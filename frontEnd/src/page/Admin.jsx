@@ -1,6 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Admin.css';
+
+import {
+  useAuth,
+} from '../auth/AuthContext.jsx';
 
 const MENU = {
   HOME: 'home',
@@ -507,10 +511,21 @@ function CriteriaManagement({ criteria, setCriteria }) {
 
 function Admin() {
   const navigate = useNavigate();
+  const {
+    user,
+    logout,
+  } = useAuth();
   const [selectedMenu, setSelectedMenu] = useState(MENU.HOME);
   const [services, setServices] = useState(initialServices);
   const [personas, setPersonas] = useState(initialPersonas);
   const [criteria, setCriteria] = useState(initialCriteria);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/', {
+      replace: true,
+    });
+  };
 
   const menuItems = [
     { key: MENU.HOME, label: '관리자 홈' },
@@ -563,8 +578,8 @@ function Admin() {
         </button>
 
         <div className="admin-profile">
-          <strong>관리자</strong>
-          <span>Restricted</span>
+          <strong>{user?.name || '관리자'}</strong>
+          <span>{user?.email || 'Restricted'}</span>
         </div>
 
         <nav className="admin-menu" aria-label="관리자 메뉴">
@@ -592,13 +607,29 @@ function Admin() {
             <h1>페르소나 플랫폼 관리자</h1>
           </div>
 
-          <button
-            type="button"
-            className="admin-switch-button"
-            onClick={() => navigate('/')}
-          >
-            일반으로 전환
-          </button>
+          <div className="admin-topbar-actions">
+            <button
+              type="button"
+              className="admin-switch-button"
+              onClick={() => navigate('/dashboard')}
+            >
+              사용자 대시보드
+            </button>
+            <button
+              type="button"
+              className="admin-switch-button"
+              onClick={() => navigate('/')}
+            >
+              공개 홈
+            </button>
+            <button
+              type="button"
+              className="admin-logout-button"
+              onClick={handleLogout}
+            >
+              로그아웃
+            </button>
+          </div>
         </header>
 
         <main className="admin-content">{renderContent()}</main>

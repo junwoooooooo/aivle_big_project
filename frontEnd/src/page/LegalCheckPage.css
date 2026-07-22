@@ -1,145 +1,161 @@
-/* =========================================================
-   페이지 기본 레이아웃 (사이드바 + 메인 영역)
-========================================================= */
-.legal-check-container {
-    min-height: 100vh;
-    display: flex;
+.legal-check-page {
+  min-height: 100%;
+  padding: 58px 32px;
+  background: #f8fbfa;
+  color: #1f2937;
+}
+
+.legal-check-content {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.legal-check-chip {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #dff6ed;
+  color: #32705c;
+  font-weight: 700;
+}
+
+.legal-check-header h1,
+.legal-check-empty h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(26px, 4vw, 36px);
+}
+
+.legal-check-header p,
+.legal-check-empty p {
+  color: #5c6f68;
+  line-height: 1.7;
+}
+
+.legal-check-header p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legal-check-result-card {
+  display: grid;
+  min-height: 320px;
+  margin-top: 30px;
+  padding: 42px 34px;
+  place-items: center;
+  border: 1px solid #c2e2d6;
+  border-radius: 18px;
+  background: #e8f7f1;
+  box-shadow: 0 14px 34px rgb(47 111 91 / 8%);
+}
+
+.legal-check-loading,
+.legal-check-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.legal-check-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #b9e2d3;
+  border-top-color: #2d8567;
+  border-radius: 50%;
+  animation: legal-check-spin 0.9s linear infinite;
+}
+
+@keyframes legal-check-spin {
+  to { transform: rotate(360deg); }
+}
+
+.legal-check-loading p,
+.legal-check-result p {
+  color: #52655e;
+  line-height: 1.7;
+}
+
+.legal-check-status {
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.legal-check-status.pass {
+  background: #ccebdc;
+  color: #176e4f;
+}
+
+.legal-check-status.fail {
+  background: #fce8e6;
+  color: #b42318;
+}
+
+.legal-check-result p strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #273c35;
+}
+
+.legal-check-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.legal-check-actions button,
+.legal-check-empty button {
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.legal-check-secondary-button {
+  border: 1px solid #cbd5d1;
+  background: #fff;
+  color: #52655e;
+}
+
+.legal-check-primary-button,
+.legal-check-empty button {
+  border: 1px solid #4cae8b;
+  background: #69c3a3;
+  color: #123a2c;
+}
+
+.legal-check-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.legal-check-empty .legal-check-content {
+  padding: 44px;
+  border: 1px solid #d7e5e0;
+  border-radius: 18px;
+  background: #fff;
+  text-align: center;
+}
+
+.legal-check-empty button {
+  margin-top: 26px;
+}
+
+@media (max-width: 620px) {
+  .legal-check-page {
+    padding: 36px 18px;
+  }
+
+  .legal-check-result-card,
+  .legal-check-empty .legal-check-content {
+    padding: 30px 20px;
+  }
+
+  .legal-check-actions {
     flex-direction: column;
-    background: #ffffff;
-    color: #1f2937;
-}
-
-.legal-check-body {
-    display: flex;
-    flex: 1;
-    min-height: calc(100vh - 80px);
-}
-
-.legal-check-main {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px 20px;
-}
-
-.legal-content-wrapper {
-    width: 100%;
-    max-width: 750px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-/* =========================================================
-   상단 타이틀 & 민트색 결과 박스
-========================================================= */
-.legal-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 32px;
-}
-
-.legal-result-card {
-    width: 100%;
-    min-height: 320px;
-    background-color: #e6f4ea; /* 와이어프레임의 연한 민트색 */
-    border-radius: 12px;
-    padding: 40px 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
-}
-
-/* 로딩 애니메이션 */
-.legal-loading-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    color: #2e6b56;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #b7e1cd;
-    border-top: 4px solid #137333;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* 결과 출력 스타일 */
-.legal-result-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 20px;
-}
-
-.status-badge {
-    font-size: 28px;
-    font-weight: 800;
-    padding: 8px 24px;
-    border-radius: 999px;
-}
-
-.status-badge.pass {
-    color: #137333;
-    background-color: #ceebd8;
-}
-
-.status-badge.fail {
-    color: #c5221f;
-    background-color: #fce8e6;
-}
-
-.reason-text {
-    font-size: 18px;
-    color: #202124;
-    line-height: 1.6;
-    max-width: 580px;
-    word-break: keep-all;
-}
-
-/* =========================================================
-   하단 버튼 영역
-========================================================= */
-.legal-action-group {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 32px;
-}
-
-.business-next-btn {
-    padding: 14px 32px;
-    border: 1.5px solid #222222;
-    border-radius: 999px;
-    background-color: #f1f3f4;
-    font-size: 16px;
-    font-weight: 600;
-    color: #000000;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-.business-next-btn:hover:not(:disabled) {
-    background-color: #e8eaed;
-    transform: translateY(-1px);
-}
-
-.business-next-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  }
 }

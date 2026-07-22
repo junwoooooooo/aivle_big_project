@@ -1,132 +1,392 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  useState,
+} from 'react';
+
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+
+import {
+  useAuth,
+} from '../auth/AuthContext.jsx';
+
+import './SignupPage.css';
+
+/* =========================================================
+   회원가입 초기값
+========================================================= */
+
+const INITIAL_FORM = {
+  name: '',
+  email: '',
+  password: '',
+  passwordConfirm: '',
+  rememberMe: false,
+  termsAgreed: false,
+};
+
+/* =========================================================
+   회원가입 페이지
+========================================================= */
 
 function SignupPage() {
-    const [agreed, setAgreed] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
+  const {
+    signupAndLogin,
+  } = useAuth();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+  const [formData, setFormData] =
+    useState(INITIAL_FORM);
 
-        // 1. 개인정보 약관 동의 체크 확인
-        if (!agreed) {
-            alert('개인정보 수집 및 이용 약관에 동의해야 회원가입이 가능합니다.');
-            return;
-        }
+  const [errorMessage, setErrorMessage] =
+    useState('');
 
-        // 2. 비밀번호 일치 확인
-        if (password !== confirmPassword) {
-            alert('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
-            return;
-        }
+  const [errorField, setErrorField] =
+    useState('');
 
-        // 가입 처리 하드코딩
-        console.log('회원가입 요청:', { email, password, agreed });
-        alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
-        navigate('/'); // 가입 완료 후 로그인 페이지로 이동 (필요 시 경로 수정)
-    };
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
-    return (
-        <div className="login-wrapper">
-            <form className="form-login" onSubmit={handleSubmit}>
-                {/* 대문자 P 브랜드 로고 */}
-                <div className="brand-logo mb-4">P</div>
+  /* =======================================================
+     입력값 변경
+  ======================================================= */
 
-                <h1 className="h3 mb-3 font-weight-normal">Sign Up</h1>
+  const handleChange = (event) => {
+    const {
+      name,
+      value,
+      checked,
+      type,
+    } = event.target;
 
-                {/* 개인정보 보호법 의거 약관 스크롤 박스 */}
-                <div className="terms-container mb-3">
-                    <label className="terms-label">개인정보 수집 및 이용 동의 (필수)</label>
-                    <div className="terms-box">
-                        <p><strong>[개인정보 수집 및 이용 약관]</strong></p>
-                        <p>
-                            본 서비스는 「개인정보 보호법」 제15조 제1항 제1호에 따라 이용자의 개인정보를 수집·이용하고자 합니다.
-                        </p>
-                        <p><strong>1. 수집하는 개인정보 항목</strong></p>
-                        <p>- 필수항목: 이메일 주소, 비밀번호</p>
-                        <p><strong>2. 개인정보의 수집 및 이용 목적</strong></p>
-                        <p>- 회원 가입 의사 확인, 회원제 서비스 제공에 따른 본인 식별·인증, 회원자격 유지·관리</p>
-                        <p><strong>3. 개인정보의 보유 및 이용 기간</strong></p>
-                        <p>- 회원 탈퇴 시까지 (단, 관계 법령 위반에 따른 수사·조사 등이 진행 중인 경우에는 해당 수사·조사 종료 시까지)</p>
-                        <p><strong>4. 동의를 거부할 권리 및 불이익</strong></p>
-                        <p>- 귀하는 개인정보 수집 및 이용에 동의하지 않을 권리가 있으나, 동의 거부 시 회원가입 및 서비스 이용이 제한될 수 있습니다.</p>
-                    </div>
+    setFormData((currentForm) => ({
+      ...currentForm,
+      [name]:
+        type === 'checkbox'
+          ? checked
+          : value,
+    }));
 
-                    <div className="terms-checkbox mt-2">
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
-                            />{' '}
-                            개인정보 수집 및 이용에 동의합니다.
-                        </label>
-                    </div>
-                </div>
+    if (
+      errorField === name ||
+      errorField === 'form'
+    ) {
+      setErrorMessage('');
+      setErrorField('');
+    }
+  };
 
-                {/* 이메일 입력 */}
-                <label htmlFor="inputEmail" className="sr-only">
-                    Email address
-                </label>
-                <input
-                    type="email"
-                    id="inputEmail"
-                    className="form-control mb-2"
-                    placeholder="Email address"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
+  /* =======================================================
+     프런트 입력 검증
+  ======================================================= */
 
-                {/* 비밀번호 입력 */}
-                <label htmlFor="inputPassword" className="sr-only">
-                    Password
-                </label>
-                <input
-                    type="password"
-                    id="inputPassword"
-                    className="form-control mb-2"
-                    placeholder="Password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      return {
+        field: 'name',
+        message:
+          '이름을 입력해 주세요.',
+      };
+    }
 
-                {/* 비밀번호 확인 입력 */}
-                <label htmlFor="confirmPassword" className="sr-only">
-                    Confirm Password
-                </label>
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    className="form-control mb-3"
-                    placeholder="Confirm Password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                />
+    if (!formData.email.trim()) {
+      return {
+        field: 'email',
+        message:
+          '이메일을 입력해 주세요.',
+      };
+    }
 
-                {/* 회원가입 버튼 */}
-                <button className="btn btn-lg btn-primary btn-block mb-3" type="submit">
-                    Sign Up
-                </button>
+    if (formData.password.length < 8) {
+      return {
+        field: 'password',
+        message:
+          '비밀번호는 8자 이상이어야 합니다.',
+      };
+    }
 
-                {/* 로그인 페이지로 돌아가는 링크 */}
-                <div className="text-center">
-                    <span style={{ fontSize: '14px', color: '#6c757d' }}>이미 계정이 있으신가요? </span>
-                    <Link to="/login" className="signup-link">
-                        Login
-                    </Link>
-                </div>
+    if (
+      formData.password !==
+      formData.passwordConfirm
+    ) {
+      return {
+        field: 'passwordConfirm',
+        message:
+          '비밀번호가 일치하지 않습니다.',
+      };
+    }
 
-                <p className="mt-4 mb-3 text-muted">©ktaivle @bootstrap</p>
-            </form>
+    if (!formData.termsAgreed) {
+      return {
+        field: 'termsAgreed',
+        message:
+          '서비스 이용약관에 동의해 주세요.',
+      };
+    }
+
+    return null;
+  };
+
+  /* =======================================================
+     회원가입 제출
+  ======================================================= */
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
+    setErrorMessage('');
+    setErrorField('');
+
+    const validationError =
+      validateForm();
+
+    if (validationError) {
+      setErrorField(
+        validationError.field,
+      );
+
+      setErrorMessage(
+        validationError.message,
+      );
+
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = signupAndLogin({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        rememberMe:
+          formData.rememberMe,
+      });
+
+      if (!result.success) {
+        setErrorField(
+          result.field || 'form',
+        );
+
+        setErrorMessage(
+          result.message ||
+            '회원가입에 실패했습니다.',
+        );
+
+        return;
+      }
+
+      navigate('/dashboard', {
+        replace: true,
+        state: {
+          signupCompleted: true,
+        },
+      });
+    } catch (error) {
+      console.error(
+        '회원가입 처리 중 오류가 발생했습니다.',
+        error,
+      );
+
+      setErrorField('form');
+
+      setErrorMessage(
+        '회원가입 처리 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getInputClassName = (
+    fieldName,
+  ) =>
+    errorField === fieldName
+      ? 'signup-input error'
+      : 'signup-input';
+
+  return (
+    <main className="signup-page">
+      <section className="signup-card">
+        <Link
+          to="/"
+          className="signup-brand"
+        >
+          페르소나 플랫폼
+        </Link>
+
+        <header className="signup-header">
+          <h1>회원가입</h1>
+
+          <p>
+            계정을 만들고 AI 시장검증을
+            시작하세요.
+          </p>
+        </header>
+
+        {errorMessage && (
+          <div
+            className="signup-error-message"
+            role="alert"
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        <form
+          className="signup-form"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <div className="signup-field">
+            <label htmlFor="signup-name">
+              이름
+            </label>
+
+            <input
+              id="signup-name"
+              name="name"
+              type="text"
+              className={getInputClassName(
+                'name',
+              )}
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="이름을 입력하세요"
+              autoComplete="name"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="signup-field">
+            <label htmlFor="signup-email">
+              이메일
+            </label>
+
+            <input
+              id="signup-email"
+              name="email"
+              type="email"
+              className={getInputClassName(
+                'email',
+              )}
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="example@email.com"
+              autoComplete="email"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="signup-field">
+            <label htmlFor="signup-password">
+              비밀번호
+            </label>
+
+            <input
+              id="signup-password"
+              name="password"
+              type="password"
+              className={getInputClassName(
+                'password',
+              )}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="8자 이상 입력하세요"
+              autoComplete="new-password"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="signup-field">
+            <label htmlFor="signup-password-confirm">
+              비밀번호 확인
+            </label>
+
+            <input
+              id="signup-password-confirm"
+              name="passwordConfirm"
+              type="password"
+              className={getInputClassName(
+                'passwordConfirm',
+              )}
+              value={
+                formData.passwordConfirm
+              }
+              onChange={handleChange}
+              placeholder="비밀번호를 다시 입력하세요"
+              autoComplete="new-password"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <label
+            className={
+              errorField ===
+              'termsAgreed'
+                ? 'signup-checkbox error'
+                : 'signup-checkbox'
+            }
+          >
+            <input
+              name="termsAgreed"
+              type="checkbox"
+              checked={
+                formData.termsAgreed
+              }
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+
+            <span>
+              서비스 이용약관 및 개인정보
+              처리방침에 동의합니다.
+            </span>
+          </label>
+
+          <label className="signup-checkbox">
+            <input
+              name="rememberMe"
+              type="checkbox"
+              checked={
+                formData.rememberMe
+              }
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+
+            <span>
+              로그인 상태 유지
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            className="signup-submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? '계정 생성 중...'
+              : '회원가입하고 시작하기'}
+          </button>
+        </form>
+
+        <div className="signup-login-link">
+          이미 계정이 있나요?
+
+          <Link to="/login">
+            로그인
+          </Link>
         </div>
-    );
+      </section>
+    </main>
+  );
 }
 
 export default SignupPage;
