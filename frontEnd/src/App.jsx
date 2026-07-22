@@ -1,10 +1,12 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Head from './Head';
 import './App.css';
 import Contact from './page/Contact.jsx';
 import Service from './page/Service.jsx';
 import Login from "./page/Login.jsx";
+import Admin from './page/Admin.jsx';
+import VirtualMarket from './page/VirtualMarket.jsx';
 
 // 메인 홈 화면 컴포넌트
 function Home() {
@@ -29,10 +31,13 @@ function Home() {
 
 
 function App() {
+    const location = useLocation();
+    const isAdminPage = location.pathname.startsWith('/admin');
+
     return (
         <div className="container">
             {/* 상단 헤더 */}
-            <Head />
+            {!isAdminPage && <Head />}
 
             {/* 라우트 설정 */}
             <Routes>
@@ -40,6 +45,8 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/service" element={<Service />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/virtual-market" element={<VirtualMarket />} />
             </Routes>
         </div>
     );
