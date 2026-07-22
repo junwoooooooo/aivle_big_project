@@ -1,0 +1,194 @@
+.project-create-page {
+  min-height: 100%;
+  padding: 52px 32px;
+  background: #f8fbfa;
+  color: #1f2937;
+}
+
+.project-create-content {
+  width: min(780px, 100%);
+  margin: 0 auto;
+}
+
+.project-create-header {
+  margin-bottom: 28px;
+}
+
+.project-create-chip {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #dff6ed;
+  color: #32705c;
+  font-weight: 700;
+}
+
+.project-create-header h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(26px, 4vw, 36px);
+}
+
+.project-create-header p {
+  color: #5c6f68;
+  line-height: 1.7;
+}
+
+.project-create-guide-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px solid #8cccb6;
+  border-radius: 999px;
+  background: #fff;
+  color: #265d4b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.project-create-guideline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 30px;
+  margin: 22px 0;
+  padding: 26px 30px;
+  border: 1px solid #cfded8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(47 111 91 / 8%);
+}
+
+.project-create-guideline p {
+  line-height: 1.5;
+}
+
+.project-create-guideline p span {
+  color: #4a9d80;
+  font-weight: 800;
+}
+
+.project-create-upload-area {
+  margin-top: 26px;
+}
+
+.project-create-upload-button {
+  width: 100%;
+  padding: 30px;
+  border: 2px dashed #8cccb6;
+  border-radius: 14px;
+  background: #f0faf6;
+  color: #245c49;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.project-create-upload-button small {
+  display: block;
+  margin-top: 8px;
+  color: #6c7f78;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.project-create-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #b9ddcf;
+  border-radius: 14px;
+  background: #eaf8f2;
+}
+
+.project-create-file-icon {
+  font-size: 28px;
+}
+
+.project-create-file-card > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.project-create-file-card strong,
+.project-create-file-card span {
+  display: block;
+}
+
+.project-create-file-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-create-file-card div span {
+  margin-top: 4px;
+  color: #60736c;
+  font-size: 13px;
+}
+
+.project-create-file-card button {
+  padding: 8px 11px;
+  border: 1px solid #9fcfbe;
+  border-radius: 8px;
+  background: #fff;
+  color: #326d58;
+  cursor: pointer;
+}
+
+.project-create-error {
+  margin-top: 10px;
+  color: #b42318;
+  font-size: 14px;
+}
+
+.project-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.project-create-actions button {
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.project-create-cancel-button {
+  border: 1px solid #cbd5d1;
+  background: #fff;
+  color: #52655e;
+}
+
+.project-create-next-button {
+  border: 1px solid #4cae8b;
+  background: #69c3a3;
+  color: #123a2c;
+}
+
+.project-create-next-button[aria-disabled='true'] {
+  border-color: #cbd5d1;
+  background: #e6ebe9;
+  color: #77837f;
+}
+
+@media (max-width: 680px) {
+  .project-create-page {
+    padding: 34px 18px;
+  }
+
+  .project-create-guideline {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .project-create-file-card {
+    flex-wrap: wrap;
+  }
+
+  .project-create-file-card > div {
+    flex-basis: calc(100% - 50px);
+  }
+}

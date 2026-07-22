@@ -1,9 +1,14 @@
-import React, {
+import {
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import {
+  useLocation,
+} from 'react-router-dom';
+
 import './VirtualMarket.css';
 
 /* =========================================================
@@ -99,14 +104,21 @@ const VIRTUAL_MARKET_TABS = [
 ========================================================= */
 
 function VirtualMarket() {
-  const navigate = useNavigate();
+  const location = useLocation();
 
   const generationTimerRef = useRef(null);
   const resultDelayRef = useRef(null);
 
-  const [activeSection, setActiveSection] = useState(
-    VIRTUAL_MARKET_SECTION.OVERVIEW,
-  );
+  const initialSection =
+    location.state?.section &&
+    Object.values(
+      VIRTUAL_MARKET_SECTION,
+    ).includes(location.state.section)
+      ? location.state.section
+      : VIRTUAL_MARKET_SECTION.OVERVIEW;
+
+  const [activeSection, setActiveSection] =
+    useState(initialSection);
 
   const [marketingStep, setMarketingStep] = useState(
     MARKETING_STEP.FORM,
@@ -151,7 +163,7 @@ function VirtualMarket() {
      타이머 정리
   ======================================================= */
 
-  const clearGenerationTimers = () => {
+  const clearGenerationTimers = useCallback(() => {
     if (generationTimerRef.current) {
       clearInterval(generationTimerRef.current);
       generationTimerRef.current = null;
@@ -161,13 +173,13 @@ function VirtualMarket() {
       clearTimeout(resultDelayRef.current);
       resultDelayRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       clearGenerationTimers();
     };
-  }, []);
+  }, [clearGenerationTimers]);
 
   useEffect(() => {
     return () => {
@@ -197,15 +209,6 @@ function VirtualMarket() {
     }
 
     setActiveSection(sectionId);
-  };
-
-  const handleReturnToOverview = () => {
-    clearGenerationTimers();
-    setProgress(0);
-    setMarketingStep(MARKETING_STEP.FORM);
-    setActiveSection(
-      VIRTUAL_MARKET_SECTION.OVERVIEW,
-    );
   };
 
   /* =======================================================
@@ -633,59 +636,8 @@ function VirtualMarket() {
   };
 
   return (
-    <div className="virtual-market-page">
-      <aside className="virtual-market-sidebar">
-        <button
-          type="button"
-          className="virtual-market-home-button"
-          onClick={() => navigate('/')}
-          aria-label="홈으로 이동"
-        >
-          ⌂
-        </button>
-
-        <nav
-          className="virtual-market-side-menu"
-          aria-label="사용자 메뉴"
-        >
-          <button
-            type="button"
-            onClick={() =>
-              navigate('/project-create')
-            }
-          >
-            기획서 등록
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate('/business-analysis')
-            }
-          >
-            사업성 분석
-          </button>
-
-          <button
-            type="button"
-            className="active"
-            onClick={handleReturnToOverview}
-          >
-            가상 시장 검증
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate('/dashboard')
-            }
-          >
-            대시보드
-          </button>
-        </nav>
-      </aside>
-
-      <main className="virtual-market-main">
+    <section className="virtual-market-page">
+      <div className="virtual-market-main">
         <div
           className="virtual-market-tabs"
           aria-label="가상 시장 검증 기능"
@@ -807,8 +759,8 @@ function VirtualMarket() {
               }
             />
           )}
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
 

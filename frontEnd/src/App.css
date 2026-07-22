@@ -19,71 +19,7 @@ body {
 }
 
 /* -----------------------------------
-   2. Head 컴포넌트 스타일
------------------------------------ */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  border-bottom: 2px solid #E5E7EB;
-  background-color: #ffffff;
-}
-
-.logo-group {
-  display: flex;
-  align-items: center;
-}
-
-.logo-text {
-  font-size: 24px;
-  font-weight: 800;
-  color: #000000;
-  text-decoration: none;
-}
-
-.nav {
-  display: flex;
-  gap: 32px;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #374151;
-  font-size: 15px;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.nav-link:hover {
-  color: #000000;
-}
-
-.user-section {
-  display: flex;
-  align-items: center;
-}
-
-.login-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #000000;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-  text-decoration: none;
-}
-
-.login-button:hover {
-  background-color: #F3F4F6;
-}
-
-/* -----------------------------------
-   3. 메인 홈 (Home) 화면 스타일
+   2. 메인 홈 (Home) 화면 스타일
 ----------------------------------- */
 .main-content {
   display: flex;
@@ -338,4 +274,155 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* =========================================================
+   로그인 보조 요소
+========================================================= */
+
+.login-description {
+  margin: 0 0 22px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.login-error-message {
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 11px 13px;
+  border: 1px solid #f0aaa5;
+  border-radius: 6px;
+  background: #fff3f2;
+  color: #b33a32;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.remember-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.remember-label input {
+  margin: 0;
+}
+
+.brand-logo {
+  text-decoration: none;
+}
+
+.form-login button:disabled,
+.form-login input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.login-demo-section {
+  width: 100%;
+  margin-top: 22px;
+  padding: 15px;
+  border: 1px solid #dce5e1;
+  border-radius: 7px;
+  background: #f7fbf9;
+}
+
+.login-demo-section > p {
+  margin: 0 0 11px;
+  color: #3f5f54;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.login-demo-buttons {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.login-demo-buttons button {
+  padding: 8px 9px;
+  border: 1px solid #91cbb7;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #326b58;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.login-demo-buttons button:hover {
+  background: #eaf8f3;
+}
+
+.login-demo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 11px;
+  color: #77847f;
+  font-size: 11px;
+  text-align: left;
+}
+
+/* =========================================================
+   공개 홈 CTA
+========================================================= */
+
+.hero-label {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: #dff6ed;
+  color: #32705c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 11px;
+  margin-top: 30px;
+}
+
+.hero-primary-button,
+.hero-secondary-button {
+  padding: 11px 21px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hero-primary-button {
+  border: 1px solid #5fb697;
+  background: #bcefdc;
+  color: #173b2f;
+}
+
+.hero-primary-button:hover {
+  background: #a9e7d2;
+}
+
+.hero-secondary-button {
+  border: 1px solid #aab8b3;
+  background: #ffffff;
+  color: #53635d;
+}
+
+.hero-secondary-button:hover {
+  border-color: #7bbda7;
+  background: #f0f8f5;
+}
+
+@media (max-width: 480px) {
+  .login-demo-buttons {
+    grid-template-columns: 1fr;
+  }
 }

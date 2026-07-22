@@ -3,10 +3,16 @@
 ========================================================= */
 
 .virtual-market-page {
-  min-height: calc(100vh - 85px);
-  display: flex;
+  width: 100%;
+  min-height: 100%;
   background: #ffffff;
   color: #1f2937;
+}
+
+.virtual-market-main {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
 }
 
 .virtual-market-page button,
@@ -14,58 +20,6 @@
 .virtual-market-page textarea,
 .virtual-market-page select {
   font: inherit;
-}
-
-/* =========================================================
-   좌측 메뉴
-========================================================= */
-
-.virtual-market-sidebar {
-  width: 210px;
-  flex-shrink: 0;
-  padding: 24px 18px;
-  border-right: 1px solid #dce5e1;
-  background: #ffffff;
-}
-
-.virtual-market-home-button {
-  width: 36px;
-  height: 36px;
-  margin-bottom: 28px;
-  border: 1px solid #dce5e1;
-  border-radius: 6px;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.virtual-market-home-button:hover {
-  background: #eff8f4;
-}
-
-.virtual-market-side-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.virtual-market-side-menu button {
-  padding: 12px 14px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  background: #e5f7f0;
-  color: #263b34;
-  text-align: left;
-  cursor: pointer;
-}
-
-.virtual-market-side-menu button:hover {
-  background: #d4f1e6;
-}
-
-.virtual-market-side-menu button.active {
-  border-color: #6bc4a7;
-  background: #bcefdc;
-  font-weight: 700;
 }
 
 /* =========================================================
@@ -1022,28 +976,6 @@
 ========================================================= */
 
 @media (max-width: 760px) {
-  .virtual-market-page {
-    display: block;
-  }
-
-  .virtual-market-sidebar {
-    width: 100%;
-    padding: 16px;
-    border-right: 0;
-    border-bottom:
-      1px solid #dce5e1;
-  }
-
-  .virtual-market-home-button {
-    margin-bottom: 14px;
-  }
-
-  .virtual-market-side-menu {
-    display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
   .virtual-market-main {
     padding: 20px 16px 40px;
   }
