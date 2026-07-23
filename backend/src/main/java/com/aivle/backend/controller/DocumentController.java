@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/project")
-@CrossOrigin(origins = "*") // 프론트엔드 통신 허용
+@CrossOrigin(originPatterns = "*", allowedHeaders = "*")
 public class DocumentController {
 
     private final DocumentAnalysisService analysisService;
