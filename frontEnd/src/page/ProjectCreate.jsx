@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. useNavigate 임포트
 import './ProjectCreate.css';
 
 const GUIDELINE_ITEMS = [
@@ -17,6 +18,8 @@ const GUIDELINE_ITEMS = [
 ];
 
 export default function ProjectCreate() {
+  const navigate = useNavigate(); // 2. navigate 객체 생성
+
   const [file, setFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -80,6 +83,32 @@ export default function ProjectCreate() {
   const getItemAnalysis = (itemIndex) => {
     if (!analysisResult || !analysisResult.itemResults) return null;
     return analysisResult.itemResults.find((r) => r.itemNumber === itemIndex + 1);
+  };
+  const handleNextStep = async () => {
+    if (!analysisResult || !analysisResult.overallPassed) return;
+
+    try {
+      // 1) 백엔드로 분석 결과 전달 (선택 사항: 에러 나도 catch에서 다음 페이지 이동)
+      const response = await fetch("http://localhost:8080/api/project/save-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file?.name || "사업기획서.docx",
+          analysisData: analysisResult
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // 저장 성공 시 projectId와 함께 이동
+        navigate("/legal-check", { state: { projectId: data.projectId, analysisResult } });
+        return;
+      }
+    } catch (error) {
+      console.warn("DB 저장 미완결 상태이므로 임시 이동합니다:", error);
+    }
+    // 2) 백엔드 DB 연동 전이어도 다음 페이지(/legal-check)로 바로 이동
+    navigate("/legal-check", { state: { analysisResult, fileName: file?.name } });
   };
 
   return (
@@ -194,7 +223,7 @@ export default function ProjectCreate() {
                 className="project-create-next-button"
                 aria-disabled={!analysisResult || !analysisResult.overallPassed || isAnalyzing}
                 disabled={!analysisResult || !analysisResult.overallPassed || isAnalyzing}
-                onClick={() => alert("법률 · 규제 검토 단계로 이동합니다.")}
+                onClick={handleNextStep}
             >
               법률 · 규제 검토 단계로 이동
             </button>
