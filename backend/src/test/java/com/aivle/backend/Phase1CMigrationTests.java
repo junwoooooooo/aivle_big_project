@@ -28,7 +28,9 @@ class Phase1CMigrationTests {
         assertThat(columnExists("analysis_jobs", "heartbeat_at")).isTrue();
         assertThat(columnExists("analysis_jobs", "claim_token")).isTrue();
         assertThat(columnExists("structured_plan_sections", "display_order")).isTrue();
-        assertThat(constraintExists("uk_plan_source_document_version")).isTrue();
+        // V4가 추가한 uk_plan_source_document_version은 V13(피드백 루프)에서 의도적으로 삭제됐다.
+        // 파생 plan 버전이 문서 버전을 공유하며, UPLOAD 유일성은 서비스 계층이 보장한다.
+        assertThat(constraintExists("uk_plan_source_document_version")).isFalse();
     }
 
     @Test

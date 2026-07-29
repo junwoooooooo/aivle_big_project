@@ -64,6 +64,7 @@ public class AnalysisJob extends BaseEntity {
     @Column(length = 100) private String lastErrorCode;
     private Boolean retryable;
     @Column(length = 64) private String claimToken;
+    @Column(length = 20) private String requestedMode;
 
     private AnalysisJob(Project project, JobType jobType, String requestJson) {
         this.project = project;
@@ -102,6 +103,10 @@ public class AnalysisJob extends BaseEntity {
         job.idempotencyKey = idempotencyKey;
         job.requestFingerprint = requestFingerprint;
         return job;
+    }
+
+    public void assignRequestedMode(String requestedMode) {
+        this.requestedMode = requestedMode;
     }
 
     public static AnalysisJob queuedFeasibilityAssessment(
@@ -315,6 +320,35 @@ public class AnalysisJob extends BaseEntity {
         this.errorMessage = "분석 작업의 최대 시도 횟수를 초과했습니다.";
         this.retryable = false;
         this.completedAt = now;
+        clearClaim();
+    }
+
+    /**
+     * 종료된 작업을 사용자 요청으로 다시 큐에 넣는다.
+     * idempotency key는 프로젝트·유형당 하나뿐이라 새 row를 만들 수 없으므로
+     * 기존 row를 재사용해야 재시도 경로가 생긴다.
+     * 진행 중인 작업만 막는다 — 그건 호출부가 ANALYSIS_ALREADY_RUNNING으로 처리한다.
+     */
+    public void requeueTerminated() {
+        if (status == JobStatus.QUEUED || status == JobStatus.RUNNING) {
+            throw new IllegalStateException("job is still active");
+        }
+        this.status = JobStatus.QUEUED;
+        this.currentStep = null;
+        this.progress = 0;
+        this.attemptCount = 0;
+        this.errorCode = null;
+        this.errorMessage = null;
+        this.lastErrorCode = null;
+        this.retryable = null;
+        this.externalRequestId = null;
+        this.resultReferenceType = null;
+        this.resultReferenceId = null;
+        this.startedAt = null;
+        this.completedAt = null;
+        // 러너의 claim 쿼리는 UTC 시계로 nextAttemptAt을 비교한다.
+        // null이면 시계와 무관하게 즉시 claim 대상이 된다.
+        this.nextAttemptAt = null;
         clearClaim();
     }
 

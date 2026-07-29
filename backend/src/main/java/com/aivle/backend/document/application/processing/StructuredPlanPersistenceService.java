@@ -49,16 +49,22 @@ public class StructuredPlanPersistenceService {
             throw new IllegalStateException("job claim is no longer current");
         }
         DocumentVersion sourceVersion = job.getSourceDocumentVersion();
-        var existing = planRepository.findBySourceDocumentVersionIdAndDeletedAtIsNull(
-            sourceVersion.getId()
+        // 파생 버전(REVISION_ACCEPT 등)이 문서 버전을 공유하므로 업로드 멱등 체크는 UPLOAD origin으로 한정한다
+        var existing = planRepository.findBySourceDocumentVersionIdAndOriginAndDeletedAtIsNull(
+            sourceVersion.getId(), PlanOrigin.UPLOAD
         );
         StructuredPlan plan;
         if (existing.isPresent()) {
             plan = existing.get();
         } else {
+            int nextVersionNumber = planRepository
+                .findTopByProjectIdOrderByVersionNumberDesc(job.getProject().getId())
+                .map(latest -> latest.getVersionNumber() + 1)
+                .orElse(sourceVersion.getVersionNumber());
             plan = planRepository.save(StructuredPlan.create(
                 job.getProject(),
                 sourceVersion,
+                nextVersionNumber,
                 parsed,
                 aiResult,
                 mapping,

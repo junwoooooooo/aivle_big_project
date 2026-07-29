@@ -7,7 +7,11 @@ import com.aivle.backend.common.entity.StructuredPlanStatus;
 public interface StructuredPlanRepository extends JpaRepository<StructuredPlan, Long> {
     Optional<StructuredPlan> findTopByProjectIdOrderByVersionNumberDesc(Long projectId);
     boolean existsBySourceDocumentVersionIdAndDeletedAtIsNull(Long sourceDocumentVersionId);
+    /** 파생 버전이 문서 버전을 공유하므로 다건일 수 있다 — 업로드 멱등 체크에는 origin 스코프 변형을 쓸 것. */
     Optional<StructuredPlan> findBySourceDocumentVersionIdAndDeletedAtIsNull(Long sourceDocumentVersionId);
+    Optional<StructuredPlan> findBySourceDocumentVersionIdAndOriginAndDeletedAtIsNull(
+        Long sourceDocumentVersionId, com.aivle.backend.document.entity.PlanOrigin origin);
+    java.util.List<StructuredPlan> findAllByProjectIdAndDeletedAtIsNullOrderByVersionNumberDesc(Long projectId);
     @EntityGraph(attributePaths = {"project", "sourceDocumentVersion", "confirmedBy"})
     Optional<StructuredPlan> findByIdAndProjectIdAndDeletedAtIsNull(
         Long id,

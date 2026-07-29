@@ -36,6 +36,12 @@ public class LegalReview extends BaseEntity {
     @Column(columnDefinition = "TEXT") private String inputSnapshotJson;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
+    @Column(name = "review_cycle_id") private Long reviewCycleId;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "parent_review_id") private LegalReview parentReview;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private ReviewMode mode = ReviewMode.FULL;
+    @Column(columnDefinition = "TEXT") private String changedSectionsJson;
+    @Column(columnDefinition = "TEXT") private String rerunCategoriesJson;
+    @Column(columnDefinition = "TEXT") private String carriedCategoriesJson;
 
     public static LegalReview completed(
         Project project, AnalysisJob job, StructuredPlan plan, LegalReviewStatus status,
@@ -62,5 +68,22 @@ public class LegalReview extends BaseEntity {
         review.startedAt = job.getStartedAt();
         review.completedAt = now;
         return review;
+    }
+
+    /** 피드백 루프 실행 메타데이터. persistence 시점에 1회 부착한다. */
+    public void attachRunMetadata(
+        Long reviewCycleId,
+        LegalReview parentReview,
+        ReviewMode mode,
+        String changedSectionsJson,
+        String rerunCategoriesJson,
+        String carriedCategoriesJson
+    ) {
+        this.reviewCycleId = reviewCycleId;
+        this.parentReview = parentReview;
+        this.mode = mode;
+        this.changedSectionsJson = changedSectionsJson;
+        this.rerunCategoriesJson = rerunCategoriesJson;
+        this.carriedCategoriesJson = carriedCategoriesJson;
     }
 }

@@ -65,4 +65,29 @@ public class StructuredPlanSection extends BaseEntity {
             sourceBlockReferencesJson
         );
     }
+
+    /**
+     * 파생 plan 버전용 섹션 복사. overrideSourceText가 null이면 원문 그대로 복사한다.
+     * 원본 섹션은 절대 변경하지 않는다.
+     */
+    public static StructuredPlanSection copyOf(
+        StructuredPlanSection source,
+        StructuredPlan targetPlan,
+        String overrideSourceText
+    ) {
+        StructuredPlanSection copy = new StructuredPlanSection();
+        copy.structuredPlan = targetPlan;
+        copy.sectionType = source.sectionType;
+        copy.title = source.title;
+        copy.contentJson = source.contentJson;
+        copy.sourceText = overrideSourceText != null ? overrideSourceText : source.sourceText;
+        copy.confidence = source.confidence;
+        copy.sectionCode = source.sectionCode;
+        copy.itemStatus = source.itemStatus;
+        copy.reason = source.reason;
+        copy.evidenceJson = source.evidenceJson;
+        copy.sourceBlockReferencesJson = source.sourceBlockReferencesJson;
+        copy.sequence = source.sequence;
+        return copy;
+    }
 }

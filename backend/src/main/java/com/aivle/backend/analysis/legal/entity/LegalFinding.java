@@ -26,6 +26,8 @@ public class LegalFinding extends BaseEntity {
     @Column(columnDefinition = "TEXT") private String sourceSectionCodesJson;
     @Column(nullable = false) private Boolean requiresProfessionalReview;
     @Column(precision = 5, scale = 4) private java.math.BigDecimal confidence;
+    @Column(nullable = false) private Boolean carried = Boolean.FALSE;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "carried_from_finding_id") private LegalFinding carriedFromFinding;
 
     public static LegalFinding create(
         LegalReview review, LegalCategory category, int displayOrder,
@@ -47,6 +49,31 @@ public class LegalFinding extends BaseEntity {
         item.sourceSectionCodesJson = sourceSectionCodesJson;
         item.requiresProfessionalReview = professionalReview;
         item.confidence = confidence;
+        item.carried = Boolean.FALSE;
+        return item;
+    }
+
+    /** 증분 재검토에서 승계 범주의 finding을 이전 리뷰에서 복사한다. */
+    public static LegalFinding carriedFrom(LegalFinding parent, LegalReview newReview, int displayOrder) {
+        LegalFinding item = new LegalFinding();
+        item.legalReview = newReview;
+        item.category = parent.category;
+        item.displayOrder = displayOrder;
+        item.applicability = parent.applicability;
+        item.severity = parent.severity;
+        item.title = parent.title;
+        item.description = parent.description;
+        item.legalBasis = parent.legalBasis;
+        item.sourceName = parent.sourceName;
+        item.sourceUrl = parent.sourceUrl;
+        item.recommendation = parent.recommendation;
+        item.rationale = parent.rationale;
+        item.evidenceJson = parent.evidenceJson;
+        item.sourceSectionCodesJson = parent.sourceSectionCodesJson;
+        item.requiresProfessionalReview = parent.requiresProfessionalReview;
+        item.confidence = parent.confidence;
+        item.carried = Boolean.TRUE;
+        item.carriedFromFinding = parent;
         return item;
     }
 }

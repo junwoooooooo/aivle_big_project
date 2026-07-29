@@ -6,4 +6,7 @@ import java.util.List;
 
 public interface LegalReviewQuestionRepository extends JpaRepository<LegalReviewQuestion, Long> {
     List<LegalReviewQuestion> findByLegalReviewIdAndDeletedAtIsNullOrderByDisplayOrder(Long reviewId);
+
+    long countByLegalReviewIdAndStatusAndResolvedInVersionIsNullAndDeletedAtIsNull(
+        Long reviewId, com.aivle.backend.analysis.legal.entity.LegalQuestionStatus status);
 }
