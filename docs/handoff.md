@@ -111,6 +111,49 @@ Mock 화면 캡처만으로 실제 조문처럼 유통되면 안 된다. Mock �
 넣어 `NODE_OPTIONS` 없이 통과한다. 함정 — Vitest 4에서 `execArgv`는 **`test` 최상위 옵션**이며
 v3식 `poolOptions.forks.execArgv`는 조용히 무시된다.
 
+## 0-4. 2026-07-31: 재무 분석 — 계산·계약 계층 완료, 서비스·프론트 이월
+
+승인된 계획: **`docs/current/FINANCIAL_ANALYSIS_DESIGN.md`** (저장소에 보존됨).
+설계 핵심은 **가정 확정 단계**다 — 실측(펜타클 예시)으로 *계획서 단독 자동 계산은 성립하지 않음*을
+확인했다: 단가가 3종, 월 고정비·할인율이 아예 없고, 단가×수량(3.04억) ≠ 명시 매출(2.8억)이라
+문서가 truth를 답하지 않는다. 그래서 흐름이 이렇다:
+
+```
+[다음: 재무 분석] → job(AI 가정 추출) → NEEDS_ASSUMPTIONS
+   → 가정 확정 화면(후보 선택·모순 해소·월 고정비 입력) → 확정 → 결정론 계산 → CONFIRMED
+   → 결과 화면의 슬라이더 what-if = 저장 없는 샌드박스
+```
+
+### 이번에 끝낸 것 (커밋 안 함)
+
+| 파일 | 내용 |
+|---|---|
+| `analysis/financial/application/FinancialCalculationPolicy.java` | 지표 전부 순수 함수. 공헌이익·BEP수량/시점·안전여유율·3년ROI·NPV36·IRR(이분법)·peak funding·누적현금흐름. **계산 불가는 예외가 아니라 `Metric(null, reason, missingKeys)`** |
+| `analysis/financial/entity/FinancialTypes.java` | `Verdict`(타당성 문법 준수, 별도 enum) · `AssumptionState` · `AssumptionSourceType(PLAN/DEFAULT/USER)` · `UnavailableReason` |
+| `analysis/financial/FinancialPolicy.java` | 필수 가정 키 6개 · 할인율 기본값·자수 문구 · TAM/SAM 금지 프롬프트 · 경계 문구 |
+| `integration/ai/financial/FinancialAiRequest/Response.java` | 응답은 **가정 초안 + 서술뿐**. 지표는 AI 산출물이 아니다. `candidates`(후보 다수) · `conflicts`(문서 모순) |
+| `integration/ai/financial/MockFinancialAiClient.java` | 결정론 추출. **결측(월 고정비 미방출)·후보 다수(단가 3종)·모순(매출 불일치) 세 경로를 모두 방출** |
+| `integration/ai/financial/OpenAiFinancialAdapter.java` | 인용 부분문자열 검증 실패 가정만 떨어뜨리고 나머지는 살린다(우아한 강등) |
+| `entity/FinancialAnalysis.java` + **V17** | `financial_analyses` 재활용. `structured_plan_id`·`feasibility_assessment_id` FK, `verdict`, `narrative_json`, `prompt_version` 추가. 가정 상태는 컬럼이 아니라 `assumptions_json` 안 |
+
+검증: `FinancialCalculationPolicyTests` 10개 · `MockFinancialAiClientTests` 6개 green.
+기준 케이스는 **프론트 `financialViewModel.test.js`와 같은 수치를 공유**할 것
+(객단가 38,000 · 변동원가율 0.29 · 월 1,000개 · 월 고정비 2,000만 · 초기투자 5,000만 · 할인율 10%
+→ 공헌이익 26,980 · 월이익 6,980,000 · BEP수량 741.29 · BEP시점 8개월 · ROI 4.0256 · PROMISING).
+
+### 남은 것 (다음 세션)
+
+1. **job·서비스·컨트롤러**: `FinancialCommandService`(타당성 선행 가드·멱등키·`requeueTerminated`),
+   `JobContext/Executor/Persistence/Query`, **`FinancialAssumptionService`(확정 단계 — `USER` 태깅·
+   후보 선택·모순 해소·필수 키 검사·요청 본문 `version` + 409)**, 컨트롤러 3엔드포인트, openapi + redocly.
+   job 러너에 `FINANCIAL_ANALYSIS` 등록 시 **`nextAttemptAt`은 null**(§8-3).
+2. **프론트**: `financialViewModel`(백엔드와 동일 공식), `AssumptionConfirmForm`,
+   `FinancialSection`(**가정 패널 상단 「가정 수정」 버튼 = 재확정 진입점**),
+   `CashFlowChart`(손수 SVG — 차트 라이브러리 의존성 없음), `FeasibilityPage` 버튼 활성화.
+   what-if 안내 문구는 **"반영하려면 가정을 다시 확정하세요"**(기획서 수정 경로는 막다른 길이다).
+3. `CLAUDE.md` §9에 한 줄: 지도와 실제가 어긋나 보이면 기억이 아니라 `git ls-files`로 판별할 것
+   (CLAUDE.md는 전역 gitignore 대상이라 사본이 갈라진다 — 이번 세션에 실제로 혼선이 있었다).
+
 ## 3. 남은 마일스톤 (다음 세션) — ※ §0 갱신 참조: M4·M7·M8(API 스모크)은 07-30 완료. 잔여 = UI 스크린샷 워크스루뿐.
 
 1. **M4 — ai/legal 파이프라인 확장** (Java 어댑터 계약은 완료, Python만 남음):
