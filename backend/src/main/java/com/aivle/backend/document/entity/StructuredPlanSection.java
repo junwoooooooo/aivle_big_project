@@ -75,19 +75,20 @@ public class StructuredPlanSection extends BaseEntity {
         StructuredPlan targetPlan,
         String overrideSourceText
     ) {
+        // source가 프록시일 가능성에 대비해 게터로 접근한다
         StructuredPlanSection copy = new StructuredPlanSection();
         copy.structuredPlan = targetPlan;
-        copy.sectionType = source.sectionType;
-        copy.title = source.title;
-        copy.contentJson = source.contentJson;
-        copy.sourceText = overrideSourceText != null ? overrideSourceText : source.sourceText;
-        copy.confidence = source.confidence;
-        copy.sectionCode = source.sectionCode;
-        copy.itemStatus = source.itemStatus;
-        copy.reason = source.reason;
-        copy.evidenceJson = source.evidenceJson;
-        copy.sourceBlockReferencesJson = source.sourceBlockReferencesJson;
-        copy.sequence = source.sequence;
+        copy.sectionType = source.getSectionType();
+        copy.title = source.getTitle();
+        copy.contentJson = source.getContentJson();
+        copy.sourceText = overrideSourceText != null ? overrideSourceText : source.getSourceText();
+        copy.confidence = source.getConfidence();
+        copy.sectionCode = source.getSectionCode();
+        copy.itemStatus = source.getItemStatus();
+        copy.reason = source.getReason();
+        copy.evidenceJson = source.getEvidenceJson();
+        copy.sourceBlockReferencesJson = source.getSourceBlockReferencesJson();
+        copy.sequence = source.getSequence();
         return copy;
     }
 }

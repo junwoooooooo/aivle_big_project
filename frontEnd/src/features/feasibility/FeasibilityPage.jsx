@@ -7,8 +7,9 @@ import {
 } from '../../shared/ui/index.js';
 import { useFeasibility } from './hooks/useFeasibility.js';
 import {
-  CONFIDENCE_LABELS, DIMENSION_LABELS, EVIDENCE_TYPE_LABELS, VERDICT_LABELS, parseJsonList,
+  CONFIDENCE_LABELS, VERDICT_LABELS, groupDimensions, parseJsonList,
 } from './model/feasibilityViewModel.js';
+import { AnalysisGroupCard } from './components/AnalysisGroupCard.jsx';
 import './feasibility.css';
 
 function ReadyState({ plan, legalReview, onStart }) {
@@ -24,8 +25,8 @@ function ReadyState({ plan, legalReview, onStart }) {
           <div><dt>법률 사전검토</dt><dd>#{legalReview?.legalReviewId}</dd></div>
         </dl>
         <p>
-          문제·고객·시장·경쟁·제품·BM·진입·재무·실행·법률의 10개 차원을
-          확인하고 검증 과제와 위험을 우선 정리합니다.
+          시장, 비즈니스 모델, 기술·운영 세 갈래로 나눠 확인하고
+          검증 과제와 위험을 우선 정리합니다. 이어서 재무 분석으로 넘어갑니다.
         </p>
         <Alert title="분석 범위와 데이터 주의" tone="warning">
           시장 규모와 재무 수치는 자동 생성하지 않습니다. 문서의 가정은 외부 출처와
@@ -59,22 +60,6 @@ function ProcessingState({ job }) {
   );
 }
 
-function EvidenceList({ value }) {
-  const evidence = parseJsonList(value);
-  if (evidence.length === 0) return <p className="feasibility-muted">표시할 근거가 없습니다.</p>;
-  return (
-    <ul className="feasibility-evidence">
-      {evidence.map((item, index) => (
-        <li key={`${item.type}-${item.reference}-${index}`}>
-          <strong>{EVIDENCE_TYPE_LABELS[item.type] ?? item.type}</strong>
-          <span>{item.description}</span>
-          {item.reference && <small>{item.reference}</small>}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function ResultState({ assessment }) {
   const strengths = parseJsonList(assessment.keyStrengthsJson);
   const risks = parseJsonList(assessment.keyRisksJson);
@@ -100,27 +85,15 @@ function ResultState({ assessment }) {
         </div>
       </Card>
 
-      <section aria-labelledby="feasibility-dimensions-title">
-        <h2 id="feasibility-dimensions-title">차원별 결과</h2>
-        <div className="feasibility-dimension-grid">
-          {assessment.dimensions.map((item) => (
-            <Card key={item.code} className="feasibility-dimension">
-              <div className="feasibility-dimension-heading">
-                <h3>{DIMENSION_LABELS[item.code] ?? item.code}</h3>
-                <span>{item.score ?? '정보 부족'}</span>
-              </div>
-              <p className="feasibility-confidence">
-                신뢰도 {CONFIDENCE_LABELS[item.confidence] ?? item.confidence}
-              </p>
-              <p>{item.finding}</p>
-              <h4>판단 이유</h4><p>{item.rationale}</p>
-              <h4>근거 구분</h4><EvidenceList value={item.evidenceJson} />
-              {parseJsonList(item.risksJson).length > 0 && (
-                <><h4>위험</h4><ul>{parseJsonList(item.risksJson).map((risk) => <li key={risk}>{risk}</li>)}</ul></>
-              )}
-              <h4>권장 행동</h4>
-              <ul>{parseJsonList(item.recommendedActionsJson).map((action) => <li key={action}>{action}</li>)}</ul>
-            </Card>
+      <section aria-labelledby="feasibility-groups-title">
+        <h2 id="feasibility-groups-title">시장 · 비즈니스 모델 · 기술 운영</h2>
+        <p className="feasibility-muted">
+          세 갈래로 나눠 보되 하나의 분석입니다. 각 묶음의 결론이 먼저 오고,
+          그 판단을 구성한 항목은 펼쳐서 확인할 수 있습니다.
+        </p>
+        <div className="feasibility-group-list">
+          {groupDimensions(assessment).map((group) => (
+            <AnalysisGroupCard key={group.analysisType} group={group} />
           ))}
         </div>
       </section>
@@ -142,6 +115,16 @@ function ResultState({ assessment }) {
             ))}
           </ol>
         )}
+      </Card>
+      <Card className="feasibility-next">
+        <div>
+          <h2>다음: 재무 분석</h2>
+          <p className="feasibility-muted">
+            위 세 묶음의 결과와 계획서의 원가·매출 항목을 바탕으로 예상 매출, 손익,
+            손익분기를 계산합니다. 같은 단계 안에서 이어지는 후속 분석입니다.
+          </p>
+        </div>
+        <Button disabled aria-disabled="true">재무 분석 실행 (준비 중)</Button>
       </Card>
       <Alert title="재무 분석 경계" tone="warning" live={false}>
         검증된 가격·판매량·원가·고정비 가정이 없어 예상 매출, 손익, 수익성,

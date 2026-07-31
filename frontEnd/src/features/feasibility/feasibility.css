@@ -12,18 +12,69 @@
 .feasibility-dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 .feasibility-results { display: grid; gap: var(--space-6); }
 .feasibility-kicker, .feasibility-confidence, .feasibility-muted { color: var(--color-text-muted); }
-.feasibility-summary-grid, .feasibility-dimension-grid {
+.feasibility-summary-grid, .feasibility-group__grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4);
 }
-.feasibility-dimension { min-width: 0; }
-.feasibility-dimension-heading {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3);
+
+/* --- 묶음 카드 (시장 · 비즈니스 모델 · 기술 운영) --- */
+.feasibility-group-list { display: grid; gap: var(--space-5); }
+.feasibility-group { display: grid; gap: var(--space-4); min-width: 0; }
+.feasibility-group__head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-4); flex-wrap: wrap;
 }
-.feasibility-dimension-heading span {
-  min-width: 3rem; padding: var(--space-1) var(--space-2);
+.feasibility-group__head h3 { margin: 0; }
+.feasibility-group__score {
+  display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;
+}
+.feasibility-group__number {
+  min-width: 3.5rem; padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full); background: var(--color-surface-subtle);
+  text-align: center; font-size: 1.15rem; font-weight: 700;
+}
+.feasibility-verdict {
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); font-size: .8rem; font-weight: 700;
+}
+.feasibility-verdict--high_risk { border-color: var(--color-danger); }
+.feasibility-verdict--conditional { border-color: var(--color-warning); }
+.feasibility-verdict--promising { border-color: var(--color-success); }
+.feasibility-group__headline { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.feasibility-group__focus {
+  margin: 0; padding: var(--space-3);
+  border-left: .25rem solid var(--color-warning);
+  background: var(--color-surface-subtle);
+}
+.feasibility-group__focus-tag {
+  display: inline-block; margin-right: var(--space-2);
+  font-size: .8rem; font-weight: 700; color: var(--color-text-muted);
+}
+.feasibility-group__dimensions { display: grid; gap: var(--space-2); }
+.feasibility-group__dimensions h4 { margin: 0; font-size: .9rem; }
+.feasibility-dimension-row {
+  border: 1px solid var(--color-border); border-radius: var(--radius-card);
+}
+.feasibility-dimension-row > summary {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); cursor: pointer;
+}
+.feasibility-dimension-row__name { font-weight: 600; margin-right: auto; }
+.feasibility-dimension-row__score {
+  min-width: 3rem; padding: 0 var(--space-2);
   border-radius: var(--radius-full); background: var(--color-surface-subtle);
   text-align: center; font-weight: 700;
 }
+.feasibility-dimension-row__body {
+  display: grid; gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+.feasibility-dimension-row__body h5 { margin: 0; font-size: .85rem; }
+.feasibility-next {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-4); flex-wrap: wrap;
+}
+.feasibility-next h2 { margin: 0 0 var(--space-1); }
 .feasibility-evidence, .feasibility-tasks { display: grid; gap: var(--space-3); }
 .feasibility-evidence li { display: grid; gap: var(--space-1); }
 .feasibility-evidence small { overflow-wrap: anywhere; color: var(--color-text-muted); }
@@ -33,7 +84,7 @@
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3);
 }
 @media (max-width: 767px) {
-  .feasibility-summary-grid, .feasibility-dimension-grid, .feasibility-tasks dl {
+  .feasibility-summary-grid, .feasibility-group__grid, .feasibility-tasks dl {
     grid-template-columns: 1fr;
   }
   .feasibility-dialog-actions { flex-direction: column-reverse; }

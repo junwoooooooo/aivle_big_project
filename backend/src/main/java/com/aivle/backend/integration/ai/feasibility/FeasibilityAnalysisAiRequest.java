@@ -1,6 +1,7 @@
 package com.aivle.backend.integration.ai.feasibility;
 
 import com.aivle.backend.analysis.feasibility.entity.FeasibilityTypes.DimensionCode;
+import com.aivle.backend.common.entity.AnalysisType;
 import com.aivle.backend.common.entity.RiskLevel;
 import java.util.List;
 
@@ -18,8 +19,8 @@ public record FeasibilityAnalysisAiRequest(
     LegalContext legalReview
 ) {
     public record CatalogDimension(
-        DimensionCode code, String displayName, int displayOrder, String description,
-        List<String> sourceSectionCodes
+        DimensionCode code, AnalysisType group, String displayName, int displayOrder,
+        String description, List<String> sourceSectionCodes
     ) {}
     public record Section(
         String code, String title, String content, String itemStatus,

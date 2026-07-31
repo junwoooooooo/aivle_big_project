@@ -1,0 +1,243 @@
+{
+  "_meta": {
+    "version": "v1",
+    "updated": "2026-07-24",
+    "description": "규제 경로(route) → 지배 법령 큐레이션 테이블. 검색이 아닌 조회로 법령을 확정한다. 팀 합의로만 수정.",
+    "notes": [
+      "laws[].name 은 법제처 국가법령정보 Open API 검색과 정확히 일치해야 하는 법령명(현행).",
+      "focus_keywords 는 조문 제목/내용 필터용 — 스크리닝 프롬프트 크기 제어. 필터 결과가 3개 미만이면 전체 조문(축약)으로 폴백.",
+      "notices 는 법률이 아닌 고시/별표 포인터(대상품목 판단용) — API 미조회, 리포트에 안내만.",
+      "priority: 스크리닝·리포트 정렬용 (높을수록 먼저)."
+    ]
+  },
+  "routes": {
+    "consumer_product_safety": {
+      "topic": "소비자 제품안전",
+      "priority": 90,
+      "laws": [
+        {"name": "전기용품 및 생활용품 안전관리법", "focus_keywords": ["정의", "안전기준준수", "공급자적합성", "안전확인", "표시", "판매", "벌칙", "과태료"]},
+        {"name": "제품안전기본법", "focus_keywords": ["정의", "안전성조사", "리콜", "수거", "중대결함", "보고"]}
+      ],
+      "notices": ["안전기준준수대상생활용품 품목·안전기준: 국가기술표준원 고시(안전확인대상/공급자적합성확인대상/안전기준준수대상 생활용품의 안전기준) 별표에서 품목 해당 여부 확인 필요"]
+    },
+    "electrical_safety": {
+      "topic": "전기용품 안전",
+      "priority": 95,
+      "laws": [
+        {"name": "전기용품 및 생활용품 안전관리법", "focus_keywords": ["정의", "안전인증", "안전확인", "공급자적합성", "표시", "판매", "벌칙"]}
+      ],
+      "notices": ["전기용품 품목별 안전기준: 국가기술표준원 고시 확인 필요"]
+    },
+    "wireless_radio": {
+      "topic": "무선·전파 적합성",
+      "priority": 95,
+      "laws": [
+        {"name": "전파법", "focus_keywords": ["정의", "적합성평가", "적합인증", "적합등록", "표시", "판매", "벌칙"]}
+      ],
+      "notices": ["방송통신기자재등의 적합성평가에 관한 고시(국립전파연구원) 확인 필요"]
+    },
+    "food_product": {
+      "topic": "식품 제조·판매",
+      "priority": 95,
+      "laws": [
+        {"name": "식품위생법", "focus_keywords": ["정의", "영업", "등록", "신고", "허가", "기준", "표시", "품목제조", "벌칙"]},
+        {"name": "식품 등의 표시ㆍ광고에 관한 법률", "focus_keywords": ["정의", "표시", "광고", "부당", "실증", "벌칙"]}
+      ],
+      "notices": ["식품의 기준 및 규격(식약처 고시, 식품공전) 확인 필요"]
+    },
+    "food_contact": {
+      "topic": "식품용 기구·용기·포장",
+      "priority": 90,
+      "laws": [
+        {"name": "식품위생법", "focus_keywords": ["정의", "기구", "용기", "포장", "기준", "규격", "표시", "판매", "벌칙"]}
+      ],
+      "notices": ["기구 및 용기·포장의 기준 및 규격(식약처 고시) 확인 필요"]
+    },
+    "health_functional_food": {
+      "topic": "건강기능식품",
+      "priority": 100,
+      "laws": [
+        {"name": "건강기능식품에 관한 법률", "focus_keywords": ["정의", "영업", "허가", "신고", "기준", "표시", "광고", "벌칙"]}
+      ],
+      "notices": ["건강기능식품의 기준 및 규격(식약처 고시) 확인 필요"]
+    },
+    "medical_device": {
+      "topic": "의료기기",
+      "priority": 100,
+      "laws": [
+        {"name": "의료기기법", "focus_keywords": ["정의", "제조", "허가", "인증", "신고", "표시", "광고", "판매", "벌칙"]}
+      ],
+      "notices": ["의료기기 품목 및 품목별 등급에 관한 규정(식약처 고시)으로 의료기기 해당 여부·등급 확인 필요"]
+    },
+    "pharmaceutical": {
+      "topic": "의약품·의약외품",
+      "priority": 100,
+      "laws": [
+        {"name": "약사법", "focus_keywords": ["정의", "제조", "품목허가", "의약외품", "표시", "광고", "판매", "벌칙"]}
+      ],
+      "notices": ["의약외품 범위 지정(식약처 고시) 확인 필요"]
+    },
+    "cosmetic": {
+      "topic": "화장품",
+      "priority": 95,
+      "laws": [
+        {"name": "화장품법", "focus_keywords": ["정의", "영업", "등록", "기능성", "표시", "광고", "실증", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "chemical_biocidal": {
+      "topic": "생활화학·살생물제품",
+      "priority": 100,
+      "laws": [
+        {"name": "생활화학제품 및 살생물제의 안전관리에 관한 법률", "focus_keywords": ["정의", "안전확인", "신고", "승인", "표시", "광고", "판매", "벌칙"]}
+      ],
+      "notices": ["안전확인대상생활화학제품 지정 및 안전·표시기준(환경부 고시) 확인 필요"]
+    },
+    "children_product": {
+      "topic": "어린이제품 안전",
+      "priority": 100,
+      "laws": [
+        {"name": "어린이제품 안전 특별법", "focus_keywords": ["정의", "안전인증", "안전확인", "공급자적합성", "표시", "판매", "벌칙"]}
+      ],
+      "notices": ["어린이제품 공통안전기준(산업부 고시) 확인 필요"]
+    },
+    "industrial_safety": {
+      "topic": "산업안전",
+      "priority": 90,
+      "laws": [
+        {"name": "산업안전보건법", "focus_keywords": ["정의", "안전인증", "자율안전확인", "방호", "보호구", "표시", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "vehicle_mobility": {
+      "topic": "자동차·모빌리티",
+      "priority": 95,
+      "laws": [
+        {"name": "자동차관리법", "focus_keywords": ["정의", "자기인증", "부품", "안전기준", "표시", "벌칙"]}
+      ],
+      "notices": ["자동차 및 자동차부품의 성능과 기준에 관한 규칙 확인 필요"]
+    },
+    "construction_building": {
+      "topic": "건축·건설 자재",
+      "priority": 90,
+      "laws": [
+        {"name": "건축법", "focus_keywords": ["정의", "건축자재", "품질", "인정", "마감재", "벌칙"]},
+        {"name": "건설기술 진흥법", "focus_keywords": ["정의", "품질", "자재", "시험", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "environmental_waste": {
+      "topic": "환경·폐기물 (사업자가 폐기물 처리·재활용 행위를 직접 수행하는 경우만)",
+      "priority": 85,
+      "laws": [
+        {"name": "폐기물관리법", "focus_keywords": ["정의", "폐기물처리업", "허가", "신고", "보관", "수집", "운반", "벌칙"]},
+        {"name": "자원의 절약과 재활용촉진에 관한 법률", "focus_keywords": ["정의", "재활용", "생산자책임", "분담금", "포장재", "벌칙"]}
+      ],
+      "notices": ["제품·포장재 재질구조 등급평가(포장재 EPR)는 자원재활용법 하위 고시 확인 필요"]
+    },
+    "personal_data": {
+      "topic": "개인정보 보호",
+      "priority": 100,
+      "laws": [
+        {"name": "개인정보 보호법", "focus_keywords": ["정의", "수집", "동의", "처리방침", "안전성", "위탁", "유출", "벌칙", "과태료"]}
+      ],
+      "notices": []
+    },
+    "location_data": {
+      "topic": "위치정보",
+      "priority": 100,
+      "laws": [
+        {"name": "위치정보의 보호 및 이용 등에 관한 법률", "focus_keywords": ["정의", "사업", "등록", "신고", "동의", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "online_sales": {
+      "topic": "전자상거래·통신판매",
+      "priority": 100,
+      "laws": [
+        {"name": "전자상거래 등에서의 소비자보호에 관한 법률", "focus_keywords": ["정의", "통신판매업", "신고", "신원", "정보의 제공", "청약철회", "금지행위", "벌칙", "과태료"]},
+        {"name": "부가가치세법", "focus_keywords": ["사업자등록", "등록신청", "등록증", "사업자단위"]},
+        {"name": "약관의 규제에 관한 법률", "focus_keywords": ["약관", "불공정", "명시", "설명", "무효", "해석"]}
+      ],
+      "notices": []
+    },
+    "advertising_claims": {
+      "topic": "표시·광고 실증",
+      "priority": 100,
+      "laws": [
+        {"name": "표시ㆍ광고의 공정화에 관한 법률", "focus_keywords": ["정의", "부당한 표시", "실증", "손해배상", "벌칙", "과태료"]},
+        {"name": "표시ㆍ광고의 공정화에 관한 법률 시행령", "focus_keywords": ["실증", "부당"]}
+      ],
+      "notices": []
+    },
+    "import_export_customs": {
+      "topic": "수출입·통관",
+      "priority": 85,
+      "laws": [
+        {"name": "관세법", "focus_keywords": ["정의", "수입신고", "통관", "관세", "벌칙"]},
+        {"name": "대외무역법", "focus_keywords": ["정의", "원산지", "표시", "수출입", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "intellectual_property": {
+      "topic": "지식재산권",
+      "priority": 70,
+      "laws": [
+        {"name": "특허법", "focus_keywords": ["침해", "손해배상", "권리범위", "효력", "금지", "과실"]},
+        {"name": "상표법", "focus_keywords": ["침해", "손해배상", "선출원", "유사", "받을 수 없는", "효력"]},
+        {"name": "디자인보호법", "focus_keywords": ["침해", "손해배상", "유사", "권리범위", "효력"]}
+      ],
+      "notices": []
+    },
+    "finance_payment": {
+      "topic": "금융·전자결제",
+      "priority": 100,
+      "laws": [
+        {"name": "전자금융거래법", "focus_keywords": ["정의", "전자금융업", "등록", "허가", "선불", "벌칙"]},
+        {"name": "금융소비자 보호에 관한 법률", "focus_keywords": ["정의", "판매", "광고", "설명의무", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "education_service": {
+      "topic": "교육서비스",
+      "priority": 85,
+      "laws": [
+        {"name": "학원의 설립ㆍ운영 및 과외교습에 관한 법률", "focus_keywords": ["정의", "등록", "신고", "교습", "벌칙"]},
+        {"name": "평생교육법", "focus_keywords": ["정의", "원격", "신고", "시설"]}
+      ],
+      "notices": []
+    },
+    "telecom_platform": {
+      "topic": "통신·플랫폼",
+      "priority": 90,
+      "laws": [
+        {"name": "전기통신사업법", "focus_keywords": ["정의", "부가통신", "신고", "등록", "이용자", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "software_ai_service": {
+      "topic": "소프트웨어·AI 서비스",
+      "priority": 80,
+      "laws": [
+        {"name": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법", "focus_keywords": ["정의", "고영향", "생성형", "표시", "사업자", "책무"]},
+        {"name": "정보통신망 이용촉진 및 정보보호 등에 관한 법률", "focus_keywords": ["정의", "정보보호", "광고", "이용자", "벌칙"]}
+      ],
+      "notices": []
+    },
+    "content_copyright": {
+      "topic": "콘텐츠·저작권",
+      "priority": 85,
+      "laws": [
+        {"name": "저작권법", "focus_keywords": ["정의", "복제", "전송", "이용허락", "온라인서비스제공자", "침해", "벌칙"]},
+        {"name": "콘텐츠산업 진흥법", "focus_keywords": ["정의", "표시", "이용자"]}
+      ],
+      "notices": []
+    },
+    "other": {
+      "topic": "기타 규제 탐색",
+      "priority": 40,
+      "laws": [],
+      "notices": ["레지스트리 미등록 경로 — additional_route_candidates 내용을 바탕으로 키워드 검색 폴백(search_laws) 사용"]
+    }
+  }
+}

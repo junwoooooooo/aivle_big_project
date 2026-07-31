@@ -1,2 +1,9 @@
+# 서버 구동용 — 이것만 있으면 /health 와 /api/v1/test 가 뜬다
 fastapi
 uvicorn[standard]
+pydantic>=2
+
+# 법령 조사 파이프라인 (legal/) — 지연 import 라 없어도 서버는 뜨지만
+# 실제 법령 검토를 돌리려면 필요하다.
+anthropic>=0.40      # LEGAL_LLM_BACKEND=anthropic 일 때만 (claude-cli 면 불필요)
+python-docx>=1.1     # legal_pipeline.py CLI 의 docx 입력 경로에서만 사용

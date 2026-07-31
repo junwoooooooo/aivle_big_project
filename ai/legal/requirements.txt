@@ -1,0 +1,8 @@
+# 서비스 구동용
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2
+
+# 파이프라인 실행용
+anthropic>=0.40      # 라우팅·선별 LLM (ANTHROPIC_API_KEY 필요)
+python-docx>=1.1     # CLI의 docx 입력 경로에서만 사용

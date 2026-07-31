@@ -31,6 +31,10 @@ app:
       refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:7d}
       secret: ${JWT_SECRET:}
       clock-skew: ${JWT_CLOCK_SKEW:30s}
+  # AI 서버(ai/). AiServerHealthClient가 @Value로 참조하므로 기본값이 없으면
+  # local 이외 프로파일(테스트 포함)에서 컨텍스트 로딩이 실패한다.
+  ai-server:
+    base-url: ${AI_SERVER_BASE_URL:http://127.0.0.1:8000}
   ai:
     enabled: false
     base-url: ${AI_BASE_URL:}
@@ -41,6 +45,16 @@ app:
     max-retries: ${AI_MAX_RETRIES:2}
     max-input-characters: ${AI_MAX_INPUT_CHARACTERS:200000}
     max-response-bytes: ${AI_MAX_RESPONSE_BYTES:1048576}
+  legal-service:
+    provider: ${LEGAL_PROVIDER:auto}
+    base-url: ${LEGAL_SERVICE_URL:http://127.0.0.1:8000/legal-review}
+    connect-timeout: ${LEGAL_CONNECT_TIMEOUT:5s}
+    # 법령 조사는 LLM 2회 + 법제처 조회다. 조문 수에 비례해 길어지며
+    # 조문 200건대에서는 10분을 넘길 수 있다. job execution-timeout보다 짧으면
+    # 완료 직전에 끊겨 재시도 루프가 된다.
+    read-timeout: ${LEGAL_READ_TIMEOUT:1800s}
+    max-input-characters: ${LEGAL_MAX_INPUT_CHARACTERS:200000}
+    max-response-bytes: ${LEGAL_MAX_RESPONSE_BYTES:1048576}
   jobs:
     document-processing:
       enabled: ${DOCUMENT_JOB_RUNNER_ENABLED:false}

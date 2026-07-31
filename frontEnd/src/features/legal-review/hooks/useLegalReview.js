@@ -105,11 +105,16 @@ export function useLegalReview(projectId) {
     }
   }, [clear, client, loadResult, poll, projectId]);
 
-  const start = useCallback(async () => {
+  /** mode: 'FULL' | 'INCREMENTAL' | undefined(서버 기본값). 자동 실행 금지 — 항상 사용자 액션으로만 호출한다. */
+  const start = useCallback(async (mode) => {
     clear();
-    setState((current) => ({ ...current, status: 'starting', error: null }));
+    setState((current) => ({
+      ...current, status: 'starting', startedMode: typeof mode === 'string' ? mode : null,
+      error: null,
+    }));
     try {
-      const accepted = await createLegalReviewApi(client).start(projectId);
+      const accepted = await createLegalReviewApi(client)
+        .start(projectId, typeof mode === 'string' ? mode : undefined);
       if (!mounted.current) return;
       setState((current) => ({
         ...current, status: 'processing',

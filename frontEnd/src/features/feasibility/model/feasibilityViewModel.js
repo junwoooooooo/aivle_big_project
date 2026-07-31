@@ -28,6 +28,60 @@ export const EVIDENCE_TYPE_LABELS = {
   EXTERNAL_VERIFICATION_REQUIRED: '외부 검증 필요',
 };
 
+export const GROUP_LABELS = {
+  MARKET: '시장 분석',
+  BUSINESS_MODEL: '비즈니스 모델 분석',
+  TECHNOLOGY_OPERATION: '기술·운영 분석',
+};
+
+/** 각 묶음이 무엇을 보는지 — 화면에서 역할 경계를 드러낸다. */
+export const GROUP_DESCRIPTIONS = {
+  MARKET: '해결하려는 문제와 고객이 실재하는지, 그 시장이 매력적인지 봅니다.',
+  BUSINESS_MODEL: '제품이 문제에 연결되는지, 수익 구조와 재무 가정이 검증 가능한지 봅니다.',
+  TECHNOLOGY_OPERATION: '만들고 운영할 역량이 있는지, 규제가 실행에 어떤 제약을 주는지 봅니다.',
+};
+
+// 백엔드 FeasibilityDimensionCatalog 와 짝을 이룬다. 한쪽만 바꾸면 묶음에서 차원이 사라진다.
+const DIMENSION_GROUP = {
+  PROBLEM_AND_NEED: 'MARKET',
+  TARGET_CUSTOMER: 'MARKET',
+  MARKET_ATTRACTIVENESS: 'MARKET',
+  COMPETITIVE_POSITION: 'MARKET',
+  PRODUCT_SOLUTION_FIT: 'BUSINESS_MODEL',
+  BUSINESS_MODEL: 'BUSINESS_MODEL',
+  GO_TO_MARKET: 'BUSINESS_MODEL',
+  FINANCIAL_VIABILITY: 'BUSINESS_MODEL',
+  EXECUTION_CAPABILITY: 'TECHNOLOGY_OPERATION',
+  LEGAL_AND_REGULATORY: 'TECHNOLOGY_OPERATION',
+};
+
+const GROUP_ORDER = ['MARKET', 'BUSINESS_MODEL', 'TECHNOLOGY_OPERATION'];
+
+/**
+ * 묶음 결과에 소속 차원을 붙여 화면이 쓸 형태로 만든다. 순수 함수.
+ * 묶음 결과가 없는 구 assessment는 차원만으로 묶음을 구성한다(점수·서술은 비어 있음).
+ */
+export function groupDimensions(assessment) {
+  const dimensions = assessment?.dimensions ?? [];
+  const byType = new Map((assessment?.groups ?? []).map((item) => [item.analysisType, item]));
+  return GROUP_ORDER.map((analysisType) => {
+    const group = byType.get(analysisType);
+    return {
+      analysisType,
+      label: GROUP_LABELS[analysisType] ?? analysisType,
+      description: GROUP_DESCRIPTIONS[analysisType] ?? '',
+      score: group?.score ?? null,
+      verdict: group?.verdict ?? null,
+      headline: group?.headline ?? null,
+      summary: group?.summary ?? null,
+      nextFocus: group?.nextFocus ?? null,
+      strengths: parseJsonList(group?.strengthsJson),
+      risks: parseJsonList(group?.risksJson),
+      dimensions: dimensions.filter((item) => DIMENSION_GROUP[item.code] === analysisType),
+    };
+  }).filter((group) => group.dimensions.length > 0 || group.headline);
+}
+
 export function parseJsonList(value) {
   if (Array.isArray(value)) return value;
   if (typeof value !== 'string' || value.trim() === '') return [];

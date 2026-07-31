@@ -46,7 +46,8 @@ public class FeasibilityJobContextService {
         }
         var catalog = FeasibilityDimensionCatalog.all().stream().map(item ->
             new FeasibilityAnalysisAiRequest.CatalogDimension(
-                item.code(), item.displayName(), item.displayOrder(), item.description(),
+                item.code(), item.group(), item.displayName(), item.displayOrder(),
+                item.description(),
                 item.sourceSections().stream().map(Enum::name).toList())).toList();
         var sectionInputs = sections
             .findAllByStructuredPlanIdAndDeletedAtIsNullOrderBySequence(plan.getId()).stream()

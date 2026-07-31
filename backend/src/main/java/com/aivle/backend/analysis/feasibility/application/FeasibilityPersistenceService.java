@@ -4,6 +4,7 @@ import com.aivle.backend.analysis.feasibility.*;
 import com.aivle.backend.analysis.feasibility.entity.*;
 import com.aivle.backend.analysis.feasibility.repository.*;
 import com.aivle.backend.audit.*;
+import com.aivle.backend.common.entity.AnalysisType;
 import com.aivle.backend.common.entity.JobStatus;
 import com.aivle.backend.integration.ai.feasibility.FeasibilityAnalysisAiResponse;
 import com.aivle.backend.job.repository.AnalysisJobRepository;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import static com.aivle.backend.analysis.feasibility.entity.FeasibilityTypes.*;
 
 @Service
@@ -25,6 +27,7 @@ public class FeasibilityPersistenceService {
     private final AnalysisJobRepository jobs;
     private final FeasibilityAssessmentRepository assessments;
     private final FeasibilityDimensionResultRepository dimensions;
+    private final FeasibilityGroupResultRepository groups;
     private final FeasibilityValidationTaskRepository validationTasks;
     private final FeasibilityScorePolicy scorePolicy;
     private final ObjectMapper objectMapper;
@@ -74,6 +77,21 @@ public class FeasibilityPersistenceService {
                     json(item.evidence()), json(item.sourceSectionCodes()),
                     json(item.legalFindingIds()), json(item.recommendedActions())));
             }
+            // 묶음 점수·판정은 백엔드가 계산하고, AI 서술은 있으면 얹는다(없어도 행은 만든다).
+            var narratives = result.groups().stream().collect(
+                Collectors.toMap(FeasibilityAnalysisAiResponse.Group::analysisType, item -> item,
+                    (first, second) -> first));
+            for (var group : scorePolicy.evaluateGroups(result.dimensions(), result.validationTasks())) {
+                var narrative = narratives.get(group.group());
+                groups.save(FeasibilityGroupResult.create(
+                    assessment, group.group(), group.displayOrder(), group.score(),
+                    group.verdict(),
+                    narrative == null ? null : narrative.headline(),
+                    narrative == null ? null : narrative.summary(),
+                    json(narrative == null ? List.of() : narrative.keyStrengths()),
+                    json(narrative == null ? List.of() : narrative.keyRisks()),
+                    narrative == null ? null : narrative.nextFocus()));
+            }
             int order = 1;
             for (var task : result.validationTasks()) {
                 validationTasks.save(FeasibilityValidationTask.open(
@@ -103,6 +121,14 @@ public class FeasibilityPersistenceService {
             || result.dimensions() == null
             || result.dimensions().size() != DimensionCode.values().length) {
             throw new IllegalArgumentException("feasibility result contract is invalid");
+        }
+        // 묶음 서술은 선택이다(구 어댑터는 안 보낸다). 다만 보냈으면 중복은 허용하지 않는다 —
+        // 같은 묶음이 두 번 오면 어느 쪽이 화면에 뜰지가 응답 순서에 좌우된다.
+        EnumSet<AnalysisType> seenGroups = EnumSet.noneOf(AnalysisType.class);
+        for (var group : result.groups()) {
+            if (group == null || group.analysisType() == null || !seenGroups.add(group.analysisType())) {
+                throw new IllegalArgumentException("feasibility groups are invalid");
+            }
         }
         EnumSet<DimensionCode> seen = EnumSet.noneOf(DimensionCode.class);
         Set<String> taskCodes = new HashSet<>();

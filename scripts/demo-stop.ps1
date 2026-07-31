@@ -26,7 +26,7 @@ Get-Content -LiteralPath $processFile -Encoding UTF8 | ForEach-Object {
     }
 }
 
-foreach ($name in @("BACKEND_PID", "FRONTEND_PID")) {
+foreach ($name in @("BACKEND_PID", "FRONTEND_PID", "AI_PID")) {
     if (-not $processes.ContainsKey($name)) {
         continue
     }

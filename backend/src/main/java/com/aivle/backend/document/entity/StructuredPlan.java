@@ -102,24 +102,25 @@ public class StructuredPlan extends BaseEntity {
         if (origin == PlanOrigin.UPLOAD) {
             throw new IllegalArgumentException("derived plan versions cannot have UPLOAD origin");
         }
+        // parent가 지연 로딩 프록시일 수 있으므로 반드시 게터로 접근한다 (필드 직접 접근은 null을 읽는다)
         StructuredPlan plan = new StructuredPlan();
-        plan.project = parent.project;
-        plan.sourceDocumentVersion = parent.sourceDocumentVersion;
+        plan.project = parent.getProject();
+        plan.sourceDocumentVersion = parent.getSourceDocumentVersion();
         plan.versionNumber = newVersionNumber;
         plan.parentPlan = parent;
         plan.origin = origin;
         plan.status = StructuredPlanStatus.CONFIRMED;
         plan.completionRate = 100;
-        plan.rawExtractedJson = parent.rawExtractedJson;
+        plan.rawExtractedJson = parent.getRawExtractedJson();
         plan.confirmedByUser = true;
         plan.confirmedAt = now;
         plan.confirmedBy = user;
-        plan.provider = parent.provider;
-        plan.modelName = parent.modelName;
-        plan.promptVersion = parent.promptVersion;
-        plan.parserName = parent.parserName;
-        plan.parserVersion = parent.parserVersion;
-        plan.rawResultHash = parent.rawResultHash;
+        plan.provider = parent.getProvider();
+        plan.modelName = parent.getModelName();
+        plan.promptVersion = parent.getPromptVersion();
+        plan.parserName = parent.getParserName();
+        plan.parserVersion = parent.getParserVersion();
+        plan.rawResultHash = parent.getRawResultHash();
         return plan;
     }
 

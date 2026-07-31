@@ -29,11 +29,19 @@ public class LegalReviewCommandService {
     private final StructuredPlanRepository planRepository;
     private final AnalysisJobRepository jobRepository;
     private final LegalReviewRepository reviewRepository;
+    private final com.aivle.backend.analysis.legal.feedback.ReviewCycleService cycleService;
     private final ApplicationEventPublisher events;
     private final DomainAuditService audit;
 
     @Transactional
     public LegalReviewStartResponse start(Long userId, Long projectId) {
+        return start(userId, projectId, null);
+    }
+
+    @Transactional
+    public LegalReviewStartResponse start(
+        Long userId, Long projectId, com.aivle.backend.analysis.legal.entity.ReviewMode requestedMode
+    ) {
         var project = projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
         var plan = planRepository
@@ -54,16 +62,46 @@ public class LegalReviewCommandService {
             projectId, JobType.LEGAL_REVIEW, List.of(JobStatus.QUEUED, JobStatus.RUNNING))) {
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
         }
+        var cycle = cycleService.ensureActiveCycle(project, plan);
+        // 기본 모드: 사이클에 완료된 리뷰가 있으면 INCREMENTAL, 첫 검토면 FULL (§4-2)
+        var mode = requestedMode != null ? requestedMode
+            : (cycle.getLatestReviewId() != null
+                ? com.aivle.backend.analysis.legal.entity.ReviewMode.INCREMENTAL
+                : com.aivle.backend.analysis.legal.entity.ReviewMode.FULL);
+        if (cycle.getLatestReviewId() == null) {
+            mode = com.aivle.backend.analysis.legal.entity.ReviewMode.FULL;
+        }
+        cycle.beginReview(null);
         String fingerprint = sha256(projectId + ":" + plan.getId() + ":"
             + plan.getSourceDocumentVersion().getId() + ":" + LegalReviewPolicy.PROMPT_VERSION);
-        AnalysisJob job = jobRepository.save(AnalysisJob.queuedLegalReview(
+        String idempotencyKey = "legal:" + plan.getId() + ":" + LegalReviewPolicy.PROMPT_VERSION;
+
+        // idempotency key는 (project, jobType)당 하나뿐이다. 실패로 끝난 작업이 남아 있으면
+        // 새 row를 넣을 수 없으므로 그 row를 다시 큐에 넣는다.
+        var previous = jobRepository.findByProjectIdAndJobTypeAndIdempotencyKeyAndDeletedAtIsNull(
+            projectId, JobType.LEGAL_REVIEW, idempotencyKey);
+        if (previous.isPresent()) {
+            AnalysisJob retried = previous.get();
+            retried.requeueTerminated();
+            retried.assignRequestedMode(mode.name());
+            audit.record(userId, projectId, AuditEventType.LEGAL_REVIEW_REQUESTED,
+                "AnalysisJob", retried.getId(), null,
+                Map.of("jobId", retried.getId().toString(),
+                    "structuredPlanId", plan.getId().toString()));
+            events.publishEvent(new LegalReviewRequested(retried.getId()));
+            return response(projectId, null, retried, plan);
+        }
+
+        AnalysisJob job = AnalysisJob.queuedLegalReview(
             project, plan,
             "{\"structuredPlanId\":" + plan.getId()
                 + ",\"sourceDocumentVersionId\":" + plan.getSourceDocumentVersion().getId()
                 + ",\"promptVersion\":\"" + LegalReviewPolicy.PROMPT_VERSION + "\"}",
-            "legal:" + plan.getId() + ":" + LegalReviewPolicy.PROMPT_VERSION,
+            idempotencyKey,
             fingerprint
-        ));
+        );
+        job.assignRequestedMode(mode.name());
+        job = jobRepository.save(job);
         audit.record(userId, projectId, AuditEventType.LEGAL_REVIEW_REQUESTED,
             "AnalysisJob", job.getId(), null,
             Map.of("jobId", job.getId().toString(),

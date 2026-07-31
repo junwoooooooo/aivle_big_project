@@ -85,7 +85,8 @@ class OpenAiFeasibilityAnalysisAdapterTests {
     private FeasibilityAnalysisAiRequest request() {
         var catalog = FeasibilityDimensionCatalog.all().stream().map(item ->
             new FeasibilityAnalysisAiRequest.CatalogDimension(
-                item.code(), item.displayName(), item.displayOrder(), item.description(),
+                item.code(), item.group(), item.displayName(), item.displayOrder(),
+                item.description(),
                 item.sourceSections().stream().map(Enum::name).toList())).toList();
         return new FeasibilityAnalysisAiRequest(
             1L, 2L, 3L, 4L, FeasibilityPolicy.PROMPT_VERSION,

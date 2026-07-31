@@ -3,3 +3,14 @@
 !.env.demo.example
 .demo*
 .github
+
+# 로컬 전용 — 원격에 올리지 않는다.
+#   model/  : KMP2025 페르소나 매칭 번들. 개인 원자료 포함
+#             (model/rebuild/raw/p25v32_KMP_csv.csv — "서버에 올리지 말 것")
+#   문서/   : 발표자료 .pptx, 요구사항 정의서 .xlsx 등
+#   법률/   : ai/legal/ 로 흡수된 사장 원본 (정본은 ai/legal/)
+#   front+back_renew/ : 저장소 재편 전 트리의 잔재 (빌드 산출물·node_modules)
+model/
+문서/
+법률/
+front+back_renew/

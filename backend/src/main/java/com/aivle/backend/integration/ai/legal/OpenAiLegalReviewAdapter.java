@@ -2,11 +2,9 @@ package com.aivle.backend.integration.ai.legal;
 
 import com.aivle.backend.config.AiProperties;
 import com.aivle.backend.integration.ai.document.AiClientException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.*;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -17,8 +15,6 @@ import java.util.List;
 import java.util.EnumSet;
 import com.aivle.backend.analysis.legal.entity.LegalCategory;
 
-@Component
-@ConditionalOnProperty(prefix = "app.ai", name = "enabled", havingValue = "true")
 public class OpenAiLegalReviewAdapter implements LegalReviewAiClient {
     private final AiProperties properties;
     private final ObjectMapper objectMapper;

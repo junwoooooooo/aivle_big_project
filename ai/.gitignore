@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# 법령 파이프라인 실행 산출물 — 법제처 캐시(law_cache)와 work_dir.
+# 재생성 가능하고 수 MB 라 커밋하지 않는다.
+legal/출력/

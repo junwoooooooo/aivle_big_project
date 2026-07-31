@@ -1,7 +1,7 @@
 package com.aivle.backend.analysis.feasibility;
 
 public final class FeasibilityPolicy {
-    public static final String PROMPT_VERSION = "feasibility-analysis-v1";
+    public static final String PROMPT_VERSION = "feasibility-analysis-v2";
     public static final String DISCLAIMER =
         "이 결과는 입력된 사업계획과 법률 사전검토를 바탕으로 한 AI 보조 분석입니다. "
         + "성공 가능성, 투자 적합성 또는 실제 시장 규모를 보장하지 않으며, "
@@ -17,6 +17,15 @@ public final class FeasibilityPolicy {
         Include concrete strengths, risks, evidence, and validation tasks.
         A legal HIGH or CRITICAL finding is an execution constraint, not a mechanical
         score deduction. Do not emit success probability or investment advice.
+
+        Each catalog dimension carries a group: MARKET, BUSINESS_MODEL, or
+        TECHNOLOGY_OPERATION. Besides the ten dimensions, return exactly three group
+        entries, one per group, each with headline, summary, keyStrengths, keyRisks,
+        and nextFocus. A group entry must synthesise only its own dimensions and must
+        not restate them one by one. Do not put scores or verdicts in group entries —
+        those are computed outside the model. The headline is a single sentence a
+        founder can act on. nextFocus names the one thing to resolve first in that group.
+        Write group text in Korean.
         """;
 
     private FeasibilityPolicy() {}

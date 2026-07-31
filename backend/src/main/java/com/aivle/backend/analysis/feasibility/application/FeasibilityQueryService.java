@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FeasibilityQueryService {
     private final FeasibilityAssessmentRepository assessments;
     private final FeasibilityDimensionResultRepository dimensions;
+    private final FeasibilityGroupResultRepository groups;
     private final FeasibilityValidationTaskRepository validationTasks;
 
     public FeasibilityAssessmentResponse latest(Long userId, Long projectId) {
@@ -29,6 +30,12 @@ public class FeasibilityQueryService {
                 item.getStrengthsJson(), item.getRisksJson(), item.getAssumptionsJson(),
                 item.getEvidenceJson(), item.getSourceSectionCodesJson(),
                 item.getLegalFindingIdsJson(), item.getRecommendedActionsJson())).toList();
+        var groupResponses = groups
+            .findByFeasibilityAssessmentIdAndDeletedAtIsNullOrderByDisplayOrder(assessment.getId())
+            .stream().map(item -> new FeasibilityAssessmentResponse.Group(
+                item.getId(), item.getAnalysisType(), item.getDisplayOrder(), item.getScore(),
+                item.getVerdict(), item.getHeadline(), item.getSummary(),
+                item.getStrengthsJson(), item.getRisksJson(), item.getNextFocus())).toList();
         var taskResponses = validationTasks
             .findByFeasibilityAssessmentIdAndDeletedAtIsNullOrderByDisplayOrder(assessment.getId())
             .stream().map(item -> new FeasibilityAssessmentResponse.ValidationTask(
@@ -45,6 +52,6 @@ public class FeasibilityQueryService {
             assessment.getKeyStrengthsJson(), assessment.getKeyRisksJson(),
             assessment.getDisclaimer(), assessment.getProvider(), assessment.getModelName(),
             assessment.getPromptVersion(), assessment.getCatalogVersion(),
-            assessment.getCompletedAt(), dimensionResponses, taskResponses);
+            assessment.getCompletedAt(), dimensionResponses, groupResponses, taskResponses);
     }
 }

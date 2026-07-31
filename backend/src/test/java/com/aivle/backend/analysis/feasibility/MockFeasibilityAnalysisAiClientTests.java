@@ -1,6 +1,7 @@
 package com.aivle.backend.analysis.feasibility;
 
 import com.aivle.backend.analysis.feasibility.entity.FeasibilityTypes.*;
+import com.aivle.backend.common.entity.AnalysisType;
 import com.aivle.backend.common.entity.RiskLevel;
 import com.aivle.backend.integration.ai.feasibility.*;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,29 @@ class MockFeasibilityAnalysisAiClientTests {
             .doesNotContain("TAM", "SAM", "SOM", "CAC", "LTV", "1.2조", "손익분기 12");
     }
 
+    @Test
+    void eachGroupGetsItsOwnNarrativeAndNoScores() {
+        var result = new MockFeasibilityAnalysisAiClient().analyze(request());
+        assertThat(result.groups()).extracting(FeasibilityAnalysisAiResponse.Group::analysisType)
+            .containsExactly(AnalysisType.MARKET, AnalysisType.BUSINESS_MODEL,
+                AnalysisType.TECHNOLOGY_OPERATION);
+        // 묶음마다 문구가 달라야 화면에서 3분할이 의미를 갖는다
+        assertThat(result.groups()).extracting(FeasibilityAnalysisAiResponse.Group::headline)
+            .doesNotHaveDuplicates();
+        assertThat(result.groups()).allSatisfy(group -> {
+            assertThat(group.headline()).isNotBlank();
+            assertThat(group.summary()).isNotBlank();
+            assertThat(group.nextFocus()).isNotBlank();
+            assertThat(group.keyStrengths()).isNotEmpty();
+            assertThat(group.keyRisks()).isNotEmpty();
+        });
+    }
+
     private FeasibilityAnalysisAiRequest request() {
         var catalog = FeasibilityDimensionCatalog.all().stream().map(item ->
             new FeasibilityAnalysisAiRequest.CatalogDimension(
-                item.code(), item.displayName(), item.displayOrder(), item.description(),
+                item.code(), item.group(), item.displayName(), item.displayOrder(),
+                item.description(),
                 item.sourceSections().stream().map(Enum::name).toList())).toList();
         return new FeasibilityAnalysisAiRequest(
             1L, 2L, 3L, 4L, FeasibilityPolicy.PROMPT_VERSION,

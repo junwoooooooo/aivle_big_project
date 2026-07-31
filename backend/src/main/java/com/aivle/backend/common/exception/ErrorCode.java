@@ -72,6 +72,14 @@ public enum ErrorCode {
     FEASIBILITY_INPUT_INVALID(HttpStatus.UNPROCESSABLE_ENTITY, "확정된 사업계획과 최신 법률 사전검토 결과를 확인해 주세요.", false),
     PERSONA_RECOMMENDATION_NOT_FOUND(HttpStatus.NOT_FOUND, "페르소나 추천 결과를 찾을 수 없습니다.", false),
     PERSONA_INPUT_INVALID(HttpStatus.UNPROCESSABLE_ENTITY, "확정 계획과 최신 타당성 분석 입력을 확인해 주세요.", false),
+    REVISION_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "수정 요청을 찾을 수 없습니다.", false),
+    REVISION_REQUEST_NOT_OPEN(HttpStatus.CONFLICT, "이미 처리된 수정 요청입니다.", false),
+    REVISION_SUGGESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "수정안을 찾을 수 없습니다.", false),
+    REVISION_ANCHOR_MISMATCH(HttpStatus.CONFLICT, "수정 대상 문장이 현재 계획서와 일치하지 않습니다.", false),
+    LEGAL_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "검토 질문을 찾을 수 없습니다.", false),
+    LEGAL_QUESTION_NOT_OPEN(HttpStatus.CONFLICT, "이미 처리된 질문입니다.", false),
+    REVIEW_CYCLE_NOT_FOUND(HttpStatus.NOT_FOUND, "검토 사이클을 찾을 수 없습니다.", false),
+    REVIEW_CYCLE_NOT_CONVERGED(HttpStatus.CONFLICT, "수정 요청과 질문이 모두 해소된 뒤에 발행할 수 있습니다.", false),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.", true);
 
     private final HttpStatus httpStatus;

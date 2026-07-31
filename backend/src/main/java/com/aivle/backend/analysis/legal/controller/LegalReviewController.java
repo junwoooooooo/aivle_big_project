@@ -18,12 +18,17 @@ public class LegalReviewController {
     private final LegalReviewQueryService queries;
     private final CurrentUserProvider currentUser;
 
+    public record StartLegalReviewRequest(com.aivle.backend.analysis.legal.entity.ReviewMode mode) {}
+
     @PostMapping
     public ResponseEntity<ApiResponse<LegalReviewStartResponse>> start(
-        @PathVariable Long projectId, HttpServletRequest request
+        @PathVariable Long projectId,
+        @RequestBody(required = false) StartLegalReviewRequest body,
+        HttpServletRequest request
     ) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
-            commands.start(currentUser.currentUserId(), projectId),
+            commands.start(currentUser.currentUserId(), projectId,
+                body == null ? null : body.mode()),
             request.getHeader("X-Request-Id")));
     }
 

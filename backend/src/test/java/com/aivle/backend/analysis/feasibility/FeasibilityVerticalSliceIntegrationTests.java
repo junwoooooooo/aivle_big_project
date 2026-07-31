@@ -148,6 +148,7 @@ class FeasibilityVerticalSliceIntegrationTests {
         jdbc.sql("update analysis_jobs set source_legal_review_id = null").update();
         for (String table : new String[] {
             "audit_events", "feasibility_validation_tasks", "feasibility_dimension_results",
+            "feasibility_group_results",
             "feasibility_assessments", "legal_review_questions", "legal_findings",
             "legal_reviews", "missing_fields", "structured_plan_sections", "analysis_jobs",
             "structured_plans", "document_versions", "project_documents", "stored_files",
@@ -172,6 +173,15 @@ class FeasibilityVerticalSliceIntegrationTests {
 
         var result = queries.latest(100L, 10L);
         assertThat(result.dimensions()).hasSize(10);
+        // 묶음 계층이 붙어도 차원 10개 보증은 그대로다
+        assertThat(result.groups()).hasSize(3);
+        assertThat(result.groups()).extracting(item -> item.analysisType().name())
+            .containsExactly("MARKET", "BUSINESS_MODEL", "TECHNOLOGY_OPERATION");
+        assertThat(result.groups()).allSatisfy(group -> {
+            assertThat(group.verdict()).isNotNull();
+            assertThat(group.headline()).isNotBlank();
+            assertThat(group.nextFocus()).isNotBlank();
+        });
         assertThat(result.validationTasks()).extracting(
             item -> item.code()).contains(
                 "VERIFY_MARKET_SOURCES", "VALIDATE_FINANCIAL_ASSUMPTIONS",

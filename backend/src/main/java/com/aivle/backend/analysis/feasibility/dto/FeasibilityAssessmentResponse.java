@@ -1,6 +1,7 @@
 package com.aivle.backend.analysis.feasibility.dto;
 
 import static com.aivle.backend.analysis.feasibility.entity.FeasibilityTypes.*;
+import com.aivle.backend.common.entity.AnalysisType;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public record FeasibilityAssessmentResponse(
     String catalogVersion,
     LocalDateTime completedAt,
     List<Dimension> dimensions,
+    List<Group> groups,
     List<ValidationTask> validationTasks
 ) {
     public record Dimension(
@@ -43,6 +45,20 @@ public record FeasibilityAssessmentResponse(
         String sourceSectionCodesJson,
         String legalFindingIdsJson,
         String recommendedActionsJson
+    ) {}
+
+    /** 시장·비즈니스 모델·기술 운영 묶음 결과. 구 assessment는 비어 있다. */
+    public record Group(
+        Long id,
+        AnalysisType analysisType,
+        Integer displayOrder,
+        Integer score,
+        Verdict verdict,
+        String headline,
+        String summary,
+        String strengthsJson,
+        String risksJson,
+        String nextFocus
     ) {}
 
     public record ValidationTask(

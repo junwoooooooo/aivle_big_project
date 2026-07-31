@@ -23,6 +23,8 @@ public class LegalFinding extends BaseEntity {
     @Column(columnDefinition = "TEXT") private String recommendation;
     @Column(columnDefinition = "TEXT") private String rationale;
     @Column(columnDefinition = "TEXT") private String evidenceJson;
+    /** 판정에 이른 논리 사슬(기획서 근거 → 규제 영역 → 의무 → 위반 결과 → 조치) JSON. 구 리뷰는 null. */
+    @Column(columnDefinition = "TEXT") private String reasoningJson;
     @Column(columnDefinition = "TEXT") private String sourceSectionCodesJson;
     @Column(nullable = false) private Boolean requiresProfessionalReview;
     @Column(precision = 5, scale = 4) private java.math.BigDecimal confidence;
@@ -32,7 +34,7 @@ public class LegalFinding extends BaseEntity {
     public static LegalFinding create(
         LegalReview review, LegalCategory category, int displayOrder,
         LegalApplicability applicability, RiskLevel risk, String title, String finding,
-        String rationale, String recommendation, String evidenceJson,
+        String rationale, String recommendation, String evidenceJson, String reasoningJson,
         String sourceSectionCodesJson, boolean professionalReview, java.math.BigDecimal confidence
     ) {
         LegalFinding item = new LegalFinding();
@@ -46,6 +48,7 @@ public class LegalFinding extends BaseEntity {
         item.rationale = rationale;
         item.recommendation = recommendation;
         item.evidenceJson = evidenceJson;
+        item.reasoningJson = reasoningJson;
         item.sourceSectionCodesJson = sourceSectionCodesJson;
         item.requiresProfessionalReview = professionalReview;
         item.confidence = confidence;
@@ -69,6 +72,7 @@ public class LegalFinding extends BaseEntity {
         item.recommendation = parent.recommendation;
         item.rationale = parent.rationale;
         item.evidenceJson = parent.evidenceJson;
+        item.reasoningJson = parent.reasoningJson;
         item.sourceSectionCodesJson = parent.sourceSectionCodesJson;
         item.requiresProfessionalReview = parent.requiresProfessionalReview;
         item.confidence = parent.confidence;

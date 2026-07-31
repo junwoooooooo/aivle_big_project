@@ -36,6 +36,19 @@ public class StructuredPlanController {
         );
     }
 
+    /** 특정 버전 조회 — 정식 보고서가 latest가 아닌 검토 시점 버전을 봐야 할 때 쓴다. */
+    @GetMapping("/api/v1/projects/{projectId}/structured-plans/{planId}")
+    public ApiResponse<StructuredPlanResponse> findById(
+        @PathVariable Long projectId,
+        @PathVariable Long planId,
+        HttpServletRequest request
+    ) {
+        return ApiResponse.success(
+            queryService.findById(currentUserProvider.currentUserId(), projectId, planId),
+            request.getHeader("X-Request-Id")
+        );
+    }
+
     @PatchMapping(
         "/api/v1/projects/{projectId}/structured-plans/{planId}/missing-fields/{fieldId}"
     )

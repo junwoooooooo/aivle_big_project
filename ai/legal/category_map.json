@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "version": "category-map-v1",
+    "description": "law_registry.json의 27개 규제 경로를 백엔드 LegalCategory 10개로 접는 매핑표. 팀 합의로만 수정.",
+    "notes": [
+      "한 경로가 여러 범주에 기여할 수 있다. 예: online_sales는 통신판매업 신고(BUSINESS_REGISTRATION), 청약철회(CONSUMER_PROTECTION), 약관(TERMS_AND_CONTRACT)에 모두 걸린다.",
+      "매핑에 없는 route_id는 aggregator가 INDUSTRY_SPECIFIC으로 흡수하고 경고를 남긴다.",
+      "10개 범주는 백엔드 LegalCategory enum과 1:1이어야 한다. enum이 바뀌면 이 파일도 바꿔야 한다."
+    ]
+  },
+  "categories": {
+    "BUSINESS_REGISTRATION": "사업자 등록",
+    "LICENSE_AND_PERMIT": "인허가",
+    "PRIVACY_AND_DATA": "개인정보·데이터",
+    "TERMS_AND_CONTRACT": "약관·계약",
+    "INTELLECTUAL_PROPERTY": "지식재산권",
+    "CONSUMER_PROTECTION": "소비자 보호",
+    "ADVERTISING_AND_MARKETING": "광고·마케팅",
+    "LABOR_AND_EMPLOYMENT": "노무·고용",
+    "INDUSTRY_SPECIFIC": "산업별 규제",
+    "TAX_AND_FINANCIAL": "세무·재무 규제"
+  },
+  "routes": {
+    "consumer_product_safety": ["CONSUMER_PROTECTION", "LICENSE_AND_PERMIT"],
+    "electrical_safety": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "wireless_radio": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "food_product": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "food_contact": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "health_functional_food": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC", "ADVERTISING_AND_MARKETING"],
+    "medical_device": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "pharmaceutical": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "cosmetic": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "chemical_biocidal": ["LICENSE_AND_PERMIT", "INDUSTRY_SPECIFIC"],
+    "children_product": ["CONSUMER_PROTECTION", "LICENSE_AND_PERMIT"],
+    "industrial_safety": ["LABOR_AND_EMPLOYMENT", "INDUSTRY_SPECIFIC"],
+    "vehicle_mobility": ["INDUSTRY_SPECIFIC", "LICENSE_AND_PERMIT"],
+    "construction_building": ["INDUSTRY_SPECIFIC", "LICENSE_AND_PERMIT"],
+    "environmental_waste": ["INDUSTRY_SPECIFIC", "LICENSE_AND_PERMIT"],
+    "personal_data": ["PRIVACY_AND_DATA"],
+    "location_data": ["PRIVACY_AND_DATA", "LICENSE_AND_PERMIT"],
+    "online_sales": ["BUSINESS_REGISTRATION", "CONSUMER_PROTECTION", "TERMS_AND_CONTRACT"],
+    "advertising_claims": ["ADVERTISING_AND_MARKETING"],
+    "import_export_customs": ["TAX_AND_FINANCIAL", "INDUSTRY_SPECIFIC"],
+    "intellectual_property": ["INTELLECTUAL_PROPERTY"],
+    "finance_payment": ["TAX_AND_FINANCIAL", "LICENSE_AND_PERMIT"],
+    "education_service": ["INDUSTRY_SPECIFIC", "LICENSE_AND_PERMIT"],
+    "telecom_platform": ["INDUSTRY_SPECIFIC", "LICENSE_AND_PERMIT"],
+    "software_ai_service": ["INDUSTRY_SPECIFIC", "TERMS_AND_CONTRACT"],
+    "content_copyright": ["INTELLECTUAL_PROPERTY"],
+    "other": ["INDUSTRY_SPECIFIC"]
+  }
+}

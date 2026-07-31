@@ -1,6 +1,7 @@
 package com.aivle.backend.integration.ai.feasibility;
 
 import com.aivle.backend.analysis.feasibility.entity.FeasibilityTypes.*;
+import com.aivle.backend.common.entity.AnalysisType;
 import com.aivle.backend.common.entity.RiskLevel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,37 @@ public class MockFeasibilityAnalysisAiClient implements FeasibilityAnalysisAiCli
             "확정된 계획과 법률 사전검토를 기준으로 강점, 위험, 추가 검증 과제를 정리했습니다.",
             List.of("확정된 구조화 계획과 출처 문서 버전이 입력으로 고정되어 있습니다."),
             List.of("시장·고객·재무 주장은 외부 검증 전 가정으로 취급해야 합니다."),
-            dimensions, List.copyOf(tasks));
+            dimensions, groups(), List.copyOf(tasks));
+    }
+
+    /**
+     * 묶음 서술 3건. 점수·판정은 백엔드가 계산하므로 여기서는 "무엇을 읽었는가"만 쓴다.
+     * 묶음마다 문구가 달라야 화면 검증이 의미를 갖는다.
+     */
+    private List<FeasibilityAnalysisAiResponse.Group> groups() {
+        return List.of(
+            new FeasibilityAnalysisAiResponse.Group(
+                AnalysisType.MARKET,
+                "문제와 고객은 계획서에서 읽히지만, 시장 규모 주장은 외부 출처로 확인해야 합니다.",
+                "해결하려는 문제·목표 고객·시장 매력도·경쟁 포지션을 계획서 기준으로 함께 봤습니다.",
+                List.of("문제와 목표 고객이 계획서 문장으로 특정되어 있습니다."),
+                List.of("시장 규모와 경쟁 주장은 계획서 안에서만 확인되어 외부 검증이 필요합니다."),
+                "시장 규모 주장의 출처와 산출 기준부터 확보하세요."),
+            new FeasibilityAnalysisAiResponse.Group(
+                AnalysisType.BUSINESS_MODEL,
+                "제품과 수익 구조는 연결되지만, 재무 가정이 아직 검증 가능한 형태가 아닙니다.",
+                "제품·해결책 적합성, 수익 구조, 시장 진입 전략, 재무 실행 가능성을 하나로 봤습니다. "
+                    + "여기서 보는 재무는 '가정이 검증 가능한가'이며 숫자 계산은 다음 재무 분석의 몫입니다.",
+                List.of("제품이 앞서 정의한 문제와 고객에 연결되어 있습니다."),
+                List.of("가격·원가·판매량 가정의 근거와 단위가 계획서에 명시되지 않았습니다."),
+                "가격·원가·판매량 가정을 근거와 함께 표로 정리하세요."),
+            new FeasibilityAnalysisAiResponse.Group(
+                AnalysisType.TECHNOLOGY_OPERATION,
+                "실행 계획은 있으나 규제 미확정 사항이 일정과 비용을 흔들 수 있습니다.",
+                "기술·생산·운영 실행 역량과, 앞선 규제 검토 결과를 사업 실행 제약으로 번역해 함께 봤습니다.",
+                List.of("생산·운영 방식이 계획서에 서술되어 있습니다."),
+                List.of("규제 검토에서 남은 미확정 항목이 실행 일정에 반영되지 않았습니다."),
+                "규제 검토의 열린 항목을 담당자와 완료 예정일까지 정하세요."));
     }
 
     private FeasibilityAnalysisAiResponse.Dimension dimension(
