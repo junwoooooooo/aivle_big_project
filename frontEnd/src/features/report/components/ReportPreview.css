@@ -1,0 +1,18 @@
+/* A4 페이지의 가로 너비에 맞춰 글자 크기를 동적으로 조절 */
+.auto-fit-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* 인쇄 시 그림자와 배경색 제거 */
+@media print {
+  .a4-page {
+    box-shadow: none !important;
+  }
+  .preview-wrapper {
+    background-color: transparent !important;
+    padding: 0 !important;
+  }
+}

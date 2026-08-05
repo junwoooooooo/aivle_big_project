@@ -41,6 +41,8 @@ public class SecurityConfiguration {
                     "/api/v1/auth/signup",
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh",
+                    "/api/jaemu/analysis",
+                    "/api/jaemu/pipeline",
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
@@ -99,6 +101,8 @@ public class SecurityConfiguration {
                     "/api/v1/auth/signup",
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh",
+                    "/api/jaemu/analysis",
+                    "/api/jaemu/pipeline",
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
@@ -130,6 +134,8 @@ public class SecurityConfiguration {
                     "/api/v1/auth/signup",
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh",
+                    "/api/jaemu/analysis",
+                    "/api/jaemu/pipeline",
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
