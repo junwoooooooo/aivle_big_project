@@ -8,6 +8,7 @@ import ProtectedRoute from '../../features/auth/ProtectedRoute.jsx';
 import AdminRoute from '../../features/auth/AdminRoute.jsx';
 import PublicOnlyRoute from '../../features/auth/PublicOnlyRoute.jsx';
 import { ProjectCreatePage, ProjectListPage } from '../../features/projects/ProjectPages.jsx';
+import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
 import ProjectSettingsSheet from '../../features/projects/ProjectSettingsSheet.jsx';
@@ -65,7 +66,7 @@ export default function AppRouter() {
           <Route path="app/projects/:projectId" element={<ProjectLayout />}>
             <Route index element={<ProjectRedirect />} />
             <Route path="overview" element={<ProjectOverviewPage />} />
-            <Route path="idea" element={<ProjectModulePlaceholder moduleId="idea" />} />
+            <Route path="idea" element={<IdeaIntakePage />} />
             <Route path="concepts" element={<ProjectModulePlaceholder moduleId="concepts" />} />
             <Route path="concepts/compare" element={<ProjectModulePlaceholder moduleId="conceptCompare" />} />
             <Route path="market" element={<ProjectModulePlaceholder moduleId="market" />} />
