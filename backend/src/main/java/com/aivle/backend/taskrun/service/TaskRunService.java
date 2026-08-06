@@ -155,21 +155,6 @@ public class TaskRunService {
     }
 
     @Transactional
-    public void failWithLegalAutoRetry(String runId, String attemptId, String claimToken,
-            String code, String reason, boolean retryable) {
-        TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
-        TaskAttempt attempt = attempts.findByIdAndTaskRunId(attemptId, runId).orElseThrow(this::notFound);
-        if (run.terminal()) return;
-        LocalDateTime now = LocalDateTime.now(clock);
-        attempt.fail(claimToken, code, reason, retryable, now);
-        run.fail(mapPublic(code, reason), retryable, now);
-        if (run.getTaskType() == TaskType.IDEA_LEGAL_PRECHECK && run.isRetryable()) {
-            run.queueRetry(now);
-            attempts.save(TaskAttempt.pending(run, now.plusMinutes(2)));
-        }
-    }
-
-    @Transactional
     public void rejectAndFail(String runId, String attemptId, String claimToken, String payload,
                               String schemaVersion, String reason) {
         TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);

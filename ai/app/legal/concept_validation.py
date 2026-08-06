@@ -9,7 +9,7 @@ from app.models.journey import (
     ConceptLegalValidationBatchResult,
     ConceptLegalValidationResult,
 )
-from app.services.journey_provider import ProviderFailure, execute_structured_prompt
+from app.providers import ProviderFailure, execute_structured_prompt
 
 
 SYSTEM = """Validate only whether the supplied Concept Draft complies with the supplied Legal Guardrail.

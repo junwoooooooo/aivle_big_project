@@ -83,20 +83,9 @@ export default function AppRouter() {
 
             <Route path="get-started" element={<ProjectRedirect routeKey="idea" />} />
             <Route path="legal" element={<ProjectRedirect routeKey="concepts" />} />
-            <Route path="journey/concept" element={<ProjectRedirect routeKey="concepts" />} />
-            <Route path="journey/concept-analysis" element={<ProjectRedirect routeKey="conceptCompare" />} />
-            <Route path="journey/concept-selection" element={<ProjectRedirect routeKey="conceptCompare" />} />
-            <Route path="journey/persona" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-            <Route path="journey/interview" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-            <Route path="journey/marketing" element={<ProjectRedirect routeKey="marketing" />} />
-            <Route path="journey/final-report" element={<ProjectRedirect />} />
             <Route path="plan/*" element={<ProjectRedirect routeKey="idea" />} />
             <Route path="review/legal" element={<ProjectRedirect routeKey="concepts" />} />
             <Route path="review/*" element={<ProjectRedirect routeKey="market" />} />
-            <Route path="validate/marketing/*" element={<ProjectRedirect routeKey="marketing" />} />
-            <Route path="validate/*" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-            <Route path="validation/marketing/*" element={<ProjectRedirect routeKey="marketing" />} />
-            <Route path="validation/*" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
             <Route path="report/*" element={<ProjectRedirect />} />
             <Route path="*" element={<ProjectRedirect />} />
           </Route>
@@ -109,20 +98,13 @@ export default function AppRouter() {
           <Route path="projects/:projectId" element={<ProjectRedirect />} />
           <Route path="projects/:projectId/overview" element={<ProjectRedirect />} />
           <Route path="projects/:projectId/input" element={<ProjectRedirect routeKey="idea" />} />
-          <Route path="projects/:projectId/documents" element={<ProjectRedirect routeKey="idea" />} />
           <Route path="projects/:projectId/structure" element={<ProjectRedirect routeKey="idea" />} />
           <Route path="projects/:projectId/structured-plan/*" element={<ProjectRedirect routeKey="idea" />} />
           <Route path="projects/:projectId/legal-review" element={<ProjectRedirect routeKey="concepts" />} />
           <Route path="projects/:projectId/feasibility" element={<ProjectRedirect routeKey="market" />} />
-          <Route path="projects/:projectId/financial" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-          <Route path="projects/:projectId/analyses/:analysis" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-          <Route path="projects/:projectId/personas" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-          <Route path="projects/:projectId/panel-survey" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
-          <Route path="projects/:projectId/panel-discussion" element={<ProjectRedirect routeKey="businessPersonaTest" />} />
           <Route path="projects/:projectId/market-validation" element={<ProjectRedirect routeKey="market" />} />
           <Route path="projects/:projectId/report" element={<ProjectRedirect />} />
           <Route path="projects/:projectId/reports/*" element={<ProjectRedirect />} />
-          <Route path="projects/:projectId/marketing" element={<ProjectRedirect routeKey="marketing" />} />
           <Route path="projects/:projectId/settings" element={<ProjectRedirect routeKey="settings" />} />
         </Route>
 

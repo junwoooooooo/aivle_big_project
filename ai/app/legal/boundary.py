@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from app.legal.pipeline import execute_legal_source_pipeline
 from app.models.legal_source import BoundaryNormalizationResult, RegulatoryBoundaryResult
-from app.services.journey_provider import ProviderFailure, execute_structured_prompt
+from app.providers import ProviderFailure, execute_structured_prompt
 
 
 BOUNDARY_SYSTEM = """당신은 공식 법령 Evidence를 사업 구조의 실행 가능한 Regulatory Boundary로 변환한다.

@@ -1,7 +1,6 @@
 package com.aivle.backend.project.entity;
 
 import com.aivle.backend.common.entity.BaseEntity;
-import com.aivle.backend.common.entity.ProjectStage;
 import com.aivle.backend.common.entity.ProjectStatus;
 import com.aivle.backend.user.entity.User;
 import jakarta.persistence.*;
@@ -35,10 +34,6 @@ public class Project extends BaseEntity {
     private String industryCategory;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 40)
-    private ProjectStage stage;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ProjectStatus status;
 
@@ -50,7 +45,6 @@ public class Project extends BaseEntity {
         this.title = title;
         this.description = description;
         this.industryCategory = industryCategory;
-        this.stage = ProjectStage.DOCUMENT;
         this.status = ProjectStatus.DRAFT;
     }
 
@@ -64,37 +58,4 @@ public class Project extends BaseEntity {
         this.industryCategory = industryCategory;
     }
 
-    public void enterStructuring() {
-        if (this.stage == ProjectStage.DOCUMENT) {
-            this.stage = ProjectStage.STRUCTURING;
-        }
-    }
-
-    public void enterLegalReview() {
-        if (this.stage != ProjectStage.STRUCTURING) {
-            throw new IllegalStateException(
-                "only structuring projects can enter legal review"
-            );
-        }
-        this.stage = ProjectStage.LEGAL_REVIEW;
-    }
-
-    public void enterFeasibility() {
-        if (this.stage != ProjectStage.LEGAL_REVIEW) {
-            throw new IllegalStateException("only legal review projects can enter feasibility");
-        }
-        this.stage = ProjectStage.FEASIBILITY;
-    }
-
-    public void enterFinancial() {
-        if (this.stage == ProjectStage.FEASIBILITY) {
-            this.stage = ProjectStage.FINANCIAL;
-        }
-    }
-
-    public void enterPersonaConfiguration() {
-        if (this.stage == ProjectStage.FINANCIAL) {
-            this.stage = ProjectStage.PERSONA_CONFIGURATION;
-        }
-    }
 }

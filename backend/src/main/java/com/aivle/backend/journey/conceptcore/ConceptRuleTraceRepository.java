@@ -1,1 +1,0 @@
-package com.aivle.backend.journey.conceptcore;import java.util.*;import org.springframework.data.jpa.repository.*;public interface ConceptRuleTraceRepository extends JpaRepository<ConceptRuleTrace,Long>{@EntityGraph(attributePaths={"boundaryRule"}) List<ConceptRuleTrace> findByAssessmentIdAndDeletedAtIsNullOrderById(Long assessmentId);}

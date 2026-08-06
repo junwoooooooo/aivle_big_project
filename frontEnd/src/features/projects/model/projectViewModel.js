@@ -8,7 +8,6 @@ export function toProjectViewModel(project) {
     description: project.description ?? '',
     industryCategory: project.industryCategory ?? '',
     status: project.status,
-    stage: project.stage,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt ?? project.createdAt,
     version: project.version,

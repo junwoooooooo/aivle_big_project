@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from app.legal.moleg import MolegClient, MolegFailure
 from app.legal.registry import LegalRegistry, RegistryError
 from app.models.legal_source import LegalSourcePipelineResult, RoutingResult, ScreeningResult
-from app.services.journey_provider import ProviderFailure, execute_structured_prompt
+from app.providers import ProviderFailure, execute_structured_prompt
 
 
 ROUTING_SYSTEM = """당신은 사업 설명에서 조사할 규제 경로를 고르는 라우터다.

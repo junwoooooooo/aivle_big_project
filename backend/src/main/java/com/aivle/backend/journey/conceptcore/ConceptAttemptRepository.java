@@ -1,2 +1,0 @@
-package com.aivle.backend.journey.conceptcore;import java.util.*;import org.springframework.data.jpa.repository.*;
-public interface ConceptAttemptRepository extends JpaRepository<ConceptAttempt,Long>{@EntityGraph(attributePaths={"slot"}) List<ConceptAttempt> findBySlotIdAndDeletedAtIsNullOrderByAttemptNumber(Long slotId);Optional<ConceptAttempt> findTopBySlotIdAndDeletedAtIsNullOrderByAttemptNumberDesc(Long slotId);}

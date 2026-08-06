@@ -2,7 +2,7 @@ import json
 
 from pydantic import ValidationError
 
-from app.services.journey_provider import ProviderFailure, execute_structured_prompt
+from app.providers import ProviderFailure, execute_structured_prompt
 from app.tasks.idea_brief.mapper import to_domain
 from app.tasks.idea_brief.models import IdeaBriefDerivationInput, IdeaBriefProviderResult
 

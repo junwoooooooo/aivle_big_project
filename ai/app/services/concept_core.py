@@ -7,7 +7,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.models.concept_core import ConceptExplorationResult, ConceptSkeleton
-from app.services.journey_provider import ProviderFailure, execute_structured_prompt
+from app.providers import ProviderFailure, execute_structured_prompt
 
 
 FOCUSES = (

@@ -1,7 +1,0 @@
-package com.aivle.backend.journey;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.*;
-public interface ConceptSelectionRepository extends JpaRepository<ConceptSelection, Long> {
-    @EntityGraph(attributePaths={"conceptVersion","conceptVersion.concept"})
-    Optional<ConceptSelection> findTopByProjectIdAndIdeaVersionIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(Long projectId, Long ideaVersionId);
-}

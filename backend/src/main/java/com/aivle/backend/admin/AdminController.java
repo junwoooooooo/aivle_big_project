@@ -154,9 +154,7 @@ public class AdminController {
     public ApiResponse<Page<AdminProjectService.ProjectListItem>> projectList(
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) String owner,
-        @RequestParam(required = false) String area,
         @RequestParam(required = false) String status,
-        @RequestParam(required = false) String stage,
         @RequestParam(required = false) String industryCategory,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
@@ -170,8 +168,7 @@ public class AdminController {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
         var filter = new AdminProjectService.ProjectQuery(
-            keyword, owner, parseArea(area), parseProjectStatus(status), parseProjectStage(stage),
-            industryCategory, createdFrom, createdTo
+            keyword, owner, parseProjectStatus(status), industryCategory, createdFrom, createdTo
         );
         return ApiResponse.success(adminProjects.list(filter, projectPageable(page, size, sort)), requestId(request));
     }
@@ -264,7 +261,7 @@ public class AdminController {
     private Pageable projectPageable(int page, int size, String sort) {
         String[] parts = sort.split(",", 2);
         boolean supported = switch (parts[0]) {
-            case "createdAt", "updatedAt", "title", "status", "stage" -> true;
+            case "createdAt", "updatedAt", "title", "status" -> true;
             default -> false;
         };
         String property = supported ? parts[0] : "updatedAt";
@@ -291,9 +288,7 @@ public class AdminController {
     }
     private UserRole parseRole(String value) { if (value == null || value.isBlank()) return null; try { return UserRole.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
     private UserStatus parseStatus(String value) { if (value == null || value.isBlank()) return null; try { return UserStatus.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
-    private ProjectArea parseArea(String value) { if (value == null || value.isBlank()) return null; try { return ProjectArea.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
     private com.aivle.backend.common.entity.ProjectStatus parseProjectStatus(String value) { if (value == null || value.isBlank()) return null; try { return com.aivle.backend.common.entity.ProjectStatus.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
-    private com.aivle.backend.common.entity.ProjectStage parseProjectStage(String value) { if (value == null || value.isBlank()) return null; try { return com.aivle.backend.common.entity.ProjectStage.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
     private AdminAuditAction parseAuditAction(String value) { if (value == null || value.isBlank()) return null; try { return AdminAuditAction.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
     private AdminAuditResult parseAuditResult(String value) { if (value == null || value.isBlank()) return null; try { return AdminAuditResult.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
     private AdminAuditTargetType parseAuditTargetType(String value) { if (value == null || value.isBlank()) return null; try { return AdminAuditTargetType.valueOf(value.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException e) { throw new BusinessException(ErrorCode.INVALID_REQUEST); } }
