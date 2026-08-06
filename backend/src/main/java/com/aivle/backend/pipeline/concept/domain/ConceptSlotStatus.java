@@ -1,0 +1,6 @@
+package com.aivle.backend.pipeline.concept.domain;
+
+public enum ConceptSlotStatus {
+    QUEUED, GENERATING, GENERATED, SCHEMA_INVALID, VALIDATING_ORIGIN, VALIDATING_LEGAL,
+    REDESIGNING, REPLACING, ELIGIBLE, REJECTED, NEEDS_INPUT, FAILED, STALE
+}
