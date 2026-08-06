@@ -11,7 +11,7 @@ class TaskRunDomainTests {
 
     @Test
     void retryCreatesNewAttemptNumberOnNextClaim() {
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now();
         TaskAttempt first = TaskAttempt.claim(run, "worker-1", now, now.plusSeconds(30), now.plusMinutes(2));
         first.start(first.getClaimToken(), now);
@@ -27,7 +27,7 @@ class TaskRunDomainTests {
 
     @Test
     void staleClaimCannotCompleteAttempt() {
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now();
         TaskAttempt attempt = TaskAttempt.claim(run, "worker", now, now.plusSeconds(30), now.plusMinutes(2));
         attempt.start(attempt.getClaimToken(), now);
@@ -36,7 +36,7 @@ class TaskRunDomainTests {
 
     @Test
     void cancelIsIdempotentForTerminalRun() {
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now(); run.cancel(now); run.cancel(now.plusSeconds(1));
         assertThat(run.getState()).isEqualTo(TaskRunState.CANCELLED);
         assertThat(run.isRetryable()).isFalse();
@@ -44,7 +44,7 @@ class TaskRunDomainTests {
 
     @Test
     void resultRequiresValidationBeforeAdoption() {
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now();
         TaskAttempt attempt = TaskAttempt.claim(run, "worker", now, now.plusSeconds(30), now.plusMinutes(2));
         attempt.start(attempt.getClaimToken(), now);
@@ -56,7 +56,7 @@ class TaskRunDomainTests {
 
     @Test
     void terminalRunRejectsMutation() {
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now(); run.cancel(now);
         assertThatThrownBy(() -> run.fail("ERROR", true, now)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> run.succeed("result", now)).isInstanceOf(IllegalStateException.class);

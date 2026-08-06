@@ -25,7 +25,7 @@ class InternalAiExecutionClientTests {
         server.createContext("/internal/v1/ai/executions", exchange -> {
             path.set(exchange.getRequestURI().getPath()); authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
             String response = """
-                {"contractVersion":"1.0","taskType":"IDEA_INTERPRETATION","taskSchemaVersion":"1.0",
+                {"contractVersion":"1.0","taskType":"IDEA_BRIEF_DERIVATION","taskSchemaVersion":"1.0",
                 "taskRunId":"%s","taskAttemptId":"attempt-1","correlationId":"correlation-1",
                 "canonicalInputHash":"sha256:%s","resultSchemaVersion":"1.0","result":{"readiness":"APPROPRIATE"},
                 "warnings":[],"provenance":[],"usage":null}
@@ -38,7 +38,7 @@ class InternalAiExecutionClientTests {
             AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
             ObjectMapper mapper = new ObjectMapper();
             InternalAiExecutionClient client = new InternalAiExecutionClient(RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, mapper);
-            TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1", "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
             runId.set(run.getId());
             var result = client.execute(run, "attempt-1", LocalDateTime.of(2035, 1, 1, 0, 0));
             assertThat(result.taskRunId()).isEqualTo(run.getId());
@@ -54,7 +54,7 @@ class InternalAiExecutionClientTests {
         InternalAiExecutionClient client = new InternalAiExecutionClient(
             RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, mapper);
         String input = "{\"text\":\"" + "x".repeat(InternalAiExecutionClient.MAX_JSON_BYTES) + "\"}";
-        TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1",
+        TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
             input, "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
 
         assertThatThrownBy(() -> client.execute(run, "attempt-1", LocalDateTime.of(2035, 1, 1, 0, 0)))
@@ -76,7 +76,7 @@ class InternalAiExecutionClientTests {
             AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
-            TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1",
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
                 "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
 
             assertThatThrownBy(() -> client.execute(run, "attempt-1", LocalDateTime.of(2035, 1, 1, 0, 0)))
@@ -117,7 +117,7 @@ class InternalAiExecutionClientTests {
                 Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
-            TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1",
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
                 "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
 
             assertThatThrownBy(() -> client.execute(run, "attempt-1", LocalDateTime.of(2035, 1, 1, 0, 0)))
@@ -151,8 +151,8 @@ class InternalAiExecutionClientTests {
                 Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
-            TaskRun run = TaskRun.create(null, TaskType.IDEA_CONVERSATION_TURN,
-                "IDEA_CONVERSATION_MESSAGE", "1", "{}", "sha256:" + "a".repeat(64),
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION,
+                "IDEA_BRIEF_DERIVATION_RUN", "1", "{}", "sha256:" + "a".repeat(64),
                 "key", "correlation-1", 3);
 
             assertThatThrownBy(() -> client.execute(run, "attempt-1",
@@ -172,7 +172,7 @@ class InternalAiExecutionClientTests {
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/internal/v1/ai/executions", exchange -> {
             String response = """
-                {"contractVersion":"1.0","taskType":"IDEA_INTERPRETATION","taskSchemaVersion":"1.0",
+                {"contractVersion":"1.0","taskType":"IDEA_BRIEF_DERIVATION","taskSchemaVersion":"1.0",
                 "taskRunId":"%s","taskAttemptId":"%s","correlationId":"correlation-1",
                 "canonicalInputHash":"%s","resultSchemaVersion":"1.0","result":{"readiness":"APPROPRIATE"},
                 "warnings":[],"provenance":[],"usage":null}
@@ -189,7 +189,7 @@ class InternalAiExecutionClientTests {
                 Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
-            TaskRun run = TaskRun.create(null, TaskType.IDEA_INTERPRETATION, "IDEA_INTERPRETATION_RUN", "subject-1",
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
                 "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
             runId.set(run.getId());
 

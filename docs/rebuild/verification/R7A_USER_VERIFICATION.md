@@ -18,7 +18,7 @@ npm run build
 cd ..
 docker compose config
 docker compose down -v
-docker compose build backend ai frontend
+docker compose build backend ai-server frontend
 docker compose up -d
 docker compose ps
 ```
@@ -62,7 +62,7 @@ if its image/config changed locally; its stored objects should also be considere
 ## Logs to collect on failure
 
 ```powershell
-docker compose logs --no-color postgres backend ai frontend > r7a-compose.log
+docker compose logs --no-color postgres backend ai-server frontend > r7a-compose.log
 cd backend
 .\gradlew.bat test postgresTest --stacktrace --info > ..\r7a-gradle.log
 cd ..\ai
