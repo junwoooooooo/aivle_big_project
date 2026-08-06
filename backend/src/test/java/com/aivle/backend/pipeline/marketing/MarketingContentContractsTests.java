@@ -7,6 +7,7 @@ import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.planning.domain.FinalizedPlanningSnapshot;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
@@ -21,7 +22,11 @@ class MarketingContentContractsTests {
             {"planning":{"finalConcept":{"conceptName":"Local Cart","problem":"Waste","positioning":"Local first","competitorDifferentiators":["fresh"]},"finalTarget":"Solo","finalValueProposition":"Right amount","finalFeatures":["split"],"finalPricingRevenueHypothesis":"fee","finalChannels":["app"]},"legalControls":{"allowedClaims":["same day"],"prohibitedExpressions":["always cheapest"],"requiredDisclosures":["area varies"]},"ignoredMarketDatabase":{"secret":"must not flow"}}
             """, "sha256:" + "1".repeat(64), 9L, Instant.EPOCH);
         var first = factory.create(finalized); var second = factory.create(finalized);
+        MarketingSourceSnapshot typed = factory.map(finalized);
         assertEquals(first.path("sourceSnapshotHash").asText(), second.path("sourceSnapshotHash").asText());
+        assertTrue(factory.matches(finalized, typed.sourceSnapshotHash()));
+        assertFalse(factory.matches(finalized, "sha256:" + "0".repeat(64)));
+        assertEquals(List.of("split"), typed.keyFeatures());
         assertEquals(13, first.size());
         assertFalse(first.has("ignoredMarketDatabase"));
         assertEquals("Local Cart", first.path("conceptName").asText());

@@ -1,7 +1,17 @@
+import asyncio
+from typing import Any, get_args, get_type_hints
+
 import pytest
 from pydantic import ValidationError
 
-from app.tasks.marketing_content.models import MarketingContentInput, MarketingContentResult
+from app.tasks.marketing_content.models import (
+    MarketingContentInput,
+    MarketingContentResult,
+    MarketingSourceSnapshot,
+    lint_provider_schema,
+)
+from app.providers import ProviderFailure
+from app.tasks.marketing_content import service
 
 
 def request_input() -> dict:
@@ -41,3 +51,38 @@ def test_ai_result_schema_is_closed() -> None:
     MarketingContentResult.model_validate(valid)
     with pytest.raises(ValidationError):
         MarketingContentResult.model_validate({**valid, "providerPayload": {}})
+
+
+def test_provider_models_have_no_any_and_schema_is_strict_and_bounded() -> None:
+    def contains_any(annotation: object) -> bool:
+        return annotation is Any or any(contains_any(value) for value in get_args(annotation))
+
+    for model in (MarketingSourceSnapshot, MarketingContentInput, MarketingContentResult):
+        assert not any(contains_any(value) for value in get_type_hints(model, include_extras=True).values())
+        assert lint_provider_schema(model.model_json_schema()) == []
+
+
+def test_source_strings_and_arrays_are_bounded() -> None:
+    invalid = request_input()
+    invalid["source"]["conceptName"] = "x" * 501
+    with pytest.raises(ValidationError):
+        MarketingContentInput.model_validate(invalid)
+
+
+def test_provider_result_with_prohibited_claim_is_blocked(monkeypatch) -> None:
+    async def prohibited_result(*_args, **_kwargs):
+        return {
+            "contract": "marketing-content-result-v1", "contentType": "BLOG_INTRO",
+            "title": "Title", "body": "전 지역 최저가 상품", "callToAction": None,
+            "hashtags": [], "imageBrief": None,
+            "legalReview": {"compliant": False, "warnings": [], "requiredDisclosuresApplied": []},
+            "artifactRefs": [],
+        }
+
+    value = request_input()
+    value["source"]["prohibitedClaims"] = ["전 지역 최저가"]
+    monkeypatch.setattr(service, "execute_structured_prompt", prohibited_result)
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_marketing_content(value))
+    assert raised.value.reason == "SAFETY_POLICY_BLOCKED"
+    assert raised.value.retryable is False

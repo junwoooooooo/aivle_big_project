@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.marketing.api;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import tools.jackson.databind.JsonNode;
 
@@ -19,7 +20,8 @@ public final class MarketingApiModels {
     public record EditRequest(@NotNull MarketingRevisionType revisionType, @NotNull JsonNode result) {}
     public record ContentSummary(String contentId, String planningSnapshotId, String sourceSnapshotHash,
         MarketingContentType contentType, String channel, String title, String status,
-        int currentRevisionNumber, String taskRunId, Instant finalizedAt) {}
+        int currentRevisionNumber, String taskRunId, String activeJobId, String sourceSnapshotId,
+        LocalDateTime updatedAt, Instant finalizedAt) {}
     public record RevisionView(String revisionId, int revisionNumber, MarketingRevisionType revisionType,
         MarketingRevisionOrigin origin, JsonNode result) {}
     public record ContentView(ContentSummary content, JsonNode sourceSnapshot, JsonNode request,

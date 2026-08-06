@@ -1,45 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useJobEvents } from '../../../shared/async-events/index.js';
+
 const ACTIVE = new Set(['QUEUED', 'RUNNING']);
 export const newIdempotencyKey = () => globalThis.crypto?.randomUUID?.() ?? `marketing-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-export default function useMarketingGeneration({ api, projectId, onUpdate, pollMs = 1500 }) {
-  const timer = useRef(null);
-  const mounted = useRef(true);
-  const [state, setState] = useState({ active: false, status: 'IDLE', error: null });
+export default function useMarketingGeneration({ api, projectId, onUpdate }) {
+  const [state, setState] = useState({ active: false, status: 'IDLE', activeJobId: null, contentId: null, error: null });
+  const handledTerminal = useRef(null);
+  const jobEvents = useJobEvents(state.activeJobId);
 
-  useEffect(() => () => { mounted.current = false; if (timer.current) clearInterval(timer.current); }, []);
+  const applyDetail = useCallback((detail) => {
+    if (!detail?.content) return detail;
+    const { content } = detail;
+    const active = ACTIVE.has(content.status);
+    setState({ active, status: content.status, activeJobId: active ? content.activeJobId : null,
+      contentId: content.contentId, error: null });
+    if (active && handledTerminal.current !== content.activeJobId) handledTerminal.current = null;
+    onUpdate?.(detail);
+    return detail;
+  }, [onUpdate]);
 
-  const poll = useCallback(async (contentId) => {
+  const restore = useCallback((detail) => applyDetail(detail), [applyDetail]);
+
+  const refreshDetail = useCallback(async (contentId = state.contentId) => {
+    if (!contentId) return null;
     try {
-      const detail = await api.detail(projectId, contentId);
-      if (!mounted.current) return detail;
-      const status = detail.content.status;
-      setState({ active: ACTIVE.has(status), status, error: null }); onUpdate?.(detail);
-      return detail;
+      return applyDetail(await api.detail(projectId, contentId));
     } catch (error) {
-      if (mounted.current) setState({ active: false, status: 'FAILED', error });
+      setState((value) => ({ ...value, active: false, status: 'FAILED', activeJobId: null, error }));
       return null;
     }
-  }, [api, onUpdate, projectId]);
+  }, [api, applyDetail, projectId, state.contentId]);
+
+  useEffect(() => {
+    if (!jobEvents.terminal || !state.activeJobId || handledTerminal.current === state.activeJobId) return;
+    handledTerminal.current = state.activeJobId;
+    void refreshDetail(state.contentId);
+  }, [jobEvents.terminal, refreshDetail, state.activeJobId, state.contentId]);
 
   const begin = useCallback(async (action) => {
-    if (timer.current) clearInterval(timer.current);
-    setState({ active: true, status: 'QUEUED', error: null });
+    setState((value) => ({ ...value, active: true, status: 'QUEUED', error: null }));
     try {
-      const detail = await action(newIdempotencyKey());
-      if (mounted.current) { onUpdate?.(detail); setState({ active: true, status: detail.content.status, error: null }); }
-      timer.current = setInterval(async () => {
-        const refreshed = await poll(detail.content.contentId);
-        if (refreshed && !ACTIVE.has(refreshed.content.status)) { clearInterval(timer.current); timer.current = null; }
-      }, pollMs);
-      return detail;
+      return applyDetail(await action(newIdempotencyKey()));
     } catch (error) {
-      if (mounted.current) setState({ active: false, status: 'FAILED', error });
+      setState((value) => ({ ...value, active: false, status: 'FAILED', activeJobId: null, error }));
       throw error;
     }
-  }, [onUpdate, poll, pollMs]);
+  }, [applyDetail]);
 
-  return { ...state, create: (request) => begin((key) => api.create(projectId, request, key)),
-    regenerate: (contentId) => begin((key) => api.regenerate(projectId, contentId, key)), poll };
+  return {
+    ...state,
+    jobEvents,
+    restore,
+    refreshDetail,
+    create: (request) => begin((key) => api.create(projectId, request, key)),
+    regenerate: (contentId) => begin((key) => api.regenerate(projectId, contentId, key)),
+  };
 }

@@ -39,7 +39,7 @@ public class MarketingContentService {
         requireOwned(ownerId, projectId); validateRequest(request);
         FinalizedPlanningSnapshot finalized = currentPlanning(projectId);
         if (!finalized.getId().equals(request.planningSnapshotId())) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
-        ObjectNode source = sources.create(finalized); String sourceJson = mapper.writeValueAsString(source);
+        ObjectNode source = source(finalized); String sourceJson = mapper.writeValueAsString(source);
         String requestJson = mapper.writeValueAsString(request); String id = UUID.randomUUID().toString();
         String title = source.path("conceptName").asText("Marketing") + " - " + request.contentType().name();
         MarketingContent content = contents.save(MarketingContent.queued(id, projectId, finalized.getId(),
@@ -62,7 +62,7 @@ public class MarketingContentService {
         requireOwned(ownerId, projectId); MarketingContent content=findLocked(projectId,id);
         if (!Set.of(MarketingRevisionType.TONE_EDITED, MarketingRevisionType.SHORTENED, MarketingRevisionType.LEGAL_NOTICE_APPLIED, MarketingRevisionType.USER_EDITED).contains(request.revisionType()))
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        try { results.validate(request.result(), content.getContentType()); int number=content.addUserRevision();
+        try { results.validate(request.result(), content.getContentType()); validateClaims(content,request.result()); int number=content.addUserRevision();
             revisions.save(MarketingContentRevision.create(id,number,request.revisionType(),MarketingRevisionOrigin.USER,mapper.writeValueAsString(request.result()),ownerId));
         } catch (IllegalArgumentException invalid) { throw new BusinessException(ErrorCode.INVALID_REQUEST, invalid.getMessage()); }
         return view(content,currentPlanning(projectId));
@@ -71,7 +71,7 @@ public class MarketingContentService {
     @Transactional
     public ContentView regenerate(Long ownerId, Long projectId, String id, String idempotencyKey, String correlationId) {
         requireOwned(ownerId, projectId); MarketingContent content=findLocked(projectId,id); FinalizedPlanningSnapshot finalized=currentPlanning(projectId);
-        ObjectNode source=sources.create(finalized); ObjectNode request=(ObjectNode)mapper.readTree(content.getRequestJson()); request.put("planningSnapshotId",finalized.getId());
+        ObjectNode source=source(finalized); ObjectNode request=(ObjectNode)mapper.readTree(content.getRequestJson()); request.put("planningSnapshotId",finalized.getId());
         String requestJson=mapper.writeValueAsString(request); String sourceJson=mapper.writeValueAsString(source);
         String taskId=enqueue(ownerId,projectId,content,requestJson,sourceJson,idempotencyKey,correlationId);
         try { content.regenerate(finalized.getId(),source.path("sourceSnapshotHash").asText(),sourceJson,requestJson,taskId); }
@@ -84,7 +84,7 @@ public class MarketingContentService {
         requireOwned(ownerId,projectId); MarketingContent content=findLocked(projectId,id); FinalizedPlanningSnapshot current=currentPlanning(projectId);
         if (stale(content,current)) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
         MarketingContentRevision latest=revisions.findFirstByContentIdAndDeletedAtIsNullOrderByRevisionNumberDesc(id).orElseThrow(()->new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
-        try { int number=content.finalizeContent(Instant.now()); revisions.save(MarketingContentRevision.create(id,number,MarketingRevisionType.FINALIZED,MarketingRevisionOrigin.SYSTEM,latest.getResultJson(),ownerId)); }
+        try { validateClaims(content,mapper.readTree(latest.getResultJson())); int number=content.finalizeContent(Instant.now()); revisions.save(MarketingContentRevision.create(id,number,MarketingRevisionType.FINALIZED,MarketingRevisionOrigin.SYSTEM,latest.getResultJson(),ownerId)); }
         catch (IllegalStateException invalid) { throw new BusinessException(ErrorCode.INVALID_REQUEST,invalid.getMessage()); }
         return view(content,current);
     }
@@ -96,8 +96,11 @@ public class MarketingContentService {
         return taskRuns.create(ownerId,projectId,TaskType.MARKETING_CONTENT_GENERATION,"MARKETING_CONTENT",content.getId(),json,hash,key,correlation==null||correlation.isBlank()?UUID.randomUUID().toString():correlation,2).getId();
     }
     private ContentView view(MarketingContent c,FinalizedPlanningSnapshot current){return new ContentView(summary(c,current),mapper.readTree(c.getSourceSnapshotJson()),mapper.readTree(c.getRequestJson()),revisions.findAllByContentIdAndDeletedAtIsNullOrderByRevisionNumberAsc(c.getId()).stream().map(r->new RevisionView(r.getId(),r.getRevisionNumber(),r.getRevisionType(),r.getOrigin(),mapper.readTree(r.getResultJson()))).toList(),assets.findAllByContentIdAndDeletedAtIsNull(c.getId()).stream().map(MarketingAsset::getArtifactRef).toList());}
-    private ContentSummary summary(MarketingContent c,FinalizedPlanningSnapshot current){String status=stale(c,current)?"STALE":c.getStatus().name();return new ContentSummary(c.getId(),c.getPlanningSnapshotId(),c.getSourceSnapshotHash(),c.getContentType(),c.getChannel(),c.getTitle(),status,c.getCurrentRevisionNumber(),c.getTaskRunId(),c.getFinalizedAt());}
-    private boolean stale(MarketingContent c,FinalizedPlanningSnapshot current){return current!=null&&(!current.getId().equals(c.getPlanningSnapshotId())||!sources.create(current).path("sourceSnapshotHash").asText().equals(c.getSourceSnapshotHash()));}
+    private ContentSummary summary(MarketingContent c,FinalizedPlanningSnapshot current){String status=stale(c,current)?"STALE":c.getStatus().name();String activeJobId=("QUEUED".equals(status)||"RUNNING".equals(status))?c.getTaskRunId():null;return new ContentSummary(c.getId(),c.getPlanningSnapshotId(),c.getSourceSnapshotHash(),c.getContentType(),c.getChannel(),c.getTitle(),status,c.getCurrentRevisionNumber(),c.getTaskRunId(),activeJobId,c.getPlanningSnapshotId(),c.getUpdatedAt(),c.getFinalizedAt());}
+    private boolean stale(MarketingContent c,FinalizedPlanningSnapshot current){return current!=null&&(!current.getId().equals(c.getPlanningSnapshotId())||!sourceMatches(current,c.getSourceSnapshotHash()));}
+    private boolean sourceMatches(FinalizedPlanningSnapshot snapshot,String hash){try{return sources.matches(snapshot,hash);}catch(IllegalArgumentException invalid){throw new BusinessException(ErrorCode.PLAN_INCOMPLETE);}}
+    private void validateClaims(MarketingContent content,JsonNode result){JsonNode source=mapper.readTree(content.getSourceSnapshotJson());String rendered=(result.path("title").asText()+"\n"+result.path("body").asText()+"\n"+result.path("callToAction").asText()+"\n"+result.path("imageBrief").asText()).toLowerCase(Locale.ROOT);for(JsonNode claim:source.path("prohibitedClaims"))if(!claim.asText().isBlank()&&rendered.contains(claim.asText().toLowerCase(Locale.ROOT)))throw new BusinessException(ErrorCode.MARKETING_PROHIBITED_CLAIM);}
+    private ObjectNode source(FinalizedPlanningSnapshot snapshot){try{return sources.create(snapshot);}catch(IllegalArgumentException invalid){throw new BusinessException(ErrorCode.PLAN_INCOMPLETE);}}
     private void validateRequest(CreateRequest r){if(!REQUEST_CONTRACT.equals(r.contract()))throw new BusinessException(ErrorCode.INVALID_REQUEST);}
     private FinalizedPlanningSnapshot currentPlanning(Long projectId){return planning.findFirstByProjectIdAndDeletedAtIsNullOrderBySequenceDesc(projectId).orElseThrow(()->new BusinessException(ErrorCode.PLAN_INCOMPLETE));}
     private MarketingContent find(Long projectId,String id){return contents.findByIdAndProjectIdAndDeletedAtIsNull(id,projectId).orElseThrow(()->new BusinessException(ErrorCode.MARKETING_CONTENT_NOT_FOUND));}

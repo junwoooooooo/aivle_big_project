@@ -21,7 +21,15 @@ async def main() -> None:
             "additionalInstruction": None,
         },
     })
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps({
+        "ok": True,
+        "contract": result.get("contract"),
+        "contentType": result.get("contentType"),
+        "hasTitle": bool(result.get("title")),
+        "hasBody": bool(result.get("body")),
+        "legalCompliant": result.get("legalReview", {}).get("compliant"),
+        "artifactRefCount": len(result.get("artifactRefs", [])),
+    }, ensure_ascii=False))
 
 
 if __name__ == "__main__":

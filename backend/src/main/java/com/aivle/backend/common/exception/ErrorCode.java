@@ -71,6 +71,7 @@ public enum ErrorCode {
     MARKETING_SOURCE_REFRESH_FAILED(HttpStatus.CONFLICT, "검증 결과를 다시 불러오지 못했습니다.", true),
     MARKETING_EXPORT_OVERFLOW(HttpStatus.UNPROCESSABLE_ENTITY, "긴 문구가 출력 영역을 벗어납니다.", false),
     MARKETING_ASSET_INVALID(HttpStatus.BAD_REQUEST, "마케팅 이미지 파일이 올바르지 않습니다.", false),
+    MARKETING_PROHIBITED_CLAIM(HttpStatus.UNPROCESSABLE_ENTITY, "확정 기획에서 금지한 표현이 포함되어 있습니다.", false),
     PANEL_INTERVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "패널 인터뷰를 찾을 수 없습니다.", false),
     PANEL_INTERVIEW_INVALID_PERSONA(HttpStatus.BAD_REQUEST, "인터뷰 대상 Persona가 올바르지 않습니다.", false),
     PANEL_INTERVIEW_PERSONA_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "인터뷰 Persona는 최대 3개까지 선택할 수 있습니다.", false),

@@ -8,11 +8,10 @@ import MarketingSetupPanel from '../components/MarketingSetupPanel.jsx';
 import MarketingSourceSummary from '../components/MarketingSourceSummary.jsx';
 import MarketingStylePanel from '../components/MarketingStylePanel.jsx';
 import useMarketingContent from '../hooks/useMarketingContent.js';
-import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, legalSignals, sourceSummary, toCreateRequest } from '../model/marketingContentModel.js';
+import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, legalSignals, marketingFailureMessage, sourceSummary, toCreateRequest } from '../model/marketingContentModel.js';
 import { copyMarketingContent, downloadMarketingContent } from '../render/marketingRenderer.js';
+import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
 import '../styles/marketing-content.css';
-
-const PROGRESS = ['기획 내용을 불러오고 있습니다.','핵심 메시지를 구성하고 있습니다.','채널에 맞게 문구를 조정하고 있습니다.','법률상 주의 표현을 확인하고 있습니다.','콘텐츠를 완성하고 있습니다.'];
 
 export default function MarketingContentPage() {
   const { projectId } = useParams(); const hook = useMarketingContent(projectId);
@@ -27,6 +26,8 @@ export default function MarketingContentPage() {
   const signals=useMemo(()=>legalSignals(draft,source),[draft,source]);
   const selectedStatus=hook.selected?.content.status; const editable=selectedStatus==='COMPLETED';
   const generationStatus=hook.status==='IDLE'?selectedStatus:hook.status;
+  const progressEvents=(hook.jobEvents?.events??[]).filter(isUserVisibleJobEvent);
+  const latestEvent=progressEvents.at(-1);
 
   async function create() { setNotice(''); try { await hook.create(toCreateRequest(effectiveSetup)); } catch (error) { setNotice(error.message); } }
   async function save() { if(!draft)return;setNotice('');try{await hook.save(draft,revisionType);setNotice('편집 내용을 새 revision으로 저장했습니다.');}catch(error){setNotice(error.message);} }
@@ -35,14 +36,14 @@ export default function MarketingContentPage() {
 
   return <div className="mk-page">
     <header className="mk-page__header"><div><p>Marketing Content</p><h1>확정된 기획을 실제 콘텐츠로</h1><span>기획 Source를 고정하고 생성·편집·revision 저장까지 한 화면에서 진행합니다.</span></div><button type="button" onClick={()=>void hook.refresh()}>새로고침</button></header>
-    {hook.error&&<div className="mk-alert mk-alert--danger" role="alert">{hook.error.message||'콘텐츠를 불러오지 못했습니다.'}</div>}
+    {hook.error&&<div className="mk-alert mk-alert--danger" role="alert">{marketingFailureMessage(hook.error,latestEvent?.technicalCode)}</div>}
     {notice&&<div className="mk-alert" role="status">{notice}</div>}
     {!hook.loading&&!hook.planning&&<section className="mk-not-ready"><div><p>페이지는 사용할 수 있지만 생성 준비가 필요합니다.</p><h2>최종 확정 기획이 없습니다.</h2><span>시장 분석 제안을 검토하고 기획을 확정하면 생성 버튼이 활성화됩니다. BM·재무·Persona 결과는 필요하지 않습니다.</span></div><Link to={`/app/projects/${projectId}/market`}>기획 확정으로 이동</Link></section>}
     <MarketingContentList contents={hook.list} onOpen={(id)=>void hook.open(id)} selectedId={hook.selected?.content.contentId}/>
     <div className="mk-workspace">
       <aside className="mk-workspace__setup"><MarketingSourceSummary source={source}/><MarketingSetupPanel value={effectiveSetup} onChange={setSetup} onSubmit={()=>void create()} disabled={!hook.planning} busy={hook.active}/></aside>
       <main className="mk-workspace__canvas">
-        <section className="mk-progress" aria-live="polite" aria-busy={hook.active}><div><span>{hook.active?'생성 중':generationStatus==='FAILED'?'확인 필요':'Preview'}</span><strong>{ASYNC_MESSAGES[generationStatus]??'콘텐츠를 선택하거나 새로 생성하세요.'}</strong></div>{hook.active&&<ol>{PROGRESS.map((message,index)=><li key={message} data-active={index===Math.min(4,hook.status==='QUEUED'?0:hook.status==='RUNNING'?4:1)}>{message}</li>)}</ol>}</section>
+        <section className="mk-progress" aria-live="polite" aria-busy={hook.active}><div><span>{hook.active?'생성 중':generationStatus==='FAILED'?'확인 필요':'Preview'}</span><strong>{generationStatus==='FAILED'?marketingFailureMessage(null,latestEvent?.technicalCode):latestEvent?jobEventMessage(latestEvent):ASYNC_MESSAGES[generationStatus]??'콘텐츠를 선택하거나 새로 생성하세요.'}</strong></div>{progressEvents.length>0&&<ol>{progressEvents.map((event)=><li key={event.sequence} data-active={event===latestEvent}>{jobEventMessage(event)}</li>)}</ol>}</section>
         <MarketingCanvas result={draft} style={style}/>
         {hook.selected&&<MarketingRevisionList revisions={hook.selected.revisions} activeNumber={hook.selected.content.currentRevisionNumber}/>} 
       </main>

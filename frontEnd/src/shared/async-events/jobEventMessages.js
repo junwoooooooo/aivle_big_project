@@ -49,6 +49,13 @@ const messages = {
   'job.concept.run.completed': '검증된 Concept 5개가 준비되었습니다.',
   'job.concept.run.failed': 'Concept 탐색을 완료하지 못했습니다.',
   'job.legal-report.build.started': '선택한 Concept의 법률 보고서를 구성하고 있습니다.',
+  'job.marketing.queued': '마케팅 콘텐츠 생성을 준비하고 있습니다.',
+  'job.marketing.started': '마케팅 콘텐츠 생성을 시작했습니다.',
+  'job.marketing.source_prepared': '확정된 기획 Source를 준비했습니다.',
+  'job.marketing.copy_generating': '채널에 맞는 문구를 생성하고 있습니다.',
+  'job.marketing.legal_checking': '금지 표현과 필수 고지를 확인하고 있습니다.',
+  'job.marketing.completed': '마케팅 콘텐츠가 준비되었습니다.',
+  'job.marketing.failed': '마케팅 콘텐츠 생성을 완료하지 못했습니다.',
 };
 
 const hiddenKeys = new Set(['job.claimed', 'job.started']);

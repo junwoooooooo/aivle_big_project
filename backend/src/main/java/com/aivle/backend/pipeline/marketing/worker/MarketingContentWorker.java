@@ -56,7 +56,15 @@ public class MarketingContentWorker {
 
     private void terminalFailure(TaskRunService.Claim claim,TaskRunWorkerContext context,String code,String reason,boolean retryable) {
         try { completion.fail(claim,context,code,reason,retryable); }
-        finally { publish(context,"FAILED","job.marketing.failed",JobEvent.Status.FAILED,code); }
+        finally { publish(context,"FAILED","job.marketing.failed",JobEvent.Status.FAILED,safeCode(code,reason)); }
+    }
+    private String safeCode(String code,String reason) {
+        if ("SAFETY_POLICY_BLOCKED".equals(reason)) return "MARKETING_PROHIBITED_CLAIM";
+        if ("REQUEST_DEADLINE_EXCEEDED".equals(reason)) return "TASK_TIMEOUT";
+        if ("DEPENDENCY_RATE_LIMITED".equals(reason)) return "RATE_LIMITED";
+        if ("AI_CONFIGURATION_INVALID".equals(reason)) return "AI_CONFIGURATION_INVALID";
+        if ("RESULT_SCHEMA_INVALID".equals(code) || "INVALID_REQUEST".equals(code)) return "AI_RESULT_INVALID";
+        return "AI_SERVICE_UNAVAILABLE";
     }
     private void publish(TaskRunWorkerContext c,String stage,String type,JobEvent.Status status,String code) {
         events.publish(new JobEventPublisher.Command(c.projectId(),c.taskRunId(),c.taskRunId(),stage,type,status,type,Map.of(),code));
