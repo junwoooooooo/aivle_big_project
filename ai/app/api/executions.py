@@ -24,7 +24,7 @@ router = APIRouter(prefix="/internal/v1/ai", tags=["Internal AI Executions"])
 logger = logging.getLogger(__name__)
 TASK_TYPES = {
     "IDEA_BRIEF_DERIVATION",
-    "CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN",
+    "CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "MARKETING_CONTENT_GENERATION",
     "IDEA_INTERPRETATION", "IDEA_CONVERSATION_TURN", "LEGAL_REVIEW", "CONCEPT_GENERATION", "QUICK_ASSESSMENT",
     "DETAILED_ANALYSIS", "PERSONA_CARD_GENERATION", "PERSONA_INTERVIEW",
     "INTERVIEW_SYNTHESIS", "MARKETING_GENERATION", "MARKETING_COMPARISON",
@@ -162,7 +162,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                               body.taskRunId, body.taskAttemptId)
     if body.taskType not in {
         "IDEA_BRIEF_DERIVATION",
-        "CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN",
+        "CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "MARKETING_CONTENT_GENERATION",
         "IDEA_INTERPRETATION", "IDEA_CONVERSATION_TURN", "LEGAL_REVIEW", "CONCEPT_GENERATION",
         "QUICK_ASSESSMENT", "DETAILED_ANALYSIS", "PERSONA_CARD_GENERATION",
         "PERSONA_INTERVIEW", "INTERVIEW_SYNTHESIS",
@@ -175,6 +175,10 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
+    elif body.taskType == "MARKETING_CONTENT_GENERATION":
+        text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        source_hash = body.input.get("source", {}).get("sourceSnapshotHash", "unknown")
+        source_keys = [f"finalized-planning:{source_hash}"]
     elif body.taskType == "IDEA_BRIEF_DERIVATION":
         from app.tasks.idea_brief.models import IdeaBriefDerivationInput
         try:
@@ -223,6 +227,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "CONCEPT_REDESIGN":
             from app.tasks.concept_redesign import execute_concept_redesign
             result = await execute_concept_redesign(body.input)
+        elif body.taskType == "MARKETING_CONTENT_GENERATION":
+            from app.tasks.marketing_content import execute_marketing_content
+            result = await execute_marketing_content(body.input)
         elif body.taskType == "IDEA_BRIEF_DERIVATION":
             from app.tasks.idea_brief import execute_idea_brief_derivation
             result = await execute_idea_brief_derivation(body.input)

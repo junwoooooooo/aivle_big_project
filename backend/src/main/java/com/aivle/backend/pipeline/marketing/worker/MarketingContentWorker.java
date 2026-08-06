@@ -1,0 +1,64 @@
+package com.aivle.backend.pipeline.marketing.worker;
+
+import com.aivle.backend.jobevent.*;
+import com.aivle.backend.pipeline.marketing.application.MarketingContentCompletionService;
+import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.integration.InternalAiExecutionClient;
+import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.*;
+import com.aivle.backend.taskrun.service.*;
+import java.time.*;
+import java.util.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component @RequiredArgsConstructor @Slf4j
+public class MarketingContentWorker {
+    private static final TaskType TYPE = TaskType.MARKETING_CONTENT_GENERATION;
+    private final TaskRunService taskRuns;
+    private final InternalAiExecutionClient ai;
+    private final MarketingContentCompletionService completion;
+    private final JobEventPublisher events;
+    private final String workerId = "marketing-content-" + UUID.randomUUID();
+
+    @Scheduled(fixedDelayString = "${app.task-run.marketing-content-poll-interval-ms:1000}")
+    public void poll() { processOne(); }
+
+    @Scheduled(fixedDelayString = "${app.task-run.marketing-content-recovery-interval-ms:5000}")
+    public void recover() {
+        for (String id : taskRuns.recoverExpiredTaskIds(Duration.ZERO, List.of(TYPE)))
+            publish(taskRuns.workerContext(id), "QUEUED", "job.marketing.queued", JobEvent.Status.QUEUED, null);
+    }
+
+    public boolean processOne() {
+        TaskRunService.Claim claim = taskRuns.claimNext(TYPE, workerId, Duration.ofMinutes(5), Duration.ofMinutes(3));
+        if (claim == null) return false;
+        TaskRunWorkerContext context = taskRuns.workerContext(claim.taskRunId());
+        try {
+            publish(context,"STARTED","job.marketing.started",JobEvent.Status.RUNNING,null);
+            taskRuns.startExecution(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken());
+            completion.start(context.subjectId(),context.projectId());
+            publish(context,"SOURCE_PREPARED","job.marketing.source_prepared",JobEvent.Status.RUNNING,null);
+            publish(context,"COPY_GENERATING","job.marketing.copy_generating",JobEvent.Status.RUNNING,null);
+            ExecutionResponse response=ai.executeWorker(context,claim.taskAttemptId(),LocalDateTime.now().plusMinutes(3));
+            publish(context,"LEGAL_CHECKING","job.marketing.legal_checking",JobEvent.Status.RUNNING,null);
+            completion.complete(claim,context,response);
+            publish(context,"COMPLETED","job.marketing.completed",JobEvent.Status.COMPLETED,null);
+        } catch (ExecutionFailure failure) {
+            terminalFailure(claim,context,failure.code(),failure.reason(),failure.retryable());
+        } catch (RuntimeException failure) {
+            log.warn("Marketing content worker failed taskRunId={} type={}",claim.taskRunId(),failure.getClass().getSimpleName());
+            terminalFailure(claim,context,"RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",false);
+        }
+        return true;
+    }
+
+    private void terminalFailure(TaskRunService.Claim claim,TaskRunWorkerContext context,String code,String reason,boolean retryable) {
+        try { completion.fail(claim,context,code,reason,retryable); }
+        finally { publish(context,"FAILED","job.marketing.failed",JobEvent.Status.FAILED,code); }
+    }
+    private void publish(TaskRunWorkerContext c,String stage,String type,JobEvent.Status status,String code) {
+        events.publish(new JobEventPublisher.Command(c.projectId(),c.taskRunId(),c.taskRunId(),stage,type,status,type,Map.of(),code));
+    }
+}
