@@ -70,9 +70,9 @@ G0 Baseline/Docs
 
 - 현재 `main`과 기준 커밋을 확인한다.
 - Idea Source, Idea Origin, Legal Precheck, Concept Eligibility, TaskRun, Frontend Journey route를 실제 파일 기준으로 매핑한다.
-- `docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md`를 생성한다.
-- `docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md`를 생성한다.
-- `docs/redesign/DECISION_LOG.md`에 Design Freeze ADR을 추가한다.
+- `docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md`를 생성한다.
+- `docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md`를 생성한다.
+- `docs/archive/conversational-workspace/redesign/DECISION_LOG.md`에 Design Freeze ADR을 추가한다.
 - 기존 공식 Journey와 레거시 MVP의 보존 범위를 명시한다.
 - Feature Flag 명칭과 기본값만 설계한다. 기능은 구현하지 않는다.
 

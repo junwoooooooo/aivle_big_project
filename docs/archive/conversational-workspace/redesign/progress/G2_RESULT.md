@@ -36,9 +36,9 @@
 
 ### 문서
 
-- `docs/redesign/decisions/DECISION_LOG.md`
-- `docs/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
-- `docs/redesign/progress/G2_RESULT.md`
+- `docs/archive/conversational-workspace/redesign/decisions/DECISION_LOG.md`
+- `docs/archive/conversational-workspace/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
+- `docs/archive/conversational-workspace/redesign/progress/G2_RESULT.md`
 
 ## 2. Backend 계약
 

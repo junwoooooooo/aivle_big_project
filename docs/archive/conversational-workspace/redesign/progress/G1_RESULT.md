@@ -32,8 +32,8 @@
 
 ### 문서
 
-- `docs/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
-- `docs/redesign/progress/G1_RESULT.md`
+- `docs/archive/conversational-workspace/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
+- `docs/archive/conversational-workspace/redesign/progress/G1_RESULT.md`
 
 ## 2. Migration 번호와 신규 테이블
 

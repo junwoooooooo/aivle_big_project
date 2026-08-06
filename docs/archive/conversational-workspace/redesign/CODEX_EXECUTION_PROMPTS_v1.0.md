@@ -41,14 +41,14 @@ C:\Users\seewo\Desktop\big_proj_01\new_2
 - backend JourneyController, JourneyAiService, LegalPrecheck, ConceptJourneyService
 - ai journey models/provider/prompts
 - task_runs/task_attempts/task_results
-- 현재 Migration과 docs/redesign
+- 현재 Migration과 docs/archive/conversational-workspace/redesign
 - 레거시 Quick/Detailed/Selection/Persona/Report 연결
 
 생성 문서:
-1. docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md
-2. docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md
-3. docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md
-4. docs/redesign/DECISION_LOG.md가 있으면 ADR 추가, 없으면 생성
+1. docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md
+2. docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md
+3. docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md
+4. docs/archive/conversational-workspace/redesign/DECISION_LOG.md가 있으면 ADR 추가, 없으면 생성
 
 문서 필수 내용:
 - 12개 고정 불변식

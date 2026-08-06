@@ -8,13 +8,13 @@
 
 ## 생성·정리 문서
 
-- `docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md`
-- `docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md`
-- `docs/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
-- `docs/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
-- `docs/redesign/decisions/DECISION_LOG.md`
-- `docs/redesign/DECISION_LOG.md`
-- `docs/redesign/progress/G0_RESULT.md`
+- `docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_SPEC_v1.0.md`
+- `docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_IMPLEMENTATION_PLAN_v1.0.md`
+- `docs/archive/conversational-workspace/redesign/current-to-target/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
+- `docs/archive/conversational-workspace/redesign/CONVERSATIONAL_VALIDATION_WORKSPACE_CURRENT_TO_TARGET_MAP.md`
+- `docs/archive/conversational-workspace/redesign/decisions/DECISION_LOG.md`
+- `docs/archive/conversational-workspace/redesign/DECISION_LOG.md`
+- `docs/archive/conversational-workspace/redesign/progress/G0_RESULT.md`
 
 SPEC와 IMPLEMENTATION_PLAN은 G0 시작 시 작업 트리에 이미 존재한 기준
 문서이며 내용을 변경하지 않았다. 이번 작업은 현행→목표 매핑, ADR 정본,
