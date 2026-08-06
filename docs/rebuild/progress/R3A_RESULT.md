@@ -25,7 +25,7 @@ R3A is implemented as a new pipeline-only Concept Factory and Legal domain. A ru
 ## Contracts implemented
 
 - Run states: `QUEUED`, `GENERATING`, `VALIDATING`, `REPLACING`, `NEEDS_INPUT`, `COMPLETED`, `FAILED`, `STALE`.
-- Slot states and attempt phases exactly match the R3A instruction; no legacy `PROVIDER_FAILURE` state was introduced.
+- Slot states and attempt phases exactly match the R3A instruction; no `PROVIDER_FAILURE` state was introduced. This boundary is ratified by [D-009](../decisions/DECISION_LOG.md#d-009-concept-provider-failure-상태-경계): provider failures belong to Concept Attempt error classification.
 - Exactly five ordered slots are created with the five canonical `VariationFocus` values.
 - Bounds are enforced in domain logic and database checks: one legal redesign per slot, two replacement rounds, fifteen inspected candidates, and one provider transient retry.
 - Completion requires five eligible slots and five non-duplicate concepts from the same immutable Idea Brief snapshot. Only `IMPLEMENTABLE` and `IMPLEMENTABLE_WITH_CONTROLS` concepts can be published.

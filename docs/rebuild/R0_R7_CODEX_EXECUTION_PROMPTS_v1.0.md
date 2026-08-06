@@ -18,7 +18,7 @@ Idea Brief Form, AI derive, Question Card, Review, Confirm, TaskRun/Event/restor
 
 ## R3
 
-5 Slot Concept Factory와 Legal Context·Assessment·Evidence·bounded redesign/replacement·Workboard를 구현한다. 5개 동시 공개 Gate를 검증한다.
+5 Slot Concept Factory와 Legal Context·Assessment·Evidence·bounded redesign/replacement·Workboard를 구현한다. 5개 동시 공개 Gate를 검증한다. Provider 실패는 Concept Attempt 오류로 분류하고 Slot 상태에 `PROVIDER_FAILURE`를 추가하지 않는다. transient retry와 schema repair는 각각 1회로 제한하며 permanent provider failure는 retry 불가 terminal failure로 처리한다.
 
 ## R4
 

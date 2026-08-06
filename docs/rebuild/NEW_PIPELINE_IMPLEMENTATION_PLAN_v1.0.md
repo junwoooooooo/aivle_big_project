@@ -33,6 +33,8 @@
 - Legal Context
 - 5 Slot·Attempt
 - Generate·validate·legal·redesign·replace
+- Provider 오류는 Attempt error classification으로 저장하고 Slot 상태에는 `PROVIDER_FAILURE`를 추가하지 않음
+- transient provider retry 1회, schema repair 1회, 소진 시 replacement; permanent provider failure는 retry 불가 terminal failure
 - Workboard·Timeline
 - 5개 동시 공개
 

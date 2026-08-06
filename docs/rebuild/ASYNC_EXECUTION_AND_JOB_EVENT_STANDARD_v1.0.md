@@ -62,3 +62,13 @@ SSE 실패 시 bounded fallback. 2초 고정 Polling 금지. 초기·재연결·
 ## 10. Provider Smoke
 
 실제 Provider Output Schema와 모델 호환을 synthetic input으로 검증하는 Smoke를 각 핵심 AI Task의 완료 Gate로 둔다.
+
+## 11. Concept Attempt 오류와 Slot 상태 경계
+
+Concept Provider 오류는 Attempt에 다음 분류 중 하나로 기록한다: `SCHEMA_INVALID`, `TRANSIENT_PROVIDER_FAILURE`, `PERMANENT_PROVIDER_FAILURE`, `ORIGIN_INVALID`, `LEGAL_REDESIGN_REQUIRED`, `LEGAL_REJECTED`, `INSUFFICIENT_INFORMATION`, `INTERNAL_EXECUTION_ERROR`.
+
+- transient retry가 남으면 Slot 상태를 바꾸지 않고 동일 Slot을 최대 1회 재시도한다.
+- transient retry가 소진되면 Slot은 `REPLACING`으로 전이한다.
+- permanent provider failure이면 Slot과 Run은 `FAILED`, terminal `retryable=false`로 종료한다.
+- schema invalid이면 Slot은 `SCHEMA_INVALID`, `REPAIR` Attempt는 최대 1회이며 재실패 시 `REPLACING`으로 전이한다.
+- `PROVIDER_FAILURE`는 Slot registry, 사용자 progress event status, query response 상태로 사용하지 않는다.

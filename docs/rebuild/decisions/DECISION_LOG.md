@@ -37,3 +37,15 @@
   - R1A·R1B에서 신규 사용자 Surface와 `/api/v3` API는 이미 Legacy 경로와 분리됐다.
   - 보존할 운영 데이터가 없으므로 Legacy Entity 제거가 끝나는 R7에서 최종 Schema만으로 안전하게 Clean Baseline을 만들 수 있다.
 - 제약: R1~R6은 기존 Migration을 수정·재정렬하거나 legacy 행을 변환하지 않는다.
+
+## D-009 Concept Provider Failure 상태 경계
+
+- 상태: 승인
+- 결정: `PROVIDER_FAILURE`는 Concept Slot의 영속 상태가 아니다. Provider 실패는 Concept Attempt 오류 분류로 기록한다.
+- 공식 Attempt 오류 분류: `SCHEMA_INVALID`, `TRANSIENT_PROVIDER_FAILURE`, `PERMANENT_PROVIDER_FAILURE`, `ORIGIN_INVALID`, `LEGAL_REDESIGN_REQUIRED`, `LEGAL_REJECTED`, `INSUFFICIENT_INFORMATION`, `INTERNAL_EXECUTION_ERROR`.
+- 전이:
+  - transient provider failure는 retry가 남아 있으면 현재 Slot 실행 상태를 유지하고 동일 Slot을 최대 1회 재시도한다. 소진 시 `REPLACING`으로 전이한다.
+  - permanent provider failure는 Slot과 Run을 `FAILED`로 전이하고 `retryable=false`로 종료한다.
+  - schema invalid는 `SCHEMA_INVALID` 후 `REPAIR` 1회를 허용하고 재실패 시 `REPLACING`으로 전이한다.
+- 근거: Provider 장애는 사용자 작업 진행 상태가 아니라 Attempt 실행 결과이며, Slot 상태로 영속화하면 복구 정책과 사용자 진행 표시가 결합된다.
+- 영향: R3A enum과 V8 constraint는 변경하지 않는다. R3B Worker는 Attempt error classification을 저장하고 이 ADR의 전이만 적용한다.
