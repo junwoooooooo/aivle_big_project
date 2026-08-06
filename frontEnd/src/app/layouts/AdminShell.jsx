@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../features/auth/AuthProvider.jsx';
-import { appRoutes } from '../../features/projects/routing/projectRoutes.js';
+import { appRoutes } from '../routing/projectRoutes.js';
 import { AppIcon, Drawer } from '../../shared/ui/index.js';
 import { useAuthTransition } from '../transitions/AuthTransitionProvider.jsx';
 import './admin-layout.css';

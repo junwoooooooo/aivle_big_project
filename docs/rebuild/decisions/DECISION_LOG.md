@@ -28,3 +28,12 @@
 ## D-007 마케팅
 
 - 결정: AIdev의 생성·편집 부분만 선별 이식하고 검증·A/B·Persona 종속은 제외한다.
+
+## D-008 최종 DB Baseline Squash 시점
+
+- 결정: R1에서는 기존 Migration을 유지하고 신규 파이프라인 Foundation을 additive Migration으로 추가한다. 최종 Clean Baseline Squash는 R7에서 수행한다.
+- 이유:
+  - Legacy Entity가 아직 Compile 및 Entity Scan 대상이어서 R1에서 기존 Table을 제거하면 `ddl-auto: validate` Runtime 검증이 실패할 수 있다.
+  - R1A·R1B에서 신규 사용자 Surface와 `/api/v3` API는 이미 Legacy 경로와 분리됐다.
+  - 보존할 운영 데이터가 없으므로 Legacy Entity 제거가 끝나는 R7에서 최종 Schema만으로 안전하게 Clean Baseline을 만들 수 있다.
+- 제약: R1~R6은 기존 Migration을 수정·재정렬하거나 legacy 행을 변환하지 않는다.

@@ -4,7 +4,7 @@ import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { Alert, Button, Dialog, PageHeader, TextInput, Textarea } from '../../shared/ui/index.js';
-import { appRoutes, projectRoutes } from './routing/projectRoutes.js';
+import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { createProjectApi } from './api/projectApi.js';
 import { useProjectContext } from './ProjectContext.jsx';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
@@ -13,7 +13,7 @@ import './projects.css';
 
 export function ProjectSettingsLayout() {
   const { project } = useProjectContext();
-  return <section className="project-settings"><PageHeader eyebrow="Project settings" title={project.name} description="프로젝트 메타데이터와 보관 정책을 관리합니다." /><nav aria-label="프로젝트 설정"><Link to={projectRoutes.settings(project.projectId)}>General</Link><Link to={projectRoutes.danger(project.projectId)}>Danger zone</Link></nav><Outlet /> </section>;
+  return <section className="project-settings"><PageHeader eyebrow="Project settings" title={project.name} description="프로젝트 메타데이터와 보관 정책을 관리합니다." /><nav aria-label="프로젝트 설정"><Link to={projectRoutes.settings(project.projectId)}>프로젝트 설정</Link></nav><Outlet /> </section>;
 }
 
 export function ProjectSettingsRedirect() { const { project } = useProjectContext(); return <Navigate to={projectRoutes.settings(project.projectId)} replace />; }

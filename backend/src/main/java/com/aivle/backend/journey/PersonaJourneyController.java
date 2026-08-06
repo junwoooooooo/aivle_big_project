@@ -1,5 +1,6 @@
 package com.aivle.backend.journey;
 import com.aivle.backend.common.response.ApiResponse; import com.aivle.backend.common.security.CurrentUserProvider; import jakarta.servlet.http.HttpServletRequest; import jakarta.validation.Valid; import java.util.List; import lombok.RequiredArgsConstructor; import org.springframework.web.bind.annotation.*;
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController @RequestMapping("/api/v2/projects/{projectId}") @RequiredArgsConstructor
 public class PersonaJourneyController {
  private final PersonaJourneyService personas; private final CurrentUserProvider currentUser;

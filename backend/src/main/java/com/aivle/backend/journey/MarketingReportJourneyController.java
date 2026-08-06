@@ -1,4 +1,5 @@
 package com.aivle.backend.journey;import com.aivle.backend.common.response.ApiResponse;import com.aivle.backend.common.security.CurrentUserProvider;import jakarta.servlet.http.HttpServletRequest;import jakarta.validation.Valid;import lombok.RequiredArgsConstructor;import org.springframework.web.bind.annotation.*;
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController @RequestMapping("/api/v2/projects/{projectId}") @RequiredArgsConstructor
 public class MarketingReportJourneyController{private final MarketingReportJourneyService service;private final CurrentUserProvider currentUser;
  @PostMapping("/marketing-generations")public ApiResponse<MarketingReportJourneyService.WorkspaceView> generate(@PathVariable Long projectId,HttpServletRequest request){return ApiResponse.success(service.generate(user(),projectId),id(request));}

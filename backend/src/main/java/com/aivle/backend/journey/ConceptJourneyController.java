@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.*;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequestMapping("/api/v2/projects/{projectId}")
 @RequiredArgsConstructor

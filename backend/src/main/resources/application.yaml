@@ -18,6 +18,8 @@ spring:
       max-request-size: 21MB
 
 app:
+  legacy-pipeline:
+    enabled: ${LEGACY_PIPELINE_ENABLED:false}
   bootstrap-admin:
     enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
     username: ${BOOTSTRAP_ADMIN_USERNAME:}

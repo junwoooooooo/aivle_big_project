@@ -7,7 +7,7 @@ import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { Alert, AppIcon, Button, ErrorState, LoadingState, SideSheet, TextInput, Textarea } from '../../shared/ui/index.js';
 import { createProjectApi } from './api/projectApi.js';
 import { useProjectContext } from './ProjectContext.jsx';
-import { appRoutes, projectRoutes } from './routing/projectRoutes.js';
+import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { getProjectNameError } from './projectNameError.js';
 import ProjectDeleteDialog from './components/ProjectDeleteDialog.jsx';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';

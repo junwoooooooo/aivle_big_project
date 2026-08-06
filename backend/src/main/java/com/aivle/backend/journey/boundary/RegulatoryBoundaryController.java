@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequestMapping("/api/v2/projects/{projectId}/regulatory-boundaries")
 @RequiredArgsConstructor

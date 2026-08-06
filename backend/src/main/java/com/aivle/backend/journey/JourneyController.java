@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequestMapping("/api/v2/projects/{projectId}")
 @RequiredArgsConstructor

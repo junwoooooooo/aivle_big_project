@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/financial-analysis")
 @RequiredArgsConstructor

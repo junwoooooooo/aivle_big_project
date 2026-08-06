@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequiredArgsConstructor
 public class DocumentController {

@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import static com.aivle.backend.marketing.content.MarketingContentTypes.*;
 
+@com.aivle.backend.pipeline.module.LegacyPipelineSurface
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/marketing-contents")
 @RequiredArgsConstructor
