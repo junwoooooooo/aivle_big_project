@@ -1,0 +1,65 @@
+{
+  "canonicalInputHash": "sha256:fddba406e613a29158e52d595ecd98d75939ea9ac99e3fb9270dd979ad5bdb43",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-4",
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:00Z",
+      "sourceKeys": [
+        "source-1"
+      ],
+      "statementKey": "envelope-prov",
+      "verificationNeeded": false
+    }
+  ],
+  "result": {
+    "assumptions": [],
+    "dimensions": [
+      {
+        "assessment": "명확함",
+        "caveats": [],
+        "dimensionKey": "dimension-1",
+        "evidenceKeys": [
+          "evidence-1"
+        ],
+        "label": "명확성"
+      }
+    ],
+    "evidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "evidenceNeeds": [],
+    "provenance": [
+      {
+        "category": "AI_PROPOSAL",
+        "externalSourceReferences": [],
+        "generatedAt": "2035-01-01T00:00:00Z",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "statementKey": "result-1",
+        "verificationNeeded": false
+      }
+    ],
+    "uncertainties": [],
+    "unexpectedField": "invalid",
+    "warnings": []
+  },
+  "resultSchemaVersion": "1.0",
+  "taskAttemptId": "task-attempt-4",
+  "taskRunId": "task-run-4",
+  "taskSchemaVersion": "1.0",
+  "taskType": "QUICK_ASSESSMENT",
+  "usage": null,
+  "warnings": []
+}

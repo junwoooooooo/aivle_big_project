@@ -1,0 +1,161 @@
+.auth-shell {
+  isolation: isolate;
+}
+
+.auth-shell__background::before,
+.auth-shell__background::after {
+  position: fixed;
+  z-index: -1;
+  width: min(48vw, 620px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: .42;
+  content: '';
+  pointer-events: none;
+  will-change: transform;
+}
+
+.auth-shell__background::before {
+  inset: -14% auto auto -10%;
+  background: rgb(80 205 184 / .34);
+  animation: auth-gradient-drift-a 20s ease-in-out infinite alternate;
+}
+
+.auth-shell__background::after {
+  inset: auto -13% -18% auto;
+  background: rgb(128 180 233 / .28);
+  animation: auth-gradient-drift-b 23s ease-in-out infinite alternate;
+}
+
+.auth-topbar__home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 5px 9px 5px 5px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--auth-ink);
+  text-decoration: none;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.auth-topbar__home-link:hover {
+  border-color: rgb(15 136 120 / .24);
+  background: rgb(235 249 246 / .84);
+  box-shadow: 0 8px 16px rgb(22 77 81 / .08);
+  transform: translateY(-1px);
+}
+
+.auth-topbar__home-link:focus-visible {
+  outline: 3px solid rgb(15 136 120 / .3);
+  outline-offset: 3px;
+}
+
+.auth-topbar__brand-mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--auth-aqua);
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.auth-topbar__brand-copy {
+  display: grid;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.auth-topbar__brand-copy strong { font-size: 15px; }
+.auth-topbar__brand-copy small { color: var(--auth-muted); font-size: 11px; font-weight: 600; }
+.auth-topbar__home-icon { color: var(--auth-aqua); transition: transform 180ms ease; }
+.auth-topbar__home-link:hover .auth-topbar__home-icon { transform: translate(2px, -2px); }
+
+.auth-brand-panel__preview {
+  display: block;
+  min-height: 194px;
+  padding: 13px;
+}
+
+.auth-brand-panel__preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 3px 12px;
+  color: #698083;
+  font-size: 11px;
+}
+
+.auth-brand-panel__preview-bar b { color: #1d6660; font-size: 12px; }
+
+.auth-brand-panel__scene {
+  display: grid;
+  gap: 7px;
+  min-height: 104px;
+  animation: auth-scene-enter 420ms ease both;
+}
+
+.auth-brand-panel__scene p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid #e1ecea;
+  border-radius: 7px;
+  background: #f8fbfa;
+  color: #557174;
+  font-size: 12px;
+}
+
+.auth-brand-panel__scene b { color: #197368; font-size: 12px; }
+.auth-brand-panel__indicators { display: flex; gap: 6px; margin: 12px 0 6px; }
+
+.auth-brand-panel__indicators button {
+  width: 20px;
+  height: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #c9dcda;
+  cursor: pointer;
+  transition: width 180ms ease, background-color 180ms ease;
+}
+
+.auth-brand-panel__indicators button.is-active { width: 30px; background: var(--auth-aqua); }
+.auth-brand-panel__indicators button:focus-visible { outline: 3px solid rgb(15 136 120 / .32); outline-offset: 3px; }
+.auth-brand-panel__preview > small { color: #7b9090; font-size: 10px; }
+
+.auth-policy-notice {
+  margin-bottom: 18px;
+}
+
+.auth-policy-notice p {
+  margin: 0 0 10px;
+}
+
+@keyframes auth-gradient-drift-a { to { transform: translate3d(38px, 26px, 0) scale(1.06); } }
+@keyframes auth-gradient-drift-b { to { transform: translate3d(-32px, -42px, 0) scale(1.04); } }
+@keyframes auth-scene-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 760px) {
+  .auth-topbar__brand-copy small { display: none; }
+  .auth-topbar__home-link { padding-inline-end: 7px; }
+  .auth-shell__background::before { transform: scale(.72); }
+  .auth-shell__background::after { transform: scale(.72); }
+  .auth-brand-panel__preview { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell__background::before,
+  .auth-shell__background::after,
+  .auth-brand-panel__scene { animation: none; }
+  .auth-topbar__home-link,
+  .auth-topbar__home-icon,
+  .auth-brand-panel__indicators button { transition: none; }
+}

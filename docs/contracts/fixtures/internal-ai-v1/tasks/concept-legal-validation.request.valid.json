@@ -1,0 +1,32 @@
+{
+  "canonicalInputHash": "sha256:dbeb0d1b4d606609f5bd7d8271d3abf1518e2bd9c4b4b385a1403a0c1dd02638",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-concept-legal",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "guardrailVersionId": 1,
+    "textContents": [
+      {
+        "chunks": [
+          {
+            "characterCount": 662,
+            "chunkHash": "sha256:890271bc845aeb9ebb777b512bf3daa2a5d7f0c13607895c2ffedc30b0ff9367",
+            "index": 0,
+            "text": "{\"guardrails\":{\"hardConstraints\":[],\"prohibitedPatterns\":[],\"conditionalConstraints\":[],\"requiredDisclosures\":[],\"requiredOperationalControls\":[]},\"lockedValues\":{\"targetRegion\":{\"value\":\"KR\"}},\"conceptDrafts\":[{\"candidateKey\":\"candidate-1\",\"conceptName\":\"A\",\"targetSegment\":{\"segment\":\"owners\"},\"positioning\":\"care\",\"featureSet\":[\"alerts\"],\"pricing\":{\"amount\":39000,\"currency\":\"KRW\"},\"revenueModel\":{\"type\":\"DEVICE_SALE\"},\"channels\":[\"direct\"],\"operatingModel\":{\"seller\":\"operator\"},\"newAssumptions\":[],\"newBusinessActivities\":[\"data processing\"],\"originTrace\":[{\"structureKey\":\"problem\",\"sourceValue\":[\"problem\"],\"conceptValue\":[\"problem\"]}],\"legalTrace\":[]}]}"
+          }
+        ],
+        "contentHash": "sha256:890271bc845aeb9ebb777b512bf3daa2a5d7f0c13607895c2ffedc30b0ff9367",
+        "contentKey": "concept-legal-validation-batch",
+        "contentType": "TEXT",
+        "language": "ko-KR",
+        "totalCharacters": 662
+      }
+    ],
+    "validationMode": "GUARDRAIL_BATCH"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-concept-legal",
+  "taskRunId": "task-run-concept-legal",
+  "taskSchemaVersion": "1.0",
+  "taskType": "CONCEPT_LEGAL_VALIDATION"
+}

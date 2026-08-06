@@ -1,0 +1,5 @@
+package com.aivle.backend.common.entity;
+public enum ReportType {
+    LEGAL, MARKET, BUSINESS_MODEL, TECHNOLOGY_OPERATION, FINANCIAL,
+    FEASIBILITY_INTERMEDIATE, FGI_RESULT, FGD_RESULT, FINAL
+}

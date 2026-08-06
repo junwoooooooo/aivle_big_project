@@ -1,0 +1,87 @@
+{
+  "contractVersion": "1.0",
+  "taskType": "IDEA_CONVERSATION_TURN",
+  "taskSchemaVersion": "1.0",
+  "taskRunId": "run-conversation-1",
+  "taskAttemptId": "attempt-conversation-1",
+  "correlationId": "correlation-conversation-1",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "canonicalInputHash": "sha256:ff92fcd012d7d5dbf29ad89b487028dc70bd1c217b568a095d5829a34edb8e6c",
+  "locale": "ko-KR",
+  "input": {
+    "schemaVersion": "1.0",
+    "conversationContract": "opportunity-brief-v1",
+    "projectId": 101,
+    "ownerId": 201,
+    "conversationId": 301,
+    "sourceMessageId": 403,
+    "briefVersionId": null,
+    "locale": "ko-KR",
+    "supportedFields": [
+      "problem",
+      "targetCustomer",
+      "beneficiaries",
+      "usageContext",
+      "desiredOutcome",
+      "targetRegion",
+      "fixedConstraints",
+      "preferredConstraints",
+      "openDecisions",
+      "assumptions",
+      "prohibitedApproaches",
+      "regulatorySensitiveActivities"
+    ],
+    "sourceRules": {
+      "aiAllowed": ["SOURCE_EXTRACTED", "AI_PROPOSED", "MISSING"],
+      "neverAutoConfirm": true,
+      "neverDefaultAssumption": true
+    },
+    "messages": [
+      {
+        "messageId": 401,
+        "sequence": 1,
+        "role": "USER",
+        "messageType": "TEXT",
+        "content": "서울의 재활용 배출 문제를 해결하고 싶습니다.",
+        "envelope": null
+      },
+      {
+        "messageId": 402,
+        "sequence": 2,
+        "role": "ASSISTANT",
+        "messageType": "QUESTION_SET",
+        "content": "주요 사용자를 알려주세요.",
+        "envelope": {
+          "schemaVersion": "1.0",
+          "messageType": "QUESTION_SET",
+          "payload": {
+            "text": "주요 사용자를 알려주세요.",
+            "questions": [
+              {
+                "id": "target-customer-history",
+                "fieldKey": "targetCustomer",
+                "prompt": "주요 사용자는 누구인가요?",
+                "type": "FREE_TEXT",
+                "options": [],
+                "allowUndecided": true
+              }
+            ],
+            "contradictions": [],
+            "readiness": "NEEDS_INPUT"
+          }
+        }
+      },
+      {
+        "messageId": 403,
+        "sequence": 3,
+        "role": "USER",
+        "messageType": "TEXT",
+        "content": "주요 사용자는 서울 아파트 주민입니다.",
+        "envelope": null
+      }
+    ],
+    "attachments": [],
+    "currentBrief": null,
+    "legacyIdeaSource": null
+  }
+}

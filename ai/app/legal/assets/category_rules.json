@@ -1,0 +1,13 @@
+{
+  "_meta":{"version":"category-rules-v1","updated":"2026-08-03"},
+  "laws":{
+    "전자상거래 등에서의 소비자보호에 관한 법률":{"default":["CONSUMER_PROTECTION"],"rules":[{"titleKeywords":["신고","휴업","폐업","사이버몰","등록"],"categories":["BUSINESS_REGISTRATION"]},{"titleKeywords":["약관","계약"],"categories":["TERMS_AND_CONTRACT"]}]},
+    "부가가치세법":{"default":["BUSINESS_REGISTRATION"]},"약관의 규제에 관한 법률":{"default":["TERMS_AND_CONTRACT"]},
+    "전기용품 및 생활용품 안전관리법":{"default":["CONSUMER_PROTECTION"],"rules":[{"titleKeywords":["안전인증","안전확인","공급자적합성","안전기준준수"],"categories":["LICENSE_AND_PERMIT"]}]},
+    "제품안전기본법":{"default":["CONSUMER_PROTECTION"]},"개인정보 보호법":{"default":["PRIVACY_AND_DATA"]},
+    "위치정보의 보호 및 이용 등에 관한 법률":{"default":["PRIVACY_AND_DATA"],"rules":[{"titleKeywords":["허가","신고","등록"],"categories":["LICENSE_AND_PERMIT"]}]},
+    "특허법":{"default":["INTELLECTUAL_PROPERTY"]},"상표법":{"default":["INTELLECTUAL_PROPERTY"]},"디자인보호법":{"default":["INTELLECTUAL_PROPERTY"]},"저작권법":{"default":["INTELLECTUAL_PROPERTY"]},
+    "표시ㆍ광고의 공정화에 관한 법률":{"default":["ADVERTISING_AND_MARKETING"]},"표시ㆍ광고의 공정화에 관한 법률 시행령":{"default":["ADVERTISING_AND_MARKETING"]},
+    "관세법":{"default":["TAX_AND_FINANCIAL"]},"대외무역법":{"default":["INDUSTRY_SPECIFIC"]},"산업안전보건법":{"default":["LABOR_AND_EMPLOYMENT"]}
+  }
+}

@@ -1,0 +1,4 @@
+3f33357f5ae4a604fa97ba7da87d9a3a53ad4d51:docs/contracts/fixtures/internal-ai-v1/negative/schema-execution-interview-synthesis.response.json:generic-api-key:35
+f089c66a10e657f3587939cb11d03b21e3bd70a2:docs/contracts/fixtures/internal-ai-v1/tasks/interview-synthesis.response.valid.json:generic-api-key:35
+3441855dd6790c82c280eb18a2c502637b2ba178:docs/contracts/fixtures/internal-ai-v1/negative/schema-interview-synthesis-response-unknown-field.json:generic-api-key:35
+ca22117fd9da65f1b232b9aa34e9d6e085e7ee06:docs/contracts/INTERNAL_AI_API_V1_CONTRACT.md:generic-api-key:11

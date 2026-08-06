@@ -1,0 +1,11 @@
+vulnerabilities:
+  - id: GHSA-qwww-vcr4-c8h2
+    paths:
+      - "frontEnd/package-lock.json"
+    purls:
+      - "pkg:npm/react-router@7.18.1"
+    expired_at: 2026-10-31
+    statement: >-
+      Temporary not-affected exception: this Vite SPA uses declarative BrowserRouter
+      only and has no React Router unstable RSC, server action, SSR, or data-router
+      execution path. See docs/security/REACT_ROUTER_ADVISORY_DECISION.md.

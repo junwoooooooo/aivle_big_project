@@ -1,0 +1,43 @@
+{
+  "canonicalInputHash": "sha256:957577f6a7ad46cba7b236bb5df4ce093cc0e5a59e47f41323ff96d7b58f173a",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-10",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "assets": [
+      {
+        "assetType": "HEADLINE",
+        "assetVersionKey": "asset-1",
+        "content": "시안 A"
+      },
+      {
+        "assetType": "HEADLINE",
+        "assetVersionKey": "asset-2",
+        "content": "시안 B"
+      }
+    ],
+    "comparisonDimensions": [
+      {
+        "dimensionKey": "dimension-1",
+        "label": "명확성"
+      }
+    ],
+    "personaEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "workspaceVersionKey": "workspace-1"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-10",
+  "taskRunId": "task-run-10",
+  "taskSchemaVersion": "1.0",
+  "taskType": "MARKETING_COMPARISON"
+}

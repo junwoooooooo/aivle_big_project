@@ -1,0 +1,26 @@
+{
+  "canonicalInputHash": "sha256:07d6f0cf99d991ab0caae15e71a713a4669018cb77d3f9e91600fb44877829f4",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-3",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "assumptions": [],
+    "candidateCount": 1,
+    "constraints": [],
+    "facts": [],
+    "generationFocuses": [
+      "VALUE"
+    ],
+    "ideaVersionKey": "idea-1",
+    "legalConditions": [],
+    "legalResult": "PASS",
+    "legalReviewKey": "legal-1",
+    "normalizedDescription": "확정 아이디어",
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-3",
+  "taskRunId": "task-run-3",
+  "taskSchemaVersion": "1.0",
+  "taskType": "CONCEPT_GENERATION"
+}

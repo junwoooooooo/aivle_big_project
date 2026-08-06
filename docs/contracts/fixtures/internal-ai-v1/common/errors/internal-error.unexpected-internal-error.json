@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "UNEXPECTED_INTERNAL_ERROR"
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": true,
+    "taskAttemptId": "task-attempt-error",
+    "taskRunId": "task-run-error"
+  }
+}

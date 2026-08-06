@@ -1,0 +1,1 @@
+package com.aivle.backend.journey.conceptcore;import java.util.*;import org.springframework.data.jpa.repository.*;public interface ConceptLegalAssessmentRepository extends JpaRepository<ConceptLegalAssessment,Long>{@EntityGraph(attributePaths={"attempt","briefVersion","boundaryVersion"}) Optional<ConceptLegalAssessment> findByAttemptId(Long attemptId);}

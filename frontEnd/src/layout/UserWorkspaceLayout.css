@@ -1,0 +1,214 @@
+/* =========================================================
+   로그인 사용자 공통 작업영역
+========================================================= */
+
+.workspace-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.workspace-sidebar {
+  min-height: 100vh;
+  padding: 28px 24px;
+  border-right: 1px solid #dce5e1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.workspace-home-button {
+  width: fit-content;
+  margin-bottom: 36px;
+  padding: 8px 11px;
+  border: 1px solid #d7e1dd;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #ffffff;
+  color: #4e615a;
+  cursor: pointer;
+}
+
+.workspace-home-button:hover {
+  background: #eff8f4;
+}
+
+.workspace-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workspace-menu-link {
+  padding: 13px 18px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: #e3f3ed;
+  color: #1f302a;
+  font-size: 18px;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.workspace-menu-link:hover {
+  border-color: #9fd7c4;
+  background: #d7f1e7;
+}
+
+.workspace-menu-link.active {
+  border-color: #71cbae;
+  background: #b8efdc;
+  font-weight: 700;
+}
+
+.workspace-sidebar-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8e5;
+}
+
+.workspace-user-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.workspace-user-avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #c9f2e3;
+  color: #27654f;
+  font-weight: 800;
+}
+
+.workspace-user-summary strong {
+  display: block;
+  color: #2e4039;
+  font-size: 13px;
+}
+
+.workspace-user-summary span {
+  display: block;
+  max-width: 145px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #7a8782;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-admin-button,
+.workspace-logout-button {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.workspace-admin-button {
+  margin-bottom: 8px;
+  border: 1px solid #75bfa6;
+  background: #eef9f5;
+  color: #316b58;
+}
+
+.workspace-logout-button {
+  border: 1px solid #d1d9d6;
+  background: #ffffff;
+  color: #596761;
+}
+
+.workspace-admin-button:hover,
+.workspace-logout-button:hover {
+  background: #e5f5ef;
+}
+
+.workspace-content {
+  min-width: 0;
+  padding: 38px 42px 60px;
+  background: #ffffff;
+}
+
+/* =========================================================
+   반응형
+========================================================= */
+
+@media (max-width: 850px) {
+  .workspace-layout {
+    display: block;
+  }
+
+  .workspace-sidebar {
+    min-height: auto;
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid #dce5e1;
+  }
+
+  .workspace-home-button {
+    margin-bottom: 14px;
+  }
+
+  .workspace-menu {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .workspace-menu-link {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .workspace-sidebar-footer {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .workspace-user-summary {
+    margin-bottom: 0;
+  }
+
+  .workspace-admin-button,
+  .workspace-logout-button {
+    width: auto;
+    margin: 0;
+  }
+
+  .workspace-content {
+    padding: 26px 18px 45px;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-admin-button,
+  .workspace-logout-button {
+    width: 100%;
+  }
+}

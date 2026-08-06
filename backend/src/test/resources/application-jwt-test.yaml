@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:aivle-jwt-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+
+app:
+  security:
+    jwt:
+      issuer: aivle-security-test
+      access-token-ttl: 15m
+      refresh-token-ttl: 7d
+      secret: phase3-test-only-secret-key-at-least-32-bytes-long
+      clock-skew: 0s
+  ai:
+    enabled: false
+    base-url: ""
+    model: ""
+    api-key: ""
+    connect-timeout: 1s
+    read-timeout: 1s
+    max-retries: 0
+    max-input-characters: 200000
+    max-response-bytes: 1048576
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+    allow-credentials: false
+  file-storage:
+    root: ./build/jwt-test-files
+    business-plan-max-size: 20MB
+    image-max-size: 10MB
+    business-plan-extensions: docx
+    image-extensions: png,jpg,jpeg,webp

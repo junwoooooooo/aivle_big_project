@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+!.env.demo.example
+!.env.e2e.example
+!.env.infrastructure.example
+.demo*
+.vscode
+.pytest_cache
+.idea

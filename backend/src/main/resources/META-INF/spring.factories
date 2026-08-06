@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+com.aivle.backend.config.PostgreSqlCredentialEnvironmentPostProcessor

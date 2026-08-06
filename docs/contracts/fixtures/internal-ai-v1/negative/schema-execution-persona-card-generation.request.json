@@ -1,0 +1,32 @@
+{
+  "canonicalInputHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-6",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "conceptSelectionKey": "selection-1",
+    "diversityFocuses": [
+      "ROLE_CONTEXT"
+    ],
+    "personaCount": 1,
+    "personaStudyKey": "study-1",
+    "selectedConcept": {
+      "assumptions": [],
+      "conceptVersionKey": "concept-1",
+      "constraints": [],
+      "differentiators": [],
+      "evidenceNeeds": [],
+      "solutionOutline": "해결 방향",
+      "targetProblem": "해결할 문제",
+      "targetUserContext": "사용 맥락",
+      "title": "검증 개념",
+      "valueProposition": "핵심 가치"
+    },
+    "selectedConceptVersionKey": "concept-1"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-6",
+  "taskRunId": "task-run-6",
+  "taskSchemaVersion": "1.0",
+  "taskType": "PERSONA_CARD_GENERATION"
+}

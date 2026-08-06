@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "EXECUTION_FAILED",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "PERMANENT_EXECUTION_FAILURE"
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": false,
+    "taskAttemptId": "task-attempt-error",
+    "taskRunId": "task-run-error"
+  }
+}

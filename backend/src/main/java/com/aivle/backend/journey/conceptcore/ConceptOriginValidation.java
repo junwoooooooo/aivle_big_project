@@ -1,0 +1,4 @@
+package com.aivle.backend.journey.conceptcore;
+import com.aivle.backend.common.entity.BaseEntity;import jakarta.persistence.*;import lombok.AccessLevel;import lombok.Getter;import lombok.NoArgsConstructor;
+@Entity @Table(name="concept_origin_validations") @Getter @NoArgsConstructor(access=AccessLevel.PROTECTED)
+public class ConceptOriginValidation extends BaseEntity {@Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;@OneToOne(fetch=FetchType.LAZY) @JoinColumn(name="concept_attempt_id",nullable=false) private ConceptAttempt attempt;@Column(nullable=false) private boolean passed;@Column(nullable=false,columnDefinition="TEXT") private String traceJson;public static ConceptOriginValidation create(ConceptAttempt attempt,boolean passed,String trace){ConceptOriginValidation v=new ConceptOriginValidation();v.attempt=attempt;v.passed=passed;v.traceJson=trace;return v;}}

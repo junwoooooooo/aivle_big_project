@@ -1,0 +1,89 @@
+{
+  "canonicalInputHash": "sha256:1248aaf800e173c33f73fe4dc433b7536f286bbf6a81f47ea3980b1ff727eacf",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-3",
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:00Z",
+      "sourceKeys": [
+        "source-1"
+      ],
+      "statementKey": "envelope-prov",
+      "verificationNeeded": false
+    }
+  ],
+  "result": {
+    "concepts": [
+      {
+        "assumptions": [],
+        "constraints": [],
+        "differentiators": [],
+        "evidenceNeeds": [],
+        "proposalKey": "concept-proposal-1",
+        "provenance": [
+          {
+            "category": "AI_PROPOSAL",
+            "externalSourceReferences": [],
+            "generatedAt": "2035-01-01T00:00:00Z",
+            "sourceKeys": [
+              "source-1"
+            ],
+            "statementKey": "result-1",
+            "verificationNeeded": false
+          }
+        ],
+        "solutionOutline": "방향",
+        "targetProblem": "문제",
+        "targetUserContext": "맥락",
+        "title": "개념",
+        "valueProposition": "가치"
+      },
+      {
+        "assumptions": [],
+        "constraints": [],
+        "differentiators": [],
+        "evidenceNeeds": [],
+        "proposalKey": "concept-proposal-1",
+        "provenance": [
+          {
+            "category": "AI_PROPOSAL",
+            "externalSourceReferences": [],
+            "generatedAt": "2035-01-01T00:00:00Z",
+            "sourceKeys": [
+              "source-1"
+            ],
+            "statementKey": "result-1",
+            "verificationNeeded": false
+          }
+        ],
+        "solutionOutline": "방향",
+        "targetProblem": "문제",
+        "targetUserContext": "맥락",
+        "title": "개념",
+        "valueProposition": "가치"
+      }
+    ],
+    "provenance": [
+      {
+        "category": "AI_PROPOSAL",
+        "externalSourceReferences": [],
+        "generatedAt": "2035-01-01T00:00:00Z",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "statementKey": "result-1",
+        "verificationNeeded": false
+      }
+    ],
+    "warnings": []
+  },
+  "resultSchemaVersion": "1.0",
+  "taskAttemptId": "task-attempt-3",
+  "taskRunId": "task-run-3",
+  "taskSchemaVersion": "1.0",
+  "taskType": "CONCEPT_GENERATION",
+  "usage": null,
+  "warnings": []
+}

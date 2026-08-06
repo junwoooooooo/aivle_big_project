@@ -1,0 +1,46 @@
+{
+  "canonicalInputHash": "sha256:2381631cc9f463aee3d5ecd2924c238e127dea60b905870baae3d341a51f4f75",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-1",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "maxOpenQuestions": 5,
+    "normalizationMode": "PRESERVE_CONSTRAINTS",
+    "preserveSourceWording": true,
+    "sourceReferences": [
+      {
+        "key": "source-1",
+        "namespace": "INPUT",
+        "resourceType": "SOURCE_EXTRACTION"
+      }
+    ],
+    "textContents": [
+      {
+        "chunks": [
+          {
+            "characterCount": 7,
+            "chunkHash": "sha256:36a06bf45d8daad19829660aa14773a34ffcfcc556f6d69f69d764c283fa665e",
+            "index": 0,
+            "text": "아이디어 입력"
+          },
+          {
+            "characterCount": 7,
+            "chunkHash": "sha256:95d1bafb1377e9568517570d1be5cf3bf058c9d3a328450288656ed85e81ceef",
+            "index": 0,
+            "text": "과 제약 조건"
+          }
+        ],
+        "contentHash": "sha256:f76da9cdb6c9221752895b44f255cc5157504c2f13c11c45589eaeefa3522b01",
+        "contentKey": "source-1",
+        "contentType": "TEXT",
+        "language": "ko-KR",
+        "totalCharacters": 14
+      }
+    ]
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-1",
+  "taskRunId": "task-run-1",
+  "taskSchemaVersion": "1.0",
+  "taskType": "IDEA_INTERPRETATION"
+}

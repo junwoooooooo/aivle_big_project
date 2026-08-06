@@ -1,0 +1,18 @@
+{
+  "locale": "en-US",
+  "contractVersion": "1.0",
+  "taskType": "IDEA_INTERPRETATION",
+  "taskSchemaVersion": "1.0",
+  "taskRunId": "task-run-locale",
+  "taskAttemptId": "task-attempt-locale",
+  "correlationId": "correlation-locale",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "canonicalInputHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "input": {
+    "textContents": [{"contentKey": "source-1", "contentType": "TEXT", "language": "ko-KR", "totalCharacters": 4, "contentHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "chunks": [{"index": 0, "text": "idea", "characterCount": 4, "chunkHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"}]}],
+    "sourceReferences": [{"key": "source-1", "namespace": "INPUT", "resourceType": "SOURCE_EXTRACTION"}],
+    "normalizationMode": "PRESERVE_CONSTRAINTS",
+    "maxOpenQuestions": 5,
+    "preserveSourceWording": true
+  }
+}

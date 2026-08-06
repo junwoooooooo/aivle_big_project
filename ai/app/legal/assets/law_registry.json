@@ -1,0 +1,32 @@
+{
+  "_meta": {"version": "legal-registry-v1", "updated": "2026-08-03", "description": "규제 Route별 법제처 조회 법령과 조문 focus keyword의 versioned registry"},
+  "routes": {
+    "consumer_product_safety": {"topic":"소비자 제품안전","priority":90,"laws":[{"name":"전기용품 및 생활용품 안전관리법","focusKeywords":["안전기준준수","공급자적합성","안전확인","표시","판매","벌칙"]},{"name":"제품안전기본법","focusKeywords":["안전성조사","리콜","수거","중대결함"]}]},
+    "electrical_safety": {"topic":"전기용품 안전","priority":95,"laws":[{"name":"전기용품 및 생활용품 안전관리법","focusKeywords":["안전인증","안전확인","공급자적합성","표시","판매"]}]},
+    "wireless_radio": {"topic":"무선·전파 적합성","priority":95,"laws":[{"name":"전파법","focusKeywords":["적합성평가","적합인증","적합등록","표시","판매"]}]},
+    "food_product": {"topic":"식품 제조·판매","priority":95,"laws":[{"name":"식품위생법","focusKeywords":["영업","등록","신고","허가","기준","표시","벌칙"]},{"name":"식품 등의 표시ㆍ광고에 관한 법률","focusKeywords":["표시","광고","부당","실증","벌칙"]}]},
+    "food_contact": {"topic":"식품용 기구·용기·포장","priority":90,"laws":[{"name":"식품위생법","focusKeywords":["기구","용기","포장","기준","규격","표시"]}]},
+    "health_functional_food": {"topic":"건강기능식품","priority":100,"laws":[{"name":"건강기능식품에 관한 법률","focusKeywords":["영업","허가","신고","기준","표시","광고","벌칙"]}]},
+    "medical_device": {"topic":"의료기기","priority":100,"laws":[{"name":"의료기기법","focusKeywords":["제조","허가","인증","신고","표시","광고","판매"]}]},
+    "pharmaceutical": {"topic":"의약품·의약외품","priority":100,"laws":[{"name":"약사법","focusKeywords":["제조","품목허가","의약외품","표시","광고","판매"]}]},
+    "cosmetic": {"topic":"화장품","priority":95,"laws":[{"name":"화장품법","focusKeywords":["영업","등록","기능성","표시","광고","실증"]}]},
+    "chemical_biocidal": {"topic":"생활화학·살생물제품","priority":100,"laws":[{"name":"생활화학제품 및 살생물제의 안전관리에 관한 법률","focusKeywords":["안전확인","신고","승인","표시","광고","판매"]}]},
+    "children_product": {"topic":"어린이제품 안전","priority":100,"laws":[{"name":"어린이제품 안전 특별법","focusKeywords":["안전인증","안전확인","공급자적합성","표시","판매"]}]},
+    "industrial_safety": {"topic":"산업안전","priority":90,"laws":[{"name":"산업안전보건법","focusKeywords":["안전인증","자율안전확인","방호","보호구","벌칙"]}]},
+    "vehicle_mobility": {"topic":"자동차·모빌리티","priority":95,"laws":[{"name":"자동차관리법","focusKeywords":["자기인증","부품","안전기준","표시"]}]},
+    "construction_building": {"topic":"건축·건설 자재","priority":90,"laws":[{"name":"건축법","focusKeywords":["건축자재","품질","인정","마감재"]},{"name":"건설기술 진흥법","focusKeywords":["품질","자재","시험"]}]},
+    "environmental_waste": {"topic":"환경·폐기물","priority":85,"laws":[{"name":"폐기물관리법","focusKeywords":["폐기물처리업","허가","신고","보관","수집","운반"]},{"name":"자원의 절약과 재활용촉진에 관한 법률","focusKeywords":["재활용","생산자책임","분담금","포장재"]}]},
+    "personal_data": {"topic":"개인정보 보호","priority":100,"laws":[{"name":"개인정보 보호법","focusKeywords":["수집","동의","처리방침","안전성","위탁","유출"]}]},
+    "location_data": {"topic":"위치정보","priority":100,"laws":[{"name":"위치정보의 보호 및 이용 등에 관한 법률","focusKeywords":["사업","등록","신고","동의","벌칙"]}]},
+    "online_sales": {"topic":"전자상거래·통신판매","priority":100,"laws":[{"name":"전자상거래 등에서의 소비자보호에 관한 법률","focusKeywords":["통신판매업","신고","신원","정보의 제공","청약철회","금지행위"]},{"name":"부가가치세법","focusKeywords":["사업자등록","등록신청"]},{"name":"약관의 규제에 관한 법률","focusKeywords":["약관","불공정","명시","설명","무효"]}]},
+    "advertising_claims": {"topic":"표시·광고 실증","priority":100,"laws":[{"name":"표시ㆍ광고의 공정화에 관한 법률","focusKeywords":["부당한 표시","실증","손해배상","벌칙"]},{"name":"표시ㆍ광고의 공정화에 관한 법률 시행령","focusKeywords":["실증","부당"]}]},
+    "import_export_customs": {"topic":"수출입·통관","priority":85,"laws":[{"name":"관세법","focusKeywords":["수입신고","통관","관세"]},{"name":"대외무역법","focusKeywords":["원산지","표시","수출입"]}]},
+    "intellectual_property": {"topic":"지식재산권","priority":70,"laws":[{"name":"특허법","focusKeywords":["침해","손해배상","권리범위"]},{"name":"상표법","focusKeywords":["침해","유사","효력"]},{"name":"디자인보호법","focusKeywords":["침해","유사","권리범위"]}]},
+    "finance_payment": {"topic":"금융·전자결제","priority":100,"laws":[{"name":"전자금융거래법","focusKeywords":["전자금융업","등록","허가","선불"]},{"name":"금융소비자 보호에 관한 법률","focusKeywords":["판매","광고","설명의무"]}]},
+    "education_service": {"topic":"교육서비스","priority":85,"laws":[{"name":"학원의 설립ㆍ운영 및 과외교습에 관한 법률","focusKeywords":["등록","신고","교습"]},{"name":"평생교육법","focusKeywords":["원격","신고","시설"]}]},
+    "telecom_platform": {"topic":"통신·플랫폼","priority":90,"laws":[{"name":"전기통신사업법","focusKeywords":["부가통신","신고","등록","이용자"]}]},
+    "software_ai_service": {"topic":"소프트웨어·AI 서비스","priority":80,"laws":[{"name":"인공지능 발전과 신뢰 기반 조성 등에 관한 기본법","focusKeywords":["고영향","생성형","표시","사업자","책무"]},{"name":"정보통신망 이용촉진 및 정보보호 등에 관한 법률","focusKeywords":["정보보호","광고","이용자"]}]},
+    "content_copyright": {"topic":"콘텐츠·저작권","priority":85,"laws":[{"name":"저작권법","focusKeywords":["복제","전송","이용허락","온라인서비스제공자","침해"]},{"name":"콘텐츠산업 진흥법","focusKeywords":["표시","이용자"]}]},
+    "other": {"topic":"기타 규제 탐색","priority":40,"laws":[]}
+  }
+}

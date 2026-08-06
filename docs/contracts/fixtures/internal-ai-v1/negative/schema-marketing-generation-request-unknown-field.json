@@ -1,0 +1,33 @@
+{
+  "canonicalInputHash": "sha256:559f2c53aa1680bb42d4e86232820616b540081789e997b34ccf196140731823",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-9",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "assetType": "HEADLINE",
+    "generationBrief": "명확한 헤드라인 생성",
+    "personaEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "selectedConceptVersionKey": "concept-1",
+    "targetPersonaKeys": [
+      "persona-1"
+    ],
+    "tone": "INFORMATIVE",
+    "unexpectedField": "invalid",
+    "workspaceVersionKey": "workspace-1"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-9",
+  "taskRunId": "task-run-9",
+  "taskSchemaVersion": "1.0",
+  "taskType": "MARKETING_GENERATION"
+}

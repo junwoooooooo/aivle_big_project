@@ -1,0 +1,1 @@
+package com.aivle.backend.journey.conceptcore;import java.util.*;import org.springframework.data.jpa.repository.JpaRepository;public interface ConceptOriginValidationRepository extends JpaRepository<ConceptOriginValidation,Long>{Optional<ConceptOriginValidation> findByAttemptId(Long attemptId);}

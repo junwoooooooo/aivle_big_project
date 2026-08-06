@@ -1,0 +1,1 @@
+package com.aivle.backend.journey;import java.util.Optional;import org.springframework.data.jpa.repository.*;public interface JourneyMarketingComparisonRepository extends JpaRepository<JourneyMarketingComparison,Long>{@EntityGraph(attributePaths={"run","workspace","conceptVersion"})Optional<JourneyMarketingComparison> findByRunIdAndDeletedAtIsNull(Long runId);}

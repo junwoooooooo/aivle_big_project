@@ -1,0 +1,56 @@
+.idea-workspace { --iw-title: 1rem; --iw-body: .875rem; --iw-meta: .75rem; min-width: 0; }
+.idea-workspace__heading { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.idea-workspace__heading h2 { margin:.2rem 0; font-size:inherit; }
+.idea-workspace__heading p,.idea-workspace__empty p { margin:0; font-size:var(--iw-body); color:var(--color-text-secondary,#667085); }
+.idea-workspace__state { align-self:flex-start; padding:.35rem .6rem; border-radius:999px; background:#eef2ff; font-size:var(--iw-meta); }
+.idea-workspace__error,.idea-brief-missing { padding:.75rem; border-radius:.65rem; background:#fff1f0; color:#9f1c1c; font-size:var(--iw-body); margin-bottom:.75rem; }
+.idea-workspace__columns { display:grid; grid-template-columns:minmax(0,3fr) minmax(18rem,2fr); gap:1rem; align-items:start; }
+.idea-workspace__conversation,.idea-workspace__brief { min-width:0; border:1px solid #e4e7ec; border-radius:1rem; background:#fff; }
+.idea-workspace__conversation { padding:1rem; }
+.idea-workspace__brief { padding:.9rem; position:sticky; top:1rem; max-height:calc(100vh - 2rem); overflow:auto; }
+.idea-workspace__brief > header { display:flex; justify-content:space-between; gap:.5rem; border-bottom:1px solid #eef0f3; padding-bottom:.65rem; }
+.idea-workspace__brief h3,.idea-workspace__empty h3,.idea-question-set legend { margin:0; font-size:var(--iw-title); }
+.idea-workspace__brief p,.idea-workspace__brief small,.idea-message time,.idea-attachment small,.idea-workspace__timeline > small { font-size:var(--iw-meta); color:#667085; }
+.idea-workspace__messages { display:flex; flex-direction:column; gap:.75rem; margin:1rem 0; }
+.idea-message { max-width:88%; padding:.75rem; border-radius:.85rem; background:#f4f6f8; font-size:var(--iw-body); }
+.idea-message--user { align-self:flex-end; background:#eef4ff; }
+.idea-message__role { display:block; margin-bottom:.25rem; font-size:var(--iw-meta); font-weight:700; }
+.idea-message p { margin:.15rem 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.idea-question-set { display:grid; gap:.6rem; margin-top:.65rem; }
+.idea-question-set fieldset { border:1px solid #dfe3e8; border-radius:.6rem; padding:.65rem; }
+.idea-question-set label { display:block; margin-top:.4rem; font-size:var(--iw-body); }
+.idea-attachment { display:flex; justify-content:space-between; padding:.55rem; border:1px solid #e4e7ec; border-radius:.55rem; font-size:var(--iw-body); }
+.idea-workspace__timeline { margin-top:.75rem; }
+.idea-workspace__timeline .job-timeline__message { font-size:var(--iw-body); }
+.idea-composer { margin-top:1rem; border-top:1px solid #e4e7ec; padding-top:1rem; }
+.idea-composer textarea,.idea-brief-field textarea,.idea-question-set input { width:100%; box-sizing:border-box; resize:vertical; }
+.idea-composer > div,.idea-brief-field > div { display:flex; justify-content:space-between; gap:.5rem; margin-top:.45rem; }
+.idea-composer__file { font-size:var(--iw-body); }
+.idea-composer__file input { display:block; font-size:var(--iw-meta); }
+.idea-brief-fields { display:grid; gap:.65rem; margin:.75rem 0; }
+.idea-brief-field { border:1px solid #e4e7ec; border-radius:.65rem; padding:.65rem; }
+.idea-brief-field.is-proposed { border-left:3px solid #f5b942; }
+.idea-brief-field.is-confirmed { border-left:3px solid #29a36a; }
+.idea-brief-field label { font-size:var(--iw-title); font-weight:700; }
+.idea-brief-field span,.idea-brief-field small { font-size:var(--iw-meta); }
+.idea-brief-field__decision { justify-content:flex-start !important; }
+.idea-brief-confirm { width:100%; padding:.7rem; }
+.idea-workspace__brief-toggle { display:none; }
+.idea-workspace__workboard-return { margin-bottom:.75rem; }
+.idea-boundary { margin-top:1rem; padding-top:.85rem; border-top:1px solid #e4e7ec; font-size:var(--iw-body); }
+.idea-boundary > header { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+.idea-boundary h3,.idea-boundary h4 { margin:.25rem 0; font-size:var(--iw-title); }
+.idea-boundary p,.idea-boundary li { overflow-wrap:anywhere; }
+.idea-boundary__status { font-size:var(--iw-meta); padding:.2rem .45rem; border-radius:999px; background:#eef2ff; }
+.idea-boundary__groups { display:grid; gap:.65rem; }
+.idea-boundary__groups section,.idea-boundary__notice,.idea-boundary__blocked { margin-top:.6rem; padding:.65rem; border-radius:.6rem; background:#f7f8fa; }
+.idea-boundary__blocked { background:#fff1f0; color:#8f1d1d; }
+.idea-boundary small { font-size:var(--iw-meta); color:#667085; }
+.idea-boundary__concept-action { margin-top:.75rem; padding:.75rem; border:1px solid #cfd8e3; border-radius:.65rem; background:#fff; }
+@media (max-width: 760px) {
+  .idea-workspace__columns { display:block; }
+  .idea-workspace__brief-toggle { display:block; width:100%; margin-bottom:.65rem; }
+  .idea-workspace__brief { display:none; position:static; max-height:none; margin-top:.75rem; }
+  .idea-workspace__brief.is-open { display:block; }
+  .idea-message { max-width:94%; }
+}

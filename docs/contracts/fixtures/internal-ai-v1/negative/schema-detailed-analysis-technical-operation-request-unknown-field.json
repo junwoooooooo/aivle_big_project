@@ -1,0 +1,34 @@
+{
+  "canonicalInputHash": "sha256:cf09d6871d75f06af8116325cab0be61f89fa5066a00b92f00d684ae8a82f5fe",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-technical_operation",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "analysisType": "TECHNICAL_OPERATION",
+    "conceptVersionKey": "concept-1",
+    "sharedEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "shortlistDecisionKey": "shortlist-1",
+    "technicalOperationInput": {
+      "evidenceKeys": [
+        "evidence-1"
+      ],
+      "operatingConstraints": []
+    },
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-technical_operation",
+  "taskRunId": "task-run-technical_operation",
+  "taskSchemaVersion": "1.0",
+  "taskType": "DETAILED_ANALYSIS"
+}

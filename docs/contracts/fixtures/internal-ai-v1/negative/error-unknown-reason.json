@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "UNKNOWN_REASON"
+      }
+    ],
+    "message": "안전한 오류",
+    "retryable": false,
+    "taskAttemptId": "task-attempt-error",
+    "taskRunId": "task-run-error"
+  }
+}

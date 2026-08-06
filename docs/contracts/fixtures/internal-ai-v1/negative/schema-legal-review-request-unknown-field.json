@@ -1,0 +1,31 @@
+{
+  "canonicalInputHash": "sha256:12a3f348b4efb33165319a33285ddb05d066c6910bd9a5595746353750bc5ce1",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-2",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "assumptions": [],
+    "constraints": [],
+    "facts": [
+      {
+        "key": "fact-1",
+        "provenanceCategory": "USER_INPUT",
+        "sourceReferences": [
+          "source-1"
+        ],
+        "text": "검증 가능한 진술",
+        "verificationNeeded": false
+      }
+    ],
+    "ideaVersionKey": "idea-1",
+    "includeRelatedStatutes": true,
+    "jurisdiction": "KR",
+    "normalizedDescription": "확정 아이디어",
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-2",
+  "taskRunId": "task-run-2",
+  "taskSchemaVersion": "1.0",
+  "taskType": "LEGAL_REVIEW"
+}

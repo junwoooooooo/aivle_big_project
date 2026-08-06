@@ -1,0 +1,8 @@
+package com.aivle.backend.journey.conceptcore;
+import com.aivle.backend.common.entity.BaseEntity;import com.aivle.backend.journey.boundary.BoundaryRule;import jakarta.persistence.*;import lombok.AccessLevel;import lombok.Getter;import lombok.NoArgsConstructor;
+@Entity @Table(name="concept_rule_traces") @Getter @NoArgsConstructor(access=AccessLevel.PROTECTED)
+public class ConceptRuleTrace extends BaseEntity {
+ public enum ComplianceStatus{SATISFIED,SATISFIED_WITH_CONTROLS,REDESIGN_REQUIRED,INSUFFICIENT_INFORMATION,HARD_BLOCK}
+ @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;@ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="assessment_id",nullable=false) private ConceptLegalAssessment assessment;@ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="boundary_rule_id",nullable=false) private BoundaryRule boundaryRule;@Enumerated(EnumType.STRING) @Column(nullable=false,length=40) private ComplianceStatus complianceStatus;@Column(nullable=false,columnDefinition="TEXT") private String conceptFieldPathsJson,implementationControlsJson,partnerDependenciesJson,evidenceIdsJson,explanation;@Column(columnDefinition="TEXT") private String prohibitedVariant;
+ public static ConceptRuleTrace create(ConceptLegalAssessment a,BoundaryRule r,ComplianceStatus s,String paths,String controls,String partners,String prohibited,String evidence,String explanation){ConceptRuleTrace v=new ConceptRuleTrace();v.assessment=a;v.boundaryRule=r;v.complianceStatus=s;v.conceptFieldPathsJson=paths;v.implementationControlsJson=controls;v.partnerDependenciesJson=partners;v.prohibitedVariant=prohibited;v.evidenceIdsJson=evidence;v.explanation=explanation;return v;}
+}

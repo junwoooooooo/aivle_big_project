@@ -1,0 +1,303 @@
+.project-create-page {
+  min-height: 100%;
+  padding: 52px 32px;
+  background: #f8fbfa;
+  color: #1f2937;
+}
+
+.project-create-content {
+  width: min(780px, 100%);
+  margin: 0 auto;
+}
+
+.project-create-header {
+  margin-bottom: 28px;
+}
+
+.project-create-chip {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #dff6ed;
+  color: #32705c;
+  font-weight: 700;
+}
+
+.project-create-header h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(26px, 4vw, 36px);
+}
+
+.project-create-header p {
+  color: #5c6f68;
+  line-height: 1.7;
+}
+
+.project-create-guide-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px solid #8cccb6;
+  border-radius: 999px;
+  background: #fff;
+  color: #265d4b;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.project-create-guide-download:hover {
+  background: #f0faf6;
+}
+
+/* --- 12가지 가이드라인 리스트 & 검증 배지 영역 --- */
+.project-create-guideline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 22px 0;
+  padding: 26px 30px;
+  border: 1px solid #cfded8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(47 111 91 / 8%);
+}
+
+.guideline-item-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: #fafdfc;
+  border: 1px solid #eef5f3;
+}
+
+.guideline-item-title {
+  line-height: 1.5;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e38;
+}
+
+.guideline-item-title span {
+  color: #4a9d80;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.guideline-status-wrapper {
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* AI 검증 상태 배지 공통 스타일 */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 검토 대기 */
+.badge-idle {
+  background: #f1f5f4;
+  color: #94a3b8;
+}
+
+/* 애니메이션: 검토중... */
+.badge-analyzing {
+  background: #e0f2fe;
+  color: #0284c7;
+  min-width: 68px;
+  text-align: center;
+}
+
+/* 통과: PASS */
+.badge-pass {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+/* 거절/누락: REJECT */
+.badge-reject-box {
+  text-align: right;
+}
+
+.badge-reject {
+  background: #ffe4e6;
+  color: #b91c1c;
+  border: 1px solid #fecdd3;
+}
+
+.reject-reason {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #e11d48;
+  line-height: 1.3;
+  text-align: left;
+  word-break: keep-all;
+}
+
+/* --- 업로드 영역 --- */
+.project-create-upload-area {
+  margin-top: 26px;
+}
+
+.project-create-upload-button {
+  width: 100%;
+  padding: 30px;
+  border: 2px dashed #8cccb6;
+  border-radius: 14px;
+  background: #f0faf6;
+  color: #245c49;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-create-upload-button:hover {
+  background: #e2f7f0;
+  border-color: #69c3a3;
+}
+
+.project-create-upload-button small {
+  display: block;
+  margin-top: 8px;
+  color: #6c7f78;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.project-create-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #b9ddcf;
+  border-radius: 14px;
+  background: #eaf8f2;
+}
+
+.project-create-file-icon {
+  font-size: 28px;
+}
+
+.project-create-file-card > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.project-create-file-card strong,
+.project-create-file-card span {
+  display: block;
+}
+
+.project-create-file-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-create-file-card div span {
+  margin-top: 4px;
+  color: #60736c;
+  font-size: 13px;
+}
+
+.project-create-file-card button {
+  padding: 8px 11px;
+  border: 1px solid #9fcfbe;
+  border-radius: 8px;
+  background: #fff;
+  color: #326d58;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* AI 검증 실행 전용 강조 버튼 */
+.project-create-verify-btn {
+  background: #32705c !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 16px !important;
+}
+
+.project-create-verify-btn:disabled {
+  background: #a3c7bc !important;
+  cursor: not-allowed;
+}
+
+.project-create-error {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #fff5f5;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* --- 하단 액션 버튼 --- */
+.project-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.project-create-actions button {
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project-create-cancel-button {
+  border: 1px solid #cbd5d1;
+  background: #fff;
+  color: #52655e;
+}
+
+.project-create-next-button {
+  border: 1px solid #4cae8b;
+  background: #69c3a3;
+  color: #123a2c;
+}
+
+/* aria-disabled / disabled 시 스타일 */
+.project-create-next-button:disabled,
+.project-create-next-button[aria-disabled='true'] {
+  border-color: #cbd5d1 !important;
+  background: #e6ebe9 !important;
+  color: #77837f !important;
+  cursor: not-allowed !important;
+  box-shadow: none;
+}
+
+/* 반응형 처리 */
+@media (max-width: 680px) {
+  .project-create-page {
+    padding: 34px 18px;
+  }
+
+  .project-create-guideline {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .project-create-file-card {
+    flex-wrap: wrap;
+  }
+
+  .project-create-file-card > div {
+    flex-basis: calc(100% - 50px);
+  }
+}

@@ -1,0 +1,17 @@
+.auth-shell::before,
+.auth-shell__background::before,
+.auth-shell__background::after { position: fixed; z-index: -1; width: min(48vw, 620px); aspect-ratio: 1; border-radius: 50%; content: ''; pointer-events: none; will-change: transform, opacity; }
+.auth-shell::before { inset: auto auto -20% 22%; background: rgb(103 221 181 / .22); animation: auth-edge-light-c 26s ease-in-out infinite; }
+.auth-shell__background::before { animation: auth-edge-light-a 20s ease-in-out infinite; }
+.auth-shell__background::after { animation: auth-edge-light-b 23s ease-in-out infinite; }
+@keyframes auth-edge-light-a { 0%, 100% { opacity: 0; transform: translate3d(-12px, -8px, 0); } 25%, 70% { opacity: .42; transform: translate3d(34px, 24px, 0); } }
+@keyframes auth-edge-light-b { 0%, 100% { opacity: 0; transform: translate3d(20px, 12px, 0); } 30%, 75% { opacity: .38; transform: translate3d(-34px, -38px, 0); } }
+@keyframes auth-edge-light-c { 0%, 100% { opacity: 0; transform: translate3d(0, 20px, 0); } 35%, 68% { opacity: .3; transform: translate3d(12px, -28px, 0); } }
+.auth-optional-fields { display: grid; gap: 14px; padding: 18px 0 0; margin: 4px 0 0; border: 0; border-top: 1px solid #dce9e6; }
+.auth-optional-fields legend { padding: 0; color: #426266; font-size: 14px; font-weight: 800; }
+.auth-optional-fields legend span { margin-inline-start: 5px; color: #769092; font-size: 12px; font-weight: 600; }
+.auth-optional-fields > p, .auth-password-rules p { margin: -6px 0 0; color: #74898b; font-size: 12px; line-height: 1.5; }
+.auth-password-rules p { margin: 4px 0 0; }
+.auth-shell--landing-transition .auth-topbar, .auth-shell--landing-transition .auth-shell__grid { animation: auth-landing-enter 420ms ease both; }
+@keyframes auth-landing-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .auth-shell::before, .auth-shell__background::before, .auth-shell__background::after, .auth-shell--landing-transition .auth-topbar, .auth-shell--landing-transition .auth-shell__grid { animation: none; } }

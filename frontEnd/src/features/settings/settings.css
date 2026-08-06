@@ -1,0 +1,8 @@
+.account-settings { max-width: 46rem; }.account-settings > nav { display: flex; gap: .25rem; margin: 0 0 1.5rem; border-bottom: 1px solid #e1e8e7; }.account-settings > nav a { padding: .65rem .8rem; color: #647b7e; font-weight: 700; text-decoration: none; }.account-settings > nav a.active { border-bottom: 2px solid #0f8878; color: #087465; }.settings-form { display: grid; gap: 1rem; }.profile-settings__avatar { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e1e8e7; }.profile-settings__avatar p { margin: .2rem 0 0; color: #718488; font-size: .86rem; }.password-check-list { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; color: #718488; font-size: .86rem; }.password-check-list li::before { content: '○'; margin-right: .45rem; }.password-check-list li[data-valid="true"] { color: #087465; }.password-check-list li[data-valid="true"]::before { content: '✓'; }
+.settings-danger-zone { display: grid; gap: 1rem; margin-top: 2.5rem; padding: 1.25rem; border: 1px solid var(--color-danger-border, #d9a3a3); border-radius: var(--radius-large, 1rem); background: var(--color-danger-surface, #fff7f7); }
+.settings-danger-zone h2 { margin: .25rem 0 .5rem; }
+.settings-danger-zone p { margin: .25rem 0; color: var(--color-text-muted, #647b7e); }
+.settings-danger-zone__eyebrow { color: var(--color-danger, #a62b2b); font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.settings-danger-zone__notice { font-weight: 700; }
+.settings-danger-zone__actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1rem; }
+.settings-danger-zone__error { color: var(--color-danger, #a62b2b); }

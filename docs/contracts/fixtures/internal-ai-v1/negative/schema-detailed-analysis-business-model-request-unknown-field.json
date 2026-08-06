@@ -1,0 +1,34 @@
+{
+  "canonicalInputHash": "sha256:506fa4b79db0bb6e1ec53649ba4a4995b6cafa95c9af2c6907979994bbb813ea",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-business_model",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "analysisType": "BUSINESS_MODEL",
+    "businessModelInput": {
+      "constraints": [],
+      "evidenceKeys": [
+        "evidence-1"
+      ]
+    },
+    "conceptVersionKey": "concept-1",
+    "sharedEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "shortlistDecisionKey": "shortlist-1",
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-business_model",
+  "taskRunId": "task-run-business_model",
+  "taskSchemaVersion": "1.0",
+  "taskType": "DETAILED_ANALYSIS"
+}

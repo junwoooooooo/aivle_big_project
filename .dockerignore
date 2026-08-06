@@ -1,0 +1,18 @@
+# The only root-context image is the Frontend. Keep the context intentionally
+# limited to its source and the two required business-plan resource folders.
+**
+!.dockerignore
+!frontEnd
+!frontEnd/**
+!docs
+!docs/guide
+!docs/guide/**
+!docs/example
+!docs/example/**
+
+frontEnd/node_modules
+frontEnd/dist
+frontEnd/coverage
+frontEnd/.env
+frontEnd/.env.*
+frontEnd/*.log

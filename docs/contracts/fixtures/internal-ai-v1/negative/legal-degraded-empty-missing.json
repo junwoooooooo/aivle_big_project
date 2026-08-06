@@ -1,0 +1,75 @@
+{
+  "canonicalInputHash": "sha256:dcf5a9b194e689cca2c5045476ccba883b095bde7efebd4ea34457bb7f44ad47",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-2",
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:00Z",
+      "sourceKeys": [
+        "source-1"
+      ],
+      "statementKey": "envelope-prov",
+      "verificationNeeded": false
+    }
+  ],
+  "result": {
+    "conditions": [],
+    "expertReviewReasons": [],
+    "findings": [],
+    "legalResult": "PASS",
+    "provenance": [
+      {
+        "category": "AI_PROPOSAL",
+        "externalSourceReferences": [],
+        "generatedAt": "2035-01-01T00:00:00Z",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "statementKey": "result-1",
+        "verificationNeeded": false
+      }
+    ],
+    "sourceCoverage": {
+      "attemptedChannels": [
+        "MOLEG_API",
+        "LEGAL_MCP"
+      ],
+      "degraded": true,
+      "missingChannels": [],
+      "successfulChannels": [
+        "MOLEG_API"
+      ],
+      "warnings": [
+        {
+          "code": "LEGAL_MCP_UNAVAILABLE",
+          "message": "제한 사항을 확인해야 합니다.",
+          "sourceKeys": []
+        }
+      ]
+    },
+    "sourceReferences": [
+      {
+        "article": "제1조",
+        "authoritative": true,
+        "currentness": "CURRENT",
+        "degraded": false,
+        "lawIdentifier": "KR-LAW-1",
+        "lawName": "예시 법령",
+        "observedAt": "2035-01-01T00:00:00Z",
+        "officialSourceUrl": "https://www.law.go.kr/example",
+        "sourceChannel": "MOLEG_API",
+        "sourceKey": "law-1"
+      }
+    ],
+    "warnings": []
+  },
+  "resultSchemaVersion": "1.0",
+  "taskAttemptId": "task-attempt-2",
+  "taskRunId": "task-run-2",
+  "taskSchemaVersion": "1.0",
+  "taskType": "LEGAL_REVIEW",
+  "usage": null,
+  "warnings": []
+}

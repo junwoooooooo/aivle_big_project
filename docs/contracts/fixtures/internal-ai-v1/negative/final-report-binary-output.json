@@ -1,0 +1,56 @@
+{
+  "canonicalInputHash": "sha256:57edce24389e58768fd865c2de50c14790462b931ec00325aab559fb684a01ec",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-11",
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:00Z",
+      "sourceKeys": [
+        "source-1"
+      ],
+      "statementKey": "envelope-prov",
+      "verificationNeeded": false
+    }
+  ],
+  "result": {
+    "binary": "AA==",
+    "caveats": [
+      "AI 제안과 사용자 결정을 구분합니다."
+    ],
+    "executiveSummary": "최종 요약",
+    "provenance": [
+      {
+        "category": "AI_PROPOSAL",
+        "externalSourceReferences": [],
+        "generatedAt": "2035-01-01T00:00:00Z",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "statementKey": "result-1",
+        "verificationNeeded": false
+      }
+    ],
+    "reportDecision": "GO",
+    "risks": [],
+    "sections": [
+      {
+        "caveats": [],
+        "findings": [],
+        "sectionKey": "section-1",
+        "summary": "구조화 결과",
+        "title": "검증 결과"
+      }
+    ],
+    "supportingFindings": [],
+    "unresolvedResearch": []
+  },
+  "resultSchemaVersion": "1.0",
+  "taskAttemptId": "task-attempt-11",
+  "taskRunId": "task-run-11",
+  "taskSchemaVersion": "1.0",
+  "taskType": "FINAL_REPORT_GENERATION",
+  "usage": null,
+  "warnings": []
+}

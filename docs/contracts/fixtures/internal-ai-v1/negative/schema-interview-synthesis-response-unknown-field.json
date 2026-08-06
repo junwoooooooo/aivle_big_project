@@ -1,0 +1,66 @@
+{
+  "canonicalInputHash": "sha256:7c701bee7295ed839a7778561e75a071e2dad838db56b8118b85d9417efe1b24",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-8",
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:00Z",
+      "sourceKeys": [
+        "source-1"
+      ],
+      "statementKey": "envelope-prov",
+      "verificationNeeded": false
+    }
+  ],
+  "result": {
+    "caveats": [
+      "합성 응답 기반입니다."
+    ],
+    "commonResponses": [
+      {
+        "interviewKeys": [
+          "interview-1"
+        ],
+        "itemKey": "synthesis-item-1",
+        "provenance": [
+          {
+            "category": "AI_PROPOSAL",
+            "externalSourceReferences": [],
+            "generatedAt": "2035-01-01T00:00:00Z",
+            "sourceKeys": [
+              "interview-1"
+            ],
+            "statementKey": "synthesis-item-prov-1",
+            "verificationNeeded": true
+          }
+        ],
+        "summary": "독립 인터뷰에서 공통으로 확인된 합성 응답입니다."
+      }
+    ],
+    "conflictingResponses": [],
+    "provenance": [
+      {
+        "category": "AI_PROPOSAL",
+        "externalSourceReferences": [],
+        "generatedAt": "2035-01-01T00:00:00Z",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "statementKey": "result-1",
+        "verificationNeeded": false
+      }
+    ],
+    "researchRecommendations": [],
+    "unexpectedField": "invalid",
+    "unresolvedQuestions": []
+  },
+  "resultSchemaVersion": "1.0",
+  "taskAttemptId": "task-attempt-8",
+  "taskRunId": "task-run-8",
+  "taskSchemaVersion": "1.0",
+  "taskType": "INTERVIEW_SYNTHESIS",
+  "usage": null,
+  "warnings": []
+}

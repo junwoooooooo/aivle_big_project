@@ -1,0 +1,41 @@
+{
+  "canonicalInputHash": "sha256:359ba7c4ef1aec9ce5a0cb5814e05f4b6efbde57edcfa666cc579d6deec7b3d8",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-4",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "concept": {
+      "assumptions": [],
+      "conceptVersionKey": "concept-1",
+      "constraints": [],
+      "differentiators": [],
+      "evidenceNeeds": [],
+      "solutionOutline": "해결 방향",
+      "targetProblem": "해결할 문제",
+      "targetUserContext": "사용 맥락",
+      "title": "검증 개념",
+      "valueProposition": "핵심 가치"
+    },
+    "conceptVersionKey": "concept-1",
+    "dimensionKeys": [
+      "dimension-1"
+    ],
+    "sharedEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-4",
+  "taskRunId": "task-run-4",
+  "taskSchemaVersion": "1.0",
+  "taskType": "QUICK_ASSESSMENT"
+}

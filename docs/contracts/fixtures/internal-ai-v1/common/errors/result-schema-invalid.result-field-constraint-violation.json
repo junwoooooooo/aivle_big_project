@@ -1,0 +1,17 @@
+{
+  "error": {
+    "code": "RESULT_SCHEMA_INVALID",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "field": "input.example",
+        "limitName": "FIELD_BOUND",
+        "reason": "RESULT_FIELD_CONSTRAINT_VIOLATION"
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": false,
+    "taskAttemptId": "task-attempt-error",
+    "taskRunId": "task-run-error"
+  }
+}
