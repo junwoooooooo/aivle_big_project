@@ -129,6 +129,9 @@ public enum ErrorCode {
     IDEA_NOT_CONFIRMED(HttpStatus.CONFLICT, "법률 검토 전에 아이디어를 확정해 주세요.", false),
     AI_CONFIGURATION_INVALID(HttpStatus.SERVICE_UNAVAILABLE, "AI Provider 설정 또는 API Key를 확인해 주세요.", false),
     AI_RESULT_INVALID(HttpStatus.BAD_GATEWAY, "AI 응답을 유효한 구조로 해석할 수 없습니다.", false),
+    CONCEPT_NOT_SELECTABLE(HttpStatus.UNPROCESSABLE_ENTITY, "현재 공개된 컨셉 중 하나를 선택해 주세요.", false),
+    CONCEPT_SELECTION_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "시장분석 전달 전에 컨셉 선택을 확정해 주세요.", false),
+    MODULE_INPUT_STALE(HttpStatus.CONFLICT, "현재 선택과 다른 입력 Snapshot입니다.", false),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.", true);
 
     private final HttpStatus httpStatus;

@@ -44,6 +44,16 @@
 .selection-draft p { color: #bceccb; margin: 4px 0 0; }
 .selection-draft button { background: #fff; border: 0; border-radius: 10px; color: #173e7a; font-weight: 700; padding: 0 18px; white-space: nowrap; }
 .selection-draft button:disabled { cursor: not-allowed; opacity: .5; }
+.selection-confirmation { background: #fff; border: 1px solid #b9c9df; border-radius: 16px; display: grid; gap: 16px; padding: 20px; }
+.selection-confirmation p, .selection-confirmation h2 { margin: 0 0 5px; }
+.selection-confirmation > div > span, .selection-confirmation label > span { color: #5e6d82; }
+.selection-confirmation label { display: grid; gap: 7px; }
+.selection-confirmation textarea { border: 1px solid #aab5c5; border-radius: 10px; font: inherit; padding: 11px; resize: vertical; }
+.selection-confirmation__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.selection-confirmation__actions button, .selection-confirmation__actions a { align-items: center; border-radius: 10px; display: inline-flex; font-weight: 700; padding: 0 16px; }
+.selection-confirmation__actions button { background: #245fc0; border: 0; color: #fff; }
+.selection-confirmation__actions button:disabled { opacity: .5; }
+.selection-confirmation__actions a { border: 1px solid #245fc0; color: #245fc0; text-decoration: none; }
 .legal-dialog__backdrop { background: #111827a6; display: grid; inset: 0; padding: 24px; place-items: center; position: fixed; z-index: 20; }
 .legal-dialog { background: #fff; border-radius: 16px; box-shadow: 0 24px 80px #0005; max-height: calc(100vh - 48px); max-width: 760px; outline: none; overflow: auto; padding: 22px; width: 100%; }
 .legal-dialog > header { align-items: flex-start; display: flex; justify-content: space-between; }

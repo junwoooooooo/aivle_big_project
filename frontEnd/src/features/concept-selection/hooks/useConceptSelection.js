@@ -17,7 +17,7 @@ function readDraft(projectId) {
 export default function useConceptSelection(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createConceptSelectionApi(client), [client]);
-  const [state, setState] = useState({ loading: true, run: null, concepts: [], error: null });
+  const [state, setState] = useState({ loading: true, run: null, concepts: [], currentSelection: null, error: null });
   const [draft, setDraft] = useState(() => readDraft(projectId));
 
   const refresh = useCallback(async () => {
@@ -25,14 +25,20 @@ export default function useConceptSelection(projectId) {
       const runPayload = await api.currentRun(projectId);
       const run = runPayload.data;
       if (run?.status !== 'COMPLETED') {
-        setState({ loading: false, run, concepts: [], error: null });
+        setState({ loading: false, run, concepts: [], currentSelection: null, error: null });
         return;
       }
-      const conceptPayload = await api.concepts(projectId);
-      setState({ loading: false, run, concepts: conceptPayload.data?.concepts ?? [], error: null });
+      const [conceptPayload, currentSelection] = await Promise.all([
+        api.concepts(projectId),
+        api.currentSelection(projectId).then((payload) => payload.data).catch((error) => {
+          if (error?.status === 404) return null;
+          throw error;
+        }),
+      ]);
+      setState({ loading: false, run, concepts: conceptPayload.data?.concepts ?? [], currentSelection, error: null });
     } catch (error) {
       if (error?.status === 404) {
-        setState({ loading: false, run: null, concepts: [], error: null });
+        setState({ loading: false, run: null, concepts: [], currentSelection: null, error: null });
         return;
       }
       setState((value) => ({ ...value, loading: false, error }));
@@ -48,5 +54,11 @@ export default function useConceptSelection(projectId) {
     return next;
   }, [projectId]);
 
-  return { ...state, draft, refresh, saveDraft };
+  const confirmSelection = useCallback(async (conceptId, selectionReason) => {
+    const payload = await api.select(projectId, conceptId, selectionReason);
+    setState((value) => ({ ...value, currentSelection: payload.data }));
+    return payload.data;
+  }, [api, projectId]);
+
+  return { ...state, draft, refresh, saveDraft, confirmSelection };
 }

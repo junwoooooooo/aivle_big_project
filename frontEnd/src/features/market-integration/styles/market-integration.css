@@ -1,0 +1,23 @@
+.market-integration { color: #172033; display: grid; gap: 22px; }
+.market-integration > header { align-items: flex-start; display: flex; gap: 20px; justify-content: space-between; }
+.market-integration > header p, .market-integration > header h1 { margin: 0 0 6px; }
+.market-integration > header span { color: #5d6c80; }
+.market-integration__status { background: #eef2f7; border-radius: 999px; color: #43536a !important; font-weight: 700; padding: 9px 12px; }
+.market-integration__grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.market-integration__grid article, .market-integration__manifest, .market-integration__runs { border: 1px solid #d7deea; border-radius: 14px; padding: 17px; }
+.market-integration__grid article { display: grid; gap: 7px; }
+.market-integration__grid article > span { color: #667085; font-size: .82rem; }
+.market-integration__grid article > strong { overflow-wrap: anywhere; }
+.market-integration__grid article p { color: #59687d; margin: 0; overflow-wrap: anywhere; }
+.market-integration__manifest ul { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.market-integration__actions, .market-integration__error { align-items: center; border-radius: 14px; display: flex; gap: 16px; justify-content: space-between; padding: 17px; }
+.market-integration__actions { background: #eaf3ff; border: 1px solid #bdd5f5; }
+.market-integration__actions > div, .market-integration__error { display: flex; flex-direction: column; }
+.market-integration__actions button, .market-integration__actions a, .market-integration__error button { align-items: center; border-radius: 9px; display: inline-flex; min-height: 44px; padding: 0 15px; }
+.market-integration__actions button, .market-integration__actions a { background: #245fc0; border: 0; color: #fff; font-weight: 700; text-decoration: none; }
+.market-integration__error { background: #fff1f1; border: 1px solid #efc1c1; }
+.market-integration__runs ul { display: grid; gap: 10px; list-style: none; padding: 0; }
+.market-integration__runs li { align-items: center; background: #f6f8fb; border-radius: 10px; display: flex; gap: 12px; justify-content: space-between; padding: 12px; }
+.market-integration__runs li div { display: grid; gap: 4px; }
+.market-integration__runs li span, .market-integration__runs li small { color: #667085; overflow-wrap: anywhere; }
+@media (max-width: 700px) { .market-integration > header, .market-integration__actions { flex-direction: column; } .market-integration__grid, .market-integration__manifest ul { grid-template-columns: 1fr; } }
