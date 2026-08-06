@@ -11,8 +11,11 @@ import com.aivle.backend.pipeline.concept.domain.ConceptSlot;
 import com.aivle.backend.pipeline.concept.domain.ConceptSlotStatus;
 import com.aivle.backend.pipeline.concept.domain.VariationFocus;
 import com.aivle.backend.pipeline.concept.repository.ConceptFactoryRunRepository;
+import com.aivle.backend.pipeline.concept.repository.ConceptAttemptRepository;
 import com.aivle.backend.pipeline.concept.repository.ConceptRepository;
 import com.aivle.backend.pipeline.concept.repository.ConceptSlotRepository;
+import com.aivle.backend.pipeline.legal.repository.ConceptLegalAssessmentRepository;
+import com.aivle.backend.pipeline.legal.repository.ConceptLegalEvidenceLinkRepository;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.project.entity.Project;
@@ -38,6 +41,9 @@ public class ConceptFactoryService {
     private final ConceptRepository concepts;
     private final IdeaBriefRepository ideaBriefs;
     private final ProjectRepository projects;
+    private final ConceptAttemptRepository attempts;
+    private final ConceptLegalAssessmentRepository legalAssessments;
+    private final ConceptLegalEvidenceLinkRepository legalEvidenceLinks;
     private final TaskRunService taskRuns;
     private final CanonicalInputHasher inputHasher;
     private final ObjectMapper objectMapper;
@@ -128,11 +134,23 @@ public class ConceptFactoryService {
     }
 
     private SlotResponse response(ConceptSlot slot) {
-        return new SlotResponse(slot.getSlotNumber(), slot.getVariationFocus(), slot.getStatus(), slot.getAttemptCount(), slot.getLegalRedesignCount());
+        String phase = attempts.findFirstBySlotIdOrderByAttemptNumberDesc(slot.getId())
+            .map(value -> value.getPhase().name()).orElse(null);
+        return new SlotResponse(slot.getSlotNumber(), slot.getVariationFocus(), slot.getStatus(), phase,
+            slot.getAttemptCount(), slot.getLegalRedesignCount(), slot.getUpdatedAt());
     }
 
     private ConceptResponse response(Concept concept) {
+        var assessment = legalAssessments.findByConceptIdAndProjectIdAndDeletedAtIsNull(concept.getId(), concept.getProjectId())
+            .orElseThrow(() -> new IllegalStateException("published concept requires a legal assessment"));
+        List<EvidenceView> evidence = legalEvidenceLinks
+            .findAllByAssessmentIdAndProjectIdAndDeletedAtIsNull(assessment.getId(), concept.getProjectId()).stream()
+            .map(link -> new EvidenceView(link.getEvidence().getTitle(), link.getEvidence().getSourceUri())).toList();
+        LegalReviewView legal = new LegalReviewView(assessment.getStatus(), assessment.getSafeSummary(),
+            objectMapper.readTree(assessment.getAssessmentJson()), evidence);
         return new ConceptResponse(concept.getId(), concept.getSlot().getSlotNumber(), concept.getSlot().getVariationFocus(),
-            concept.getTitle(), concept.getSummary(), concept.getLegalStatus());
+            concept.getTitle(), concept.getSummary(), concept.getLegalStatus(), concept.getSourceSnapshotHash(),
+            concept.getCanonicalHash(), concept.getMajorFieldHash(), concept.getRun().getStatus() == ConceptFactoryRunStatus.STALE,
+            objectMapper.readTree(concept.getCandidateJson()), legal);
     }
 }
