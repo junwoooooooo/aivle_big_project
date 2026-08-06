@@ -65,9 +65,8 @@ describe('auth and project integration flow', () => {
     });
     fireEvent.submit(screen.getByRole('button', { name: '로그인' }).closest('form'));
 
-    expect(await screen.findByRole('heading', { name: '첫 사업 검증 프로젝트를 만들어 보세요' }))
-      .toBeInTheDocument();
-    fireEvent.click(screen.getByRole('link', { name: '프로젝트 만들기' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Projects' }));
+    fireEvent.click(await screen.findByRole('link', { name: '프로젝트 만들기' }));
     fireEvent.change(document.getElementById('project-title'), {
       target: { value: '통합 프로젝트' },
     });
@@ -75,7 +74,7 @@ describe('auth and project integration flow', () => {
 
     expect(await screen.findByRole('heading', { name: '통합 프로젝트' }))
       .toBeInTheDocument();
-    expect(screen.getByText('현재 재설계 범위')).toBeInTheDocument();
+    expect(document.getElementById('project-overview-title')).toHaveTextContent('프로젝트 개요');
     expect(client.post).toHaveBeenCalledWith('/projects', expect.objectContaining({
       title: '통합 프로젝트',
     }));

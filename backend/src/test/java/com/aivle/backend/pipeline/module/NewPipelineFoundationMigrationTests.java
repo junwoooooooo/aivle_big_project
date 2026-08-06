@@ -11,14 +11,14 @@ class NewPipelineFoundationMigrationTests {
     void definesAdditiveProjectScopedPipelineFoundation() throws IOException {
         String sql;
         try (var stream = getClass().getClassLoader().getResourceAsStream(
-            "db/migration/V6__new_pipeline_foundation.sql"
+            "db/migration/V1__new_pipeline_baseline.sql"
         )) {
             assertThat(stream).isNotNull();
             sql = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
 
         assertThat(sql).contains(
-            "CREATE TABLE pipeline_module_runs",
+            "CREATE TABLE module_runs",
             "CREATE TABLE module_handoffs",
             "CREATE TABLE module_results",
             "CREATE TABLE planning_snapshots"
@@ -27,14 +27,13 @@ class NewPipelineFoundationMigrationTests {
             "REFERENCES projects(id)",
             "REFERENCES users(id)",
             "REFERENCES stored_files(id)",
-            "REFERENCES task_runs(id, project_id)"
+            "REFERENCES selected_concept_snapshots(id, project_id)"
         );
         assertThat(sql).contains(
-            "uk_pipeline_module_run_sequence",
             "uk_module_handoff_idempotency",
-            "uk_module_result_sequence",
-            "uk_planning_snapshot_sequence",
-            "uk_planning_snapshot_hash"
+            "uk_module_run_handoff",
+            "uk_planning_snapshot_project_sequence",
+            "ck_planning_snapshot_hash"
         );
         assertThat(sql).doesNotContain("DROP TABLE", "TRUNCATE TABLE", "DELETE FROM");
     }

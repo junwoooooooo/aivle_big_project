@@ -55,7 +55,7 @@ class ProjectApiIntegrationTests {
                     """))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.title").value("검증 프로젝트"))
-            .andExpect(jsonPath("$.data.stage").value("DOCUMENT"))
+            .andExpect(jsonPath("$.data.stage").doesNotExist())
             .andExpect(jsonPath("$.data.status").value("DRAFT"))
             .andReturn().getResponse().getContentAsString();
 

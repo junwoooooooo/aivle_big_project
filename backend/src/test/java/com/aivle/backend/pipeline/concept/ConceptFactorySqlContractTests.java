@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class ConceptFactorySqlContractTests {
     @Test
     void migrationContainsAllTablesAndIsolationConstraints() throws IOException {
-        String sql = Files.readString(Path.of("src/main/resources/db/migration/V8__concept_factory_domain.sql"));
+        String sql = Files.readString(Path.of("src/main/resources/db/migration/V1__new_pipeline_baseline.sql"));
         List.of("legal_context_packs", "legal_evidence", "concept_factory_runs", "concept_slots", "concept_attempts",
             "concepts", "concept_legal_assessments", "concept_legal_evidence_links", "concept_rejection_summaries")
             .forEach(table -> assertThat(sql).contains("CREATE TABLE " + table));
