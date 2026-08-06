@@ -27,8 +27,11 @@ public class ConceptLegalAssessment extends BaseEntity {
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 40) private ConceptLegalStatus status;
     @Column(nullable = false, length = 1000) private String safeSummary;
+    @Column(nullable = false, columnDefinition = "TEXT") private String assessmentJson;
+    @Column(nullable = false, columnDefinition = "TEXT") private String legalTraceJson;
 
-    public static ConceptLegalAssessment create(Concept concept, LegalContextPack pack, ConceptLegalStatus status, String safeSummary) {
+    public static ConceptLegalAssessment create(Concept concept, LegalContextPack pack, ConceptLegalStatus status, String safeSummary,
+                                                 String assessmentJson, String legalTraceJson) {
         ConceptLegalAssessment assessment = new ConceptLegalAssessment();
         assessment.id = UUID.randomUUID().toString();
         assessment.concept = concept;
@@ -36,6 +39,8 @@ public class ConceptLegalAssessment extends BaseEntity {
         assessment.projectId = concept.getProjectId();
         assessment.status = status;
         assessment.safeSummary = safeSummary;
+        assessment.assessmentJson = assessmentJson;
+        assessment.legalTraceJson = legalTraceJson;
         return assessment;
     }
 }

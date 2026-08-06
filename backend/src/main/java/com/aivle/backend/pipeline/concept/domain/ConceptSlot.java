@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public class ConceptSlot extends BaseEntity {
     private static final Map<ConceptSlotStatus, Set<ConceptSlotStatus>> TRANSITIONS = Map.ofEntries(
         Map.entry(ConceptSlotStatus.QUEUED, EnumSet.of(ConceptSlotStatus.GENERATING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
-        Map.entry(ConceptSlotStatus.GENERATING, EnumSet.of(ConceptSlotStatus.GENERATED, ConceptSlotStatus.SCHEMA_INVALID, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
+        Map.entry(ConceptSlotStatus.GENERATING, EnumSet.of(ConceptSlotStatus.GENERATED, ConceptSlotStatus.SCHEMA_INVALID, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.GENERATED, EnumSet.of(ConceptSlotStatus.VALIDATING_ORIGIN, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.SCHEMA_INVALID, EnumSet.of(ConceptSlotStatus.GENERATING, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.VALIDATING_ORIGIN, EnumSet.of(ConceptSlotStatus.VALIDATING_LEGAL, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
@@ -71,5 +71,9 @@ public class ConceptSlot extends BaseEntity {
         }
         attemptCount++;
         return attemptCount;
+    }
+
+    public void fail() {
+        if (status != ConceptSlotStatus.ELIGIBLE && status != ConceptSlotStatus.STALE) status = ConceptSlotStatus.FAILED;
     }
 }

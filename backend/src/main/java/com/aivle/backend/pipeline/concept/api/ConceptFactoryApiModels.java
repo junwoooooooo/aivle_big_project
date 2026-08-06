@@ -15,7 +15,7 @@ public final class ConceptFactoryApiModels {
     public record RunResponse(
         String runId, String sourceIdeaBriefSnapshotId, String sourceSnapshotHash,
         ConceptFactoryRunStatus status, int replacementRounds, int inspectedCandidateCount,
-        int providerTransientRetryCount, LocalDateTime updatedAt
+        int providerTransientRetryCount, String activeJobId, LocalDateTime updatedAt
     ) {}
     public record SlotResponse(int slotNumber, VariationFocus variationFocus, ConceptSlotStatus status, int attemptCount, int legalRedesignCount) {}
     public record ConceptResponse(String conceptId, int slotNumber, VariationFocus variationFocus, String title, String summary, ConceptLegalStatus legalStatus) {}

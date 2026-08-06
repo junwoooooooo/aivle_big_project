@@ -63,6 +63,9 @@ public class ConceptFactoryRun extends BaseEntity {
     @Column(nullable = false)
     private Long createdByUserId;
 
+    @Column(length = 64)
+    private String taskRunId;
+
     public static ConceptFactoryRun create(Project project, String snapshotId, String snapshotHash, Long userId) {
         if (project == null || snapshotId == null || snapshotId.isBlank()) throw new IllegalArgumentException("confirmed Idea Brief snapshot is required");
         if (snapshotHash == null || !snapshotHash.matches("sha256:[0-9a-f]{64}")) throw new IllegalArgumentException("snapshot hash is invalid");
@@ -74,6 +77,11 @@ public class ConceptFactoryRun extends BaseEntity {
         run.status = ConceptFactoryRunStatus.QUEUED;
         run.createdByUserId = userId;
         return run;
+    }
+
+    public void attachTaskRun(String taskRunId) {
+        if (this.taskRunId != null && !this.taskRunId.equals(taskRunId)) throw new IllegalStateException("task run already attached");
+        this.taskRunId = taskRunId;
     }
 
     public void transitionTo(ConceptFactoryRunStatus next) {

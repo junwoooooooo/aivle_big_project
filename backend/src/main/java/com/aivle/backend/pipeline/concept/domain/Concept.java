@@ -33,6 +33,8 @@ public class Concept extends BaseEntity {
     @Column(nullable = false, length = 71) private String majorFieldHash;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 40) private ConceptLegalStatus legalStatus;
     @Column(nullable = false) private boolean published;
+    @Column(nullable = false, columnDefinition = "TEXT") private String candidateJson;
+    @Column(nullable = false, columnDefinition = "TEXT") private String originTraceJson;
 
     public static Concept eligible(
         ConceptFactoryRun run,
@@ -41,7 +43,7 @@ public class Concept extends BaseEntity {
         String summary,
         String canonicalHash,
         String majorFieldHash,
-        ConceptLegalStatus legalStatus
+        ConceptLegalStatus legalStatus, String candidateJson, String originTraceJson
     ) {
         if (!legalStatus.isPubliclyEligible()) throw new IllegalArgumentException("concept legal status is not publicly eligible");
         Concept concept = new Concept();
@@ -56,6 +58,8 @@ public class Concept extends BaseEntity {
         concept.canonicalHash = ConceptCanonicalizer.requireHash(canonicalHash);
         concept.majorFieldHash = ConceptCanonicalizer.requireHash(majorFieldHash);
         concept.legalStatus = legalStatus;
+        concept.candidateJson = candidateJson;
+        concept.originTraceJson = originTraceJson;
         return concept;
     }
 

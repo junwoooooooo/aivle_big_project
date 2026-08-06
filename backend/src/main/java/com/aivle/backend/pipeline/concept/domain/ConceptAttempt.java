@@ -26,6 +26,10 @@ public class ConceptAttempt extends BaseEntity {
     @Column(nullable = false) private int attemptNumber;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private ConceptAttemptPhase phase;
     @Column(length = 64) private String taskRunId;
+    @Enumerated(EnumType.STRING) @Column(length = 40) private ConceptAttemptError errorClassification;
+    @Column(length = 80) private String safeErrorCode;
+    @Column(nullable = false) private boolean retryable;
+    @Column(columnDefinition = "TEXT") private String resultJson;
 
     public static ConceptAttempt begin(ConceptSlot slot, ConceptAttemptPhase phase, String taskRunId) {
         ConceptAttempt attempt = new ConceptAttempt();
@@ -36,5 +40,20 @@ public class ConceptAttempt extends BaseEntity {
         attempt.phase = phase;
         attempt.taskRunId = taskRunId;
         return attempt;
+    }
+
+    public void succeed(String resultJson) {
+        if (resultJson == null || resultJson.isBlank()) throw new IllegalArgumentException("attempt result is required");
+        this.resultJson = resultJson;
+        this.errorClassification = null;
+        this.safeErrorCode = null;
+        this.retryable = false;
+    }
+
+    public void fail(ConceptAttemptError classification, String safeErrorCode, boolean retryable) {
+        this.errorClassification = classification;
+        this.safeErrorCode = safeErrorCode;
+        this.retryable = retryable;
+        this.resultJson = null;
     }
 }

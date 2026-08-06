@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConceptRepository extends JpaRepository<Concept, String> {
     List<Concept> findAllByRunIdAndProjectIdAndPublishedTrueAndDeletedAtIsNullOrderBySlotSlotNumber(String runId, Long projectId);
+    List<Concept> findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(String runId, Long projectId);
 }

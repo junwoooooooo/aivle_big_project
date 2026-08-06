@@ -17,11 +17,18 @@ import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import com.aivle.backend.taskrun.service.TaskRunService;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +38,10 @@ public class ConceptFactoryService {
     private final ConceptRepository concepts;
     private final IdeaBriefRepository ideaBriefs;
     private final ProjectRepository projects;
+    private final TaskRunService taskRuns;
+    private final CanonicalInputHasher inputHasher;
+    private final ObjectMapper objectMapper;
+    private final JobEventPublisher jobEvents;
 
     @Transactional
     public RunResponse create(Long ownerId, Long projectId, CreateRunRequest request) {
@@ -51,6 +62,15 @@ public class ConceptFactoryService {
             .map(focus -> ConceptSlot.create(run, focus.ordinal() + 1, focus))
             .toList();
         slots.saveAll(fiveSlots);
+        String input = objectMapper.writeValueAsString(java.util.Map.of(
+            "runId", run.getId(), "ideaBriefSnapshotId", snapshot.getId(), "snapshotHash", snapshot.getSnapshotHash()
+        ));
+        String key = "concept-factory:" + run.getId();
+        TaskRun task = taskRuns.create(ownerId, projectId, TaskType.CONCEPT_FACTORY_RUN, "CONCEPT_FACTORY_RUN",
+            run.getId(), input, inputHasher.hash(TaskType.CONCEPT_FACTORY_RUN, "1.0", "ko-KR", input), key, key, 1);
+        run.attachTaskRun(task.getId());
+        jobEvents.publish(new JobEventPublisher.Command(projectId, task.getId(), task.getId(), "QUEUED",
+            "job.concept.run.queued", JobEvent.Status.QUEUED, "job.concept.run.queued", java.util.Map.of(), null));
         return response(run);
     }
 
@@ -104,7 +124,7 @@ public class ConceptFactoryService {
 
     private RunResponse response(ConceptFactoryRun run) {
         return new RunResponse(run.getId(), run.getSourceIdeaBriefSnapshotId(), run.getSourceSnapshotHash(), run.getStatus(),
-            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getUpdatedAt());
+            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getTaskRunId(), run.getUpdatedAt());
     }
 
     private SlotResponse response(ConceptSlot slot) {

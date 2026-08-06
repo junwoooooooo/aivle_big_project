@@ -1,0 +1,12 @@
+package com.aivle.backend.pipeline.concept.domain;
+
+public enum ConceptAttemptError {
+    SCHEMA_INVALID,
+    TRANSIENT_PROVIDER_FAILURE,
+    PERMANENT_PROVIDER_FAILURE,
+    ORIGIN_INVALID,
+    LEGAL_REDESIGN_REQUIRED,
+    LEGAL_REJECTED,
+    INSUFFICIENT_INFORMATION,
+    INTERNAL_EXECUTION_ERROR
+}
