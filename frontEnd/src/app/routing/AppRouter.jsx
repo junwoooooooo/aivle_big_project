@@ -10,6 +10,7 @@ import PublicOnlyRoute from '../../features/auth/PublicOnlyRoute.jsx';
 import { ProjectCreatePage, ProjectListPage } from '../../features/projects/ProjectPages.jsx';
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { ConceptFactoryPage } from '../../features/concept-factory/index.js';
+import { ConceptComparisonPage } from '../../features/concept-selection/index.js';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
 import ProjectSettingsSheet from '../../features/projects/ProjectSettingsSheet.jsx';
@@ -69,7 +70,7 @@ export default function AppRouter() {
             <Route path="overview" element={<ProjectOverviewPage />} />
             <Route path="idea" element={<IdeaIntakePage />} />
             <Route path="concepts" element={<ConceptFactoryPage />} />
-            <Route path="concepts/compare" element={<ProjectModulePlaceholder moduleId="conceptCompare" />} />
+            <Route path="concepts/compare" element={<ConceptComparisonPage />} />
             <Route path="market" element={<ProjectModulePlaceholder moduleId="market" />} />
             <Route path="business-persona-test" element={<ProjectModulePlaceholder moduleId="businessPersonaTest" />} />
             <Route path="marketing" element={<ProjectModulePlaceholder moduleId="marketing" />} />
