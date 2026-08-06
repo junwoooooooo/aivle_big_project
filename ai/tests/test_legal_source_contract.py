@@ -7,8 +7,12 @@ from app.models.legal_source import LegalSourcePipelineResult
 
 
 class FakeMolegClient:
+    def __init__(self, *_):
+        pass
+
     async def search_exact(self, law_name):
-        return LawMetadata(law_name, "100", "LAW-100", "20260803", "https://law.example/100")
+        return LawMetadata(law_name, "100", "LAW-100", "20260803",
+            "https://www.law.go.kr/법령/개인정보보호법", "20250101")
 
     async def articles(self, metadata):
         return [{"article": "제1조", "title": "처리방침", "text": "개인정보 처리자는 처리방침을 공개해야 한다."}]
@@ -36,6 +40,11 @@ def test_legal_source_pipeline_contract(monkeypatch):
     assert value.registryVersion == "legal-registry-v1"
     assert value.evidence[0].registryVersion == value.registryVersion
     assert value.evidence[0].lawName == "개인정보 보호법"
+    assert value.evidence[0].articleReference == "제1조"
+    assert value.evidence[0].lawId == "LAW-100"
+    assert value.evidence[0].promulgationDate == "20250101"
+    assert value.evidence[0].contentHash.startswith("sha256:")
+    assert value.evidence[0].queryKey.startswith("sha256:")
     assert value.findings[0].reasoning.evidenceIds == [value.evidence[0].evidenceId]
 
 

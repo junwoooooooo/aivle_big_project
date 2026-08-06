@@ -145,7 +145,10 @@ public class ConceptFactoryService {
             .orElseThrow(() -> new IllegalStateException("published concept requires a legal assessment"));
         List<EvidenceView> evidence = legalEvidenceLinks
             .findAllByAssessmentIdAndProjectIdAndDeletedAtIsNull(assessment.getId(), concept.getProjectId()).stream()
-            .map(link -> new EvidenceView(link.getEvidence().getTitle(), link.getEvidence().getSourceUri())).toList();
+            .map(link -> new EvidenceView(link.getEvidence().getSourceType(), link.getEvidence().getLawId(),
+                link.getEvidence().getLawName(), link.getEvidence().getArticleReference(),
+                link.getEvidence().getTitle(), link.getEvidence().getEffectiveDate(),
+                link.getEvidence().getRetrievedAt(), link.getEvidence().getOfficialSourceUri())).toList();
         LegalReviewView legal = new LegalReviewView(assessment.getStatus(), assessment.getSafeSummary(),
             objectMapper.readTree(assessment.getAssessmentJson()), evidence);
         return new ConceptResponse(concept.getId(), concept.getSlot().getSlotNumber(), concept.getSlot().getVariationFocus(),

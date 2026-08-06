@@ -355,6 +355,9 @@ CREATE TABLE legal_context_packs (
     source_snapshot_id VARCHAR(64) NOT NULL,
     source_snapshot_hash VARCHAR(71) NOT NULL,
     status VARCHAR(30) NOT NULL,
+    canonical_context_json TEXT NOT NULL,
+    provenance_json TEXT NOT NULL,
+    registry_version VARCHAR(80) NOT NULL,
     created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uk_legal_context_id_project UNIQUE (id, project_id),
     CONSTRAINT fk_legal_context_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
@@ -367,13 +370,28 @@ CREATE TABLE legal_evidence (
     id VARCHAR(64) PRIMARY KEY,
     context_pack_id VARCHAR(64) NOT NULL,
     project_id BIGINT NOT NULL,
+    source_type VARCHAR(30) NOT NULL,
+    law_id VARCHAR(100),
+    official_identifier VARCHAR(100) NOT NULL,
+    law_name VARCHAR(500) NOT NULL,
+    article_reference VARCHAR(200) NOT NULL,
     title VARCHAR(500) NOT NULL,
-    source_uri VARCHAR(1000) NOT NULL,
+    official_source_uri VARCHAR(1000) NOT NULL,
+    jurisdiction VARCHAR(10) NOT NULL,
+    promulgation_date VARCHAR(20),
+    effective_date VARCHAR(20),
+    retrieved_at TIMESTAMP NOT NULL,
     content_hash VARCHAR(71) NOT NULL,
+    bounded_provision_summary VARCHAR(1000) NOT NULL,
+    query_key VARCHAR(71) NOT NULL,
+    registry_version VARCHAR(80) NOT NULL,
     created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT uk_legal_evidence_id_project UNIQUE (id, project_id),
     CONSTRAINT fk_legal_evidence_context FOREIGN KEY (context_pack_id, project_id) REFERENCES legal_context_packs(id, project_id) ON DELETE NO ACTION,
-    CONSTRAINT ck_legal_evidence_hash CHECK (content_hash LIKE 'sha256:%')
+    CONSTRAINT uk_legal_evidence_cache UNIQUE (context_pack_id, query_key, article_reference, content_hash),
+    CONSTRAINT ck_legal_evidence_hash CHECK (content_hash LIKE 'sha256:%' AND query_key LIKE 'sha256:%'),
+    CONSTRAINT ck_legal_evidence_source CHECK (source_type = 'OFFICIAL_LAW' AND jurisdiction = 'KR'),
+    CONSTRAINT ck_legal_evidence_official_uri CHECK (official_source_uri LIKE 'https://www.law.go.kr/%' AND official_source_uri <> 'https://www.law.go.kr/')
 );
 
 CREATE TABLE concept_factory_runs (
@@ -507,16 +525,6 @@ ALTER TABLE concept_attempts ADD CONSTRAINT ck_concept_attempt_error CHECK (erro
     'SCHEMA_INVALID','TRANSIENT_PROVIDER_FAILURE','PERMANENT_PROVIDER_FAILURE','ORIGIN_INVALID',
     'LEGAL_REDESIGN_REQUIRED','LEGAL_REJECTED','INSUFFICIENT_INFORMATION','INTERNAL_EXECUTION_ERROR'
 ));
-
-ALTER TABLE legal_context_packs ADD COLUMN industry VARCHAR(500) NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN region VARCHAR(500) NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN platform_role VARCHAR(1000) NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN transaction_structure TEXT NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN payment VARCHAR(1000) NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN personal_data VARCHAR(1000) NOT NULL DEFAULT '미확인';
-ALTER TABLE legal_context_packs ADD COLUMN physical_activities_json TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE legal_context_packs ADD COLUMN qualifications_and_permits_json TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE legal_context_packs ADD COLUMN labeling_and_advertising_json TEXT NOT NULL DEFAULT '[]';
 
 ALTER TABLE concepts ADD COLUMN candidate_json TEXT NOT NULL DEFAULT '{}';
 ALTER TABLE concepts ADD COLUMN origin_trace_json TEXT NOT NULL DEFAULT '{}';

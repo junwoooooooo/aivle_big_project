@@ -109,8 +109,14 @@ public class ConceptSelectionService {
             assessments.findByConceptIdAndProjectIdAndDeletedAtIsNull(concept.getId(), selection.getProjectId()).orElseThrow().getId(), selection.getProjectId())
             .forEach(link -> {
                 ObjectNode item = evidence.addObject();
+                item.put("sourceType", link.getEvidence().getSourceType());
+                item.put("lawId", link.getEvidence().getLawId());
+                item.put("lawName", link.getEvidence().getLawName());
+                item.put("articleReference", link.getEvidence().getArticleReference());
                 item.put("title", link.getEvidence().getTitle());
-                item.put("officialSourceUri", link.getEvidence().getSourceUri());
+                item.put("officialSourceUri", link.getEvidence().getOfficialSourceUri());
+                item.put("effectiveDate", link.getEvidence().getEffectiveDate());
+                item.put("retrievedAt", link.getEvidence().getRetrievedAt().toString());
                 item.put("contentHash", link.getEvidence().getContentHash());
             });
         return root;

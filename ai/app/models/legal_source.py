@@ -71,6 +71,17 @@ class LegalEvidence(StrictModel):
     effectiveDate: str | None
     lawUrl: str = Field(min_length=1)
     verifiedAt: str = Field(min_length=1)
+    sourceType: Literal["OFFICIAL_LAW"]
+    lawId: str | None
+    officialIdentifier: str = Field(min_length=1)
+    articleReference: str = Field(min_length=1)
+    officialSourceUri: str = Field(pattern=r"^https://www\.law\.go\.kr/")
+    jurisdiction: Literal["KR"]
+    promulgationDate: str | None
+    retrievedAt: str = Field(min_length=1)
+    contentHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    boundedOfficialText: str = Field(min_length=1, max_length=700)
+    queryKey: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
 class LegalReasoning(StrictModel):

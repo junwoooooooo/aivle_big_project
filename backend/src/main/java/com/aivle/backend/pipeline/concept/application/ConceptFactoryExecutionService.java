@@ -3,12 +3,15 @@ package com.aivle.backend.pipeline.concept.application;
 import com.aivle.backend.pipeline.concept.domain.*;
 import com.aivle.backend.pipeline.concept.repository.*;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
+import com.aivle.backend.pipeline.legal.application.CanonicalLegalContextAssembler;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.legal.domain.*;
 import com.aivle.backend.pipeline.legal.repository.*;
 import java.util.*;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -28,6 +31,9 @@ public class ConceptFactoryExecutionService {
     private final ConceptLegalEvidenceLinkRepository evidenceLinks;
     private final ConceptRejectionSummaryRepository rejections;
     private final ObjectMapper mapper;
+    private final CanonicalLegalContextAssembler legalContextAssembler;
+    @Value("${app.legal.registry-version:legal-registry-v1}")
+    private String registryVersion;
 
     @Transactional
     public Work prepare(String runId, Long projectId) {
@@ -36,11 +42,9 @@ public class ConceptFactoryExecutionService {
         if (run.getStatus() == ConceptFactoryRunStatus.GENERATING) run.transitionTo(ConceptFactoryRunStatus.VALIDATING);
         LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(projectId, run.getSourceIdeaBriefSnapshotId())
             .orElseGet(() -> createContext(run));
-        List<LegalEvidence> official = evidence.findAllByContextPackIdAndProjectIdAndDeletedAtIsNull(pack.getId(), projectId);
-        if (official.isEmpty()) throw new IllegalStateException("official legal evidence is required");
         List<Map<String, String>> fields = ideaFields.findAllByBriefIdOrderById(run.getSourceIdeaBriefSnapshotId()).stream()
             .map(value -> Map.of("fieldKey", value.getFieldKey(), "value", Objects.toString(value.getFieldValue(), ""))).toList();
-        Map<String, Object> shared = sharedContext(pack, official);
+        Map<String, Object> shared = sharedContext(pack);
         List<SlotWork> slotWork = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
             .filter(value -> value.getStatus() != ConceptSlotStatus.ELIGIBLE)
             .map(value -> new SlotWork(value.getId(), value.getSlotNumber(), value.getVariationFocus(), value.getLegalRedesignCount())).toList();
@@ -48,31 +52,16 @@ public class ConceptFactoryExecutionService {
     }
 
     private LegalContextPack createContext(ConceptFactoryRun run) {
-        Map<String, String> values = new HashMap<>();
-        for (IdeaBriefField field : ideaFields.findAllByBriefIdOrderById(run.getSourceIdeaBriefSnapshotId()))
-            values.put(field.getFieldKey(), Objects.toString(field.getFieldValue(), "미확인"));
-        LegalContextPack pack = LegalContextPack.pending(run.getProject(), run.getSourceIdeaBriefSnapshotId(), run.getSourceSnapshotHash());
-        pack.complete(values.getOrDefault("industry", "미확인"), values.getOrDefault("targetRegion", "대한민국"),
-            values.getOrDefault("platformRole", "미확인"), values.getOrDefault("transactionFlow", "미확인"),
-            values.getOrDefault("payment", "미확인"), values.getOrDefault("personalData", "미확인"),
-            mapper.writeValueAsString(List.of(values.getOrDefault("physicalActivity", "미확인"))),
-            mapper.writeValueAsString(List.of(values.getOrDefault("requiredPartners", "미확인"))),
-            mapper.writeValueAsString(List.of(values.getOrDefault("labelingAndAdvertising", "미확인"))));
-        contexts.save(pack);
-        evidence.save(LegalEvidence.create(pack, "국가법령정보센터 공식 법령 근거", "https://www.law.go.kr/",
-            ConceptCanonicalizer.hash("https://www.law.go.kr/", run.getSourceSnapshotHash())));
-        return pack;
+        CanonicalLegalContextAssembler.Result assembled = legalContextAssembler.assemble(
+            ideaFields.findAllByBriefIdOrderById(run.getSourceIdeaBriefSnapshotId()));
+        return contexts.save(LegalContextPack.ready(run.getProject(), run.getSourceIdeaBriefSnapshotId(),
+            run.getSourceSnapshotHash(), assembled.contextJson(), assembled.provenanceJson(), registryVersion));
     }
 
-    private Map<String, Object> sharedContext(LegalContextPack pack, List<LegalEvidence> values) {
-        List<Map<String, Object>> refs = new ArrayList<>();
-        for (int i = 0; i < values.size(); i++) refs.add(Map.of("referenceIndex", i, "title", values.get(i).getTitle(),
-            "officialSourceUri", values.get(i).getSourceUri(), "reviewedAt", java.time.LocalDate.now().toString()));
-        return Map.of("industry", pack.getIndustry(), "region", pack.getRegion(), "platformRole", pack.getPlatformRole(),
-            "transactionStructure", pack.getTransactionStructure(), "payment", pack.getPayment(), "personalData", pack.getPersonalData(),
-            "physicalActivities", mapper.readTree(pack.getPhysicalActivitiesJson()),
-            "qualificationsAndPermits", mapper.readTree(pack.getQualificationsAndPermitsJson()),
-            "labelingAndAdvertising", mapper.readTree(pack.getLabelingAndAdvertisingJson()), "officialEvidence", refs);
+    private Map<String, Object> sharedContext(LegalContextPack pack) {
+        return Map.of("sourceSnapshotHash", pack.getSourceSnapshotHash(),
+            "registryVersion", pack.getRegistryVersion(),
+            "fields", mapper.readTree(pack.getCanonicalContextJson()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -107,39 +96,108 @@ public class ConceptFactoryExecutionService {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         ConceptLegalStatus status = ConceptLegalStatus.valueOf(legal.path("status").asText());
+        LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(
+            run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
+        Map<Integer, LegalEvidence> official = persistEvidence(pack, legal.path("officialEvidence"));
         if (status == ConceptLegalStatus.NEEDS_FACTS) {
             attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.INSUFFICIENT_INFORMATION, "NEEDS_FACTS", false);
             slot.transitionTo(ConceptSlotStatus.NEEDS_INPUT); run.transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
             return LegalDisposition.NEEDS_INPUT;
         }
         if (status == ConceptLegalStatus.REDESIGNABLE) {
+            validateFindingCoverage(legal, official.keySet(), false);
             attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.LEGAL_REDESIGN_REQUIRED, "REDESIGN_REQUIRED", false);
             slot.transitionTo(ConceptSlotStatus.REDESIGNING); return LegalDisposition.REDESIGN;
         }
         if (status == ConceptLegalStatus.REJECTED) {
+            validateFindingCoverage(legal, official.keySet(), false);
             attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.LEGAL_REJECTED, "LEGAL_REJECTED", false);
             slot.transitionTo(ConceptSlotStatus.REJECTED); slot.transitionTo(ConceptSlotStatus.REPLACING);
             rejections.save(ConceptRejectionSummary.create(slot, "LEGAL_REJECTED", legal.path("safeUserSummary").asText("재설계가 필요합니다.")));
             return LegalDisposition.REPLACE;
         }
+        validateFindingCoverage(legal, official.keySet(), true);
         String candidateJson = mapper.writeValueAsString(candidate);
         String canonical = ConceptCanonicalizer.hash(candidateJson);
         String major = ConceptCanonicalizer.hash(candidate.path("targetSegment").asText(), candidate.path("valueProposition").asText(), candidate.path("solutionMechanism").asText());
         Concept concept = concepts.save(Concept.eligible(run, slot, candidate.path("conceptName").asText(),
             candidate.path("oneLineSummary").asText(), canonical, major, status, candidateJson,
             mapper.writeValueAsString(Map.of("sourceSnapshotId", run.getSourceIdeaBriefSnapshotId(), "slotId", slotId, "attemptId", attemptId))));
-        LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
+        var safeAssessment = legal.deepCopy();
+        if (safeAssessment.isObject()) ((tools.jackson.databind.node.ObjectNode) safeAssessment).remove("officialEvidence");
         ConceptLegalAssessment assessment = assessments.save(ConceptLegalAssessment.create(concept, pack, status,
-            legal.path("safeUserSummary").asText(), mapper.writeValueAsString(legal),
-            mapper.writeValueAsString(Map.of("contextPackId", pack.getId(), "reviewedAt", legal.path("reviewBasisDate").asText()))));
-        List<LegalEvidence> refs = evidence.findAllByContextPackIdAndProjectIdAndDeletedAtIsNull(pack.getId(), run.getProject().getId());
-        for (JsonNode ref : legal.path("evidenceReferences")) {
-            int index = ref.path("referenceIndex").asInt(-1);
-            if (index < 0 || index >= refs.size()) throw new IllegalStateException("invalid official evidence reference");
-            evidenceLinks.save(ConceptLegalEvidenceLink.create(assessment, refs.get(index)));
+            legal.path("safeUserSummary").asText(), mapper.writeValueAsString(safeAssessment),
+            mapper.writeValueAsString(Map.of("contextPackId", pack.getId(), "sourceSnapshotHash",
+                pack.getSourceSnapshotHash(), "registryVersion", pack.getRegistryVersion(),
+                "reviewedAt", legal.path("reviewBasisDate").asText()))));
+        for (JsonNode ref : legal.path("evidenceReferenceIndexes")) {
+            LegalEvidence cited = official.get(ref.asInt(-1));
+            if (cited == null) throw new IllegalStateException("invalid official evidence reference");
+            evidenceLinks.save(ConceptLegalEvidenceLink.create(assessment, cited));
         }
         slot.transitionTo(ConceptSlotStatus.ELIGIBLE);
         return LegalDisposition.ELIGIBLE;
+    }
+
+    private Map<Integer, LegalEvidence> persistEvidence(LegalContextPack pack, JsonNode values) {
+        if (!values.isArray()) throw new IllegalStateException("official evidence collection is invalid");
+        Map<Integer, LegalEvidence> result = new LinkedHashMap<>();
+        for (JsonNode value : values) {
+            int index = value.path("referenceIndex").asInt(-1);
+            if (index < 0 || result.containsKey(index)) throw new IllegalStateException("official evidence index is invalid");
+            if (!"OFFICIAL_LAW".equals(value.path("sourceType").asText())
+                || !"KR".equals(value.path("jurisdiction").asText())
+                || !pack.getRegistryVersion().equals(value.path("registryVersion").asText())) {
+                throw new IllegalStateException("official evidence source metadata is invalid");
+            }
+            String queryKey = requiredText(value, "queryKey");
+            String article = requiredText(value, "articleReference");
+            String contentHash = requiredText(value, "contentHash");
+            LegalEvidence stored = evidence.findByContextPackIdAndQueryKeyAndArticleReferenceAndContentHashAndDeletedAtIsNull(
+                pack.getId(), queryKey, article, contentHash).orElseGet(() -> evidence.save(LegalEvidence.officialLaw(
+                    pack, optionalText(value, "lawId"), requiredText(value, "officialIdentifier"),
+                    requiredText(value, "lawName"), article, value.path("title").asText(""),
+                    requiredText(value, "officialSourceUri"), optionalText(value, "promulgationDate"),
+                    optionalText(value, "effectiveDate"), OffsetDateTime.parse(requiredText(value, "retrievedAt")).toLocalDateTime(),
+                    contentHash, requiredText(value, "boundedProvisionSummary"), queryKey,
+                    requiredText(value, "registryVersion"))));
+            result.put(index, stored);
+        }
+        return result;
+    }
+
+    private void validateFindingCoverage(JsonNode legal, Set<Integer> evidenceIndexes, boolean eligible) {
+        if (eligible && (evidenceIndexes.isEmpty() || !legal.path("evidenceReferenceIndexes").isArray()
+            || legal.path("evidenceReferenceIndexes").isEmpty())) {
+            throw new IllegalStateException("eligible legal review requires official evidence");
+        }
+        Set<String> expected = new HashSet<>();
+        for (String field : List.of("requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants")) {
+            JsonNode findings = legal.path(field);
+            if (!findings.isArray()) throw new IllegalStateException("material legal finding collection is invalid");
+            for (int i = 0; i < findings.size(); i++) expected.add(field + ":" + i);
+        }
+        Set<String> actual = new HashSet<>();
+        for (JsonNode coverage : legal.path("findingEvidence")) {
+            String key = requiredText(coverage, "findingType") + ":" + coverage.path("findingIndex").asInt(-1);
+            if (!actual.add(key) || !coverage.path("evidenceReferenceIndexes").isArray()
+                || coverage.path("evidenceReferenceIndexes").isEmpty()) throw new IllegalStateException("finding evidence coverage is invalid");
+            for (JsonNode index : coverage.path("evidenceReferenceIndexes")) {
+                if (!evidenceIndexes.contains(index.asInt(-1))) throw new IllegalStateException("finding evidence index is invalid");
+            }
+        }
+        if (!actual.equals(expected)) throw new IllegalStateException("each material finding requires evidence");
+    }
+
+    private String requiredText(JsonNode value, String field) {
+        String text = value.path(field).asText();
+        if (text.isBlank()) throw new IllegalStateException("official evidence field is required");
+        return text;
+    }
+
+    private String optionalText(JsonNode value, String field) {
+        String text = value.path(field).asText(null);
+        return text == null || text.isBlank() ? null : text;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

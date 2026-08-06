@@ -19,5 +19,10 @@ class ConceptFactorySqlContractTests {
         assertThat(sql).contains("source_snapshot_hash LIKE 'sha256:%'");
         assertThat(sql).contains("replacement_rounds BETWEEN 0 AND 2");
         assertThat(sql).contains("inspected_candidate_count BETWEEN 0 AND 15");
+        assertThat(sql).contains("official_identifier VARCHAR(100) NOT NULL");
+        assertThat(sql).contains("article_reference VARCHAR(200) NOT NULL");
+        assertThat(sql).contains("retrieved_at TIMESTAMP NOT NULL");
+        assertThat(sql).contains("query_key VARCHAR(71) NOT NULL");
+        assertThat(sql).contains("official_source_uri <> 'https://www.law.go.kr/'");
     }
 }

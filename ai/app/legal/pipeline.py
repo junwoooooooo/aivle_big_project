@@ -1,4 +1,5 @@
 import json
+import hashlib
 import logging
 import re
 from collections import defaultdict
@@ -268,7 +269,7 @@ async def execute_legal_source_pipeline(task_type: str, text: str,
     client: MolegClient | None = None
     if active:
         try:
-            client = MolegClient()
+            client = MolegClient(registry.version)
         except MolegFailure as failure:
             raise ProviderFailure("DEPENDENCY_UNAVAILABLE", failure.reason, 503, failure.retryable) from failure
     citation_number = 0
@@ -294,6 +295,8 @@ async def execute_legal_source_pipeline(task_type: str, text: str,
                     raise ProviderFailure("DEPENDENCY_UNAVAILABLE", failure.reason, 503, False) from failure
                 if failure.retryable:
                     retryable_source_failure = failure.reason
+                else:
+                    raise ProviderFailure("DEPENDENCY_UNAVAILABLE", failure.reason, 503, False) from failure
                 warnings.append(f"SOURCE_ERROR:{decision.routeId}:{law['name']}:{failure.reason}")
                 continue
             for article in articles:
@@ -304,7 +307,14 @@ async def execute_legal_source_pipeline(task_type: str, text: str,
                 candidates.append({"citationId": f"CIT-{citation_number:03d}", "routeId": decision.routeId,
                     "categories": categories, "lawName": law["name"], "article": article["article"],
                     "title": article["title"], "excerpt": article["text"][:700],
-                    "effectiveDate": metadata.effective_date, "lawUrl": metadata.law_url})
+                    "effectiveDate": metadata.effective_date, "lawUrl": metadata.law_url,
+                    "lawId": metadata.law_id, "officialIdentifier": metadata.mst,
+                    "promulgationDate": metadata.promulgation_date,
+                    "queryKey": "sha256:" + hashlib.sha256(json.dumps({
+                        "lawName": law["name"], "focusKeywords": law.get("focusKeywords") or [],
+                        "registryVersion": registry.version,
+                        "retrievedDate": datetime.now(timezone.utc).date().isoformat(),
+                    }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()})
     if not candidates and retryable_source_failure:
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", retryable_source_failure, 503, True)
     if len(candidates) > MAX_SCREENING_CANDIDATES:
@@ -330,7 +340,14 @@ async def execute_legal_source_pipeline(task_type: str, text: str,
                 "title": candidate["title"], "role": screened.role,
                 "plainSummary": screened.plainSummary, "whyRelevant": screened.whyRelevant,
                 "excerpt": candidate["excerpt"], "effectiveDate": candidate["effectiveDate"],
-                "lawUrl": candidate["lawUrl"], "verifiedAt": verified_at})
+                "lawUrl": candidate["lawUrl"], "verifiedAt": verified_at,
+                "sourceType": "OFFICIAL_LAW", "lawId": candidate["lawId"],
+                "officialIdentifier": candidate["officialIdentifier"],
+                "articleReference": candidate["article"],
+                "officialSourceUri": candidate["lawUrl"], "jurisdiction": "KR",
+                "promulgationDate": candidate["promulgationDate"], "retrievedAt": verified_at,
+                "contentHash": "sha256:" + hashlib.sha256(candidate["excerpt"].encode("utf-8")).hexdigest(),
+                "boundedOfficialText": candidate["excerpt"], "queryKey": candidate["queryKey"]})
     by_category: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in evidence:
         by_category[item["category"]].append(item)

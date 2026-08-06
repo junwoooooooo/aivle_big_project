@@ -1,7 +1,10 @@
 import asyncio
+import hashlib
+import json
 import os
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 
@@ -15,6 +18,7 @@ class LawMetadata:
     law_id: str | None
     effective_date: str | None
     law_url: str
+    promulgation_date: str | None = None
 
 
 class MolegFailure(RuntimeError):
@@ -28,9 +32,10 @@ _CACHE: dict[str, tuple[float, Any]] = {}
 
 
 class MolegClient:
-    def __init__(self):
+    def __init__(self, registry_version: str = "legal-registry-v1"):
         self.key = os.getenv("MOLEG_API_KEY", "").strip()
         self.base_url = os.getenv("MOLEG_API_BASE_URL", "https://www.law.go.kr/DRF").strip().rstrip("/")
+        self.registry_version = registry_version
         try:
             self.timeout = float(os.getenv("LEGAL_PROVIDER_TIMEOUT_SECONDS", "30"))
             self.cache_seconds = int(os.getenv("LEGAL_SOURCE_CACHE_SECONDS", "3600"))
@@ -41,7 +46,11 @@ class MolegClient:
 
     async def _get(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
         safe_params = {**params, "OC": self.key, "type": "JSON"}
-        cache_key = endpoint + ":" + repr(sorted((key, value) for key, value in params.items()))
+        normalized = json.dumps({"endpoint": endpoint, "params": params,
+            "registryVersion": self.registry_version,
+            "retrievedDate": datetime.now(timezone.utc).date().isoformat()},
+            ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        cache_key = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
         cached = _CACHE.get(cache_key)
         if cached and cached[0] > time.monotonic():
             return cached[1]
@@ -89,7 +98,7 @@ class MolegClient:
                 if not mst:
                     continue
                 return LawMetadata(law_name, mst, item.get("법령ID"), item.get("시행일자"),
-                    f"https://www.law.go.kr/법령/{quote(law_name)}")
+                    f"https://www.law.go.kr/법령/{quote(law_name)}", item.get("공포일자"))
         return None
 
     async def articles(self, metadata: LawMetadata) -> list[dict[str, str]]:

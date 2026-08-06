@@ -20,7 +20,8 @@ public final class ConceptFactoryApiModels {
     ) {}
     public record SlotResponse(int slotNumber, VariationFocus variationFocus, ConceptSlotStatus status,
         String currentAttemptPhase, int attemptCount, int legalRedesignCount, LocalDateTime updatedAt) {}
-    public record EvidenceView(String title, String officialSourceUri) {}
+    public record EvidenceView(String sourceType, String lawId, String lawName, String articleReference,
+        String title, String effectiveDate, LocalDateTime retrievedAt, String officialSourceUri) {}
     public record LegalReviewView(ConceptLegalStatus status, String safeSummary, JsonNode assessment, List<EvidenceView> evidence) {}
     public record ConceptResponse(String conceptId, int slotNumber, VariationFocus variationFocus, String title,
         String summary, ConceptLegalStatus legalStatus, String sourceSnapshotHash, String canonicalHash,
