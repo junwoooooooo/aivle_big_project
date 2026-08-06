@@ -34,6 +34,6 @@ export default function IdeaIntakePage() {
         onDecisionStateChange={intake.updateBriefDecisionState} onConfirm={intake.confirmBrief} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 정리를 완료하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.retry}>입력 화면으로 돌아가기</Button>} />}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="Idea Brief가 준비되었습니다" description="R2A에서는 확인 요청을 로컬 경계까지만 준비했습니다. 실제 컨셉 생성 연결은 후속 단계에서 제공됩니다." />}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="아이디어를 정리했습니다." description="이 내용으로 컨셉 5개를 만들고 법률 근거를 확인할 수 있습니다." />}
   </section>;
 }

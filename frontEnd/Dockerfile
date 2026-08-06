@@ -6,8 +6,6 @@ RUN npm ci
 COPY frontEnd/ ./
 COPY docs/guide/ /workspace/docs/guide/
 COPY docs/example/ /workspace/docs/example/
-ARG VITE_CONVERSATIONAL_VALIDATION_WORKSPACE_ENABLED=false
-ENV VITE_CONVERSATIONAL_VALIDATION_WORKSPACE_ENABLED=${VITE_CONVERSATIONAL_VALIDATION_WORKSPACE_ENABLED}
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine

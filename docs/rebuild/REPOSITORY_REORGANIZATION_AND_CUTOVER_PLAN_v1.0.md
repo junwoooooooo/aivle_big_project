@@ -75,7 +75,7 @@ ai/app/tools/
 2. 새 Route·Shell 적용, Legacy Navigation 미노출
 3. 새 DB Baseline
 4. Idea 대체 후 Conversational UI 삭제
-5. Concept Factory 대체 후 3개 Workboard·Boundary UI 삭제
+5. Concept Factory 대체 후 기존 Workboard·Boundary UI 삭제
 6. Selection·Market Shell 후 legacy validation UI 삭제
 7. Marketing 포팅 후 legacy marketing 삭제
 8. Dead code·Migration·Test 정리

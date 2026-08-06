@@ -21,7 +21,7 @@ export default function MarketIntegrationPage() {
 }
 
 function NotConnected({ market, snapshot, projectId }) {
-  return <><section className="market-integration__empty"><strong>Not Connected</strong><p>현재는 안전한 Handoff 계약과 개발용 fixture 수신 경로만 준비되어 있습니다.</p></section><section className="market-integration__actions"><div><strong>{snapshot ? '선택한 컨셉 Snapshot을 전달할 수 있습니다.' : '먼저 컨셉을 선택해 주세요.'}</strong><span>{snapshot?.snapshotId ?? '분석 기준 Snapshot 없음'}</span></div>{snapshot ? <button type="button" onClick={market.prepare} disabled={market.preparing}>{market.preparing ? 'Handoff 준비 중…' : '시장분석 Handoff 준비'}</button> : <Link to={projectRoutes.conceptCompare(projectId)}>컨셉 선택하기</Link>}</section></>;
+  return <><section className="market-integration__empty"><strong>Not Connected</strong><p>외부 시장분석 연결이 아직 준비되지 않았습니다.</p></section><section className="market-integration__actions"><div><strong>{snapshot ? '선택한 컨셉 Snapshot을 전달할 수 있습니다.' : '먼저 컨셉을 선택해 주세요.'}</strong><span>{snapshot?.snapshotId ?? '분석 기준 Snapshot 없음'}</span></div>{snapshot ? <button type="button" onClick={market.prepare} disabled={market.preparing}>{market.preparing ? 'Handoff 준비 중…' : '시장분석 Handoff 준비'}</button> : <Link to={projectRoutes.conceptCompare(projectId)}>컨셉 선택하기</Link>}</section></>;
 }
 
 function ResultView({ result, snapshot, projectId }) {

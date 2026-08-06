@@ -12,7 +12,7 @@ $envFile = Join-Path $root ".env.demo"
 
 Write-Warning (
     "Legacy stable-core demo: Backend + Frontend 직접 실행, /api/v1 중심, " +
-    "local/H2 설정 사용. 공식 Idea-Legal-Concept Journey 검증이 아닙니다."
+    "local/H2 설정 사용. 신규 6단계 제품 파이프라인 검증이 아닙니다."
 )
 
 if (-not (Test-Path -LiteralPath $envFile)) {

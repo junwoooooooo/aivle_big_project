@@ -47,7 +47,7 @@ export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange,
       </section>
 
       <section className="idea-form-section" aria-labelledby="idea-files-heading">
-        <div className="idea-section-heading"><p>선택 입력</p><h3 id="idea-files-heading">참고 파일</h3><span>R2A에서는 파일 선택 상태만 보관하며 업로드와 추출은 후속 단계에서 연결합니다.</span></div>
+        <div className="idea-section-heading"><p>선택 입력</p><h3 id="idea-files-heading">참고 파일</h3><span>아이디어를 설명하는 문서가 있다면 함께 선택해 주세요.</span></div>
         <FileInput
           id="referenceFiles"
           label="참고 파일 선택"

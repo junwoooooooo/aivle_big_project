@@ -15,11 +15,3 @@ export function ideaCommandOptions(prefix) {
     ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return { headers: { 'Idempotency-Key': `${prefix}:${suffix}` } };
 }
-
-export function createR2AConfirmBoundary() {
-  return Object.freeze({
-    prepare(projectId, draft, createRequest) {
-      return createRequest(projectId, draft);
-    },
-  });
-}
