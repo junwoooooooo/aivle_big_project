@@ -1,0 +1,36 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
+import { createMarketingContentApi } from '../api/marketingContentApi.js';
+import { createFinalizedPlanningApi } from '../api/finalizedPlanningApi.js';
+import useMarketingGeneration from './useMarketingGeneration.js';
+
+export default function useMarketingContent(projectId) {
+  const client = useApiClient();
+  const api = useMemo(() => createMarketingContentApi(client), [client]);
+  const planningApi = useMemo(() => createFinalizedPlanningApi(client), [client]);
+  const [state, setState] = useState({ loading: true, list: [], planning: null, selected: null, error: null, saving: false });
+  const updateSelected = useCallback((selected) => setState((value) => ({ ...value, selected })), []);
+  const generation = useMarketingGeneration({ api, projectId, onUpdate: updateSelected });
+
+  const refresh = useCallback(async () => {
+    const [contents, planning] = await Promise.allSettled([api.list(projectId), planningApi.current(projectId)]);
+    setState((value) => ({ ...value, loading: false,
+      list: contents.status === 'fulfilled' ? contents.value.contents : [],
+      planning: planning.status === 'fulfilled' ? planning.value.finalizedPlanning : null,
+      error: contents.status === 'rejected' ? contents.reason : null }));
+  }, [api, planningApi, projectId]);
+  useEffect(() => { const timer = setTimeout(() => void refresh(), 0); return () => clearTimeout(timer); }, [refresh]);
+
+  const open = useCallback(async (contentId) => {
+    const detail = await api.detail(projectId, contentId); setState((value) => ({ ...value, selected: detail })); return detail;
+  }, [api, projectId]);
+  const create = async (request) => { const detail = await generation.create(request); await refresh(); return detail; };
+  const regenerate = async () => { if (!state.selected) return null; const detail = await generation.regenerate(state.selected.content.contentId); await refresh(); return detail; };
+  const save = async (result, revisionType = 'USER_EDITED') => {
+    if (!state.selected) return null; setState((value) => ({ ...value, saving: true, error: null }));
+    try { const detail = await api.update(projectId, state.selected.content.contentId, { revisionType, result }); setState((value) => ({ ...value, selected: detail, saving: false })); await refresh(); return detail; }
+    catch (error) { setState((value) => ({ ...value, saving: false, error })); throw error; }
+  };
+  const finalize = async () => { if (!state.selected) return null; const detail = await api.finalize(projectId, state.selected.content.contentId); setState((value) => ({ ...value, selected: detail })); await refresh(); return detail; };
+  return { ...state, ...generation, refresh, open, create, regenerate, save, finalize };
+}

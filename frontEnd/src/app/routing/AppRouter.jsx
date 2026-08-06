@@ -13,6 +13,7 @@ import { ConceptFactoryPage } from '../../features/concept-factory/index.js';
 import { ConceptComparisonPage } from '../../features/concept-selection/index.js';
 import { MarketIntegrationPage } from '../../features/market-integration/index.js';
 import { BusinessPersonaIntegrationPage } from '../../features/business-persona-integration/index.js';
+import { MarketingContentPage } from '../../features/marketing-content/index.js';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
 import ProjectSettingsSheet from '../../features/projects/ProjectSettingsSheet.jsx';
@@ -27,7 +28,7 @@ import AdminSettingsPage from '../../features/admin/pages/AdminSettingsPage.jsx'
 import AdminUsersPage, { AdminUserDetailOverlay } from '../../features/admin/pages/AdminUsersPage.jsx';
 import AdminProjectsPage, { AdminProjectDetailOverlay } from '../../features/admin/pages/AdminProjectsPage.jsx';
 import AdminAuditPage, { AdminAuditDetailOverlay } from '../../features/admin/pages/AdminAuditPage.jsx';
-import { ProjectModulePlaceholder, ProjectOverviewPage } from '../project-shell/ProjectModulePages.jsx';
+import { ProjectOverviewPage } from '../project-shell/ProjectModulePages.jsx';
 import { projectRoutes } from './projectRoutes.js';
 
 function ProjectRedirect({ routeKey = 'overview' }) {
@@ -75,7 +76,7 @@ export default function AppRouter() {
             <Route path="concepts/compare" element={<ConceptComparisonPage />} />
             <Route path="market" element={<MarketIntegrationPage />} />
             <Route path="business-persona-test" element={<BusinessPersonaIntegrationPage />} />
-            <Route path="marketing" element={<ProjectModulePlaceholder moduleId="marketing" />} />
+            <Route path="marketing" element={<MarketingContentPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />
             <Route path="settings/general" element={<ProjectRedirect routeKey="settings" />} />
             <Route path="settings/danger" element={<ProjectRedirect routeKey="settings" />} />

@@ -1,0 +1,120 @@
+export const CONTENT_TYPES = Object.freeze([
+  ['SOCIAL_POST', 'SNS 게시물'], ['AD_COPY', '광고 문구'], ['LANDING_PAGE', '랜딩 페이지'],
+  ['BLOG_INTRO', '블로그 도입부'], ['EMAIL', '이메일'], ['BANNER', '배너'],
+  ['POSTER', '포스터'], ['IMAGE_BRIEF', '이미지 설명서'],
+]);
+
+export const LENGTHS = Object.freeze([['SHORT', '짧게'], ['MEDIUM', '보통'], ['LONG', '길게']]);
+
+export const REVISION_LABELS = Object.freeze({
+  GENERATED: '첫 생성안', TONE_EDITED: '친근한 톤 수정안', SHORTENED: '짧은 SNS 문구안',
+  LEGAL_NOTICE_APPLIED: '법률 고지 반영안', USER_EDITED: '사용자 편집안', FINALIZED: '최종 저장본',
+});
+
+export const ASYNC_MESSAGES = Object.freeze({
+  QUEUED: '기획 내용을 불러오고 있습니다.',
+  STARTED: '핵심 메시지를 구성하고 있습니다.',
+  SOURCE_PREPARED: '핵심 메시지를 구성하고 있습니다.',
+  COPY_GENERATING: '채널에 맞게 문구를 조정하고 있습니다.',
+  LEGAL_CHECKING: '법률상 주의 표현을 확인하고 있습니다.',
+  RUNNING: '콘텐츠를 완성하고 있습니다.',
+  COMPLETED: '콘텐츠를 완성했습니다.',
+  FAILED: '콘텐츠 생성에 실패했습니다.',
+  STALE: '현재 확정 기획과 다른 기준으로 생성된 콘텐츠입니다.',
+});
+
+export function createSetupModel(planningSnapshotId = '') {
+  return {
+    planningSnapshotId, contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
+    length: 'MEDIUM', callToAction: '', requiredPhrases: '', excludedPhrases: '', additionalInstruction: '',
+  };
+}
+
+export function parsePhrases(value) {
+  return [...new Set(String(value || '').split(/[\n,]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
+}
+
+export function toCreateRequest(setup) {
+  const required = parsePhrases(setup.requiredPhrases);
+  if (setup.callToAction?.trim()) required.unshift(setup.callToAction.trim());
+  const instruction = [setup.additionalInstruction?.trim(), setup.callToAction?.trim() && `CTA는 '${setup.callToAction.trim()}'로 작성합니다.`]
+    .filter(Boolean).join('\n');
+  return {
+    contract: 'marketing-content-request-v1', planningSnapshotId: setup.planningSnapshotId,
+    contentType: setup.contentType, channel: setup.channel.trim(), purpose: setup.purpose.trim(),
+    tone: setup.tone.trim(), length: setup.length, requiredPhrases: [...new Set(required)].slice(0, 20),
+    excludedPhrases: parsePhrases(setup.excludedPhrases), additionalInstruction: instruction || null,
+  };
+}
+
+export function setupIsValid(setup) {
+  return Boolean(setup.planningSnapshotId && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
+}
+
+export function emptyResult(contentType = 'SOCIAL_POST') {
+  return { contract: 'marketing-content-result-v1', contentType, title: '', body: '', callToAction: null,
+    hashtags: [], imageBrief: null, legalReview: { compliant: true, warnings: [], requiredDisclosuresApplied: [] }, artifactRefs: [] };
+}
+
+export function editableFromResult(value, contentType = 'SOCIAL_POST') {
+  const result = value ?? emptyResult(contentType);
+  return { ...emptyResult(contentType), ...result,
+    hashtags: Array.isArray(result.hashtags) ? result.hashtags : [],
+    legalReview: { ...emptyResult(contentType).legalReview, ...result.legalReview,
+      warnings: result.legalReview?.warnings ?? [], requiredDisclosuresApplied: result.legalReview?.requiredDisclosuresApplied ?? [] },
+    artifactRefs: result.artifactRefs ?? [] };
+}
+
+export function latestRevision(detail) {
+  return detail?.revisions?.at(-1) ?? null;
+}
+
+export function revisionLabel(type) { return REVISION_LABELS[type] ?? '편집안'; }
+
+export function sourceSummary(source = {}, finalized = null) {
+  return {
+    conceptName: source.conceptName ?? finalized?.displayLabel ?? '최종 확정 기획',
+    targetSegment: source.targetSegment ?? finalized?.planning?.finalTarget,
+    valueProposition: source.valueProposition ?? finalized?.planning?.finalValueProposition,
+    positioning: source.positioning ?? finalized?.planning?.finalConcept?.positioning,
+    keyFeatures: source.keyFeatures ?? finalized?.planning?.finalFeatures,
+    channels: source.channels ?? finalized?.planning?.finalChannels,
+    competitorDifferentiators: source.competitorDifferentiators ?? finalized?.planning?.finalConcept?.competitorDifferentiators,
+    allowedClaims: source.allowedClaims ?? finalized?.legalControls?.allowedClaims,
+    prohibitedClaims: source.prohibitedClaims ?? finalized?.legalControls?.prohibitedExpressions,
+    requiredDisclosures: source.requiredDisclosures ?? finalized?.legalControls?.requiredDisclosures,
+    capturedAt: finalized?.finalizedAt ?? null,
+  };
+}
+
+export function displayValue(value) {
+  if (value == null || value === '') return '기획에 별도 값이 없습니다.';
+  if (Array.isArray(value)) return value.length ? value.join(' · ') : '기획에 별도 값이 없습니다.';
+  if (typeof value === 'object') return Object.values(value).flat().filter(Boolean).join(' · ') || '기획에 별도 값이 없습니다.';
+  return String(value);
+}
+
+export function legalSignals(result, source = {}) {
+  const text = [result?.title, result?.body, result?.callToAction].filter(Boolean).join(' ');
+  const prohibited = Array.isArray(source.prohibitedClaims) ? source.prohibitedClaims : [];
+  const blocking = prohibited.filter((phrase) => phrase && text.includes(phrase));
+  if (result?.legalReview?.compliant === false) blocking.unshift('AI 법률 점검에서 사용 불가로 분류했습니다.');
+  const applied = result?.legalReview?.requiredDisclosuresApplied ?? [];
+  const required = Array.isArray(source.requiredDisclosures) ? source.requiredDisclosures : [];
+  const missing = required.filter((notice) => !applied.includes(notice) && !text.includes(notice));
+  return { blocking, warnings: [...(result?.legalReview?.warnings ?? []), ...missing.map((notice) => `필수 고지 확인 필요: ${notice}`)] };
+}
+
+export function applyEditorAction(result, action, source = {}) {
+  const next = editableFromResult(result, result?.contentType);
+  if (action === 'SHORTEN') {
+    return { result: { ...next, title: next.title.slice(0, 45), body: next.body.slice(0, 240) }, revisionType: 'SHORTENED' };
+  }
+  if (action === 'LEGAL') {
+    const notices = Array.isArray(source.requiredDisclosures) ? source.requiredDisclosures : [];
+    const missing = notices.filter((notice) => !next.body.includes(notice));
+    return { result: { ...next, body: [next.body, ...missing].filter(Boolean).join('\n'),
+      legalReview: { ...next.legalReview, requiredDisclosuresApplied: [...new Set([...next.legalReview.requiredDisclosuresApplied, ...notices])] } }, revisionType: 'LEGAL_NOTICE_APPLIED' };
+  }
+  return { result: next, revisionType: 'USER_EDITED' };
+}
