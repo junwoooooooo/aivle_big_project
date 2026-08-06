@@ -43,4 +43,15 @@ public class ModuleRun extends BaseEntity {
         value.status = ModuleRunStatus.NOT_CONNECTED;
         return value;
     }
+
+    public void receiveResult(ModuleRunStatus resultStatus, String resultReference, String resultHash, Instant completedAt) {
+        if (resultStatus != ModuleRunStatus.COMPLETED && resultStatus != ModuleRunStatus.FAILED
+                && resultStatus != ModuleRunStatus.NEEDS_INPUT)
+            throw new IllegalArgumentException("unsupported result status");
+        this.status = resultStatus;
+        this.resultReference = resultReference;
+        this.resultHash = resultHash;
+        this.completedAt = completedAt;
+        this.safeErrorCode = null;
+    }
 }

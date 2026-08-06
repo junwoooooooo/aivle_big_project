@@ -18,6 +18,8 @@ spring:
       max-request-size: 21MB
 
 app:
+  market-integration:
+    internal-api-key: ${MARKET_MODULE_INTERNAL_API_KEY:}
   legacy-pipeline:
     enabled: ${LEGACY_PIPELINE_ENABLED:false}
   bootstrap-admin:

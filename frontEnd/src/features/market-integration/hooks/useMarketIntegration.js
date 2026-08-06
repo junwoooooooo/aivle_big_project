@@ -6,14 +6,15 @@ import { createMarketIntegrationApi } from '../api/marketIntegrationApi.js';
 export default function useMarketIntegration(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createMarketIntegrationApi(client), [client]);
-  const [state, setState] = useState({ loading: true, selection: null, runs: [], handoff: null, error: null, preparing: false });
+  const [state, setState] = useState({ loading: true, selection: null, runs: [], result: null, handoff: null, error: null, preparing: false, decidingId: null });
   const refresh = useCallback(async () => {
     try {
-      const [selection, runPayload] = await Promise.all([
+      const [selection, runPayload, result] = await Promise.all([
         api.currentSelection(projectId).then((payload) => payload.data).catch((error) => error?.status === 404 ? null : Promise.reject(error)),
         api.runs(projectId),
+        api.result(projectId).then((payload) => payload.data).catch((error) => error?.status === 404 ? null : Promise.reject(error)),
       ]);
-      setState((value) => ({ ...value, loading: false, selection, runs: runPayload.data?.runs ?? [], error: null }));
+      setState((value) => ({ ...value, loading: false, selection, runs: runPayload.data?.runs ?? [], result, error: null }));
     } catch (error) {
       setState((value) => ({ ...value, loading: false, error }));
     }
@@ -30,5 +31,14 @@ export default function useMarketIntegration(projectId) {
       setState((value) => ({ ...value, preparing: false, error }));
     }
   };
-  return { ...state, refresh, prepare };
+  const decide = async (proposalId, action, modifiedAfter) => {
+    setState((value) => ({ ...value, decidingId: proposalId, error: null }));
+    try {
+      const payload = await api.decide(projectId, proposalId, action, modifiedAfter);
+      setState((value) => ({ ...value, result: payload.data, decidingId: null }));
+    } catch (error) {
+      setState((value) => ({ ...value, decidingId: null, error }));
+    }
+  };
+  return { ...state, refresh, prepare, decide };
 }
