@@ -2,11 +2,11 @@ package com.aivle.backend.pipeline.idea.application;
 
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
+import com.aivle.backend.pipeline.idea.domain.IdeaBriefFieldCatalog;
 import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
 import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestion;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestionType;
-import com.aivle.backend.pipeline.idea.repository.IdeaAnswerRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaQuestionRepository;
@@ -36,9 +36,9 @@ public class IdeaBriefDerivationCommitService {
     private final IdeaBriefRepository briefs;
     private final IdeaBriefFieldRepository fields;
     private final IdeaQuestionRepository questions;
-    private final IdeaAnswerRepository answers;
     private final TaskRunService taskRuns;
     private final ObjectMapper mapper;
+    private final IdeaBriefReadinessCalculator readinessCalculator;
 
     @Transactional
     public CommitResult complete(
@@ -57,6 +57,7 @@ public class IdeaBriefDerivationCommitService {
         for (JsonNode item : requireArray(result, "fields", 30)) {
             requireObject(item, FIELD_FIELDS);
             String fieldKey = text(item, "fieldKey", 80);
+            IdeaBriefFieldCatalog.require(fieldKey);
             String value = text(item, "value", 20_000);
             IdeaDecisionState decision = IdeaDecisionState.valueOf(text(item, "decisionState", 20));
             IdeaFieldProvenance provenance = IdeaFieldProvenance.valueOf(text(item, "provenance", 30));
@@ -68,10 +69,8 @@ public class IdeaBriefDerivationCommitService {
             else existing.applyAi(value, decision, provenance);
         }
 
-        answers.deleteAllByBriefId(brief.getId());
-        questions.deleteAllByBriefId(brief.getId());
-        answers.flush();
-        questions.flush();
+        questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())
+            .forEach(IdeaQuestion::retire);
         int order = 0;
         for (JsonNode item : requireArray(result, "questions", 4)) {
             requireObject(item, QUESTION_FIELDS);
@@ -85,14 +84,37 @@ public class IdeaBriefDerivationCommitService {
                 IdeaQuestionType.valueOf(text(item, "type", 30)),
                 text(item, "prompt", 500),
                 mapper.writeValueAsString(options),
-                order++
+                order++,
+                brief.getClarificationRound()
             ));
         }
         JsonNode readiness = result.get("readiness");
         if (readiness == null || !readiness.isObject()) throw new IllegalArgumentException("readiness invalid");
+        requireObject(readiness, Set.of("status", "score", "missingFieldKeys"));
         String readinessStatus = text(readiness, "status", 30);
-        if ("READY_FOR_REVIEW".equals(readinessStatus) && order == 0) brief.readyForReview();
-        else brief.needsInput();
+        JsonNode score = readiness.get("score");
+        JsonNode missingFieldKeys = readiness.get("missingFieldKeys");
+        JsonNode contradictions = result.get("contradictions");
+        if (score == null || !score.isIntegralNumber() || score.intValue() < 0 || score.intValue() > 100
+            || missingFieldKeys == null || !missingFieldKeys.isArray() || missingFieldKeys.size() > 15
+            || contradictions == null || !contradictions.isArray() || contradictions.size() > 12) {
+            throw new IllegalArgumentException("readiness metadata invalid");
+        }
+        for (JsonNode key : missingFieldKeys) IdeaBriefFieldCatalog.require(textValue(key, 80));
+        for (JsonNode contradiction : contradictions) validateContradiction(contradiction);
+        brief.applyAssessment(
+            text(result, "userFacingSummary", 1_000),
+            mapper.writeValueAsString(contradictions),
+            mapper.writeValueAsString(missingFieldKeys),
+            readinessStatus,
+            score.intValue()
+        );
+        IdeaBriefReadinessCalculator.Assessment assessment = readinessCalculator.calculate(
+            brief,
+            fields.findAllByBriefIdOrderById(brief.getId()),
+            questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())
+        );
+        if (assessment.readyForConfirm()) brief.readyForReview(); else brief.needsInput();
 
         taskRuns.adopt(
             claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
@@ -126,6 +148,23 @@ public class IdeaBriefDerivationCommitService {
             throw new IllegalArgumentException(name + " invalid");
         }
         return field.asText();
+    }
+
+    private String textValue(JsonNode value, int max) {
+        if (value == null || !value.isTextual() || value.asText().isBlank() || value.asText().length() > max) {
+            throw new IllegalArgumentException("text value invalid");
+        }
+        return value.asText();
+    }
+
+    private void validateContradiction(JsonNode value) {
+        requireObject(value, Set.of("fieldKeys", "summary"));
+        JsonNode keys = value.get("fieldKeys");
+        if (keys == null || !keys.isArray() || keys.size() < 2 || keys.size() > 6) {
+            throw new IllegalArgumentException("contradiction fields invalid");
+        }
+        for (JsonNode key : keys) IdeaBriefFieldCatalog.require(textValue(key, 80));
+        text(value, "summary", 500);
     }
 
     public record CommitResult(String status, int questionCount) {}

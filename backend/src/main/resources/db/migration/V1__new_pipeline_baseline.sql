@@ -240,9 +240,16 @@ CREATE TABLE idea_briefs (
     status VARCHAR(30) NOT NULL,
     brief_sequence BIGINT NOT NULL,
     parent_brief_id VARCHAR(64),
+    overview_text TEXT,
     active_task_run_id VARCHAR(64),
     confirmed_snapshot_id VARCHAR(64),
     snapshot_hash VARCHAR(71),
+    user_facing_summary TEXT,
+    contradictions_json TEXT NOT NULL DEFAULT '[]',
+    missing_field_keys_json TEXT NOT NULL DEFAULT '[]',
+    ai_readiness_status VARCHAR(30),
+    readiness_score INTEGER NOT NULL DEFAULT 0,
+    clarification_round INTEGER NOT NULL DEFAULT 0,
     created_by_user_id BIGINT NOT NULL,
     last_command VARCHAR(30),
     last_idempotency_key VARCHAR(100),
@@ -298,12 +305,14 @@ CREATE TABLE idea_questions (
     options_json TEXT,
     display_order INTEGER NOT NULL,
     answered BOOLEAN NOT NULL DEFAULT FALSE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    clarification_round INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP,
     version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_idea_question_brief FOREIGN KEY (brief_id) REFERENCES idea_briefs(id) ON DELETE NO ACTION,
-    CONSTRAINT uk_idea_question_order UNIQUE (brief_id, display_order),
+    CONSTRAINT uk_idea_question_order UNIQUE (brief_id, clarification_round, display_order),
     CONSTRAINT ck_idea_question_type CHECK (question_type IN ('FREE_TEXT', 'SINGLE_SELECT', 'MULTI_SELECT', 'UNDECIDED')),
     CONSTRAINT ck_idea_question_order CHECK (display_order >= 0)
 );
@@ -782,5 +791,3 @@ CREATE TABLE pipeline_marketing_assets (
     CONSTRAINT fk_pipeline_marketing_asset_content FOREIGN KEY (content_id) REFERENCES pipeline_marketing_contents(id) ON DELETE NO ACTION,
     CONSTRAINT fk_pipeline_marketing_asset_revision FOREIGN KEY (revision_id) REFERENCES pipeline_marketing_content_revisions(id) ON DELETE NO ACTION
 );
-
-

@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IdeaBrief extends BaseEntity {
+    public static final int MAX_CLARIFICATION_ROUNDS = 2;
     @Id
     @Column(length = 64)
     private String id;
@@ -43,6 +44,9 @@ public class IdeaBrief extends BaseEntity {
     @Column(length = 64)
     private String parentBriefId;
 
+    @Column(columnDefinition = "TEXT")
+    private String overviewText;
+
     @Column(length = 64)
     private String activeTaskRunId;
 
@@ -51,6 +55,24 @@ public class IdeaBrief extends BaseEntity {
 
     @Column(length = 71)
     private String snapshotHash;
+
+    @Column(columnDefinition = "TEXT")
+    private String userFacingSummary;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String contradictionsJson = "[]";
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String missingFieldKeysJson = "[]";
+
+    @Column(length = 30)
+    private String aiReadinessStatus;
+
+    @Column(nullable = false)
+    private int readinessScore;
+
+    @Column(nullable = false)
+    private int clarificationRound;
 
     @Column(nullable = false)
     private Long createdByUserId;
@@ -125,6 +147,40 @@ public class IdeaBrief extends BaseEntity {
         recordCommand("DERIVE", idempotencyKey, requestHash);
     }
 
+    public void startClarification(String taskRunId) {
+        requireMutable();
+        if (clarificationRound >= MAX_CLARIFICATION_ROUNDS) {
+            throw new IllegalStateException("clarification round limit reached");
+        }
+        this.clarificationRound++;
+        this.status = IdeaBriefStatus.DERIVING;
+        this.activeTaskRunId = taskRunId;
+    }
+
+    public void updateOverview(String overview) {
+        requireMutable();
+        if (overview == null || overview.isBlank() || overview.length() > 20_000) {
+            throw new IllegalArgumentException("idea overview is invalid");
+        }
+        this.overviewText = overview;
+    }
+
+    public void applyAssessment(String summary, String contradictionsJson,
+            String missingFieldKeysJson, String readinessStatus, int score) {
+        requireMutable();
+        if (summary == null || summary.isBlank() || summary.length() > 1_000
+            || contradictionsJson == null || missingFieldKeysJson == null
+            || !("NEEDS_INPUT".equals(readinessStatus) || "READY_FOR_REVIEW".equals(readinessStatus))
+            || score < 0 || score > 100) {
+            throw new IllegalArgumentException("idea assessment is invalid");
+        }
+        this.userFacingSummary = summary;
+        this.contradictionsJson = contradictionsJson;
+        this.missingFieldKeysJson = missingFieldKeysJson;
+        this.aiReadinessStatus = readinessStatus;
+        this.readinessScore = score;
+    }
+
     public void needsInput() {
         requireMutable();
         this.status = IdeaBriefStatus.NEEDS_INPUT;
@@ -167,6 +223,16 @@ public class IdeaBrief extends BaseEntity {
         requireMutable();
         this.status = IdeaBriefStatus.DRAFT;
         this.activeTaskRunId = null;
+    }
+
+    public void copyCanonicalStateFrom(IdeaBrief source) {
+        requireMutable();
+        this.overviewText = source.overviewText;
+        this.userFacingSummary = source.userFacingSummary;
+        this.contradictionsJson = source.contradictionsJson;
+        this.missingFieldKeysJson = source.missingFieldKeysJson;
+        this.aiReadinessStatus = source.aiReadinessStatus;
+        this.readinessScore = source.readinessScore;
     }
 
     public boolean isConfirmed() {

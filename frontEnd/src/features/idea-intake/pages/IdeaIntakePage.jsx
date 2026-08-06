@@ -30,7 +30,8 @@ export default function IdeaIntakePage() {
       <QuestionGroup questions={intake.questions} answers={intake.draft.answers} errors={intake.errors} onAnswer={intake.answerQuestion} onSubmit={intake.submitAnswers} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.REVIEW && (
-      <IdeaBriefReview draft={intake.draft} onFieldChange={intake.updateBriefField} onConfirm={intake.confirmBrief} />
+      <IdeaBriefReview draft={intake.draft} onFieldChange={intake.updateBriefField}
+        onDecisionStateChange={intake.updateBriefDecisionState} onConfirm={intake.confirmBrief} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 정리를 완료하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.retry}>입력 화면으로 돌아가기</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="Idea Brief가 준비되었습니다" description="R2A에서는 확인 요청을 로컬 경계까지만 준비했습니다. 실제 컨셉 생성 연결은 후속 단계에서 제공됩니다." />}

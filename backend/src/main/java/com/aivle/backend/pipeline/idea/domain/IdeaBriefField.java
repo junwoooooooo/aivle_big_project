@@ -61,6 +61,12 @@ public class IdeaBriefField extends BaseEntity {
         return create(brief, fieldKey, value, decisionState, IdeaFieldProvenance.SOURCE_EXTRACTED, false);
     }
 
+    public static IdeaBriefField userAnswer(IdeaBrief brief, String fieldKey, String value,
+            IdeaDecisionState decisionState, boolean undecided) {
+        return create(brief, fieldKey, value, decisionState,
+            undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_CONFIRMED, false);
+    }
+
     public static IdeaBriefField aiProposal(
         IdeaBrief brief,
         String fieldKey,
@@ -80,9 +86,8 @@ public class IdeaBriefField extends BaseEntity {
         boolean aiAuthored
     ) {
         brief.requireMutable();
-        if (fieldKey == null || fieldKey.isBlank() || fieldKey.length() > 80) {
-            throw new IllegalArgumentException("field key is invalid");
-        }
+        IdeaBriefFieldCatalog.require(fieldKey);
+        if (decisionState == null || provenance == null) throw new IllegalArgumentException("field metadata is required");
         if (aiAuthored && (decisionState == IdeaDecisionState.LOCKED || provenance == IdeaFieldProvenance.USER_CONFIRMED)) {
             throw new IllegalArgumentException("AI cannot lock or user-confirm a field");
         }
@@ -101,9 +106,18 @@ public class IdeaBriefField extends BaseEntity {
 
     public void updateByUser(String value, IdeaDecisionState decisionState) {
         brief.requireMutable();
+        if (decisionState == null) throw new IllegalArgumentException("decision state is required");
         this.fieldValue = value;
         this.decisionState = decisionState;
         this.provenance = IdeaFieldProvenance.USER_CONFIRMED;
+    }
+
+    public void updateFromAnswer(String value, IdeaDecisionState decisionState, boolean undecided) {
+        brief.requireMutable();
+        if (decisionState == null) throw new IllegalArgumentException("decision state is required");
+        this.fieldValue = value;
+        this.decisionState = decisionState;
+        this.provenance = undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_CONFIRMED;
     }
 
     public void applyAi(String value, IdeaDecisionState decisionState, IdeaFieldProvenance provenance) {

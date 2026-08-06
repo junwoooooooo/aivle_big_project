@@ -41,9 +41,15 @@ public final class IdeaBriefApiModels {
     public record IdeaBriefResponse(
         String briefId,
         IdeaBriefStatus status,
+        String overview,
         List<FieldView> fields,
         List<QuestionView> questions,
+        List<FieldCatalogView> fieldCatalog,
+        String userFacingSummary,
+        List<ContradictionView> contradictions,
         ReadinessView readiness,
+        int clarificationRound,
+        int maxClarificationRounds,
         String activeJobId,
         String confirmedSnapshotId,
         LocalDateTime updatedAt
@@ -53,8 +59,20 @@ public final class IdeaBriefApiModels {
         String fieldKey,
         String value,
         IdeaDecisionState decisionState,
-        IdeaFieldProvenance provenance
+        IdeaFieldProvenance provenance,
+        boolean explicitlyUndecided
     ) {}
+
+    public record FieldCatalogView(
+        String key,
+        String label,
+        boolean requiredForConcept,
+        IdeaDecisionState defaultDecisionState,
+        boolean regulatorySensitive,
+        Set<IdeaQuestionType> allowedQuestionTypes
+    ) {}
+
+    public record ContradictionView(List<String> fieldKeys, String summary) {}
 
     public record QuestionView(
         String questionId,
@@ -67,9 +85,12 @@ public final class IdeaBriefApiModels {
     ) {}
 
     public record ReadinessView(
-        int fieldCount,
-        int missingFieldCount,
+        int totalRequiredFieldCount,
+        int completedRequiredFieldCount,
+        List<String> missingFieldKeys,
         int unansweredQuestionCount,
+        int contradictionCount,
+        int score,
         boolean readyForConfirm
     ) {}
 }

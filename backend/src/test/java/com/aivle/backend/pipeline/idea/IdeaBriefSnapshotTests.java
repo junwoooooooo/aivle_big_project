@@ -15,6 +15,8 @@ class IdeaBriefSnapshotTests {
     @Test
     void confirmationIsImmutableAndLaterEditingUsesANewDraftVersion() {
         IdeaBrief confirmed = IdeaBrief.initial(null, 7L);
+        confirmed.updateOverview("overview is not an assumption");
+        confirmed.applyAssessment("summary", "[]", "[]", "READY_FOR_REVIEW", 100);
         IdeaBriefField field = IdeaBriefField.userValue(
             confirmed, "problem", "first value", IdeaDecisionState.LOCKED
         );
@@ -27,6 +29,7 @@ class IdeaBriefSnapshotTests {
             .isInstanceOf(IllegalStateException.class);
 
         IdeaBrief nextDraft = IdeaBrief.nextDraft(confirmed, 7L);
+        nextDraft.copyCanonicalStateFrom(confirmed);
         IdeaBriefField copied = field.copyTo(nextDraft);
         copied.updateByUser("new draft value", IdeaDecisionState.PREFERRED);
 
@@ -34,5 +37,7 @@ class IdeaBriefSnapshotTests {
         assertThat(nextDraft.getConfirmedSnapshotId()).isEqualTo(confirmed.getId());
         assertThat(field.getFieldValue()).isEqualTo("first value");
         assertThat(copied.getFieldValue()).isEqualTo("new draft value");
+        assertThat(nextDraft.getOverviewText()).isEqualTo("overview is not an assumption");
+        assertThat(nextDraft.getUserFacingSummary()).isEqualTo("summary");
     }
 }

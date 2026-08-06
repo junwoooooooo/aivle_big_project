@@ -30,6 +30,49 @@ export const FIELD_SOURCE_LABEL = Object.freeze({
   [FIELD_SOURCE.UNDECIDED]: '미정',
 });
 
+export const DECISION_STATE = Object.freeze({
+  LOCKED: 'LOCKED',
+  PREFERRED: 'PREFERRED',
+  OPEN: 'OPEN',
+  ASSUMPTION: 'ASSUMPTION',
+});
+
+export const DECISION_STATE_LABEL = Object.freeze({
+  [DECISION_STATE.LOCKED]: '반드시 유지',
+  [DECISION_STATE.PREFERRED]: '선호',
+  [DECISION_STATE.OPEN]: '열어 두기',
+  [DECISION_STATE.ASSUMPTION]: '가정',
+});
+
+const ALL_QUESTION_TYPES = Object.freeze(Object.values(QUESTION_TYPE));
+const FACT_QUESTION_TYPES = Object.freeze([
+  QUESTION_TYPE.FREE_TEXT, QUESTION_TYPE.SINGLE_SELECT, QUESTION_TYPE.UNDECIDED,
+]);
+
+export const CANONICAL_FIELD_CATALOG = Object.freeze([
+  ['problem', '해결 문제', true, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['targetCustomers', '대상 고객', true, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['beneficiaries', '수혜자', true, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['usageContext', '사용 상황', true, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['expectedOutcome', '기대 결과', true, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['targetRegion', '대상 지역', true, DECISION_STATE.PREFERRED, true, FACT_QUESTION_TYPES],
+  ['fixedConditions', '반드시 유지', false, DECISION_STATE.LOCKED, false, ALL_QUESTION_TYPES],
+  ['preferredConditions', '선호 조건', false, DECISION_STATE.PREFERRED, false, ALL_QUESTION_TYPES],
+  ['openDecisions', '열어 두기', false, DECISION_STATE.OPEN, false, ALL_QUESTION_TYPES],
+  ['assumptions', '가정', false, DECISION_STATE.ASSUMPTION, false, ALL_QUESTION_TYPES],
+  ['prohibitedMethods', '금지 방식', false, DECISION_STATE.LOCKED, true, ALL_QUESTION_TYPES],
+  ['physicalActivity', '물리 활동', true, DECISION_STATE.PREFERRED, true, FACT_QUESTION_TYPES],
+  ['personalData', '개인정보', true, DECISION_STATE.PREFERRED, true, FACT_QUESTION_TYPES],
+  ['payment', '결제', true, DECISION_STATE.PREFERRED, true, FACT_QUESTION_TYPES],
+  ['requiredPartners', '필요 파트너·자격', true, DECISION_STATE.PREFERRED, true, ALL_QUESTION_TYPES],
+].map(([key, label, requiredForConcept, defaultDecisionState, regulatorySensitive, allowedQuestionTypes]) => Object.freeze({
+  key, label, requiredForConcept, defaultDecisionState, regulatorySensitive, allowedQuestionTypes,
+})));
+
+const CATALOG_BY_KEY = Object.freeze(Object.fromEntries(
+  CANONICAL_FIELD_CATALOG.map((field) => [field.key, field]),
+));
+
 export const BRIEF_FIELD_GROUPS = Object.freeze([
   {
     id: 'business-idea',
@@ -76,19 +119,23 @@ const INTAKE_FIELDS = Object.freeze([
   'avoidMethods',
 ]);
 
-function createBriefField(value = '', source = FIELD_SOURCE.UNDECIDED) {
-  return { value, source };
+function createBriefField(value = '', source = FIELD_SOURCE.UNDECIDED, decisionState) {
+  return { value, source, decisionState: decisionState ?? DECISION_STATE.OPEN };
 }
 
 export function createIdeaIntakeDraft() {
   const fields = Object.fromEntries(
-    BRIEF_FIELD_GROUPS.flatMap((group) => group.fields).map(([fieldKey]) => [fieldKey, createBriefField()]),
+    CANONICAL_FIELD_CATALOG.map((field) => [
+      field.key, createBriefField('', FIELD_SOURCE.UNDECIDED, field.defaultDecisionState),
+    ]),
   );
   return {
     intake: Object.fromEntries(INTAKE_FIELDS.map((fieldKey) => [fieldKey, ''])),
     referenceFiles: [],
     fields,
+    catalog: CANONICAL_FIELD_CATALOG,
     answers: {},
+    assessment: { userFacingSummary: '', contradictions: [], readiness: null, clarificationRound: 0, maxClarificationRounds: 2 },
   };
 }
 
@@ -103,7 +150,11 @@ export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraf
   const fields = { ...currentDraft.fields };
   for (const field of response?.fields ?? []) {
     if (!fields[field.fieldKey]) continue;
-    fields[field.fieldKey] = createBriefField(field.value ?? '', SERVER_SOURCE[field.provenance] ?? FIELD_SOURCE.UNDECIDED);
+    fields[field.fieldKey] = createBriefField(
+      field.value ?? '',
+      SERVER_SOURCE[field.provenance] ?? FIELD_SOURCE.UNDECIDED,
+      field.decisionState ?? CATALOG_BY_KEY[field.fieldKey].defaultDecisionState,
+    );
   }
   const answers = {};
   for (const question of response?.questions ?? []) {
@@ -114,7 +165,7 @@ export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraf
     ...currentDraft,
     intake: {
       ...currentDraft.intake,
-      overview: fields.assumptions?.value || currentDraft.intake.overview,
+      overview: response?.overview ?? currentDraft.intake.overview,
       problem: fields.problem?.value || '',
       expectedUsers: fields.targetCustomers?.value || '',
       region: fields.targetRegion?.value || '',
@@ -123,7 +174,16 @@ export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraf
       avoidMethods: fields.prohibitedMethods?.value || '',
     },
     fields,
+    catalog: response?.fieldCatalog?.length === CANONICAL_FIELD_CATALOG.length
+      ? response.fieldCatalog : currentDraft.catalog,
     answers,
+    assessment: {
+      userFacingSummary: response?.userFacingSummary ?? '',
+      contradictions: response?.contradictions ?? [],
+      readiness: response?.readiness ?? null,
+      clarificationRound: response?.clarificationRound ?? 0,
+      maxClarificationRounds: response?.maxClarificationRounds ?? 2,
+    },
   };
 }
 
@@ -160,7 +220,7 @@ export function hydrateBriefFromIntake(draft) {
     fixedConditions: intake.constraints,
     preferredConditions: '',
     openDecisions: '',
-    assumptions: intake.overview,
+    assumptions: '',
     prohibitedMethods: intake.avoidMethods,
     physicalActivity: '',
     personalData: '',
@@ -170,7 +230,10 @@ export function hydrateBriefFromIntake(draft) {
   return {
     ...draft,
     fields: Object.fromEntries(
-      Object.entries(values).map(([fieldKey, value]) => [fieldKey, createBriefField(value, sourceFor(value))]),
+      Object.entries(values).map(([fieldKey, value]) => [
+        fieldKey,
+        createBriefField(value, sourceFor(value), CATALOG_BY_KEY[fieldKey].defaultDecisionState),
+      ]),
     ),
   };
 }
@@ -192,7 +255,8 @@ export function applyQuestionAnswers(draft, questions) {
     if (!question.fieldKey || answer == null || answer === '') return;
     fields[question.fieldKey] = createBriefField(
       answer === '__UNDECIDED__' ? '' : normalizeAnswerValue(answer),
-      answer === '__UNDECIDED__' ? FIELD_SOURCE.UNDECIDED : FIELD_SOURCE.AI_SUGGESTED,
+      answer === '__UNDECIDED__' ? FIELD_SOURCE.UNDECIDED : FIELD_SOURCE.USER_INPUT,
+      CATALOG_BY_KEY[question.fieldKey]?.defaultDecisionState,
     );
   });
   return { ...draft, fields };
@@ -217,7 +281,19 @@ export function ideaIntakeDraftReducer(draft, action) {
         ...draft,
         fields: {
           ...draft.fields,
-          [action.field]: createBriefField(action.value, FIELD_SOURCE.USER_INPUT),
+          [action.field]: createBriefField(
+            action.value,
+            FIELD_SOURCE.USER_INPUT,
+            draft.fields[action.field].decisionState,
+          ),
+        },
+      };
+    case 'UPDATE_BRIEF_DECISION_STATE':
+      return {
+        ...draft,
+        fields: {
+          ...draft.fields,
+          [action.field]: { ...draft.fields[action.field], decisionState: action.decisionState },
         },
       };
     default:

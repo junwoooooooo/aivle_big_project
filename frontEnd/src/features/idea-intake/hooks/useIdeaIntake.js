@@ -19,6 +19,11 @@ function hasAnswer(question, answer) {
 }
 
 function screenStateFor(response) {
+  if (response?.status === 'NEEDS_INPUT'
+      && response.clarificationRound >= response.maxClarificationRounds
+      && response.readiness?.unansweredQuestionCount === 0) {
+    return IDEA_INTAKE_SCREEN_STATE.REVIEW;
+  }
   return {
     DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
     DERIVING: IDEA_INTAKE_SCREEN_STATE.RUNNING,
@@ -36,7 +41,7 @@ function fieldsPayload(draft, includeEmpty = false) {
     .map(([fieldKey, field]) => ({
       fieldKey,
       value: field.value ?? '',
-      decisionState: field.source === 'USER_INPUT' ? 'LOCKED' : 'OPEN',
+      decisionState: field.decisionState,
     }));
 }
 
@@ -136,7 +141,9 @@ export default function useIdeaIntake(projectId) {
   const confirmBrief = async (event) => {
     event.preventDefault();
     try {
-      await api.patchFields(projectId, { fields: fieldsPayload(draft, true) }, ideaCommandOptions('idea-fields'));
+      const patched = await api.patchFields(projectId, { fields: fieldsPayload(draft, true) }, ideaCommandOptions('idea-fields'));
+      applyResponse(patched.data);
+      if (!patched.data.readiness?.readyForConfirm) return;
       const payload = await api.confirm(projectId, { expectedVersion: null }, ideaCommandOptions('idea-confirm'));
       applyResponse(payload.data);
     } catch (error) {
@@ -154,6 +161,9 @@ export default function useIdeaIntake(projectId) {
       setErrors((current) => ({ ...current, [questionId]: undefined }));
     },
     updateBriefField: (field, value) => dispatch({ type: 'UPDATE_BRIEF_FIELD', field, value }),
+    updateBriefDecisionState: (field, decisionState) => dispatch({
+      type: 'UPDATE_BRIEF_DECISION_STATE', field, decisionState,
+    }),
     organizeIdea, submitAnswers, confirmBrief,
     retry: refresh,
   };

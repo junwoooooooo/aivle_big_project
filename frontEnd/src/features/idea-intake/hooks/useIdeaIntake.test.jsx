@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
@@ -35,6 +35,36 @@ describe('useIdeaIntake async recovery', () => {
     await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT));
     expect(client.get).toHaveBeenCalledTimes(2);
     expect(result.current.questions[0].id).toBe('q-1');
+  });
+
+  it('sends catalog decision states and does not confirm before the patched readiness is true', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const review = {
+      ...response('READY_FOR_REVIEW', null, []),
+      overview: 'overview',
+      fields: [
+        { fieldKey: 'problem', value: 'problem', provenance: 'USER_CONFIRMED', decisionState: 'PREFERRED' },
+        { fieldKey: 'fixedConditions', value: 'fixed', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+      ],
+      readiness: { readyForConfirm: false, unansweredQuestionCount: 0 },
+      clarificationRound: 2,
+      maxClarificationRounds: 2,
+    };
+    const client = {
+      get: vi.fn().mockResolvedValue({ data: review }),
+      patch: vi.fn().mockResolvedValue({ data: review }),
+      post: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.REVIEW));
+
+    await act(async () => result.current.confirmBrief({ preventDefault: vi.fn() }));
+
+    const payload = client.patch.mock.calls[0][1];
+    expect(payload.fields.find((field) => field.fieldKey === 'problem').decisionState).toBe('PREFERRED');
+    expect(payload.fields.find((field) => field.fieldKey === 'fixedConditions').decisionState).toBe('LOCKED');
+    expect(client.post).not.toHaveBeenCalled();
   });
 });
 

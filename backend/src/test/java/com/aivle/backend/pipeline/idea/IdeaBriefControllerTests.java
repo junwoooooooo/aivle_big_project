@@ -37,8 +37,11 @@ class IdeaBriefControllerTests {
     @Test
     void deriveUsesCanonicalV3RouteAndReturnsQueuedTaskIdentifier() throws Exception {
         IdeaBriefResponse response = new IdeaBriefResponse(
-            "brief-1", IdeaBriefStatus.DERIVING, List.of(), List.of(),
-            new ReadinessView(0, 0, 0, false), "task-1", null, LocalDateTime.of(2026, 8, 6, 12, 0)
+            "brief-1", IdeaBriefStatus.DERIVING, "local food waste service", List.of(), List.of(),
+            List.of(), null, List.of(), new ReadinessView(10, 0, List.of(
+                "problem", "targetCustomers", "beneficiaries", "usageContext", "expectedOutcome",
+                "targetRegion", "physicalActivity", "personalData", "payment", "requiredPartners"
+            ), 0, 0, 0, false), 0, 2, "task-1", null, LocalDateTime.of(2026, 8, 6, 12, 0)
         );
         when(service.derive(eq(7L), eq(42L), any(DeriveRequest.class), eq("derive-1"), eq("request-1")))
             .thenReturn(response);

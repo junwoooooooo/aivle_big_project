@@ -47,16 +47,25 @@ public class IdeaQuestion extends BaseEntity {
     @Column(nullable = false)
     private boolean answered;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
+    @Column(nullable = false)
+    private int clarificationRound;
+
     public static IdeaQuestion create(
         IdeaBrief brief,
         String targetFieldKey,
         IdeaQuestionType type,
         String prompt,
         String optionsJson,
-        int displayOrder
+        int displayOrder,
+        int clarificationRound
     ) {
         brief.requireMutable();
-        if (prompt == null || prompt.isBlank() || displayOrder < 0) {
+        IdeaBriefFieldCatalog.FieldDefinition definition = IdeaBriefFieldCatalog.require(targetFieldKey);
+        if (prompt == null || prompt.isBlank() || displayOrder < 0 || clarificationRound < 0
+            || !definition.allowedQuestionTypes().contains(type)) {
             throw new IllegalArgumentException("question is invalid");
         }
         IdeaQuestion question = new IdeaQuestion();
@@ -67,11 +76,17 @@ public class IdeaQuestion extends BaseEntity {
         question.prompt = prompt;
         question.optionsJson = optionsJson;
         question.displayOrder = displayOrder;
+        question.clarificationRound = clarificationRound;
         return question;
     }
 
     public void markAnswered() {
         brief.requireMutable();
         this.answered = true;
+    }
+
+    public void retire() {
+        brief.requireMutable();
+        this.active = false;
     }
 }
