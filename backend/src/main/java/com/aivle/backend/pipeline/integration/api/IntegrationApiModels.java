@@ -13,7 +13,7 @@ public final class IntegrationApiModels {
                                                 JsonNode concept, JsonNode legalAssessment, String snapshotHash, Instant createdAt) {}
     public record HandoffResponse(String contract, String handoffId, Long projectId, String module, String inputSnapshotId,
                                   String inputSnapshotHash, Instant requestedAt, CallbackView callback,
-                                  String requestedOperation, String status, SelectedConceptMarketInputV1 input, ModuleRunResponse moduleRun) {}
+                                  String requestedOperation, String status, JsonNode input, ModuleRunResponse moduleRun) {}
     public record ModuleRunResponse(String runId, String handoffId, String module, String inputSnapshotId,
                                     String inputSnapshotHash, String status, boolean stale, boolean cancelRequested,
                                     String externalRunReference, Instant startedAt, Instant completedAt,

@@ -4,6 +4,8 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
 import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
+import com.aivle.backend.pipeline.integration.domain.ModuleType;
+import com.aivle.backend.pipeline.planning.repository.FinalizedPlanningSnapshotRepository;
 import com.aivle.backend.pipeline.selection.domain.SelectedConceptSnapshot;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.selection.repository.SelectedConceptSnapshotRepository;
@@ -22,6 +24,7 @@ public class ProjectModuleStatusService {
     private final ConceptSelectionRepository selectionRepository;
     private final SelectedConceptSnapshotRepository snapshotRepository;
     private final ModuleRunRepository moduleRunRepository;
+    private final FinalizedPlanningSnapshotRepository finalizedPlanningSnapshotRepository;
 
     public List<ProjectModuleStatusResponse> findAll(Long userId, Long projectId) {
         Project project = projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
@@ -31,10 +34,15 @@ public class ProjectModuleStatusService {
         var selection = selectionRepository.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId).orElse(null);
         SelectedConceptSnapshot snapshot = selection == null ? null
             : snapshotRepository.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId).orElse(null);
-        var moduleRun = moduleRunRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
+        var moduleRun = moduleRunRepository.findFirstByProjectIdAndModuleAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, ModuleType.MARKET_ANALYSIS).orElse(null);
         PipelineModuleStatus marketStatus = moduleRun == null ? PipelineModuleStatus.NOT_CONNECTED
             : snapshot != null && !snapshot.getId().equals(moduleRun.getInputSnapshotId()) ? PipelineModuleStatus.STALE
             : PipelineModuleStatus.valueOf(moduleRun.getStatus().name());
+        var finalized = finalizedPlanningSnapshotRepository.findFirstByProjectIdAndDeletedAtIsNullOrderBySequenceDesc(projectId).orElse(null);
+        var businessRun = moduleRunRepository.findFirstByProjectIdAndModuleAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, ModuleType.BUSINESS_FINANCIAL).orElse(null);
+        var personaRun = moduleRunRepository.findFirstByProjectIdAndModuleAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, ModuleType.PERSONA_RESPONSE_TEST).orElse(null);
+        PipelineModuleStatus externalStatus = finalized == null ? PipelineModuleStatus.NOT_CONNECTED
+            : combinedExternalStatus(finalized.getId(), businessRun, personaRun);
         return List.of(
             response(projectId, PipelineModuleType.IDEA,
                 hasIdeaDescription ? PipelineModuleStatus.READY : PipelineModuleStatus.NEEDS_INPUT,
@@ -51,12 +59,26 @@ public class ProjectModuleStatusService {
                 snapshot == null ? List.of("selectedConceptSnapshotId", "marketAnalysisConnection") : List.of("marketAnalysisConnection"),
                 new NextAction(snapshot == null ? "컨셉 비교·선택" : "시장분석 연결 상태 확인", snapshot == null ? "/concepts/compare" : "/market"),
                 moduleRun == null ? null : moduleRun.getId(), snapshot == null ? null : snapshot.getId(), moduleRun == null ? null : moduleRun.getUpdatedAt()),
-            response(projectId, PipelineModuleType.BUSINESS_PERSONA_TEST, PipelineModuleStatus.NOT_CONNECTED,
-                List.of("finalizedPlanningSnapshotId", "businessPersonaModuleConnection"),
-                new NextAction("시장분석 결과 확인", "/market")),
+            response(projectId, PipelineModuleType.BUSINESS_PERSONA_TEST, externalStatus,
+                finalized == null ? List.of("finalizedPlanningSnapshotId", "businessPersonaModuleConnection") : List.of("businessPersonaModuleConnection"),
+                new NextAction(finalized == null ? "시장분석 결과 확인" : "외부 모듈 상태 확인", finalized == null ? "/market" : "/business-persona-test"),
+                businessRun != null ? businessRun.getId() : personaRun == null ? null : personaRun.getId(), finalized == null ? null : finalized.getId(),
+                businessRun != null ? businessRun.getUpdatedAt() : personaRun == null ? null : personaRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, PipelineModuleStatus.NOT_READY,
                 List.of("finalizedPlanningSnapshotId"), new NextAction("기획 확정 상태 확인", "/market"))
         );
+    }
+
+    private PipelineModuleStatus combinedExternalStatus(String currentId,
+            com.aivle.backend.pipeline.integration.domain.ModuleRun business,
+            com.aivle.backend.pipeline.integration.domain.ModuleRun persona) {
+        if (business == null && persona == null) return PipelineModuleStatus.NOT_CONNECTED;
+        if ((business != null && !currentId.equals(business.getInputSnapshotId())) || (persona != null && !currentId.equals(persona.getInputSnapshotId()))) return PipelineModuleStatus.STALE;
+        if (business != null && business.getStatus().name().equals("FAILED") || persona != null && persona.getStatus().name().equals("FAILED")) return PipelineModuleStatus.FAILED;
+        if (business != null && business.getStatus().name().equals("RUNNING") || persona != null && persona.getStatus().name().equals("RUNNING")) return PipelineModuleStatus.RUNNING;
+        if (business != null && persona != null && business.getStatus().name().equals("COMPLETED") && persona.getStatus().name().equals("COMPLETED")) return PipelineModuleStatus.COMPLETED;
+        if (business != null && business.getStatus().name().equals("QUEUED") || persona != null && persona.getStatus().name().equals("QUEUED")) return PipelineModuleStatus.QUEUED;
+        return PipelineModuleStatus.NOT_CONNECTED;
     }
 
     private ProjectModuleStatusResponse response(

@@ -1,0 +1,6 @@
+package com.aivle.backend.pipeline.planning.application;
+import com.aivle.backend.pipeline.integration.domain.*;import com.aivle.backend.pipeline.planning.domain.PlanningChangeDecision;
+import java.util.*;import java.util.stream.*;import org.springframework.stereotype.Component;import tools.jackson.core.type.TypeReference;import tools.jackson.databind.ObjectMapper;
+@Component public class MeaningfulPlanningLabel {private final ObjectMapper mapper;public MeaningfulPlanningLabel(ObjectMapper mapper){this.mapper=mapper;}
+ public String create(List<PlanningChangeProposal> values,Map<String,PlanningChangeDecision> decisions){Set<String> fields=values.stream().filter(p->{var d=decisions.get(p.getId());return d!=null&&d.getDecision()!=ProposalDecisionStatus.REJECT;}).flatMap(p->read(p.getAffectedFieldsJson()).stream()).map(String::toLowerCase).collect(Collectors.toSet());if(fields.stream().anyMatch(f->f.contains("price")||f.contains("channel")))return"시장분석 반영안 — 가격·채널 조정";if(fields.stream().anyMatch(f->f.contains("launch")||f.contains("area")))return"시장분석 반영안 — 초기 출시범위 축소";if(fields.stream().anyMatch(f->f.contains("target")||f.contains("operat")))return"시장분석 반영안 — 타깃·운영모델 조정";return"시장분석 반영안 — 제안 검토 결과 반영";}
+ private List<String> read(String json){return mapper.readValue(json,new TypeReference<List<String>>(){});}}

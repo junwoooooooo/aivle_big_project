@@ -41,7 +41,7 @@ const MODULE_CONTENT = Object.freeze({
   },
   businessPersonaTest: {
     title: 'BM·재무 분석 + 페르소나 응답 테스트',
-    description: '확정 기획을 바탕으로 외부 분석 결과와 응답 테스트 결과를 한곳에서 확인합니다.',
+    description: '확정된 기획의 비즈니스 모델과 재무 구조를 분석하고, 경쟁상품 대비 반응을 가상 페르소나 응답으로 확인합니다.',
     stateTitle: '외부 모듈 연결 준비 중',
     stateDescription: 'BM·재무 분석과 응답 테스트 연동은 아직 제공되지 않습니다.',
     inputs: ['확정된 기획 Snapshot', '외부 분석 모듈 연결'],

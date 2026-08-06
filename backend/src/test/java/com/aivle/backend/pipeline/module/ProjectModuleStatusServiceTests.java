@@ -10,12 +10,20 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
+import com.aivle.backend.pipeline.selection.repository.SelectedConceptSnapshotRepository;
+import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
+import com.aivle.backend.pipeline.planning.repository.FinalizedPlanningSnapshotRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class ProjectModuleStatusServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
-    private final ProjectModuleStatusService service = new ProjectModuleStatusService(projects);
+    private final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
+    private final SelectedConceptSnapshotRepository snapshots = mock(SelectedConceptSnapshotRepository.class);
+    private final ModuleRunRepository runs = mock(ModuleRunRepository.class);
+    private final FinalizedPlanningSnapshotRepository finalized = mock(FinalizedPlanningSnapshotRepository.class);
+    private final ProjectModuleStatusService service = new ProjectModuleStatusService(projects, selections, snapshots, runs, finalized);
 
     @Test
     void returnsSafeDefaultsWithoutUsingProjectStage() {

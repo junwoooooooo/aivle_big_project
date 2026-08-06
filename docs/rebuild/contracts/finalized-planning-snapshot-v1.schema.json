@@ -32,10 +32,22 @@
       "type": "string"
     },
     "planning": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finalConcept", "finalTarget", "finalValueProposition", "finalFeatures", "finalChannels", "finalPricingRevenueHypothesis", "finalOperatingStructure"],
+      "properties": {
+        "finalConcept": { "type": "object" },
+        "finalTarget": {}, "finalValueProposition": {}, "finalFeatures": {}, "finalChannels": {},
+        "finalPricingRevenueHypothesis": {}, "finalOperatingStructure": {}
+      }
     },
     "legalControls": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredControls", "requiredDisclosures", "allowedClaims", "prohibitedExpressions"],
+      "properties": {
+        "requiredControls": {}, "requiredDisclosures": {}, "allowedClaims": {}, "prohibitedExpressions": {}
+      }
     },
     "changeDecisions": {
       "type": "array",
@@ -45,7 +57,7 @@
     },
     "snapshotHash": {
       "type": "string",
-      "pattern": "^sha256:"
+      "pattern": "^sha256:[0-9a-f]{64}$"
     },
     "finalizedAt": {
       "type": "string",
