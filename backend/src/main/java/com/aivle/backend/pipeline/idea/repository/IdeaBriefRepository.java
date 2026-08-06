@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface IdeaBriefRepository extends JpaRepository<IdeaBrief, String> {
+    Optional<IdeaBrief> findByIdAndProjectIdAndDeletedAtIsNull(String id, Long projectId);
     @Query("""
         select b from IdeaBrief b
         join fetch b.project p

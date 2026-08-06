@@ -1,80 +1,152 @@
-import { useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
-import { createR2AConfirmBoundary } from '../api/ideaBriefApi.js';
+import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
+import { useJobEvents } from '../../../shared/async-events/index.js';
+import { createIdeaBriefApiAdapter, ideaCommandOptions } from '../api/ideaBriefApi.js';
 import {
-  createConfirmIdeaBriefRequest,
   createIdeaIntakeDraft,
+  hydrateBriefFromIntake,
   IDEA_INTAKE_SCREEN_STATE,
   ideaIntakeDraftReducer,
   QUESTION_TYPE,
+  questionsFromIdeaBrief,
   validateIdeaIntake,
 } from '../model/ideaIntakeModel.js';
-import { IDEA_FOLLOW_UP_QUESTIONS } from '../model/ideaQuestions.js';
 
 function hasAnswer(question, answer) {
   if (question.type === QUESTION_TYPE.MULTI_SELECT) return Array.isArray(answer) && answer.length > 0;
   return answer != null && answer !== '';
 }
 
-function questionErrors(questions, answers) {
-  return Object.fromEntries(
-    questions.filter((question) => !hasAnswer(question, answers[question.id])).map((question) => [question.id, question.type === QUESTION_TYPE.UNDECIDED ? '결정 여부를 선택해 주세요.' : '질문에 답해 주세요.']),
-  );
+function screenStateFor(response) {
+  return {
+    DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
+    DERIVING: IDEA_INTAKE_SCREEN_STATE.RUNNING,
+    NEEDS_INPUT: IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT,
+    READY_FOR_REVIEW: IDEA_INTAKE_SCREEN_STATE.REVIEW,
+    CONFIRMED: IDEA_INTAKE_SCREEN_STATE.CONFIRMED,
+    FAILED: IDEA_INTAKE_SCREEN_STATE.FAILED,
+    STALE: IDEA_INTAKE_SCREEN_STATE.FAILED,
+  }[response?.status] ?? IDEA_INTAKE_SCREEN_STATE.EMPTY;
+}
+
+function fieldsPayload(draft, includeEmpty = false) {
+  return Object.entries(draft.fields)
+    .filter(([, field]) => includeEmpty || Boolean(field.value?.trim()))
+    .map(([fieldKey, field]) => ({
+      fieldKey,
+      value: field.value ?? '',
+      decisionState: field.source === 'USER_INPUT' ? 'LOCKED' : 'OPEN',
+    }));
 }
 
 export default function useIdeaIntake(projectId) {
+  const client = useApiClient();
+  const api = useMemo(() => createIdeaBriefApiAdapter(client), [client]);
   const [draft, dispatch] = useReducer(ideaIntakeDraftReducer, undefined, createIdeaIntakeDraft);
-  const [screenState, setScreenState] = useState(IDEA_INTAKE_SCREEN_STATE.EMPTY);
+  const [screenState, setScreenState] = useState(IDEA_INTAKE_SCREEN_STATE.LOADING);
   const [errors, setErrors] = useState({});
   const [failureMessage, setFailureMessage] = useState('');
-  const [pendingConfirmRequest, setPendingConfirmRequest] = useState(null);
+  const [activeJobId, setActiveJobId] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const jobEvents = useJobEvents(activeJobId);
+
+  const applyResponse = useCallback((response) => {
+    dispatch({ type: 'LOAD_SERVER_BRIEF', response });
+    setQuestions(questionsFromIdeaBrief(response));
+    setActiveJobId(response.activeJobId ?? null);
+    setScreenState(screenStateFor(response));
+    if (response.status === 'FAILED' || response.status === 'STALE') {
+      setFailureMessage('아이디어 정리를 완료하지 못했습니다. 다시 시도해 주세요.');
+    }
+  }, []);
+
+  const refresh = useCallback(async () => {
+    try {
+      const payload = await api.get(projectId);
+      applyResponse(payload.data);
+    } catch (error) {
+      if (error?.status === 404) {
+        setScreenState(IDEA_INTAKE_SCREEN_STATE.EMPTY);
+        return;
+      }
+      setFailureMessage(error?.message ?? 'Idea Brief를 불러오지 못했습니다.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
+  }, [api, applyResponse, projectId]);
+
+  useEffect(() => {
+    const timer = setTimeout(refresh, 0);
+    return () => clearTimeout(timer);
+  }, [refresh]);
+  useEffect(() => {
+    if (!jobEvents.terminal || !activeJobId) return undefined;
+    const timer = setTimeout(refresh, 0);
+    return () => clearTimeout(timer);
+  }, [activeJobId, jobEvents.terminal, refresh]);
 
   const updateIntake = (field, value) => {
     dispatch({ type: 'UPDATE_INTAKE', field, value });
     setErrors((current) => ({ ...current, [field]: undefined }));
     setScreenState(value.trim() || field !== 'overview' || draft.intake.overview.trim()
-      ? IDEA_INTAKE_SCREEN_STATE.READY
-      : IDEA_INTAKE_SCREEN_STATE.EMPTY);
+      ? IDEA_INTAKE_SCREEN_STATE.READY : IDEA_INTAKE_SCREEN_STATE.EMPTY);
   };
 
-  const organizeIdea = (event) => {
+  const organizeIdea = async (event) => {
     event.preventDefault();
     const nextErrors = validateIdeaIntake(draft);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+    const prepared = hydrateBriefFromIntake(draft);
     setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
-    dispatch({ type: 'HYDRATE_BRIEF' });
-    Promise.resolve().then(() => setScreenState(IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT));
+    try {
+      const payload = await api.derive(projectId, {
+        overview: prepared.intake.overview,
+        fields: fieldsPayload(prepared),
+        attachmentFileIds: [],
+      }, ideaCommandOptions('idea-derive'));
+      applyResponse(payload.data);
+    } catch (error) {
+      setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
   };
 
-  const submitAnswers = (event) => {
+  const submitAnswers = async (event) => {
     event.preventDefault();
-    const nextErrors = questionErrors(IDEA_FOLLOW_UP_QUESTIONS, draft.answers);
+    const nextErrors = Object.fromEntries(questions
+      .filter((question) => !hasAnswer(question, draft.answers[question.id]))
+      .map((question) => [question.id, '질문에 답해 주세요.']));
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    dispatch({ type: 'APPLY_ANSWERS', questions: IDEA_FOLLOW_UP_QUESTIONS });
-    setScreenState(IDEA_INTAKE_SCREEN_STATE.REVIEW);
+    try {
+      const payload = await api.answerQuestions(projectId, {
+        answers: questions.map((question) => ({
+          questionId: question.id,
+          answerJson: JSON.stringify(draft.answers[question.id]),
+        })),
+      }, ideaCommandOptions('idea-answers'));
+      applyResponse(payload.data);
+    } catch (error) {
+      setFailureMessage(error?.message ?? '답변을 저장하지 못했습니다.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
   };
 
-  const confirmBrief = (event) => {
+  const confirmBrief = async (event) => {
     event.preventDefault();
-    const boundary = createR2AConfirmBoundary();
-    setPendingConfirmRequest(boundary.prepare(projectId, draft, createConfirmIdeaBriefRequest));
-    setScreenState(IDEA_INTAKE_SCREEN_STATE.CONFIRMED);
-  };
-
-  const retry = () => {
-    setFailureMessage('');
-    setScreenState(draft.intake.overview.trim() ? IDEA_INTAKE_SCREEN_STATE.READY : IDEA_INTAKE_SCREEN_STATE.EMPTY);
+    try {
+      await api.patchFields(projectId, { fields: fieldsPayload(draft, true) }, ideaCommandOptions('idea-fields'));
+      const payload = await api.confirm(projectId, { expectedVersion: null }, ideaCommandOptions('idea-confirm'));
+      applyResponse(payload.data);
+    } catch (error) {
+      setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
   };
 
   return {
-    draft,
-    errors,
-    failureMessage,
-    pendingConfirmRequest,
-    questions: IDEA_FOLLOW_UP_QUESTIONS,
-    screenState,
+    draft, errors, failureMessage, questions, screenState, activeJobId, jobEvents,
     setFiles: (files) => dispatch({ type: 'SET_FILES', files }),
     updateIntake,
     answerQuestion: (questionId, value) => {
@@ -82,13 +154,7 @@ export default function useIdeaIntake(projectId) {
       setErrors((current) => ({ ...current, [questionId]: undefined }));
     },
     updateBriefField: (field, value) => dispatch({ type: 'UPDATE_BRIEF_FIELD', field, value }),
-    organizeIdea,
-    submitAnswers,
-    confirmBrief,
-    retry,
-    fail: (message) => {
-      setFailureMessage(message);
-      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
-    },
+    organizeIdea, submitAnswers, confirmBrief,
+    retry: refresh,
   };
 }

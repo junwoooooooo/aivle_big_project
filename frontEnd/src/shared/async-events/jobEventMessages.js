@@ -1,4 +1,11 @@
 const messages = {
+  'job.idea.queued': '아이디어 정리 작업을 준비하고 있습니다.',
+  'job.idea.started': '아이디어 정리를 시작했습니다.',
+  'job.idea.extracting': '입력에서 핵심 정보를 추출하고 있습니다.',
+  'job.idea.questions.preparing': '필요한 후속 질문을 준비하고 있습니다.',
+  'job.idea.brief.preparing': 'Idea Brief 초안을 저장하고 있습니다.',
+  'job.idea.completed': 'Idea Brief 초안이 준비되었습니다.',
+  'job.idea.failed': 'Idea Brief 정리를 완료하지 못했습니다.',
   'job.idea.file.extraction.started': '첨부 문서의 텍스트와 표를 읽고 있습니다.',
   'job.idea.followup.ready': '추가 확인이 필요한 질문을 준비했습니다.',
   'job.idea.attachment.received': '첨부파일을 안전하게 저장했습니다.',

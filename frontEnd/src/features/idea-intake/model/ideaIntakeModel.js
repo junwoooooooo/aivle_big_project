@@ -92,6 +92,58 @@ export function createIdeaIntakeDraft() {
   };
 }
 
+const SERVER_SOURCE = Object.freeze({
+  USER_CONFIRMED: FIELD_SOURCE.USER_INPUT,
+  SOURCE_EXTRACTED: FIELD_SOURCE.FILE_EXTRACTED,
+  AI_PROPOSED: FIELD_SOURCE.AI_SUGGESTED,
+  MISSING: FIELD_SOURCE.UNDECIDED,
+});
+
+export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraft()) {
+  const fields = { ...currentDraft.fields };
+  for (const field of response?.fields ?? []) {
+    if (!fields[field.fieldKey]) continue;
+    fields[field.fieldKey] = createBriefField(field.value ?? '', SERVER_SOURCE[field.provenance] ?? FIELD_SOURCE.UNDECIDED);
+  }
+  const answers = {};
+  for (const question of response?.questions ?? []) {
+    if (!question.answerJson) continue;
+    try { answers[question.questionId] = JSON.parse(question.answerJson); } catch { answers[question.questionId] = question.answerJson; }
+  }
+  return {
+    ...currentDraft,
+    intake: {
+      ...currentDraft.intake,
+      overview: fields.assumptions?.value || currentDraft.intake.overview,
+      problem: fields.problem?.value || '',
+      expectedUsers: fields.targetCustomers?.value || '',
+      region: fields.targetRegion?.value || '',
+      desiredOutcome: fields.expectedOutcome?.value || '',
+      constraints: fields.fixedConditions?.value || '',
+      avoidMethods: fields.prohibitedMethods?.value || '',
+    },
+    fields,
+    answers,
+  };
+}
+
+export function questionsFromIdeaBrief(response) {
+  return (response?.questions ?? []).map((question) => {
+    const options = parseQuestionOptions(question.optionsJson);
+    return {
+      id: question.questionId,
+      fieldKey: question.targetFieldKey,
+      type: question.type,
+      title: question.prompt,
+      options,
+    };
+  });
+}
+
+function parseQuestionOptions(optionsJson) {
+  try { return JSON.parse(optionsJson ?? '[]'); } catch { return []; }
+}
+
 function sourceFor(value) {
   return value?.trim() ? FIELD_SOURCE.USER_INPUT : FIELD_SOURCE.UNDECIDED;
 }
@@ -152,6 +204,8 @@ export function ideaIntakeDraftReducer(draft, action) {
       return { ...draft, intake: { ...draft.intake, [action.field]: action.value } };
     case 'SET_FILES':
       return { ...draft, referenceFiles: action.files };
+    case 'LOAD_SERVER_BRIEF':
+      return draftFromIdeaBrief(action.response, draft);
     case 'HYDRATE_BRIEF':
       return hydrateBriefFromIntake(draft);
     case 'ANSWER_QUESTION':

@@ -9,4 +9,5 @@ public interface IdeaQuestionRepository extends JpaRepository<IdeaQuestion, Stri
     List<IdeaQuestion> findAllByBriefIdOrderByDisplayOrder(String briefId);
     Optional<IdeaQuestion> findByIdAndBriefId(String id, String briefId);
     long countByBriefIdAndAnsweredFalse(String briefId);
+    void deleteAllByBriefId(String briefId);
 }

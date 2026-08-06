@@ -105,4 +105,17 @@ public class IdeaBriefField extends BaseEntity {
         this.decisionState = decisionState;
         this.provenance = IdeaFieldProvenance.USER_CONFIRMED;
     }
+
+    public void applyAi(String value, IdeaDecisionState decisionState, IdeaFieldProvenance provenance) {
+        brief.requireMutable();
+        if (decisionState == IdeaDecisionState.LOCKED || provenance == IdeaFieldProvenance.USER_CONFIRMED) {
+            throw new IllegalArgumentException("AI cannot lock or user-confirm a field");
+        }
+        if (this.decisionState == IdeaDecisionState.LOCKED || this.provenance == IdeaFieldProvenance.USER_CONFIRMED) {
+            return;
+        }
+        this.fieldValue = value;
+        this.decisionState = decisionState;
+        this.provenance = provenance;
+    }
 }

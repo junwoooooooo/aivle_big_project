@@ -10,6 +10,12 @@ export function createIdeaBriefApiAdapter(client) {
   });
 }
 
+export function ideaCommandOptions(prefix) {
+  const suffix = globalThis.crypto?.randomUUID?.()
+    ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return { headers: { 'Idempotency-Key': `${prefix}:${suffix}` } };
+}
+
 export function createR2AConfirmBoundary() {
   return Object.freeze({
     prepare(projectId, draft, createRequest) {

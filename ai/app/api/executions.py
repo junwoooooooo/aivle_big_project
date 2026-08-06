@@ -23,6 +23,7 @@ from app.services.journey_provider import ProviderFailure, execute_journey_task
 router = APIRouter(prefix="/internal/v1/ai", tags=["Internal AI Executions"])
 logger = logging.getLogger(__name__)
 TASK_TYPES = {
+    "IDEA_BRIEF_DERIVATION",
     "IDEA_INTERPRETATION", "IDEA_CONVERSATION_TURN", "LEGAL_REVIEW", "CONCEPT_GENERATION", "QUICK_ASSESSMENT",
     "DETAILED_ANALYSIS", "PERSONA_CARD_GENERATION", "PERSONA_INTERVIEW",
     "INTERVIEW_SYNTHESIS", "MARKETING_GENERATION", "MARKETING_COMPARISON",
@@ -159,6 +160,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
     if body.taskType not in {
+        "IDEA_BRIEF_DERIVATION",
         "IDEA_INTERPRETATION", "IDEA_CONVERSATION_TURN", "LEGAL_REVIEW", "CONCEPT_GENERATION",
         "QUICK_ASSESSMENT", "DETAILED_ANALYSIS", "PERSONA_CARD_GENERATION",
         "PERSONA_INTERVIEW", "INTERVIEW_SYNTHESIS",
@@ -168,7 +170,18 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     }:
         return internal_error(correlation, "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType == "IDEA_CONVERSATION_TURN":
+    if body.taskType == "IDEA_BRIEF_DERIVATION":
+        from app.tasks.idea_brief.models import IdeaBriefDerivationInput
+        try:
+            idea_brief_input = IdeaBriefDerivationInput.model_validate(body.input)
+        except ValidationError as failure:
+            return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION",
+                                  400, False, body.taskRunId, body.taskAttemptId,
+                                  safe_validation_fields(failure))
+        text = json.dumps(idea_brief_input.model_dump(mode="json"), ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+        source_keys = ["idea-brief-input"]
+    elif body.taskType == "IDEA_CONVERSATION_TURN":
         try:
             conversation_input = IdeaConversationTurnInputV1.model_validate(body.input)
         except ValidationError as failure:
@@ -196,7 +209,10 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                   "externalSourceReferences": [], "generatedAt": generated_at, "verificationNeeded": True}
     execution_warnings = []
     try:
-        if body.taskType == "CONCEPT_EXPLORATION":
+        if body.taskType == "IDEA_BRIEF_DERIVATION":
+            from app.tasks.idea_brief import execute_idea_brief_derivation
+            result = await execute_idea_brief_derivation(body.input)
+        elif body.taskType == "CONCEPT_EXPLORATION":
             from app.services.concept_core import execute_concept_exploration
             result = await execute_concept_exploration(body.input)
         elif body.taskType == "REGULATORY_BOUNDARY_GENERATION":

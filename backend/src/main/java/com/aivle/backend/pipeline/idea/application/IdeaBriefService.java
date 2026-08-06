@@ -15,6 +15,8 @@ import com.aivle.backend.pipeline.idea.repository.IdeaAnswerRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaQuestionRepository;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -48,6 +50,7 @@ public class IdeaBriefService {
     private final CanonicalInputHasher canonicalInputHasher;
     private final IdeaBriefIdempotencyPolicy idempotencyKeys;
     private final ObjectMapper objectMapper;
+    private final JobEventPublisher jobEvents;
 
     @Transactional(readOnly = true)
     public IdeaBriefResponse get(Long ownerId, Long projectId) {
@@ -87,6 +90,10 @@ public class IdeaBriefService {
             3
         );
         brief.startDeriving(run.getId(), idempotencyKey, requestHash);
+        jobEvents.publish(new JobEventPublisher.Command(
+            projectId, run.getId(), run.getId(), "QUEUED", "job.idea.queued",
+            JobEvent.Status.QUEUED, "job.idea.queued", Map.of(), null
+        ));
         return response(brief);
     }
 
@@ -102,8 +109,9 @@ public class IdeaBriefService {
         IdeaBrief brief = requireCurrentForUpdate(ownerId, projectId);
         if (replay(brief, "PATCH_FIELDS", idempotencyKey, requestHash)) return response(brief);
         if (brief.isConfirmed()) brief = forkConfirmed(brief, ownerId);
+        boolean keepReviewReady = brief.getStatus() == IdeaBriefStatus.READY_FOR_REVIEW;
         upsertUserFields(brief, request.fields());
-        brief.markDraft();
+        if (keepReviewReady) brief.readyForReview(); else brief.markDraft();
         brief.recordCommand("PATCH_FIELDS", idempotencyKey, requestHash);
         return response(brief);
     }
