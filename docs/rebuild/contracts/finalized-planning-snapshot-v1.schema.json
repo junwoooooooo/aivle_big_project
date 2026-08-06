@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FinalizedPlanningSnapshotV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "snapshotId",
+    "projectId",
+    "sourceSelectionSnapshotId",
+    "displayLabel",
+    "planning",
+    "legalControls",
+    "changeDecisions",
+    "snapshotHash",
+    "finalizedAt"
+  ],
+  "properties": {
+    "contract": {
+      "const": "finalized-planning-snapshot-v1"
+    },
+    "snapshotId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "integer"
+    },
+    "sourceSelectionSnapshotId": {
+      "type": "string"
+    },
+    "displayLabel": {
+      "type": "string"
+    },
+    "planning": {
+      "type": "object"
+    },
+    "legalControls": {
+      "type": "object"
+    },
+    "changeDecisions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "snapshotHash": {
+      "type": "string",
+      "pattern": "^sha256:"
+    },
+    "finalizedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketAnalysisResultV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "moduleRunId",
+    "inputSnapshotId",
+    "status",
+    "resultReference",
+    "summary",
+    "competitors",
+    "planningChangeProposals",
+    "completedAt",
+    "resultHash"
+  ],
+  "properties": {
+    "contract": {
+      "const": "market-analysis-result-v1"
+    },
+    "moduleRunId": {
+      "type": "string"
+    },
+    "inputSnapshotId": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "COMPLETED",
+        "FAILED",
+        "NEEDS_INPUT"
+      ]
+    },
+    "resultReference": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "object"
+    },
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "planningChangeProposals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "resultHash": {
+      "type": "string",
+      "pattern": "^sha256:"
+    }
+  }
+}

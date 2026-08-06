@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketingContentRequestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "planningSnapshotId",
+    "contentType",
+    "channel",
+    "purpose",
+    "tone",
+    "length"
+  ],
+  "properties": {
+    "contract": {
+      "const": "marketing-content-request-v1"
+    },
+    "planningSnapshotId": {
+      "type": "string"
+    },
+    "contentType": {
+      "enum": [
+        "SOCIAL_POST",
+        "AD_COPY",
+        "LANDING_PAGE",
+        "BLOG",
+        "EMAIL",
+        "BANNER",
+        "POSTER",
+        "IMAGE_BRIEF"
+      ]
+    },
+    "channel": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "string"
+    },
+    "length": {
+      "enum": [
+        "SHORT",
+        "MEDIUM",
+        "LONG"
+      ]
+    },
+    "requiredPhrases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "excludedPhrases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "additionalInstruction": {
+      "type": "string"
+    }
+  }
+}

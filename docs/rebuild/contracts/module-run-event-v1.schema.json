@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ModuleRunEventV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "eventId",
+    "handoffId",
+    "moduleRunId",
+    "projectId",
+    "module",
+    "eventType",
+    "status",
+    "safeMessageKey",
+    "sequence",
+    "occurredAt"
+  ],
+  "properties": {
+    "contract": {
+      "const": "module-run-event-v1"
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "handoffId": {
+      "type": "string"
+    },
+    "moduleRunId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "integer"
+    },
+    "module": {
+      "enum": [
+        "MARKET_ANALYSIS",
+        "BUSINESS_FINANCIAL",
+        "PERSONA_RESPONSE_TEST"
+      ]
+    },
+    "eventType": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "RUNNING",
+        "NEEDS_INPUT",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED"
+      ]
+    },
+    "safeMessageKey": {
+      "type": "string"
+    },
+    "safeMessageParams": {
+      "type": "object"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
