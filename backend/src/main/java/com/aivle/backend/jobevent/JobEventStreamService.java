@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,12 +28,12 @@ public class JobEventStreamService {
         emitter.onCompletion(() -> remove(jobId, subscriptionId));
         emitter.onTimeout(() -> remove(jobId, subscriptionId));
         emitter.onError(ignored -> remove(jobId, subscriptionId));
-        AtomicReference<RuntimeException> replayFailure = new AtomicReference<>();
         groups.compute(jobId, (ignored, existing) -> {
             StreamGroup group = existing == null ? new StreamGroup() : existing;
             synchronized (group) {
                 group.emitters.put(subscriptionId, emitter);
                 try {
+                    emitter.send(SseEmitter.event().comment("connected"));
                     for (JobEventView event : replaySupplier.get()) {
                         if (!sendEvent(emitter, event)) {
                             group.emitters.remove(subscriptionId);
@@ -46,15 +45,13 @@ public class JobEventStreamService {
                             break;
                         }
                     }
-                } catch (RuntimeException exception) {
+                } catch (IOException | RuntimeException exception) {
                     group.emitters.remove(subscriptionId);
                     safeComplete(emitter);
-                    replayFailure.set(exception);
                 }
                 return group.emitters.isEmpty() ? null : group;
             }
         });
-        if (replayFailure.get() != null) throw replayFailure.get();
         return emitter;
     }
 

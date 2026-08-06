@@ -21,6 +21,27 @@ import tools.jackson.databind.ObjectMapper;
 
 class ConceptFactoryWorkerTests {
     @Test
+    void runtimeFailureAfterClaimTerminatesTaskRunAsFailed() {
+        TaskRunService tasks = mock(TaskRunService.class);
+        ConceptFactoryExecutionService execution = mock(ConceptFactoryExecutionService.class);
+        ConceptFactoryAiGateway ai = mock(ConceptFactoryAiGateway.class);
+        JobEventPublisher events = mock(JobEventPublisher.class);
+        ConceptFactoryWorker worker = new ConceptFactoryWorker(tasks, execution, ai, events, new ObjectMapper());
+        TaskRunService.Claim claim = new TaskRunService.Claim("task", "attempt", "claim");
+        TaskRunWorkerContext context = new TaskRunWorkerContext("task", 1L, 2L, TaskType.CONCEPT_FACTORY_RUN,
+            "CONCEPT_FACTORY_RUN", "run", "{}", "sha256:" + "a".repeat(64), "key", "correlation",
+            "1.0", "1.0", "ko-KR", 1, 1);
+        when(tasks.claimNext(eq(TaskType.CONCEPT_FACTORY_RUN), anyString(), any(), any())).thenReturn(claim);
+        when(tasks.workerContext("task")).thenReturn(context);
+        when(execution.prepare("run", 1L)).thenThrow(new IllegalStateException("boom"));
+
+        assertThat(worker.processOne()).isTrue();
+
+        verify(tasks).fail("task", "attempt", "claim", "EXECUTION_FAILED", "INTERNAL_EXECUTION_ERROR", false);
+        verify(events).publish(argThat(command -> command.status() == com.aivle.backend.jobevent.JobEvent.Status.FAILED));
+    }
+
+    @Test
     void permanentFailureInOneSlotDoesNotDiscardAnotherSlot() {
         TaskRunService tasks = mock(TaskRunService.class);
         ConceptFactoryExecutionService execution = mock(ConceptFactoryExecutionService.class);

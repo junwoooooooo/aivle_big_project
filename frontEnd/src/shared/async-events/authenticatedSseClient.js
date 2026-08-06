@@ -5,6 +5,7 @@ export async function consumeAuthenticatedSse({
   signal,
   onOpen,
   onEvent,
+  onActivity,
 }) {
   const response = await client.stream(
     `/api/v2/jobs/${encodeURIComponent(jobId)}/events`,
@@ -17,10 +18,11 @@ export async function consumeAuthenticatedSse({
     },
   );
   onOpen?.();
-  await parseSseStream(response.body, onEvent, signal);
+  onActivity?.();
+  await parseSseStream(response.body, onEvent, signal, onActivity);
 }
 
-export async function parseSseStream(body, onEvent, signal) {
+export async function parseSseStream(body, onEvent, signal, onActivity) {
   if (!body?.getReader) throw new Error('ReadableStream body is required.');
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -31,6 +33,7 @@ export async function parseSseStream(body, onEvent, signal) {
     while (true) {
       if (signal?.aborted) return;
       const { done, value } = await reader.read();
+      if (value?.length) onActivity?.();
       buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
       buffer = drainFrames(buffer, onEvent);
       if (done) break;

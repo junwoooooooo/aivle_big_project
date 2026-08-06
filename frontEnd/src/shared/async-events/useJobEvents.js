@@ -12,6 +12,9 @@ import {
 const DEFAULT_RECONNECT_DELAY = 1000;
 const DEFAULT_MAX_RECONNECT_DELAY = 8000;
 const DEFAULT_POLL_INTERVAL = 2000;
+const DEFAULT_MAX_POLL_INTERVAL = 30000;
+const DEFAULT_INACTIVITY_TIMEOUT = 45000;
+const HIDDEN_POLL_MULTIPLIER = 3;
 
 export function useJobEvents(jobId, options = {}) {
   const client = useApiClient();
@@ -26,6 +29,8 @@ export function useJobEvents(jobId, options = {}) {
     reconnectDelayMs = DEFAULT_RECONNECT_DELAY,
     maxReconnectDelayMs = DEFAULT_MAX_RECONNECT_DELAY,
     pollIntervalMs = DEFAULT_POLL_INTERVAL,
+    maxPollIntervalMs = DEFAULT_MAX_POLL_INTERVAL,
+    inactivityTimeoutMs = DEFAULT_INACTIVITY_TIMEOUT,
     maxSseFailures = 3,
   } = options;
 
@@ -80,14 +85,24 @@ export function useJobEvents(jobId, options = {}) {
       const failureLimit = Math.max(1, maxSseFailures);
       while (!controller.signal.aborted && sseFailures < failureLimit) {
         dispatch({ type: 'CONNECTING' });
+        const streamController = new AbortController();
+        const stopStream = () => streamController.abort();
+        controller.signal.addEventListener('abort', stopStream, { once: true });
+        let inactivityTimer;
+        const recordActivity = () => {
+          clearTimeout(inactivityTimer);
+          inactivityTimer = setTimeout(() => streamController.abort(), inactivityTimeoutMs);
+        };
+        recordActivity();
         try {
           await consumeAuthenticatedSse({
             client,
             jobId,
             after: cursor.current,
-            signal: controller.signal,
+            signal: streamController.signal,
             onOpen: () => dispatch({ type: 'CONNECTED' }),
             onEvent: (event) => append([event]),
+            onActivity: recordActivity,
           });
           if (controller.signal.aborted || terminal.current) return;
           throw new Error('event stream closed');
@@ -105,17 +120,28 @@ export function useJobEvents(jobId, options = {}) {
             );
             await wait(delay, controller.signal);
           }
+        } finally {
+          clearTimeout(inactivityTimer);
+          controller.signal.removeEventListener('abort', stopStream);
+          streamController.abort();
         }
       }
 
       if (controller.signal.aborted || terminal.current) return;
       dispatch({ type: 'POLLING' });
+      let pollBackoff = 0;
       while (!controller.signal.aborted && !terminal.current) {
         try {
           const result = await api.poll(jobId, cursor.current, { signal: controller.signal });
+          const receivedEvent = (result.events?.length ?? 0) > 0;
           if (append(result.events)) return;
           dispatch({ type: 'POLLING' });
-          if (result.hasMore) continue;
+          if (result.hasMore || receivedEvent) {
+            pollBackoff = 0;
+            if (result.hasMore) continue;
+          } else {
+            pollBackoff += 1;
+          }
         } catch (error) {
           if (controller.signal.aborted || terminal.current) return;
           if (isAuthenticationError(error)) {
@@ -123,8 +149,16 @@ export function useJobEvents(jobId, options = {}) {
             return;
           }
           dispatch({ type: 'POLLING', error });
+          pollBackoff += 1;
         }
-        await wait(pollIntervalMs, controller.signal);
+        const visibleDelay = Math.min(
+          pollIntervalMs * (2 ** Math.max(0, pollBackoff - 1)),
+          maxPollIntervalMs,
+        );
+        const delay = document.visibilityState === 'hidden'
+          ? Math.min(visibleDelay * HIDDEN_POLL_MULTIPLIER, maxPollIntervalMs)
+          : visibleDelay;
+        await wait(delay, controller.signal);
       }
     };
 
@@ -139,7 +173,9 @@ export function useJobEvents(jobId, options = {}) {
     client,
     jobId,
     maxReconnectDelayMs,
+    maxPollIntervalMs,
     maxSseFailures,
+    inactivityTimeoutMs,
     pollIntervalMs,
     reconnectDelayMs,
     restartToken,

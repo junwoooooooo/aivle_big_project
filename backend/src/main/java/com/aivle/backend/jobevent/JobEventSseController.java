@@ -5,6 +5,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +36,11 @@ public class JobEventSseController {
         long cursor = parseCursor(lastEventId);
         queries.verifyOwnership(ownerId, jobId);
         SseEmitter emitter = streams.subscribe(jobId, () -> queries.replay(ownerId, jobId, cursor));
-        return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).body(emitter);
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.noCache())
+            .header("X-Accel-Buffering", "no")
+            .contentType(MediaType.TEXT_EVENT_STREAM)
+            .body(emitter);
     }
 
     @ExceptionHandler(BusinessException.class)

@@ -38,6 +38,14 @@ class JobEventApiIntegrationTests {
         publisher.publish(command(project.getId(), jobId, "STARTED", JobEvent.Status.RUNNING));
 
         mockMvc.perform(get("/api/v2/jobs/{jobId}/events", jobId)
+                .queryParam("after", "0")
+                .accept(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", owner.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.events[0].sequence").value(1))
+            .andExpect(jsonPath("$.data.events[0].eventType").value("QUEUED"));
+
+        mockMvc.perform(get("/api/v2/jobs/{jobId}/events", jobId)
                 .queryParam("after", "1")
                 .accept(MediaType.APPLICATION_JSON)
                 .header("X-User-Id", owner.getId()))
@@ -113,6 +121,29 @@ class JobEventApiIntegrationTests {
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .header("X-User-Id", outsider.getId()))
             .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sseAndPollingRoutesSelectByAfterParameterWithoutConflict() throws Exception {
+        User owner = users.saveAndFlush(User.create("g2-route-owner@example.com", "hash", "g2-route-owner"));
+        Project project = projects.saveAndFlush(Project.create(owner, "g2 route", null, "AI"));
+        String jobId = "g2-route-job";
+        publisher.publish(command(project.getId(), jobId, "QUEUED", JobEvent.Status.QUEUED));
+
+        mockMvc.perform(get("/api/v2/jobs/{jobId}/events", jobId)
+                .queryParam("after", "0")
+                .accept(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", owner.getId()))
+            .andExpect(status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                .contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mockMvc.perform(get("/api/v2/jobs/{jobId}/events", jobId)
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .header("X-User-Id", owner.getId()))
+            .andExpect(status().isOk())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                .contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM));
     }
 
     private JobEventPublisher.Command command(Long projectId, String jobId, String type,

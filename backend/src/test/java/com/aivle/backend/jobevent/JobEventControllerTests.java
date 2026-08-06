@@ -38,5 +38,7 @@ class JobEventControllerTests {
         replay.getValue().get();
         verify(queries).replay(41L, "job-reconnect", 7L);
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.TEXT_EVENT_STREAM);
+        assertThat(response.getHeaders().getCacheControl()).isEqualTo("no-cache");
+        assertThat(response.getHeaders().getFirst("X-Accel-Buffering")).isEqualTo("no");
     }
 }

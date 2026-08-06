@@ -1,28 +1,31 @@
 package com.aivle.backend.jobevent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 class JobEventStreamServiceTests {
     @Test
-    void completionCallbackRemovesEmitter() {
+    void completionCallbackRemovesEmitter() throws Exception {
         JobEventStreamService service = new JobEventStreamService();
         SseEmitter emitter = mock(SseEmitter.class);
         ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
         service.subscribe("job-complete", List::of, emitter);
 
+        verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
         verify(emitter).onCompletion(callback.capture());
         callback.getValue().run();
 
@@ -85,8 +88,9 @@ class JobEventStreamServiceTests {
         service.publish(event("job-terminal", 1, "COMPLETED"));
         service.publish(event("job-terminal", 2, "COMPLETED"));
 
-        verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
-        verify(emitter).complete();
+        InOrder order = inOrder(emitter);
+        order.verify(emitter, times(2)).send(any(SseEmitter.SseEventBuilder.class));
+        order.verify(emitter).complete();
         assertThat(service.activeConnections()).isZero();
     }
 
@@ -104,13 +108,15 @@ class JobEventStreamServiceTests {
     }
 
     @Test
-    void removesEmitterWhenInitialReplayFails() {
+    void completesAndRemovesEmitterWhenInitialReplayFailsWithoutPropagating() {
         JobEventStreamService service = new JobEventStreamService();
+        SseEmitter emitter = mock(SseEmitter.class);
 
-        assertThatThrownBy(() -> service.subscribe("failed-job", () -> {
+        service.subscribe("failed-job", () -> {
             throw new IllegalStateException("replay failed");
-        })).isInstanceOf(IllegalStateException.class);
+        }, emitter);
 
+        verify(emitter).complete();
         assertThat(service.activeConnections()).isZero();
     }
 

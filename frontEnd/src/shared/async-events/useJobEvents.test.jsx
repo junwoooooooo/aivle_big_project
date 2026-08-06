@@ -62,6 +62,82 @@ describe('useJobEvents', () => {
     unmount();
   });
 
+  it('abandons an inactive SSE attempt and falls back without waiting for proxy timeout', async () => {
+    const client = {
+      stream: vi.fn().mockImplementation(pendingUntilAbort),
+      get: vi.fn().mockImplementation(pendingUntilAbort),
+    };
+    useApiClient.mockReturnValue(client);
+    const { unmount } = renderHook(() => useJobEvents('job-inactive', {
+      inactivityTimeoutMs: 100,
+      maxSseFailures: 1,
+    }));
+
+    await flush();
+    expect(client.get).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(100); await flush(); });
+
+    expect(client.stream).toHaveBeenCalledOnce();
+    expect(client.get).toHaveBeenCalledOnce();
+    unmount();
+  });
+
+  it('backs off polling, caps the delay, and slows down while the page is hidden', async () => {
+    const originalVisibility = document.visibilityState;
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    const client = {
+      stream: vi.fn(async () => { throw new Error('stream unavailable'); }),
+      get: vi.fn().mockResolvedValue({ data: { events: [], hasMore: false } }),
+    };
+    useApiClient.mockReturnValue(client);
+    const { unmount } = renderHook(() => useJobEvents('job-poll-backoff', {
+      maxSseFailures: 1,
+      pollIntervalMs: 100,
+      maxPollIntervalMs: 500,
+    }));
+
+    await flush();
+    expect(client.get).toHaveBeenCalledOnce();
+    await act(async () => { vi.advanceTimersByTime(299); await flush(); });
+    expect(client.get).toHaveBeenCalledOnce();
+    await act(async () => { vi.advanceTimersByTime(1); await flush(); });
+    expect(client.get).toHaveBeenCalledTimes(2);
+
+    unmount();
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: originalVisibility,
+    });
+  });
+
+  it('resets polling backoff after receiving an event', async () => {
+    const client = {
+      stream: vi.fn(async () => { throw new Error('stream unavailable'); }),
+      get: vi.fn()
+        .mockResolvedValueOnce({ data: { events: [], hasMore: false } })
+        .mockResolvedValueOnce({ data: {
+          events: [{ jobId: 'job-reset', sequence: 1, status: 'RUNNING' }],
+          hasMore: false,
+        } })
+        .mockImplementation(pendingUntilAbort),
+    };
+    useApiClient.mockReturnValue(client);
+    const { unmount } = renderHook(() => useJobEvents('job-reset', {
+      maxSseFailures: 1,
+      pollIntervalMs: 100,
+      maxPollIntervalMs: 800,
+    }));
+
+    await flush();
+    await act(async () => { vi.advanceTimersByTime(100); await flush(); });
+    expect(client.get).toHaveBeenCalledTimes(2);
+    await act(async () => { vi.advanceTimersByTime(99); await flush(); });
+    expect(client.get).toHaveBeenCalledTimes(2);
+    await act(async () => { vi.advanceTimersByTime(1); await flush(); });
+    expect(client.get).toHaveBeenCalledTimes(3);
+    unmount();
+  });
+
   it.each([401, 403])('does not reconnect or poll after HTTP %s', async (status) => {
     const error = Object.assign(new Error('authentication failed'), { status });
     const client = {
