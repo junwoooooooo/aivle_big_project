@@ -1,26 +1,56 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { projectRoutes } from '../../app/routing/projectRoutes.js';
-import { Drawer } from '../../shared/ui/index.js';
-import { JOB_CENTER_CHANGED, readJobs } from './jobCenterStore.js';
+import { getUserErrorMessage } from '../../shared/api/apiError.js';
+import { jobEventMessage } from '../../shared/async-events/index.js';
+import { useProjectJobs } from './useProjectJobs.js';
 
-export default function JobCenter() {
-  const [open, setOpen] = useState(false);
-  const [jobs, setJobs] = useState(readJobs);
-  useEffect(() => {
-    const update = () => setJobs(readJobs());
-    globalThis.addEventListener?.(JOB_CENTER_CHANGED, update);
-    globalThis.addEventListener?.('storage', update);
-    return () => { globalThis.removeEventListener?.(JOB_CENTER_CHANGED, update); globalThis.removeEventListener?.('storage', update); };
-  }, []);
-  const active = jobs.filter((job) => !['COMPLETED', 'FAILED', 'STALE'].includes(job.status)).length;
-  return <>
-    <button type="button" className="app-job-center-trigger" aria-label={`작업 센터, 진행 중 ${active}개`} onClick={() => setOpen(true)}>작업 센터 {active > 0 && <span>{active}</span>}</button>
-    <Drawer open={open} onClose={() => setOpen(false)} title="작업 센터">
-      <section aria-live="polite"><h2 className="visually-hidden">비동기 작업</h2>{jobs.length === 0 ? <p>표시할 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId}>
-        <Link to={projectRoutes.concepts(job.projectId)} onClick={() => setOpen(false)}><strong>Concept Factory</strong><span>{job.status}</span></Link>
-      </li>)}</ul>}</section>
-    </Drawer>
-  </>;
+const STATUS_LABELS = {
+  QUEUED: '대기 중', READY: '실행 대기', RUNNING: '진행 중', NEEDS_INPUT: '입력 필요',
+  SUCCEEDED: '완료', COMPLETED: '완료', FAILED: '실패', CANCELLED: '취소됨', TIMED_OUT: '시간 초과',
+};
+
+function targetHref(projectId, route) {
+  return `/app/projects/${encodeURIComponent(projectId)}${route || '/overview'}`;
+}
+
+function JobList({ title, jobs, selectedJobId, onSelect, projectId }) {
+  return <section className="job-center__group">
+    <h3>{title}</h3>
+    {jobs.length === 0 ? <p>해당 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId} data-status={job.status}>
+      <button type="button" aria-pressed={selectedJobId === job.jobId} onClick={() => onSelect(job.jobId)}>
+        <strong>{job.taskType.replaceAll('_', ' ')}</strong><span>{STATUS_LABELS[job.status] ?? job.status}</span><small>서버 상태: {STATUS_LABELS[job.status] ?? job.status}</small>
+      </button>
+      <Link to={targetHref(projectId, job.targetRoute)}>모듈로 이동</Link>
+    </li>)}</ul>}
+  </section>;
+}
+
+export default function JobCenter({ projectId, onTerminal }) {
+  const jobs = useProjectJobs(projectId, { onTerminal });
+  const props = { selectedJobId: jobs.selectedJobId, onSelect: jobs.selectJob, projectId };
+  const running = jobs.active.filter((job) => job.status === 'RUNNING');
+  const queued = jobs.active.filter((job) => ['QUEUED', 'READY'].includes(job.status));
+  const needsInput = jobs.active.filter((job) => job.status === 'NEEDS_INPUT');
+  const completed = jobs.recent.filter((job) => job.status === 'SUCCEEDED');
+  const failed = jobs.recent.filter((job) => ['FAILED', 'CANCELLED', 'TIMED_OUT'].includes(job.status));
+
+  return <section id="project-task-center" className="pipeline-task-center job-center" aria-labelledby="task-center-title">
+    <header><div><p>작업 센터</p><h2 id="task-center-title">프로젝트 비동기 작업</h2></div><button type="button" onClick={jobs.refresh}>수동 새로고침</button></header>
+    {jobs.notice && <p className="job-center__notice" role="status" aria-live="polite">작업이 {STATUS_LABELS[jobs.notice.status] ?? jobs.notice.status} 상태로 종료되었습니다.</p>}
+    {jobs.loading && <p>서버에서 작업 목록을 복원하고 있습니다.</p>}
+    {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
+    {!jobs.loading && !jobs.error && <div className="job-center__groups">
+      <JobList title="진행 중인 작업" jobs={running} {...props} />
+      <JobList title="대기 중인 작업" jobs={queued} {...props} />
+      <JobList title="입력이 필요한 작업" jobs={needsInput} {...props} />
+      <JobList title="최근 완료" jobs={completed} {...props} />
+      <JobList title="최근 실패" jobs={failed} {...props} />
+    </div>}
+    {jobs.selectedJobId && <section className="job-center__timeline" aria-live="polite">
+      <header><h3>선택한 작업 타임라인</h3><span>{jobs.events.transport ?? '연결 준비'}</span></header>
+      {jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>연결 재시도</button>}
+      {jobs.events.events.length === 0 ? <p>수신된 이벤트가 없습니다. 작업 상태는 서버 조회 결과를 기준으로 표시합니다.</p>
+        : <ol>{jobs.events.events.map((event) => <li key={event.sequence}><strong>{jobEventMessage(event)}</strong><span>{STATUS_LABELS[event.status] ?? event.status}</span></li>)}</ol>}
+    </section>}
+  </section>;
 }

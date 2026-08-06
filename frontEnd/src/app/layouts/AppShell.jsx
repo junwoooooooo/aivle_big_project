@@ -8,7 +8,6 @@ import { useProjects } from '../../features/projects/hooks/useProjects.js';
 import { AppIcon, Button, Drawer, ToastRegion } from '../../shared/ui/index.js';
 import { useServicePolicy } from '../../features/service-policy/useServicePolicy.js';
 import { getWriteRestriction } from '../../features/service-policy/servicePolicyRestrictions.js';
-import JobCenter from '../../features/job-center/JobCenter.jsx';
 import './layouts.css';
 
 function userLabel(user) {
@@ -143,7 +142,6 @@ export default function AppShell() {
         <GlobalNavigation />
         <div className="app-topbar__actions">
           <ProjectSearch />
-          <JobCenter />
           <div className="app-account">
             <button ref={triggerRef} type="button" className="app-account-trigger" aria-label="계정 메뉴" aria-haspopup="menu" aria-expanded={accountOpen} onClick={toggleAccount}>
               <ProfileAvatar user={user} /><span><strong>{userLabel(user)}</strong><small>개인 계정</small></span><AppIcon name="chevronRight" className="app-account-trigger__chevron" />

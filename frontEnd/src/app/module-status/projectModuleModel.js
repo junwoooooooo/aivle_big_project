@@ -71,7 +71,11 @@ export function normalizeProjectModuleStatuses(items) {
       requiredInputs: Array.isArray(item.requiredInputs) ? item.requiredInputs : [],
       nextAction: item.nextAction ?? null,
       activeRunId: item.activeRunId ?? null,
+      activeTaskRunId: item.activeTaskRunId ?? null,
+      activeJobId: item.activeJobId ?? null,
       sourceSnapshotId: item.sourceSnapshotId ?? null,
+      confirmedSnapshotId: item.confirmedSnapshotId ?? null,
+      eligibleCount: Number.isSafeInteger(item.eligibleCount) ? item.eligibleCount : null,
       updatedAt: item.updatedAt ?? null,
     }]];
   }));

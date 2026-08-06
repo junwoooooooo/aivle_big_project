@@ -11,7 +11,11 @@ public record ProjectModuleStatusResponse(
     List<String> requiredInputs,
     NextAction nextAction,
     String activeRunId,
+    String activeTaskRunId,
+    String activeJobId,
     String sourceSnapshotId,
+    String confirmedSnapshotId,
+    Long eligibleCount,
     LocalDateTime updatedAt
 ) {
     public record NextAction(String label, String route) {}

@@ -5,6 +5,7 @@ import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { ProjectProvider, useProjectContext } from '../../features/projects/ProjectContext.jsx';
 import { getModuleStatusView, getProjectModuleByPath, getProjectModules } from '../module-status/projectModuleModel.js';
 import { useProjectModuleStatuses } from '../module-status/useProjectModuleStatuses.js';
+import JobCenter from '../../features/job-center/JobCenter.jsx';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import './project-shell.css';
 
@@ -56,7 +57,7 @@ function ProjectLayoutContent() {
       <main className="pipeline-shell__main">
         {moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>모듈 상태를 불러오지 못했습니다</strong><span>{getUserErrorMessage(moduleState.error)} 프로젝트 이동과 설정은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}
         <Outlet context={{ modules, moduleState }} />
-        <section id="project-task-center" className="pipeline-task-center" aria-labelledby="task-center-title"><div><p>작업 센터</p><h2 id="task-center-title">진행 중인 작업이 없습니다</h2></div><span>비동기 작업 연결은 후속 단계에서 제공됩니다.</span></section>
+        <JobCenter projectId={projectId} onTerminal={moduleState.retry} />
       </main>
     </div>
   </div>;

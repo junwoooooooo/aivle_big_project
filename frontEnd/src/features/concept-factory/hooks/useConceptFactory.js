@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { useJobEvents } from '../../../shared/async-events/index.js';
-import { registerConceptJob } from '../../job-center/jobCenterStore.js';
 import { createConceptFactoryApi } from '../api/conceptFactoryApi.js';
 
 export default function useConceptFactory(projectId) {
@@ -20,7 +19,6 @@ export default function useConceptFactory(projectId) {
         api.slots(projectId, run.runId), api.concepts(projectId),
       ]);
       setState({ loading: false, run, slots: slotPayload.data ?? [], concepts: conceptPayload.data?.concepts ?? [], error: null, confirmedSnapshotId: null });
-      registerConceptJob({ projectId, runId: run.runId, jobId: run.activeJobId, status: run.status, updatedAt: run.updatedAt });
     } catch (error) {
       if (error?.status === 404) {
         try {
