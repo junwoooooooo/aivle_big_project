@@ -42,6 +42,7 @@ public class TaskRun extends BaseEntity {
  public void registerAttempt(String attemptId){currentAttemptId=attemptId;}
  public void claimed(String attemptId,LocalDateTime now){currentAttemptId=attemptId;state=TaskRunState.RUNNING;retryable=false;nextAttemptAt=now;if(startedAt==null)startedAt=now;}
  public void succeed(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.SUCCEEDED;retryable=false;finishedAt=now;lastErrorCode=null;}
+ public void needsInput(LocalDateTime now){requireRunning();state=TaskRunState.NEEDS_INPUT;retryable=false;finishedAt=now;lastErrorCode="NEEDS_INPUT";}
  public void fail(String code,boolean canRetry,LocalDateTime now){requireRunning();state=TaskRunState.FAILED;retryable=canRetry&&attemptCount<maxAttempts;lastErrorCode=code;finishedAt=now;}
  public void timeOut(LocalDateTime now){requireRunning();state=TaskRunState.TIMED_OUT;retryable=attemptCount<maxAttempts;lastErrorCode="TASK_TIMEOUT";finishedAt=now;}
  public void recoverAfterLeaseExpiry(LocalDateTime now){requireRunning();lastErrorCode="TASK_TIMEOUT";if(attemptCount<maxAttempts){state=TaskRunState.QUEUED;retryable=false;finishedAt=null;nextAttemptAt=now;}else{state=TaskRunState.TIMED_OUT;retryable=false;finishedAt=now;}}
@@ -52,6 +53,6 @@ public class TaskRun extends BaseEntity {
  public boolean retryKeyConflicts(String key){return state==TaskRunState.QUEUED&&lastRetryIdempotencyKey!=null&&!lastRetryIdempotencyKey.equals(key);}
  public void recordRetryKey(String key){lastRetryIdempotencyKey=key;}
  public void cancel(LocalDateTime now){if(terminal())return;cancelRequested=true;if(state==TaskRunState.QUEUED||state==TaskRunState.READY||state==TaskRunState.RUNNING){state=TaskRunState.CANCELLED;retryable=false;finishedAt=now;}}
- public boolean terminal(){return state==TaskRunState.SUCCEEDED||state==TaskRunState.FAILED||state==TaskRunState.CANCELLED||state==TaskRunState.TIMED_OUT;}
+ public boolean terminal(){return state==TaskRunState.SUCCEEDED||state==TaskRunState.NEEDS_INPUT||state==TaskRunState.FAILED||state==TaskRunState.CANCELLED||state==TaskRunState.TIMED_OUT;}
  private void requireRunning(){if(state!=TaskRunState.RUNNING)throw new IllegalStateException("task run is not running");}
 }

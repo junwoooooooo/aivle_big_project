@@ -83,6 +83,17 @@ public class ConceptFactoryExecutionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String beginRetryAttempt(String slotId, ConceptAttemptPhase phase, String taskRunId) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        return attempts.save(ConceptAttempt.retry(slot, phase, taskRunId)).getId();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordCandidateInspection(String runId) {
+        runs.findById(runId).orElseThrow().recordCandidateInspection();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void generated(String slotId, String attemptId, JsonNode candidate) {
         attempts.findById(attemptId).orElseThrow().succeed(mapper.writeValueAsString(candidate));
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
@@ -146,28 +157,33 @@ public class ConceptFactoryExecutionService {
     public void recordAttemptError(String runId, String slotId, String attemptId, ConceptAttemptError error, boolean retryable) {
         attempts.findById(attemptId).orElseThrow().fail(error, error.name(), retryable);
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
-        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
-        if (error == ConceptAttemptError.SCHEMA_INVALID) {
+        if (error == ConceptAttemptError.SCHEMA_INVALID && slot.getStatus() == ConceptSlotStatus.GENERATING) {
             slot.transitionTo(ConceptSlotStatus.SCHEMA_INVALID);
-        } else if (error == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE) {
-            try {
-                run.recordProviderTransientRetry();
-            } catch (IllegalStateException exhausted) {
-                slot.transitionTo(ConceptSlotStatus.REPLACING);
-            }
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void beginReplacement(String runId, String slotId) {
+    public void beginReplacement(String runId, String slotId, int replacementRound) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         if (slot.getStatus() != ConceptSlotStatus.REPLACING) slot.transitionTo(ConceptSlotStatus.REPLACING);
-        if (run.getStatus() == ConceptFactoryRunStatus.VALIDATING) run.beginReplacementRound();
+        if (run.getStatus() == ConceptFactoryRunStatus.VALIDATING) run.ensureReplacementRound(replacementRound);
         if (run.getStatus() == ConceptFactoryRunStatus.REPLACING) {
             run.transitionTo(ConceptFactoryRunStatus.GENERATING);
             run.transitionTo(ConceptFactoryRunStatus.VALIDATING);
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void needsInput(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        if (run.getStatus() != ConceptFactoryRunStatus.NEEDS_INPUT) run.transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failRun(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        if (run.getStatus() != ConceptFactoryRunStatus.FAILED) run.transitionTo(ConceptFactoryRunStatus.FAILED);
     }
 
     @Transactional

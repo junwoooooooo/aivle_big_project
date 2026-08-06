@@ -31,6 +31,24 @@ class ConceptFactoryStateMachineTests {
             .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void needsInputIsTerminalAndReplacementRoundIsSharedAcrossSlots() {
+        ConceptFactoryRun needsInput = run();
+        needsInput.transitionTo(ConceptFactoryRunStatus.GENERATING);
+        needsInput.transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
+        assertThat(needsInput.isTerminal()).isTrue();
+
+        ConceptFactoryRun replacing = run();
+        replacing.transitionTo(ConceptFactoryRunStatus.GENERATING);
+        replacing.transitionTo(ConceptFactoryRunStatus.VALIDATING);
+        replacing.ensureReplacementRound(1);
+        replacing.transitionTo(ConceptFactoryRunStatus.GENERATING);
+        replacing.transitionTo(ConceptFactoryRunStatus.VALIDATING);
+        replacing.ensureReplacementRound(1);
+        assertThat(replacing.getReplacementRounds()).isOne();
+        assertThat(replacing.getStatus()).isEqualTo(ConceptFactoryRunStatus.VALIDATING);
+    }
+
     static ConceptFactoryRun run() {
         return ConceptFactoryRun.create(Project.create(null, "p", null, null), "brief-1", "sha256:" + "a".repeat(64), 1L);
     }

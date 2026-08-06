@@ -32,11 +32,19 @@ public class ConceptAttempt extends BaseEntity {
     @Column(columnDefinition = "TEXT") private String resultJson;
 
     public static ConceptAttempt begin(ConceptSlot slot, ConceptAttemptPhase phase, String taskRunId) {
+        return create(slot, phase, taskRunId, slot.beginAttempt(phase));
+    }
+
+    public static ConceptAttempt retry(ConceptSlot slot, ConceptAttemptPhase phase, String taskRunId) {
+        return create(slot, phase, taskRunId, slot.beginRetry());
+    }
+
+    private static ConceptAttempt create(ConceptSlot slot, ConceptAttemptPhase phase, String taskRunId, int attemptNumber) {
         ConceptAttempt attempt = new ConceptAttempt();
         attempt.id = UUID.randomUUID().toString();
         attempt.slot = slot;
         attempt.projectId = slot.getProjectId();
-        attempt.attemptNumber = slot.beginAttempt(phase);
+        attempt.attemptNumber = attemptNumber;
         attempt.phase = phase;
         attempt.taskRunId = taskRunId;
         return attempt;

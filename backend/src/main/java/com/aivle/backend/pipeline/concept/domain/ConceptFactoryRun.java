@@ -98,8 +98,13 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public void beginReplacementRound() {
-        if (replacementRounds >= ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS) throw new IllegalStateException("replacement round limit exceeded");
-        replacementRounds++;
+        ensureReplacementRound(replacementRounds + 1);
+    }
+
+    public void ensureReplacementRound(int round) {
+        if (round < 1 || round > ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS) throw new IllegalStateException("replacement round limit exceeded");
+        if (round <= replacementRounds) return;
+        replacementRounds = round;
         transitionTo(ConceptFactoryRunStatus.REPLACING);
     }
 
@@ -109,6 +114,7 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public boolean isTerminal() {
-        return status == ConceptFactoryRunStatus.COMPLETED || status == ConceptFactoryRunStatus.FAILED || status == ConceptFactoryRunStatus.STALE;
+        return status == ConceptFactoryRunStatus.NEEDS_INPUT || status == ConceptFactoryRunStatus.COMPLETED
+            || status == ConceptFactoryRunStatus.FAILED || status == ConceptFactoryRunStatus.STALE;
     }
 }

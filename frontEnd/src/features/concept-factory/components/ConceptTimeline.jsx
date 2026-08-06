@@ -41,8 +41,10 @@ function connectionLabel(state, transport) {
 
 function eventLabel(type) {
   return ({
-    'job.concept.run.queued': '컨셉 작업 대기', 'job.concept.slot.started': '후보 생성 시작',
-    'job.concept.slot.generated': '후보 생성 완료', 'job.concept.slot.validating_legal': '법률 근거 확인',
+    'job.concept.run.queued': '컨셉 작업 대기', 'job.concept.run.started': '컨셉 작업 시작',
+    'job.concept.legal-context.started': '법률 컨텍스트 확인', 'job.concept.legal-context.completed': '법률 컨텍스트 준비',
+    'job.concept.slot.started': '후보 생성 시작', 'job.concept.slot.generated': '후보 생성 완료',
+    'job.concept.slot.validating_origin': '아이디어 조건 확인', 'job.concept.slot.validating_legal': '법률 근거 확인',
     'job.concept.slot.redesigning': '필수 통제 반영', 'job.concept.slot.replacing': '대체 후보 생성',
     'job.concept.slot.eligible': '법률검토 통과', 'job.concept.slot.rejected': '후보 폐기',
     'job.concept.run.needs_input': '추가 정보 필요', 'job.concept.run.completed': '5개 컨셉 준비 완료',

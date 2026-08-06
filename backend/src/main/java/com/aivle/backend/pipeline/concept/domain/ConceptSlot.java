@@ -73,6 +73,11 @@ public class ConceptSlot extends BaseEntity {
         return attemptCount;
     }
 
+    public int beginRetry() {
+        attemptCount++;
+        return attemptCount;
+    }
+
     public void fail() {
         if (status != ConceptSlotStatus.ELIGIBLE && status != ConceptSlotStatus.STALE) status = ConceptSlotStatus.FAILED;
     }

@@ -155,6 +155,16 @@ public class TaskRunService {
     }
 
     @Transactional
+    public void needsInput(String runId, String attemptId, String claimToken) {
+        TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
+        TaskAttempt attempt = attempts.findByIdAndTaskRunId(attemptId, runId).orElseThrow(this::notFound);
+        if (run.terminal()) return;
+        LocalDateTime now = LocalDateTime.now(clock);
+        attempt.needsInput(claimToken, now);
+        run.needsInput(now);
+    }
+
+    @Transactional
     public void rejectAndFail(String runId, String attemptId, String claimToken, String payload,
                               String schemaVersion, String reason) {
         TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
