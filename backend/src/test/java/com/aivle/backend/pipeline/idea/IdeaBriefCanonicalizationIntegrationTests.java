@@ -114,9 +114,9 @@ class IdeaBriefCanonicalizationIntegrationTests {
     void finalQuestionAnswerQueuesFinalSynthesisWithoutIncreasingRound() {
         Fixture fixture = fixture();
         fixture.brief().startClarification("old-task-1");
-        fixture.brief().needsInput();
+        fixture.brief().needsInput(1, 0);
         fixture.brief().startClarification("old-task-2");
-        fixture.brief().needsInput();
+        fixture.brief().needsInput(1, 0);
         IdeaQuestion question = questions.save(IdeaQuestion.create(
             fixture.brief(), "problem", IdeaQuestionType.UNDECIDED,
             "Can this remain undecided?", "[]", 0, 2));
@@ -296,7 +296,7 @@ class IdeaBriefCanonicalizationIntegrationTests {
         Project project = projects.saveAndFlush(Project.create(user, "canonical idea", null, "AI"));
         IdeaBrief brief = IdeaBrief.initial(project, user.getId());
         brief.updateOverview("Canonical overview only");
-        brief.needsInput();
+        brief.needsInput(0, 1);
         return new Fixture(user, project, briefs.saveAndFlush(brief));
     }
 

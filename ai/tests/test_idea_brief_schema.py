@@ -114,6 +114,30 @@ def test_final_synthesis_allows_ai_proposal_and_keeps_unresolved_required_missin
     assert result["readiness"]["missingFieldKeys"] == ["personalData"]
 
 
+def test_final_synthesis_normalizes_provider_needs_input_when_required_fields_are_complete(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return {
+            "extractedFields": [], "fieldSuggestions": [], "clarificationQuestions": [],
+            "contradictions": [],
+            "readiness": {"status": "NEEDS_INPUT", "score": 60, "missingFieldKeys": []},
+            "userFacingSummary": "검토할 수 있습니다.",
+        }
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+
+    result = asyncio.run(service.execute_idea_brief_derivation({
+        "mode": "FINAL_SYNTHESIS", "overview": "idea",
+        "fields": [
+            {"fieldKey": value["fieldKey"], "value": "complete", "decisionState": "PREFERRED"}
+            for value in FIELD_METADATA if value["requiredForConcept"]
+        ],
+        "attachmentFileIds": [], "fieldMetadata": FIELD_METADATA,
+    }))
+
+    assert result["questions"] == []
+    assert result["readiness"]["missingFieldKeys"] == []
+    assert result["readiness"]["status"] == "READY_FOR_REVIEW"
+
+
 def _assert_closed_schema(node: dict, root: dict) -> None:
     if "$ref" in node:
         target = root

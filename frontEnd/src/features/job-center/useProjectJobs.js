@@ -16,6 +16,15 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
     try {
       const [active, recent] = await Promise.all([api.active(projectId), api.recent(projectId)]);
       setState({ loading: false, active, recent, error: null });
+      setNotice((current) => {
+        if (!current) return null;
+        const job = [...active, ...recent].find((value) => value.jobId === current.jobId);
+        if (!job) return null;
+        if (job.rawStatus === 'NEEDS_INPUT' && job.actionable === false) {
+          return { jobId: job.jobId, status: 'RESOLVED_INPUT' };
+        }
+        return current;
+      });
       setSelectedJobId((current) => {
         if (current && [...active, ...recent].some((job) => job.jobId === current)) return current;
         return active[0]?.jobId ?? recent[0]?.jobId ?? null;
@@ -28,6 +37,7 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
   useEffect(() => {
     setState({ loading: true, active: [], recent: [], error: null });
     setSelectedJobId(null);
+    setNotice(null);
     handledTerminal.current = null;
     const timer = setTimeout(refresh, 0);
     return () => clearTimeout(timer);

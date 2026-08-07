@@ -41,4 +41,27 @@ describe('useProjectJobs', () => {
     await waitFor(() => expect(onTerminal).toHaveBeenCalledTimes(1));
     expect(client.get).toHaveBeenCalledTimes(4);
   });
+
+  it('replaces a stale needs-input notice after refresh resolves its actionability', async () => {
+    let terminal = false;
+    const current = { jobId: 'job-1', status: 'NEEDS_INPUT', rawStatus: 'NEEDS_INPUT',
+      actionable: true, presentationStatus: 'NEEDS_INPUT' };
+    const resolved = { ...current, actionable: false, presentationStatus: 'RESOLVED_INPUT' };
+    const client = { get: vi.fn()
+      .mockResolvedValueOnce({ data: [current] })
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: [resolved] }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockImplementation(() => ({
+      terminal, events: terminal ? [{ sequence: 2, status: 'NEEDS_INPUT' }] : [], reconnect: vi.fn(),
+    }));
+    const { result, rerender } = renderHook(() => useProjectJobs('41'));
+    await waitFor(() => expect(result.current.selectedJobId).toBe('job-1'));
+
+    terminal = true;
+    rerender();
+
+    await waitFor(() => expect(result.current.notice?.status).toBe('RESOLVED_INPUT'));
+  });
 });

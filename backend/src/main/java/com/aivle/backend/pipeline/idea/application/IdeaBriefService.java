@@ -154,7 +154,8 @@ public class IdeaBriefService {
         }
         boolean complete = questionMap.values().stream().allMatch(IdeaQuestion::isAnswered);
         if (!complete) {
-            brief.needsInput();
+            int unanswered = (int) questionMap.values().stream().filter(question -> !question.isAnswered()).count();
+            brief.needsInput(unanswered, 0);
         } else if (brief.getClarificationRound() < IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS) {
             queueDerivation(ownerId, projectId, brief, idempotencyKey, IdeaBriefDerivationMode.CLARIFICATION);
         } else {

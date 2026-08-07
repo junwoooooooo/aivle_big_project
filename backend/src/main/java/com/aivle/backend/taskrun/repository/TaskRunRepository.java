@@ -33,6 +33,8 @@ public interface TaskRunRepository extends JpaRepository<TaskRun, String> {
         String subjectId, String inputHash, List<TaskRunState> states);
     List<TaskRun> findByProjectIdAndSubjectTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
         Long projectId, String subjectType);
+    Optional<TaskRun> findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, String subjectType, String subjectId);
     List<TaskRun> findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
         Long projectId, List<TaskRunState> states, Pageable pageable);
 

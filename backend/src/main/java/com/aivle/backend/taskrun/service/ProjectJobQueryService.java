@@ -2,6 +2,8 @@ package com.aivle.backend.taskrun.service;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
+import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.api.ProjectJobView;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -25,20 +27,27 @@ public class ProjectJobQueryService {
 
     private final ProjectRepository projects;
     private final TaskRunRepository taskRuns;
+    private final IdeaBriefRepository ideaBriefs;
 
-    public ProjectJobQueryService(ProjectRepository projects, TaskRunRepository taskRuns) {
+    public ProjectJobQueryService(ProjectRepository projects, TaskRunRepository taskRuns,
+            IdeaBriefRepository ideaBriefs) {
         this.projects = projects;
         this.taskRuns = taskRuns;
+        this.ideaBriefs = ideaBriefs;
     }
 
     public List<ProjectJobView> active(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
-        return find(projectId, ACTIVE_STATES);
+        return find(projectId, ACTIVE_STATES).stream()
+            .filter(job -> job.rawStatus().equals(TaskRunState.NEEDS_INPUT.name()) ? job.actionable() : true)
+            .toList();
     }
 
     public List<ProjectJobView> recent(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
-        return find(projectId, RECENT_STATES);
+        return find(projectId, RECENT_STATES).stream()
+            .filter(job -> !job.rawStatus().equals(TaskRunState.NEEDS_INPUT.name()) || !job.actionable())
+            .toList();
     }
 
     private List<ProjectJobView> find(Long projectId, List<TaskRunState> states) {
@@ -54,13 +63,43 @@ public class ProjectJobQueryService {
 
     private ProjectJobView view(TaskRun run) {
         JobModule module = module(run.getTaskType());
-        String stateKey = run.getState().name().toLowerCase();
+        String rawStatus = run.getState().name();
+        boolean actionable = actionable(run);
+        String presentationStatus = presentationStatus(run.getState(), actionable);
+        String stateKey = presentationStatus.toLowerCase();
         return new ProjectJobView(
             run.getId(), run.getId(), run.getTaskType().name(), run.getSubjectType(), run.getSubjectId(),
-            run.getState().name(), "job.title." + module.name().toLowerCase(),
+            rawStatus, rawStatus, actionable, presentationStatus,
+            "job.title." + module.name().toLowerCase(),
             "job.status." + stateKey, module.name(), run.getStartedAt(), run.getUpdatedAt(),
             run.terminal(), run.isRetryable(), module.route
         );
+    }
+
+    private boolean actionable(TaskRun run) {
+        if (run.getState() != TaskRunState.NEEDS_INPUT) {
+            return run.getState() == TaskRunState.QUEUED || run.getState() == TaskRunState.READY
+                || run.getState() == TaskRunState.RUNNING;
+        }
+        if (run.getTaskType() != TaskType.IDEA_BRIEF_DERIVATION || !"IDEA_BRIEF".equals(run.getSubjectType())) {
+            return true;
+        }
+        boolean latestForSubject = taskRuns
+            .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                run.getProject().getId(), run.getSubjectType(), run.getSubjectId())
+            .map(latest -> latest.getId().equals(run.getId()))
+            .orElse(false);
+        boolean domainNeedsInput = ideaBriefs.findByIdAndProjectIdAndDeletedAtIsNull(
+                run.getSubjectId(), run.getProject().getId())
+            .map(brief -> brief.getStatus() == IdeaBriefStatus.NEEDS_INPUT)
+            .orElse(false);
+        return latestForSubject && domainNeedsInput;
+    }
+
+    private String presentationStatus(TaskRunState rawStatus, boolean actionable) {
+        if (rawStatus == TaskRunState.NEEDS_INPUT && !actionable) return "RESOLVED_INPUT";
+        if (rawStatus == TaskRunState.SUCCEEDED) return "COMPLETED";
+        return rawStatus.name();
     }
 
     private JobModule module(TaskType type) {

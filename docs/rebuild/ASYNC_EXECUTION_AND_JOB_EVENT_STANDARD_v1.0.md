@@ -81,3 +81,7 @@ Concept Provider 오류는 Attempt에 다음 분류 중 하나로 기록한다: 
 - Event terminal publish 전에 TaskRun과 domain transaction의 terminal transition이 완료되어야 한다.
 - canonical input hash는 content identity이고 command-derived idempotency key는 execution identity다. 같은 command replay와 새로운 사용자 execution을 혼용하지 않는다.
 - `DERIVING` domain이 terminal active TaskRun을 가리키면 invalid recoverable state다. read path는 이를 RUNNING으로 표시하지 않고 recovery signal을 반환하며, recovery는 새 TaskRun과 sequence 1의 새 job history를 만든다.
+- Terminal TaskRun의 raw outcome과 현재 사용자 actionability는 서로 다른 projection 개념이다. 과거 `NEEDS_INPUT` TaskRun을 사용자의 후속 입력 때문에 `SUCCEEDED`로 갱신하지 않는다.
+- Project active jobs는 실제 실행 중인 `QUEUED`, `READY`, `RUNNING`과 현재 unresolved `NEEDS_INPUT`만 포함한다. `NEEDS_INPUT`은 해당 subject의 최신 relevant job이고 Domain도 현재 `NEEDS_INPUT`이며 후속 answer, field patch, newer TaskRun, Review 또는 Confirm으로 해결되지 않았을 때만 actionable하다.
+- 해결된 raw `NEEDS_INPUT`은 recent history에서 `rawStatus=NEEDS_INPUT`, `actionable=false`, `presentationStatus=RESOLVED_INPUT`으로 표현할 수 있다. 현재 unresolved 항목은 `presentationStatus=NEEDS_INPUT`이다.
+- Job Center의 terminal notice는 refresh된 projection을 따른다. 선택한 raw `NEEDS_INPUT`이 더 이상 actionable하지 않으면 notice를 지우거나 입력 반영 완료로 변경한다.

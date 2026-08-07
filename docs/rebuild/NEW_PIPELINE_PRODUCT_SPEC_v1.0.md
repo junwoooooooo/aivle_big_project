@@ -101,17 +101,23 @@ Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt �
 
 ## 12. Actionable NEEDS_INPUT UX
 
-- `NEEDS_INPUT`은 빈 화면이나 실패 반복 상태가 아니다. unanswered question이 있으면 질문을, 질문이 없고 `missingFieldKeys`가 있으면 canonical field 직접 입력 폼을 표시한다.
-- 질문과 missing field가 모두 없는 비정상 `NEEDS_INPUT` 또는 AI derivation failure에는 새 `FINAL_SYNTHESIS` TaskRun을 만드는 재분석 Action을 제공한다.
+- Business-level `NEEDS_INPUT`은 항상 구체적인 unanswered question 또는 required `missingFieldKeys`를 하나 이상 가진다. unanswered question이 있으면 질문을, 질문이 없고 required missing field가 있으면 canonical field 직접 입력 폼을 표시한다.
+- 질문과 required missing field가 모두 해결되면 `READY_FOR_REVIEW`로 이동한다. `READY_FOR_REVIEW`는 사용자가 현재 정리 결과를 검토·수정할 수 있다는 의미이고, `READY_FOR_CONFIRM`은 그대로 최종 Confirm할 수 있다는 의미다.
+- Blocking contradiction은 Review 진입을 막지 않는다. 질문과 required missing field가 없고 contradiction만 남으면 `READY_FOR_REVIEW`, `readyForConfirm=false`로 응답하며 Review에서 contradiction을 표시하고 관련 field를 수정하게 한다.
+- Backend `readyForConfirm`은 required missing 0, unanswered question 0, blocking contradiction 0, assessment current를 모두 요구한다. AI provider의 readiness status와 score는 advisory metadata이며 hard gate가 아니다.
+- `RECOVERY`는 `DERIVING`과 terminal/missing active TaskRun의 불일치, terminal execution 재사용 감지 등 execution-state inconsistency에만 사용한다. 단순 AI readiness `NEEDS_INPUT`, contradiction, 질문 0 + missing 0은 recovery 사유가 아니다.
 - 누락 필드 입력은 Answers API가 아닌 fields PATCH를 사용한다. 변경이 반영되면 `DERIVING`과 새 `activeJobId`를 받고 최종 분석이 끝난 뒤 Review 또는 다시 actionable `NEEDS_INPUT`으로 이동한다.
 - 질문이 0개인 상태에서는 빈 Answers request를 전송하지 않는다.
 - Clarification 질문은 required/regulatory-sensitive missing field를 optional field보다 우선한다.
 - `FINAL_SYNTHESIS`가 현재 사실에서 required field를 합리적으로 유추하면 `AI_PROPOSED`로 제안할 수 있다. 확정할 수 없는 required field는 manual completion 대상으로 유지한다.
+- `FINAL_SYNTHESIS`는 질문을 빈 배열로 유지한다. required missing이 없으면 provider status와 무관하게 최소 `READY_FOR_REVIEW`로 normalize한다.
 
 ## 13. Idea asynchronous execution identity
 
 - Terminal TaskRun과 Job ID는 immutable execution history이며 새로운 사용자 Action에 재사용하지 않는다.
 - 사용자 command idempotency와 canonical content hash를 분리한다. 동일 command key replay는 동일 execution을 반환하지만 새 command key는 canonical content가 같아도 새 TaskRun을 생성한다. 동일 input의 active TaskRun 차단은 유지한다.
-- Idea Brief `NEEDS_INPUT`, TaskRun `NEEDS_INPUT`, terminal JobEvent `NEEDS_INPUT`은 같은 execution에서 일치해야 한다. `READY_FOR_REVIEW`는 TaskRun `SUCCEEDED` 및 JobEvent `COMPLETED`와 일치한다.
+- Task result를 adoption하는 시점의 Idea Brief `NEEDS_INPUT`, TaskRun `NEEDS_INPUT`, terminal JobEvent `NEEDS_INPUT`은 같은 execution에서 일치해야 한다. 이후 사용자 답변·field patch·newer TaskRun·`READY_FOR_REVIEW`·`CONFIRMED`가 발생해도 과거 TaskRun/Event의 raw terminal history는 변경하지 않는다.
+- Job Center는 raw TaskRun outcome과 현재 사용자 actionability를 분리한다. 현재 subject의 최신 relevant job이면서 Domain도 여전히 `NEEDS_INPUT`인 unresolved 항목만 active jobs에 포함한다. 해결된 과거 raw `NEEDS_INPUT`은 `actionable=false`, `presentationStatus=RESOLVED_INPUT`인 최근 처리 이력으로 표시한다.
+- `READY_FOR_REVIEW`를 만든 execution은 TaskRun `SUCCEEDED` 및 JobEvent `COMPLETED`와 일치한다.
 - `DERIVING`인데 active TaskRun이 terminal인 상태는 유효한 RUNNING 상태가 아니라 복구 가능한 invalid state다. 조회 화면은 spinner 대신 recovery Action을 제공하고 재분석은 과거 history를 수정하지 않은 새 TaskRun을 만든다.
 - Terminal JobEvent 뒤에는 같은 jobId의 어떤 Event도 추가할 수 없다.

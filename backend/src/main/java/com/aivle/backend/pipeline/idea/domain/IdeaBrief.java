@@ -198,8 +198,11 @@ public class IdeaBrief extends BaseEntity {
             "sha256:" + "0".repeat(64));
     }
 
-    public void needsInput() {
+    public void needsInput(int unansweredQuestionCount, int requiredMissingFieldCount) {
         requireMutable();
+        if (unansweredQuestionCount <= 0 && requiredMissingFieldCount <= 0) {
+            throw new IllegalStateException("NEEDS_INPUT requires an unanswered question or required missing field");
+        }
         this.status = IdeaBriefStatus.NEEDS_INPUT;
         this.activeTaskRunId = null;
     }

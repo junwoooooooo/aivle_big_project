@@ -95,7 +95,7 @@ describe('useIdeaIntake async recovery', () => {
     expect(result.current.activeJobId).toBe('job-final');
   });
 
-  it('never posts empty answers and routes malformed needs-input state to recovery', async () => {
+  it('routes needs-input without questions or missing fields to review', async () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const client = {
       get: vi.fn().mockResolvedValue({ data: response('NEEDS_INPUT', null, []) }),
@@ -103,18 +103,37 @@ describe('useIdeaIntake async recovery', () => {
     };
     useApiClient.mockReturnValue(client);
     const { result } = renderHook(() => useIdeaIntake('42'));
-    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RECOVERY));
-
-    await act(async () => result.current.submitAnswers({ preventDefault: vi.fn() }));
-
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.REVIEW));
     expect(client.post).not.toHaveBeenCalled();
-    expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RECOVERY);
+  });
+
+  it('routes needs-input with contradictions but no actionable inputs to review', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const payload = {
+      ...response('NEEDS_INPUT', null, []),
+      contradictions: [{ fieldKeys: ['problem', 'targetCustomers'], summary: 'conflict' }],
+    };
+    const client = { get: vi.fn().mockResolvedValue({ data: payload }), patch: vi.fn(), post: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.REVIEW));
+  });
+
+  it('gives explicit execution recovery precedence over business screen state', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const payload = { ...response('NEEDS_INPUT', null, []), recoveryRequired: true };
+    const client = { get: vi.fn().mockResolvedValue({ data: payload }), patch: vi.fn(), post: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RECOVERY));
   });
 
   it('uses the reanalyze endpoint for recovery and adopts the new job id', async () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const client = {
-      get: vi.fn().mockResolvedValue({ data: response('NEEDS_INPUT', null, []) }),
+      get: vi.fn().mockResolvedValue({ data: { ...response('NEEDS_INPUT', null, []), recoveryRequired: true } }),
       patch: vi.fn(),
       post: vi.fn().mockResolvedValue({ data: response('DERIVING', 'job-recovery', []) }),
     };

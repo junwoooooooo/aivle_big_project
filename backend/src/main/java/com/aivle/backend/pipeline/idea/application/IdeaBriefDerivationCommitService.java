@@ -142,7 +142,11 @@ public class IdeaBriefDerivationCommitService {
             questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()),
             true
         );
-        if (assessment.readyForConfirm()) brief.readyForReview(); else brief.needsInput();
+        if (assessment.unansweredQuestionCount() > 0 || !assessment.missingFieldKeys().isEmpty()) {
+            brief.needsInput(assessment.unansweredQuestionCount(), assessment.missingFieldKeys().size());
+        } else {
+            brief.readyForReview();
+        }
 
         if (brief.getStatus() == com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus.NEEDS_INPUT) {
             taskRuns.adoptNeedsInput(

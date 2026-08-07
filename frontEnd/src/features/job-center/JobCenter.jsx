@@ -6,8 +6,13 @@ import { useProjectJobs } from './useProjectJobs.js';
 
 const STATUS_LABELS = {
   QUEUED: '대기 중', READY: '실행 대기', RUNNING: '진행 중', NEEDS_INPUT: '입력 필요',
+  RESOLVED_INPUT: '입력 반영 완료',
   SUCCEEDED: '완료', COMPLETED: '완료', FAILED: '실패', CANCELLED: '취소됨', TIMED_OUT: '시간 초과',
 };
+
+function displayStatus(job) {
+  return job.presentationStatus ?? job.status;
+}
 
 function targetHref(projectId, route) {
   return `/app/projects/${encodeURIComponent(projectId)}${route || '/overview'}`;
@@ -16,9 +21,11 @@ function targetHref(projectId, route) {
 function JobList({ title, jobs, selectedJobId, onSelect, projectId }) {
   return <section className="job-center__group">
     <h3>{title}</h3>
-    {jobs.length === 0 ? <p>해당 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId} data-status={job.status}>
+    {jobs.length === 0 ? <p>해당 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId} data-status={displayStatus(job)}>
       <button type="button" aria-pressed={selectedJobId === job.jobId} onClick={() => onSelect(job.jobId)}>
-        <strong>{job.taskType.replaceAll('_', ' ')}</strong><span>{STATUS_LABELS[job.status] ?? job.status}</span><small>서버 상태: {STATUS_LABELS[job.status] ?? job.status}</small>
+        <strong>{job.taskType.replaceAll('_', ' ')}</strong>
+        <span>{STATUS_LABELS[displayStatus(job)] ?? displayStatus(job)}</span>
+        <small>서버 상태: {STATUS_LABELS[job.rawStatus ?? job.status] ?? (job.rawStatus ?? job.status)}</small>
       </button>
       <Link to={targetHref(projectId, job.targetRoute)}>모듈로 이동</Link>
     </li>)}</ul>}
@@ -30,8 +37,8 @@ export default function JobCenter({ projectId, onTerminal }) {
   const props = { selectedJobId: jobs.selectedJobId, onSelect: jobs.selectJob, projectId };
   const running = jobs.active.filter((job) => job.status === 'RUNNING');
   const queued = jobs.active.filter((job) => ['QUEUED', 'READY'].includes(job.status));
-  const needsInput = jobs.active.filter((job) => job.status === 'NEEDS_INPUT');
-  const completed = jobs.recent.filter((job) => job.status === 'SUCCEEDED');
+  const needsInput = jobs.active.filter((job) => job.status === 'NEEDS_INPUT' && job.actionable !== false);
+  const completed = jobs.recent.filter((job) => ['SUCCEEDED', 'COMPLETED', 'RESOLVED_INPUT'].includes(displayStatus(job)));
   const failed = jobs.recent.filter((job) => ['FAILED', 'CANCELLED', 'TIMED_OUT'].includes(job.status));
 
   return <section id="project-task-center" className="pipeline-task-center job-center" aria-labelledby="task-center-title">

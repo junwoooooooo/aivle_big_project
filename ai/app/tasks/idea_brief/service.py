@@ -55,7 +55,11 @@ async def execute_idea_brief_derivation(task_input: dict) -> dict:
     ]
     provider = provider.model_copy(update={
         "readiness": provider.readiness.model_copy(update={
-            "status": "NEEDS_INPUT" if required_missing else provider.readiness.status,
+            "status": (
+                "NEEDS_INPUT" if required_missing
+                else "READY_FOR_REVIEW" if validated_input.mode == "FINAL_SYNTHESIS"
+                else provider.readiness.status
+            ),
             "missingFieldKeys": required_missing,
         })
     })

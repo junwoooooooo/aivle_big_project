@@ -49,8 +49,7 @@ public class IdeaBriefReadinessCalculator {
         int completionScore = total == 0 ? 0 : completed * 100 / total;
         int aiScore = brief.getAiReadinessStatus() == null ? completionScore : brief.getReadinessScore();
         int score = Math.max(0, Math.min(completionScore, aiScore) - blocking * 10 - unanswered * 5);
-        boolean aiReady = "READY_FOR_REVIEW".equals(brief.getAiReadinessStatus());
-        boolean ready = requiredMissing.isEmpty() && unanswered == 0 && blocking == 0 && aiReady
+        boolean ready = requiredMissing.isEmpty() && unanswered == 0 && blocking == 0
             && assessmentCurrent;
         return new Assessment(total, completed, missing, unanswered, blocking, score, ready);
     }

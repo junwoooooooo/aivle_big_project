@@ -826,9 +826,13 @@ Provider Adapter는 유지하되 Provider Output Schema 검증과 Smoke Gate를 
 
 ## 29. Actionable Idea Brief NEEDS_INPUT invariant
 
-- `NEEDS_INPUT`은 항상 사용자가 즉시 수행할 수 있는 Action을 제공한다.
-- unanswered question이 있으면 question input, 질문이 없고 required missing field가 있으면 manual field completion을 제공한다.
-- `NEEDS_INPUT`이면서 질문과 missing field가 모두 없으면 Answers API를 호출하지 않고 `FINAL_SYNTHESIS` 재분석 Action을 제공한다.
+- Business-level `NEEDS_INPUT`은 항상 사용자가 즉시 수행할 수 있는 actionable input requirement를 가진다. `IdeaBrief.status == NEEDS_INPUT`이면 unanswered question이 하나 이상이거나 required `missingFieldKeys`가 하나 이상이어야 한다.
+- unanswered question이 있으면 question input, 질문이 없고 required missing field가 있으면 manual field completion을 제공한다. 질문과 required missing field가 모두 해결되면 `READY_FOR_REVIEW`로 이동한다.
+- `READY_FOR_REVIEW`는 사용자가 현재 Brief를 검토·수정할 수 있다는 의미이며, `READY_FOR_CONFIRM`은 현재 Brief를 최종 Confirm할 수 있다는 의미다. 둘은 같은 gate가 아니다.
+- 질문과 required missing field가 모두 없으면 blocking contradiction이 있어도 `READY_FOR_REVIEW`로 이동한다. contradiction은 Review에서 표시하고 관련 field 수정과 재평가로 해소한다.
+- Backend `readyForConfirm`의 최종 조건은 required missing 0, unanswered question 0, blocking contradiction 0, 최신 canonical assessment input hash 일치다. AI provider의 `readiness.status`와 `readiness.score`는 advisory metadata이며 hard gate가 아니다.
+- `RECOVERY`는 `DERIVING`이 terminal active TaskRun을 가리키거나 active TaskRun이 없거나 유실된 경우, terminal Job 재사용 감지, execution/domain state inconsistency에만 사용한다. AI readiness `NEEDS_INPUT`, contradiction 존재, 질문 0 + missing 0은 recovery 사유가 아니다.
 - zero-question 상태에서 `POST /idea-brief/answers {"answers":[]}`를 호출하지 않으며 Backend의 non-empty validation은 유지한다.
 - Backend `IdeaBriefFieldCatalog`가 required/regulatory-sensitive metadata의 source of truth다. 이 metadata를 AI input에 전달하고 clarification은 missing required regulatory-sensitive, missing required, blocking contradiction, optional 정보 순서로 처리한다.
-- `FINAL_SYNTHESIS`는 질문을 생성하지 않는다. 합리적으로 유추 가능한 required field는 `AI_PROPOSED` suggestion으로 채울 수 있지만 user-confirmed fact로 확정하지 않는다. 유추 불가능한 required field는 manual field completion으로 이어진다.
+- `FINAL_SYNTHESIS`는 질문을 생성하지 않는다. required missing이 0이면 provider readiness와 무관하게 최소 `READY_FOR_REVIEW` 가능한 상태로 normalize한다. contradiction이 없으면 `readyForConfirm` 가능하고, contradiction이 있으면 Review에서 수정한다. 합리적으로 유추 가능한 required field는 `AI_PROPOSED` suggestion으로 채울 수 있지만 user-confirmed fact로 확정하지 않는다. 유추 불가능한 required field는 manual field completion으로 이어진다.
+- 과거 TaskRun의 terminal raw `NEEDS_INPUT` history는 immutable하다. raw TaskRun outcome과 현재 사용자 actionability를 분리하며, 답변·field patch·newer TaskRun·`READY_FOR_REVIEW`·`CONFIRMED`로 해결된 과거 `NEEDS_INPUT`은 `actionable=false`, `presentationStatus=RESOLVED_INPUT`인 최근 처리 이력으로 표시한다. 현재 unresolved `NEEDS_INPUT`만 active jobs의 입력 필요 항목에 포함한다.

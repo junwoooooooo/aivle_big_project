@@ -27,4 +27,13 @@ class IdeaBriefFieldInvariantTests {
         assertThat(userField.getDecisionState()).isEqualTo(IdeaDecisionState.LOCKED);
         assertThat(userField.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_CONFIRMED);
     }
+
+    @Test
+    void needsInputRequiresAnActionableQuestionOrMissingField() {
+        IdeaBrief brief = IdeaBrief.initial(null, 7L);
+
+        assertThatThrownBy(() -> brief.needsInput(0, 0))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("NEEDS_INPUT requires");
+    }
 }

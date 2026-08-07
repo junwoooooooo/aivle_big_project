@@ -25,6 +25,7 @@ function hasAnswer(question, answer) {
 }
 
 function screenStateFor(response) {
+  if (response?.recoveryRequired) return IDEA_INTAKE_SCREEN_STATE.RECOVERY;
   if (response?.status === 'NEEDS_INPUT') {
     if ((response.questions ?? []).some((question) => !question.answered)) {
       return IDEA_INTAKE_SCREEN_STATE.NEEDS_QUESTIONS;
@@ -32,7 +33,7 @@ function screenStateFor(response) {
     if ((response.readiness?.missingFieldKeys ?? []).length > 0) {
       return IDEA_INTAKE_SCREEN_STATE.NEEDS_FIELDS;
     }
-    return IDEA_INTAKE_SCREEN_STATE.RECOVERY;
+    return IDEA_INTAKE_SCREEN_STATE.REVIEW;
   }
   return {
     DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
@@ -149,8 +150,7 @@ export default function useIdeaIntake(projectId) {
   const submitAnswers = async (event) => {
     event.preventDefault();
     if (questions.length === 0) {
-      setFailureMessage('답변할 질문이 없습니다. 현재 입력을 다시 분석해 주세요.');
-      setScreenState(IDEA_INTAKE_SCREEN_STATE.RECOVERY);
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.REVIEW);
       return;
     }
     const nextErrors = Object.fromEntries(questions
