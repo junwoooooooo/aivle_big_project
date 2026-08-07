@@ -64,6 +64,18 @@ public class IdeaBriefController {
         return success(service.answer(currentUser.currentUserId(), projectId, body, idempotencyKey), request);
     }
 
+    @PostMapping("/reanalyze")
+    public ResponseEntity<ApiResponse<IdeaBriefResponse>> reanalyze(
+        @PathVariable Long projectId,
+        @RequestHeader("Idempotency-Key") String idempotencyKey,
+        HttpServletRequest request
+    ) {
+        IdeaBriefResponse response = service.reanalyze(
+            currentUser.currentUserId(), projectId, idempotencyKey
+        );
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(success(response, request));
+    }
+
     @PostMapping("/confirm")
     public ApiResponse<IdeaBriefResponse> confirm(
         @PathVariable Long projectId,

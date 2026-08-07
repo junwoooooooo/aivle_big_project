@@ -37,6 +37,7 @@ public class IdeaBriefReadinessCalculator {
             .toList();
         LinkedHashSet<String> missingKeys = new LinkedHashSet<>(requiredMissing);
         persistedMissingKeys(brief.getMissingFieldKeysJson()).stream()
+            .filter(key -> IdeaBriefFieldCatalog.require(key).requiredForConcept())
             .filter(key -> incomplete(byKey.get(key))).forEach(missingKeys::add);
         List<String> missing = List.copyOf(missingKeys);
         int total = (int) IdeaBriefFieldCatalog.fields().stream()

@@ -8,6 +8,14 @@ from app.tasks.idea_brief import service
 from app.providers import ProviderFailure
 
 
+FIELD_METADATA = [
+    {"fieldKey": "physicalActivity", "requiredForConcept": True, "regulatorySensitive": True},
+    {"fieldKey": "personalData", "requiredForConcept": True, "regulatorySensitive": True},
+    {"fieldKey": "problem", "requiredForConcept": True, "regulatorySensitive": False},
+    {"fieldKey": "assumptions", "requiredForConcept": False, "regulatorySensitive": False},
+]
+
+
 def test_provider_schema_is_closed_and_fully_typed():
     schema = IdeaBriefProviderResult.model_json_schema()
     _assert_closed_schema(schema, schema)
@@ -47,10 +55,63 @@ def test_final_synthesis_uses_strict_mode_prompt_and_rejects_questions(monkeypat
     with pytest.raises(ProviderFailure) as raised:
         asyncio.run(service.execute_idea_brief_derivation({
             "mode": "FINAL_SYNTHESIS", "overview": "idea", "fields": [], "attachmentFileIds": [],
+            "fieldMetadata": FIELD_METADATA,
         }))
     assert raised.value.reason == "FINAL_SYNTHESIS_QUESTIONS_FORBIDDEN"
     assert "더 이상 새로운 질문을 생성하지 말고" in captured["system"]
     assert captured["response_schema"]["additionalProperties"] is False
+
+
+def test_clarification_keeps_required_questions_before_optional_questions(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return {
+            "extractedFields": [], "fieldSuggestions": [],
+            "clarificationQuestions": [
+                {"targetFieldKey": "assumptions", "prompt": "optional", "type": "FREE_TEXT",
+                    "options": [], "allowUndecided": True},
+                {"targetFieldKey": "problem", "prompt": "problem", "type": "FREE_TEXT",
+                    "options": [], "allowUndecided": True},
+                {"targetFieldKey": "physicalActivity", "prompt": "activity", "type": "FREE_TEXT",
+                    "options": [], "allowUndecided": True},
+            ],
+            "contradictions": [],
+            "readiness": {"status": "NEEDS_INPUT", "score": 30,
+                "missingFieldKeys": ["problem", "physicalActivity"]},
+            "userFacingSummary": "필수 정보가 필요합니다.",
+        }
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+
+    result = asyncio.run(service.execute_idea_brief_derivation({
+        "mode": "CLARIFICATION", "overview": "idea", "fields": [], "attachmentFileIds": [],
+        "fieldMetadata": FIELD_METADATA,
+    }))
+
+    assert [value["targetFieldKey"] for value in result["questions"]] == ["physicalActivity", "problem"]
+
+
+def test_final_synthesis_allows_ai_proposal_and_keeps_unresolved_required_missing(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return {
+            "extractedFields": [],
+            "fieldSuggestions": [{"fieldKey": "physicalActivity", "value": "오프라인 활동 없음",
+                "decisionState": "PREFERRED", "rationale": "현재 설명에서 합리적으로 추론"}],
+            "clarificationQuestions": [], "contradictions": [],
+            "readiness": {"status": "NEEDS_INPUT", "score": 70,
+                "missingFieldKeys": ["personalData"]},
+            "userFacingSummary": "개인정보 항목은 사용자 확인이 필요합니다.",
+        }
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+
+    result = asyncio.run(service.execute_idea_brief_derivation({
+        "mode": "FINAL_SYNTHESIS", "overview": "idea",
+        "fields": [{"fieldKey": "problem", "value": "문제", "decisionState": "PREFERRED"}],
+        "attachmentFileIds": [],
+        "fieldMetadata": FIELD_METADATA,
+    }))
+
+    assert result["questions"] == []
+    assert result["fields"][0]["provenance"] == "AI_PROPOSED"
+    assert result["readiness"]["missingFieldKeys"] == ["personalData"]
 
 
 def _assert_closed_schema(node: dict, root: dict) -> None:

@@ -821,3 +821,14 @@ Provider Adapter는 유지하되 Provider Output Schema 검증과 Smoke Gate를 
 - Shared Legal Evidence는 snapshot별 context pack과 base official evidence를 공통 구축·재사용하고, Candidate가 새로운 활동을 도입할 때만 delta retrieval하는 것을 원칙으로 한다.
 - Failed run의 resume은 이전 TaskRun history를 보존하고 새 TaskRun/activeJobId를 만든다. `NEEDS_INPUT`은 Idea Brief 보완, source snapshot 변경은 새 run 시작으로 안내한다.
 - Process health와 Concept Factory capability를 분리한다. capability는 AI 설정, internal service token, legal registry version/load, MOLEG 설정을 검사하되 live poll에서 provider correctness 호출은 하지 않는다.
+
+---
+
+## 29. Actionable Idea Brief NEEDS_INPUT invariant
+
+- `NEEDS_INPUT`은 항상 사용자가 즉시 수행할 수 있는 Action을 제공한다.
+- unanswered question이 있으면 question input, 질문이 없고 required missing field가 있으면 manual field completion을 제공한다.
+- `NEEDS_INPUT`이면서 질문과 missing field가 모두 없으면 Answers API를 호출하지 않고 `FINAL_SYNTHESIS` 재분석 Action을 제공한다.
+- zero-question 상태에서 `POST /idea-brief/answers {"answers":[]}`를 호출하지 않으며 Backend의 non-empty validation은 유지한다.
+- Backend `IdeaBriefFieldCatalog`가 required/regulatory-sensitive metadata의 source of truth다. 이 metadata를 AI input에 전달하고 clarification은 missing required regulatory-sensitive, missing required, blocking contradiction, optional 정보 순서로 처리한다.
+- `FINAL_SYNTHESIS`는 질문을 생성하지 않는다. 합리적으로 유추 가능한 required field는 `AI_PROPOSED` suggestion으로 채울 수 있지만 user-confirmed fact로 확정하지 않는다. 유추 불가능한 required field는 manual field completion으로 이어진다.

@@ -19,10 +19,18 @@ function hasAnswer(question, answer) {
 }
 
 function screenStateFor(response) {
+  if (response?.status === 'NEEDS_INPUT') {
+    if ((response.questions ?? []).some((question) => !question.answered)) {
+      return IDEA_INTAKE_SCREEN_STATE.NEEDS_QUESTIONS;
+    }
+    if ((response.readiness?.missingFieldKeys ?? []).length > 0) {
+      return IDEA_INTAKE_SCREEN_STATE.NEEDS_FIELDS;
+    }
+    return IDEA_INTAKE_SCREEN_STATE.RECOVERY;
+  }
   return {
     DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
     DERIVING: IDEA_INTAKE_SCREEN_STATE.RUNNING,
-    NEEDS_INPUT: IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT,
     READY_FOR_REVIEW: IDEA_INTAKE_SCREEN_STATE.REVIEW,
     CONFIRMED: IDEA_INTAKE_SCREEN_STATE.CONFIRMED,
     FAILED: IDEA_INTAKE_SCREEN_STATE.FAILED,
@@ -47,6 +55,7 @@ export default function useIdeaIntake(projectId) {
   const [screenState, setScreenState] = useState(IDEA_INTAKE_SCREEN_STATE.LOADING);
   const [errors, setErrors] = useState({});
   const [failureMessage, setFailureMessage] = useState('');
+  const [failureKind, setFailureKind] = useState('INTERACTION');
   const [activeJobId, setActiveJobId] = useState(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [questions, setQuestions] = useState([]);
@@ -54,11 +63,14 @@ export default function useIdeaIntake(projectId) {
 
   const applyResponse = useCallback((response) => {
     dispatch({ type: 'LOAD_SERVER_BRIEF', response });
-    setQuestions(questionsFromIdeaBrief(response));
+    const unansweredIds = new Set((response.questions ?? [])
+      .filter((question) => !question.answered).map((question) => question.questionId));
+    setQuestions(questionsFromIdeaBrief(response).filter((question) => unansweredIds.has(question.id)));
     setActiveJobId(response.activeJobId ?? null);
     setScreenState(screenStateFor(response));
     if (response.status !== 'DERIVING') setIsReanalyzing(false);
     if (response.status === 'FAILED' || response.status === 'STALE') {
+      setFailureKind('DERIVATION');
       setFailureMessage('아이디어 정리를 완료하지 못했습니다. 다시 시도해 주세요.');
     }
   }, []);
@@ -73,6 +85,7 @@ export default function useIdeaIntake(projectId) {
         return;
       }
       setFailureMessage(error?.message ?? 'Idea Brief를 불러오지 못했습니다.');
+      setFailureKind('INTERACTION');
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   }, [api, applyResponse, projectId]);
@@ -110,12 +123,18 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
+      setFailureKind('INTERACTION');
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
 
   const submitAnswers = async (event) => {
     event.preventDefault();
+    if (questions.length === 0) {
+      setFailureMessage('답변할 질문이 없습니다. 현재 입력을 다시 분석해 주세요.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.RECOVERY);
+      return;
+    }
     const nextErrors = Object.fromEntries(questions
       .filter((question) => !hasAnswer(question, draft.answers[question.id]))
       .map((question) => [question.id, '질문에 답해 주세요.']));
@@ -131,6 +150,45 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '답변을 저장하지 못했습니다.');
+      setFailureKind('INTERACTION');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
+  };
+
+  const submitMissingFields = async (event) => {
+    event.preventDefault();
+    const missingFieldKeys = draft.assessment.readiness?.missingFieldKeys ?? [];
+    const nextErrors = Object.fromEntries(missingFieldKeys
+      .filter((fieldKey) => !draft.fields[fieldKey]?.value?.trim())
+      .map((fieldKey) => [fieldKey, '필수 정보를 입력해 주세요.']));
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    try {
+      const payload = await api.patchFields(projectId, {
+        fields: missingFieldKeys.map((fieldKey) => ({
+          fieldKey,
+          value: draft.fields[fieldKey].value.trim(),
+          decisionState: draft.fields[fieldKey].decisionState,
+        })),
+      }, ideaCommandOptions('idea-missing-fields'));
+      if (payload.data.status === 'DERIVING') setIsReanalyzing(true);
+      applyResponse(payload.data);
+    } catch (error) {
+      setFailureMessage(error?.message ?? '누락 정보를 반영하지 못했습니다.');
+      setFailureKind('INTERACTION');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    }
+  };
+
+  const reanalyze = async () => {
+    setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
+    setIsReanalyzing(true);
+    try {
+      const payload = await api.reanalyze(projectId, ideaCommandOptions('idea-reanalyze'));
+      applyResponse(payload.data);
+    } catch (error) {
+      setFailureMessage(error?.message ?? 'Idea Brief를 다시 분석하지 못했습니다.');
+      setFailureKind('INTERACTION');
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
@@ -147,12 +205,13 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
+      setFailureKind('INTERACTION');
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
 
   return {
-    draft, errors, failureMessage, questions, screenState, activeJobId, jobEvents, isReanalyzing,
+    draft, errors, failureMessage, failureKind, questions, screenState, activeJobId, jobEvents, isReanalyzing,
     setFiles: (files) => dispatch({ type: 'SET_FILES', files }),
     updateIntake,
     answerQuestion: (questionId, value) => {
@@ -163,7 +222,7 @@ export default function useIdeaIntake(projectId) {
     updateBriefDecisionState: (field, decisionState) => dispatch({
       type: 'UPDATE_BRIEF_DECISION_STATE', field, decisionState,
     }),
-    organizeIdea, submitAnswers, confirmBrief,
-    retry: refresh,
+    organizeIdea, submitAnswers, submitMissingFields, confirmBrief,
+    refresh, reanalyze,
   };
 }

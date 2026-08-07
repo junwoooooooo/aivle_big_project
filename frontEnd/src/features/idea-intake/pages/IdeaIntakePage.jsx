@@ -4,6 +4,7 @@ import { Button, LoadingState } from '../../../shared/ui/index.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
 import IdeaBriefReview from '../components/IdeaBriefReview.jsx';
 import IdeaIntakeForm from '../components/IdeaIntakeForm.jsx';
+import MissingRequiredFieldsForm from '../components/MissingRequiredFieldsForm.jsx';
 import QuestionGroup from '../components/QuestionGroup.jsx';
 import useIdeaIntake from '../hooks/useIdeaIntake.js';
 import { IDEA_INTAKE_SCREEN_STATE } from '../model/ideaIntakeModel.js';
@@ -29,14 +30,23 @@ export default function IdeaIntakePage() {
       title={intake.isReanalyzing ? '변경 내용을 다시 정리하고 있습니다.' : '아이디어를 정리하고 있습니다'}
       description={intake.isReanalyzing ? '최신 요약, 충돌, 준비 상태를 다시 확인합니다.' : '입력 내용을 Idea Brief 필드와 후속 질문으로 구성하고 있습니다.'} />
       <JobTimeline events={intake.jobEvents.events} title="Idea Brief 진행 상황" /></>}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT && (
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.NEEDS_QUESTIONS && intake.questions.length > 0 && (
       <QuestionGroup questions={intake.questions} answers={intake.draft.answers} errors={intake.errors} onAnswer={intake.answerQuestion} onSubmit={intake.submitAnswers} />
     )}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.NEEDS_FIELDS && (
+      <MissingRequiredFieldsForm fieldKeys={intake.draft.assessment.readiness?.missingFieldKeys ?? []}
+        catalog={intake.draft.catalog} fields={intake.draft.fields} errors={intake.errors}
+        onChange={intake.updateBriefField} onSubmit={intake.submitMissingFields} />
+    )}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RECOVERY && <StatePanel tone="warning"
+      title="Idea Brief를 다시 확인해야 합니다"
+      description="현재 입력을 기준으로 최종 분석을 다시 실행해 주세요."
+      action={<Button type="button" variant="outline" onClick={intake.reanalyze}>다시 분석하기</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.REVIEW && (
       <IdeaBriefReview draft={intake.draft} onFieldChange={intake.updateBriefField}
         onDecisionStateChange={intake.updateBriefDecisionState} onConfirm={intake.confirmBrief} />
     )}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 정리를 완료하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.retry}>입력 화면으로 돌아가기</Button>} />}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 정리를 완료하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.failureKind === 'DERIVATION' ? intake.reanalyze : intake.refresh}>{intake.failureKind === 'DERIVATION' ? '다시 분석하기' : '상태 다시 불러오기'}</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="아이디어를 정리했습니다." description="이 내용으로 컨셉 5개를 만들고 법률 근거를 확인할 수 있습니다." />}
   </section>;
 }

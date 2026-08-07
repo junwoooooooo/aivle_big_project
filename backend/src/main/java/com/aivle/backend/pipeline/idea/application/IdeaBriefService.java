@@ -74,7 +74,8 @@ public class IdeaBriefService {
             "mode", IdeaBriefDerivationMode.INITIAL.name(),
             "overview", request.overview(),
             "fields", request.fields() == null ? List.of() : request.fields(),
-            "attachmentFileIds", request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds()
+            "attachmentFileIds", request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds(),
+            "fieldMetadata", fieldMetadata()
         ));
         String requestHash = sha256(inputJson);
         IdeaBrief brief = currentOrInitial(ownerId, projectId);
@@ -160,6 +161,26 @@ public class IdeaBriefService {
             queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         }
         brief.recordCommand("ANSWERS", idempotencyKey, requestHash);
+        return response(brief);
+    }
+
+    @Transactional
+    public IdeaBriefResponse reanalyze(
+        Long ownerId,
+        Long projectId,
+        String rawIdempotencyKey
+    ) {
+        String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
+        IdeaBrief brief = requireCurrentForUpdate(ownerId, projectId);
+        String requestHash = sha256("FINAL_SYNTHESIS:" + assessmentHasher.hash(
+            brief, fields.findAllByBriefIdOrderById(brief.getId())));
+        if (replay(brief, "REANALYZE", idempotencyKey, requestHash)) return response(brief);
+        brief.requireMutable();
+        if (brief.getStatus() == IdeaBriefStatus.DERIVING) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Idea Brief analysis is already running.");
+        }
+        queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
+        brief.recordCommand("REANALYZE", idempotencyKey, requestHash);
         return response(brief);
     }
 
@@ -362,7 +383,8 @@ public class IdeaBriefService {
                 "value", IdeaBriefReadinessCalculator.UNDECIDED.equals(field.getFieldValue()) ? "" : field.getFieldValue(),
                 "decisionState", field.getDecisionState().name()
             )).toList(),
-            "attachmentFileIds", brief.getAttachmentFileIds().stream().sorted().toList()
+            "attachmentFileIds", brief.getAttachmentFileIds().stream().sorted().toList(),
+            "fieldMetadata", fieldMetadata()
         ));
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);
         String key = sha256(mode.name() + ":" + brief.getId() + ":"
@@ -374,6 +396,14 @@ public class IdeaBriefService {
         else brief.startFinalSynthesis(run.getId());
         jobEvents.publish(new JobEventPublisher.Command(projectId, run.getId(), run.getId(),
             "QUEUED", "job.idea.queued", JobEvent.Status.QUEUED, "job.idea.queued", Map.of(), null));
+    }
+
+    private List<Map<String, Object>> fieldMetadata() {
+        return IdeaBriefFieldCatalog.fields().stream().map(definition -> Map.<String, Object>of(
+            "fieldKey", definition.key(),
+            "requiredForConcept", definition.requiredForConcept(),
+            "regulatorySensitive", definition.regulatorySensitive()
+        )).toList();
     }
 
     private boolean replay(IdeaBrief brief, String command, String idempotencyKey, String requestHash) {

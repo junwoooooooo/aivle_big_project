@@ -98,3 +98,12 @@ Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt �
 - Slot 기본 카드는 후보 생성 횟수, 법률 검토 상태, 재설계 횟수를 표시한다. provider/repair call count는 기본 UI에서 숨긴다.
 - Failed run은 `이어서 시도`와 `처음부터 새로 만들기`를 제공한다. 이어서 시도는 새 TaskRun과 새 activeJobId를 만들며 eligible Slot과 보존 Candidate를 재사용한다. `NEEDS_FACTS`는 Idea Brief 보완, snapshot 변경은 새 Run 생성을 안내한다.
 - Shared Legal Context와 base official evidence는 snapshot별로 한 번 구축해 Slot 간 재사용하고 Candidate 신규 활동만 delta evidence retrieval 대상이 된다.
+
+## 12. Actionable NEEDS_INPUT UX
+
+- `NEEDS_INPUT`은 빈 화면이나 실패 반복 상태가 아니다. unanswered question이 있으면 질문을, 질문이 없고 `missingFieldKeys`가 있으면 canonical field 직접 입력 폼을 표시한다.
+- 질문과 missing field가 모두 없는 비정상 `NEEDS_INPUT` 또는 AI derivation failure에는 새 `FINAL_SYNTHESIS` TaskRun을 만드는 재분석 Action을 제공한다.
+- 누락 필드 입력은 Answers API가 아닌 fields PATCH를 사용한다. 변경이 반영되면 `DERIVING`과 새 `activeJobId`를 받고 최종 분석이 끝난 뒤 Review 또는 다시 actionable `NEEDS_INPUT`으로 이동한다.
+- 질문이 0개인 상태에서는 빈 Answers request를 전송하지 않는다.
+- Clarification 질문은 required/regulatory-sensitive missing field를 optional field보다 우선한다.
+- `FINAL_SYNTHESIS`가 현재 사실에서 required field를 합리적으로 유추하면 `AI_PROPOSED`로 제안할 수 있다. 확정할 수 없는 required field는 manual completion 대상으로 유지한다.

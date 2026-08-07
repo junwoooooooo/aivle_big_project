@@ -31,6 +31,7 @@ import com.aivle.backend.user.entity.User;
 import com.aivle.backend.user.repository.UserRepository;
 import java.util.List;
 import java.util.UUID;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,6 +54,7 @@ class IdeaBriefCanonicalizationIntegrationTests {
     @Autowired UserRepository users;
     @Autowired ProjectRepository projects;
     @Autowired IdeaBriefAssessmentHasher assessmentHasher;
+    @Autowired Validator validator;
 
     @Test
     void deriveStoresOverviewWithoutDuplicatingItIntoAssumptions() {
@@ -68,6 +70,10 @@ class IdeaBriefCanonicalizationIntegrationTests {
         assertThat(response.fieldCatalog()).hasSize(15);
         assertThat(fields.findByBriefIdAndFieldKey(response.briefId(), "assumptions")).isEmpty();
         assertThat(response.fields()).noneMatch(value -> value.fieldKey().equals("assumptions"));
+        assertThat(taskRuns.findById(response.activeJobId()).orElseThrow().getInputSnapshot())
+            .contains("\"fieldKey\":\"physicalActivity\"")
+            .contains("\"requiredForConcept\":true")
+            .contains("\"regulatorySensitive\":true");
     }
 
     @Test
@@ -161,6 +167,40 @@ class IdeaBriefCanonicalizationIntegrationTests {
         assertThatThrownBy(() -> service.confirm(fixture.user().getId(), fixture.project().getId(),
             new ConfirmRequest(null), "confirm-stale-" + UUID.randomUUID()))
             .isInstanceOf(com.aivle.backend.common.exception.BusinessException.class);
+    }
+
+    @Test
+    void needsInputWithoutQuestionsExposesRequiredFieldsForManualCompletion() {
+        Fixture fixture = fixture();
+        fixture.brief().applyAssessment("More facts required", "[]",
+            "[\"physicalActivity\",\"personalData\"]", "NEEDS_INPUT", 70,
+            assessmentHasher.hash(fixture.brief(), List.of()));
+
+        var response = service.get(fixture.user().getId(), fixture.project().getId());
+
+        assertThat(response.status()).isEqualTo(IdeaBriefStatus.NEEDS_INPUT);
+        assertThat(response.questions()).isEmpty();
+        assertThat(response.readiness().missingFieldKeys())
+            .contains("physicalActivity", "personalData");
+    }
+
+    @Test
+    void recoveryReanalysisCreatesFinalSynthesisTaskRun() {
+        Fixture fixture = fixture();
+
+        var response = service.reanalyze(fixture.user().getId(), fixture.project().getId(),
+            "reanalyze-" + UUID.randomUUID());
+
+        assertThat(response.status()).isEqualTo(IdeaBriefStatus.DERIVING);
+        assertThat(response.activeJobId()).isNotBlank();
+        assertThat(taskRuns.findById(response.activeJobId()).orElseThrow().getInputSnapshot())
+            .contains("\"mode\":\"FINAL_SYNTHESIS\"");
+    }
+
+    @Test
+    void emptyAnswersRemainRejectedByBeanValidation() {
+        assertThat(validator.validate(new AnswersRequest(List.of())))
+            .anyMatch(violation -> violation.getPropertyPath().toString().equals("answers"));
     }
 
     private Fixture fixture() {

@@ -24,11 +24,18 @@ class IdeaBriefFieldInput(StrictModel):
     decisionState: Literal["LOCKED", "PREFERRED", "OPEN", "ASSUMPTION"]
 
 
+class IdeaBriefFieldMetadata(StrictModel):
+    fieldKey: FieldKey
+    requiredForConcept: bool
+    regulatorySensitive: bool
+
+
 class IdeaBriefDerivationInput(StrictModel):
     mode: DerivationMode
     overview: str = Field(min_length=1, max_length=20_000)
     fields: list[IdeaBriefFieldInput] = Field(max_length=32)
     attachmentFileIds: list[int] = Field(max_length=20)
+    fieldMetadata: list[IdeaBriefFieldMetadata] = Field(min_length=1, max_length=32)
 
 
 class ExtractedField(StrictModel):
