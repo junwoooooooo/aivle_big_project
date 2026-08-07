@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { useJobEvents } from '../../../shared/async-events/index.js';
@@ -12,6 +12,12 @@ import {
   questionsFromIdeaBrief,
   validateIdeaIntake,
 } from '../model/ideaIntakeModel.js';
+
+export const IDEA_FAILURE_KIND = Object.freeze({
+  DERIVATION_FAILURE: 'DERIVATION_FAILURE',
+  INTERACTION_FAILURE: 'INTERACTION_FAILURE',
+  STATE_RECONCILIATION_REQUIRED: 'STATE_RECONCILIATION_REQUIRED',
+});
 
 function hasAnswer(question, answer) {
   if (question.type === QUESTION_TYPE.MULTI_SELECT) return Array.isArray(answer) && answer.length > 0;
@@ -55,10 +61,11 @@ export default function useIdeaIntake(projectId) {
   const [screenState, setScreenState] = useState(IDEA_INTAKE_SCREEN_STATE.LOADING);
   const [errors, setErrors] = useState({});
   const [failureMessage, setFailureMessage] = useState('');
-  const [failureKind, setFailureKind] = useState('INTERACTION');
+  const [failureKind, setFailureKind] = useState(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
   const [activeJobId, setActiveJobId] = useState(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [questions, setQuestions] = useState([]);
+  const terminalJobId = useRef(null);
   const jobEvents = useJobEvents(activeJobId);
 
   const applyResponse = useCallback((response) => {
@@ -67,11 +74,21 @@ export default function useIdeaIntake(projectId) {
       .filter((question) => !question.answered).map((question) => question.questionId));
     setQuestions(questionsFromIdeaBrief(response).filter((question) => unansweredIds.has(question.id)));
     setActiveJobId(response.activeJobId ?? null);
+    const terminalJobStillAttached = response.status === 'DERIVING'
+      && response.activeJobId != null && response.activeJobId === terminalJobId.current;
+    if (response.recoveryRequired || terminalJobStillAttached) {
+      setFailureKind(IDEA_FAILURE_KIND.STATE_RECONCILIATION_REQUIRED);
+      setFailureMessage('이전 분석 작업은 종료되었습니다. 현재 입력으로 다시 분석해 주세요.');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.RECOVERY);
+      setIsReanalyzing(false);
+      return;
+    }
+    if (response.activeJobId !== terminalJobId.current) terminalJobId.current = null;
     setScreenState(screenStateFor(response));
     if (response.status !== 'DERIVING') setIsReanalyzing(false);
     if (response.status === 'FAILED' || response.status === 'STALE') {
-      setFailureKind('DERIVATION');
-      setFailureMessage('아이디어 정리를 완료하지 못했습니다. 다시 시도해 주세요.');
+      setFailureKind(IDEA_FAILURE_KIND.DERIVATION_FAILURE);
+      setFailureMessage('AI 분석을 완료하지 못했습니다. 다시 분석할 수 있습니다.');
     }
   }, []);
 
@@ -85,7 +102,7 @@ export default function useIdeaIntake(projectId) {
         return;
       }
       setFailureMessage(error?.message ?? 'Idea Brief를 불러오지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   }, [api, applyResponse, projectId]);
@@ -96,6 +113,7 @@ export default function useIdeaIntake(projectId) {
   }, [refresh]);
   useEffect(() => {
     if (!jobEvents.terminal || !activeJobId) return undefined;
+    terminalJobId.current = activeJobId;
     const timer = setTimeout(refresh, 0);
     return () => clearTimeout(timer);
   }, [activeJobId, jobEvents.terminal, refresh]);
@@ -123,7 +141,7 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
@@ -150,7 +168,7 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '답변을 저장하지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
@@ -175,20 +193,28 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '누락 정보를 반영하지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
 
   const reanalyze = async () => {
+    const previousJobId = activeJobId;
     setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
     setIsReanalyzing(true);
     try {
       const payload = await api.reanalyze(projectId, ideaCommandOptions('idea-reanalyze'));
+      if (previousJobId && payload.data.activeJobId === previousJobId) {
+        setFailureKind(IDEA_FAILURE_KIND.STATE_RECONCILIATION_REQUIRED);
+        setFailureMessage('이전 분석 작업은 종료되었습니다. 현재 입력으로 다시 분석해 주세요.');
+        setIsReanalyzing(false);
+        setScreenState(IDEA_INTAKE_SCREEN_STATE.RECOVERY);
+        return;
+      }
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? 'Idea Brief를 다시 분석하지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };
@@ -205,7 +231,7 @@ export default function useIdeaIntake(projectId) {
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
-      setFailureKind('INTERACTION');
+      setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
     }
   };

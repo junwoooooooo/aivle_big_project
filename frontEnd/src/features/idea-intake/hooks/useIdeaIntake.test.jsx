@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { useJobEvents } from '../../../shared/async-events/index.js';
 import { IDEA_INTAKE_SCREEN_STATE } from '../model/ideaIntakeModel.js';
-import useIdeaIntake from './useIdeaIntake.js';
+import useIdeaIntake, { IDEA_FAILURE_KIND } from './useIdeaIntake.js';
 
 vi.mock('../../../shared/api/ApiClientProvider.jsx', () => ({ useApiClient: vi.fn() }));
 vi.mock('../../../shared/async-events/index.js', () => ({ useJobEvents: vi.fn() }));
@@ -139,13 +139,46 @@ describe('useIdeaIntake async recovery', () => {
     useApiClient.mockReturnValue(client);
     const { result } = renderHook(() => useIdeaIntake('42'));
     await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.FAILED));
-    expect(result.current.failureKind).toBe('DERIVATION');
+    expect(result.current.failureKind).toBe(IDEA_FAILURE_KIND.DERIVATION_FAILURE);
 
     await act(async () => result.current.reanalyze());
 
     expect(client.get).toHaveBeenCalledTimes(1);
     expect(client.post.mock.calls[0][0]).toContain('/reanalyze');
     expect(result.current.activeJobId).toBe('job-after-failure');
+  });
+
+  it('moves a terminal job still attached to DERIVING into recovery and resets on a new job', async () => {
+    let terminal = false;
+    const observedJobIds = [];
+    useJobEvents.mockImplementation((jobId) => {
+      observedJobIds.push(jobId);
+      return { terminal, events: jobId ? [{ jobId }] : [] };
+    });
+    const stuck = response('DERIVING', 'job-old', []);
+    const recovered = response('DERIVING', 'job-new', []);
+    const client = {
+      get: vi.fn().mockResolvedValue({ data: stuck }),
+      patch: vi.fn(),
+      post: vi.fn().mockResolvedValue({ data: recovered }),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result, rerender } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.activeJobId).toBe('job-old'));
+
+    terminal = true;
+    rerender();
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RECOVERY));
+    expect(result.current.failureKind).toBe(IDEA_FAILURE_KIND.STATE_RECONCILIATION_REQUIRED);
+
+    terminal = false;
+    await act(async () => result.current.reanalyze());
+
+    expect(result.current.activeJobId).toBe('job-new');
+    expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RUNNING);
+    expect(result.current.jobEvents.events).toEqual([{ jobId: 'job-new' }]);
+    expect(observedJobIds).toContain('job-old');
+    expect(observedJobIds).toContain('job-new');
   });
 });
 

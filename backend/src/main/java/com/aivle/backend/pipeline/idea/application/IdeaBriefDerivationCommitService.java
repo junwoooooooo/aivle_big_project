@@ -144,10 +144,17 @@ public class IdeaBriefDerivationCommitService {
         );
         if (assessment.readyForConfirm()) brief.readyForReview(); else brief.needsInput();
 
-        taskRuns.adopt(
-            claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
-            mapper.writeValueAsString(result), response.canonicalInputHash(), response.resultSchemaVersion()
-        );
+        if (brief.getStatus() == com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus.NEEDS_INPUT) {
+            taskRuns.adoptNeedsInput(
+                claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
+                mapper.writeValueAsString(result), response.canonicalInputHash(), response.resultSchemaVersion()
+            );
+        } else {
+            taskRuns.adopt(
+                claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
+                mapper.writeValueAsString(result), response.canonicalInputHash(), response.resultSchemaVersion()
+            );
+        }
         return new CommitResult(brief.getStatus().name(), order);
     }
 

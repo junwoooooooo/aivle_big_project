@@ -36,6 +36,14 @@ public class TaskRunService {
     @Transactional
     public TaskRun create(Long ownerId, Long projectId, TaskType type, String subjectType, String subjectId,
                           String input, String hash, String idempotencyKey, String correlationId, int maxAttempts) {
+        return createWithDisposition(ownerId, projectId, type, subjectType, subjectId,
+            input, hash, idempotencyKey, correlationId, maxAttempts).taskRun();
+    }
+
+    @Transactional
+    public CreateResult createWithDisposition(Long ownerId, Long projectId, TaskType type,
+            String subjectType, String subjectId, String input, String hash,
+            String idempotencyKey, String correlationId, int maxAttempts) {
         Project project = projects.findByIdForUpdate(projectId)
             .filter(value -> value.getOwner().getId().equals(ownerId)).orElseThrow(this::notFound);
         if (project.getStatus() == ProjectStatus.ARCHIVED) throw new TaskRunFailure("CAPABILITY_NOT_AVAILABLE", "PROJECT_ARCHIVED", HttpStatus.CONFLICT, false);
@@ -47,7 +55,7 @@ public class TaskRunService {
         String scope = type.name() + ":" + subjectType + ":" + subjectId;
         Optional<TaskRun> replay = runs.findByProjectIdAndIdempotencyScopeAndIdempotencyKey(projectId, scope, idempotencyKey);
         if (replay.isPresent()) {
-            if (replay.get().getInputHash().equals(hash)) return replay.get();
+            if (replay.get().getInputHash().equals(hash)) return new CreateResult(replay.get(), false, true);
             throw new TaskRunFailure("IDEMPOTENCY_CONFLICT", "REQUEST_HASH_MISMATCH", HttpStatus.CONFLICT, false);
         }
         if (runs.findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndInputHashAndStateIn(
@@ -57,7 +65,7 @@ public class TaskRunService {
         }
         TaskRun created = TaskRun.create(project, type, subjectType, subjectId, input, hash, idempotencyKey, correlationId, maxAttempts);
         created.scheduleInitial(LocalDateTime.now(clock));
-        return runs.save(created);
+        return new CreateResult(runs.save(created), true, false);
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +153,30 @@ public class TaskRunService {
         if (!run.getInputHash().equals(hash)) return reject(run, attempt, payload, schemaVersion, "HASH_MISMATCH", HttpStatus.BAD_GATEWAY);
         attempt.succeed(claimToken, now);
         TaskResult result = results.save(TaskResult.adopted(run, attempt, payload, sha256(payload), schemaVersion, now)); run.succeed(result.getId(), now); return result;
+    }
+
+    @Transactional(noRollbackFor = TaskRunFailure.class)
+    public TaskResult adoptNeedsInput(String runId, String attemptId, String claimToken,
+            String payload, String hash, String schemaVersion) {
+        TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
+        TaskAttempt attempt = attempts.findByIdAndTaskRunId(attemptId, runId).orElseThrow(this::notFound);
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (run.getState() != TaskRunState.RUNNING || run.getFinalResultId() != null
+                || !attemptId.equals(run.getCurrentAttemptId())) {
+            return reject(run, attempt, payload, schemaVersion, "LATE_OR_DUPLICATE_RESULT", HttpStatus.CONFLICT);
+        }
+        try { attempt.assertCompletable(claimToken, now); }
+        catch (IllegalStateException | IllegalArgumentException invalid) {
+            return reject(run, attempt, payload, schemaVersion, "STALE_CLAIM", HttpStatus.CONFLICT);
+        }
+        if (!run.getInputHash().equals(hash)) {
+            return reject(run, attempt, payload, schemaVersion, "HASH_MISMATCH", HttpStatus.BAD_GATEWAY);
+        }
+        attempt.needsInput(claimToken, now);
+        TaskResult result = results.save(TaskResult.adopted(
+            run, attempt, payload, sha256(payload), schemaVersion, now));
+        run.needsInput(result.getId(), now);
+        return result;
     }
 
     @Transactional
@@ -259,4 +291,5 @@ public class TaskRunService {
     }
     private TaskRunFailure notFound() { return new TaskRunFailure("RESOURCE_NOT_FOUND", "TASK_RUN_NOT_FOUND", HttpStatus.NOT_FOUND, false); }
     public record Claim(String taskRunId, String taskAttemptId, String claimToken) {}
+    public record CreateResult(TaskRun taskRun, boolean createdNew, boolean replayed) {}
 }

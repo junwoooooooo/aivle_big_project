@@ -24,13 +24,22 @@ import com.aivle.backend.pipeline.idea.repository.IdeaAnswerRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaQuestionRepository;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.jobevent.JobEventRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
+import com.aivle.backend.taskrun.service.TaskRunService;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.user.entity.User;
 import com.aivle.backend.user.repository.UserRepository;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +64,9 @@ class IdeaBriefCanonicalizationIntegrationTests {
     @Autowired ProjectRepository projects;
     @Autowired IdeaBriefAssessmentHasher assessmentHasher;
     @Autowired Validator validator;
+    @Autowired TaskRunService taskRunService;
+    @Autowired JobEventPublisher jobEvents;
+    @Autowired JobEventRepository eventRepository;
 
     @Test
     void deriveStoresOverviewWithoutDuplicatingItIntoAssumptions() {
@@ -198,9 +210,84 @@ class IdeaBriefCanonicalizationIntegrationTests {
     }
 
     @Test
+    void commandReplayKeepsExecutionButNewCommandRecoversSucceededZombieWithNewJob() {
+        Fixture fixture = fixture();
+        String keyA = "reanalyze-a-" + UUID.randomUUID();
+        var first = service.reanalyze(fixture.user().getId(), fixture.project().getId(), keyA);
+        var replay = service.reanalyze(fixture.user().getId(), fixture.project().getId(), keyA);
+        assertThat(replay.activeJobId()).isEqualTo(first.activeJobId());
+
+        finishTask(fixture, first.activeJobId(), false);
+        jobEvents.publish(new JobEventPublisher.Command(fixture.project().getId(), first.activeJobId(),
+            first.activeJobId(), "SUCCEEDED", "job.idea.completed", JobEvent.Status.COMPLETED,
+            "job.idea.completed", Map.of(), null));
+        TaskRun historicalRun = taskRuns.findById(first.activeJobId()).orElseThrow();
+        eventRepository.save(JobEvent.create(first.activeJobId(), fixture.project(), historicalRun,
+            "QUEUED", "job.idea.queued", JobEvent.Status.QUEUED, "job.idea.queued", "{}", null,
+            3L, LocalDateTime.now()));
+        long historicalEventCount = eventsFor(first.activeJobId(), fixture.project().getId()).size();
+
+        var poisonedRead = service.get(fixture.user().getId(), fixture.project().getId());
+        assertThat(poisonedRead.status()).isEqualTo(IdeaBriefStatus.DERIVING);
+        assertThat(poisonedRead.executionStateConsistent()).isFalse();
+        assertThat(poisonedRead.recoveryRequired()).isTrue();
+
+        var recovered = service.reanalyze(fixture.user().getId(), fixture.project().getId(),
+            "reanalyze-b-" + UUID.randomUUID());
+
+        assertThat(recovered.activeJobId()).isNotEqualTo(first.activeJobId());
+        assertThat(taskRuns.findById(first.activeJobId()).orElseThrow().getState())
+            .isEqualTo(TaskRunState.SUCCEEDED);
+        assertThat(taskRuns.findById(recovered.activeJobId()).orElseThrow().getState())
+            .isEqualTo(TaskRunState.QUEUED);
+        assertThat(eventsFor(first.activeJobId(), fixture.project().getId())).hasSize((int) historicalEventCount);
+        assertThat(eventsFor(recovered.activeJobId(), fixture.project().getId()))
+            .singleElement().extracting(JobEvent::getSequence).isEqualTo(1L);
+    }
+
+    @Test
+    void newCommandRecoversNeedsInputTaskZombieWithoutReusingTerminalJob() {
+        Fixture fixture = fixture();
+        var first = service.reanalyze(fixture.user().getId(), fixture.project().getId(),
+            "reanalyze-needs-a-" + UUID.randomUUID());
+        finishTask(fixture, first.activeJobId(), true);
+        jobEvents.publish(new JobEventPublisher.Command(fixture.project().getId(), first.activeJobId(),
+            first.activeJobId(), "NEEDS_INPUT", "job.idea.completed", JobEvent.Status.NEEDS_INPUT,
+            "job.idea.completed", Map.of(), null));
+
+        var recovered = service.reanalyze(fixture.user().getId(), fixture.project().getId(),
+            "reanalyze-needs-b-" + UUID.randomUUID());
+
+        assertThat(recovered.activeJobId()).isNotEqualTo(first.activeJobId());
+        assertThat(taskRuns.findById(first.activeJobId()).orElseThrow().getState())
+            .isEqualTo(TaskRunState.NEEDS_INPUT);
+        assertThat(taskRuns.findById(recovered.activeJobId()).orElseThrow().getState())
+            .isEqualTo(TaskRunState.QUEUED);
+    }
+
+    @Test
     void emptyAnswersRemainRejectedByBeanValidation() {
         assertThat(validator.validate(new AnswersRequest(List.of())))
             .anyMatch(violation -> violation.getPropertyPath().toString().equals("answers"));
+    }
+
+    private void finishTask(Fixture fixture, String taskRunId, boolean needsInput) {
+        TaskRun run = taskRuns.findById(taskRunId).orElseThrow();
+        TaskRunService.Claim claim = taskRunService.claim(taskRunId, "idea-test-worker",
+            Duration.ofMinutes(1), Duration.ofMinutes(2));
+        taskRunService.startExecution(taskRunId, claim.taskAttemptId(), claim.claimToken());
+        if (needsInput) {
+            taskRunService.adoptNeedsInput(taskRunId, claim.taskAttemptId(), claim.claimToken(),
+                "{\"status\":\"NEEDS_INPUT\"}", run.getInputHash(), "1.0");
+        } else {
+            taskRunService.adopt(taskRunId, claim.taskAttemptId(), claim.claimToken(),
+                "{\"status\":\"READY_FOR_REVIEW\"}", run.getInputHash(), "1.0");
+        }
+    }
+
+    private List<JobEvent> eventsFor(String jobId, Long projectId) {
+        return eventRepository.findByJobIdAndProjectIdAndSequenceGreaterThanAndDeletedAtIsNullOrderBySequence(
+            jobId, projectId, 0);
     }
 
     private Fixture fixture() {

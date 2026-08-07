@@ -47,6 +47,9 @@ public class JobEventPublisher {
         if (latestForJob != null && !latestForJob.getProject().getId().equals(project.getId())) {
             throw new IllegalArgumentException("job id already belongs to another project");
         }
+        if (latestForJob != null && terminal(latestForJob.getStatus())) {
+            throw new IllegalStateException("TERMINAL_JOB_EVENT_IMMUTABLE");
+        }
         TaskRun taskRun = command.taskRunId() == null ? null : taskRuns.findById(command.taskRunId())
             .orElseThrow(() -> new BusinessException(ErrorCode.JOB_NOT_FOUND));
         if (taskRun != null && !taskRun.getProject().getId().equals(project.getId())) {
@@ -72,6 +75,11 @@ public class JobEventPublisher {
         requireLength(command.stage(), "job event stage", 50);
         requireLength(command.eventType(), "job event type", 80);
         if (command.status() == null) throw new IllegalArgumentException("job event status is required");
+    }
+
+    private boolean terminal(JobEvent.Status status) {
+        return status == JobEvent.Status.COMPLETED || status == JobEvent.Status.NEEDS_INPUT
+            || status == JobEvent.Status.FAILED || status == JobEvent.Status.BLOCKED;
     }
 
     private void requireLength(String value, String name, int max) {

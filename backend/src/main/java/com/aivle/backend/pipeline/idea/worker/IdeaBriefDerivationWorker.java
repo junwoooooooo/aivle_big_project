@@ -67,7 +67,8 @@ public class IdeaBriefDerivationWorker {
         }
         JobEvent.Status status = "NEEDS_INPUT".equals(committed.status())
             ? JobEvent.Status.NEEDS_INPUT : JobEvent.Status.COMPLETED;
-        publish(context, "SUCCEEDED", "job.idea.completed", status,
+        publish(context, status == JobEvent.Status.NEEDS_INPUT ? "NEEDS_INPUT" : "SUCCEEDED",
+            "job.idea.completed", status,
             Map.of("questionCount", committed.questionCount()), null);
         return true;
     }

@@ -21,6 +21,7 @@ import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
@@ -88,7 +89,8 @@ public class IdeaBriefService {
         briefs.save(brief);
 
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);
-        TaskRun run = taskRuns.create(
+        String executionKey = executionKey(brief, IdeaBriefDerivationMode.INITIAL, idempotencyKey);
+        TaskRunService.CreateResult creation = taskRuns.createWithDisposition(
             ownerId,
             projectId,
             TaskType.IDEA_BRIEF_DERIVATION,
@@ -96,15 +98,13 @@ public class IdeaBriefService {
             brief.getId(),
             inputJson,
             inputHash,
-            idempotencyKey,
-            correlationId == null || correlationId.isBlank() ? idempotencyKey : correlationId,
+            executionKey,
+            correlationId == null || correlationId.isBlank() ? executionKey : correlationId,
             3
         );
+        TaskRun run = requireReusableExecution(creation);
         brief.startDeriving(run.getId(), idempotencyKey, requestHash);
-        jobEvents.publish(new JobEventPublisher.Command(
-            projectId, run.getId(), run.getId(), "QUEUED", "job.idea.queued",
-            JobEvent.Status.QUEUED, "job.idea.queued", Map.of(), null
-        ));
+        if (creation.createdNew()) publishQueued(projectId, run);
         return response(brief);
     }
 
@@ -121,7 +121,7 @@ public class IdeaBriefService {
         if (replay(brief, "PATCH_FIELDS", idempotencyKey, requestHash)) return response(brief);
         if (brief.isConfirmed()) brief = forkConfirmed(brief, ownerId);
         boolean changed = upsertUserFields(brief, request.fields());
-        if (changed) queueDerivation(ownerId, projectId, brief, requestHash,
+        if (changed) queueDerivation(ownerId, projectId, brief, idempotencyKey,
             IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         brief.recordCommand("PATCH_FIELDS", idempotencyKey, requestHash);
         return response(brief);
@@ -156,9 +156,9 @@ public class IdeaBriefService {
         if (!complete) {
             brief.needsInput();
         } else if (brief.getClarificationRound() < IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS) {
-            queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.CLARIFICATION);
+            queueDerivation(ownerId, projectId, brief, idempotencyKey, IdeaBriefDerivationMode.CLARIFICATION);
         } else {
-            queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
+            queueDerivation(ownerId, projectId, brief, idempotencyKey, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         }
         brief.recordCommand("ANSWERS", idempotencyKey, requestHash);
         return response(brief);
@@ -177,9 +177,12 @@ public class IdeaBriefService {
         if (replay(brief, "REANALYZE", idempotencyKey, requestHash)) return response(brief);
         brief.requireMutable();
         if (brief.getStatus() == IdeaBriefStatus.DERIVING) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Idea Brief analysis is already running.");
+            TaskRun active = activeTaskRun(brief);
+            if (active != null && activeExecutionState(active.getState())) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "ANALYSIS_ALREADY_RUNNING");
+            }
         }
-        queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
+        queueDerivation(ownerId, projectId, brief, idempotencyKey, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         brief.recordCommand("REANALYZE", idempotencyKey, requestHash);
         return response(brief);
     }
@@ -275,6 +278,7 @@ public class IdeaBriefService {
             && brief.getAssessmentInputHash().equals(assessmentHasher.hash(brief, fieldEntities));
         IdeaBriefReadinessCalculator.Assessment assessment = readinessCalculator.calculate(
             brief, fieldEntities, questionEntities, assessmentCurrent);
+        ExecutionConsistency execution = executionConsistency(brief);
         return new IdeaBriefResponse(
             brief.getId(),
             brief.getStatus(),
@@ -304,6 +308,8 @@ public class IdeaBriefService {
             brief.getClarificationRound(),
             IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS,
             assessmentCurrent,
+            execution.consistent(),
+            execution.recoveryRequired(),
             brief.getActiveTaskRunId(),
             brief.getConfirmedSnapshotId(),
             brief.getUpdatedAt()
@@ -373,7 +379,7 @@ public class IdeaBriefService {
             questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()));
     }
 
-    private void queueDerivation(Long ownerId, Long projectId, IdeaBrief brief, String requestHash,
+    private void queueDerivation(Long ownerId, Long projectId, IdeaBrief brief, String rawCommandIdempotencyKey,
             IdeaBriefDerivationMode mode) {
         String inputJson = objectMapper.writeValueAsString(Map.of(
             "mode", mode.name(),
@@ -387,16 +393,55 @@ public class IdeaBriefService {
             "fieldMetadata", fieldMetadata()
         ));
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);
-        String key = sha256(mode.name() + ":" + brief.getId() + ":"
-            + (brief.getClarificationRound() + (mode == IdeaBriefDerivationMode.CLARIFICATION ? 1 : 0))
-            + ":" + requestHash);
-        TaskRun run = taskRuns.create(ownerId, projectId, TaskType.IDEA_BRIEF_DERIVATION,
+        String key = executionKey(brief, mode, rawCommandIdempotencyKey);
+        TaskRunService.CreateResult creation = taskRuns.createWithDisposition(
+            ownerId, projectId, TaskType.IDEA_BRIEF_DERIVATION,
             "IDEA_BRIEF", brief.getId(), inputJson, inputHash, key, key, 3);
+        TaskRun run = requireReusableExecution(creation);
         if (mode == IdeaBriefDerivationMode.CLARIFICATION) brief.startClarification(run.getId());
         else brief.startFinalSynthesis(run.getId());
+        if (creation.createdNew()) publishQueued(projectId, run);
+    }
+
+    private TaskRun requireReusableExecution(TaskRunService.CreateResult creation) {
+        TaskRun run = creation.taskRun();
+        if (creation.replayed() && run.terminal()) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT,
+                "Terminal task execution cannot be reused.");
+        }
+        return run;
+    }
+
+    private void publishQueued(Long projectId, TaskRun run) {
         jobEvents.publish(new JobEventPublisher.Command(projectId, run.getId(), run.getId(),
             "QUEUED", "job.idea.queued", JobEvent.Status.QUEUED, "job.idea.queued", Map.of(), null));
     }
+
+    private String executionKey(IdeaBrief brief, IdeaBriefDerivationMode mode, String rawCommandKey) {
+        return sha256("IDEA_BRIEF_DERIVATION:" + brief.getId() + ":" + mode.name() + ":" + rawCommandKey);
+    }
+
+    private ExecutionConsistency executionConsistency(IdeaBrief brief) {
+        if (brief.getStatus() != IdeaBriefStatus.DERIVING) return new ExecutionConsistency(true, false);
+        TaskRun active = activeTaskRun(brief);
+        boolean consistent = active != null && activeExecutionState(active.getState());
+        return new ExecutionConsistency(consistent, !consistent);
+    }
+
+    private TaskRun activeTaskRun(IdeaBrief brief) {
+        if (brief.getActiveTaskRunId() == null) return null;
+        try {
+            return taskRuns.getOwnedForWorker(brief.getActiveTaskRunId());
+        } catch (RuntimeException missing) {
+            return null;
+        }
+    }
+
+    private boolean activeExecutionState(TaskRunState state) {
+        return state == TaskRunState.QUEUED || state == TaskRunState.READY || state == TaskRunState.RUNNING;
+    }
+
+    private record ExecutionConsistency(boolean consistent, boolean recoveryRequired) { }
 
     private List<Map<String, Object>> fieldMetadata() {
         return IdeaBriefFieldCatalog.fields().stream().map(definition -> Map.<String, Object>of(

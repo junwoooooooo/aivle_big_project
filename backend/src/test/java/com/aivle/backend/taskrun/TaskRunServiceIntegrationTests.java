@@ -7,6 +7,7 @@ import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.*;
 import com.aivle.backend.taskrun.service.*;
 import com.aivle.backend.taskrun.repository.TaskResultRepository;
+import com.aivle.backend.taskrun.repository.TaskAttemptRepository;
 import com.aivle.backend.user.entity.User;
 import com.aivle.backend.user.repository.UserRepository;
 import java.time.Duration;
@@ -30,6 +31,7 @@ class TaskRunServiceIntegrationTests {
     @Autowired MockMvc mockMvc;
     @Autowired CanonicalInputHasher hasher;
     @Autowired TaskResultRepository results;
+    @Autowired TaskAttemptRepository attempts;
 
     private String hash() {
         return hash("{}");
@@ -60,6 +62,28 @@ class TaskRunServiceIntegrationTests {
         TaskRun completed = service.getOwned(owner.getId(), project.getId(), run.getId());
         assertThat(completed.getState()).isEqualTo(TaskRunState.SUCCEEDED);
         assertThat(completed.getFinalResultId()).isNotBlank();
+    }
+
+    @Test
+    void adoptsNeedsInputPayloadIntoAlignedRunAndAttemptTerminalStates() {
+        User owner = users.saveAndFlush(User.create("task-needs-input@example.com", "hash", "owner"));
+        Project project = projects.saveAndFlush(Project.create(owner, "needs input task", null, null));
+        TaskRun run = service.create(owner.getId(), project.getId(), TaskType.IDEA_BRIEF_DERIVATION,
+            "IDEA_BRIEF", "needs-input-subject", "{}", hash(), "needs-input-key", "needs-input-correlation", 3);
+        TaskRunService.Claim claim = service.claim(run.getId(), "worker-needs-input",
+            Duration.ofSeconds(30), Duration.ofMinutes(2));
+        service.startExecution(run.getId(), claim.taskAttemptId(), claim.claimToken());
+
+        TaskResult result = service.adoptNeedsInput(run.getId(), claim.taskAttemptId(), claim.claimToken(),
+            "{\"status\":\"NEEDS_INPUT\"}", hash(), "1.0");
+
+        TaskRun completed = service.getOwned(owner.getId(), project.getId(), run.getId());
+        assertThat(completed.getState()).isEqualTo(TaskRunState.NEEDS_INPUT);
+        assertThat(completed.getFinalResultId()).isEqualTo(result.getId());
+        assertThat(attempts.findById(claim.taskAttemptId()).orElseThrow().getState())
+            .isEqualTo(TaskAttemptState.NEEDS_INPUT);
+        assertThat(results.findByTaskRunId(run.getId())).singleElement()
+            .extracting(TaskResult::getValidationState).isEqualTo(TaskResultValidationState.ADOPTED);
     }
 
     @Test

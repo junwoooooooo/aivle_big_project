@@ -107,6 +107,24 @@ class JobEventPublisherIntegrationTests {
         streams.shutdown();
     }
 
+    @Test
+    void rejectsEveryEventAfterNeedsInputTerminalHistory() {
+        User owner = users.saveAndFlush(User.create("g2-terminal@example.com", "hash", "g2-terminal"));
+        Project project = projects.saveAndFlush(Project.create(owner, "g2 terminal", null, "AI"));
+        String jobId = "g2-terminal-job";
+        publisher.publish(new JobEventPublisher.Command(project.getId(), jobId, null,
+            "NEEDS_INPUT", "job.idea.completed", JobEvent.Status.NEEDS_INPUT,
+            "job.idea.completed", Map.of(), null));
+
+        assertThatThrownBy(() -> publisher.publish(new JobEventPublisher.Command(project.getId(), jobId, null,
+            "QUEUED", "job.idea.queued", JobEvent.Status.QUEUED,
+            "job.idea.queued", Map.of(), null)))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("TERMINAL_JOB_EVENT_IMMUTABLE");
+        assertThat(events.findByJobIdAndProjectIdAndSequenceGreaterThanAndDeletedAtIsNullOrderBySequence(
+            jobId, project.getId(), 0)).hasSize(1);
+    }
+
     private JobEventPublisher.Command command(Long projectId, String jobId, int index) {
         return new JobEventPublisher.Command(
             projectId, jobId, null, "REGULATORY_BOUNDARY", "STEP_" + index,

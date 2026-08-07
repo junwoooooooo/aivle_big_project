@@ -42,7 +42,8 @@ public class TaskRun extends BaseEntity {
  public void registerAttempt(String attemptId){currentAttemptId=attemptId;}
  public void claimed(String attemptId,LocalDateTime now){currentAttemptId=attemptId;state=TaskRunState.RUNNING;retryable=false;nextAttemptAt=now;if(startedAt==null)startedAt=now;}
  public void succeed(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.SUCCEEDED;retryable=false;finishedAt=now;lastErrorCode=null;}
- public void needsInput(LocalDateTime now){requireRunning();state=TaskRunState.NEEDS_INPUT;retryable=false;finishedAt=now;lastErrorCode="NEEDS_INPUT";}
+ public void needsInput(LocalDateTime now){needsInput(null,now);}
+ public void needsInput(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.NEEDS_INPUT;retryable=false;finishedAt=now;lastErrorCode="NEEDS_INPUT";}
  public void fail(String code,boolean canRetry,LocalDateTime now){requireRunning();state=TaskRunState.FAILED;retryable=canRetry&&attemptCount<maxAttempts;lastErrorCode=code;finishedAt=now;}
  public void timeOut(LocalDateTime now){requireRunning();state=TaskRunState.TIMED_OUT;retryable=attemptCount<maxAttempts;lastErrorCode="TASK_TIMEOUT";finishedAt=now;}
  public void recoverAfterLeaseExpiry(LocalDateTime now){requireRunning();lastErrorCode="TASK_TIMEOUT";if(attemptCount<maxAttempts){state=TaskRunState.QUEUED;retryable=false;finishedAt=null;nextAttemptAt=now;}else{state=TaskRunState.TIMED_OUT;retryable=false;finishedAt=now;}}

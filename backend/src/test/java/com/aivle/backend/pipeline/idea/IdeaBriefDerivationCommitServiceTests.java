@@ -57,7 +57,7 @@ class IdeaBriefDerivationCommitServiceTests {
         assertThat(brief.getMissingFieldKeysJson()).contains("problem");
         assertThat(brief.getReadinessScore()).isEqualTo(25);
         assertThat(brief.getAiReadinessStatus()).isEqualTo("NEEDS_INPUT");
-        verify(taskRuns).adopt("task-1", "attempt-1", "claim-1", mapper.writeValueAsString(result),
+        verify(taskRuns).adoptNeedsInput("task-1", "attempt-1", "claim-1", mapper.writeValueAsString(result),
             context.inputHash(), "1.0");
     }
 }

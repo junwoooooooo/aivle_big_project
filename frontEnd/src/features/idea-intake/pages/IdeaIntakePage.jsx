@@ -6,7 +6,7 @@ import IdeaBriefReview from '../components/IdeaBriefReview.jsx';
 import IdeaIntakeForm from '../components/IdeaIntakeForm.jsx';
 import MissingRequiredFieldsForm from '../components/MissingRequiredFieldsForm.jsx';
 import QuestionGroup from '../components/QuestionGroup.jsx';
-import useIdeaIntake from '../hooks/useIdeaIntake.js';
+import useIdeaIntake, { IDEA_FAILURE_KIND } from '../hooks/useIdeaIntake.js';
 import { IDEA_INTAKE_SCREEN_STATE } from '../model/ideaIntakeModel.js';
 import '../styles/idea-intake.css';
 
@@ -39,14 +39,14 @@ export default function IdeaIntakePage() {
         onChange={intake.updateBriefField} onSubmit={intake.submitMissingFields} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RECOVERY && <StatePanel tone="warning"
-      title="Idea Brief를 다시 확인해야 합니다"
-      description="현재 입력을 기준으로 최종 분석을 다시 실행해 주세요."
+      title="이전 분석 작업은 종료되었지만 아이디어 상태를 다시 연결해야 합니다"
+      description="현재 입력으로 최종 분석을 다시 실행해 주세요."
       action={<Button type="button" variant="outline" onClick={intake.reanalyze}>다시 분석하기</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.REVIEW && (
       <IdeaBriefReview draft={intake.draft} onFieldChange={intake.updateBriefField}
         onDecisionStateChange={intake.updateBriefDecisionState} onConfirm={intake.confirmBrief} />
     )}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 정리를 완료하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.failureKind === 'DERIVATION' ? intake.reanalyze : intake.refresh}>{intake.failureKind === 'DERIVATION' ? '다시 분석하기' : '상태 다시 불러오기'}</Button>} />}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 상태를 확인하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.failureKind === IDEA_FAILURE_KIND.DERIVATION_FAILURE ? intake.reanalyze : intake.refresh}>{intake.failureKind === IDEA_FAILURE_KIND.DERIVATION_FAILURE ? '다시 분석하기' : '상태 다시 확인하기'}</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="아이디어를 정리했습니다." description="이 내용으로 컨셉 5개를 만들고 법률 근거를 확인할 수 있습니다." />}
   </section>;
 }

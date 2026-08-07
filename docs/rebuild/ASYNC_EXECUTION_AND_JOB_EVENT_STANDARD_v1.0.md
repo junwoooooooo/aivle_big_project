@@ -72,3 +72,12 @@ Concept Provider 오류는 Attempt에 다음 분류 중 하나로 기록한다: 
 - permanent provider failure이면 Slot과 Run은 `FAILED`, terminal `retryable=false`로 종료한다.
 - schema invalid이면 Slot은 `SCHEMA_INVALID`, `REPAIR` Attempt는 최대 1회이며 재실패 시 `REPLACING`으로 전이한다.
 - `PROVIDER_FAILURE`는 Slot registry, 사용자 progress event status, query response 상태로 사용하지 않는다.
+
+## 12. Terminal execution immutability and domain alignment
+
+- Terminal TaskRun and Job IDs are immutable execution history and must never be reused for a new user action.
+- JobEvent가 `COMPLETED`, `NEEDS_INPUT`, `FAILED`, 또는 `BLOCKED`에 도달하면 동일 jobId에 후속 Event를 publish할 수 없다. 위반은 safe internal code `TERMINAL_JOB_EVENT_IMMUTABLE`로 거부한다.
+- Task result adoption은 payload를 보존하면서 domain terminal 의미를 TaskAttempt와 TaskRun에 동일하게 반영한다. Domain `NEEDS_INPUT`은 Attempt/Run/Event 모두 `NEEDS_INPUT`이어야 한다.
+- Event terminal publish 전에 TaskRun과 domain transaction의 terminal transition이 완료되어야 한다.
+- canonical input hash는 content identity이고 command-derived idempotency key는 execution identity다. 같은 command replay와 새로운 사용자 execution을 혼용하지 않는다.
+- `DERIVING` domain이 terminal active TaskRun을 가리키면 invalid recoverable state다. read path는 이를 RUNNING으로 표시하지 않고 recovery signal을 반환하며, recovery는 새 TaskRun과 sequence 1의 새 job history를 만든다.

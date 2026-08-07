@@ -51,6 +51,8 @@ public final class IdeaBriefApiModels {
         int clarificationRound,
         int maxClarificationRounds,
         boolean assessmentCurrent,
+        boolean executionStateConsistent,
+        boolean recoveryRequired,
         String activeJobId,
         String confirmedSnapshotId,
         LocalDateTime updatedAt
@@ -61,7 +63,7 @@ public final class IdeaBriefApiModels {
                 int clarificationRound, int maxClarificationRounds, String activeJobId,
                 String confirmedSnapshotId, LocalDateTime updatedAt) {
             this(briefId, status, overview, fields, questions, fieldCatalog, userFacingSummary,
-                contradictions, readiness, clarificationRound, maxClarificationRounds, false,
+                contradictions, readiness, clarificationRound, maxClarificationRounds, false, true, false,
                 activeJobId, confirmedSnapshotId, updatedAt);
         }
     }

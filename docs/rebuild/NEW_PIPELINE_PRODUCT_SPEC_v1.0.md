@@ -107,3 +107,11 @@ Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt �
 - 질문이 0개인 상태에서는 빈 Answers request를 전송하지 않는다.
 - Clarification 질문은 required/regulatory-sensitive missing field를 optional field보다 우선한다.
 - `FINAL_SYNTHESIS`가 현재 사실에서 required field를 합리적으로 유추하면 `AI_PROPOSED`로 제안할 수 있다. 확정할 수 없는 required field는 manual completion 대상으로 유지한다.
+
+## 13. Idea asynchronous execution identity
+
+- Terminal TaskRun과 Job ID는 immutable execution history이며 새로운 사용자 Action에 재사용하지 않는다.
+- 사용자 command idempotency와 canonical content hash를 분리한다. 동일 command key replay는 동일 execution을 반환하지만 새 command key는 canonical content가 같아도 새 TaskRun을 생성한다. 동일 input의 active TaskRun 차단은 유지한다.
+- Idea Brief `NEEDS_INPUT`, TaskRun `NEEDS_INPUT`, terminal JobEvent `NEEDS_INPUT`은 같은 execution에서 일치해야 한다. `READY_FOR_REVIEW`는 TaskRun `SUCCEEDED` 및 JobEvent `COMPLETED`와 일치한다.
+- `DERIVING`인데 active TaskRun이 terminal인 상태는 유효한 RUNNING 상태가 아니라 복구 가능한 invalid state다. 조회 화면은 spinner 대신 recovery Action을 제공하고 재분석은 과거 history를 수정하지 않은 새 TaskRun을 만든다.
+- Terminal JobEvent 뒤에는 같은 jobId의 어떤 Event도 추가할 수 없다.
