@@ -250,6 +250,7 @@ CREATE TABLE idea_briefs (
     ai_readiness_status VARCHAR(30),
     readiness_score INTEGER NOT NULL DEFAULT 0,
     clarification_round INTEGER NOT NULL DEFAULT 0,
+    assessment_input_hash VARCHAR(71),
     created_by_user_id BIGINT NOT NULL,
     last_command VARCHAR(30),
     last_idempotency_key VARCHAR(100),
@@ -268,6 +269,7 @@ CREATE TABLE idea_briefs (
     CONSTRAINT ck_idea_brief_status CHECK (status IN ('DRAFT', 'DERIVING', 'NEEDS_INPUT', 'READY_FOR_REVIEW', 'CONFIRMED', 'FAILED', 'STALE')),
     CONSTRAINT ck_idea_brief_snapshot_hash CHECK (snapshot_hash IS NULL OR snapshot_hash LIKE 'sha256:%'),
     CONSTRAINT ck_idea_brief_request_hash CHECK (last_request_hash IS NULL OR last_request_hash LIKE 'sha256:%'),
+    CONSTRAINT ck_idea_brief_assessment_hash CHECK (assessment_input_hash IS NULL OR assessment_input_hash LIKE 'sha256:%'),
     CONSTRAINT ck_idea_brief_confirmed_snapshot CHECK (
         (status = 'CONFIRMED' AND confirmed_snapshot_id = id AND snapshot_hash IS NOT NULL)
         OR status <> 'CONFIRMED'
@@ -434,7 +436,7 @@ CREATE TABLE concept_slots (
     CONSTRAINT fk_concept_slot_run FOREIGN KEY (run_id, project_id) REFERENCES concept_factory_runs(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT ck_concept_slot_number CHECK (slot_number BETWEEN 1 AND 5),
     CONSTRAINT ck_concept_slot_focus CHECK (variation_focus IN ('CUSTOMER_EXPERIENCE','OPERATING_MODEL_AND_PARTNERS','REVENUE_AND_PRICING','CHANNEL_AND_SCALE','LOW_RISK_FAST_EXECUTION')),
-    CONSTRAINT ck_concept_slot_status CHECK (status IN ('QUEUED','GENERATING','GENERATED','SCHEMA_INVALID','VALIDATING_ORIGIN','VALIDATING_LEGAL','REDESIGNING','REPLACING','ELIGIBLE','REJECTED','NEEDS_INPUT','FAILED','STALE')),
+    CONSTRAINT ck_concept_slot_status CHECK (status IN ('QUEUED','GENERATING','GENERATED','SCHEMA_INVALID','VALIDATING_ORIGIN','VALIDATING_LEGAL','REDESIGNING','REPLACING','REVIEW_RETRY_PENDING','ELIGIBLE','REJECTED','NEEDS_INPUT','FAILED','STALE')),
     CONSTRAINT ck_concept_slot_redesign CHECK (legal_redesign_count BETWEEN 0 AND 1)
 );
 
@@ -450,7 +452,7 @@ CREATE TABLE concept_attempts (
     CONSTRAINT fk_concept_attempt_slot FOREIGN KEY (slot_id, project_id) REFERENCES concept_slots(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT fk_concept_attempt_task FOREIGN KEY (task_run_id, project_id) REFERENCES task_runs(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT ck_concept_attempt_number CHECK (attempt_number > 0),
-    CONSTRAINT ck_concept_attempt_phase CHECK (phase IN ('INITIAL','REPAIR','REDESIGN','REPLACEMENT'))
+    CONSTRAINT ck_concept_attempt_phase CHECK (phase IN ('INITIAL','REPAIR','REDESIGN','REPLACEMENT','LEGAL_REVIEW'))
 );
 
 CREATE TABLE concepts (
@@ -515,6 +517,7 @@ CREATE TABLE concept_rejection_summaries (
 );
 
 ALTER TABLE concept_factory_runs ADD COLUMN task_run_id VARCHAR(64);
+ALTER TABLE concept_factory_runs ADD COLUMN last_retry_idempotency_key VARCHAR(128);
 ALTER TABLE concept_factory_runs ADD CONSTRAINT fk_concept_factory_task FOREIGN KEY (task_run_id, project_id) REFERENCES task_runs(id, project_id) ON DELETE NO ACTION;
 
 ALTER TABLE concept_attempts ADD COLUMN error_classification VARCHAR(40);
@@ -524,6 +527,8 @@ ALTER TABLE concept_attempts ADD COLUMN result_json TEXT;
 ALTER TABLE concept_attempts ADD CONSTRAINT ck_concept_attempt_error CHECK (error_classification IS NULL OR error_classification IN (
     'SCHEMA_INVALID','TRANSIENT_PROVIDER_FAILURE','PERMANENT_PROVIDER_FAILURE','ORIGIN_INVALID',
     'LEGAL_REDESIGN_REQUIRED','LEGAL_REJECTED','INSUFFICIENT_INFORMATION','INTERNAL_EXECUTION_ERROR'
+    ,'CANDIDATE_DOMAIN_REJECTION','LEGAL_DOMAIN_REJECTION','RESULT_SCHEMA_INVALID','LEGAL_SOURCE_FAILURE',
+    'NEEDS_FACTS','INTERNAL_STATE_FAILURE'
 ));
 
 ALTER TABLE concepts ADD COLUMN candidate_json TEXT NOT NULL DEFAULT '{}';

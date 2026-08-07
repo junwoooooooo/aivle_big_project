@@ -29,9 +29,10 @@ public class ConceptSlot extends BaseEntity {
         Map.entry(ConceptSlotStatus.GENERATED, EnumSet.of(ConceptSlotStatus.VALIDATING_ORIGIN, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.SCHEMA_INVALID, EnumSet.of(ConceptSlotStatus.GENERATING, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.VALIDATING_ORIGIN, EnumSet.of(ConceptSlotStatus.VALIDATING_LEGAL, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
-        Map.entry(ConceptSlotStatus.VALIDATING_LEGAL, EnumSet.of(ConceptSlotStatus.ELIGIBLE, ConceptSlotStatus.REDESIGNING, ConceptSlotStatus.REJECTED, ConceptSlotStatus.NEEDS_INPUT, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
+        Map.entry(ConceptSlotStatus.VALIDATING_LEGAL, EnumSet.of(ConceptSlotStatus.ELIGIBLE, ConceptSlotStatus.REDESIGNING, ConceptSlotStatus.REJECTED, ConceptSlotStatus.NEEDS_INPUT, ConceptSlotStatus.REVIEW_RETRY_PENDING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.REDESIGNING, EnumSet.of(ConceptSlotStatus.GENERATING, ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.REPLACING, EnumSet.of(ConceptSlotStatus.GENERATING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
+        Map.entry(ConceptSlotStatus.REVIEW_RETRY_PENDING, EnumSet.of(ConceptSlotStatus.VALIDATING_LEGAL, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.REJECTED, EnumSet.of(ConceptSlotStatus.REPLACING, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.NEEDS_INPUT, EnumSet.of(ConceptSlotStatus.QUEUED, ConceptSlotStatus.FAILED, ConceptSlotStatus.STALE)),
         Map.entry(ConceptSlotStatus.FAILED, EnumSet.of(ConceptSlotStatus.QUEUED, ConceptSlotStatus.STALE))
@@ -76,6 +77,10 @@ public class ConceptSlot extends BaseEntity {
     public int beginRetry() {
         attemptCount++;
         return attemptCount;
+    }
+
+    public void resumeLegalReview() {
+        transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
     }
 
     public void fail() {

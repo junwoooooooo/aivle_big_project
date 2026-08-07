@@ -1,7 +1,11 @@
+import asyncio
 from typing import Any, get_args, get_origin, get_type_hints
+import pytest
 
 from app.tasks.idea_brief.mapper import to_domain
 from app.tasks.idea_brief.models import IdeaBriefProviderResult
+from app.tasks.idea_brief import service
+from app.providers import ProviderFailure
 
 
 def test_provider_schema_is_closed_and_fully_typed():
@@ -24,6 +28,29 @@ def test_provider_to_domain_mapping_is_deterministic():
     second = to_domain(provider).model_dump(mode="json")
     assert first == second
     assert [field["provenance"] for field in first["fields"]] == ["SOURCE_EXTRACTED", "AI_PROPOSED"]
+
+
+def test_final_synthesis_uses_strict_mode_prompt_and_rejects_questions(monkeypatch):
+    captured = {}
+    async def prompt(system, _user, **kwargs):
+        captured["system"] = system
+        captured.update(kwargs)
+        return {
+            "extractedFields": [], "fieldSuggestions": [],
+            "clarificationQuestions": [{"targetFieldKey": "problem", "prompt": "more?",
+                "type": "FREE_TEXT", "options": [], "allowUndecided": True}],
+            "contradictions": [],
+            "readiness": {"status": "NEEDS_INPUT", "score": 20, "missingFieldKeys": ["problem"]},
+            "userFacingSummary": "추가 확인이 필요합니다.",
+        }
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_idea_brief_derivation({
+            "mode": "FINAL_SYNTHESIS", "overview": "idea", "fields": [], "attachmentFileIds": [],
+        }))
+    assert raised.value.reason == "FINAL_SYNTHESIS_QUESTIONS_FORBIDDEN"
+    assert "더 이상 새로운 질문을 생성하지 말고" in captured["system"]
+    assert captured["response_schema"]["additionalProperties"] is False
 
 
 def _assert_closed_schema(node: dict, root: dict) -> None:

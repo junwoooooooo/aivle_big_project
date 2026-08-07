@@ -13,13 +13,18 @@ public final class ConceptFactoryApiModels {
     private ConceptFactoryApiModels() {}
 
     public record CreateRunRequest(@NotBlank String ideaBriefSnapshotId) {}
+    public record RetryRunRequest(@NotBlank String idempotencyKey) {}
     public record RunResponse(
         String runId, String sourceIdeaBriefSnapshotId, String sourceSnapshotHash,
         ConceptFactoryRunStatus status, int replacementRounds, int inspectedCandidateCount,
-        int providerTransientRetryCount, String activeJobId, LocalDateTime updatedAt
+        int providerTransientRetryCount, String activeJobId,
+        String failureScope, String failureCode, boolean retryable, boolean canResume,
+        boolean canStartNew, String nextAction, LocalDateTime updatedAt
     ) {}
     public record SlotResponse(int slotNumber, VariationFocus variationFocus, ConceptSlotStatus status,
-        String currentAttemptPhase, int attemptCount, int legalRedesignCount, LocalDateTime updatedAt) {}
+        String currentAttemptPhase, int candidateCount, int legalReviewAttemptCount,
+        int legalRedesignCount, int replacementCount, String latestFailurePhase,
+        String latestFailureCode, boolean retryable, boolean candidatePreserved, LocalDateTime updatedAt) {}
     public record EvidenceView(String sourceType, String lawId, String lawName, String articleReference,
         String title, String effectiveDate, LocalDateTime retrievedAt, String officialSourceUri) {}
     public record LegalReviewView(ConceptLegalStatus status, String safeSummary, JsonNode assessment, List<EvidenceView> evidence) {}

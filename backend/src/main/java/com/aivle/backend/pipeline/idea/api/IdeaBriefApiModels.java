@@ -50,10 +50,21 @@ public final class IdeaBriefApiModels {
         ReadinessView readiness,
         int clarificationRound,
         int maxClarificationRounds,
+        boolean assessmentCurrent,
         String activeJobId,
         String confirmedSnapshotId,
         LocalDateTime updatedAt
-    ) {}
+    ) {
+        public IdeaBriefResponse(String briefId, IdeaBriefStatus status, String overview,
+                List<FieldView> fields, List<QuestionView> questions, List<FieldCatalogView> fieldCatalog,
+                String userFacingSummary, List<ContradictionView> contradictions, ReadinessView readiness,
+                int clarificationRound, int maxClarificationRounds, String activeJobId,
+                String confirmedSnapshotId, LocalDateTime updatedAt) {
+            this(briefId, status, overview, fields, questions, fieldCatalog, userFacingSummary,
+                contradictions, readiness, clarificationRound, maxClarificationRounds, false,
+                activeJobId, confirmedSnapshotId, updatedAt);
+        }
+    }
 
     public record FieldView(
         String fieldKey,

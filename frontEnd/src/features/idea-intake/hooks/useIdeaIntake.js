@@ -19,11 +19,6 @@ function hasAnswer(question, answer) {
 }
 
 function screenStateFor(response) {
-  if (response?.status === 'NEEDS_INPUT'
-      && response.clarificationRound >= response.maxClarificationRounds
-      && response.readiness?.unansweredQuestionCount === 0) {
-    return IDEA_INTAKE_SCREEN_STATE.REVIEW;
-  }
   return {
     DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
     DERIVING: IDEA_INTAKE_SCREEN_STATE.RUNNING,
@@ -53,6 +48,7 @@ export default function useIdeaIntake(projectId) {
   const [errors, setErrors] = useState({});
   const [failureMessage, setFailureMessage] = useState('');
   const [activeJobId, setActiveJobId] = useState(null);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [questions, setQuestions] = useState([]);
   const jobEvents = useJobEvents(activeJobId);
 
@@ -61,6 +57,7 @@ export default function useIdeaIntake(projectId) {
     setQuestions(questionsFromIdeaBrief(response));
     setActiveJobId(response.activeJobId ?? null);
     setScreenState(screenStateFor(response));
+    if (response.status !== 'DERIVING') setIsReanalyzing(false);
     if (response.status === 'FAILED' || response.status === 'STALE') {
       setFailureMessage('아이디어 정리를 완료하지 못했습니다. 다시 시도해 주세요.');
     }
@@ -142,8 +139,10 @@ export default function useIdeaIntake(projectId) {
     event.preventDefault();
     try {
       const patched = await api.patchFields(projectId, { fields: fieldsPayload(draft, true) }, ideaCommandOptions('idea-fields'));
+      if (patched.data.status === 'DERIVING') setIsReanalyzing(true);
       applyResponse(patched.data);
-      if (!patched.data.readiness?.readyForConfirm) return;
+      if (patched.data.status === 'DERIVING' || !patched.data.assessmentCurrent
+          || !patched.data.readiness?.readyForConfirm) return;
       const payload = await api.confirm(projectId, { expectedVersion: null }, ideaCommandOptions('idea-confirm'));
       applyResponse(payload.data);
     } catch (error) {
@@ -153,7 +152,7 @@ export default function useIdeaIntake(projectId) {
   };
 
   return {
-    draft, errors, failureMessage, questions, screenState, activeJobId, jobEvents,
+    draft, errors, failureMessage, questions, screenState, activeJobId, jobEvents, isReanalyzing,
     setFiles: (files) => dispatch({ type: 'SET_FILES', files }),
     updateIntake,
     answerQuestion: (questionId, value) => {

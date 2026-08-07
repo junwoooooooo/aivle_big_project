@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,6 +12,7 @@ from app.api.errors import (ApiHttpException, api_http_exception_handler,
 from app.api.executions import internal_error, router as execution_router, safe_validation_fields
 from app.models.contracts import HealthResponse
 from app.request_context import REQUEST_ID_HEADER, current_request_id, resolve_request_id
+from app.legal.registry import LegalRegistry, RegistryError
 
 
 app = FastAPI(title="New Pipeline AI Server", version="1.0.0")
@@ -104,3 +106,30 @@ def health_live(request: Request):
 @app.get("/health/ready", response_model=HealthResponse)
 def health_ready(request: Request):
     return health_payload(request, "ready")
+
+
+@app.get("/health/capabilities/concept-factory")
+def concept_factory_capability():
+    ai_configured = (
+        os.getenv("AI_PROVIDER", "").strip().lower() in {"openai", "openai-compatible"}
+        and bool(os.getenv("AI_API_KEY", "").strip())
+        and bool(os.getenv("AI_MODEL", "").strip())
+    )
+    internal_token = bool(os.getenv("AI_INTERNAL_SERVICE_TOKEN", "").strip())
+    moleg_configured = bool(os.getenv("MOLEG_API_KEY", "").strip())
+    try:
+        registry = LegalRegistry()
+        registry_status = {"available": True, "version": registry.version}
+    except RegistryError:
+        registry_status = {"available": False, "version": None}
+    available = ai_configured and internal_token and moleg_configured and registry_status["available"]
+    return {
+        "capability": "CONCEPT_FACTORY",
+        "available": available,
+        "checks": {
+            "aiProviderConfig": ai_configured,
+            "internalServiceToken": internal_token,
+            "legalRegistry": registry_status,
+            "molegConfiguration": moleg_configured,
+        },
+    }

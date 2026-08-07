@@ -66,6 +66,9 @@ public class ConceptFactoryRun extends BaseEntity {
     @Column(length = 64)
     private String taskRunId;
 
+    @Column(length = 128)
+    private String lastRetryIdempotencyKey;
+
     public static ConceptFactoryRun create(Project project, String snapshotId, String snapshotHash, Long userId) {
         if (project == null || snapshotId == null || snapshotId.isBlank()) throw new IllegalArgumentException("confirmed Idea Brief snapshot is required");
         if (snapshotHash == null || !snapshotHash.matches("sha256:[0-9a-f]{64}")) throw new IllegalArgumentException("snapshot hash is invalid");
@@ -82,6 +85,18 @@ public class ConceptFactoryRun extends BaseEntity {
     public void attachTaskRun(String taskRunId) {
         if (this.taskRunId != null && !this.taskRunId.equals(taskRunId)) throw new IllegalStateException("task run already attached");
         this.taskRunId = taskRunId;
+    }
+
+    public boolean retryReplay(String key) {
+        return key != null && key.equals(lastRetryIdempotencyKey) && status == ConceptFactoryRunStatus.QUEUED;
+    }
+
+    public void attachRetryTaskRun(String taskRunId, String key) {
+        if (taskRunId == null || taskRunId.isBlank() || key == null || key.isBlank()) {
+            throw new IllegalArgumentException("retry task run and idempotency key are required");
+        }
+        this.taskRunId = taskRunId;
+        this.lastRetryIdempotencyKey = key;
     }
 
     public void transitionTo(ConceptFactoryRunStatus next) {

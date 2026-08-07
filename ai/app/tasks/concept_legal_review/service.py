@@ -13,8 +13,9 @@ from app.tasks.concept_legal_review.models import (
 
 SYSTEM_PROMPT = """Perform an official-evidence-based legal implementation feasibility pre-review.
 Use only supplied evidence reference indexes. Do not invent statutes, provisions, facts, or citations.
-Every item in requiredControls, requiredPartnersAndQualifications, requiredDisclosures, and prohibitedVariants
-must have a matching findingEvidence entry with at least one supplied reference. This is not legal advice.
+Each material finding is an object with text and its own evidenceReferenceIndexes. Do not return parallel
+coverage arrays or derived unions. IMPLEMENTABLE findings must cite at least one supplied official reference.
+This is not legal advice.
 Return only the strict schema."""
 
 REVIEW_LABEL = "공식 근거 기반 법률 구현 가능성 사전검토"
@@ -70,28 +71,27 @@ def _official_evidence(source: dict) -> list[OfficialEvidence]:
 
 
 def _validate_coverage(provider: ConceptLegalReviewProviderResult,
-                       evidence: list[OfficialEvidence]) -> None:
+                       evidence: list[OfficialEvidence]) -> tuple[dict[str, list[str]], list[dict], list[int]]:
     indexes = {item.referenceIndex for item in evidence}
-    cited = provider.evidenceReferenceIndexes
-    if len(set(cited)) != len(cited) or any(index not in indexes for index in cited):
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "EVIDENCE_REFERENCE_INVALID", 502, False)
-    expected = {
-        (field, index)
-        for field in ("requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants")
-        for index, _ in enumerate(getattr(provider, field))
-    }
-    actual: set[tuple[str, int]] = set()
-    for coverage in provider.findingEvidence:
-        key = (coverage.findingType, coverage.findingIndex)
-        values = getattr(provider, coverage.findingType)
-        if key in actual or coverage.findingIndex >= len(values) or any(
-                index not in indexes for index in coverage.evidenceReferenceIndexes):
-            raise ProviderFailure("RESULT_SCHEMA_INVALID", "EVIDENCE_REFERENCE_INVALID", 502, False)
-        actual.add(key)
-    if actual != expected:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "CONCEPT_LEGAL_FINDING_EVIDENCE_REQUIRED", 502, False)
+    fields = ("requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants")
+    strings: dict[str, list[str]] = {}
+    coverage: list[dict] = []
+    cited: set[int] = set()
+    for field in fields:
+        findings = getattr(provider, field)
+        strings[field] = [finding.text for finding in findings]
+        for finding_index, finding in enumerate(findings):
+            refs = finding.evidenceReferenceIndexes
+            if len(refs) != len(set(refs)) or any(index not in indexes for index in refs):
+                raise ProviderFailure("RESULT_SCHEMA_INVALID", "EVIDENCE_REFERENCE_INVALID", 502, False)
+            if provider.status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and not refs:
+                raise ProviderFailure("RESULT_SCHEMA_INVALID", "CONCEPT_LEGAL_FINDING_EVIDENCE_REQUIRED", 502, False)
+            cited.update(refs)
+            coverage.append({"findingType": field, "findingIndex": finding_index,
+                "evidenceReferenceIndexes": refs})
     if provider.status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and not cited:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "CONCEPT_LEGAL_EVIDENCE_REQUIRED", 502, False)
+    return strings, coverage, sorted(cited)
 
 
 def _needs_facts(source: dict, evidence: list[OfficialEvidence]) -> dict:
@@ -114,11 +114,16 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
         value = ConceptLegalReviewInput.model_validate(task_input)
     except ValidationError as failure:
         raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
-    source = await execute_legal_source_pipeline("CONCEPT_LEGAL_VALIDATION", _source_text(value), {
-        "mode": "FULL", "rerunCategories": [], "confirmedFacts": [],
-        "registryVersion": value.sharedContext.registryVersion,
-    })
-    evidence = _official_evidence(source)
+    if value.sharedOfficialEvidence:
+        evidence = [item.model_copy(update={"referenceIndex": index})
+                    for index, item in enumerate(value.sharedOfficialEvidence)]
+        source = {"requiredUserInputs": []}
+    else:
+        source = await execute_legal_source_pipeline("CONCEPT_LEGAL_VALIDATION", _source_text(value), {
+            "mode": "FULL", "rerunCategories": [], "confirmedFacts": [],
+            "registryVersion": value.sharedContext.registryVersion,
+        })
+        evidence = _official_evidence(source)
     if not evidence:
         return _needs_facts(source, evidence)
     provider_input = {
@@ -135,11 +140,16 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
         provider = ConceptLegalReviewProviderResult.model_validate(raw)
     except ValidationError as failure:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
-    _validate_coverage(provider, evidence)
+    finding_strings, finding_evidence, evidence_union = _validate_coverage(provider, evidence)
+    provider_values = provider.model_dump(exclude={
+        "requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants",
+    })
     return ConceptLegalReviewDomainResult(
-        **provider.model_dump(exclude={"evidenceReferenceIndexes"}),
+        **provider_values,
+        **finding_strings,
+        findingEvidence=finding_evidence,
         officialEvidence=evidence,
-        evidenceReferenceIndexes=provider.evidenceReferenceIndexes,
+        evidenceReferenceIndexes=evidence_union,
         reviewLabel=REVIEW_LABEL,
         reviewLimitations=REVIEW_LIMITATIONS,
     ).model_dump(mode="json")

@@ -47,7 +47,15 @@ public class ConceptFactoryExecutionService {
         Map<String, Object> shared = sharedContext(pack);
         List<SlotWork> slotWork = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
             .filter(value -> value.getStatus() != ConceptSlotStatus.ELIGIBLE)
-            .map(value -> new SlotWork(value.getId(), value.getSlotNumber(), value.getVariationFocus(), value.getLegalRedesignCount())).toList();
+            .map(value -> {
+                ConceptAttempt candidate = attempts.findAllBySlotIdOrderByAttemptNumber(value.getId()).stream()
+                    .filter(attempt -> attempt.getPhase() != ConceptAttemptPhase.LEGAL_REVIEW
+                        && attempt.getResultJson() != null)
+                    .reduce((first, second) -> second).orElse(null);
+                return new SlotWork(value.getId(), value.getSlotNumber(), value.getVariationFocus(),
+                    value.getLegalRedesignCount(), candidate == null ? null : candidate.getId(),
+                    candidate == null ? null : candidate.getResultJson());
+            }).toList();
         return new Work(runId, projectId, run.getSourceIdeaBriefSnapshotId(), fields, shared, slotWork);
     }
 
@@ -64,6 +72,38 @@ public class ConceptFactoryExecutionService {
             "fields", mapper.readTree(pack.getCanonicalContextJson()));
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> sharedOfficialEvidence(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(
+            run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
+        List<LegalEvidence> values = evidence.findAllByContextPackIdAndProjectIdAndDeletedAtIsNull(
+            pack.getId(), run.getProject().getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (int index = 0; index < values.size(); index++) {
+            LegalEvidence value = values.get(index);
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("referenceIndex", index);
+            item.put("sourceType", value.getSourceType());
+            item.put("lawId", value.getLawId());
+            item.put("officialIdentifier", value.getOfficialIdentifier());
+            item.put("lawName", value.getLawName());
+            item.put("articleReference", value.getArticleReference());
+            item.put("title", value.getTitle());
+            item.put("officialSourceUri", value.getOfficialSourceUri());
+            item.put("jurisdiction", value.getJurisdiction());
+            item.put("promulgationDate", value.getPromulgationDate());
+            item.put("effectiveDate", value.getEffectiveDate());
+            item.put("retrievedAt", value.getRetrievedAt().toString());
+            item.put("contentHash", value.getContentHash());
+            item.put("boundedProvisionSummary", value.getBoundedProvisionSummary());
+            item.put("queryKey", value.getQueryKey());
+            item.put("registryVersion", value.getRegistryVersion());
+            result.add(item);
+        }
+        return result;
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String beginAttempt(String slotId, ConceptAttemptPhase phase, String taskRunId) {
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
@@ -75,6 +115,13 @@ public class ConceptFactoryExecutionService {
     public String beginRetryAttempt(String slotId, ConceptAttemptPhase phase, String taskRunId) {
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         return attempts.save(ConceptAttempt.retry(slot, phase, taskRunId)).getId();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String beginLegalReviewAttempt(String slotId, String taskRunId) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        if (slot.getStatus() == ConceptSlotStatus.REVIEW_RETRY_PENDING) slot.resumeLegalReview();
+        return attempts.save(ConceptAttempt.retry(slot, ConceptAttemptPhase.LEGAL_REVIEW, taskRunId)).getId();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -100,7 +147,7 @@ public class ConceptFactoryExecutionService {
             run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
         Map<Integer, LegalEvidence> official = persistEvidence(pack, legal.path("officialEvidence"));
         if (status == ConceptLegalStatus.NEEDS_FACTS) {
-            attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.INSUFFICIENT_INFORMATION, "NEEDS_FACTS", false);
+            attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.NEEDS_FACTS, "NEEDS_FACTS", false);
             slot.transitionTo(ConceptSlotStatus.NEEDS_INPUT); run.transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
             return LegalDisposition.NEEDS_INPUT;
         }
@@ -136,6 +183,7 @@ public class ConceptFactoryExecutionService {
             evidenceLinks.save(ConceptLegalEvidenceLink.create(assessment, cited));
         }
         slot.transitionTo(ConceptSlotStatus.ELIGIBLE);
+        attempts.findById(attemptId).orElseThrow().succeed(mapper.writeValueAsString(legal));
         return LegalDisposition.ELIGIBLE;
     }
 
@@ -213,10 +261,26 @@ public class ConceptFactoryExecutionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAttemptError(String runId, String slotId, String attemptId, ConceptAttemptError error, boolean retryable) {
-        attempts.findById(attemptId).orElseThrow().fail(error, error.name(), retryable);
+        recordAttemptError(runId, slotId, attemptId, error, error.name(), retryable);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordAttemptError(String runId, String slotId, String attemptId, ConceptAttemptError error,
+            String safeErrorCode, boolean retryable) {
+        attempts.findById(attemptId).orElseThrow().fail(error, safeErrorCode, retryable);
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         if (error == ConceptAttemptError.SCHEMA_INVALID && slot.getStatus() == ConceptSlotStatus.GENERATING) {
             slot.transitionTo(ConceptSlotStatus.SCHEMA_INVALID);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failLegalReview(String runId, String slotId, String attemptId,
+            ConceptAttemptError error, String safeErrorCode, boolean retryable) {
+        attempts.findById(attemptId).orElseThrow().fail(error, safeErrorCode, retryable);
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        if (slot.getStatus() == ConceptSlotStatus.VALIDATING_LEGAL) {
+            slot.transitionTo(ConceptSlotStatus.REVIEW_RETRY_PENDING);
         }
     }
 
@@ -244,6 +308,16 @@ public class ConceptFactoryExecutionService {
         if (run.getStatus() != ConceptFactoryRunStatus.FAILED) run.transitionTo(ConceptFactoryRunStatus.FAILED);
     }
 
+    @Transactional(readOnly = true)
+    public FailureDiagnostic diagnostic(String runId, String slotId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        ConceptAttempt latest = attempts.findFirstBySlotIdOrderByAttemptNumberDesc(slotId).orElse(null);
+        return new FailureDiagnostic(run.getStatus().name(), slot.getStatus().name(),
+            latest == null ? null : latest.getPhase().name(),
+            latest == null || latest.getSafeErrorCode() == null ? "INTERNAL_STATE_FAILURE" : latest.getSafeErrorCode());
+    }
+
     @Transactional
     public boolean completeIfEligible(String runId) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
@@ -256,7 +330,13 @@ public class ConceptFactoryExecutionService {
     }
 
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
-    public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount) {}
+    public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
+    public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount,
+                           String candidateAttemptId, String candidateJson) {
+        public SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount) {
+            this(slotId, slotNumber, focus, redesignCount, null, null);
+        }
+    }
     public record Work(String runId, Long projectId, String snapshotId, List<Map<String, String>> fields,
                        Map<String, Object> sharedContext, List<SlotWork> slots) {}
 }

@@ -4,15 +4,20 @@ import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.AnswerComma
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.AnswersRequest;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.ConfirmRequest;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.DeriveRequest;
+import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.FieldCommand;
+import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.PatchFieldsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.aivle.backend.pipeline.idea.application.IdeaBriefReadinessCalculator;
+import com.aivle.backend.pipeline.idea.application.IdeaBriefAssessmentHasher;
 import com.aivle.backend.pipeline.idea.application.IdeaBriefService;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefFieldCatalog;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
+import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestion;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestionType;
 import com.aivle.backend.pipeline.idea.repository.IdeaAnswerRepository;
@@ -47,6 +52,7 @@ class IdeaBriefCanonicalizationIntegrationTests {
     @Autowired TaskRunRepository taskRuns;
     @Autowired UserRepository users;
     @Autowired ProjectRepository projects;
+    @Autowired IdeaBriefAssessmentHasher assessmentHasher;
 
     @Test
     void deriveStoresOverviewWithoutDuplicatingItIntoAssumptions() {
@@ -87,7 +93,7 @@ class IdeaBriefCanonicalizationIntegrationTests {
     }
 
     @Test
-    void clarificationDoesNotQueueBeyondTheSecondRound() {
+    void finalQuestionAnswerQueuesFinalSynthesisWithoutIncreasingRound() {
         Fixture fixture = fixture();
         fixture.brief().startClarification("old-task-1");
         fixture.brief().needsInput();
@@ -101,10 +107,12 @@ class IdeaBriefCanonicalizationIntegrationTests {
             new AnswersRequest(List.of(new AnswerCommand(question.getId(), "\"__UNDECIDED__\""))),
             "bounded-" + UUID.randomUUID());
 
-        assertThat(response.status()).isEqualTo(IdeaBriefStatus.NEEDS_INPUT);
+        assertThat(response.status()).isEqualTo(IdeaBriefStatus.DERIVING);
         assertThat(response.clarificationRound()).isEqualTo(IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS);
-        assertThat(response.activeJobId()).isNull();
-        assertThat(taskRuns.count()).isZero();
+        assertThat(response.activeJobId()).isNotBlank();
+        assertThat(taskRuns.count()).isEqualTo(1);
+        assertThat(taskRuns.findById(response.activeJobId()).orElseThrow().getInputSnapshot())
+            .contains("\"mode\":\"FINAL_SYNTHESIS\"");
         assertThat(response.fields()).filteredOn(value -> value.fieldKey().equals("problem"))
             .singleElement().satisfies(value -> {
                 assertThat(value.explicitlyUndecided()).isTrue();
@@ -120,7 +128,8 @@ class IdeaBriefCanonicalizationIntegrationTests {
             fields.save(IdeaBriefField.userValue(fixture.brief(), definition.key(),
                 "confirmed " + definition.key(), definition.defaultDecisionState()));
         }
-        fixture.brief().applyAssessment("Ready summary", "[]", "[]", "READY_FOR_REVIEW", 100);
+        fixture.brief().applyAssessment("Ready summary", "[]", "[]", "READY_FOR_REVIEW", 100,
+            assessmentHasher.hash(fixture.brief(), fields.findAllByBriefIdOrderById(fixture.brief().getId())));
         fixture.brief().readyForReview();
 
         var response = service.confirm(fixture.user().getId(), fixture.project().getId(),
@@ -130,6 +139,28 @@ class IdeaBriefCanonicalizationIntegrationTests {
         assertThat(response.confirmedSnapshotId()).isEqualTo(fixture.brief().getId());
         assertThat(fixture.brief().getSnapshotHash()).startsWith("sha256:");
         assertThat(response.overview()).isEqualTo("Canonical overview only");
+    }
+
+    @Test
+    void fieldPatchMarksAssessmentStaleAndQueuesFinalSynthesisBeforeConfirm() {
+        Fixture fixture = fixture();
+        fields.save(IdeaBriefField.userValue(fixture.brief(), "problem", "old problem", IdeaDecisionState.PREFERRED));
+        fixture.brief().applyAssessment("Ready summary", "[]", "[]", "READY_FOR_REVIEW", 100,
+            assessmentHasher.hash(fixture.brief(), fields.findAllByBriefIdOrderById(fixture.brief().getId())));
+        fixture.brief().readyForReview();
+
+        var patched = service.patchFields(fixture.user().getId(), fixture.project().getId(),
+            new PatchFieldsRequest(List.of(new FieldCommand("problem", "new problem", IdeaDecisionState.PREFERRED))),
+            "patch-" + UUID.randomUUID());
+
+        assertThat(patched.status()).isEqualTo(IdeaBriefStatus.DERIVING);
+        assertThat(patched.assessmentCurrent()).isFalse();
+        assertThat(patched.activeJobId()).isNotBlank();
+        assertThat(taskRuns.findById(patched.activeJobId()).orElseThrow().getInputSnapshot())
+            .contains("\"mode\":\"FINAL_SYNTHESIS\"");
+        assertThatThrownBy(() -> service.confirm(fixture.user().getId(), fixture.project().getId(),
+            new ConfirmRequest(null), "confirm-stale-" + UUID.randomUUID()))
+            .isInstanceOf(com.aivle.backend.common.exception.BusinessException.class);
     }
 
     private Fixture fixture() {

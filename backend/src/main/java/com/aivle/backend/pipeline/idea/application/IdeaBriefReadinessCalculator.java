@@ -23,6 +23,11 @@ public class IdeaBriefReadinessCalculator {
 
     public Assessment calculate(IdeaBrief brief, List<IdeaBriefField> fieldEntities,
             List<IdeaQuestion> activeQuestions) {
+        return calculate(brief, fieldEntities, activeQuestions, brief.getAssessmentInputHash() != null);
+    }
+
+    public Assessment calculate(IdeaBrief brief, List<IdeaBriefField> fieldEntities,
+            List<IdeaQuestion> activeQuestions, boolean assessmentCurrent) {
         Map<String, IdeaBriefField> byKey = new LinkedHashMap<>();
         fieldEntities.forEach(field -> byKey.put(field.getFieldKey(), field));
         List<String> requiredMissing = IdeaBriefFieldCatalog.fields().stream()
@@ -43,9 +48,9 @@ public class IdeaBriefReadinessCalculator {
         int completionScore = total == 0 ? 0 : completed * 100 / total;
         int aiScore = brief.getAiReadinessStatus() == null ? completionScore : brief.getReadinessScore();
         int score = Math.max(0, Math.min(completionScore, aiScore) - blocking * 10 - unanswered * 5);
-        boolean aiReady = "READY_FOR_REVIEW".equals(brief.getAiReadinessStatus())
-            || brief.getClarificationRound() >= MAX_CLARIFICATION_ROUNDS;
-        boolean ready = requiredMissing.isEmpty() && unanswered == 0 && blocking == 0 && aiReady;
+        boolean aiReady = "READY_FOR_REVIEW".equals(brief.getAiReadinessStatus());
+        boolean ready = requiredMissing.isEmpty() && unanswered == 0 && blocking == 0 && aiReady
+            && assessmentCurrent;
         return new Assessment(total, completed, missing, unanswered, blocking, score, ready);
     }
 

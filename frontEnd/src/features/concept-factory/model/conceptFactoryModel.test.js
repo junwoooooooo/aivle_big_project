@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { dedupeTimeline, evaluateRevealGate, workboardSummary } from './conceptFactoryModel.js';
 
 const slots = Array.from({ length: 5 }, (_, index) => ({
-  slotNumber: index + 1, status: 'ELIGIBLE', attemptCount: index + 1, legalRedesignCount: index === 0 ? 1 : 0,
+  slotNumber: index + 1, status: 'ELIGIBLE', candidateCount: index + 1, legalReviewAttemptCount: 2,
+  legalRedesignCount: index === 0 ? 1 : 0,
 }));
 const concepts = Array.from({ length: 5 }, (_, index) => ({
   conceptId: `c-${index}`, sourceSnapshotHash: 'sha256:same', canonicalHash: `canonical-${index}`,

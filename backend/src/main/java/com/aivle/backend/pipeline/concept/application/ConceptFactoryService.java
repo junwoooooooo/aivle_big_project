@@ -99,16 +99,37 @@ public class ConceptFactoryService {
     }
 
     @Transactional
-    public RunResponse retry(Long ownerId, Long projectId, String runId) {
+    public RunResponse retry(Long ownerId, Long projectId, String runId, String idempotencyKey) {
         ConceptFactoryRun run = runs.findOwnedForUpdate(ownerId, projectId, runId)
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Concept Factory run was not found."));
-        if (run.getStatus() != ConceptFactoryRunStatus.FAILED && run.getStatus() != ConceptFactoryRunStatus.NEEDS_INPUT) {
+        if (run.retryReplay(idempotencyKey)) return response(run);
+        IdeaBrief latestBrief = ideaBriefs.findCurrentOwned(ownerId, projectId).orElse(null);
+        if (latestBrief != null && latestBrief.isConfirmed()
+            && !latestBrief.getId().equals(run.getSourceIdeaBriefSnapshotId())) {
+            if (run.getStatus() == ConceptFactoryRunStatus.FAILED) run.transitionTo(ConceptFactoryRunStatus.STALE);
+            throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED,
+                "Idea Brief snapshot changed; start a new Concept Factory run.");
+        }
+        if (run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT || run.getStatus() == ConceptFactoryRunStatus.STALE
+            || run.getStatus() != ConceptFactoryRunStatus.FAILED) {
             throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED);
         }
         slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
-            .filter(slot -> slot.getStatus() == ConceptSlotStatus.FAILED || slot.getStatus() == ConceptSlotStatus.NEEDS_INPUT)
+            .filter(slot -> slot.getStatus() == ConceptSlotStatus.FAILED)
             .forEach(slot -> slot.transitionTo(ConceptSlotStatus.QUEUED));
         run.transitionTo(ConceptFactoryRunStatus.QUEUED);
+        String input = objectMapper.writeValueAsString(java.util.Map.of(
+            "runId", run.getId(), "ideaBriefSnapshotId", run.getSourceIdeaBriefSnapshotId(),
+            "snapshotHash", run.getSourceSnapshotHash(), "resume", true
+        ));
+        String taskKey = "concept-factory-retry:" + run.getId() + ":" + idempotencyKey;
+        TaskRun task = taskRuns.create(ownerId, projectId, TaskType.CONCEPT_FACTORY_RUN,
+            "CONCEPT_FACTORY_RUN", run.getId(), input,
+            inputHasher.hash(TaskType.CONCEPT_FACTORY_RUN, "1.0", "ko-KR", input),
+            taskKey, taskKey, 1);
+        run.attachRetryTaskRun(task.getId(), idempotencyKey);
+        jobEvents.publish(new JobEventPublisher.Command(projectId, task.getId(), task.getId(), "QUEUED",
+            "job.concept.run.queued", JobEvent.Status.QUEUED, "job.concept.run.queued", java.util.Map.of(), null));
         return response(run);
     }
 
@@ -129,15 +150,40 @@ public class ConceptFactoryService {
     }
 
     private RunResponse response(ConceptFactoryRun run) {
+        List<com.aivle.backend.pipeline.concept.domain.ConceptAttempt> allAttempts = slots
+            .findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(run.getId(), run.getProject().getId()).stream()
+            .flatMap(slot -> attempts.findAllBySlotIdOrderByAttemptNumber(slot.getId()).stream()).toList();
+        var latestFailure = allAttempts.stream().filter(value -> value.getSafeErrorCode() != null)
+            .reduce((first, second) -> second).orElse(null);
+        boolean resumable = run.getStatus() == ConceptFactoryRunStatus.FAILED
+            && latestFailure != null && latestFailure.isRetryable();
+        String nextAction = run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT ? "COMPLETE_IDEA_BRIEF"
+            : run.getStatus() == ConceptFactoryRunStatus.STALE ? "START_NEW_RUN"
+            : resumable ? "RESUME_LEGAL_REVIEW" : run.getStatus() == ConceptFactoryRunStatus.FAILED
+                ? "START_NEW_RUN" : "WAIT";
         return new RunResponse(run.getId(), run.getSourceIdeaBriefSnapshotId(), run.getSourceSnapshotHash(), run.getStatus(),
-            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getTaskRunId(), run.getUpdatedAt());
+            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getTaskRunId(),
+            latestFailure == null ? null : "SLOT", latestFailure == null ? null : latestFailure.getSafeErrorCode(),
+            resumable, resumable, run.isTerminal(), nextAction, run.getUpdatedAt());
     }
 
     private SlotResponse response(ConceptSlot slot) {
-        String phase = attempts.findFirstBySlotIdOrderByAttemptNumberDesc(slot.getId())
-            .map(value -> value.getPhase().name()).orElse(null);
-        return new SlotResponse(slot.getSlotNumber(), slot.getVariationFocus(), slot.getStatus(), phase,
-            slot.getAttemptCount(), slot.getLegalRedesignCount(), slot.getUpdatedAt());
+        List<com.aivle.backend.pipeline.concept.domain.ConceptAttempt> values = attempts
+            .findAllBySlotIdOrderByAttemptNumber(slot.getId());
+        var latest = values.isEmpty() ? null : values.get(values.size() - 1);
+        var failure = values.stream().filter(value -> value.getSafeErrorCode() != null)
+            .reduce((first, second) -> second).orElse(null);
+        int candidateCount = (int) values.stream().filter(value -> value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
+            && value.getResultJson() != null).count();
+        int legalReviewCount = (int) values.stream().filter(value -> value.getPhase() == com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW).count();
+        int replacementCount = (int) values.stream().filter(value -> value.getPhase() == com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.REPLACEMENT
+            && value.getResultJson() != null).count();
+        boolean preserved = candidateCount > 0;
+        return new SlotResponse(slot.getSlotNumber(), slot.getVariationFocus(), slot.getStatus(),
+            latest == null ? null : latest.getPhase().name(), candidateCount, legalReviewCount,
+            slot.getLegalRedesignCount(), replacementCount,
+            failure == null ? null : failure.getPhase().name(), failure == null ? null : failure.getSafeErrorCode(),
+            failure != null && failure.isRetryable(), preserved, slot.getUpdatedAt());
     }
 
     private ConceptResponse response(Concept concept) {

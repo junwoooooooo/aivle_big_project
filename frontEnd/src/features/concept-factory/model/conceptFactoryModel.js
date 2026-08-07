@@ -17,6 +17,7 @@ export const SLOT_STATUS_COPY = Object.freeze({
   VALIDATING_LEGAL: '법률 근거를 확인하고 있습니다.',
   REDESIGNING: '필수 통제를 반영하고 있습니다.',
   REPLACING: '부적합 후보를 다른 방향으로 교체하고 있습니다.',
+  REVIEW_RETRY_PENDING: '법률 검토 처리 중 오류가 발생했습니다. 생성된 후보는 보존되었습니다.',
   ELIGIBLE: '법률검토를 통과했습니다.',
   REJECTED: '운영 역할을 다시 설계하고 있습니다.',
   NEEDS_INPUT: '확인이 필요한 정보가 있습니다.',
@@ -41,7 +42,7 @@ export function workboardSummary(run, slots = [], events = []) {
   const ordered = dedupeTimeline(events);
   return {
     eligible: slots.filter((slot) => slot.status === 'ELIGIBLE').length,
-    inspected: Number(run?.inspectedCandidateCount) || slots.reduce((sum, slot) => sum + (slot.attemptCount || 0), 0),
+    inspected: Number(run?.inspectedCandidateCount) || slots.reduce((sum, slot) => sum + (slot.candidateCount || 0), 0),
     redesigned: slots.reduce((sum, slot) => sum + (slot.legalRedesignCount || 0), 0),
     replaced: Number(run?.replacementRounds) || 0,
     discarded: ordered.filter((event) => event.eventType === 'job.concept.slot.rejected').length,

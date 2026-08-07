@@ -81,4 +81,20 @@ AI 사업검증 플랫폼은 사용자의 초기 아이디어를 구조화하고
 
 ## 9. Concept Provider 실패 경계
 
-Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt 실행 오류다. Slot 상태에는 `PROVIDER_FAILURE`를 두지 않는다. 일시 오류는 동일 Slot에서 최대 1회 재시도하고 소진 시 교체하며, 영구 오류는 Slot과 Run을 재시도 불가능한 실패로 종료한다. Schema 오류는 1회 Repair 후 실패하면 교체한다.
+Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt 실행 오류다. Slot 상태에는 `PROVIDER_FAILURE`를 두지 않는다. Candidate 생성의 일시 오류는 동일 Slot에서 최대 1회 재시도하며, Candidate schema/domain 오류는 1회 Repair 후 replacement 정책을 따른다. Legal Review schema/source/provider/internal 오류는 법률 거절로 표시하거나 Candidate를 교체하지 않고, 생성된 Candidate를 보존한 `REVIEW_RETRY_PENDING`으로 종료한다.
+
+## 10. Idea Brief synthesis와 assessment freshness
+
+- clarification limit는 새로운 질문 생성 횟수의 상한이다. 마지막 질문 답변 뒤에는 `FINAL_SYNTHESIS`를 실행하며 질문은 빈 배열이어야 한다.
+- 사용자의 답변, canonical field, overview, attachment 변경은 기존 assessment를 무효화한다. Review 수정 후에는 최신 summary·contradiction·readiness 분석이 끝날 때까지 Confirm할 수 없다.
+- `READY_FOR_REVIEW`는 최신 canonical assessment hash가 일치할 때만 Confirm 가능하다. max round 도달 자체는 ready 조건이 아니다.
+- 사용자에게는 내부 `STALE` 용어 대신 `변경 내용을 다시 정리하고 있습니다.`라고 표시한다.
+
+## 11. Legal contract와 retry UX
+
+- Screening AI는 관련 citation subset만 반환하고 omitted citation은 시스템이 excluded로 계산한다.
+- 각 material legal finding은 자신의 official evidence reference를 포함한다. 사용자 문자열 배열과 전체 evidence union은 시스템이 파생한다.
+- 법률 `REJECTED`만 rejected event와 Candidate replacement를 만든다. schema/provider/source/internal failure는 안전한 review retry/failed event를 사용한다.
+- Slot 기본 카드는 후보 생성 횟수, 법률 검토 상태, 재설계 횟수를 표시한다. provider/repair call count는 기본 UI에서 숨긴다.
+- Failed run은 `이어서 시도`와 `처음부터 새로 만들기`를 제공한다. 이어서 시도는 새 TaskRun과 새 activeJobId를 만들며 eligible Slot과 보존 Candidate를 재사용한다. `NEEDS_FACTS`는 Idea Brief 보완, snapshot 변경은 새 Run 생성을 안내한다.
+- Shared Legal Context와 base official evidence는 snapshot별로 한 번 구축해 Slot 간 재사용하고 Candidate 신규 활동만 delta evidence retrieval 대상이 된다.

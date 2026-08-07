@@ -10,6 +10,7 @@ import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefFieldCatalog;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
+import com.aivle.backend.pipeline.idea.domain.IdeaBriefDerivationMode;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestion;
 import com.aivle.backend.pipeline.idea.repository.IdeaAnswerRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
@@ -53,6 +54,7 @@ public class IdeaBriefService {
     private final ObjectMapper objectMapper;
     private final JobEventPublisher jobEvents;
     private final IdeaBriefReadinessCalculator readinessCalculator;
+    private final IdeaBriefAssessmentHasher assessmentHasher;
 
     @Transactional(readOnly = true)
     public IdeaBriefResponse get(Long ownerId, Long projectId) {
@@ -68,7 +70,12 @@ public class IdeaBriefService {
         String correlationId
     ) {
         String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
-        String inputJson = objectMapper.writeValueAsString(request);
+        String inputJson = objectMapper.writeValueAsString(Map.of(
+            "mode", IdeaBriefDerivationMode.INITIAL.name(),
+            "overview", request.overview(),
+            "fields", request.fields() == null ? List.of() : request.fields(),
+            "attachmentFileIds", request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds()
+        ));
         String requestHash = sha256(inputJson);
         IdeaBrief brief = currentOrInitial(ownerId, projectId);
         if (replay(brief, "DERIVE", idempotencyKey, requestHash)) return response(brief);
@@ -112,12 +119,9 @@ public class IdeaBriefService {
         IdeaBrief brief = requireCurrentForUpdate(ownerId, projectId);
         if (replay(brief, "PATCH_FIELDS", idempotencyKey, requestHash)) return response(brief);
         if (brief.isConfirmed()) brief = forkConfirmed(brief, ownerId);
-        boolean recalculateReadiness = brief.getStatus() == IdeaBriefStatus.READY_FOR_REVIEW
-            || brief.getClarificationRound() >= IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS;
-        upsertUserFields(brief, request.fields());
-        if (recalculateReadiness) {
-            if (readiness(brief).readyForConfirm()) brief.readyForReview(); else brief.needsInput();
-        } else brief.markDraft();
+        boolean changed = upsertUserFields(brief, request.fields());
+        if (changed) queueDerivation(ownerId, projectId, brief, requestHash,
+            IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         brief.recordCommand("PATCH_FIELDS", idempotencyKey, requestHash);
         return response(brief);
     }
@@ -150,12 +154,10 @@ public class IdeaBriefService {
         boolean complete = questionMap.values().stream().allMatch(IdeaQuestion::isAnswered);
         if (!complete) {
             brief.needsInput();
-        } else if (readiness(brief).readyForConfirm()) {
-            brief.readyForReview();
         } else if (brief.getClarificationRound() < IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS) {
-            queueClarification(ownerId, projectId, brief, requestHash);
+            queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.CLARIFICATION);
         } else {
-            brief.needsInput();
+            queueDerivation(ownerId, projectId, brief, requestHash, IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         }
         brief.recordCommand("ANSWERS", idempotencyKey, requestHash);
         return response(brief);
@@ -179,7 +181,11 @@ public class IdeaBriefService {
         if (brief.getStatus() != IdeaBriefStatus.READY_FOR_REVIEW) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Idea Brief가 검토 준비 상태가 아닙니다.");
         }
-        if (!readiness(brief).readyForConfirm()) {
+        boolean assessmentCurrent = assessmentHasher.hash(brief, currentFields)
+            .equals(brief.getAssessmentInputHash());
+        if (!readinessCalculator.calculate(brief, currentFields,
+                questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()), assessmentCurrent)
+            .readyForConfirm()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Idea Brief readiness requirements are not satisfied.");
         }
         if (questions.countByBriefIdAndActiveTrueAndAnsweredFalse(brief.getId()) > 0) {
@@ -216,17 +222,26 @@ public class IdeaBriefService {
         return draft;
     }
 
-    private void upsertUserFields(IdeaBrief brief, List<FieldCommand> commands) {
-        if (commands == null) return;
+    private boolean upsertUserFields(IdeaBrief brief, List<FieldCommand> commands) {
+        if (commands == null) return false;
+        boolean changed = false;
         for (FieldCommand command : commands) {
             IdeaBriefFieldCatalog.FieldDefinition definition = IdeaBriefFieldCatalog.require(command.fieldKey());
             IdeaDecisionState decisionState = command.decisionState() == null
                 ? definition.defaultDecisionState() : command.decisionState();
             IdeaBriefField field = fields.findByBriefIdAndFieldKey(brief.getId(), command.fieldKey()).orElse(null);
             String value = command.value() == null ? "" : command.value();
-            if (field == null) fields.save(IdeaBriefField.userValue(brief, command.fieldKey(), value, decisionState));
-            else field.updateByUser(value, decisionState);
+            if (field == null) {
+                fields.save(IdeaBriefField.userValue(brief, command.fieldKey(), value, decisionState));
+                changed = true;
+            } else if (!java.util.Objects.equals(field.getFieldValue(), value)
+                    || field.getDecisionState() != decisionState
+                    || field.getProvenance() != com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_CONFIRMED) {
+                field.updateByUser(value, decisionState);
+                changed = true;
+            }
         }
+        return changed;
     }
 
     private IdeaBriefResponse response(IdeaBrief brief) {
@@ -235,8 +250,10 @@ public class IdeaBriefService {
         Map<String, String> answerByQuestion = new LinkedHashMap<>();
         answers.findAllByBriefIdOrderById(brief.getId())
             .forEach(answer -> answerByQuestion.put(answer.getQuestion().getId(), answer.getAnswerJson()));
+        boolean assessmentCurrent = brief.getAssessmentInputHash() != null
+            && brief.getAssessmentInputHash().equals(assessmentHasher.hash(brief, fieldEntities));
         IdeaBriefReadinessCalculator.Assessment assessment = readinessCalculator.calculate(
-            brief, fieldEntities, questionEntities);
+            brief, fieldEntities, questionEntities, assessmentCurrent);
         return new IdeaBriefResponse(
             brief.getId(),
             brief.getStatus(),
@@ -265,6 +282,7 @@ public class IdeaBriefService {
             ),
             brief.getClarificationRound(),
             IdeaBriefReadinessCalculator.MAX_CLARIFICATION_ROUNDS,
+            assessmentCurrent,
             brief.getActiveTaskRunId(),
             brief.getConfirmedSnapshotId(),
             brief.getUpdatedAt()
@@ -334,8 +352,10 @@ public class IdeaBriefService {
             questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()));
     }
 
-    private void queueClarification(Long ownerId, Long projectId, IdeaBrief brief, String requestHash) {
+    private void queueDerivation(Long ownerId, Long projectId, IdeaBrief brief, String requestHash,
+            IdeaBriefDerivationMode mode) {
         String inputJson = objectMapper.writeValueAsString(Map.of(
+            "mode", mode.name(),
             "overview", brief.getOverviewText(),
             "fields", fields.findAllByBriefIdOrderById(brief.getId()).stream().map(field -> Map.of(
                 "fieldKey", field.getFieldKey(),
@@ -345,10 +365,13 @@ public class IdeaBriefService {
             "attachmentFileIds", brief.getAttachmentFileIds().stream().sorted().toList()
         ));
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);
-        String key = sha256("clarification:" + brief.getId() + ":" + (brief.getClarificationRound() + 1) + ":" + requestHash);
+        String key = sha256(mode.name() + ":" + brief.getId() + ":"
+            + (brief.getClarificationRound() + (mode == IdeaBriefDerivationMode.CLARIFICATION ? 1 : 0))
+            + ":" + requestHash);
         TaskRun run = taskRuns.create(ownerId, projectId, TaskType.IDEA_BRIEF_DERIVATION,
             "IDEA_BRIEF", brief.getId(), inputJson, inputHash, key, key, 3);
-        brief.startClarification(run.getId());
+        if (mode == IdeaBriefDerivationMode.CLARIFICATION) brief.startClarification(run.getId());
+        else brief.startFinalSynthesis(run.getId());
         jobEvents.publish(new JobEventPublisher.Command(projectId, run.getId(), run.getId(),
             "QUEUED", "job.idea.queued", JobEvent.Status.QUEUED, "job.idea.queued", Map.of(), null));
     }

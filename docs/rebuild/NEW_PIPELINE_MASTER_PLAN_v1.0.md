@@ -806,3 +806,18 @@ Provider Adapter는 유지하되 Provider Output Schema 검증과 Smoke Gate를 
 - `REPOSITORY_FILE_OPERATION_MANIFEST.csv`
 
 과거 문서는 `docs/archive/conversational-workspace/`로 이동한다.
+
+---
+
+## 28. Runtime correction contract — Idea synthesis and Concept Factory
+
+- `MAX_CLARIFICATION_ROUNDS`는 AI 실행 횟수가 아니라 새 follow-up question 생성 횟수의 상한이다. 마지막 질문 답변 뒤에는 round를 증가시키지 않는 `FINAL_SYNTHESIS`가 반드시 실행된다.
+- Idea Brief AI mode는 `INITIAL`, `CLARIFICATION`, `FINAL_SYNTHESIS`이며, `FINAL_SYNTHESIS`는 질문을 생성하지 않고 최신 overview·canonical fields·사용자 확정 의미·attachment를 기준으로 summary, contradiction, missing fields, readiness를 다시 계산한다.
+- Confirm은 `READY_FOR_REVIEW`, unanswered 0, blocking contradiction 0, `readyForConfirm=true`, canonical assessment input hash 일치를 모두 요구한다. round 한도만으로 readiness를 올리지 않는다.
+- Candidate generation attempt와 Legal Review attempt는 별도 phase/lifecycle이다. Legal technical failure가 성공한 Candidate JSON을 지우거나 replacement round를 소비할 수 없다.
+- Candidate schema/domain failure는 repair 후 replacement 대상이다. Legal Review schema, source, provider, internal-state failure는 같은 Candidate를 보존하고 review retry 대상으로 종료한다. 기술 실패는 법률 `REJECTED`가 아니다.
+- Legal screening provider는 관련 citation subset만 반환한다. unknown/duplicate ID는 거부하고 omitted supplied ID는 backend가 excluded로 파생한다.
+- Legal finding은 `{text, evidenceReferenceIndexes}` 단위로 evidence를 소유하며 string arrays, finding coverage, top-level evidence union은 backend가 파생한다.
+- Shared Legal Evidence는 snapshot별 context pack과 base official evidence를 공통 구축·재사용하고, Candidate가 새로운 활동을 도입할 때만 delta retrieval하는 것을 원칙으로 한다.
+- Failed run의 resume은 이전 TaskRun history를 보존하고 새 TaskRun/activeJobId를 만든다. `NEEDS_INPUT`은 Idea Brief 보완, source snapshot 변경은 새 run 시작으로 안내한다.
+- Process health와 Concept Factory capability를 분리한다. capability는 AI 설정, internal service token, legal registry version/load, MOLEG 설정을 검사하되 live poll에서 provider correctness 호출은 하지 않는다.

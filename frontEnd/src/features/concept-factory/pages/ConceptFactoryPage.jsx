@@ -28,11 +28,12 @@ export default function ConceptFactoryPage() {
       <strong>{factory.run.status === 'NEEDS_INPUT' ? '추가 정보가 필요합니다.' : '작업을 완료하지 못했습니다.'}</strong>
       <span>현재까지 통과된 결과는 보존되었습니다.</span>
       {factory.run.status === 'NEEDS_INPUT' && <Link to={projectRoutes.idea(projectId)}>Idea Brief 확인</Link>}
-      {factory.run.status !== 'STALE' && <button type="button" onClick={factory.retry}>작업 다시 시도</button>}
+      {factory.run.canResume && <button type="button" onClick={factory.retry}>이어서 시도</button>}
+      {factory.run.canStartNew && <button type="button" onClick={factory.startNew}>처음부터 새로 만들기</button>}
     </div>}
     <section className="concept-summary" aria-label="Concept Factory 요약" aria-live="polite">
       <Metric label="법률검토 통과" value={`${summary.eligible} / 5`} />
-      <Metric label="검토 후보" value={summary.inspected} />
+      <Metric label="생성 후보" value={summary.inspected} />
       <Metric label="재설계" value={summary.redesigned} />
       <Metric label="대체 후보" value={summary.replaced} />
       <Metric label="폐기 후보" value={summary.discarded} />

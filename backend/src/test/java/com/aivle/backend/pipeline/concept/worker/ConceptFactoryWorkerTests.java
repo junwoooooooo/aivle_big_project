@@ -182,6 +182,23 @@ class ConceptFactoryWorkerTests {
     }
 
     @Test
+    void legalSchemaFailurePreservesCandidateAndDoesNotReplace() {
+        Harness h = new Harness();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            if (invocation.getArgument(0) == TaskType.CONCEPT_LEGAL_REVIEW) throw schemaFailure();
+            return h.candidate();
+        });
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
+        verify(h.execution).generated(eq("slot-1"), anyString(), any());
+        verify(h.execution).failLegalReview(eq("run"), eq("slot-1"), anyString(),
+            eq(ConceptAttemptError.RESULT_SCHEMA_INVALID),
+            eq("PROVIDER_RESPONSE_SCHEMA_REJECTED"), eq(true));
+        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+    }
+
+    @Test
     void failedSlotDoesNotDiscardSuccessfulOtherSlot() {
         Harness h = new Harness();
         when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
@@ -253,6 +270,8 @@ class ConceptFactoryWorkerTests {
                 invocation.getArgument(0) + "-attempt-" + attemptSequence.incrementAndGet());
             when(execution.beginRetryAttempt(anyString(), any(), anyString())).thenAnswer(invocation ->
                 invocation.getArgument(0) + "-retry-" + attemptSequence.incrementAndGet());
+            when(execution.beginLegalReviewAttempt(anyString(), anyString())).thenAnswer(invocation ->
+                invocation.getArgument(0) + "-legal-" + attemptSequence.incrementAndGet());
         }
 
         void successfulAi() {

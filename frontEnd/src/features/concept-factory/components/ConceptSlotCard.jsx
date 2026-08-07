@@ -9,8 +9,9 @@ export default function ConceptSlotCard({ slot }) {
     </div>
     <p>{SLOT_STATUS_COPY[slot.status] ?? '진행 상태를 확인하고 있습니다.'}</p>
     <dl>
-      <div><dt>현재 Attempt</dt><dd>{slot.currentAttemptPhase ?? '준비 중'}</dd></div>
-      <div><dt>검사 후보</dt><dd>{slot.attemptCount ?? 0}</dd></div>
+      <div><dt>후보 생성 횟수</dt><dd>{slot.candidateCount ?? 0}</dd></div>
+      <div><dt>법률 검토 상태</dt><dd>{slot.status === 'REVIEW_RETRY_PENDING' ? '다시 시도 필요' : slot.status}</dd></div>
+      <div><dt>재설계 횟수</dt><dd>{slot.legalRedesignCount ?? 0}</dd></div>
       <div><dt>최근 갱신</dt><dd><time dateTime={slot.updatedAt}>{formatTime(slot.updatedAt)}</time></dd></div>
     </dl>
   </article>;

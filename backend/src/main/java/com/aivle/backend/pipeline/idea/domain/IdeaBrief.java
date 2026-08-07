@@ -74,6 +74,9 @@ public class IdeaBrief extends BaseEntity {
     @Column(nullable = false)
     private int clarificationRound;
 
+    @Column(length = 71)
+    private String assessmentInputHash;
+
     @Column(nullable = false)
     private Long createdByUserId;
 
@@ -157,6 +160,12 @@ public class IdeaBrief extends BaseEntity {
         this.activeTaskRunId = taskRunId;
     }
 
+    public void startFinalSynthesis(String taskRunId) {
+        requireMutable();
+        this.status = IdeaBriefStatus.DERIVING;
+        this.activeTaskRunId = taskRunId;
+    }
+
     public void updateOverview(String overview) {
         requireMutable();
         if (overview == null || overview.isBlank() || overview.length() > 20_000) {
@@ -166,12 +175,13 @@ public class IdeaBrief extends BaseEntity {
     }
 
     public void applyAssessment(String summary, String contradictionsJson,
-            String missingFieldKeysJson, String readinessStatus, int score) {
+            String missingFieldKeysJson, String readinessStatus, int score, String assessmentInputHash) {
         requireMutable();
         if (summary == null || summary.isBlank() || summary.length() > 1_000
             || contradictionsJson == null || missingFieldKeysJson == null
             || !("NEEDS_INPUT".equals(readinessStatus) || "READY_FOR_REVIEW".equals(readinessStatus))
-            || score < 0 || score > 100) {
+            || score < 0 || score > 100
+            || assessmentInputHash == null || !assessmentInputHash.matches("sha256:[0-9a-f]{64}")) {
             throw new IllegalArgumentException("idea assessment is invalid");
         }
         this.userFacingSummary = summary;
@@ -179,6 +189,13 @@ public class IdeaBrief extends BaseEntity {
         this.missingFieldKeysJson = missingFieldKeysJson;
         this.aiReadinessStatus = readinessStatus;
         this.readinessScore = score;
+        this.assessmentInputHash = assessmentInputHash;
+    }
+
+    public void applyAssessment(String summary, String contradictionsJson,
+            String missingFieldKeysJson, String readinessStatus, int score) {
+        applyAssessment(summary, contradictionsJson, missingFieldKeysJson, readinessStatus, score,
+            "sha256:" + "0".repeat(64));
     }
 
     public void needsInput() {
@@ -233,6 +250,7 @@ public class IdeaBrief extends BaseEntity {
         this.missingFieldKeysJson = source.missingFieldKeysJson;
         this.aiReadinessStatus = source.aiReadinessStatus;
         this.readinessScore = source.readinessScore;
+        this.assessmentInputHash = source.assessmentInputHash;
     }
 
     public boolean isConfirmed() {

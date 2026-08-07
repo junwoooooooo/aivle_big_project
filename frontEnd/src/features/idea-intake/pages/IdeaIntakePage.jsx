@@ -25,7 +25,10 @@ export default function IdeaIntakePage() {
     {[IDEA_INTAKE_SCREEN_STATE.EMPTY, IDEA_INTAKE_SCREEN_STATE.READY].includes(intake.screenState) && (
       <IdeaIntakeForm draft={intake.draft} errors={intake.errors} onChange={intake.updateIntake} onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} />
     )}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <><StatePanel title="아이디어를 정리하고 있습니다" description="입력 내용을 Idea Brief 필드와 후속 질문으로 구성하고 있습니다." /><JobTimeline events={intake.jobEvents.events} title="Idea Brief 진행 상황" /></>}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <><StatePanel
+      title={intake.isReanalyzing ? '변경 내용을 다시 정리하고 있습니다.' : '아이디어를 정리하고 있습니다'}
+      description={intake.isReanalyzing ? '최신 요약, 충돌, 준비 상태를 다시 확인합니다.' : '입력 내용을 Idea Brief 필드와 후속 질문으로 구성하고 있습니다.'} />
+      <JobTimeline events={intake.jobEvents.events} title="Idea Brief 진행 상황" /></>}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.NEEDS_INPUT && (
       <QuestionGroup questions={intake.questions} answers={intake.draft.answers} errors={intake.errors} onAnswer={intake.answerQuestion} onSubmit={intake.submitAnswers} />
     )}

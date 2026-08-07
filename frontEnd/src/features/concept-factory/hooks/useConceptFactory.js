@@ -15,10 +15,10 @@ export default function useConceptFactory(projectId) {
     try {
       const current = await api.current(projectId);
       const run = current.data;
-      const [slotPayload, conceptPayload] = await Promise.all([
-        api.slots(projectId, run.runId), api.concepts(projectId),
+      const [slotPayload, conceptPayload, briefPayload] = await Promise.all([
+        api.slots(projectId, run.runId), api.concepts(projectId), api.ideaBrief(projectId),
       ]);
-      setState({ loading: false, run, slots: slotPayload.data ?? [], concepts: conceptPayload.data?.concepts ?? [], error: null, confirmedSnapshotId: null });
+      setState({ loading: false, run, slots: slotPayload.data ?? [], concepts: conceptPayload.data?.concepts ?? [], error: null, confirmedSnapshotId: briefPayload.data?.confirmedSnapshotId ?? null });
     } catch (error) {
       if (error?.status === 404) {
         try {
@@ -50,10 +50,16 @@ export default function useConceptFactory(projectId) {
   };
   const retry = async () => {
     if (!state.run) return;
-    await api.retry(projectId, state.run.runId);
+    await api.retry(projectId, state.run.runId, crypto.randomUUID());
     jobEvents.reconnect();
     await refresh();
   };
 
-  return { ...state, jobEvents, refresh, start, retry };
+  const startNew = async () => {
+    if (!state.confirmedSnapshotId) return;
+    await api.create(projectId, state.confirmedSnapshotId);
+    await refresh();
+  };
+
+  return { ...state, jobEvents, refresh, start, retry, startNew };
 }

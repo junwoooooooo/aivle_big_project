@@ -6,7 +6,7 @@ export function createConceptFactoryApi(client) {
     slots: (projectId, runId, options) => client.get(`${base(projectId)}/concept-factory-runs/${encodeURIComponent(runId)}/slots`, options),
     concepts: (projectId, options) => client.get(`${base(projectId)}/concepts`, options),
     create: (projectId, snapshotId, options) => client.post(`${base(projectId)}/concept-factory-runs`, { ideaBriefSnapshotId: snapshotId }, options),
-    retry: (projectId, runId, options) => client.post(`${base(projectId)}/concept-factory-runs/${encodeURIComponent(runId)}/retry`, {}, options),
+    retry: (projectId, runId, idempotencyKey, options) => client.post(`${base(projectId)}/concept-factory-runs/${encodeURIComponent(runId)}/retry`, { idempotencyKey }, options),
     ideaBrief: (projectId, options) => client.get(`${base(projectId)}/idea-brief`, options),
   });
 }

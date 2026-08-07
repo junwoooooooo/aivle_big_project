@@ -61,11 +61,10 @@ def source(values=None):
 
 def provider(index=0, coverage=True):
     return {"status": "IMPLEMENTABLE_WITH_CONTROLS", "reviewedActivities": ["예약 연락처 처리"],
-        "requiredControls": ["개인정보 처리방침을 공개합니다."],
+        "requiredControls": [{"text": "개인정보 처리방침을 공개합니다.",
+            "evidenceReferenceIndexes": ([index] if coverage else [])}],
         "requiredPartnersAndQualifications": [], "requiredDisclosures": [], "prohibitedVariants": [],
-        "unknownFacts": [], "evidenceReferenceIndexes": [index],
-        "findingEvidence": ([{"findingType": "requiredControls", "findingIndex": 0,
-            "evidenceReferenceIndexes": [index]}] if coverage else []),
+        "unknownFacts": [],
         "expertReviewRecommended": True, "reviewBasisDate": "2026-08-07",
         "safeUserSummary": "공식 근거에 따른 통제를 반영하면 구현 가능성이 있습니다."}
 

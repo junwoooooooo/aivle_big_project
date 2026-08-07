@@ -15,6 +15,7 @@ FieldKey = Literal[
 ]
 DecisionState = Literal["PREFERRED", "OPEN", "ASSUMPTION"]
 QuestionType = Literal["FREE_TEXT", "SINGLE_SELECT", "MULTI_SELECT", "UNDECIDED"]
+DerivationMode = Literal["INITIAL", "CLARIFICATION", "FINAL_SYNTHESIS"]
 
 
 class IdeaBriefFieldInput(StrictModel):
@@ -24,6 +25,7 @@ class IdeaBriefFieldInput(StrictModel):
 
 
 class IdeaBriefDerivationInput(StrictModel):
+    mode: DerivationMode
     overview: str = Field(min_length=1, max_length=20_000)
     fields: list[IdeaBriefFieldInput] = Field(max_length=32)
     attachmentFileIds: list[int] = Field(max_length=20)

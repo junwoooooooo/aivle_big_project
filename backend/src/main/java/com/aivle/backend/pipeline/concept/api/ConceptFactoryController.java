@@ -46,8 +46,10 @@ public class ConceptFactoryController {
     }
 
     @PostMapping("/concept-factory-runs/{runId}/retry")
-    public ResponseEntity<ApiResponse<RunResponse>> retry(@PathVariable Long projectId, @PathVariable String runId, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(success(service.retry(currentUser.currentUserId(), projectId, runId), request));
+    public ResponseEntity<ApiResponse<RunResponse>> retry(@PathVariable Long projectId, @PathVariable String runId,
+            @Valid @RequestBody RetryRunRequest body, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(success(
+            service.retry(currentUser.currentUserId(), projectId, runId, body.idempotencyKey()), request));
     }
 
     @GetMapping("/concepts")

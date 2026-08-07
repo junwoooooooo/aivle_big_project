@@ -14,14 +14,13 @@ import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.Execution
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
-@RequiredArgsConstructor
 public class IdeaBriefDerivationCommitService {
     private static final Set<String> RESULT_FIELDS = Set.of(
         "fields", "questions", "contradictions", "readiness", "userFacingSummary"
@@ -39,6 +38,27 @@ public class IdeaBriefDerivationCommitService {
     private final TaskRunService taskRuns;
     private final ObjectMapper mapper;
     private final IdeaBriefReadinessCalculator readinessCalculator;
+    private final IdeaBriefAssessmentHasher assessmentHasher;
+
+    @Autowired
+    public IdeaBriefDerivationCommitService(IdeaBriefRepository briefs, IdeaBriefFieldRepository fields,
+            IdeaQuestionRepository questions, TaskRunService taskRuns, ObjectMapper mapper,
+            IdeaBriefReadinessCalculator readinessCalculator, IdeaBriefAssessmentHasher assessmentHasher) {
+        this.briefs = briefs;
+        this.fields = fields;
+        this.questions = questions;
+        this.taskRuns = taskRuns;
+        this.mapper = mapper;
+        this.readinessCalculator = readinessCalculator;
+        this.assessmentHasher = assessmentHasher;
+    }
+
+    public IdeaBriefDerivationCommitService(IdeaBriefRepository briefs, IdeaBriefFieldRepository fields,
+            IdeaQuestionRepository questions, TaskRunService taskRuns, ObjectMapper mapper,
+            IdeaBriefReadinessCalculator readinessCalculator) {
+        this(briefs, fields, questions, taskRuns, mapper, readinessCalculator,
+            new IdeaBriefAssessmentHasher(mapper));
+    }
 
     @Transactional
     public CommitResult complete(
@@ -52,6 +72,10 @@ public class IdeaBriefDerivationCommitService {
             .orElseThrow(() -> new IllegalArgumentException("idea brief task subject not found"));
         if (!claim.taskRunId().equals(brief.getActiveTaskRunId())) {
             throw new IllegalStateException("idea brief active task changed");
+        }
+        String mode = mapper.readTree(context.inputSnapshot()).path("mode").asText("INITIAL");
+        if ("FINAL_SYNTHESIS".equals(mode) && result.path("questions").size() != 0) {
+            throw new IllegalArgumentException("final synthesis cannot generate questions");
         }
 
         for (JsonNode item : requireArray(result, "fields", 30)) {
@@ -102,17 +126,21 @@ public class IdeaBriefDerivationCommitService {
         }
         for (JsonNode key : missingFieldKeys) IdeaBriefFieldCatalog.require(textValue(key, 80));
         for (JsonNode contradiction : contradictions) validateContradiction(contradiction);
+        String assessmentInputHash = assessmentHasher.hash(
+            brief, fields.findAllByBriefIdOrderById(brief.getId()));
         brief.applyAssessment(
             text(result, "userFacingSummary", 1_000),
             mapper.writeValueAsString(contradictions),
             mapper.writeValueAsString(missingFieldKeys),
             readinessStatus,
-            score.intValue()
+            score.intValue(),
+            assessmentInputHash
         );
         IdeaBriefReadinessCalculator.Assessment assessment = readinessCalculator.calculate(
             brief,
             fields.findAllByBriefIdOrderById(brief.getId()),
-            questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())
+            questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()),
+            true
         );
         if (assessment.readyForConfirm()) brief.readyForReview(); else brief.needsInput();
 

@@ -53,6 +53,7 @@ class OfficialEvidence(StrictModel):
 class ConceptLegalReviewInput(StrictModel):
     candidate: ConceptCandidateResult
     sharedContext: SharedLegalContext
+    sharedOfficialEvidence: list[OfficialEvidence] = Field(default_factory=list, max_length=200)
 
 
 FindingType = Literal[
@@ -66,16 +67,19 @@ class FindingEvidenceCoverage(StrictModel):
     evidenceReferenceIndexes: list[int] = Field(min_length=1, max_length=20)
 
 
+class EvidenceBackedFinding(StrictModel):
+    text: str = Field(min_length=1, max_length=1000)
+    evidenceReferenceIndexes: list[int] = Field(max_length=20)
+
+
 class ConceptLegalReviewProviderResult(StrictModel):
     status: Literal["IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS", "NEEDS_FACTS", "REDESIGNABLE", "REJECTED"]
     reviewedActivities: list[str] = Field(min_length=1, max_length=30)
-    requiredControls: list[str] = Field(max_length=30)
-    requiredPartnersAndQualifications: list[str] = Field(max_length=30)
-    requiredDisclosures: list[str] = Field(max_length=30)
-    prohibitedVariants: list[str] = Field(max_length=30)
+    requiredControls: list[EvidenceBackedFinding] = Field(max_length=30)
+    requiredPartnersAndQualifications: list[EvidenceBackedFinding] = Field(max_length=30)
+    requiredDisclosures: list[EvidenceBackedFinding] = Field(max_length=30)
+    prohibitedVariants: list[EvidenceBackedFinding] = Field(max_length=30)
     unknownFacts: list[str] = Field(max_length=30)
-    evidenceReferenceIndexes: list[int] = Field(min_length=1, max_length=50)
-    findingEvidence: list[FindingEvidenceCoverage] = Field(max_length=120)
     expertReviewRecommended: bool
     reviewBasisDate: date
     safeUserSummary: str = Field(min_length=1, max_length=1000)
