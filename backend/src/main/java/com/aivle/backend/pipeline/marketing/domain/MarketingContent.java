@@ -12,7 +12,7 @@ import lombok.*;
 public class MarketingContent extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
-    @Column(name = "planning_snapshot_id", nullable = false, length = 64) private String planningSnapshotId;
+    @Column(name = "marketing_source_snapshot_id", nullable = false, length = 64) private String marketingSourceSnapshotId;
     @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
     @Column(name = "source_snapshot_json", nullable = false, columnDefinition = "TEXT") private String sourceSnapshotJson;
     @Column(name = "request_json", nullable = false, columnDefinition = "TEXT") private String requestJson;
@@ -26,11 +26,11 @@ public class MarketingContent extends BaseEntity {
     @Column(name = "created_by_user_id", nullable = false) private Long createdByUserId;
     @Column(name = "finalized_at") private Instant finalizedAt;
 
-    public static MarketingContent queued(String id, Long projectId, String planningSnapshotId,
+    public static MarketingContent queued(String id, Long projectId, String marketingSourceSnapshotId,
             String sourceHash, String sourceJson, String requestJson, MarketingContentType type,
             String channel, String title, Long userId) {
         MarketingContent value = new MarketingContent();
-        value.id = id; value.projectId = projectId; value.planningSnapshotId = planningSnapshotId;
+        value.id = id; value.projectId = projectId; value.marketingSourceSnapshotId = marketingSourceSnapshotId;
         value.sourceSnapshotHash = sourceHash; value.sourceSnapshotJson = sourceJson;
         value.requestJson = requestJson; value.contentType = type; value.channel = channel;
         value.title = title; value.status = MarketingContentStatus.QUEUED;
@@ -45,7 +45,7 @@ public class MarketingContent extends BaseEntity {
     public void regenerate(String snapshotId, String sourceHash, String sourceJson, String request, String taskId) {
         if (status == MarketingContentStatus.FINALIZED || status == MarketingContentStatus.RUNNING || status == MarketingContentStatus.QUEUED)
             throw new IllegalStateException("content cannot be regenerated");
-        planningSnapshotId = snapshotId; sourceSnapshotHash = sourceHash; sourceSnapshotJson = sourceJson; requestJson = request;
+        marketingSourceSnapshotId = snapshotId; sourceSnapshotHash = sourceHash; sourceSnapshotJson = sourceJson; requestJson = request;
         taskRunId = taskId; status = MarketingContentStatus.QUEUED;
     }
     public int finalizeContent(Instant at) {

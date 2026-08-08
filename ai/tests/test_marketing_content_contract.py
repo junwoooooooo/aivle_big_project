@@ -17,14 +17,24 @@ from app.tasks.marketing_content import service
 def request_input() -> dict:
     return {
         "source": {
+            "contract": "marketing-source-snapshot-v1", "schemaVersion": "2.0",
+            "snapshotId": "source-1", "hash": "sha256:" + "0" * 64,
+            "createdAt": "2026-08-08T00:00:00Z", "projectId": 1, "selectionId": 2,
+            "conceptId": "concept-1", "marketAnalysisSeedSnapshotId": "market-seed-1",
+            "marketAnalysisSeedSnapshotHash": "sha256:" + "1" * 64,
             "conceptName": "Concept", "targetSegment": "Target", "problem": "Problem",
             "valueProposition": "Value", "positioning": "Position", "keyFeatures": ["Feature"],
             "pricing": "Fee", "channels": ["App"], "competitorDifferentiators": [],
+            "targetRegion": "대한민국", "revenueModel": "구독", "price": "월 9,900원",
+            "preMarketSomShare": {"targetSharePercent": 2.5, "horizonYears": 3},
+            "preMarketSom": {"amount": 100000000, "currency": "KRW"},
+            "legalStatus": "IMPLEMENTABLE_WITH_CONTROLS",
             "allowedClaims": [], "prohibitedClaims": [], "requiredDisclosures": [],
+            "requiredControls": [], "communicationRequiredControls": [], "officialEvidenceReferences": [],
             "sourceSnapshotHash": "sha256:" + "0" * 64,
         },
         "request": {
-            "contract": "marketing-content-request-v1", "planningSnapshotId": "plan-1",
+            "contract": "marketing-content-request-v1", "marketingSourceSnapshotId": "source-1",
             "contentType": "BLOG_INTRO", "channel": "blog", "purpose": "launch",
             "tone": "clear", "length": "SHORT", "requiredPhrases": [],
             "excludedPhrases": [], "additionalInstruction": None,

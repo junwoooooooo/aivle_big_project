@@ -18,16 +18,16 @@ class IdeaBriefReadinessTests {
         IdeaBrief brief = IdeaBrief.initial(null, 7L);
         brief.applyAssessment("summary", "[]", "[]", "READY_FOR_REVIEW", 100);
         IdeaBriefField problem = IdeaBriefField.userValue(
-            brief, "problem", "food waste", IdeaDecisionState.PREFERRED);
+            brief, "ideaOverview", "food waste service", IdeaDecisionState.LOCKED);
 
         var result = new IdeaBriefReadinessCalculator(new ObjectMapper())
             .calculate(brief, List.of(problem), List.of());
 
-        assertThat(result.totalRequiredFieldCount()).isEqualTo(10);
+        assertThat(result.totalRequiredFieldCount()).isEqualTo(3);
         assertThat(result.completedRequiredFieldCount()).isEqualTo(1);
-        assertThat(result.missingFieldKeys()).contains("targetCustomers", "payment", "requiredPartners");
+        assertThat(result.missingFieldKeys()).containsExactly("problem", "targetUsers");
         assertThat(result.readyForConfirm()).isFalse();
-        assertThat(problem.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_CONFIRMED);
+        assertThat(problem.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_INPUT);
     }
 
     @Test
@@ -48,7 +48,7 @@ class IdeaBriefReadinessTests {
     void blockingContradictionPreventsConfirmButNotReviewEligibility() {
         IdeaBrief brief = IdeaBrief.initial(null, 7L);
         brief.applyAssessment("summary", """
-            [{"fieldKeys":["problem","targetCustomers"],"summary":"conflict"}]
+            [{"fieldKeys":["problem","targetUsers"],"summary":"conflict"}]
             """, "[]", "READY_FOR_REVIEW", 80);
 
         var result = new IdeaBriefReadinessCalculator(new ObjectMapper())
@@ -63,10 +63,10 @@ class IdeaBriefReadinessTests {
         return IdeaBriefFieldCatalog.fields().stream()
             .filter(IdeaBriefFieldCatalog.FieldDefinition::requiredForConcept)
             .map(definition -> unresolvedContradiction
-                && (definition.key().equals("problem") || definition.key().equals("targetCustomers"))
+                && (definition.key().equals("problem") || definition.key().equals("targetUsers"))
                     ? IdeaBriefField.aiProposal(brief, definition.key(), "value",
-                        IdeaDecisionState.PREFERRED, IdeaFieldProvenance.AI_PROPOSED)
-                    : IdeaBriefField.userValue(brief, definition.key(), "value", IdeaDecisionState.PREFERRED))
+                        IdeaDecisionState.REVIEWABLE, IdeaFieldProvenance.AI_DERIVED)
+                    : IdeaBriefField.userValue(brief, definition.key(), "value", IdeaDecisionState.LOCKED))
             .toList();
     }
 }

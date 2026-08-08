@@ -5,9 +5,11 @@ export function createIdeaBriefApiAdapter(client) {
     get: (projectId, options) => client.get(ideaBriefBase(projectId), options),
     derive: (projectId, payload, options) => client.post(`${ideaBriefBase(projectId)}/derive`, payload, options),
     patchFields: (projectId, payload, options) => client.patch(`${ideaBriefBase(projectId)}/fields`, payload, options),
+    patchInterpretation: (projectId, payload, options) => client.patch(`${ideaBriefBase(projectId)}/interpretation`, payload, options),
     answerQuestions: (projectId, payload, options) => client.post(`${ideaBriefBase(projectId)}/answers`, payload, options),
     reanalyze: (projectId, options) => client.post(`${ideaBriefBase(projectId)}/reanalyze`, {}, options),
     confirm: (projectId, payload, options) => client.post(`${ideaBriefBase(projectId)}/confirm`, payload, options),
+    confirmInterpretation: (projectId, payload, options) => client.post(`${ideaBriefBase(projectId)}/confirm-interpretation`, payload, options),
   });
 }
 

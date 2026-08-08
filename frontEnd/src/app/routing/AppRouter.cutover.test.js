@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -10,7 +10,9 @@ describe('project route cutover', () => {
     ['concepts', 'ConceptFactoryPage'],
     ['concepts/compare', 'ConceptComparisonPage'],
     ['market', 'MarketIntegrationPage'],
-    ['business-persona-test', 'BusinessPersonaIntegrationPage'],
+    ['business-model', 'BusinessModelPage'],
+    ['tech-ops', 'TechOpsPage'],
+    ['finance', 'FinancePage'],
     ['marketing', 'MarketingContentPage'],
   ])('renders the active %s module screen', (path, component) => {
     expect(routerSource).toContain(`path="${path}" element={<${component} />}`);
@@ -18,8 +20,10 @@ describe('project route cutover', () => {
 
   it('does not import or render a legacy project surface', () => {
     const removedPlaceholderName = ['ProjectModule', 'Placeholder'].join('');
-    expect(routerSource).not.toMatch(/Journey|Legacy/);
+    expect(routerSource).not.toMatch(/Journey|Legacy|business-persona-test|structured-plan|legal-review|market-validation/);
     expect(routerSource).not.toContain(removedPlaceholderName);
-    expect(routerSource).toContain('path="legal" element={<ProjectRedirect routeKey="concepts" />}');
+    expect(existsSync('src/app/layouts/ProjectLayout.jsx')).toBe(false);
+    expect(existsSync('src/features/planning-revision/api/planningApi.js')).toBe(false);
+    expect(existsSync('src/features/business-persona-integration/index.js')).toBe(false);
   });
 });

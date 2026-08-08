@@ -1,7 +1,7 @@
 export default function ConceptCard({ model, compared, preferred, compareDisabled, onToggleCompare, onPrefer, onDetails }) {
   return <article className="selection-card" data-preferred={preferred || undefined}>
     <header><div><span>컨셉 {model.slotNumber}</span><h2>{model.title}</h2></div><span className="selection-card__legal">{model.legalStatusLabel}</span></header>
-    <p className="selection-card__summary">{model.summary}</p>
+    <p className="selection-card__summary">{model.summary}</p><small>시장 값은 선택 전 AI 사전 가설입니다.</small>
     <div className="selection-card__tags" aria-label="비교 태그">{model.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
     <dl>
       <Item label="핵심 차별점" value={model.differentiator} />

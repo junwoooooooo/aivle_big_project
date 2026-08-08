@@ -10,7 +10,7 @@ import tools.jackson.databind.JsonNode;
 public final class MarketingApiModels {
     private MarketingApiModels() {}
     public record CreateRequest(
-        @NotBlank String contract, @NotBlank String planningSnapshotId,
+        @NotBlank String contract, @NotBlank String marketingSourceSnapshotId,
         @NotNull MarketingContentType contentType, @NotBlank @Size(max=120) String channel,
         @NotBlank @Size(max=500) String purpose, @NotBlank @Size(max=100) String tone,
         @NotNull Length length, @Size(max=20) List<@Size(max=200) String> requiredPhrases,
@@ -18,7 +18,7 @@ public final class MarketingApiModels {
         @Size(max=2000) String additionalInstruction) {}
     public enum Length { SHORT, MEDIUM, LONG }
     public record EditRequest(@NotNull MarketingRevisionType revisionType, @NotNull JsonNode result) {}
-    public record ContentSummary(String contentId, String planningSnapshotId, String sourceSnapshotHash,
+    public record ContentSummary(String contentId, String marketingSourceSnapshotId, String sourceSnapshotHash,
         MarketingContentType contentType, String channel, String title, String status,
         int currentRevisionNumber, String taskRunId, String activeJobId, String sourceSnapshotId,
         LocalDateTime updatedAt, Instant finalizedAt) {}

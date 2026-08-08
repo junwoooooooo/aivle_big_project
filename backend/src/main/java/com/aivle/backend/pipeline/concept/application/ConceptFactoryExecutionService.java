@@ -5,6 +5,7 @@ import com.aivle.backend.pipeline.concept.repository.*;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
 import com.aivle.backend.pipeline.legal.application.CanonicalLegalContextAssembler;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
+import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.pipeline.legal.domain.*;
 import com.aivle.backend.pipeline.legal.repository.*;
 import java.util.*;
@@ -25,6 +26,7 @@ public class ConceptFactoryExecutionService {
     private final ConceptAttemptRepository attempts;
     private final ConceptRepository concepts;
     private final IdeaBriefFieldRepository ideaFields;
+    private final IdeaBriefRepository ideaBriefs;
     private final LegalContextPackRepository contexts;
     private final LegalEvidenceRepository evidence;
     private final ConceptLegalAssessmentRepository assessments;
@@ -32,6 +34,7 @@ public class ConceptFactoryExecutionService {
     private final ConceptRejectionSummaryRepository rejections;
     private final ObjectMapper mapper;
     private final CanonicalLegalContextAssembler legalContextAssembler;
+    private final ConceptLegalFactPatternMapper legalFactPatterns;
     @Value("${app.legal.registry-version:legal-registry-v1}")
     private String registryVersion;
 
@@ -42,21 +45,58 @@ public class ConceptFactoryExecutionService {
         if (run.getStatus() == ConceptFactoryRunStatus.GENERATING) run.transitionTo(ConceptFactoryRunStatus.VALIDATING);
         LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(projectId, run.getSourceIdeaBriefSnapshotId())
             .orElseGet(() -> createContext(run));
-        List<Map<String, String>> fields = ideaFields.findAllByBriefIdOrderById(run.getSourceIdeaBriefSnapshotId()).stream()
-            .map(value -> Map.of("fieldKey", value.getFieldKey(), "value", Objects.toString(value.getFieldValue(), ""))).toList();
-        Map<String, Object> shared = sharedContext(pack);
+        List<Map<String, String>> fields = new ArrayList<>(ideaFields.findAllByBriefIdOrderById(run.getSourceIdeaBriefSnapshotId()).stream()
+            .filter(value -> value.getFieldValue() != null && !value.getFieldValue().isBlank())
+            .map(value -> Map.of(
+                "fieldKey", value.getFieldKey(),
+                "value", value.getFieldValue(),
+                "source", switch (value.getProvenance()) {
+                    case USER_INPUT, USER_CONFIRMED -> "USER_INPUT";
+                    default -> "AI_DERIVED";
+                },
+                "authority", switch (value.getDecisionState()) {
+                    case LOCKED -> "LOCKED";
+                    case REVIEWABLE -> "REVIEWABLE";
+                    default -> "OPEN";
+                }
+            )).toList());
+        JsonNode interpretation = mapper.readTree(ideaBriefs.findById(run.getSourceIdeaBriefSnapshotId())
+            .orElseThrow().getInterpretationJson());
+        for (String key : List.of("interpretedProblem", "interpretedTargetUsers", "usageContext", "industryCategory",
+                "researchScope", "conciseIdeaDefinition", "targetRegionInterpretation",
+                "relevantKnownCompetitorContext")) {
+            String value = interpretation.path(key).asText();
+            if (!value.isBlank()) fields.add(Map.of("fieldKey", key, "value", value,
+                "source", "AI_DERIVED", "authority", "REVIEWABLE"));
+        }
+        ConceptGenerationStrategy strategy = generationStrategy(fields);
+        Map<String, Object> externalFacts = externalFactContext(pack);
         List<SlotWork> slotWork = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
             .filter(value -> value.getStatus() != ConceptSlotStatus.ELIGIBLE)
             .map(value -> {
                 ConceptAttempt candidate = attempts.findAllBySlotIdOrderByAttemptNumber(value.getId()).stream()
                     .filter(attempt -> attempt.getPhase() != ConceptAttemptPhase.LEGAL_REVIEW
-                        && attempt.getResultJson() != null)
+                        && attempt.getResultJson() != null && attempt.getErrorClassification() == null)
                     .reduce((first, second) -> second).orElse(null);
                 return new SlotWork(value.getId(), value.getSlotNumber(), value.getVariationFocus(),
                     value.getLegalRedesignCount(), candidate == null ? null : candidate.getId(),
                     candidate == null ? null : candidate.getResultJson());
             }).toList();
-        return new Work(runId, projectId, run.getSourceIdeaBriefSnapshotId(), fields, shared, slotWork);
+        return new Work(runId, projectId, run.getSourceIdeaBriefSnapshotId(), strategy, fields, externalFacts, slotWork);
+    }
+
+    private ConceptGenerationStrategy generationStrategy(List<Map<String, String>> fields) {
+        Set<String> lockedOptional = new HashSet<>();
+        for (Map<String, String> field : fields) {
+            if ("LOCKED".equals(field.get("authority")) && Set.of(
+                "targetRegion", "knownCompetitors", "revenueModel", "price", "channels", "differentiators",
+                "budgetConstraint", "teamConstraint", "timelineConstraint", "otherConstraint"
+            ).contains(field.get("fieldKey"))) lockedOptional.add(field.get("fieldKey"));
+        }
+        if (lockedOptional.containsAll(Set.of("revenueModel", "price", "channels", "differentiators"))) {
+            return ConceptGenerationStrategy.AS_IS;
+        }
+        return lockedOptional.isEmpty() ? ConceptGenerationStrategy.EXPLORE : ConceptGenerationStrategy.REFINE;
     }
 
     private LegalContextPack createContext(ConceptFactoryRun run) {
@@ -66,42 +106,14 @@ public class ConceptFactoryExecutionService {
             run.getSourceSnapshotHash(), assembled.contextJson(), assembled.provenanceJson(), registryVersion));
     }
 
-    private Map<String, Object> sharedContext(LegalContextPack pack) {
+    private Map<String, Object> externalFactContext(LegalContextPack pack) {
         return Map.of("sourceSnapshotHash", pack.getSourceSnapshotHash(),
             "registryVersion", pack.getRegistryVersion(),
-            "fields", mapper.readTree(pack.getCanonicalContextJson()));
+            "facts", mapper.readTree(pack.getCanonicalContextJson()));
     }
 
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> sharedOfficialEvidence(String runId) {
-        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
-        LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(
-            run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
-        List<LegalEvidence> values = evidence.findAllByContextPackIdAndProjectIdAndDeletedAtIsNull(
-            pack.getId(), run.getProject().getId());
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (int index = 0; index < values.size(); index++) {
-            LegalEvidence value = values.get(index);
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("referenceIndex", index);
-            item.put("sourceType", value.getSourceType());
-            item.put("lawId", value.getLawId());
-            item.put("officialIdentifier", value.getOfficialIdentifier());
-            item.put("lawName", value.getLawName());
-            item.put("articleReference", value.getArticleReference());
-            item.put("title", value.getTitle());
-            item.put("officialSourceUri", value.getOfficialSourceUri());
-            item.put("jurisdiction", value.getJurisdiction());
-            item.put("promulgationDate", value.getPromulgationDate());
-            item.put("effectiveDate", value.getEffectiveDate());
-            item.put("retrievedAt", value.getRetrievedAt().toString());
-            item.put("contentHash", value.getContentHash());
-            item.put("boundedProvisionSummary", value.getBoundedProvisionSummary());
-            item.put("queryKey", value.getQueryKey());
-            item.put("registryVersion", value.getRegistryVersion());
-            result.add(item);
-        }
-        return result;
+    public ConceptLegalFactPatternMapper.Result legalFactPattern(JsonNode candidate) {
+        return legalFactPatterns.map(candidate);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -135,7 +147,65 @@ public class ConceptFactoryExecutionService {
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         slot.transitionTo(ConceptSlotStatus.GENERATED);
         slot.transitionTo(ConceptSlotStatus.VALIDATING_ORIGIN);
-        slot.transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CandidateDisposition validateCandidate(String runId, String slotId, String attemptId, JsonNode candidate,
+            ConceptGenerationStrategy strategy, int candidateIndex, List<Map<String, String>> fields) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        ConceptAttempt currentAttempt = attempts.findById(attemptId).orElseThrow();
+        if (slot.getStatus() == ConceptSlotStatus.QUEUED) {
+            slot.transitionTo(ConceptSlotStatus.GENERATING);
+            slot.transitionTo(ConceptSlotStatus.GENERATED);
+            slot.transitionTo(ConceptSlotStatus.VALIDATING_ORIGIN);
+        } else if (slot.getStatus() == ConceptSlotStatus.GENERATED) {
+            slot.transitionTo(ConceptSlotStatus.VALIDATING_ORIGIN);
+        }
+        ConceptCandidateV2Validator.Result origin = ConceptCandidateV2Validator.validate(
+            candidate, strategy, candidateIndex, fields);
+        if (!origin.accepted()) {
+            rejectCandidate(slot, attemptId, candidate, origin.error(), origin.safeCode(),
+                "확정한 Market Seed 조건을 보존하지 못한 후보입니다.");
+            return origin.error() == ConceptAttemptError.LOCKED_CONSTRAINT_INVALID
+                ? CandidateDisposition.LOCKED_INVALID : CandidateDisposition.ORIGIN_INVALID;
+        }
+        if (slot.getStatus() == ConceptSlotStatus.VALIDATING_ORIGIN) {
+            slot.transitionTo(ConceptSlotStatus.VALIDATING_DISTINCTNESS);
+        }
+        for (Concept existing : concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
+                runId, run.getProject().getId())) {
+            if (ConceptFingerprint.duplicates(candidate, mapper.readTree(existing.getCandidateJson()))) {
+                rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
+                    "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 기존 후보와 같은 후보입니다.");
+                return CandidateDisposition.DUPLICATE;
+            }
+        }
+        for (ConceptSlot existingSlot : slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
+                runId, run.getProject().getId())) {
+            for (ConceptAttempt previous : attempts.findAllBySlotIdOrderByAttemptNumber(existingSlot.getId())) {
+                if (previous.getId().equals(attemptId) || previous.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW
+                    || previous.getResultJson() == null) continue;
+                if (existingSlot.getId().equals(slotId) && currentAttempt.getPhase() == ConceptAttemptPhase.REDESIGN
+                    && previous.getErrorClassification() == null) continue;
+                if (ConceptFingerprint.duplicates(candidate, mapper.readTree(previous.getResultJson()))) {
+                    rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
+                        "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 이전 후보와 같은 후보입니다.");
+                    return CandidateDisposition.DUPLICATE;
+                }
+            }
+        }
+        if (slot.getStatus() == ConceptSlotStatus.VALIDATING_DISTINCTNESS) {
+            slot.transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
+        }
+        return CandidateDisposition.ACCEPTED;
+    }
+
+    private void rejectCandidate(ConceptSlot slot, String attemptId, JsonNode candidate, ConceptAttemptError error,
+            String safeCode, String safeSummary) {
+        attempts.findById(attemptId).orElseThrow().reject(error, safeCode, mapper.writeValueAsString(candidate));
+        if (slot.getStatus() != ConceptSlotStatus.REPLACING) slot.transitionTo(ConceptSlotStatus.REPLACING);
+        rejections.save(ConceptRejectionSummary.create(slot, error.name(), safeSummary));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -143,6 +213,11 @@ public class ConceptFactoryExecutionService {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         ConceptLegalStatus status = ConceptLegalStatus.valueOf(legal.path("status").asText());
+        ConceptLegalFactPatternMapper.Result reviewedPattern = legalFactPattern(candidate);
+        if (!"2.0".equals(legal.path("reviewedFactPatternSchemaVersion").asText())
+            || !reviewedPattern.factPatternHash().equals(legal.path("reviewedFactPatternHash").asText())) {
+            throw new IllegalStateException("legal review fact pattern does not match candidate");
+        }
         LegalContextPack pack = contexts.findByProjectIdAndSourceSnapshotIdAndDeletedAtIsNull(
             run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
         Map<Integer, LegalEvidence> official = persistEvidence(pack, legal.path("officialEvidence"));
@@ -165,18 +240,23 @@ public class ConceptFactoryExecutionService {
         }
         validateFindingCoverage(legal, official.keySet(), true);
         String candidateJson = mapper.writeValueAsString(candidate);
-        String canonical = ConceptCanonicalizer.hash(candidateJson);
-        String major = ConceptCanonicalizer.hash(candidate.path("targetSegment").asText(), candidate.path("valueProposition").asText(), candidate.path("solutionMechanism").asText());
+        ConceptFingerprint.Value fingerprint = ConceptFingerprint.from(candidate);
         Concept concept = concepts.save(Concept.eligible(run, slot, candidate.path("conceptName").asText(),
-            candidate.path("oneLineSummary").asText(), canonical, major, status, candidateJson,
+            candidate.path("conceptDefinition").asText(), fingerprint.canonicalHash(), fingerprint.majorFieldHash(), status, candidateJson,
             mapper.writeValueAsString(Map.of("sourceSnapshotId", run.getSourceIdeaBriefSnapshotId(), "slotId", slotId, "attemptId", attemptId))));
         var safeAssessment = legal.deepCopy();
-        if (safeAssessment.isObject()) ((tools.jackson.databind.node.ObjectNode) safeAssessment).remove("officialEvidence");
+        if (safeAssessment.isObject()) {
+            var safeObject = (tools.jackson.databind.node.ObjectNode) safeAssessment;
+            safeObject.remove("officialEvidence");
+            safeObject.set("legalFactPattern", reviewedPattern.factPattern());
+        }
         ConceptLegalAssessment assessment = assessments.save(ConceptLegalAssessment.create(concept, pack, status,
             legal.path("safeUserSummary").asText(), mapper.writeValueAsString(safeAssessment),
             mapper.writeValueAsString(Map.of("contextPackId", pack.getId(), "sourceSnapshotHash",
                 pack.getSourceSnapshotHash(), "registryVersion", pack.getRegistryVersion(),
-                "reviewedAt", legal.path("reviewBasisDate").asText()))));
+                "reviewedAt", legal.path("reviewBasisDate").asText(),
+                "factPatternSchemaVersion", "2.0",
+                "factPatternHash", reviewedPattern.factPatternHash()))));
         for (JsonNode ref : legal.path("evidenceReferenceIndexes")) {
             LegalEvidence cited = official.get(ref.asInt(-1));
             if (cited == null) throw new IllegalStateException("invalid official evidence reference");
@@ -275,6 +355,12 @@ public class ConceptFactoryExecutionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordCandidateExhaustion(String attemptId, ConceptAttemptError error) {
+        ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
+        attempt.reject(error, error.name(), attempt.getResultJson());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failLegalReview(String runId, String slotId, String attemptId,
             ConceptAttemptError error, String safeErrorCode, boolean retryable) {
         attempts.findById(attemptId).orElseThrow().fail(error, safeErrorCode, retryable);
@@ -330,6 +416,7 @@ public class ConceptFactoryExecutionService {
     }
 
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
+    public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE }
     public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
     public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount,
                            String candidateAttemptId, String candidateJson) {
@@ -337,6 +424,7 @@ public class ConceptFactoryExecutionService {
             this(slotId, slotNumber, focus, redesignCount, null, null);
         }
     }
-    public record Work(String runId, Long projectId, String snapshotId, List<Map<String, String>> fields,
-                       Map<String, Object> sharedContext, List<SlotWork> slots) {}
+    public record Work(String runId, Long projectId, String snapshotId, ConceptGenerationStrategy generationStrategy,
+                       List<Map<String, String>> fields,
+                       Map<String, Object> externalFactContext, List<SlotWork> slots) {}
 }

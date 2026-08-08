@@ -58,7 +58,7 @@ describe('LandingPage', () => {
   it('renders the enhanced demo CTA and only runs its attention state without reduced motion', async () => {
     vi.useFakeTimers();
     render(<MemoryRouter><HeroSection introState="completed" reducedMotion={false} onNavigate={vi.fn()} /></MemoryRouter>);
-    const cta = screen.getByRole('button', { name: 'Journey 미리보기' });
+    const cta = screen.getByRole('button', { name: '파이프라인 미리보기' });
     expect(cta).toHaveClass('landing-demo-cta');
     expect(cta.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(30); });

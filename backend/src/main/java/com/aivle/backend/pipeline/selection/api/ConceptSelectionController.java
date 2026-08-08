@@ -35,4 +35,12 @@ public class ConceptSelectionController {
     public ApiResponse<SelectionResponse> current(@PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(service.current(currentUser.currentUserId(), projectId), request.getHeader("X-Request-Id"));
     }
+
+    @PostMapping("/current/hypotheses/{hypothesisType}/actions")
+    public ApiResponse<HypothesisActionResponse> decide(@PathVariable Long projectId,
+            @PathVariable String hypothesisType, @Valid @RequestBody HypothesisActionRequest body,
+            HttpServletRequest request) {
+        return ApiResponse.success(service.decide(currentUser.currentUserId(), projectId, hypothesisType, body),
+            request.getHeader("X-Request-Id"));
+    }
 }

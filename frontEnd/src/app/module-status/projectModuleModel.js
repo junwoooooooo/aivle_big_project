@@ -38,8 +38,10 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'concepts', label: '2. 컨셉 생성·법률검토', shortLabel: '컨셉 생성', routeKey: 'concepts', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'conceptCompare', label: '3. 컨셉 비교·선택', shortLabel: '컨셉 비교', routeKey: 'conceptCompare', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'market', label: '4. 시장분석·기획 확정', shortLabel: '시장분석', routeKey: 'market', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
-  { id: 'businessPersonaTest', label: '5. BM·재무 분석 + 페르소나 응답 테스트', shortLabel: 'BM·재무·응답 테스트', routeKey: 'businessPersonaTest', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
-  { id: 'marketing', label: '6. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'businessModel', label: '5. BM 분석', shortLabel: 'BM 분석', routeKey: 'businessModel', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
+  { id: 'techOps', label: '6. 기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'finance', label: '7. 재무 분석', shortLabel: '재무 분석', routeKey: 'finance', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'marketing', label: '8. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'settings', label: '프로젝트 설정', shortLabel: '설정', routeKey: 'settings', defaultStatus: MODULE_STATUS.READY },
 ]);
 
@@ -48,7 +50,9 @@ const API_MODULE_IDS = Object.freeze({
   CONCEPT_FACTORY: 'concepts',
   CONCEPT_SELECTION: 'conceptCompare',
   MARKET_ANALYSIS: 'market',
-  BUSINESS_PERSONA_TEST: 'businessPersonaTest',
+  BUSINESS_MODEL: 'businessModel',
+  TECH_OPS: 'techOps',
+  FINANCE: 'finance',
   MARKETING: 'marketing',
 });
 

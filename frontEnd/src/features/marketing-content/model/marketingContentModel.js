@@ -12,7 +12,7 @@ export const REVISION_LABELS = Object.freeze({
 });
 
 export const ASYNC_MESSAGES = Object.freeze({
-  QUEUED: '기획 내용을 불러오고 있습니다.',
+  QUEUED: '선택한 컨셉과 확정 가설을 불러오고 있습니다.',
   STARTED: '핵심 메시지를 구성하고 있습니다.',
   SOURCE_PREPARED: '핵심 메시지를 구성하고 있습니다.',
   COPY_GENERATING: '채널에 맞게 문구를 조정하고 있습니다.',
@@ -20,7 +20,7 @@ export const ASYNC_MESSAGES = Object.freeze({
   RUNNING: '콘텐츠를 완성하고 있습니다.',
   COMPLETED: '콘텐츠를 완성했습니다.',
   FAILED: '콘텐츠 생성에 실패했습니다.',
-  STALE: '현재 확정 기획과 다른 기준으로 생성된 콘텐츠입니다.',
+  STALE: '현재 Marketing Source와 다른 기준으로 생성된 콘텐츠입니다.',
 });
 
 export function marketingFailureMessage(error, technicalCode) {
@@ -29,14 +29,14 @@ export function marketingFailureMessage(error, technicalCode) {
   if (code === 'TASK_TIMEOUT' || code === 'DEADLINE_EXCEEDED') return '생성 시간이 초과되었습니다. 다시 시도할 수 있습니다.';
   if (code === 'RATE_LIMITED' || code === 'AI_SERVICE_UNAVAILABLE') return 'AI 서비스가 혼잡합니다. 잠시 후 다시 시도해 주세요.';
   if (code === 'AI_RESULT_INVALID' || code === 'RESULT_SCHEMA_INVALID') return '생성 결과 형식을 확인하지 못했습니다. 다시 생성해 주세요.';
-  if (code === 'MARKETING_PROHIBITED_CLAIM' || code === 'SAFETY_POLICY_BLOCKED') return '확정 기획에서 금지한 표현이 포함되어 결과를 사용할 수 없습니다.';
-  if (code === 'MODULE_INPUT_STALE') return '현재 확정 기획과 다른 Source입니다. 최신 기획으로 다시 생성해 주세요.';
+  if (code === 'MARKETING_PROHIBITED_CLAIM' || code === 'SAFETY_POLICY_BLOCKED') return '법률 결과에서 금지한 표현이 포함되어 결과를 사용할 수 없습니다.';
+  if (code === 'MODULE_INPUT_STALE') return '현재 Marketing Source와 다른 기준입니다. 최신 Source로 다시 생성해 주세요.';
   return error?.message || '마케팅 콘텐츠 생성을 완료하지 못했습니다.';
 }
 
-export function createSetupModel(planningSnapshotId = '') {
+export function createSetupModel(marketingSourceSnapshotId = '') {
   return {
-    planningSnapshotId, contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
+    marketingSourceSnapshotId, contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
     length: 'MEDIUM', callToAction: '', requiredPhrases: '', excludedPhrases: '', additionalInstruction: '',
   };
 }
@@ -51,7 +51,7 @@ export function toCreateRequest(setup) {
   const instruction = [setup.additionalInstruction?.trim(), setup.callToAction?.trim() && `CTA는 '${setup.callToAction.trim()}'로 작성합니다.`]
     .filter(Boolean).join('\n');
   return {
-    contract: 'marketing-content-request-v1', planningSnapshotId: setup.planningSnapshotId,
+    contract: 'marketing-content-request-v1', marketingSourceSnapshotId: setup.marketingSourceSnapshotId,
     contentType: setup.contentType, channel: setup.channel.trim(), purpose: setup.purpose.trim(),
     tone: setup.tone.trim(), length: setup.length, requiredPhrases: [...new Set(required)].slice(0, 20),
     excludedPhrases: parsePhrases(setup.excludedPhrases), additionalInstruction: instruction || null,
@@ -59,7 +59,7 @@ export function toCreateRequest(setup) {
 }
 
 export function setupIsValid(setup) {
-  return Boolean(setup.planningSnapshotId && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
+  return Boolean(setup.marketingSourceSnapshotId && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
 }
 
 export function emptyResult(contentType = 'SOCIAL_POST') {
@@ -82,26 +82,28 @@ export function latestRevision(detail) {
 
 export function revisionLabel(type) { return REVISION_LABELS[type] ?? '편집안'; }
 
-export function sourceSummary(source = {}, finalized = null) {
+export function sourceSummary(source = {}) {
   return {
-    conceptName: source.conceptName ?? finalized?.displayLabel ?? '최종 확정 기획',
-    targetSegment: source.targetSegment ?? finalized?.planning?.finalTarget,
-    valueProposition: source.valueProposition ?? finalized?.planning?.finalValueProposition,
-    positioning: source.positioning ?? finalized?.planning?.finalConcept?.positioning,
-    keyFeatures: source.keyFeatures ?? finalized?.planning?.finalFeatures,
-    channels: source.channels ?? finalized?.planning?.finalChannels,
-    competitorDifferentiators: source.competitorDifferentiators ?? finalized?.planning?.finalConcept?.competitorDifferentiators,
-    allowedClaims: source.allowedClaims ?? finalized?.legalControls?.allowedClaims,
-    prohibitedClaims: source.prohibitedClaims ?? finalized?.legalControls?.prohibitedExpressions,
-    requiredDisclosures: source.requiredDisclosures ?? finalized?.legalControls?.requiredDisclosures,
-    capturedAt: finalized?.finalizedAt ?? null,
+    conceptName: source.conceptName ?? '선택 Concept',
+    targetSegment: source.targetSegment,
+    valueProposition: source.valueProposition,
+    positioning: source.positioning,
+    keyFeatures: source.keyFeatures,
+    channels: source.channels,
+    competitorDifferentiators: source.competitorDifferentiators,
+    allowedClaims: source.allowedClaims,
+    prohibitedClaims: source.prohibitedClaims,
+    requiredDisclosures: source.requiredDisclosures,
+    requiredControls: source.requiredControls,
+    communicationRequiredControls: source.communicationRequiredControls,
+    capturedAt: source.createdAt ?? null,
   };
 }
 
 export function displayValue(value) {
-  if (value == null || value === '') return '기획에 별도 값이 없습니다.';
-  if (Array.isArray(value)) return value.length ? value.join(' · ') : '기획에 별도 값이 없습니다.';
-  if (typeof value === 'object') return Object.values(value).flat().filter(Boolean).join(' · ') || '기획에 별도 값이 없습니다.';
+  if (value == null || value === '') return 'Source에 별도 값이 없습니다.';
+  if (Array.isArray(value)) return value.length ? value.join(' · ') : 'Source에 별도 값이 없습니다.';
+  if (typeof value === 'object') return Object.values(value).flat().filter(Boolean).join(' · ') || 'Source에 별도 값이 없습니다.';
   return String(value);
 }
 

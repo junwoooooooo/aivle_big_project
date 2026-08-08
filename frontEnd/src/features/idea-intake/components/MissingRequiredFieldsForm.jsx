@@ -3,8 +3,9 @@ import { Button } from '../../../shared/ui/index.js';
 import ErrorSummary from './ErrorSummary.jsx';
 
 const PROMPTS = Object.freeze({
-  physicalActivity: '사용자나 파트너가 실제 오프라인 활동을 수행하나요?',
-  personalData: '서비스에서 어떤 사용자 정보를 수집·사용하나요?',
+  ideaOverview: '어떤 제품이나 서비스를 생각하고 있는지 알려 주세요.',
+  problem: '해결하려는 핵심 문제를 알려 주세요.',
+  targetUsers: '예상 사용자나 고객을 알려 주세요.',
 });
 
 export default function MissingRequiredFieldsForm({
@@ -15,8 +16,8 @@ export default function MissingRequiredFieldsForm({
   return <form className="idea-question-flow" onSubmit={onSubmit} noValidate>
     <div className="idea-section-heading">
       <p>필수 정보 확인</p>
-      <h3>컨셉을 만들기 전에 필요한 정보를 확인해 주세요.</h3>
-      <span>답변은 Idea Brief에 반영한 뒤 다시 정리합니다.</span>
+      <h3>컨셉 탐색에 필요한 최소 Seed를 확인해 주세요.</h3>
+      <span>법률·운영 상세가 아니라 문제와 사용자 의도만 확인합니다.</span>
     </div>
     <ErrorSummary errors={errors} title="입력이 필요한 항목이 있습니다." />
     <div className="idea-question-grid">{fieldKeys.map((fieldKey) => {

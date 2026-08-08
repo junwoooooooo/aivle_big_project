@@ -64,4 +64,12 @@ public class ConceptAttempt extends BaseEntity {
         this.retryable = retryable;
         this.resultJson = null;
     }
+
+    public void reject(ConceptAttemptError classification, String safeErrorCode, String candidateJson) {
+        if (candidateJson == null || candidateJson.isBlank()) throw new IllegalArgumentException("candidate result is required");
+        this.errorClassification = classification;
+        this.safeErrorCode = safeErrorCode;
+        this.retryable = false;
+        this.resultJson = candidateJson;
+    }
 }

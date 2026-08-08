@@ -17,7 +17,7 @@ function readDraft(projectId) {
 export default function useConceptSelection(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createConceptSelectionApi(client), [client]);
-  const [state, setState] = useState({ loading: true, run: null, concepts: [], currentSelection: null, error: null });
+  const [state, setState] = useState({ loading: true, run: null, concepts: [], currentSelection: null, marketSeed: null, error: null, finalizing: false });
   const [draft, setDraft] = useState(() => readDraft(projectId));
 
   const refresh = useCallback(async () => {
@@ -25,20 +25,24 @@ export default function useConceptSelection(projectId) {
       const runPayload = await api.currentRun(projectId);
       const run = runPayload.data;
       if (run?.status !== 'COMPLETED') {
-        setState({ loading: false, run, concepts: [], currentSelection: null, error: null });
+        setState({ loading: false, run, concepts: [], currentSelection: null, marketSeed: null, error: null, finalizing: false });
         return;
       }
-      const [conceptPayload, currentSelection] = await Promise.all([
+      const [conceptPayload, currentSelection, marketSeed] = await Promise.all([
         api.concepts(projectId),
         api.currentSelection(projectId).then((payload) => payload.data).catch((error) => {
           if (error?.status === 404) return null;
           throw error;
         }),
+        api.currentMarketSeed(projectId).then((payload) => payload.data).catch((error) => {
+          if ([404, 409, 422].includes(error?.status)) return null;
+          throw error;
+        }),
       ]);
-      setState({ loading: false, run, concepts: conceptPayload.data?.concepts ?? [], currentSelection, error: null });
+      setState({ loading: false, run, concepts: conceptPayload.data?.concepts ?? [], currentSelection, marketSeed, error: null, finalizing: false });
     } catch (error) {
       if (error?.status === 404) {
-        setState({ loading: false, run: null, concepts: [], currentSelection: null, error: null });
+        setState({ loading: false, run: null, concepts: [], currentSelection: null, marketSeed: null, error: null, finalizing: false });
         return;
       }
       setState((value) => ({ ...value, loading: false, error }));
@@ -56,9 +60,37 @@ export default function useConceptSelection(projectId) {
 
   const confirmSelection = useCallback(async (conceptId, selectionReason) => {
     const payload = await api.select(projectId, conceptId, selectionReason);
-    setState((value) => ({ ...value, currentSelection: payload.data }));
+    setState((value) => ({ ...value, currentSelection: payload.data, marketSeed: null }));
     return payload.data;
   }, [api, projectId]);
 
-  return { ...state, draft, refresh, saveDraft, confirmSelection };
+  const decideHypothesis = useCallback(async (hypothesisType, action, expectedProposalVersion, value) => {
+    const payload = await api.decideHypothesis(projectId, hypothesisType, {
+      action, expectedProposalVersion, ...(value === undefined ? {} : { value }),
+    });
+    setState((stateValue) => {
+      const current = stateValue.currentSelection;
+      if (!current) return stateValue;
+      const hypotheses = (current.hypotheses ?? []).filter((item) => item.hypothesisType !== hypothesisType);
+      hypotheses.push(payload.data.hypothesis);
+      return { ...stateValue, currentSelection: {
+        ...current, hypotheses, decisionComplete: payload.data.decisionComplete,
+      } };
+    });
+    return payload.data;
+  }, [api, projectId]);
+
+  const finalizeMarketSeed = useCallback(async () => {
+    setState((value) => ({ ...value, finalizing: true, error: null }));
+    try {
+      const payload = await api.finalizeMarketSeed(projectId);
+      setState((value) => ({ ...value, marketSeed: payload.data, finalizing: false }));
+      return payload.data;
+    } catch (error) {
+      setState((value) => ({ ...value, finalizing: false, error }));
+      throw error;
+    }
+  }, [api, projectId]);
+
+  return { ...state, draft, refresh, saveDraft, confirmSelection, decideHypothesis, finalizeMarketSeed };
 }

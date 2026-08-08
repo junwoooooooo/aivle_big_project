@@ -12,8 +12,10 @@ import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { ConceptFactoryPage } from '../../features/concept-factory/index.js';
 import { ConceptComparisonPage } from '../../features/concept-selection/index.js';
 import { MarketIntegrationPage } from '../../features/market-integration/index.js';
-import { BusinessPersonaIntegrationPage } from '../../features/business-persona-integration/index.js';
+import { BusinessModelPage } from '../../features/business-model/index.js';
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
+import { TechOpsPage } from '../../features/tech-ops/index.js';
+import { FinancePage } from '../../features/finance/index.js';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
 import ProjectSettingsSheet from '../../features/projects/ProjectSettingsSheet.jsx';
@@ -53,8 +55,6 @@ export default function AppRouter() {
           <Route path="auth/signup" element={<SignupPage />} />
           <Route path="auth/password-reset" element={<AuthPlaceholderPage mode="reset" />} />
         </Route>
-        <Route path="login" element={<Navigate to="/auth/login" replace />} />
-        <Route path="signup" element={<Navigate to="/auth/signup" replace />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
@@ -75,37 +75,13 @@ export default function AppRouter() {
             <Route path="concepts" element={<ConceptFactoryPage />} />
             <Route path="concepts/compare" element={<ConceptComparisonPage />} />
             <Route path="market" element={<MarketIntegrationPage />} />
-            <Route path="business-persona-test" element={<BusinessPersonaIntegrationPage />} />
+            <Route path="business-model" element={<BusinessModelPage />} />
+            <Route path="tech-ops" element={<TechOpsPage />} />
+            <Route path="finance" element={<FinancePage />} />
             <Route path="marketing" element={<MarketingContentPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />
-            <Route path="settings/general" element={<ProjectRedirect routeKey="settings" />} />
-            <Route path="settings/danger" element={<ProjectRedirect routeKey="settings" />} />
-
-            <Route path="get-started" element={<ProjectRedirect routeKey="idea" />} />
-            <Route path="legal" element={<ProjectRedirect routeKey="concepts" />} />
-            <Route path="plan/*" element={<ProjectRedirect routeKey="idea" />} />
-            <Route path="review/legal" element={<ProjectRedirect routeKey="concepts" />} />
-            <Route path="review/*" element={<ProjectRedirect routeKey="market" />} />
-            <Route path="report/*" element={<ProjectRedirect />} />
             <Route path="*" element={<ProjectRedirect />} />
           </Route>
-
-          <Route path="dashboard" element={<Navigate to="/app" replace />} />
-          <Route path="projects" element={<Navigate to="/app/projects" replace />} />
-          <Route path="projects/new" element={<Navigate to="/app/projects/new" replace />} />
-          <Route path="reports" element={<Navigate to="/app/projects" replace />} />
-          <Route path="settings" element={<Navigate to="/app/settings/profile" replace />} />
-          <Route path="projects/:projectId" element={<ProjectRedirect />} />
-          <Route path="projects/:projectId/overview" element={<ProjectRedirect />} />
-          <Route path="projects/:projectId/input" element={<ProjectRedirect routeKey="idea" />} />
-          <Route path="projects/:projectId/structure" element={<ProjectRedirect routeKey="idea" />} />
-          <Route path="projects/:projectId/structured-plan/*" element={<ProjectRedirect routeKey="idea" />} />
-          <Route path="projects/:projectId/legal-review" element={<ProjectRedirect routeKey="concepts" />} />
-          <Route path="projects/:projectId/feasibility" element={<ProjectRedirect routeKey="market" />} />
-          <Route path="projects/:projectId/market-validation" element={<ProjectRedirect routeKey="market" />} />
-          <Route path="projects/:projectId/report" element={<ProjectRedirect />} />
-          <Route path="projects/:projectId/reports/*" element={<ProjectRedirect />} />
-          <Route path="projects/:projectId/settings" element={<ProjectRedirect routeKey="settings" />} />
         </Route>
 
         <Route element={<AdminRoute />}>

@@ -54,6 +54,17 @@ public class IdeaBriefController {
         return success(service.patchFields(currentUser.currentUserId(), projectId, body, idempotencyKey), request);
     }
 
+    @PatchMapping("/interpretation")
+    public ApiResponse<IdeaBriefResponse> patchInterpretation(
+        @PathVariable Long projectId,
+        @RequestHeader("Idempotency-Key") String idempotencyKey,
+        @Valid @RequestBody PatchInterpretationRequest body,
+        HttpServletRequest request
+    ) {
+        return success(service.patchInterpretation(
+            currentUser.currentUserId(), projectId, body, idempotencyKey), request);
+    }
+
     @PostMapping("/answers")
     public ApiResponse<IdeaBriefResponse> answer(
         @PathVariable Long projectId,
@@ -78,6 +89,16 @@ public class IdeaBriefController {
 
     @PostMapping("/confirm")
     public ApiResponse<IdeaBriefResponse> confirm(
+        @PathVariable Long projectId,
+        @RequestHeader("Idempotency-Key") String idempotencyKey,
+        @Valid @RequestBody ConfirmRequest body,
+        HttpServletRequest request
+    ) {
+        return success(service.confirm(currentUser.currentUserId(), projectId, body, idempotencyKey), request);
+    }
+
+    @PostMapping("/confirm-interpretation")
+    public ApiResponse<IdeaBriefResponse> confirmInterpretation(
         @PathVariable Long projectId,
         @RequestHeader("Idempotency-Key") String idempotencyKey,
         @Valid @RequestBody ConfirmRequest body,

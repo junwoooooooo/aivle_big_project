@@ -16,9 +16,28 @@ public final class IdeaBriefApiModels {
     private IdeaBriefApiModels() {}
 
     public record DeriveRequest(
-        @NotBlank @Size(max = 20000) String overview,
-        @Valid List<FieldCommand> fields,
+        @NotBlank @Size(max = 20000) String ideaOverview,
+        @NotBlank @Size(max = 20000) String problem,
+        @NotBlank @Size(max = 20000) String targetUsers,
+        @Valid OptionalSeedRequest optionalSeed,
         Set<Long> attachmentFileIds
+    ) {}
+
+    public record OptionalSeedRequest(
+        @Size(max = 20000) String targetRegion,
+        @Size(max = 20000) String knownCompetitors,
+        @Size(max = 20000) String revenueModel,
+        @Size(max = 20000) String price,
+        @Size(max = 20000) String channels,
+        @Size(max = 20000) String differentiators,
+        @Valid SeedConstraintsRequest constraints
+    ) {}
+
+    public record SeedConstraintsRequest(
+        @Size(max = 20000) String budgetConstraint,
+        @Size(max = 20000) String teamConstraint,
+        @Size(max = 20000) String timelineConstraint,
+        @Size(max = 20000) String otherConstraint
     ) {}
 
     public record PatchFieldsRequest(@NotEmpty @Valid List<FieldCommand> fields) {}
@@ -38,6 +57,17 @@ public final class IdeaBriefApiModels {
 
     public record ConfirmRequest(Long expectedVersion) {}
 
+    public record PatchInterpretationRequest(
+        @NotBlank @Size(max = 20000) String interpretedProblem,
+        @NotBlank @Size(max = 20000) String interpretedTargetUsers,
+        @NotBlank @Size(max = 20000) String usageContext,
+        @NotBlank @Size(max = 20000) String industryCategory,
+        @NotBlank @Size(max = 20000) String researchScope,
+        @NotBlank @Size(max = 20000) String conciseIdeaDefinition,
+        @Size(max = 20000) String targetRegionInterpretation,
+        @Size(max = 20000) String relevantKnownCompetitorContext
+    ) {}
+
     public record IdeaBriefResponse(
         String briefId,
         IdeaBriefStatus status,
@@ -45,6 +75,8 @@ public final class IdeaBriefApiModels {
         List<FieldView> fields,
         List<QuestionView> questions,
         List<FieldCatalogView> fieldCatalog,
+        SafetyReviewView safetyReview,
+        IdeaInterpretationView interpretation,
         String userFacingSummary,
         List<ContradictionView> contradictions,
         ReadinessView readiness,
@@ -62,11 +94,33 @@ public final class IdeaBriefApiModels {
                 String userFacingSummary, List<ContradictionView> contradictions, ReadinessView readiness,
                 int clarificationRound, int maxClarificationRounds, String activeJobId,
                 String confirmedSnapshotId, LocalDateTime updatedAt) {
-            this(briefId, status, overview, fields, questions, fieldCatalog, userFacingSummary,
+            this(briefId, status, overview, fields, questions, fieldCatalog, null, null, userFacingSummary,
                 contradictions, readiness, clarificationRound, maxClarificationRounds, false, true, false,
                 activeJobId, confirmedSnapshotId, updatedAt);
         }
     }
+
+    public record SafetyReviewView(
+        String decision,
+        List<String> categories,
+        List<String> restrictions,
+        String userFacingReason
+    ) {}
+
+    public record IdeaInterpretationView(
+        String interpretedProblem,
+        String interpretedTargetUsers,
+        String usageContext,
+        String industryCategory,
+        String researchScope,
+        String conciseIdeaDefinition,
+        String targetRegionInterpretation,
+        String relevantKnownCompetitorContext,
+        String source,
+        String authority,
+        boolean userEdited,
+        boolean confirmed
+    ) {}
 
     public record FieldView(
         String fieldKey,

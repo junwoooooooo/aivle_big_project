@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.aivle.backend.pipeline.concept.api.ConceptFactoryApiModels.EvidenceView;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
+import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
+import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
 import com.aivle.backend.pipeline.legal.application.CanonicalLegalContextAssembler;
 import com.aivle.backend.pipeline.legal.domain.LegalContextPack;
 import com.aivle.backend.pipeline.legal.domain.LegalEvidence;
@@ -20,7 +22,7 @@ class LegalEvidenceHardeningTests {
     private static final String HASH = "sha256:" + "a".repeat(64);
 
     @Test
-    void mapsOnlyCanonicalLegalFieldsWithExplicitProvenance() {
+    void mapsOnlyLockedUserExternalFactsAndLeavesConceptDesignToFactPattern() {
         IdeaBriefField problem = field("problem", "예약 확인 업무");
         IdeaBriefField targetRegion = field("targetRegion", "대한민국");
         IdeaBriefField nonexistentIndustry = field("industry", "예약업");
@@ -29,9 +31,18 @@ class LegalEvidenceHardeningTests {
 
         var result = assembler.assemble(List.of(problem, targetRegion, nonexistentIndustry, nonexistentPlatformRole));
 
-        assertThat(result.contextJson()).contains("problem", "targetRegion", "SOURCE_EXTRACTED")
-            .doesNotContain("industry", "platformRole");
-        assertThat(result.provenanceJson()).contains("DERIVED_CONTEXT", "candidateActivities");
+        assertThat(result.contextJson()).contains("fixedJurisdiction", "대한민국", "USER_INPUT", "LOCKED")
+            .doesNotContain("problem", "industry", "platformRole");
+        assertThat(result.provenanceJson()).contains("USER_INPUT_LOCKED", "CONCEPT_GENERATED");
+    }
+
+    @Test
+    void conceptLegalReviewDoesNotRequireAnExternalUserFact() {
+        CanonicalLegalContextAssembler assembler = new CanonicalLegalContextAssembler(new ObjectMapper());
+
+        var result = assembler.assemble(List.of(field("problem", "예약 확인 업무")));
+
+        assertThat(result.contextJson()).isEqualTo("[]");
     }
 
     @Test
@@ -73,6 +84,8 @@ class LegalEvidenceHardeningTests {
         IdeaBriefField field = mock(IdeaBriefField.class);
         when(field.getFieldKey()).thenReturn(key);
         when(field.getFieldValue()).thenReturn(value);
+        when(field.getDecisionState()).thenReturn(IdeaDecisionState.LOCKED);
+        when(field.getProvenance()).thenReturn(IdeaFieldProvenance.USER_INPUT);
         return field;
     }
 }

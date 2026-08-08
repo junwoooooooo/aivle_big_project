@@ -8,18 +8,18 @@ describe('MissingRequiredFieldsForm', () => {
     const onChange = vi.fn();
     const onSubmit = vi.fn((event) => event.preventDefault());
     render(<MissingRequiredFieldsForm
-      fieldKeys={['physicalActivity', 'personalData']}
+      fieldKeys={['problem', 'targetUsers']}
       catalog={[
-        { key: 'physicalActivity', label: '물리 활동' },
-        { key: 'personalData', label: '개인정보' },
+        { key: 'problem', label: '해결하려는 문제' },
+        { key: 'targetUsers', label: '예상 사용자' },
       ]}
-      fields={{ physicalActivity: { value: '' }, personalData: { value: '' } }}
+      fields={{ problem: { value: '' }, targetUsers: { value: '' } }}
       errors={{}} onChange={onChange} onSubmit={onSubmit} />);
 
-    fireEvent.change(screen.getByLabelText('물리 활동'), { target: { value: '활동 없음' } });
+    fireEvent.change(screen.getByLabelText('해결하려는 문제'), { target: { value: '폐기 문제' } });
     fireEvent.click(screen.getByRole('button', { name: '누락 정보 반영하고 다시 정리하기' }));
 
-    expect(onChange).toHaveBeenCalledWith('physicalActivity', '활동 없음');
+    expect(onChange).toHaveBeenCalledWith('problem', '폐기 문제');
     expect(onSubmit).toHaveBeenCalled();
     expect(screen.queryByText('답변을 Brief에 반영하기')).not.toBeInTheDocument();
   });

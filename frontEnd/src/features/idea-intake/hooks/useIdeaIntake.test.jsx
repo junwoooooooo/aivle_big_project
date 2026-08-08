@@ -37,15 +37,17 @@ describe('useIdeaIntake async recovery', () => {
     expect(result.current.questions[0].id).toBe('q-1');
   });
 
-  it('sends catalog decision states and does not confirm before the patched readiness is true', async () => {
+  it('sends the reviewable interpretation and does not confirm before readiness is true', async () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const review = {
       ...response('READY_FOR_REVIEW', null, []),
       overview: 'overview',
       fields: [
-        { fieldKey: 'problem', value: 'problem', provenance: 'USER_CONFIRMED', decisionState: 'PREFERRED' },
-        { fieldKey: 'fixedConditions', value: 'fixed', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'ideaOverview', value: 'overview', provenance: 'USER_INPUT', decisionState: 'LOCKED' },
+        { fieldKey: 'problem', value: 'problem', provenance: 'USER_INPUT', decisionState: 'LOCKED' },
+        { fieldKey: 'targetUsers', value: 'users', provenance: 'USER_INPUT', decisionState: 'LOCKED' },
       ],
+      interpretation: interpretation(),
       readiness: { readyForConfirm: false, unansweredQuestionCount: 0 },
       clarificationRound: 2,
       maxClarificationRounds: 2,
@@ -61,9 +63,7 @@ describe('useIdeaIntake async recovery', () => {
 
     await act(async () => result.current.confirmBrief({ preventDefault: vi.fn() }));
 
-    const payload = client.patch.mock.calls[0][1];
-    expect(payload.fields.find((field) => field.fieldKey === 'problem').decisionState).toBe('PREFERRED');
-    expect(payload.fields.find((field) => field.fieldKey === 'fixedConditions').decisionState).toBe('LOCKED');
+    expect(client.patch).toHaveBeenCalledWith(expect.stringContaining('/interpretation'), interpretation(), expect.any(Object));
     expect(client.post).not.toHaveBeenCalled();
   });
 
@@ -71,7 +71,7 @@ describe('useIdeaIntake async recovery', () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const needsFields = {
       ...response('NEEDS_INPUT', null, []),
-      readiness: { readyForConfirm: false, missingFieldKeys: ['physicalActivity'] },
+      readiness: { readyForConfirm: false, missingFieldKeys: ['problem'] },
       fieldCatalog: catalog(),
     };
     const deriving = { ...needsFields, status: 'DERIVING', activeJobId: 'job-final' };
@@ -84,11 +84,11 @@ describe('useIdeaIntake async recovery', () => {
     const { result } = renderHook(() => useIdeaIntake('42'));
     await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.NEEDS_FIELDS));
 
-    act(() => result.current.updateBriefField('physicalActivity', '오프라인 활동 없음'));
+    act(() => result.current.updateBriefField('problem', '해결할 문제'));
     await act(async () => result.current.submitMissingFields({ preventDefault: vi.fn() }));
 
     expect(client.patch).toHaveBeenCalledWith(expect.stringContaining('/fields'), {
-      fields: [expect.objectContaining({ fieldKey: 'physicalActivity', value: '오프라인 활동 없음' })],
+      fields: [expect.objectContaining({ fieldKey: 'problem', value: '해결할 문제' })],
     }, expect.any(Object));
     expect(client.post).not.toHaveBeenCalled();
     expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RUNNING);
@@ -111,7 +111,7 @@ describe('useIdeaIntake async recovery', () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const payload = {
       ...response('NEEDS_INPUT', null, []),
-      contradictions: [{ fieldKeys: ['problem', 'targetCustomers'], summary: 'conflict' }],
+      contradictions: [{ fieldKeys: ['problem', 'targetUsers'], summary: 'conflict' }],
     };
     const client = { get: vi.fn().mockResolvedValue({ data: payload }), patch: vi.fn(), post: vi.fn() };
     useApiClient.mockReturnValue(client);
@@ -210,7 +210,19 @@ function response(status, activeJobId, questions) {
 
 function catalog() {
   return [
-    { key: 'physicalActivity', label: '물리 활동', requiredForConcept: true,
-      regulatorySensitive: true, defaultDecisionState: 'PREFERRED', allowedQuestionTypes: ['FREE_TEXT'] },
+    { key: 'ideaOverview', label: '아이디어 개요', requiredForConcept: true,
+      regulatorySensitive: false, defaultDecisionState: 'LOCKED', allowedQuestionTypes: ['FREE_TEXT'] },
+    { key: 'problem', label: '해결하려는 문제', requiredForConcept: true,
+      regulatorySensitive: false, defaultDecisionState: 'LOCKED', allowedQuestionTypes: ['FREE_TEXT'] },
+    { key: 'targetUsers', label: '예상 사용자', requiredForConcept: true,
+      regulatorySensitive: false, defaultDecisionState: 'LOCKED', allowedQuestionTypes: ['FREE_TEXT'] },
   ];
+}
+
+function interpretation() {
+  return {
+    interpretedProblem: '문제 해석', interpretedTargetUsers: '사용자 해석', usageContext: '사용 맥락',
+    industryCategory: '업종', researchScope: '조사 범위', conciseIdeaDefinition: '한 줄 정의',
+    targetRegionInterpretation: '', relevantKnownCompetitorContext: '',
+  };
 }

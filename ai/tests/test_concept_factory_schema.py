@@ -4,13 +4,16 @@ import asyncio
 import pytest
 
 from app.providers import ProviderFailure
-from app.tasks.concept_candidate.models import ConceptCandidateResult
+from app.tasks.concept_candidate.models import ConceptCandidateInput, ConceptCandidateResult
 from app.tasks.concept_legal_review.models import ConceptLegalReviewProviderResult
 from app.tasks.concept_legal_review.service import execute_concept_legal_review
+from app.tasks.concept_hypothesis_alternative.models import ConceptHypothesisAlternativeResult
 from app.tasks.concept_redesign.models import ConceptRedesignResult
+from concept_candidate_v2_fixture import valid_candidate
 
 
-MODELS = [ConceptCandidateResult, ConceptLegalReviewProviderResult, ConceptRedesignResult]
+MODELS = [ConceptCandidateResult, ConceptLegalReviewProviderResult, ConceptRedesignResult,
+          ConceptHypothesisAlternativeResult]
 
 
 def _assert_closed(schema: dict, root: dict) -> None:
@@ -39,7 +42,47 @@ def test_all_provider_result_schemas_are_closed_and_typed():
         assert Any not in get_type_hints(model).values()
 
 
-def test_legal_review_refuses_missing_official_evidence():
+def test_legal_review_refuses_incomplete_fact_pattern():
     with pytest.raises(ProviderFailure) as raised:
-        asyncio.run(execute_concept_legal_review({"candidate": {}, "sharedContext": {}}))
+        asyncio.run(execute_concept_legal_review({
+            "legalFactPattern": {}, "factPatternHash": "sha256:" + "a" * 64,
+            "externalFactContext": {},
+        }))
     assert raised.value.retryable is False
+
+
+def test_minimal_seed_can_start_explore_generation():
+    value = ConceptCandidateInput.model_validate({
+        "ideaBriefSnapshotId": "brief-1", "generationStrategy": "EXPLORE", "candidateIndex": 1,
+        "originalCandidate": False, "diversityFocus": "CUSTOMER_EXPERIENCE",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "동네 재고 연결", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "problem", "value": "재고 폐기", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "동네 가게", "source": "USER_INPUT", "authority": "LOCKED"},
+        ],
+    })
+    assert value.generationStrategy == "EXPLORE"
+
+
+def test_missing_revenue_is_a_proposed_ai_hypothesis():
+    value = ConceptCandidateResult.model_validate(valid_candidate())
+    semantics = {item.fieldKey: item for item in value.valueSemantics}
+    assert semantics["revenueModel"].source == "AI_HYPOTHESIS"
+    assert semantics["revenueModel"].decision == "PROPOSED"
+
+
+def test_pre_market_som_is_never_labeled_as_analysis_result():
+    candidate = valid_candidate()
+    for item in candidate["valueSemantics"]:
+        if item["fieldKey"] == "preMarketSomHypothesis":
+            item.update(source="ANALYSIS_RESULT", authority="REVIEWABLE", decision="ACCEPTED")
+    with pytest.raises(Exception):
+        ConceptCandidateResult.model_validate(candidate)
+
+
+def test_as_is_original_is_candidate_one_only():
+    candidate = valid_candidate("AS_IS", 1)
+    assert ConceptCandidateResult.model_validate(candidate).originalCandidate is True
+    candidate["candidateIndex"] = 2
+    with pytest.raises(Exception):
+        ConceptCandidateResult.model_validate(candidate)

@@ -8,10 +8,11 @@ import {
 
 describe('active job event message registry', () => {
   it('contains only events emitted by the current Idea, Concept, and Marketing workers', () => {
-    expect(ACTIVE_JOB_EVENT_KEYS).toHaveLength(29);
+    expect(ACTIVE_JOB_EVENT_KEYS).toHaveLength(30);
     expect(new Set(ACTIVE_JOB_EVENT_KEYS).size).toBe(ACTIVE_JOB_EVENT_KEYS.length);
     expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.idea.queued');
     expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.concept.run.completed');
+    expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.concept.slot.validating_distinctness');
     expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.marketing.failed');
     expect(ACTIVE_JOB_EVENT_KEYS.some((key) => key.startsWith('job.boundary.'))).toBe(false);
     expect(ACTIVE_JOB_EVENT_KEYS.some((key) => key.includes('attachment'))).toBe(false);

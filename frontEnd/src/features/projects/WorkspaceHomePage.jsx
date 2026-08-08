@@ -27,7 +27,7 @@ function GettingStartedRail({ projects, newest, location, writeRestriction }) {
     { label: '컨셉 비교·선택', route: newest ? projectRoutes.conceptCompare(newest.projectId) : null },
     { label: '시장분석부터 콘텐츠 제작', route: newest ? projectRoutes.market(newest.projectId) : null },
   ];
-  return <aside className="getting-started-rail" aria-labelledby="workspace-getting-started-title"><p>6단계 파이프라인</p><h2 id="workspace-getting-started-title">모든 모듈을 바로 확인할 수 있습니다</h2><ol>{items.map((item, index) => {
+  return <aside className="getting-started-rail" aria-labelledby="workspace-getting-started-title"><p>8단계 파이프라인</p><h2 id="workspace-getting-started-title">모든 모듈을 바로 확인할 수 있습니다</h2><ol>{items.map((item, index) => {
     const content = <><span>{index + 1}</span><strong>{item.label}</strong></>;
     const blocked = item.route === appRoutes.newProject && writeRestriction.blocked;
     return <li key={item.label} className={index === 0 && projects.length === 0 ? 'is-current' : ''}>{item.route ? <Link to={item.route} aria-disabled={blocked} title={blocked ? writeRestriction.message : undefined} onClick={(event) => { if (blocked) event.preventDefault(); }} state={item.route === appRoutes.newProject ? overlayState(location) : undefined}>{content}</Link> : content}</li>;
@@ -48,7 +48,7 @@ export default function WorkspaceHomePage() {
     .slice(0, 3);
   const newest = recent[0];
   const showGettingStarted = projects.length === 0;
-  return <div className="workspace-home"><PageHeader eyebrow="Personal workspace" title={`안녕하세요, ${displayName(user)}님`} description="최근 프로젝트와 새 6단계 파이프라인의 모듈 상태를 확인하세요." />
+  return <div className="workspace-home"><PageHeader eyebrow="Personal workspace" title={`안녕하세요, ${displayName(user)}님`} description="최근 프로젝트와 새 8단계 파이프라인의 모듈 상태를 확인하세요." />
     <div className="workspace-home__layout">
       {showGettingStarted && <GettingStartedRail projects={projects} newest={newest} location={location} writeRestriction={writeRestriction} />}
       <div className="workspace-home__content">

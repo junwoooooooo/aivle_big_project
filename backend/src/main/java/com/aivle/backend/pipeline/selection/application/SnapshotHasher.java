@@ -47,7 +47,8 @@ public class SnapshotHasher {
         }
         if (node.isTextual()) return quote(node.asText());
         if (node.isIntegralNumber() || node.isBoolean() || node.isNull()) return node.toString();
-        throw new IllegalArgumentException("snapshot JSON must not contain floating-point numbers");
+        if (node.isFloatingPointNumber()) return node.decimalValue().stripTrailingZeros().toPlainString();
+        throw new IllegalArgumentException("snapshot JSON에 지원하지 않는 값이 있습니다.");
     }
 
     private String quote(String value) { return mapper.writeValueAsString(Normalizer.normalize(value, Normalizer.Form.NFC)); }

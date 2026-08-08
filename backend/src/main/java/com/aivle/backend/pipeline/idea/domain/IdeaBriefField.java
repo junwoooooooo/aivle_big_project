@@ -49,7 +49,7 @@ public class IdeaBriefField extends BaseEntity {
         String value,
         IdeaDecisionState decisionState
     ) {
-        return create(brief, fieldKey, value, decisionState, IdeaFieldProvenance.USER_CONFIRMED, false);
+        return create(brief, fieldKey, value, decisionState, IdeaFieldProvenance.USER_INPUT, false);
     }
 
     public static IdeaBriefField sourceValue(
@@ -58,13 +58,13 @@ public class IdeaBriefField extends BaseEntity {
         String value,
         IdeaDecisionState decisionState
     ) {
-        return create(brief, fieldKey, value, decisionState, IdeaFieldProvenance.SOURCE_EXTRACTED, false);
+        return create(brief, fieldKey, value, decisionState, IdeaFieldProvenance.AI_DERIVED, false);
     }
 
     public static IdeaBriefField userAnswer(IdeaBrief brief, String fieldKey, String value,
             IdeaDecisionState decisionState, boolean undecided) {
         return create(brief, fieldKey, value, decisionState,
-            undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_CONFIRMED, false);
+            undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_INPUT, false);
     }
 
     public static IdeaBriefField aiProposal(
@@ -88,7 +88,7 @@ public class IdeaBriefField extends BaseEntity {
         brief.requireMutable();
         IdeaBriefFieldCatalog.require(fieldKey);
         if (decisionState == null || provenance == null) throw new IllegalArgumentException("field metadata is required");
-        if (aiAuthored && (decisionState == IdeaDecisionState.LOCKED || provenance == IdeaFieldProvenance.USER_CONFIRMED)) {
+        if (aiAuthored && (decisionState == IdeaDecisionState.LOCKED || isUserSource(provenance))) {
             throw new IllegalArgumentException("AI cannot lock or user-confirm a field");
         }
         IdeaBriefField field = new IdeaBriefField();
@@ -109,7 +109,7 @@ public class IdeaBriefField extends BaseEntity {
         if (decisionState == null) throw new IllegalArgumentException("decision state is required");
         this.fieldValue = value;
         this.decisionState = decisionState;
-        this.provenance = IdeaFieldProvenance.USER_CONFIRMED;
+        this.provenance = IdeaFieldProvenance.USER_INPUT;
     }
 
     public void updateFromAnswer(String value, IdeaDecisionState decisionState, boolean undecided) {
@@ -117,19 +117,24 @@ public class IdeaBriefField extends BaseEntity {
         if (decisionState == null) throw new IllegalArgumentException("decision state is required");
         this.fieldValue = value;
         this.decisionState = decisionState;
-        this.provenance = undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_CONFIRMED;
+        this.provenance = undecided ? IdeaFieldProvenance.MISSING : IdeaFieldProvenance.USER_INPUT;
     }
 
     public void applyAi(String value, IdeaDecisionState decisionState, IdeaFieldProvenance provenance) {
         brief.requireMutable();
-        if (decisionState == IdeaDecisionState.LOCKED || provenance == IdeaFieldProvenance.USER_CONFIRMED) {
+        if (decisionState == IdeaDecisionState.LOCKED || isUserSource(provenance)) {
             throw new IllegalArgumentException("AI cannot lock or user-confirm a field");
         }
-        if (this.decisionState == IdeaDecisionState.LOCKED || this.provenance == IdeaFieldProvenance.USER_CONFIRMED) {
+        if (this.decisionState == IdeaDecisionState.LOCKED || isUserSource(this.provenance)) {
             return;
         }
         this.fieldValue = value;
         this.decisionState = decisionState;
         this.provenance = provenance;
+    }
+
+    private static boolean isUserSource(IdeaFieldProvenance provenance) {
+        return provenance == IdeaFieldProvenance.USER_INPUT
+            || provenance == IdeaFieldProvenance.USER_CONFIRMED;
     }
 }

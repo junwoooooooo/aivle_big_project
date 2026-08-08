@@ -39,8 +39,8 @@ export function deriveComparisonTags(concept) {
   const assessment = concept?.legalReview?.assessment ?? {};
   const partners = asList(candidate.partnerRequirements);
   const physical = asList(candidate.physicalActivities);
-  const target = text(candidate.targetSegment, '').toLowerCase();
-  const revenue = `${text(candidate.revenueModelHypothesis, '')} ${text(candidate.pricingHypothesis, '')}`.toLowerCase();
+  const target = text(candidate.targetUsers, '').toLowerCase();
+  const revenue = `${text(candidate.revenueModel, '')} ${text(candidate.price, '')}`.toLowerCase();
   const tags = [];
 
   if (concept?.variationFocus === 'LOW_RISK_FAST_EXECUTION') tags.push('빠른 실행');
@@ -62,20 +62,20 @@ export function toComparisonModel(concept) {
     slotNumber: concept.slotNumber,
     title: text(concept.title),
     summary: text(concept.summary),
-    differentiator: text(candidate.valueProposition),
-    targetCustomer: text(candidate.targetSegment),
+    differentiator: text(candidate.differentiators),
+    targetCustomer: text(candidate.targetUsers),
     coreProblem: text(candidate.problemScenario),
-    coreValue: text(candidate.valueProposition),
+    coreValue: text(candidate.coreValue),
     userFlow: listText(candidate.transactionFlow),
     platformRole: text(candidate.platformRole),
     features: listText(candidate.featureSet),
     operatingModel: text(candidate.operatingModel),
     operatingDifficulty: operatingDifficulty(candidate),
-    revenueModel: text(candidate.revenueModelHypothesis),
+    revenueModel: `${text(candidate.revenueModel)} · ${text(candidate.price)}`,
     partnerDependency: listText(candidate.partnerRequirements),
     requiredControls: listText(assessment.requiredControls),
-    risks: listText(candidate.risks),
-    initialScope: `${text(candidate.solutionMechanism)} · 채널: ${text(candidate.channelHypothesis)}`,
+    risks: listText(candidate.constraintCompliance),
+    initialScope: `${text(candidate.solutionMechanism)} · 채널: ${text(candidate.channels)}`,
     legalStatus: concept.legalStatus,
     legalStatusLabel: LEGAL_STATUS_LABELS[concept.legalStatus] ?? text(concept.legalStatus),
     legal,

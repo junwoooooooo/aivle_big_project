@@ -1,36 +1,32 @@
+import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createIdeaIntakeDraft } from '../model/ideaIntakeModel.js';
 import IdeaBriefReview from './IdeaBriefReview.jsx';
+import { createIdeaIntakeDraft, draftFromIdeaBrief } from '../model/ideaIntakeModel.js';
 
-describe('IdeaBriefReview', () => {
-  it('shows assessment metadata and lets the user choose field authority', () => {
-    const draft = createIdeaIntakeDraft();
-    draft.intake.overview = '원문 개요';
-    draft.assessment = {
-      userFacingSummary: 'AI가 정리한 요약',
-      contradictions: [{ fieldKeys: ['problem', 'targetCustomers'], summary: '대상이 충돌합니다.' }],
-      readiness: {
-        score: 55,
-        completedRequiredFieldCount: 5,
-        totalRequiredFieldCount: 10,
-        missingFieldKeys: ['payment'],
-        readyForConfirm: false,
+describe('AI 해석 확인', () => {
+  it('사용자 입력과 AI 해석을 다른 출처로 표시하고 해석 수정을 허용한다', () => {
+    const draft = draftFromIdeaBrief({
+      fields: [
+        { fieldKey: 'ideaOverview', value: '개요', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'problem', value: '폐기 문제', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'targetUsers', value: '지역 식당', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+      ],
+      safetyReview: { decision: 'ALLOW', restrictions: [], userFacingReason: '지원 가능한 아이디어입니다.' },
+      interpretation: {
+        interpretedProblem: '음식물 폐기 문제', interpretedTargetUsers: '지역 식당',
+        usageContext: '영업 종료 후', industryCategory: '폐기물 관리', researchScope: '수거 서비스',
+        conciseIdeaDefinition: '폐기를 줄이는 서비스', targetRegionInterpretation: '',
+        relevantKnownCompetitorContext: '',
       },
-      clarificationRound: 2,
-      maxClarificationRounds: 2,
-    };
-    const onDecisionStateChange = vi.fn();
-
-    render(<IdeaBriefReview draft={draft} onFieldChange={vi.fn()}
-      onDecisionStateChange={onDecisionStateChange} onConfirm={vi.fn()} />);
-
-    expect(screen.getByText('AI가 정리한 요약')).toBeInTheDocument();
-    expect(screen.getByText(/미정 필드: payment/)).toBeInTheDocument();
-    expect(screen.getByText(/대상이 충돌합니다/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('해결 문제 결정 상태'), { target: { value: 'LOCKED' } });
-    expect(onDecisionStateChange).toHaveBeenCalledWith('problem', 'LOCKED');
-    expect(screen.getByRole('button', { name: '저장하고 준비 상태 확인' })).toBeInTheDocument();
+      userFacingSummary: '입력하신 아이디어를 이렇게 이해했습니다.',
+    }, createIdeaIntakeDraft());
+    const onChange = vi.fn();
+    render(<IdeaBriefReview draft={draft} onInterpretationChange={onChange} onConfirm={vi.fn()} />);
+    expect(screen.getAllByText('사용자가 입력').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('AI가 해석').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText('AI가 이해한 문제'), { target: { value: '수정한 문제' } });
+    expect(onChange).toHaveBeenCalledWith('interpretedProblem', '수정한 문제');
   });
 });

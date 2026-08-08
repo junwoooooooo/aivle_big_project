@@ -1,0 +1,16 @@
+package com.aivle.backend.pipeline.finance.application;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+
+@Component
+public class FinancialReadiness {
+    public List<String> missing(JsonNode fields) {
+        List<String> missing = new ArrayList<>();
+        for (String key : FinancialPreparationFactory.REQUIRED_KEYS)
+            if (!FinancialPreparationFactory.present(fields.path(key).path("value"))) missing.add(key);
+        return List.copyOf(missing);
+    }
+}

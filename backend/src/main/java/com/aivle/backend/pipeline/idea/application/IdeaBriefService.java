@@ -71,10 +71,11 @@ public class IdeaBriefService {
         String correlationId
     ) {
         String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
+        List<FieldCommand> seedFields = seedCommands(request);
         String inputJson = objectMapper.writeValueAsString(Map.of(
             "mode", IdeaBriefDerivationMode.INITIAL.name(),
-            "overview", request.overview(),
-            "fields", request.fields() == null ? List.of() : request.fields(),
+            "ideaOverview", request.ideaOverview(),
+            "fields", seedFields,
             "attachmentFileIds", request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds(),
             "fieldMetadata", fieldMetadata()
         ));
@@ -83,8 +84,8 @@ public class IdeaBriefService {
         if (replay(brief, "DERIVE", idempotencyKey, requestHash)) return response(brief);
         if (brief.isConfirmed()) brief = forkConfirmed(brief, ownerId);
 
-        brief.updateOverview(request.overview());
-        upsertUserFields(brief, request.fields());
+        brief.updateOverview(request.ideaOverview());
+        upsertUserFields(brief, seedFields);
         brief.replaceAttachments(request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds());
         briefs.save(brief);
 
@@ -124,6 +125,36 @@ public class IdeaBriefService {
         if (changed) queueDerivation(ownerId, projectId, brief, idempotencyKey,
             IdeaBriefDerivationMode.FINAL_SYNTHESIS);
         brief.recordCommand("PATCH_FIELDS", idempotencyKey, requestHash);
+        return response(brief);
+    }
+
+    @Transactional
+    public IdeaBriefResponse patchInterpretation(
+        Long ownerId,
+        Long projectId,
+        PatchInterpretationRequest request,
+        String rawIdempotencyKey
+    ) {
+        String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
+        String requestHash = sha256(objectMapper.writeValueAsString(request));
+        IdeaBrief brief = requireCurrentForUpdate(ownerId, projectId);
+        if (replay(brief, "PATCH_INTERPRETATION", idempotencyKey, requestHash)) return response(brief);
+        if (brief.isConfirmed()) brief = forkConfirmed(brief, ownerId);
+        if (brief.getStatus() != IdeaBriefStatus.READY_FOR_REVIEW) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "아이디어 해석을 수정할 수 있는 상태가 아닙니다.");
+        }
+        brief.updateInterpretation(objectMapper.writeValueAsString(Map.of(
+            "interpretedProblem", request.interpretedProblem(),
+            "interpretedTargetUsers", request.interpretedTargetUsers(),
+            "usageContext", request.usageContext(),
+            "industryCategory", request.industryCategory(),
+            "researchScope", request.researchScope(),
+            "conciseIdeaDefinition", request.conciseIdeaDefinition(),
+            "targetRegionInterpretation", nullToEmpty(request.targetRegionInterpretation()),
+            "relevantKnownCompetitorContext", nullToEmpty(request.relevantKnownCompetitorContext()),
+            "userEdited", true
+        )));
+        brief.recordCommand("PATCH_INTERPRETATION", idempotencyKey, requestHash);
         return response(brief);
     }
 
@@ -252,17 +283,19 @@ public class IdeaBriefService {
         boolean changed = false;
         for (FieldCommand command : commands) {
             IdeaBriefFieldCatalog.FieldDefinition definition = IdeaBriefFieldCatalog.require(command.fieldKey());
-            IdeaDecisionState decisionState = command.decisionState() == null
-                ? definition.defaultDecisionState() : command.decisionState();
             IdeaBriefField field = fields.findByBriefIdAndFieldKey(brief.getId(), command.fieldKey()).orElse(null);
-            String value = command.value() == null ? "" : command.value();
+            String value = command.value() == null ? "" : command.value().trim();
+            if (value.isBlank() && !definition.requiredForConcept() && field == null) continue;
+            IdeaDecisionState decisionState = value.isBlank() ? IdeaDecisionState.OPEN : IdeaDecisionState.LOCKED;
             if (field == null) {
                 fields.save(IdeaBriefField.userValue(brief, command.fieldKey(), value, decisionState));
                 changed = true;
             } else if (!java.util.Objects.equals(field.getFieldValue(), value)
                     || field.getDecisionState() != decisionState
-                    || field.getProvenance() != com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_CONFIRMED) {
-                field.updateByUser(value, decisionState);
+                    || (field.getProvenance() != com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_INPUT
+                        && field.getProvenance() != com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_CONFIRMED)) {
+                if (value.isBlank()) field.updateFromAnswer("", IdeaDecisionState.OPEN, true);
+                else field.updateByUser(value, decisionState);
                 changed = true;
             }
         }
@@ -298,6 +331,8 @@ public class IdeaBriefService {
                 definition.defaultDecisionState(), definition.regulatorySensitive(),
                 definition.allowedQuestionTypes()
             )).toList(),
+            safetyReview(brief),
+            interpretation(brief),
             brief.getUserFacingSummary(),
             readinessCalculator.contradictions(brief.getContradictionsJson()).stream()
                 .map(value -> new ContradictionView(value.fieldKeys(), value.summary())).toList(),
@@ -331,6 +366,8 @@ public class IdeaBriefService {
             "sequence", brief.getBriefSequence(),
             "overview", brief.getOverviewText() == null ? "" : brief.getOverviewText(),
             "fields", fieldValues,
+            "safetyDecision", brief.getSafetyDecision() == null ? "" : brief.getSafetyDecision(),
+            "interpretation", brief.getInterpretationJson(),
             "userFacingSummary", brief.getUserFacingSummary() == null ? "" : brief.getUserFacingSummary(),
             "contradictions", readinessCalculator.contradictions(brief.getContradictionsJson()),
             "attachmentFileIds", brief.getAttachmentFileIds().stream().sorted().toList()
@@ -384,7 +421,7 @@ public class IdeaBriefService {
             IdeaBriefDerivationMode mode) {
         String inputJson = objectMapper.writeValueAsString(Map.of(
             "mode", mode.name(),
-            "overview", brief.getOverviewText(),
+            "ideaOverview", brief.getOverviewText(),
             "fields", fields.findAllByBriefIdOrderById(brief.getId()).stream().map(field -> Map.of(
                 "fieldKey", field.getFieldKey(),
                 "value", IdeaBriefReadinessCalculator.UNDECIDED.equals(field.getFieldValue()) ? "" : field.getFieldValue(),
@@ -450,6 +487,77 @@ public class IdeaBriefService {
             "requiredForConcept", definition.requiredForConcept(),
             "regulatorySensitive", definition.regulatorySensitive()
         )).toList();
+    }
+
+    private List<FieldCommand> seedCommands(DeriveRequest request) {
+        java.util.ArrayList<FieldCommand> values = new java.util.ArrayList<>();
+        values.add(new FieldCommand("ideaOverview", request.ideaOverview(), IdeaDecisionState.LOCKED));
+        values.add(new FieldCommand("problem", request.problem(), IdeaDecisionState.LOCKED));
+        values.add(new FieldCommand("targetUsers", request.targetUsers(), IdeaDecisionState.LOCKED));
+        OptionalSeedRequest optional = request.optionalSeed();
+        if (optional == null) return List.copyOf(values);
+        addOptional(values, "targetRegion", optional.targetRegion());
+        addOptional(values, "knownCompetitors", optional.knownCompetitors());
+        addOptional(values, "revenueModel", optional.revenueModel());
+        addOptional(values, "price", optional.price());
+        addOptional(values, "channels", optional.channels());
+        addOptional(values, "differentiators", optional.differentiators());
+        if (optional.constraints() != null) {
+            addOptional(values, "budgetConstraint", optional.constraints().budgetConstraint());
+            addOptional(values, "teamConstraint", optional.constraints().teamConstraint());
+            addOptional(values, "timelineConstraint", optional.constraints().timelineConstraint());
+            addOptional(values, "otherConstraint", optional.constraints().otherConstraint());
+        }
+        return List.copyOf(values);
+    }
+
+    private void addOptional(List<FieldCommand> values, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            values.add(new FieldCommand(key, value.trim(), IdeaDecisionState.LOCKED));
+        }
+    }
+
+    private SafetyReviewView safetyReview(IdeaBrief brief) {
+        if (brief.getSafetyDecision() == null) return null;
+        return new SafetyReviewView(
+            brief.getSafetyDecision(), textArray(brief.getSafetyCategoriesJson()),
+            textArray(brief.getSafetyRestrictionsJson()), brief.getSafetyUserFacingReason());
+    }
+
+    private IdeaInterpretationView interpretation(IdeaBrief brief) {
+        try {
+            JsonNode value = objectMapper.readTree(brief.getInterpretationJson());
+            if (value == null || !value.isObject() || value.isEmpty()) return null;
+            return new IdeaInterpretationView(
+                value.path("interpretedProblem").asText(""),
+                value.path("interpretedTargetUsers").asText(""),
+                value.path("usageContext").asText(""),
+                value.path("industryCategory").asText(""),
+                value.path("researchScope").asText(""),
+                value.path("conciseIdeaDefinition").asText(""),
+                value.path("targetRegionInterpretation").asText(""),
+                value.path("relevantKnownCompetitorContext").asText(""),
+                "AI_DERIVED", "REVIEWABLE", value.path("userEdited").asBoolean(false),
+                brief.getInterpretationConfirmedAt() != null
+            );
+        } catch (RuntimeException invalid) {
+            return null;
+        }
+    }
+
+    private List<String> textArray(String json) {
+        try {
+            JsonNode values = objectMapper.readTree(json == null ? "[]" : json);
+            if (!values.isArray()) return List.of();
+            return java.util.stream.StreamSupport.stream(values.spliterator(), false)
+                .filter(JsonNode::isTextual).map(JsonNode::asText).toList();
+        } catch (RuntimeException invalid) {
+            return List.of();
+        }
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     private boolean replay(IdeaBrief brief, String command, String idempotencyKey, String requestHash) {

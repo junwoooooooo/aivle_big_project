@@ -104,7 +104,7 @@ export function ProjectListPage() {
       <PageHeader
         eyebrow="내 워크스페이스"
         title="프로젝트"
-        description="새 6단계 파이프라인의 모듈 상태와 필요한 입력을 확인하세요."
+        description="새 8단계 파이프라인의 모듈 상태와 필요한 입력을 확인하세요."
         actions={<PolicyLink restriction={restriction} className="primary-link" to={appRoutes.newProject} state={{ backgroundLocation: location, returnTo: `${location.pathname}${location.search}` }}>새 프로젝트</PolicyLink>}
       />
       <div className="project-hub__body"><div className="project-hub__content">{!projects.length ? (

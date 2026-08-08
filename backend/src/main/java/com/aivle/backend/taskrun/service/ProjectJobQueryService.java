@@ -106,12 +106,13 @@ public class ProjectJobQueryService {
         return switch (type) {
             case IDEA_ATTACHMENT_PARSE, IDEA_BRIEF_DERIVATION -> JobModule.IDEA;
             case CONCEPT_FACTORY_RUN, CONCEPT_CANDIDATE, CONCEPT_LEGAL_REVIEW, CONCEPT_REDESIGN -> JobModule.CONCEPT_FACTORY;
+            case CONCEPT_HYPOTHESIS_ALTERNATIVE -> JobModule.CONCEPT_SELECTION;
             case MARKETING_CONTENT_GENERATION -> JobModule.MARKETING;
         };
     }
 
     private enum JobModule {
-        IDEA("/idea"), CONCEPT_FACTORY("/concepts"), MARKETING("/marketing");
+        IDEA("/idea"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }
     }

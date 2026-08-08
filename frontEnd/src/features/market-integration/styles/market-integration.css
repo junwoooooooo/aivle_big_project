@@ -20,35 +20,23 @@
 .market-integration__runs li { align-items: center; background: #f6f8fb; border-radius: 10px; display: flex; gap: 12px; justify-content: space-between; padding: 12px; }
 .market-integration__runs li div { display: grid; gap: 4px; }
 .market-integration__runs li span, .market-integration__runs li small { color: #667085; overflow-wrap: anywhere; }
-.market-integration__empty, .market-result-section, .planning-change-card, .competitor-card { border: 1px solid #d7deea; border-radius: 14px; padding: 18px; }
+.market-integration__empty, .market-result-section, .competitor-card { border: 1px solid #d7deea; border-radius: 14px; padding: 18px; }
 .market-integration__empty { background: #f7f9fc; text-align: center; }
 .market-integration__stale { background: #fff7df; border: 1px solid #eccb70; border-radius: 12px; display: grid; gap: 4px; padding: 14px 16px; }
 .market-result-section { display: grid; gap: 12px; }
-.market-result-section > h2, .planning-change-card h3, .competitor-card h3 { margin: 0; }
-.market-result-section > p, .planning-change-card p, .competitor-card p { margin: 0; }
+.market-result-section > h2, .competitor-card h3 { margin: 0; }
+.market-result-section > p, .competitor-card p { margin: 0; }
 .competitor-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .competitor-card { display: grid; gap: 11px; }
-.competitor-card header, .planning-change-card > header { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; }
+.competitor-card header { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; }
 .competitor-card header div { display: grid; gap: 4px; }
-.competitor-card header strong, .planning-change-card > header > span { background: #edf4ff; border-radius: 999px; color: #245fc0; font-size: .78rem; padding: 6px 9px; }
+.competitor-card header strong { background: #edf4ff; border-radius: 999px; color: #245fc0; font-size: .78rem; padding: 6px 9px; }
 .competitor-card details { display: grid; gap: 8px; }
-.competitor-card pre, .planning-change-card pre { margin: 7px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.competitor-card pre { margin: 7px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .competitor-card details > a { display: block; margin-top: 6px; }
-.planning-change-list { display: grid; gap: 14px; }
-.planning-change-card { display: grid; gap: 14px; }
-.planning-change-card > header p { color: #667085; margin-top: 4px; }
-.planning-change-card__values { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.planning-change-card__values section { background: #f7f9fc; border-radius: 10px; min-width: 0; padding: 12px; }
-.planning-change-card footer { display: flex; flex-wrap: wrap; gap: 8px; }
-.planning-change-card button { border: 1px solid #9aabc2; border-radius: 8px; min-height: 44px; padding: 0 13px; }
-.planning-change-card footer button:first-child, .planning-change-card__partial button { background: #245fc0; border-color: #245fc0; color: #fff; }
-.planning-change-card__partial { display: grid; gap: 8px; }
-.planning-change-card__partial textarea { border: 1px solid #9aabc2; border-radius: 8px; min-height: 100px; padding: 10px; }
-.planning-change-card__partial button { justify-self: start; }
-.planning-change-card__chosen { background: #edf8f0; border-radius: 8px; padding: 10px; }
 .market-result-snapshot dl { display: grid; gap: 8px; margin: 0; }
 .market-result-snapshot dl div { display: grid; gap: 10px; grid-template-columns: 130px 1fr; }
 .market-result-snapshot dt { color: #667085; }
 .market-result-snapshot dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 700px) { .market-integration > header, .market-integration__actions { flex-direction: column; } .market-integration__grid, .market-integration__manifest ul { grid-template-columns: 1fr; } }
-@media (max-width: 700px) { .competitor-grid, .planning-change-card__values { grid-template-columns: 1fr; } .market-result-snapshot dl div { grid-template-columns: 1fr; gap: 2px; } }
+@media (max-width: 700px) { .competitor-grid { grid-template-columns: 1fr; } .market-result-snapshot dl div { grid-template-columns: 1fr; gap: 2px; } }

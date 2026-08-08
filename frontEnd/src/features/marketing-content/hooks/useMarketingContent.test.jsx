@@ -21,7 +21,7 @@ describe('useMarketingContent refresh recovery', () => {
     const client = {
       get: vi.fn(async (path) => {
         if (path.endsWith('/marketing-contents')) return { data: { contents: [detail.content] } };
-        if (path.endsWith('/planning/current')) return { data: { finalizedPlanning: { snapshotId: 'plan-1' } } };
+        if (path.endsWith('/marketing-source-snapshots/current')) return { data: { snapshotId: 'source-1', snapshot: {} } };
         if (path.endsWith('/marketing-contents/content-1')) return { data: detail };
         throw new Error(`unexpected path ${path}`);
       }),

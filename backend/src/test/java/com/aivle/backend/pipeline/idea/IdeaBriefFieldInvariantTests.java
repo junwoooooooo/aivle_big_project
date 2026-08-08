@@ -25,7 +25,7 @@ class IdeaBriefFieldInvariantTests {
             brief, "problem", "confirmed by user", IdeaDecisionState.LOCKED
         );
         assertThat(userField.getDecisionState()).isEqualTo(IdeaDecisionState.LOCKED);
-        assertThat(userField.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_CONFIRMED);
+        assertThat(userField.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_INPUT);
     }
 
     @Test

@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -76,6 +77,23 @@ public class IdeaBrief extends BaseEntity {
 
     @Column(length = 71)
     private String assessmentInputHash;
+
+    @Column(length = 40)
+    private String safetyDecision;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String safetyCategoriesJson = "[]";
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String safetyRestrictionsJson = "[]";
+
+    @Column(length = 1000)
+    private String safetyUserFacingReason;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String interpretationJson = "{}";
+
+    private LocalDateTime interpretationConfirmedAt;
 
     @Column(nullable = false)
     private Long createdByUserId;
@@ -213,6 +231,42 @@ public class IdeaBrief extends BaseEntity {
         this.activeTaskRunId = null;
     }
 
+    public void applySafetyAndInterpretation(String decision, String categoriesJson,
+            String restrictionsJson, String userFacingReason, String interpretationJson) {
+        requireMutable();
+        if (!("ALLOW".equals(decision) || "ALLOW_WITH_RESTRICTIONS".equals(decision)
+                || "BLOCK_OR_REFRAME".equals(decision))
+            || categoriesJson == null || restrictionsJson == null
+            || userFacingReason == null || userFacingReason.isBlank() || userFacingReason.length() > 1_000
+            || interpretationJson == null || interpretationJson.isBlank()) {
+            throw new IllegalArgumentException("idea safety or interpretation is invalid");
+        }
+        this.safetyDecision = decision;
+        this.safetyCategoriesJson = categoriesJson;
+        this.safetyRestrictionsJson = restrictionsJson;
+        this.safetyUserFacingReason = userFacingReason;
+        this.interpretationJson = interpretationJson;
+        this.interpretationConfirmedAt = null;
+    }
+
+    public void updateInterpretation(String interpretationJson) {
+        requireMutable();
+        if (interpretationJson == null || interpretationJson.isBlank()) {
+            throw new IllegalArgumentException("idea interpretation is invalid");
+        }
+        this.interpretationJson = interpretationJson;
+        this.interpretationConfirmedAt = null;
+    }
+
+    public void safetyBlocked() {
+        requireMutable();
+        if (!"BLOCK_OR_REFRAME".equals(safetyDecision)) {
+            throw new IllegalStateException("safety decision does not block the pipeline");
+        }
+        this.status = IdeaBriefStatus.SAFETY_BLOCKED;
+        this.activeTaskRunId = null;
+    }
+
     public void failDerivation() {
         requireMutable();
         this.status = IdeaBriefStatus.FAILED;
@@ -229,6 +283,7 @@ public class IdeaBrief extends BaseEntity {
         this.status = IdeaBriefStatus.CONFIRMED;
         this.snapshotHash = snapshotHash;
         this.confirmedSnapshotId = id;
+        this.interpretationConfirmedAt = LocalDateTime.now();
         this.activeTaskRunId = null;
         recordCommand("CONFIRM", idempotencyKey, requestHash);
     }
@@ -254,6 +309,12 @@ public class IdeaBrief extends BaseEntity {
         this.aiReadinessStatus = source.aiReadinessStatus;
         this.readinessScore = source.readinessScore;
         this.assessmentInputHash = source.assessmentInputHash;
+        this.safetyDecision = source.safetyDecision;
+        this.safetyCategoriesJson = source.safetyCategoriesJson;
+        this.safetyRestrictionsJson = source.safetyRestrictionsJson;
+        this.safetyUserFacingReason = source.safetyUserFacingReason;
+        this.interpretationJson = source.interpretationJson;
+        this.interpretationConfirmedAt = null;
     }
 
     public boolean isConfirmed() {

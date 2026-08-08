@@ -45,15 +45,17 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
                 "legal_context_packs", "legal_evidence", "concept_factory_runs", "concept_slots",
                 "concept_attempts", "concepts", "concept_legal_assessments",
                 "concept_legal_evidence_links", "concept_rejection_summaries", "concept_selections",
-                "selected_concept_snapshots", "module_handoffs", "module_runs", "module_results",
-                "planning_change_proposals", "planning_change_decisions", "planning_snapshots",
-                "finalized_planning_snapshots", "pipeline_marketing_contents",
+                "market_analysis_seed_snapshots", "module_handoffs", "module_runs", "module_results",
+                "tech_ops_input_preparations", "tech_ops_evidence_references",
+                "tech_ops_input_snapshots", "marketing_source_snapshots", "pipeline_marketing_contents",
                 "pipeline_marketing_content_revisions", "pipeline_marketing_assets");
 
             assertTablesAbsent(connection, schema,
                 "project_documents", "document_versions", "structured_plans",
                 "structured_plan_sections", "analysis_jobs", "financial_analyses",
-                "persona_studies", "marketing_workspaces", "final_reports");
+                "persona_studies", "marketing_workspaces", "final_reports",
+                "selected_concept_snapshots", "planning_change_proposals", "planning_change_decisions",
+                "planning_snapshots", "finalized_planning_snapshots");
         }
     }
 

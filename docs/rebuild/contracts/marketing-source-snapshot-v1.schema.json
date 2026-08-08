@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketingSourceSnapshotV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "schemaVersion", "snapshotId", "hash", "sourceSnapshotHash", "createdAt",
+    "projectId", "selectionId", "conceptId", "marketAnalysisSeedSnapshotId", "marketAnalysisSeedSnapshotHash",
+    "conceptName", "targetSegment", "problem", "valueProposition", "positioning", "keyFeatures",
+    "targetRegion", "revenueModel", "price", "pricing", "channels", "competitorDifferentiators",
+    "preMarketSomShare", "preMarketSom", "legalStatus", "allowedClaims", "prohibitedClaims",
+    "requiredDisclosures", "requiredControls", "communicationRequiredControls",
+    "officialEvidenceReferences"
+  ],
+  "properties": {
+    "contract": { "const": "marketing-source-snapshot-v1" },
+    "schemaVersion": { "const": "2.0" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "sourceSnapshotHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "projectId": { "type": "integer" },
+    "selectionId": { "type": "integer" },
+    "conceptId": { "type": "string" },
+    "marketAnalysisSeedSnapshotId": { "type": "string" },
+    "marketAnalysisSeedSnapshotHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "conceptName": { "type": "string" }, "targetSegment": { "type": "string" },
+    "problem": { "type": "string" }, "valueProposition": { "type": "string" },
+    "positioning": { "type": "string" }, "keyFeatures": { "$ref": "#/$defs/textArray" },
+    "targetRegion": { "type": "string" }, "revenueModel": { "type": "string" }, "price": { "type": "string" }, "pricing": { "type": "string" },
+    "channels": { "$ref": "#/$defs/textArray" }, "competitorDifferentiators": { "$ref": "#/$defs/textArray" },
+    "preMarketSomShare": { "$ref": "#/$defs/preMarketSomShare" },
+    "preMarketSom": { "$ref": "#/$defs/preMarketSom" },
+    "legalStatus": { "type": "string", "minLength": 1 },
+    "allowedClaims": { "$ref": "#/$defs/textArray" }, "prohibitedClaims": { "$ref": "#/$defs/textArray" },
+    "requiredDisclosures": { "$ref": "#/$defs/textArray" }, "requiredControls": { "$ref": "#/$defs/textArray" },
+    "communicationRequiredControls": { "$ref": "#/$defs/textArray" },
+    "officialEvidenceReferences": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/officialEvidenceReference" } }
+  },
+  "$defs": {
+    "textArray": { "type": "array", "maxItems": 30, "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
+    "preMarketSomShare": {
+      "type": "object", "additionalProperties": false,
+      "required": ["targetSharePercent", "horizonYears"],
+      "properties": {
+        "targetSharePercent": { "type": "number", "exclusiveMinimum": 0 },
+        "horizonYears": { "type": "integer", "minimum": 1 },
+        "rationale": { "type": "string", "maxLength": 1000 },
+        "assumptions": { "$ref": "#/$defs/textArray" }
+      }
+    },
+    "preMarketSom": {
+      "type": "object", "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "period": { "type": "string", "maxLength": 100 },
+        "calculationBasis": { "type": "string", "maxLength": 1000 },
+        "assumptions": { "$ref": "#/$defs/textArray" },
+        "confidence": { "type": "string", "maxLength": 30 }
+      }
+    },
+    "officialEvidenceReference": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "referenceIndex": { "type": "integer" },
+        "sourceType": { "type": "string", "maxLength": 30 },
+        "lawId": { "type": "string", "maxLength": 100 },
+        "officialIdentifier": { "type": "string", "maxLength": 100 },
+        "lawName": { "type": "string", "maxLength": 500 },
+        "articleReference": { "type": "string", "maxLength": 200 },
+        "title": { "type": "string", "maxLength": 500 },
+        "officialSourceUri": { "type": "string", "maxLength": 1000 },
+        "jurisdiction": { "type": "string", "maxLength": 10 },
+        "promulgationDate": { "type": "string", "maxLength": 30 },
+        "effectiveDate": { "type": "string", "maxLength": 30 },
+        "retrievedAt": { "type": "string", "maxLength": 50 },
+        "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "registryVersion": { "type": "string", "maxLength": 80 }
+      }
+    }
+  }
+}

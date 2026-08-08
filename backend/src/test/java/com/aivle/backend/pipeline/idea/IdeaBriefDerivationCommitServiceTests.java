@@ -13,7 +13,6 @@ import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefFieldCatalog;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
-import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestion;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
@@ -26,108 +25,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 class IdeaBriefDerivationCommitServiceTests {
     @Test
-    void persistsSafeAiAssessmentMetadataForLaterQueries() {
-        IdeaBriefRepository briefs = mock(IdeaBriefRepository.class);
-        IdeaBriefFieldRepository fields = mock(IdeaBriefFieldRepository.class);
-        IdeaQuestionRepository questions = mock(IdeaQuestionRepository.class);
-        TaskRunService taskRuns = mock(TaskRunService.class);
-        ObjectMapper mapper = new ObjectMapper();
-        IdeaBrief brief = IdeaBrief.initial(null, 7L);
-        brief.updateOverview("overview");
-        brief.startDeriving("task-1", "derive-key", "hash");
-        when(briefs.findByIdAndProjectIdAndDeletedAtIsNull(brief.getId(), 42L)).thenReturn(Optional.of(brief));
-        when(fields.findAllByBriefIdOrderById(brief.getId())).thenReturn(List.of());
-        when(questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())).thenReturn(List.of());
-        IdeaBriefDerivationCommitService service = new IdeaBriefDerivationCommitService(
-            briefs, fields, questions, taskRuns, mapper, new IdeaBriefReadinessCalculator(mapper));
-        TaskRunService.Claim claim = new TaskRunService.Claim("task-1", "attempt-1", "claim-1");
-        TaskRunWorkerContext context = new TaskRunWorkerContext(
-            "task-1", 42L, 7L, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF", brief.getId(),
-            "{}", "sha256:" + "a".repeat(64), "key", "correlation", "1.0", "1.0", "ko-KR", 1, 3);
-        var result = mapper.readTree("""
-            {"fields":[],"questions":[],
-             "contradictions":[{"fieldKeys":["problem","targetCustomers"],"summary":"대상이 충돌합니다."}],
-             "readiness":{"status":"NEEDS_INPUT","score":25,"missingFieldKeys":["problem"]},
-             "userFacingSummary":"추가 확인이 필요합니다."}
-            """);
-        ExecutionResponse response = new ExecutionResponse(
-            "1.0", "IDEA_BRIEF_DERIVATION", "1.0", "task-1", "attempt-1", "correlation",
-            context.inputHash(), "1.0", result, mapper.createArrayNode(), mapper.createArrayNode(), null);
-
-        service.complete(claim, context, response);
-
-        assertThat(brief.getUserFacingSummary()).isEqualTo("추가 확인이 필요합니다.");
-        assertThat(brief.getContradictionsJson()).contains("대상이 충돌합니다.");
-        assertThat(brief.getMissingFieldKeysJson()).contains("problem");
-        assertThat(brief.getReadinessScore()).isEqualTo(25);
-        assertThat(brief.getAiReadinessStatus()).isEqualTo("NEEDS_INPUT");
-        assertThat(brief.getStatus()).isEqualTo(IdeaBriefStatus.NEEDS_INPUT);
-        verify(taskRuns).adoptNeedsInput("task-1", "attempt-1", "claim-1", mapper.writeValueAsString(result),
-            context.inputHash(), "1.0");
-    }
-
-    @Test
-    void finalSynthesisWithoutQuestionsMissingFieldsOrContradictionsIsReadyForReview() {
-        TestContext test = completeContext(false);
-        var result = test.mapper().readTree("""
-            {"fields":[],"questions":[],"contradictions":[],
-             "readiness":{"status":"NEEDS_INPUT","score":25,"missingFieldKeys":[]},
-             "userFacingSummary":"review"}
-            """);
+    void allowResultPersistsSafetyAndReviewableInterpretation() {
+        TestContext test = context("FINAL_SYNTHESIS");
+        JsonNode result = result(test.mapper(), "ALLOW", "[]");
 
         test.service().complete(test.claim(), test.worker(), response(test, result));
 
+        assertThat(test.brief().getSafetyDecision()).isEqualTo("ALLOW");
+        assertThat(test.brief().getInterpretationJson()).contains("interpretedProblem", "폐기 문제");
         assertThat(test.brief().getStatus()).isEqualTo(IdeaBriefStatus.READY_FOR_REVIEW);
-        assertThat(new IdeaBriefReadinessCalculator(test.mapper())
-            .calculate(test.brief(), test.fieldValues(), List.of(), true).readyForConfirm()).isTrue();
         verify(test.taskRuns()).adopt("task-1", "attempt-1", "claim-1",
             test.mapper().writeValueAsString(result), test.worker().inputHash(), "1.0");
     }
 
     @Test
-    void finalSynthesisWithBlockingContradictionStillEntersReviewButCannotConfirm() {
-        TestContext test = completeContext(true);
-        var result = test.mapper().readTree("""
-            {"fields":[],"questions":[],
-             "contradictions":[{"fieldKeys":["problem","targetCustomers"],"summary":"conflict"}],
-             "readiness":{"status":"NEEDS_INPUT","score":25,"missingFieldKeys":[]},
-             "userFacingSummary":"review conflict"}
-            """);
+    void safetyBlockStopsThePipelineWithoutQuestions() {
+        TestContext test = context("INITIAL");
+        JsonNode result = result(test.mapper(), "BLOCK_OR_REFRAME", "[]");
 
         test.service().complete(test.claim(), test.worker(), response(test, result));
 
-        assertThat(test.brief().getStatus()).isEqualTo(IdeaBriefStatus.READY_FOR_REVIEW);
-        assertThat(new IdeaBriefReadinessCalculator(test.mapper())
-            .calculate(test.brief(), test.fieldValues(), List.of(), true).readyForConfirm()).isFalse();
+        assertThat(test.brief().getStatus()).isEqualTo(IdeaBriefStatus.SAFETY_BLOCKED);
+        assertThat(test.brief().getActiveTaskRunId()).isNull();
     }
 
     @Test
-    void unansweredQuestionKeepsTheBriefInNeedsInput() {
-        TestContext test = completeContext(false);
-        var result = test.mapper().readTree("""
-            {"fields":[],
-             "questions":[{"targetFieldKey":"problem","prompt":"more?","type":"FREE_TEXT","options":[]}],
-             "contradictions":[],
-             "readiness":{"status":"NEEDS_INPUT","score":70,"missingFieldKeys":[]},
-             "userFacingSummary":"question"}
+    void coreAmbiguityQuestionKeepsSeedActionable() {
+        TestContext test = context("INITIAL");
+        JsonNode result = result(test.mapper(), "ALLOW", """
+            [{"targetFieldKey":"problem","prompt":"어떤 문제인지 더 설명해 주세요.","type":"FREE_TEXT","options":[]}]
             """);
-        TaskRunWorkerContext initialWorker = new TaskRunWorkerContext(
-            "task-1", 42L, 7L, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF", test.brief().getId(),
-            "{\"mode\":\"INITIAL\"}", test.worker().inputHash(), "key", "correlation",
-            "1.0", "1.0", "ko-KR", 1, 3);
 
-        test.service().complete(test.claim(), initialWorker, response(test, result));
+        test.service().complete(test.claim(), test.worker(), response(test, result));
 
         assertThat(test.brief().getStatus()).isEqualTo(IdeaBriefStatus.NEEDS_INPUT);
         verify(test.taskRuns()).adoptNeedsInput("task-1", "attempt-1", "claim-1",
             test.mapper().writeValueAsString(result), test.worker().inputHash(), "1.0");
     }
 
-    private TestContext completeContext(boolean unresolvedContradiction) {
+    private TestContext context(String mode) {
         IdeaBriefRepository briefs = mock(IdeaBriefRepository.class);
         IdeaBriefFieldRepository fields = mock(IdeaBriefFieldRepository.class);
         IdeaQuestionRepository questions = mock(IdeaQuestionRepository.class);
@@ -138,11 +79,8 @@ class IdeaBriefDerivationCommitServiceTests {
         brief.startDeriving("task-1", "derive-key", "hash");
         List<IdeaBriefField> fieldValues = IdeaBriefFieldCatalog.fields().stream()
             .filter(IdeaBriefFieldCatalog.FieldDefinition::requiredForConcept)
-            .map(definition -> unresolvedContradiction
-                && (definition.key().equals("problem") || definition.key().equals("targetCustomers"))
-                    ? IdeaBriefField.aiProposal(brief, definition.key(), "value",
-                        IdeaDecisionState.PREFERRED, IdeaFieldProvenance.AI_PROPOSED)
-                    : IdeaBriefField.userValue(brief, definition.key(), "value", IdeaDecisionState.PREFERRED))
+            .map(definition -> IdeaBriefField.userValue(
+                brief, definition.key(), "value", IdeaDecisionState.LOCKED))
             .toList();
         when(briefs.findByIdAndProjectIdAndDeletedAtIsNull(brief.getId(), 42L)).thenReturn(Optional.of(brief));
         when(fields.findAllByBriefIdOrderById(brief.getId())).thenReturn(fieldValues);
@@ -159,19 +97,35 @@ class IdeaBriefDerivationCommitServiceTests {
         TaskRunService.Claim claim = new TaskRunService.Claim("task-1", "attempt-1", "claim-1");
         TaskRunWorkerContext worker = new TaskRunWorkerContext(
             "task-1", 42L, 7L, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF", brief.getId(),
-            "{\"mode\":\"FINAL_SYNTHESIS\"}", "sha256:" + "a".repeat(64), "key", "correlation",
+            "{\"mode\":\"" + mode + "\"}", "sha256:" + "a".repeat(64), "key", "correlation",
             "1.0", "1.0", "ko-KR", 1, 3);
-        return new TestContext(brief, fieldValues, taskRuns, mapper, service, claim, worker);
+        return new TestContext(brief, taskRuns, mapper, service, claim, worker);
     }
 
-    private ExecutionResponse response(TestContext test, tools.jackson.databind.JsonNode result) {
+    private JsonNode result(ObjectMapper mapper, String safetyDecision, String questions) {
+        return mapper.readTree("""
+            {
+              "safetyReview":{"decision":"%s","categories":[],"restrictions":[],"userFacingReason":"안전 확인 결과입니다."},
+              "interpretation":{
+                "interpretedProblem":"폐기 문제","interpretedTargetUsers":"지역 식당","usageContext":"영업 종료 후",
+                "industryCategory":"폐기물 관리","researchScope":"감축 서비스","conciseIdeaDefinition":"폐기를 줄이는 서비스",
+                "targetRegionInterpretation":"","relevantKnownCompetitorContext":""
+              },
+              "questions":%s,"contradictions":[],
+              "readiness":{"status":"READY_FOR_REVIEW","score":90,"missingFieldKeys":[]},
+              "userFacingSummary":"입력하신 아이디어를 이렇게 이해했습니다."
+            }
+            """.formatted(safetyDecision, questions));
+    }
+
+    private ExecutionResponse response(TestContext test, JsonNode result) {
         return new ExecutionResponse(
             "1.0", "IDEA_BRIEF_DERIVATION", "1.0", "task-1", "attempt-1", "correlation",
             test.worker().inputHash(), "1.0", result, test.mapper().createArrayNode(),
             test.mapper().createArrayNode(), null);
     }
 
-    private record TestContext(IdeaBrief brief, List<IdeaBriefField> fieldValues, TaskRunService taskRuns,
-        ObjectMapper mapper, IdeaBriefDerivationCommitService service, TaskRunService.Claim claim,
+    private record TestContext(IdeaBrief brief, TaskRunService taskRuns, ObjectMapper mapper,
+        IdeaBriefDerivationCommitService service, TaskRunService.Claim claim,
         TaskRunWorkerContext worker) { }
 }

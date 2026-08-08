@@ -1,10 +1,7 @@
 package com.aivle.backend.pipeline.idea.application;
 
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
-import com.aivle.backend.pipeline.idea.domain.IdeaBriefField;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefFieldCatalog;
-import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
-import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestion;
 import com.aivle.backend.pipeline.idea.domain.IdeaQuestionType;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
@@ -23,10 +20,7 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class IdeaBriefDerivationCommitService {
     private static final Set<String> RESULT_FIELDS = Set.of(
-        "fields", "questions", "contradictions", "readiness", "userFacingSummary"
-    );
-    private static final Set<String> FIELD_FIELDS = Set.of(
-        "fieldKey", "value", "decisionState", "provenance"
+        "safetyReview", "interpretation", "questions", "contradictions", "readiness", "userFacingSummary"
     );
     private static final Set<String> QUESTION_FIELDS = Set.of(
         "targetFieldKey", "prompt", "type", "options"
@@ -78,20 +72,31 @@ public class IdeaBriefDerivationCommitService {
             throw new IllegalArgumentException("final synthesis cannot generate questions");
         }
 
-        for (JsonNode item : requireArray(result, "fields", 30)) {
-            requireObject(item, FIELD_FIELDS);
-            String fieldKey = text(item, "fieldKey", 80);
-            IdeaBriefFieldCatalog.require(fieldKey);
-            String value = text(item, "value", 20_000);
-            IdeaDecisionState decision = IdeaDecisionState.valueOf(text(item, "decisionState", 20));
-            IdeaFieldProvenance provenance = IdeaFieldProvenance.valueOf(text(item, "provenance", 30));
-            if (decision == IdeaDecisionState.LOCKED || provenance == IdeaFieldProvenance.USER_CONFIRMED) {
-                throw new IllegalArgumentException("AI result violates field authority");
-            }
-            IdeaBriefField existing = fields.findByBriefIdAndFieldKey(brief.getId(), fieldKey).orElse(null);
-            if (existing == null) fields.save(IdeaBriefField.aiProposal(brief, fieldKey, value, decision, provenance));
-            else existing.applyAi(value, decision, provenance);
+        JsonNode safety = result.get("safetyReview");
+        requireObject(safety, Set.of("decision", "categories", "restrictions", "userFacingReason"));
+        String safetyDecision = text(safety, "decision", 40);
+        JsonNode safetyCategories = requireTextArray(safety, "categories", 10, 80);
+        JsonNode safetyRestrictions = requireTextArray(safety, "restrictions", 10, 500);
+
+        JsonNode interpretation = result.get("interpretation");
+        requireObject(interpretation, Set.of(
+            "interpretedProblem", "interpretedTargetUsers", "usageContext", "industryCategory",
+            "researchScope", "conciseIdeaDefinition", "targetRegionInterpretation",
+            "relevantKnownCompetitorContext"
+        ));
+        for (String key : Set.of("interpretedProblem", "interpretedTargetUsers", "usageContext",
+                "industryCategory", "researchScope", "conciseIdeaDefinition")) {
+            text(interpretation, key, 20_000);
         }
+        optionalText(interpretation, "targetRegionInterpretation", 20_000);
+        optionalText(interpretation, "relevantKnownCompetitorContext", 20_000);
+        brief.applySafetyAndInterpretation(
+            safetyDecision,
+            mapper.writeValueAsString(safetyCategories),
+            mapper.writeValueAsString(safetyRestrictions),
+            text(safety, "userFacingReason", 1_000),
+            mapper.writeValueAsString(interpretation)
+        );
 
         questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())
             .forEach(IdeaQuestion::retire);
@@ -142,7 +147,10 @@ public class IdeaBriefDerivationCommitService {
             questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId()),
             true
         );
-        if (assessment.unansweredQuestionCount() > 0 || !assessment.missingFieldKeys().isEmpty()) {
+        if ("BLOCK_OR_REFRAME".equals(safetyDecision)) {
+            if (order > 0) throw new IllegalArgumentException("blocked safety result cannot ask follow-up questions");
+            brief.safetyBlocked();
+        } else if (assessment.unansweredQuestionCount() > 0 || !assessment.missingFieldKeys().isEmpty()) {
             brief.needsInput(assessment.unansweredQuestionCount(), assessment.missingFieldKeys().size());
         } else {
             brief.readyForReview();
@@ -175,6 +183,12 @@ public class IdeaBriefDerivationCommitService {
         return value;
     }
 
+    private JsonNode requireTextArray(JsonNode root, String name, int max, int itemMax) {
+        JsonNode value = requireArray(root, name, max);
+        for (JsonNode item : value) optionalTextValue(item, itemMax);
+        return value;
+    }
+
     private void requireObject(JsonNode value, Set<String> expected) {
         if (value == null || !value.isObject() || !Set.copyOf(value.propertyNames()).equals(expected)) {
             throw new IllegalArgumentException("result object fields invalid");
@@ -191,6 +205,21 @@ public class IdeaBriefDerivationCommitService {
 
     private String textValue(JsonNode value, int max) {
         if (value == null || !value.isTextual() || value.asText().isBlank() || value.asText().length() > max) {
+            throw new IllegalArgumentException("text value invalid");
+        }
+        return value.asText();
+    }
+
+    private String optionalText(JsonNode value, String name, int max) {
+        JsonNode field = value.get(name);
+        if (field == null || !field.isTextual() || field.asText().length() > max) {
+            throw new IllegalArgumentException(name + " invalid");
+        }
+        return field.asText();
+    }
+
+    private String optionalTextValue(JsonNode value, int max) {
+        if (value == null || !value.isTextual() || value.asText().length() > max) {
             throw new IllegalArgumentException("text value invalid");
         }
         return value.asText();

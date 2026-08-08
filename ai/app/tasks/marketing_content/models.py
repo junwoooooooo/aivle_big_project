@@ -19,7 +19,50 @@ ContentType = Literal[
 ]
 
 
+class PreMarketSomShare(StrictModel):
+    targetSharePercent: float = Field(gt=0)
+    horizonYears: int = Field(gt=0)
+    rationale: Annotated[str, Field(min_length=0, max_length=1000)] = ""
+    assumptions: list[ClaimText] = Field(default_factory=list, max_length=30)
+
+
+class PreMarketSom(StrictModel):
+    amount: float = Field(gt=0)
+    currency: Annotated[str, Field(min_length=1, max_length=20)]
+    period: Annotated[str, Field(min_length=0, max_length=100)] = ""
+    calculationBasis: Annotated[str, Field(min_length=0, max_length=1000)] = ""
+    assumptions: list[ClaimText] = Field(default_factory=list, max_length=30)
+    confidence: Annotated[str, Field(min_length=0, max_length=30)] = ""
+
+
+class OfficialEvidenceReference(StrictModel):
+    referenceIndex: int = -1
+    sourceType: Annotated[str, Field(min_length=0, max_length=30)] = ""
+    lawId: Annotated[str, Field(min_length=0, max_length=100)] = ""
+    officialIdentifier: Annotated[str, Field(min_length=0, max_length=100)] = ""
+    lawName: Annotated[str, Field(min_length=0, max_length=500)] = ""
+    articleReference: Annotated[str, Field(min_length=0, max_length=200)] = ""
+    title: Annotated[str, Field(min_length=0, max_length=500)] = ""
+    officialSourceUri: Annotated[str, Field(min_length=0, max_length=1000)] = ""
+    jurisdiction: Annotated[str, Field(min_length=0, max_length=10)] = ""
+    promulgationDate: Annotated[str, Field(min_length=0, max_length=30)] = ""
+    effectiveDate: Annotated[str, Field(min_length=0, max_length=30)] = ""
+    retrievedAt: Annotated[str, Field(min_length=0, max_length=50)] = ""
+    contentHash: HashText | None = None
+    registryVersion: Annotated[str, Field(min_length=0, max_length=80)] = ""
+
+
 class MarketingSourceSnapshot(StrictModel):
+    contract: Literal["marketing-source-snapshot-v1"]
+    schemaVersion: Literal["2.0"]
+    snapshotId: Annotated[str, Field(min_length=1, max_length=64)]
+    hash: HashText
+    createdAt: Annotated[str, Field(min_length=1, max_length=50)]
+    projectId: int
+    selectionId: int
+    conceptId: Annotated[str, Field(min_length=1, max_length=64)]
+    marketAnalysisSeedSnapshotId: Annotated[str, Field(min_length=1, max_length=64)]
+    marketAnalysisSeedSnapshotHash: HashText
     conceptName: ShortText
     targetSegment: ShortText
     problem: ShortText
@@ -27,17 +70,26 @@ class MarketingSourceSnapshot(StrictModel):
     positioning: ShortText
     keyFeatures: list[FeatureText] = Field(min_length=1, max_length=30)
     pricing: ShortText
+    targetRegion: ShortText
+    revenueModel: ShortText
+    price: ShortText
     channels: list[FeatureText] = Field(min_length=1, max_length=20)
     competitorDifferentiators: list[FeatureText] = Field(max_length=30)
+    preMarketSomShare: PreMarketSomShare
+    preMarketSom: PreMarketSom
+    legalStatus: ShortText
     allowedClaims: list[ClaimText] = Field(max_length=30)
     prohibitedClaims: list[ClaimText] = Field(max_length=30)
     requiredDisclosures: list[ClaimText] = Field(max_length=30)
+    requiredControls: list[ClaimText] = Field(max_length=30)
+    communicationRequiredControls: list[ClaimText] = Field(max_length=30)
+    officialEvidenceReferences: list[OfficialEvidenceReference] = Field(max_length=200)
     sourceSnapshotHash: HashText
 
 
 class MarketingContentRequest(StrictModel):
     contract: Literal["marketing-content-request-v1"]
-    planningSnapshotId: Annotated[str, Field(min_length=1, max_length=64)]
+    marketingSourceSnapshotId: Annotated[str, Field(min_length=1, max_length=64)]
     contentType: ContentType
     channel: Annotated[str, Field(min_length=1, max_length=120)]
     purpose: Annotated[str, Field(min_length=1, max_length=500)]

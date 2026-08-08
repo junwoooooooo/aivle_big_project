@@ -1,0 +1,79 @@
+package com.aivle.backend.pipeline.concept.domain;
+
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import tools.jackson.databind.JsonNode;
+
+public final class ConceptFingerprint {
+    private static final List<String> FIELDS = List.of(
+        "targetUsers", "problemScenario", "coreValue", "solutionMechanism", "revenueModel",
+        "channels", "platformRole", "operatingModel", "partnerModel"
+    );
+
+    private ConceptFingerprint() {}
+
+    public static Value from(JsonNode candidate) {
+        List<String> values = FIELDS.stream().map(field -> normalize(candidate.path(field).asText())).toList();
+        return new Value(ConceptCanonicalizer.hash(values.toArray(String[]::new)),
+            ConceptCanonicalizer.hash(values.get(0), values.get(1), values.get(2), values.get(3), values.get(6)),
+            values);
+    }
+
+    public static boolean duplicates(JsonNode left, JsonNode right) {
+        Value first = from(left);
+        Value second = from(right);
+        if (first.canonicalHash().equals(second.canonicalHash()) || first.majorFieldHash().equals(second.majorFieldHash())) {
+            return true;
+        }
+        int materiallySimilarFields = 0;
+        double total = 0;
+        for (int index = 0; index < first.values().size(); index++) {
+            double score = similarity(first.values().get(index), second.values().get(index));
+            total += score;
+            if (score >= 0.72) materiallySimilarFields++;
+        }
+        return similarity(String.join(" ", first.values()), String.join(" ", second.values())) >= 0.76
+            || (materiallySimilarFields >= 6 && total / first.values().size() >= 0.64);
+    }
+
+    static double similarity(String left, String right) {
+        if (left.equals(right)) return 1.0;
+        Set<String> first = ngrams(left.replace(" ", ""), 3);
+        Set<String> second = ngrams(right.replace(" ", ""), 3);
+        if (first.isEmpty() || second.isEmpty()) return 0;
+        Set<String> intersection = new HashSet<>(first);
+        intersection.retainAll(second);
+        Set<String> union = new HashSet<>(first);
+        union.addAll(second);
+        return (double) intersection.size() / union.size();
+    }
+
+    private static Set<String> ngrams(String value, int size) {
+        Set<String> result = new HashSet<>();
+        if (value.length() < size) {
+            if (!value.isBlank()) result.add(value);
+            return result;
+        }
+        for (int index = 0; index <= value.length() - size; index++) {
+            result.add(value.substring(index, index + size));
+        }
+        return result;
+    }
+
+    static String normalize(String value) {
+        if (value == null) return "";
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFKC)
+            .toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", " ").trim().replaceAll("\\s+", " ");
+        List<String> meaningful = new ArrayList<>();
+        for (String token : normalized.split(" ")) {
+            if (!Set.of("서비스", "플랫폼", "솔루션", "시스템", "기반", "제공").contains(token)) meaningful.add(token);
+        }
+        return String.join(" ", meaningful);
+    }
+
+    public record Value(String canonicalHash, String majorFieldHash, List<String> values) {}
+}

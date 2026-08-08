@@ -7,29 +7,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class IdeaBriefFieldCatalog {
-    private static final Set<IdeaQuestionType> TEXT = Set.of(
-        IdeaQuestionType.FREE_TEXT, IdeaQuestionType.SINGLE_SELECT,
-        IdeaQuestionType.MULTI_SELECT, IdeaQuestionType.UNDECIDED
+    private static final Set<IdeaQuestionType> CORE_QUESTION_TYPES = Set.of(
+        IdeaQuestionType.FREE_TEXT, IdeaQuestionType.SINGLE_SELECT, IdeaQuestionType.MULTI_SELECT
     );
-    private static final Set<IdeaQuestionType> FACT = Set.of(
-        IdeaQuestionType.FREE_TEXT, IdeaQuestionType.SINGLE_SELECT, IdeaQuestionType.UNDECIDED
-    );
+    private static final Set<IdeaQuestionType> NO_QUESTIONS = Set.of();
+
     private static final List<FieldDefinition> FIELDS = List.of(
-        field("problem", "해결 문제", true, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("targetCustomers", "대상 고객", true, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("beneficiaries", "수혜자", true, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("usageContext", "사용 상황", true, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("expectedOutcome", "기대 결과", true, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("targetRegion", "대상 지역", true, IdeaDecisionState.PREFERRED, true, FACT),
-        field("fixedConditions", "반드시 유지", false, IdeaDecisionState.LOCKED, false, TEXT),
-        field("preferredConditions", "선호 조건", false, IdeaDecisionState.PREFERRED, false, TEXT),
-        field("openDecisions", "열어 두기", false, IdeaDecisionState.OPEN, false, TEXT),
-        field("assumptions", "가정", false, IdeaDecisionState.ASSUMPTION, false, TEXT),
-        field("prohibitedMethods", "금지 방식", false, IdeaDecisionState.LOCKED, true, TEXT),
-        field("physicalActivity", "물리 활동", true, IdeaDecisionState.PREFERRED, true, FACT),
-        field("personalData", "개인정보", true, IdeaDecisionState.PREFERRED, true, FACT),
-        field("payment", "결제", true, IdeaDecisionState.PREFERRED, true, FACT),
-        field("requiredPartners", "필요 파트너·자격", true, IdeaDecisionState.PREFERRED, true, TEXT)
+        required("ideaOverview", "아이디어 개요"),
+        required("problem", "해결하려는 문제"),
+        required("targetUsers", "예상 사용자"),
+        optional("targetRegion", "대상 지역"),
+        optional("knownCompetitors", "알려진 경쟁자"),
+        optional("revenueModel", "수익 모델"),
+        optional("price", "가격"),
+        optional("channels", "채널"),
+        optional("differentiators", "차별점"),
+        optional("budgetConstraint", "예산 제약"),
+        optional("teamConstraint", "팀 제약"),
+        optional("timelineConstraint", "일정 제약"),
+        optional("otherConstraint", "기타 제약")
     );
     private static final Map<String, FieldDefinition> BY_KEY = FIELDS.stream()
         .collect(Collectors.toUnmodifiableMap(FieldDefinition::key, Function.identity()));
@@ -40,16 +36,18 @@ public final class IdeaBriefFieldCatalog {
 
     public static FieldDefinition require(String key) {
         FieldDefinition definition = BY_KEY.get(key);
-        if (definition == null) throw new IllegalArgumentException("unknown idea brief field");
+        if (definition == null) throw new IllegalArgumentException("unknown market seed field");
         return definition;
     }
 
     public static boolean contains(String key) { return BY_KEY.containsKey(key); }
 
-    private static FieldDefinition field(String key, String label, boolean required,
-            IdeaDecisionState defaultState, boolean regulatorySensitive,
-            Set<IdeaQuestionType> questionTypes) {
-        return new FieldDefinition(key, label, required, defaultState, regulatorySensitive, questionTypes);
+    private static FieldDefinition required(String key, String label) {
+        return new FieldDefinition(key, label, true, IdeaDecisionState.LOCKED, false, CORE_QUESTION_TYPES);
+    }
+
+    private static FieldDefinition optional(String key, String label) {
+        return new FieldDefinition(key, label, false, IdeaDecisionState.OPEN, false, NO_QUESTIONS);
     }
 
     public record FieldDefinition(

@@ -18,10 +18,19 @@ import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
 import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
+import com.aivle.backend.pipeline.finance.repository.FinancialInputPreparationRepository;
+import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
-import com.aivle.backend.pipeline.planning.repository.FinalizedPlanningSnapshotRepository;
+import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
+import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
-import com.aivle.backend.pipeline.selection.repository.SelectedConceptSnapshotRepository;
+import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
+import com.aivle.backend.pipeline.techops.domain.TechOpsInputPreparation;
+import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
+import com.aivle.backend.pipeline.finance.domain.FinancialInputPreparation;
+import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
+import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.time.LocalDateTime;
@@ -34,12 +43,17 @@ class ProjectModuleStatusServiceTests {
     private final ConceptFactoryRunRepository conceptRuns = mock(ConceptFactoryRunRepository.class);
     private final ConceptSlotRepository slots = mock(ConceptSlotRepository.class);
     private final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
-    private final SelectedConceptSnapshotRepository snapshots = mock(SelectedConceptSnapshotRepository.class);
+    private final MarketAnalysisSeedSnapshotRepository snapshots = mock(MarketAnalysisSeedSnapshotRepository.class);
     private final ModuleRunRepository runs = mock(ModuleRunRepository.class);
-    private final FinalizedPlanningSnapshotRepository finalized = mock(FinalizedPlanningSnapshotRepository.class);
     private final MarketingContentRepository marketing = mock(MarketingContentRepository.class);
+    private final MarketingSourceSnapshotRepository marketingSources = mock(MarketingSourceSnapshotRepository.class);
+    private final TechOpsInputPreparationRepository techOpsPreparations = mock(TechOpsInputPreparationRepository.class);
+    private final TechOpsInputSnapshotRepository techOpsSnapshots = mock(TechOpsInputSnapshotRepository.class);
+    private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
+    private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
-        projects, briefs, conceptRuns, slots, selections, snapshots, runs, finalized, marketing);
+        projects, briefs, conceptRuns, slots, selections, snapshots, runs, marketing, marketingSources,
+        techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
@@ -63,7 +77,8 @@ class ProjectModuleStatusServiceTests {
 
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_FACTORY, PipelineModuleType.CONCEPT_SELECTION,
-            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_PERSONA_TEST, PipelineModuleType.MARKETING);
+            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
+            PipelineModuleType.FINANCE, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.RUNNING);
@@ -79,7 +94,52 @@ class ProjectModuleStatusServiceTests {
         var modules = service.findAll(7L, 41L);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(3).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(4).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+    }
+
+    @Test
+    void exposesIndependentTechOpsPreparationStatusAfterMarketSeedFinalization() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(mock(Project.class)));
+        ConceptSelection selection = mock(ConceptSelection.class); MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        TechOpsInputPreparation preparation = mock(TechOpsInputPreparation.class);
+        when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1");
+        when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
+        when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
+        when(techOpsPreparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(41L, "market-seed-1"))
+            .thenReturn(Optional.of(preparation));
+
+        var techOps = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.TECH_OPS).findFirst().orElseThrow();
+
+        assertThat(techOps.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
+        assertThat(techOps.requiredInputs()).containsExactly("techOpsRequiredFacts", "techOpsRequiredDecisions");
+        assertThat(techOps.nextAction().route()).isEqualTo("/tech-ops");
+    }
+
+    @Test
+    void exposesIndependentFinancialPreparationStatusAfterTechOpsSnapshotFinalization() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(mock(Project.class)));
+        ConceptSelection selection = mock(ConceptSelection.class); MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        TechOpsInputSnapshot techOpsSnapshot = mock(TechOpsInputSnapshot.class);
+        FinancialInputPreparation preparation = mock(FinancialInputPreparation.class);
+        when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1"); when(techOpsSnapshot.getId()).thenReturn("tech-1");
+        when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
+        when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
+        when(techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("market-seed-1", 41L))
+            .thenReturn(Optional.of(techOpsSnapshot));
+        when(financialPreparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(41L, "tech-1"))
+            .thenReturn(Optional.of(preparation));
+
+        var finance = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
+
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
+        assertThat(finance.requiredInputs()).containsExactly("financialRequiredInputs");
+        assertThat(finance.nextAction().route()).isEqualTo("/finance");
     }
 
     @Test

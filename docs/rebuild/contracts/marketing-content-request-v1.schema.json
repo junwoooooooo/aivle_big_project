@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "contract",
-    "planningSnapshotId",
+    "marketingSourceSnapshotId",
     "contentType",
     "channel",
     "purpose",
@@ -16,8 +16,10 @@
     "contract": {
       "const": "marketing-content-request-v1"
     },
-    "planningSnapshotId": {
-      "type": "string"
+    "marketingSourceSnapshotId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
     },
     "contentType": {
       "enum": [
@@ -32,13 +34,19 @@
       ]
     },
     "channel": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
     },
     "purpose": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
     },
     "tone": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
     },
     "length": {
       "enum": [
@@ -49,18 +57,26 @@
     },
     "requiredPhrases": {
       "type": "array",
+      "maxItems": 20,
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
       }
     },
     "excludedPhrases": {
       "type": "array",
+      "maxItems": 20,
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
       }
     },
     "additionalInstruction": {
-      "type": "string"
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 2000
     }
   }
 }

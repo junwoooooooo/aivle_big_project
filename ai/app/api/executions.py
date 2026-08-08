@@ -23,6 +23,7 @@ TASK_TYPES = {
     "CONCEPT_CANDIDATE",
     "CONCEPT_LEGAL_REVIEW",
     "CONCEPT_REDESIGN",
+    "CONCEPT_HYPOTHESIS_ALTERNATIVE",
     "MARKETING_CONTENT_GENERATION",
 }
 
@@ -124,12 +125,12 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN"}:
+    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        source_hash = body.input.get("source", {}).get("sourceSnapshotHash", "unknown")
+        source_hash = body.input.get("source", {}).get("hash", body.input.get("source", {}).get("sourceSnapshotHash", "unknown"))
         source_keys = [f"finalized-planning:{source_hash}"]
     elif body.taskType == "IDEA_BRIEF_DERIVATION":
         from app.tasks.idea_brief.models import IdeaBriefDerivationInput
@@ -159,6 +160,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "CONCEPT_REDESIGN":
             from app.tasks.concept_redesign import execute_concept_redesign
             result = await execute_concept_redesign(body.input)
+        elif body.taskType == "CONCEPT_HYPOTHESIS_ALTERNATIVE":
+            from app.tasks.concept_hypothesis_alternative import execute_concept_hypothesis_alternative
+            result = await execute_concept_hypothesis_alternative(body.input)
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)

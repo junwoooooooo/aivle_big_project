@@ -8,10 +8,13 @@ import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.LegalDisposition;
+import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.CandidateDisposition;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.SlotWork;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.Work;
+import com.aivle.backend.pipeline.concept.application.ConceptLegalFactPatternMapper;
 import com.aivle.backend.pipeline.concept.domain.ConceptAttemptError;
 import com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase;
+import com.aivle.backend.pipeline.concept.domain.ConceptGenerationStrategy;
 import com.aivle.backend.pipeline.concept.domain.VariationFocus;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
@@ -141,6 +144,43 @@ class ConceptFactoryWorkerTests {
     }
 
     @Test
+    void redesignedDuplicateIsRejectedBeforeAnotherLegalCall() {
+        Harness h = new Harness();
+        h.successfulAi();
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.ACCEPTED, CandidateDisposition.DUPLICATE, CandidateDisposition.ACCEPTED);
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN, LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+
+        verify(h.execution, times(3)).validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList());
+        verify(h.ai, times(2)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+        verify(h.execution).beginReplacement("run", "slot-1", 1);
+    }
+
+    @Test
+    void legalInputContainsOnlyFactPatternHashAndExternalFacts() {
+        Harness h = new Harness();
+        h.successfulAi();
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+
+        var input = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(h.ai).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), input.capture(), anyString(), anyString());
+        JsonNode parsed = h.mapper.readTree(input.getValue());
+        assertThat(parsed.path("legalFactPattern").path("commercialRoles").path("sellerRole").asText())
+            .isEqualTo("예약 사업자");
+        assertThat(parsed.path("factPatternHash").asText()).matches("sha256:[0-9a-f]{64}");
+        assertThat(parsed.path("externalFactContext").has("facts")).isTrue();
+        assertThat(input.getValue()).doesNotContain("sharedOfficialEvidence", "preMarketSom");
+    }
+
+    @Test
     void needsInputIsExplicitTerminalOutcome() {
         Harness h = new Harness();
         h.successfulAi();
@@ -179,6 +219,38 @@ class ConceptFactoryWorkerTests {
         verify(h.execution).failSlot(eq("run"), eq("slot-1"), anyString(),
             eq(ConceptAttemptError.PERMANENT_PROVIDER_FAILURE), eq(false), eq(true));
         verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+    }
+
+    @Test
+    void duplicateIsReplacedBeforeLegalReviewAndTargetSlotCanStillBecomeEligible() {
+        Harness h = new Harness();
+        h.successfulAi();
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.DUPLICATE, CandidateDisposition.ACCEPTED);
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+        verify(h.execution).beginReplacement("run", "slot-1", 1);
+        verify(h.execution, times(2)).recordCandidateInspection("run");
+        verify(h.ai, times(1)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void duplicateReplacementExhaustionUsesDistinctConceptFailureCode() {
+        Harness h = new Harness();
+        h.successfulAi();
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.DUPLICATE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
+        verify(h.execution).recordCandidateExhaustion(anyString(),
+            eq(ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS));
+        verify(h.execution).failSlot("run", "slot-1", null,
+            ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS, false, false);
+        verify(h.ai, never()).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -266,12 +338,17 @@ class ConceptFactoryWorkerTests {
             "1.0", "1.0", "ko-KR", 1, 1);
 
         Harness() {
+            when(execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+                .thenReturn(CandidateDisposition.ACCEPTED);
             when(execution.beginAttempt(anyString(), any(), anyString())).thenAnswer(invocation ->
                 invocation.getArgument(0) + "-attempt-" + attemptSequence.incrementAndGet());
             when(execution.beginRetryAttempt(anyString(), any(), anyString())).thenAnswer(invocation ->
                 invocation.getArgument(0) + "-retry-" + attemptSequence.incrementAndGet());
             when(execution.beginLegalReviewAttempt(anyString(), anyString())).thenAnswer(invocation ->
                 invocation.getArgument(0) + "-legal-" + attemptSequence.incrementAndGet());
+            when(execution.legalFactPattern(any())).thenReturn(new ConceptLegalFactPatternMapper.Result(
+                mapper.readTree("{\"schemaVersion\":\"2.0\",\"commercialRoles\":{\"sellerRole\":\"예약 사업자\"},\"paymentFlow\":{\"value\":[\"사업자 구독 결제\"]}}"),
+                "sha256:" + "d".repeat(64)));
         }
 
         void successfulAi() {
@@ -292,8 +369,10 @@ class ConceptFactoryWorkerTests {
         Work work(int count) {
             List<SlotWork> slots = Arrays.stream(VariationFocus.values()).limit(count)
                 .map(focus -> slot(focus.ordinal() + 1)).toList();
-            return new Work("run", 1L, "brief", List.of(Map.of("fieldKey", "problem", "value", "x")),
-                Map.of("officialEvidence", List.of(Map.of("referenceIndex", 0))), slots);
+            return new Work("run", 1L, "brief", ConceptGenerationStrategy.EXPLORE,
+                List.of(Map.of("fieldKey", "problem", "value", "x", "source", "USER_INPUT", "authority", "LOCKED")),
+                Map.of("sourceSnapshotHash", "sha256:" + "a".repeat(64),
+                    "registryVersion", "legal-registry-v1", "facts", List.of()), slots);
         }
 
         JsonNode candidate() {
@@ -301,7 +380,7 @@ class ConceptFactoryWorkerTests {
         }
 
         JsonNode legal() {
-            return mapper.readTree("{\"status\":\"IMPLEMENTABLE\",\"requiredControls\":[],\"prohibitedVariants\":[]}");
+            return mapper.readTree("{\"status\":\"IMPLEMENTABLE\",\"requiredControls\":[],\"prohibitedVariants\":[],\"redesignRequirements\":[\"결제 주체를 명시\"]}");
         }
     }
 }

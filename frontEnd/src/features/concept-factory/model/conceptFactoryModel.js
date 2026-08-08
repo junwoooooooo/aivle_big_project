@@ -14,6 +14,7 @@ export const SLOT_STATUS_COPY = Object.freeze({
   GENERATED: '사업 구조를 정리하고 있습니다.',
   SCHEMA_INVALID: '사업 구조를 다시 정리하고 있습니다.',
   VALIDATING_ORIGIN: '사업 구조를 정리하고 있습니다.',
+  VALIDATING_DISTINCTNESS: '기존 후보와 실질적으로 다른 사업 구조인지 확인하고 있습니다.',
   VALIDATING_LEGAL: '법률 근거를 확인하고 있습니다.',
   REDESIGNING: '필수 통제를 반영하고 있습니다.',
   REPLACING: '부적합 후보를 다른 방향으로 교체하고 있습니다.',

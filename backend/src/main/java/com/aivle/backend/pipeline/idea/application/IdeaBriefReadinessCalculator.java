@@ -96,7 +96,8 @@ public class IdeaBriefReadinessCalculator {
     private boolean unresolved(Contradiction contradiction, Map<String, IdeaBriefField> fields) {
         return contradiction.fieldKeys().stream().anyMatch(key -> {
             IdeaBriefField field = fields.get(key);
-            return field == null || field.getProvenance() != IdeaFieldProvenance.USER_CONFIRMED;
+            return field == null || (field.getProvenance() != IdeaFieldProvenance.USER_INPUT
+                && field.getProvenance() != IdeaFieldProvenance.USER_CONFIRMED);
         });
     }
 

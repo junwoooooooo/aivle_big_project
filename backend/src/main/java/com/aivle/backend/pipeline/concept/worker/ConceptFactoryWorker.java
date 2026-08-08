@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.concept.worker;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService;
+import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.CandidateDisposition;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.LegalDisposition;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.SlotWork;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.Work;
@@ -97,30 +98,50 @@ public class ConceptFactoryWorker {
             if (replacementRound == 0 && slot.candidateJson() != null) {
                 candidate = mapper.readTree(slot.candidateJson());
                 attemptId = slot.candidateAttemptId();
-                publishSlot(context, slot, "job.concept.slot.validating_legal");
             } else {
                 execution.recordCandidateInspection(work.runId());
                 Generation generation = generate(context, work, slot, phase, TaskType.CONCEPT_CANDIDATE,
-                    mapper.writeValueAsString(Map.of("ideaBriefSnapshotId", work.snapshotId(),
-                        "variationFocus", slot.focus().name(), "fields", work.fields())));
+                    mapper.writeValueAsString(Map.of(
+                        "ideaBriefSnapshotId", work.snapshotId(),
+                        "generationStrategy", work.generationStrategy().name(),
+                        "candidateIndex", slot.slotNumber(),
+                        "originalCandidate", work.generationStrategy().name().equals("AS_IS") && slot.slotNumber() == 1,
+                        "diversityFocus", slot.focus().name(),
+                        "fields", work.fields())));
                 if (generation.outcome() == GenerationOutcome.FAILED) return SlotOutcome.FAILED;
                 if (generation.outcome() == GenerationOutcome.REPLACE) {
-                    if (!replace(context, work, slot, replacementRound, generation.attemptId())) return SlotOutcome.FAILED;
+                    if (!replace(context, work, slot, replacementRound, generation.attemptId(),
+                        ConceptAttemptError.INTERNAL_EXECUTION_ERROR)) return SlotOutcome.FAILED;
                     continue;
                 }
                 candidate = generation.result();
                 attemptId = generation.attemptId();
                 execution.generated(slot.slotId(), attemptId, candidate);
                 publishSlot(context, slot, "job.concept.slot.generated");
-                publishSlot(context, slot, "job.concept.slot.validating_origin");
-                publishSlot(context, slot, "job.concept.slot.validating_legal");
             }
+
+            publishSlot(context, slot, "job.concept.slot.validating_origin");
+            CandidateDisposition candidateDisposition = execution.validateCandidate(
+                work.runId(), slot.slotId(), attemptId, candidate, work.generationStrategy(),
+                slot.slotNumber(), work.fields());
+            if (candidateDisposition != CandidateDisposition.ACCEPTED) {
+                publishSlot(context, slot, "job.concept.slot.rejected");
+                ConceptAttemptError exhaustion = candidateDisposition == CandidateDisposition.DUPLICATE
+                    ? ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS
+                    : candidateDisposition == CandidateDisposition.LOCKED_INVALID
+                        ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
+                if (!replace(context, work, slot, replacementRound, attemptId, exhaustion)) return SlotOutcome.FAILED;
+                continue;
+            }
+            publishSlot(context, slot, "job.concept.slot.validating_distinctness");
+            publishSlot(context, slot, "job.concept.slot.validating_legal");
 
             Review review = review(context, work, slot, phase, attemptId, candidate);
             if (review.outcome() == ReviewOutcome.FAILED) return SlotOutcome.FAILED;
             if (review.outcome() == ReviewOutcome.REPLACE) {
                 publishSlot(context, slot, "job.concept.slot.rejected");
-                if (!replace(context, work, slot, replacementRound, review.attemptId())) return SlotOutcome.FAILED;
+                if (!replace(context, work, slot, replacementRound, review.attemptId(),
+                    ConceptAttemptError.INTERNAL_EXECUTION_ERROR)) return SlotOutcome.FAILED;
                 continue;
             }
             if (review.disposition() == LegalDisposition.NEEDS_INPUT) return SlotOutcome.NEEDS_INPUT;
@@ -131,16 +152,34 @@ public class ConceptFactoryWorker {
 
             if (review.disposition() == LegalDisposition.REDESIGN && slot.redesignCount() == 0) {
                 publishSlot(context, slot, "job.concept.slot.redesigning");
+                var reviewedPattern = execution.legalFactPattern(candidate);
                 Generation redesign = generate(context, work, slot, ConceptAttemptPhase.REDESIGN, TaskType.CONCEPT_REDESIGN,
                     mapper.writeValueAsString(Map.of("candidate", candidate,
                         "safeConstraints", review.legal().path("requiredControls"),
-                        "prohibitedVariants", review.legal().path("prohibitedVariants"))));
+                        "prohibitedVariants", review.legal().path("prohibitedVariants"),
+                        "designGaps", review.legal().path("redesignRequirements"),
+                        "legalFactPattern", reviewedPattern.factPattern())));
                 if (redesign.outcome() == GenerationOutcome.FAILED) return SlotOutcome.FAILED;
                 attemptId = redesign.attemptId();
                 if (redesign.outcome() == GenerationOutcome.SUCCESS) {
                     execution.generated(slot.slotId(), redesign.attemptId(), redesign.result());
                     publishSlot(context, slot, "job.concept.slot.generated");
                     publishSlot(context, slot, "job.concept.slot.validating_origin");
+                    CandidateDisposition redesignedValidation = execution.validateCandidate(
+                        work.runId(), slot.slotId(), redesign.attemptId(), redesign.result(),
+                        work.generationStrategy(), slot.slotNumber(), work.fields());
+                    if (redesignedValidation != CandidateDisposition.ACCEPTED) {
+                        publishSlot(context, slot, "job.concept.slot.rejected");
+                        ConceptAttemptError exhaustion = redesignedValidation == CandidateDisposition.DUPLICATE
+                            ? ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS
+                            : redesignedValidation == CandidateDisposition.LOCKED_INVALID
+                                ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
+                        if (!replace(context, work, slot, replacementRound, redesign.attemptId(), exhaustion)) {
+                            return SlotOutcome.FAILED;
+                        }
+                        continue;
+                    }
+                    publishSlot(context, slot, "job.concept.slot.validating_distinctness");
                     publishSlot(context, slot, "job.concept.slot.validating_legal");
                     Review redesigned = review(context, work, slot, ConceptAttemptPhase.REDESIGN,
                         redesign.attemptId(), redesign.result());
@@ -154,7 +193,8 @@ public class ConceptFactoryWorker {
             }
 
             publishSlot(context, slot, "job.concept.slot.rejected");
-            if (!replace(context, work, slot, replacementRound, attemptId)) return SlotOutcome.FAILED;
+            if (!replace(context, work, slot, replacementRound, attemptId,
+                ConceptAttemptError.INTERNAL_EXECUTION_ERROR)) return SlotOutcome.FAILED;
         }
         throw new IllegalStateException("bounded replacement loop did not terminate");
     }
@@ -188,12 +228,11 @@ public class ConceptFactoryWorker {
 
     private Review review(TaskRunWorkerContext context, Work work, SlotWork slot, ConceptAttemptPhase phase,
             String attemptId, JsonNode candidate) {
-        List<Map<String, Object>> sharedEvidence = execution.sharedOfficialEvidence(work.runId());
-        if (sharedEvidence == null) sharedEvidence = List.of();
+        var factPattern = execution.legalFactPattern(candidate);
         String input = mapper.writeValueAsString(Map.of(
-            "candidate", candidate,
-            "sharedContext", work.sharedContext(),
-            "sharedOfficialEvidence", sharedEvidence
+            "legalFactPattern", factPattern.factPattern(),
+            "factPatternHash", factPattern.factPatternHash(),
+            "externalFactContext", work.externalFactContext()
         ));
         String reviewAttemptId = execution.beginLegalReviewAttempt(slot.slotId(), context.taskRunId());
         AiCall call = callWithTransientRetry(context, work, slot, ConceptAttemptPhase.LEGAL_REVIEW,
@@ -234,12 +273,18 @@ public class ConceptFactoryWorker {
         }
     }
 
-    private boolean replace(TaskRunWorkerContext context, Work work, SlotWork slot, int currentRound, String attemptId) {
+    private boolean replace(TaskRunWorkerContext context, Work work, SlotWork slot, int currentRound,
+            String attemptId, ConceptAttemptError exhaustionError) {
         if (currentRound >= ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS) {
-            execution.recordAttemptError(work.runId(), slot.slotId(), attemptId,
-                ConceptAttemptError.INTERNAL_EXECUTION_ERROR, false);
+            if (exhaustionError == ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS
+                || exhaustionError == ConceptAttemptError.LOCKED_CONSTRAINT_INVALID
+                || exhaustionError == ConceptAttemptError.ORIGIN_INVALID) {
+                execution.recordCandidateExhaustion(attemptId, exhaustionError);
+            } else {
+                execution.recordAttemptError(work.runId(), slot.slotId(), attemptId, exhaustionError, false);
+            }
             execution.failSlot(work.runId(), slot.slotId(), null,
-                ConceptAttemptError.INTERNAL_EXECUTION_ERROR, false, false);
+                exhaustionError, false, false);
             return false;
         }
         execution.beginReplacement(work.runId(), slot.slotId(), currentRound + 1);

@@ -5,7 +5,7 @@ import { useJobEvents } from '../../../shared/async-events/index.js';
 import { createIdeaBriefApiAdapter, ideaCommandOptions } from '../api/ideaBriefApi.js';
 import {
   createIdeaIntakeDraft,
-  hydrateBriefFromIntake,
+  createDerivePayload,
   IDEA_INTAKE_SCREEN_STATE,
   ideaIntakeDraftReducer,
   QUESTION_TYPE,
@@ -39,20 +39,11 @@ function screenStateFor(response) {
     DRAFT: IDEA_INTAKE_SCREEN_STATE.READY,
     DERIVING: IDEA_INTAKE_SCREEN_STATE.RUNNING,
     READY_FOR_REVIEW: IDEA_INTAKE_SCREEN_STATE.REVIEW,
+    SAFETY_BLOCKED: IDEA_INTAKE_SCREEN_STATE.SAFETY_BLOCKED,
     CONFIRMED: IDEA_INTAKE_SCREEN_STATE.CONFIRMED,
     FAILED: IDEA_INTAKE_SCREEN_STATE.FAILED,
     STALE: IDEA_INTAKE_SCREEN_STATE.FAILED,
   }[response?.status] ?? IDEA_INTAKE_SCREEN_STATE.EMPTY;
-}
-
-function fieldsPayload(draft, includeEmpty = false) {
-  return Object.entries(draft.fields)
-    .filter(([, field]) => includeEmpty || Boolean(field.value?.trim()))
-    .map(([fieldKey, field]) => ({
-      fieldKey,
-      value: field.value ?? '',
-      decisionState: field.decisionState,
-    }));
 }
 
 export default function useIdeaIntake(projectId) {
@@ -122,7 +113,7 @@ export default function useIdeaIntake(projectId) {
   const updateIntake = (field, value) => {
     dispatch({ type: 'UPDATE_INTAKE', field, value });
     setErrors((current) => ({ ...current, [field]: undefined }));
-    setScreenState(value.trim() || field !== 'overview' || draft.intake.overview.trim()
+    setScreenState(value.trim() || field !== 'ideaOverview' || draft.intake.ideaOverview.trim()
       ? IDEA_INTAKE_SCREEN_STATE.READY : IDEA_INTAKE_SCREEN_STATE.EMPTY);
   };
 
@@ -131,14 +122,11 @@ export default function useIdeaIntake(projectId) {
     const nextErrors = validateIdeaIntake(draft);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    const prepared = hydrateBriefFromIntake(draft);
     setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
     try {
-      const payload = await api.derive(projectId, {
-        overview: prepared.intake.overview,
-        fields: fieldsPayload(prepared),
-        attachmentFileIds: [],
-      }, ideaCommandOptions('idea-derive'));
+      const payload = await api.derive(
+        projectId, createDerivePayload(draft), ideaCommandOptions('market-seed-interpret'),
+      );
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
@@ -222,12 +210,14 @@ export default function useIdeaIntake(projectId) {
   const confirmBrief = async (event) => {
     event.preventDefault();
     try {
-      const patched = await api.patchFields(projectId, { fields: fieldsPayload(draft, true) }, ideaCommandOptions('idea-fields'));
-      if (patched.data.status === 'DERIVING') setIsReanalyzing(true);
+      const patched = await api.patchInterpretation(
+        projectId, draft.interpretation, ideaCommandOptions('idea-interpretation'),
+      );
       applyResponse(patched.data);
-      if (patched.data.status === 'DERIVING' || !patched.data.assessmentCurrent
-          || !patched.data.readiness?.readyForConfirm) return;
-      const payload = await api.confirm(projectId, { expectedVersion: null }, ideaCommandOptions('idea-confirm'));
+      if (!patched.data.readiness?.readyForConfirm) return;
+      const payload = await api.confirmInterpretation(
+        projectId, { expectedVersion: null }, ideaCommandOptions('idea-confirm-interpretation'),
+      );
       applyResponse(payload.data);
     } catch (error) {
       setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
@@ -245,10 +235,9 @@ export default function useIdeaIntake(projectId) {
       setErrors((current) => ({ ...current, [questionId]: undefined }));
     },
     updateBriefField: (field, value) => dispatch({ type: 'UPDATE_BRIEF_FIELD', field, value }),
-    updateBriefDecisionState: (field, decisionState) => dispatch({
-      type: 'UPDATE_BRIEF_DECISION_STATE', field, decisionState,
-    }),
+    updateInterpretation: (field, value) => dispatch({ type: 'UPDATE_INTERPRETATION', field, value }),
     organizeIdea, submitAnswers, submitMissingFields, confirmBrief,
     refresh, reanalyze,
+    restart: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
   };
 }

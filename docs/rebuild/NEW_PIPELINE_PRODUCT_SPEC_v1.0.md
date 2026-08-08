@@ -1,123 +1,131 @@
-# NEW PIPELINE PRODUCT SPEC v1.0
+# NEW PIPELINE PRODUCT SPEC — V2 authoritative contract
+
+파일명은 기존 참조 호환을 위해 `v1.0`을 유지한다. 본문은 2026-08-08 승인된 V2 제품 계약이다.
 
 ## 1. 제품 정의
 
-AI 사업검증 플랫폼은 사용자의 초기 아이디어를 구조화하고, 공식 근거 기반 법률 구현 가능성 검토를 통과한 5개의 구체적 컨셉을 만든다. 사용자는 하나를 선택해 시장분석으로 전달하고, 시장 근거를 반영해 최종 기획을 확정한 뒤 외부 BM·재무 및 페르소나 응답 모듈과 마케팅 콘텐츠 제작으로 이어간다.
+사용자의 최소 사업 Seed를 안전하게 해석하고, 실질적으로 다른 사업 Concept를 설계해 공식 근거 기반 법률 구현 가능성을 검토한 뒤, 사용자가 하나를 선택하고 가설을 확정해 외부 분석과 Marketing에 전달하는 제품이다.
 
-## 2. 사용자
+## 2. 사용자 핵심 작업
 
-- 초기 사업 아이디어를 빠르게 구체화하려는 예비 창업자
-- 신규 서비스 기획을 검증하려는 팀
-- 규제 민감 사업의 초기 방향을 비교하려는 사용자
+1. `ideaOverview`, `problem`, `targetUsers`를 입력한다.
+2. 이미 정한 지역·경쟁자·수익·가격·채널·차별점·제약은 선택적으로 고정한다.
+3. Safety 결과와 AI Interpretation을 확인·수정한다.
+4. 법률 적격이면서 서로 다른 Concept 최대 5개를 비교한다.
+5. Concept 하나를 선택하고 선택 Concept의 AI 가설만 결정한다.
+6. 필요한 Delta Legal Review 후 Market Seed를 확정한다.
+7. Market, BM, TechOps, Finance의 준비·외부 실행 상태를 확인한다.
+8. 선택 Concept와 Legal Guard를 기반으로 Marketing 콘텐츠를 만든다.
 
-## 3. 핵심 사용자 작업
-
-1. 아이디어 입력과 보완
-2. Idea Brief 확인·확정
-3. 컨셉 팩토리 실행과 진행 확인
-4. 5개 컨셉 비교
-5. 컨셉 선택
-6. 시장분석으로 전달
-7. 시장분석 변경안 판단
-8. 최종 기획 확정
-9. 외부 분석 결과 확인
-10. 마케팅 콘텐츠 생성·편집·저장
-
-## 4. 범위
+## 3. 범위
 
 ### 포함
-- Idea Brief
-- 5 Concept Factory
-- 법률 Context·Assessment·Evidence
-- 비교·선택
-- 외부 모듈 Handoff
-- 기획 변화·최종 확정
-- 마케팅 콘텐츠
-- 비동기 작업 센터
+
+- `MarketAnalysisSeedDraft` 입력과 source/authority 보존
+- Safety Gate와 AI Interpretation
+- `EXPLORE`, `REFINE`, `AS_IS` 전략
+- `ConceptCandidateV2`, LOCKED validation, distinctness
+- Concept-generated Legal Fact Pattern과 official-evidence Legal Review
+- 적격 Concept 동시 공개·비교·선택
+- 선택 Concept hypothesis decision과 Delta Legal Review
+- `MarketAnalysisSeedSnapshot` 및 외부 Market Handoff
+- BM 실행 직전 Preparation boundary
+- `TechOpsInputPreparation`과 `TechOpsInputSnapshot`
+- `FinancialInputPreparation`과 `FinancialInputSnapshot`
+- `MarketingSourceSnapshot`과 Legal Guard
+- 공통 TaskRun, JobEvent, SSE, polling fallback, retry/recovery
 
 ### 제외
-- 시장분석 내부 알고리즘
-- BM·재무 내부 알고리즘
-- 인터뷰지 생성 내부 알고리즘
-- Persona 응답 엔진 내부 알고리즘
-- 기술·운영 분석
-- 마케팅 A/B 테스트와 Persona 재검증
 
-## 5. 사용자 단계
+- 외부 Market, BM, TechOps, Finance 분석 알고리즘
+- Persona 알고리즘 변경 또는 기존 외부 Persona 계약의 임의 삭제
+- 시장분석이 Concept/Planning을 자동 수정하는 기능
+- `planningChangeProposals`와 planning decision UX
+- Marketing A/B Workspace와 launch strategy validator
+- Provider raw reasoning, Prompt, policy, stack trace 노출
 
-1. 아이디어 정리
-2. 컨셉 생성·법률검토
-3. 컨셉 비교·선택
-4. 시장분석·기획 확정
-5. BM·재무 분석 + 페르소나 응답 테스트
-6. 마케팅 콘텐츠 제작
+## 4. 제품 불변식
 
-## 6. 제품 불변식
+- 초기 필수 Seed는 정확히 세 필드다.
+- 선택 Seed 누락은 Concept 탐색을 막지 않는다.
+- 사용자 선택값은 `USER_INPUT + LOCKED`; AI는 Prompt와 Backend 어느 쪽에서도 변경할 수 없다.
+- `AI_DERIVED + REVIEWABLE`은 입력 해석이고 `AI_HYPOTHESIS + PROPOSED`는 열린 값의 제안이다.
+- Evidence는 source/가설이 아니라 독립 근거 resource다.
+- Safety 판단과 Legal Review는 별도 의미와 상태를 갖는다.
+- 플랫폼 역할, 결제·데이터 흐름, 파트너·자격, 광고 주장은 Concept가 설계한다.
+- 후보 검증 순서는 schema → LOCKED/origin → distinctness → legal이다.
+- 법률검토 전에 수익·가격·채널·차별점과 pre-market SOM 가설이 존재해야 한다.
+- 의미상 중복 후보는 적격 수에 포함하지 않고 Legal API를 호출하지 않는다.
+- 목표는 적격 distinct 5개지만 bounded limit 안에서 불가능하면 `INSUFFICIENT_DISTINCT_CONCEPTS`다.
+- 적격 5개 상세는 준비 완료 뒤 동시에 공개한다.
+- 선택 전 모든 후보 가설 확정을 요구하지 않는다.
+- LOCKED 값은 hypothesis decision UI와 mutation 대상이 아니다.
+- `REJECTED` 가설에는 alternative proposal 경로가 있다.
+- legal-sensitive 가설 수정은 Delta Legal Review 통과 전 확정할 수 없다.
+- pre-market SOM 수정은 기본적으로 non-legal이다.
+- Market의 유일한 정식 입력은 immutable `MarketAnalysisSeedSnapshot`이다.
+- Market Result는 Concept를 자동 변경하지 않는다.
+- 후속 분석의 구체 입력은 각 분석 직전 Gate에서 받고 상위 확정값을 승계한다.
+- Marketing 필수 Source는 Selected Concept, final accepted hypotheses, Legal Result다.
 
-- 사용자 확정 전 AI 제안은 사실 확정이 아니다.
-- 법률검토 미통과 Draft는 공개하지 않는다.
-- 컨셉 후보 5개는 서로 구별되어야 한다.
-- 컨셉 생성 루프는 bounded하다.
-- 외부 모듈은 Snapshot을 소비한다.
-- Finalized Planning Snapshot이 후속 정본이다.
-- BM·재무와 Persona 결과는 기획을 변경하지 않는다.
-- 마케팅은 최종 기획을 사용한다.
-- 페이지 접근은 열고 실행 Action만 조건을 확인한다.
+## 5. Seed acceptance criteria
 
-## 7. 주요 성공 지표
+- 세 필드만 입력해 Safety와 Interpretation을 시작할 수 있다.
+- optional field가 없어도 진행할 수 있다.
+- optional 입력값은 LOCKED로 저장된다.
+- `BLOCK_OR_REFRAME`은 Concept Factory를 시작하지 않는다.
+- Interpretation은 사용자 의미를 축약·변형하지 않고 사용자가 수정할 수 있다.
+- 법률 상세 누락만으로 초기 `NEEDS_INPUT`을 만들지 않는다.
+- 후속 질문은 핵심 문제·사용자·의도가 불명확해 Concept 탐색이 불가능할 때만 생성한다.
 
-- Idea Brief 확정 완료율
-- 컨셉 5개 완성률
-- 평균 후보 검사 수와 재설계 수
-- 컨셉 선택 완료율
-- 시장분석 Handoff 성공률
-- 최종 기획 확정률
-- 마케팅 콘텐츠 생성 완료율
-- 비동기 작업 실패 복구율
+## 6. Concept acceptance criteria
 
-## 8. 법률 표현
+- 최소 Seed로 후보를 생성할 수 있다.
+- AS_IS Candidate 1은 사용자 원안을 의미 손실 없이 보존한다.
+- 사용자 LOCKED 수익·가격·채널·차별점·지역·제약을 모든 후보가 지킨다.
+- 열린 수익·가격·채널·차별점은 AI hypothesis로 표시된다.
+- pre-market SOM은 구조화된 가설이며 시장 사실로 표시하지 않는다.
+- payment/platform/data/partner/qualification/claim 구조는 Concept가 만든다.
+- 이름만 변경한 후보와 semantic duplicate를 거부한다.
+- distinctness를 통과하지 않은 후보는 Legal Review를 받지 않는다.
+- Legal mapper는 legal-sensitive hypothesis를 포함하고 SOM을 제외한다.
+- `REDESIGNABLE`은 한 번만 재설계하고 전체 검증을 반복한다.
+- 설계 누락은 사용자 legal 질문이나 `NEEDS_FACTS`로 전가하지 않는다.
 
-사용자에게 `완벽한 법률검토` 또는 법률 자문 완료를 암시하지 않는다. `공식 근거 기반 법률 구현 가능성 검토`로 표현하고, 사실관계·시점·전문가 확인 필요성을 표시한다.
+## 7. 선택·가설 acceptance criteria
 
-## 9. Concept Provider 실패 경계
+- 사용자에게 legal eligible Concept만 공개한다.
+- 선택 Concept의 `revenueModel`, `price`, `channels`, `differentiators`, `preMarketSomShareHypothesis`, `preMarketSomHypothesis`만 결정한다.
+- 사용자는 채택, 수정 후 채택, 다른 제안을 선택할 수 있다.
+- 거절은 `ALTERNATIVE_PROPOSED`를 생성해 dead end가 아니다.
+- LOCKED 값은 hypothesis endpoint로 수정할 수 없다.
+- 수익·결제·지역·법률 민감 claim 변경은 Delta Legal Review를 유발한다.
+- SOM 변경은 Delta Review를 유발하지 않는다.
+- 실패한 Delta Review는 해당 가설 acceptance를 막고 alternative를 허용한다.
 
-Concept Provider 실패는 사용자 진행 상태가 아니라 개별 Attempt 실행 오류다. Slot 상태에는 `PROVIDER_FAILURE`를 두지 않는다. Candidate 생성의 일시 오류는 동일 Slot에서 최대 1회 재시도하며, Candidate schema/domain 오류는 1회 Repair 후 replacement 정책을 따른다. Legal Review schema/source/provider/internal 오류는 법률 거절로 표시하거나 Candidate를 교체하지 않고, 생성된 Candidate를 보존한 `REVIEW_RETRY_PENDING`으로 종료한다.
+## 8. 외부 분석과 Marketing acceptance criteria
 
-## 10. Idea Brief synthesis와 assessment freshness
+- 모든 필수 decision과 Delta Review가 끝나야 Market Seed Snapshot을 finalize할 수 있다.
+- Market handoff는 Snapshot 본문, ID, hash, schemaVersion을 전달한다.
+- Market Result에는 planning change proposal이 없다.
+- BM 추가 입력은 BM 시작 직전에만 받는다.
+- TechOps와 Finance는 각각 준비 화면, 결정 상태, immutable Snapshot, 외부 handoff boundary를 갖는다.
+- TechOps/Finance에서 이미 확정된 값을 다시 입력시키지 않는다.
+- AI 추정값은 사용자 채택 전 user fact가 아니다.
+- Marketing은 Market Result나 `FinalizedPlanningSnapshot`을 필수로 요구하지 않는다.
+- Marketing 출력은 allowed/prohibited claims, disclosure, communication control을 지킨다.
 
-- clarification limit는 새로운 질문 생성 횟수의 상한이다. 마지막 질문 답변 뒤에는 `FINAL_SYNTHESIS`를 실행하며 질문은 빈 배열이어야 한다.
-- 사용자의 답변, canonical field, overview, attachment 변경은 기존 assessment를 무효화한다. Review 수정 후에는 최신 summary·contradiction·readiness 분석이 끝날 때까지 Confirm할 수 없다.
-- `READY_FOR_REVIEW`는 최신 canonical assessment hash가 일치할 때만 Confirm 가능하다. max round 도달 자체는 ready 조건이 아니다.
-- 사용자에게는 내부 `STALE` 용어 대신 `변경 내용을 다시 정리하고 있습니다.`라고 표시한다.
+## 9. 비동기와 오류 UX
 
-## 11. Legal contract와 retry UX
+- Event는 진행 신호이고 Query API가 화면 정본이다.
+- Terminal TaskRun과 Job ID는 새 사용자 Action에 재사용하지 않는다.
+- terminal Event 뒤 동일 jobId Event를 추가하지 않는다.
+- raw TaskRun 결과와 현재 사용자 actionability를 분리한다.
+- 외부 현실 사실이 필요한 `NEEDS_FACTS`와 Concept 설계 실패를 구분한다.
+- Provider failure는 Attempt error이며 사용자-facing Slot enum이 아니다.
+- transient retry, schema repair, redesign, replacement는 모두 bounded다.
+- 도메인 전제조건은 안전한 error code, userMessage, nextAction으로 표현한다.
 
-- Screening AI는 관련 citation subset만 반환하고 omitted citation은 시스템이 excluded로 계산한다.
-- 각 material legal finding은 자신의 official evidence reference를 포함한다. 사용자 문자열 배열과 전체 evidence union은 시스템이 파생한다.
-- 법률 `REJECTED`만 rejected event와 Candidate replacement를 만든다. schema/provider/source/internal failure는 안전한 review retry/failed event를 사용한다.
-- Slot 기본 카드는 후보 생성 횟수, 법률 검토 상태, 재설계 횟수를 표시한다. provider/repair call count는 기본 UI에서 숨긴다.
-- Failed run은 `이어서 시도`와 `처음부터 새로 만들기`를 제공한다. 이어서 시도는 새 TaskRun과 새 activeJobId를 만들며 eligible Slot과 보존 Candidate를 재사용한다. `NEEDS_FACTS`는 Idea Brief 보완, snapshot 변경은 새 Run 생성을 안내한다.
-- Shared Legal Context와 base official evidence는 snapshot별로 한 번 구축해 Slot 간 재사용하고 Candidate 신규 활동만 delta evidence retrieval 대상이 된다.
+## 10. 제품 완료 표현
 
-## 12. Actionable NEEDS_INPUT UX
-
-- Business-level `NEEDS_INPUT`은 항상 구체적인 unanswered question 또는 required `missingFieldKeys`를 하나 이상 가진다. unanswered question이 있으면 질문을, 질문이 없고 required missing field가 있으면 canonical field 직접 입력 폼을 표시한다.
-- 질문과 required missing field가 모두 해결되면 `READY_FOR_REVIEW`로 이동한다. `READY_FOR_REVIEW`는 사용자가 현재 정리 결과를 검토·수정할 수 있다는 의미이고, `READY_FOR_CONFIRM`은 그대로 최종 Confirm할 수 있다는 의미다.
-- Blocking contradiction은 Review 진입을 막지 않는다. 질문과 required missing field가 없고 contradiction만 남으면 `READY_FOR_REVIEW`, `readyForConfirm=false`로 응답하며 Review에서 contradiction을 표시하고 관련 field를 수정하게 한다.
-- Backend `readyForConfirm`은 required missing 0, unanswered question 0, blocking contradiction 0, assessment current를 모두 요구한다. AI provider의 readiness status와 score는 advisory metadata이며 hard gate가 아니다.
-- `RECOVERY`는 `DERIVING`과 terminal/missing active TaskRun의 불일치, terminal execution 재사용 감지 등 execution-state inconsistency에만 사용한다. 단순 AI readiness `NEEDS_INPUT`, contradiction, 질문 0 + missing 0은 recovery 사유가 아니다.
-- 누락 필드 입력은 Answers API가 아닌 fields PATCH를 사용한다. 변경이 반영되면 `DERIVING`과 새 `activeJobId`를 받고 최종 분석이 끝난 뒤 Review 또는 다시 actionable `NEEDS_INPUT`으로 이동한다.
-- 질문이 0개인 상태에서는 빈 Answers request를 전송하지 않는다.
-- Clarification 질문은 required/regulatory-sensitive missing field를 optional field보다 우선한다.
-- `FINAL_SYNTHESIS`가 현재 사실에서 required field를 합리적으로 유추하면 `AI_PROPOSED`로 제안할 수 있다. 확정할 수 없는 required field는 manual completion 대상으로 유지한다.
-- `FINAL_SYNTHESIS`는 질문을 빈 배열로 유지한다. required missing이 없으면 provider status와 무관하게 최소 `READY_FOR_REVIEW`로 normalize한다.
-
-## 13. Idea asynchronous execution identity
-
-- Terminal TaskRun과 Job ID는 immutable execution history이며 새로운 사용자 Action에 재사용하지 않는다.
-- 사용자 command idempotency와 canonical content hash를 분리한다. 동일 command key replay는 동일 execution을 반환하지만 새 command key는 canonical content가 같아도 새 TaskRun을 생성한다. 동일 input의 active TaskRun 차단은 유지한다.
-- Task result를 adoption하는 시점의 Idea Brief `NEEDS_INPUT`, TaskRun `NEEDS_INPUT`, terminal JobEvent `NEEDS_INPUT`은 같은 execution에서 일치해야 한다. 이후 사용자 답변·field patch·newer TaskRun·`READY_FOR_REVIEW`·`CONFIRMED`가 발생해도 과거 TaskRun/Event의 raw terminal history는 변경하지 않는다.
-- Job Center는 raw TaskRun outcome과 현재 사용자 actionability를 분리한다. 현재 subject의 최신 relevant job이면서 Domain도 여전히 `NEEDS_INPUT`인 unresolved 항목만 active jobs에 포함한다. 해결된 과거 raw `NEEDS_INPUT`은 `actionable=false`, `presentationStatus=RESOLVED_INPUT`인 최근 처리 이력으로 표시한다.
-- `READY_FOR_REVIEW`를 만든 execution은 TaskRun `SUCCEEDED` 및 JobEvent `COMPLETED`와 일치한다.
-- `DERIVING`인데 active TaskRun이 terminal인 상태는 유효한 RUNNING 상태가 아니라 복구 가능한 invalid state다. 조회 화면은 spinner 대신 recovery Action을 제공하고 재분석은 과거 history를 수정하지 않은 새 TaskRun을 만든다.
-- Terminal JobEvent 뒤에는 같은 jobId의 어떤 Event도 추가할 수 없다.
+코드·계약 구현과 실제 provider/browser/external runtime acceptance를 구분한다. 무거운 검증이 생략된 Unit은 “implementation complete / runtime acceptance pending”으로 기록한다.

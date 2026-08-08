@@ -21,20 +21,26 @@ class NewPipelineFoundationMigrationTests {
             "CREATE TABLE module_runs",
             "CREATE TABLE module_handoffs",
             "CREATE TABLE module_results",
-            "CREATE TABLE planning_snapshots"
+            "CREATE TABLE market_analysis_seed_snapshots"
         );
         assertThat(sql).contains(
             "REFERENCES projects(id)",
             "REFERENCES users(id)",
             "REFERENCES stored_files(id)",
-            "REFERENCES selected_concept_snapshots(id, project_id)"
+            "REFERENCES market_analysis_seed_snapshots(id, project_id)"
         );
         assertThat(sql).contains(
             "uk_module_handoff_idempotency",
             "uk_module_run_handoff",
-            "uk_planning_snapshot_project_sequence",
-            "ck_planning_snapshot_hash"
+            "uk_market_seed_snapshot_selection",
+            "ck_market_seed_snapshot_hash"
         );
-        assertThat(sql).doesNotContain("DROP TABLE", "TRUNCATE TABLE", "DELETE FROM");
+        assertThat(sql).doesNotContain(
+            "CREATE TABLE planning_snapshots",
+            "CREATE TABLE finalized_planning_snapshots",
+            "CREATE TABLE planning_change_proposals",
+            "CREATE TABLE selected_concept_snapshots",
+            "DROP TABLE", "TRUNCATE TABLE", "DELETE FROM"
+        );
     }
 }

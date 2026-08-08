@@ -15,6 +15,7 @@ public class MarketingContentCompletionService {
     private final MarketingContentRevisionRepository revisions;
     private final MarketingAssetRepository assets;
     private final MarketingResultContract contract;
+    private final MarketingLegalGuard legalGuard;
     private final TaskRunService taskRuns;
     private final ObjectMapper mapper;
 
@@ -27,6 +28,7 @@ public class MarketingContentCompletionService {
     public void complete(TaskRunService.Claim claim, TaskRunWorkerContext context, ExecutionResponse response) {
         MarketingContent content = locked(context.subjectId(), context.projectId());
         contract.validate(response.result(), content.getContentType());
+        legalGuard.validate(content.getSourceSnapshotJson(), response.result());
         String json = mapper.writeValueAsString(response.result());
         taskRuns.adopt(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), json,
             response.canonicalInputHash(), response.resultSchemaVersion());

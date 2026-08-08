@@ -25,6 +25,7 @@ class ConceptFactoryStateMachineTests {
         slot.transitionTo(ConceptSlotStatus.GENERATING);
         slot.transitionTo(ConceptSlotStatus.GENERATED);
         slot.transitionTo(ConceptSlotStatus.VALIDATING_ORIGIN);
+        slot.transitionTo(ConceptSlotStatus.VALIDATING_DISTINCTNESS);
         slot.transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
         slot.transitionTo(ConceptSlotStatus.ELIGIBLE);
         assertThatThrownBy(() -> slot.transitionTo(ConceptSlotStatus.GENERATING))

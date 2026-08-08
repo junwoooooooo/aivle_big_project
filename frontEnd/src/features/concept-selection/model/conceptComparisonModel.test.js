@@ -6,10 +6,11 @@ const concept = {
   conceptId: 'concept-1', slotNumber: 1, variationFocus: 'LOW_RISK_FAST_EXECUTION', title: '정기 운영 도우미', summary: '기업 매장의 반복 업무를 돕습니다.',
   legalStatus: 'IMPLEMENTABLE_WITH_CONTROLS',
   candidate: {
-    targetSegment: 'B2B 기업 매장', problemScenario: '반복 운영이 어렵다.', valueProposition: '업무를 단순화한다.',
+    targetUsers: 'B2B 기업 매장', problemScenario: '반복 운영이 어렵다.', coreValue: '업무를 단순화한다.',
+    differentiators: '당일 도입',
     transactionFlow: ['신청', '배정'], platformRole: '중개 및 기록', featureSet: ['예약', '정산'], actorRoles: ['기업', '운영자'],
-    partnerRequirements: [], physicalActivities: [], revenueModelHypothesis: '월간 구독', pricingHypothesis: '월 정액',
-    operatingModel: '직영 운영', risks: ['수요 변동'], solutionMechanism: '작은 지역부터 시작', channelHypothesis: '직접 영업',
+    partnerRequirements: [], physicalActivities: [], revenueModel: '월간 구독', price: '월 정액',
+    operatingModel: '직영 운영', constraintCompliance: ['수요 변동'], solutionMechanism: '작은 지역부터 시작', channels: '직접 영업',
   },
   legalReview: { assessment: { requiredControls: ['사전 고지'] } },
 };

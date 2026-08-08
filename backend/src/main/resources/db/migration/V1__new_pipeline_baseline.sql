@@ -251,6 +251,12 @@ CREATE TABLE idea_briefs (
     readiness_score INTEGER NOT NULL DEFAULT 0,
     clarification_round INTEGER NOT NULL DEFAULT 0,
     assessment_input_hash VARCHAR(71),
+    safety_decision VARCHAR(40),
+    safety_categories_json TEXT NOT NULL DEFAULT '[]',
+    safety_restrictions_json TEXT NOT NULL DEFAULT '[]',
+    safety_user_facing_reason VARCHAR(1000),
+    interpretation_json TEXT NOT NULL DEFAULT '{}',
+    interpretation_confirmed_at TIMESTAMP,
     created_by_user_id BIGINT NOT NULL,
     last_command VARCHAR(30),
     last_idempotency_key VARCHAR(100),
@@ -266,7 +272,8 @@ CREATE TABLE idea_briefs (
     CONSTRAINT fk_idea_brief_task FOREIGN KEY (active_task_run_id, project_id) REFERENCES task_runs(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT uk_idea_brief_sequence UNIQUE (project_id, brief_sequence),
     CONSTRAINT ck_idea_brief_sequence_positive CHECK (brief_sequence > 0),
-    CONSTRAINT ck_idea_brief_status CHECK (status IN ('DRAFT', 'DERIVING', 'NEEDS_INPUT', 'READY_FOR_REVIEW', 'CONFIRMED', 'FAILED', 'STALE')),
+    CONSTRAINT ck_idea_brief_status CHECK (status IN ('DRAFT', 'DERIVING', 'NEEDS_INPUT', 'READY_FOR_REVIEW', 'SAFETY_BLOCKED', 'CONFIRMED', 'FAILED', 'STALE')),
+    CONSTRAINT ck_idea_safety_decision CHECK (safety_decision IS NULL OR safety_decision IN ('ALLOW', 'ALLOW_WITH_RESTRICTIONS', 'BLOCK_OR_REFRAME')),
     CONSTRAINT ck_idea_brief_snapshot_hash CHECK (snapshot_hash IS NULL OR snapshot_hash LIKE 'sha256:%'),
     CONSTRAINT ck_idea_brief_request_hash CHECK (last_request_hash IS NULL OR last_request_hash LIKE 'sha256:%'),
     CONSTRAINT ck_idea_brief_assessment_hash CHECK (assessment_input_hash IS NULL OR assessment_input_hash LIKE 'sha256:%'),
@@ -292,8 +299,8 @@ CREATE TABLE idea_brief_fields (
     version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_idea_field_brief FOREIGN KEY (brief_id) REFERENCES idea_briefs(id) ON DELETE NO ACTION,
     CONSTRAINT uk_idea_field_key UNIQUE (brief_id, field_key),
-    CONSTRAINT ck_idea_field_decision CHECK (decision_state IN ('LOCKED', 'PREFERRED', 'OPEN', 'ASSUMPTION')),
-    CONSTRAINT ck_idea_field_provenance CHECK (provenance IN ('USER_CONFIRMED', 'SOURCE_EXTRACTED', 'AI_PROPOSED', 'MISSING'))
+    CONSTRAINT ck_idea_field_decision CHECK (decision_state IN ('LOCKED', 'REVIEWABLE', 'OPEN', 'PREFERRED', 'ASSUMPTION')),
+    CONSTRAINT ck_idea_field_provenance CHECK (provenance IN ('USER_INPUT', 'AI_DERIVED', 'USER_CONFIRMED', 'SOURCE_EXTRACTED', 'AI_PROPOSED', 'MISSING'))
 );
 
 CREATE INDEX idx_idea_field_brief ON idea_brief_fields(brief_id, id);
@@ -436,7 +443,7 @@ CREATE TABLE concept_slots (
     CONSTRAINT fk_concept_slot_run FOREIGN KEY (run_id, project_id) REFERENCES concept_factory_runs(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT ck_concept_slot_number CHECK (slot_number BETWEEN 1 AND 5),
     CONSTRAINT ck_concept_slot_focus CHECK (variation_focus IN ('CUSTOMER_EXPERIENCE','OPERATING_MODEL_AND_PARTNERS','REVENUE_AND_PRICING','CHANNEL_AND_SCALE','LOW_RISK_FAST_EXECUTION')),
-    CONSTRAINT ck_concept_slot_status CHECK (status IN ('QUEUED','GENERATING','GENERATED','SCHEMA_INVALID','VALIDATING_ORIGIN','VALIDATING_LEGAL','REDESIGNING','REPLACING','REVIEW_RETRY_PENDING','ELIGIBLE','REJECTED','NEEDS_INPUT','FAILED','STALE')),
+    CONSTRAINT ck_concept_slot_status CHECK (status IN ('QUEUED','GENERATING','GENERATED','SCHEMA_INVALID','VALIDATING_ORIGIN','VALIDATING_DISTINCTNESS','VALIDATING_LEGAL','REDESIGNING','REPLACING','REVIEW_RETRY_PENDING','ELIGIBLE','REJECTED','NEEDS_INPUT','FAILED','STALE')),
     CONSTRAINT ck_concept_slot_redesign CHECK (legal_redesign_count BETWEEN 0 AND 1)
 );
 
@@ -525,7 +532,7 @@ ALTER TABLE concept_attempts ADD COLUMN safe_error_code VARCHAR(80);
 ALTER TABLE concept_attempts ADD COLUMN retryable BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE concept_attempts ADD COLUMN result_json TEXT;
 ALTER TABLE concept_attempts ADD CONSTRAINT ck_concept_attempt_error CHECK (error_classification IS NULL OR error_classification IN (
-    'SCHEMA_INVALID','TRANSIENT_PROVIDER_FAILURE','PERMANENT_PROVIDER_FAILURE','ORIGIN_INVALID',
+    'SCHEMA_INVALID','TRANSIENT_PROVIDER_FAILURE','PERMANENT_PROVIDER_FAILURE','ORIGIN_INVALID','LOCKED_CONSTRAINT_INVALID','DUPLICATE_CONCEPT','INSUFFICIENT_DISTINCT_CONCEPTS',
     'LEGAL_REDESIGN_REQUIRED','LEGAL_REJECTED','INSUFFICIENT_INFORMATION','INTERNAL_EXECUTION_ERROR'
     ,'CANDIDATE_DOMAIN_REJECTION','LEGAL_DOMAIN_REJECTION','RESULT_SCHEMA_INVALID','LEGAL_SOURCE_FAILURE',
     'NEEDS_FACTS','INTERNAL_STATE_FAILURE'
@@ -556,32 +563,60 @@ CREATE TABLE concept_selections (
 CREATE UNIQUE INDEX uk_concept_selection_current ON concept_selections(project_id) WHERE is_current = TRUE AND deleted_at IS NULL;
 CREATE INDEX idx_concept_selection_project ON concept_selections(project_id, selected_at DESC);
 
-CREATE TABLE selected_concept_snapshots (
+CREATE TABLE concept_hypothesis_decisions (
     id VARCHAR(64) PRIMARY KEY,
     selection_id BIGINT NOT NULL,
     project_id BIGINT NOT NULL,
     concept_id VARCHAR(64) NOT NULL,
-    sequence_number INTEGER NOT NULL,
-    parent_snapshot_id VARCHAR(64),
-    source_concept_hash VARCHAR(71) NOT NULL,
+    hypothesis_type VARCHAR(40) NOT NULL,
+    proposed_value_json TEXT NOT NULL,
+    source VARCHAR(30) NOT NULL,
+    decision_status VARCHAR(40) NOT NULL,
+    final_value_json TEXT,
+    proposal_version INTEGER NOT NULL,
+    user_id BIGINT NOT NULL,
+    decided_at TIMESTAMP WITH TIME ZONE,
+    legal_impact VARCHAR(30) NOT NULL,
+    legal_review_status VARCHAR(30) NOT NULL,
+    legal_review_result_json TEXT,
+    locked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_concept_hypothesis_version UNIQUE (selection_id, hypothesis_type, proposal_version),
+    CONSTRAINT fk_concept_hypothesis_selection FOREIGN KEY (selection_id, project_id) REFERENCES concept_selections(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_concept_hypothesis_concept FOREIGN KEY (concept_id, project_id) REFERENCES concepts(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_concept_hypothesis_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_concept_hypothesis_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_concept_hypothesis_type CHECK (hypothesis_type IN ('REVENUE_MODEL','PRICE','CHANNELS','DIFFERENTIATORS','PRE_MARKET_SOM_SHARE','PRE_MARKET_SOM')),
+    CONSTRAINT ck_concept_hypothesis_decision CHECK (decision_status IN ('PROPOSED','ACCEPTED','USER_EDITED_ACCEPTED','REJECTED','ALTERNATIVE_PROPOSED')),
+    CONSTRAINT ck_concept_hypothesis_impact CHECK (legal_impact IN ('LEGAL_SENSITIVE','NON_LEGAL')),
+    CONSTRAINT ck_concept_hypothesis_legal_status CHECK (legal_review_status IN ('NOT_REQUIRED','PENDING','PASSED','FAILED')),
+    CONSTRAINT ck_concept_hypothesis_version CHECK (proposal_version > 0)
+);
+
+CREATE INDEX idx_concept_hypothesis_selection ON concept_hypothesis_decisions(selection_id, hypothesis_type, proposal_version DESC);
+
+CREATE TABLE market_analysis_seed_snapshots (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    selection_id BIGINT NOT NULL,
+    concept_id VARCHAR(64) NOT NULL,
+    schema_version VARCHAR(20) NOT NULL,
+    source_snapshot_hash VARCHAR(71) NOT NULL,
     snapshot_hash VARCHAR(71) NOT NULL,
     snapshot_json TEXT NOT NULL,
     created_by_user_id BIGINT NOT NULL,
-    selected_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    finalized_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT uk_selected_snapshot_id_project UNIQUE (id, project_id),
-    CONSTRAINT uk_selected_snapshot_selection UNIQUE (selection_id),
-    CONSTRAINT uk_selected_snapshot_sequence UNIQUE (project_id, sequence_number),
-    CONSTRAINT fk_selected_snapshot_selection FOREIGN KEY (selection_id, project_id) REFERENCES concept_selections(id, project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_selected_snapshot_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_selected_snapshot_concept FOREIGN KEY (concept_id, project_id) REFERENCES concepts(id, project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_selected_snapshot_parent FOREIGN KEY (parent_snapshot_id, project_id) REFERENCES selected_concept_snapshots(id, project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_selected_snapshot_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
-    CONSTRAINT ck_selected_snapshot_sequence CHECK (sequence_number > 0),
-    CONSTRAINT ck_selected_snapshot_hashes CHECK (source_concept_hash LIKE 'sha256:%' AND snapshot_hash LIKE 'sha256:%')
+    CONSTRAINT uk_market_seed_snapshot_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_market_seed_snapshot_selection UNIQUE (selection_id),
+    CONSTRAINT fk_market_seed_snapshot_selection FOREIGN KEY (selection_id, project_id) REFERENCES concept_selections(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_market_seed_snapshot_concept FOREIGN KEY (concept_id, project_id) REFERENCES concepts(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_market_seed_snapshot_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_market_seed_snapshot_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_market_seed_snapshot_hashes CHECK (source_snapshot_hash LIKE 'sha256:%' AND snapshot_hash LIKE 'sha256:%')
 );
 
-CREATE INDEX idx_selected_snapshot_project ON selected_concept_snapshots(project_id, sequence_number DESC);
+CREATE INDEX idx_market_seed_snapshot_project ON market_analysis_seed_snapshots(project_id, finalized_at DESC);
 
 CREATE TABLE module_handoffs (
     id VARCHAR(64) PRIMARY KEY,
@@ -602,7 +637,7 @@ CREATE TABLE module_handoffs (
     CONSTRAINT uk_module_handoff_id_project UNIQUE (id, project_id),
     CONSTRAINT uk_module_handoff_idempotency UNIQUE (idempotency_key),
     CONSTRAINT fk_module_handoff_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_module_handoff_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES selected_concept_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_module_handoff_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT fk_module_handoff_user FOREIGN KEY (requested_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
     CONSTRAINT ck_module_handoff_module CHECK (module IN ('MARKET_ANALYSIS')),
     CONSTRAINT ck_module_handoff_status CHECK (status IN ('PREPARED')),
@@ -631,7 +666,7 @@ CREATE TABLE module_runs (
     CONSTRAINT uk_module_run_handoff UNIQUE (handoff_id),
     CONSTRAINT fk_module_run_handoff FOREIGN KEY (handoff_id, project_id) REFERENCES module_handoffs(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT fk_module_run_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_module_run_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES selected_concept_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_module_run_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT ck_module_run_module CHECK (module IN ('MARKET_ANALYSIS')),
     CONSTRAINT ck_module_run_status CHECK (status IN ('NOT_CONNECTED','READY','QUEUED','RUNNING','COMPLETED','FAILED','STALE')),
     CONSTRAINT ck_module_run_hashes CHECK (input_snapshot_hash LIKE 'sha256:%' AND (result_hash IS NULL OR result_hash LIKE 'sha256:%'))
@@ -655,113 +690,159 @@ CREATE TABLE module_results (
     result_hash VARCHAR(71) NOT NULL,
     created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_module_result_run FOREIGN KEY (module_run_id, project_id) REFERENCES module_runs(id, project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_module_result_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES selected_concept_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_module_result_snapshot FOREIGN KEY (input_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT ck_module_result_status CHECK (status IN ('COMPLETED','FAILED','NEEDS_INPUT')),
     CONSTRAINT ck_module_result_hash CHECK (result_hash LIKE 'sha256:%')
 );
 
 CREATE INDEX idx_module_result_project ON module_results(project_id, completed_at DESC);
 
-CREATE TABLE planning_change_proposals (
-    id VARCHAR(100) PRIMARY KEY,
-    module_run_id VARCHAR(64) NOT NULL,
-    project_id BIGINT NOT NULL,
-    meaningful_title VARCHAR(300) NOT NULL,
-    affected_fields_json TEXT NOT NULL,
-    before_json TEXT NOT NULL,
-    after_json TEXT NOT NULL,
-    reason VARCHAR(2000) NOT NULL,
-    evidence_references_json TEXT NOT NULL,
-    impact_areas_json TEXT NOT NULL,
-    decision_status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
-    modified_after_json TEXT,
-    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT fk_planning_proposal_result FOREIGN KEY (module_run_id) REFERENCES module_results(module_run_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_proposal_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT ck_planning_proposal_decision CHECK (decision_status IN ('PENDING','ADOPT','PARTIALLY_ADOPT','REJECT')),
-    CONSTRAINT ck_planning_proposal_partial CHECK (
-        (decision_status = 'PARTIALLY_ADOPT' AND modified_after_json IS NOT NULL)
-        OR (decision_status <> 'PARTIALLY_ADOPT' AND modified_after_json IS NULL)
-    )
-);
-
-CREATE INDEX idx_planning_proposal_run ON planning_change_proposals(module_run_id, created_at);
-CREATE INDEX idx_planning_proposal_project ON planning_change_proposals(project_id, created_at);
-
-CREATE TABLE planning_change_decisions (
-    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    proposal_id VARCHAR(100) NOT NULL,
-    project_id BIGINT NOT NULL,
-    decision VARCHAR(30) NOT NULL,
-    applied_value_json TEXT,
-    decided_by_user_id BIGINT NOT NULL,
-    decided_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT uk_planning_decision_proposal UNIQUE (proposal_id),
-    CONSTRAINT fk_planning_decision_proposal FOREIGN KEY (proposal_id) REFERENCES planning_change_proposals(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_decision_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_decision_user FOREIGN KEY (decided_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
-    CONSTRAINT ck_planning_decision CHECK (decision IN ('ADOPT','PARTIALLY_ADOPT','REJECT')),
-    CONSTRAINT ck_planning_decision_value CHECK ((decision='PARTIALLY_ADOPT' AND applied_value_json IS NOT NULL) OR (decision<>'PARTIALLY_ADOPT' AND applied_value_json IS NULL))
-);
-
-INSERT INTO planning_change_decisions (
-    proposal_id, project_id, decision, applied_value_json, decided_by_user_id, decided_at,
-    created_at, updated_at, version
-)
-SELECT p.id, p.project_id, p.decision_status, p.modified_after_json, h.requested_by_user_id,
-       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0
-FROM planning_change_proposals p
-JOIN module_results mr ON mr.module_run_id = p.module_run_id
-JOIN module_runs r ON r.id = mr.module_run_id
-JOIN module_handoffs h ON h.id = r.handoff_id
-WHERE p.decision_status <> 'PENDING' AND p.deleted_at IS NULL;
-
-CREATE TABLE planning_snapshots (
-    id VARCHAR(64) PRIMARY KEY, project_id BIGINT NOT NULL, source_selection_snapshot_id VARCHAR(64) NOT NULL,
-    sequence_number INTEGER NOT NULL, parent_snapshot_id VARCHAR(64), display_label VARCHAR(300) NOT NULL,
-    planning_json TEXT NOT NULL, snapshot_hash VARCHAR(71) NOT NULL, created_by_user_id BIGINT NOT NULL,
-    snapshotted_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT uk_planning_snapshot_project_sequence UNIQUE(project_id,sequence_number),
-    CONSTRAINT fk_planning_snapshot_project FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_snapshot_source FOREIGN KEY(source_selection_snapshot_id,project_id) REFERENCES selected_concept_snapshots(id,project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_snapshot_parent FOREIGN KEY(parent_snapshot_id) REFERENCES planning_snapshots(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_planning_snapshot_user FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
-    CONSTRAINT ck_planning_snapshot_hash CHECK(snapshot_hash LIKE 'sha256:%')
-);
-
-CREATE TABLE finalized_planning_snapshots (
-    id VARCHAR(64) PRIMARY KEY, project_id BIGINT NOT NULL, planning_snapshot_id VARCHAR(64) NOT NULL,
-    source_selection_snapshot_id VARCHAR(64) NOT NULL, sequence_number INTEGER NOT NULL, parent_snapshot_id VARCHAR(64),
-    display_label VARCHAR(300) NOT NULL, snapshot_json TEXT NOT NULL, snapshot_hash VARCHAR(71) NOT NULL,
-    finalized_by_user_id BIGINT NOT NULL, finalized_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
-    CONSTRAINT uk_finalized_planning_project_sequence UNIQUE(project_id,sequence_number),
-    CONSTRAINT uk_finalized_planning_source UNIQUE(project_id,source_selection_snapshot_id),
-    CONSTRAINT fk_finalized_planning_project FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_finalized_planning_revision FOREIGN KEY(planning_snapshot_id) REFERENCES planning_snapshots(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_finalized_planning_source FOREIGN KEY(source_selection_snapshot_id,project_id) REFERENCES selected_concept_snapshots(id,project_id) ON DELETE NO ACTION,
-    CONSTRAINT fk_finalized_planning_parent FOREIGN KEY(parent_snapshot_id) REFERENCES finalized_planning_snapshots(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_finalized_planning_user FOREIGN KEY(finalized_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
-    CONSTRAINT ck_finalized_planning_hash CHECK(snapshot_hash LIKE 'sha256:%')
-);
-
 ALTER TABLE module_handoffs DROP CONSTRAINT fk_module_handoff_snapshot;
 ALTER TABLE module_runs DROP CONSTRAINT fk_module_run_snapshot;
 ALTER TABLE module_handoffs DROP CONSTRAINT ck_module_handoff_module;
-ALTER TABLE module_handoffs ADD CONSTRAINT ck_module_handoff_module CHECK (module IN ('MARKET_ANALYSIS','BUSINESS_FINANCIAL','PERSONA_RESPONSE_TEST'));
+ALTER TABLE module_handoffs ADD CONSTRAINT ck_module_handoff_module CHECK (module IN ('MARKET_ANALYSIS','BUSINESS_MODEL','TECH_OPS','FINANCIAL_ANALYSIS','PERSONA_RESPONSE'));
 ALTER TABLE module_runs DROP CONSTRAINT ck_module_run_module;
-ALTER TABLE module_runs ADD CONSTRAINT ck_module_run_module CHECK (module IN ('MARKET_ANALYSIS','BUSINESS_FINANCIAL','PERSONA_RESPONSE_TEST'));
+ALTER TABLE module_runs ADD CONSTRAINT ck_module_run_module CHECK (module IN ('MARKET_ANALYSIS','BUSINESS_MODEL','TECH_OPS','FINANCIAL_ANALYSIS','PERSONA_RESPONSE'));
 
-CREATE INDEX idx_planning_decision_project ON planning_change_decisions(project_id,decided_at);
-CREATE INDEX idx_planning_snapshot_project ON planning_snapshots(project_id,sequence_number DESC);
-CREATE INDEX idx_finalized_planning_project ON finalized_planning_snapshots(project_id,sequence_number DESC);
+CREATE TABLE tech_ops_input_preparations (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    source_market_seed_snapshot_id VARCHAR(64) NOT NULL,
+    source_snapshot_hash VARCHAR(71) NOT NULL,
+    required_facts_json TEXT NOT NULL,
+    proposal_decisions_json TEXT NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 1,
+    updated_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_tech_ops_preparation_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_tech_ops_preparation_source UNIQUE (project_id, source_market_seed_snapshot_id),
+    CONSTRAINT fk_tech_ops_preparation_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_preparation_source FOREIGN KEY (source_market_seed_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_preparation_user FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_tech_ops_preparation_hash CHECK (source_snapshot_hash LIKE 'sha256:%'),
+    CONSTRAINT ck_tech_ops_preparation_revision CHECK (revision > 0)
+);
+
+CREATE INDEX idx_tech_ops_preparation_project ON tech_ops_input_preparations(project_id, updated_at DESC);
+
+CREATE TABLE tech_ops_evidence_references (
+    id VARCHAR(64) PRIMARY KEY,
+    preparation_id VARCHAR(64) NOT NULL,
+    project_id BIGINT NOT NULL,
+    evidence_type VARCHAR(30) NOT NULL,
+    display_name VARCHAR(255) NOT NULL,
+    artifact_ref VARCHAR(1000) NOT NULL,
+    description VARCHAR(1000),
+    provided_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_tech_ops_evidence_preparation FOREIGN KEY (preparation_id, project_id) REFERENCES tech_ops_input_preparations(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_evidence_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_evidence_user FOREIGN KEY (provided_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_tech_ops_evidence_type CHECK (evidence_type IN ('QUOTE','BOM','SUPPLIER','SPECIFICATION','PILOT'))
+);
+
+CREATE INDEX idx_tech_ops_evidence_preparation ON tech_ops_evidence_references(preparation_id, created_at);
+
+CREATE TABLE tech_ops_input_snapshots (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    preparation_id VARCHAR(64) NOT NULL,
+    source_market_seed_snapshot_id VARCHAR(64) NOT NULL,
+    schema_version VARCHAR(20) NOT NULL,
+    snapshot_hash VARCHAR(71) NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    finalized_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_tech_ops_snapshot_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_tech_ops_snapshot_preparation UNIQUE (preparation_id),
+    CONSTRAINT uk_tech_ops_snapshot_source UNIQUE (project_id, source_market_seed_snapshot_id),
+    CONSTRAINT fk_tech_ops_snapshot_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_snapshot_preparation FOREIGN KEY (preparation_id, project_id) REFERENCES tech_ops_input_preparations(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_snapshot_source FOREIGN KEY (source_market_seed_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_tech_ops_snapshot_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_tech_ops_snapshot_hash CHECK (snapshot_hash LIKE 'sha256:%')
+);
+
+CREATE INDEX idx_tech_ops_snapshot_project ON tech_ops_input_snapshots(project_id, finalized_at DESC);
+
+CREATE TABLE financial_input_preparations (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    source_tech_ops_snapshot_id VARCHAR(64) NOT NULL,
+    source_market_seed_snapshot_id VARCHAR(64) NOT NULL,
+    source_snapshot_hash VARCHAR(71) NOT NULL,
+    financial_fields_json TEXT NOT NULL,
+    upstream_references_json TEXT NOT NULL,
+    assistance_json TEXT NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 1,
+    updated_by_user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_financial_preparation_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_financial_preparation_source UNIQUE (project_id, source_tech_ops_snapshot_id),
+    CONSTRAINT fk_financial_preparation_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_preparation_tech_ops FOREIGN KEY (source_tech_ops_snapshot_id, project_id) REFERENCES tech_ops_input_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_preparation_market_seed FOREIGN KEY (source_market_seed_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_preparation_user FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_financial_preparation_hash CHECK (source_snapshot_hash LIKE 'sha256:%'),
+    CONSTRAINT ck_financial_preparation_revision CHECK (revision > 0)
+);
+
+CREATE INDEX idx_financial_preparation_project ON financial_input_preparations(project_id, updated_at DESC);
+
+CREATE TABLE financial_input_snapshots (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    preparation_id VARCHAR(64) NOT NULL,
+    source_tech_ops_snapshot_id VARCHAR(64) NOT NULL,
+    source_market_seed_snapshot_id VARCHAR(64) NOT NULL,
+    schema_version VARCHAR(20) NOT NULL,
+    snapshot_hash VARCHAR(71) NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    finalized_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_financial_snapshot_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_financial_snapshot_preparation UNIQUE (preparation_id),
+    CONSTRAINT uk_financial_snapshot_source UNIQUE (project_id, source_tech_ops_snapshot_id),
+    CONSTRAINT fk_financial_snapshot_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_snapshot_preparation FOREIGN KEY (preparation_id, project_id) REFERENCES financial_input_preparations(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_snapshot_tech_ops FOREIGN KEY (source_tech_ops_snapshot_id, project_id) REFERENCES tech_ops_input_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_snapshot_market_seed FOREIGN KEY (source_market_seed_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_financial_snapshot_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_financial_snapshot_hash CHECK (snapshot_hash LIKE 'sha256:%')
+);
+
+CREATE INDEX idx_financial_snapshot_project ON financial_input_snapshots(project_id, finalized_at DESC);
+
+CREATE TABLE marketing_source_snapshots (
+    id VARCHAR(64) PRIMARY KEY,
+    project_id BIGINT NOT NULL,
+    source_market_seed_snapshot_id VARCHAR(64) NOT NULL,
+    selection_id BIGINT NOT NULL,
+    concept_id VARCHAR(64) NOT NULL,
+    schema_version VARCHAR(20) NOT NULL,
+    snapshot_hash VARCHAR(71) NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    finalized_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uk_marketing_source_id_project UNIQUE (id, project_id),
+    CONSTRAINT uk_marketing_source_market_seed UNIQUE (source_market_seed_snapshot_id),
+    CONSTRAINT fk_marketing_source_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_marketing_source_market_seed FOREIGN KEY (source_market_seed_snapshot_id, project_id) REFERENCES market_analysis_seed_snapshots(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_marketing_source_selection FOREIGN KEY (selection_id, project_id) REFERENCES concept_selections(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_marketing_source_concept FOREIGN KEY (concept_id, project_id) REFERENCES concepts(id, project_id) ON DELETE NO ACTION,
+    CONSTRAINT fk_marketing_source_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT ck_marketing_source_hash CHECK (snapshot_hash LIKE 'sha256:%')
+);
+
+CREATE INDEX idx_marketing_source_project ON marketing_source_snapshots(project_id, finalized_at DESC);
 
 CREATE TABLE pipeline_marketing_contents (
     id VARCHAR(64) PRIMARY KEY,
     project_id BIGINT NOT NULL,
-    planning_snapshot_id VARCHAR(64) NOT NULL,
+    marketing_source_snapshot_id VARCHAR(64) NOT NULL,
     source_snapshot_hash VARCHAR(71) NOT NULL,
     source_snapshot_json TEXT NOT NULL,
     request_json TEXT NOT NULL,
@@ -776,7 +857,7 @@ CREATE TABLE pipeline_marketing_contents (
     finalized_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, deleted_at TIMESTAMP, version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_pipeline_marketing_content_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE NO ACTION,
-    CONSTRAINT fk_pipeline_marketing_content_planning FOREIGN KEY (planning_snapshot_id) REFERENCES finalized_planning_snapshots(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_pipeline_marketing_content_source FOREIGN KEY (marketing_source_snapshot_id, project_id) REFERENCES marketing_source_snapshots(id, project_id) ON DELETE NO ACTION,
     CONSTRAINT fk_pipeline_marketing_content_task FOREIGN KEY (task_run_id) REFERENCES task_runs(id) ON DELETE NO ACTION,
     CONSTRAINT fk_pipeline_marketing_content_user FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE NO ACTION,
     CONSTRAINT ck_pipeline_marketing_content_type CHECK (content_type IN ('SOCIAL_POST','AD_COPY','LANDING_PAGE','BLOG_INTRO','EMAIL','BANNER','POSTER','IMAGE_BRIEF')),

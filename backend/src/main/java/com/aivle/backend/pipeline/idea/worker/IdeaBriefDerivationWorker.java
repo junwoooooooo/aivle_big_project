@@ -52,10 +52,10 @@ public class IdeaBriefDerivationWorker {
         try {
             publish(context, "CLAIMED", "job.idea.started", JobEvent.Status.RUNNING, Map.of(), null);
             taskRuns.startExecution(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken());
-            publish(context, "INFORMATION_EXTRACTION", "job.idea.extracting", JobEvent.Status.RUNNING, Map.of(), null);
+            publish(context, "SAFETY_REVIEW", "job.idea.extracting", JobEvent.Status.RUNNING, Map.of(), null);
             ExecutionResponse response = aiClient.executeWorker(context, claim.taskAttemptId(), LocalDateTime.now().plusMinutes(3));
-            publish(context, "QUESTION_OR_BRIEF_BUILD", "job.idea.questions.preparing", JobEvent.Status.RUNNING, Map.of(), null);
-            publish(context, "DOMAIN_COMMIT", "job.idea.brief.preparing", JobEvent.Status.RUNNING, Map.of(), null);
+            publish(context, "IDEA_INTERPRETATION", "job.idea.questions.preparing", JobEvent.Status.RUNNING, Map.of(), null);
+            publish(context, "INTERPRETATION_COMMIT", "job.idea.brief.preparing", JobEvent.Status.RUNNING, Map.of(), null);
             committed = completion.complete(claim, context, response);
         } catch (ExecutionFailure failure) {
             terminalFailure(claim, context, failure.code(), failure.reason(), failure.retryable());

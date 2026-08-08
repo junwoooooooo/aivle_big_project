@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { createMarketingContentApi } from '../api/marketingContentApi.js';
-import { createFinalizedPlanningApi } from '../api/finalizedPlanningApi.js';
+import { createMarketingSourceApi } from '../api/marketingSourceApi.js';
 import useMarketingGeneration from './useMarketingGeneration.js';
 
 export default function useMarketingContent(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createMarketingContentApi(client), [client]);
-  const planningApi = useMemo(() => createFinalizedPlanningApi(client), [client]);
+  const sourceApi = useMemo(() => createMarketingSourceApi(client), [client]);
   const selectedId = useRef(null);
-  const [state, setState] = useState({ loading: true, list: [], planning: null, selected: null, error: null, saving: false });
+  const [state, setState] = useState({ loading: true, list: [], source: null, selected: null, error: null, saving: false });
   const updateSelected = useCallback((selected) => {
     selectedId.current = selected?.content?.contentId ?? null;
     setState((value) => ({ ...value, selected }));
@@ -18,7 +18,11 @@ export default function useMarketingContent(projectId) {
   const restoreGeneration = generation.restore;
 
   const refresh = useCallback(async () => {
-    const [contents, planning] = await Promise.allSettled([api.list(projectId), planningApi.current(projectId)]);
+    const sourcePromise = sourceApi.current(projectId).catch(async (error) => {
+      if ([404, 409, 422].includes(error?.status)) return sourceApi.finalize(projectId).catch(() => null);
+      throw error;
+    });
+    const [contents, source] = await Promise.allSettled([api.list(projectId), sourcePromise]);
     const list = contents.status === 'fulfilled' ? contents.value.contents : [];
     const preferredId = selectedId.current && list.some((content) => content.contentId === selectedId.current)
       ? selectedId.current
@@ -29,10 +33,10 @@ export default function useMarketingContent(projectId) {
     }
     selectedId.current = selected?.content?.contentId ?? null;
     setState((value) => ({ ...value, loading: false, list,
-      planning: planning.status === 'fulfilled' ? planning.value.finalizedPlanning : null,
+      source: source.status === 'fulfilled' ? source.value : null,
       selected, error: contents.status === 'rejected' ? contents.reason : null }));
     if (selected) restoreGeneration(selected);
-  }, [api, planningApi, projectId, restoreGeneration]);
+  }, [api, sourceApi, projectId, restoreGeneration]);
   useEffect(() => { const timer = setTimeout(() => void refresh(), 0); return () => clearTimeout(timer); }, [refresh]);
 
   const open = useCallback(async (contentId) => {

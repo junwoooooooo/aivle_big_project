@@ -1,56 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  applyQuestionAnswers,
   CANONICAL_FIELD_CATALOG,
+  createDerivePayload,
   createIdeaIntakeDraft,
-  DECISION_STATE,
   draftFromIdeaBrief,
-  FIELD_SOURCE,
-  hydrateBriefFromIntake,
   ideaIntakeDraftReducer,
+  validateIdeaIntake,
 } from './ideaIntakeModel.js';
 
-describe('ideaIntakeModel', () => {
-  it('keeps answers and edits in the canonical draft without locking all user input', () => {
-    let draft = createIdeaIntakeDraft();
-    draft = ideaIntakeDraftReducer(draft, {
-      type: 'UPDATE_INTAKE', field: 'problem', value: '지역 소상공인의 재고 폐기',
-    });
-    draft = hydrateBriefFromIntake(draft);
-    draft = ideaIntakeDraftReducer(draft, {
-      type: 'ANSWER_QUESTION', questionId: 'beneficiary', value: '동네 상점 운영자',
-    });
-    draft = applyQuestionAnswers(draft, [{ id: 'beneficiary', fieldKey: 'beneficiaries' }]);
-    draft = ideaIntakeDraftReducer(draft, {
-      type: 'UPDATE_BRIEF_FIELD', field: 'beneficiaries', value: '동네 상점과 지역 운영자',
-    });
+describe('V2 Market Seed 모델', () => {
+  it('필수 필드를 정확히 세 개로 제한한다', () => {
+    expect(CANONICAL_FIELD_CATALOG.filter((field) => field.requiredForConcept).map((field) => field.key))
+      .toEqual(['ideaOverview', 'problem', 'targetUsers']);
+    expect(CANONICAL_FIELD_CATALOG.map((field) => field.key)).not.toContain('payment');
+    expect(CANONICAL_FIELD_CATALOG.map((field) => field.key)).not.toContain('personalData');
+  });
 
-    expect(draft.answers.beneficiary).toBe('동네 상점 운영자');
-    expect(draft.fields.problem).toEqual({
-      value: '지역 소상공인의 재고 폐기',
-      source: FIELD_SOURCE.USER_INPUT,
-      decisionState: DECISION_STATE.PREFERRED,
-    });
-    expect(draft.fields.beneficiaries).toEqual({
-      value: '동네 상점과 지역 운영자',
-      source: FIELD_SOURCE.USER_INPUT,
-      decisionState: DECISION_STATE.PREFERRED,
+  it('세 필드를 모두 요구하고 optional 누락은 허용한다', () => {
+    let draft = createIdeaIntakeDraft();
+    expect(Object.keys(validateIdeaIntake(draft))).toEqual(['ideaOverview', 'problem', 'targetUsers']);
+    for (const [field, value] of [['ideaOverview', '개요'], ['problem', '문제'], ['targetUsers', '사용자']]) {
+      draft = ideaIntakeDraftReducer(draft, { type: 'UPDATE_INTAKE', field, value });
+    }
+    expect(validateIdeaIntake(draft)).toEqual({});
+    expect(createDerivePayload(draft)).toMatchObject({
+      ideaOverview: '개요', problem: '문제', targetUsers: '사용자',
+      optionalSeed: { targetRegion: '', constraints: { budgetConstraint: '' } },
     });
   });
 
-  it('keeps overview separate from assumptions and aligns all canonical metadata', () => {
+  it('사용자 optional 값을 LOCKED 출처로 복원하고 AI 해석을 분리한다', () => {
     const draft = draftFromIdeaBrief({
-      overview: '원문 개요',
-      fields: [{
-        fieldKey: 'assumptions', value: '검증할 가정', decisionState: 'ASSUMPTION', provenance: 'AI_PROPOSED',
-      }],
+      overview: '개요',
+      fields: [
+        { fieldKey: 'ideaOverview', value: '개요', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'problem', value: '문제', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'targetUsers', value: '사용자', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'price', value: '월 9,900원', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+      ],
+      interpretation: { interpretedProblem: '문제 해석', interpretedTargetUsers: '사용자 해석' },
     });
-
-    expect(CANONICAL_FIELD_CATALOG).toHaveLength(15);
-    expect(CANONICAL_FIELD_CATALOG.map((field) => field.key)).toEqual(Object.keys(draft.fields));
-    expect(draft.intake.overview).toBe('원문 개요');
-    expect(draft.fields.assumptions.value).toBe('검증할 가정');
-    expect(draft.fields.fixedConditions.decisionState).toBe(DECISION_STATE.LOCKED);
+    expect(draft.fields.price).toEqual({ value: '월 9,900원', source: 'USER_INPUT', decisionState: 'LOCKED' });
+    expect(draft.interpretation.interpretedProblem).toBe('문제 해석');
   });
 });

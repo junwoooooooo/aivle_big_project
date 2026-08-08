@@ -15,7 +15,7 @@ export function toProjectViewModel(project) {
   const statusView = getProjectStatusView(viewModel.status);
   const nextAction = {
     type: 'READY',
-    label: '6단계 모듈 확인',
+    label: '8단계 모듈 확인',
     description: '프로젝트 개요에서 각 모듈의 독립 상태와 필요한 입력을 확인할 수 있습니다.',
     route: projectRoutes.overview(viewModel.projectId),
     priority: 'NORMAL',
@@ -24,7 +24,7 @@ export function toProjectViewModel(project) {
     ...viewModel,
     statusLabel: statusView.label,
     statusTone: statusView.tone,
-    stageLabel: '6단계 모듈',
+    stageLabel: '8단계 모듈',
     area: 'PIPELINE',
     nextAction,
     nextRoute: 'overview',

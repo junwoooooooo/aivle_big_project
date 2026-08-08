@@ -1,19 +1,59 @@
 import asyncio
 from typing import Any, get_args, get_origin, get_type_hints
+
 import pytest
 
+from app.providers import ProviderFailure
+from app.tasks.idea_brief import service
 from app.tasks.idea_brief.mapper import to_domain
 from app.tasks.idea_brief.models import IdeaBriefProviderResult
-from app.tasks.idea_brief import service
-from app.providers import ProviderFailure
 
 
 FIELD_METADATA = [
-    {"fieldKey": "physicalActivity", "requiredForConcept": True, "regulatorySensitive": True},
-    {"fieldKey": "personalData", "requiredForConcept": True, "regulatorySensitive": True},
+    {"fieldKey": "ideaOverview", "requiredForConcept": True, "regulatorySensitive": False},
     {"fieldKey": "problem", "requiredForConcept": True, "regulatorySensitive": False},
-    {"fieldKey": "assumptions", "requiredForConcept": False, "regulatorySensitive": False},
+    {"fieldKey": "targetUsers", "requiredForConcept": True, "regulatorySensitive": False},
+    {"fieldKey": "targetRegion", "requiredForConcept": False, "regulatorySensitive": False},
 ]
+
+
+def provider_result(decision="ALLOW", questions=None, contradictions=None):
+    return {
+        "safetyReview": {
+            "decision": decision,
+            "categories": [] if decision == "ALLOW" else ["CLEAR_EXPLOITATION"],
+            "restrictions": [],
+            "userFacingReason": "안전 확인 결과입니다.",
+        },
+        "interpretation": {
+            "interpretedProblem": "지역 음식물 폐기 문제",
+            "interpretedTargetUsers": "지역 식당",
+            "usageContext": "영업 종료 후",
+            "industryCategory": "폐기물 관리",
+            "researchScope": "수거 및 감축 서비스",
+            "conciseIdeaDefinition": "식당의 음식물 폐기를 줄이는 서비스",
+            "targetRegionInterpretation": "",
+            "relevantKnownCompetitorContext": "",
+        },
+        "clarificationQuestions": questions or [],
+        "contradictions": contradictions or [],
+        "readiness": {"status": "READY_FOR_REVIEW", "score": 90, "missingFieldKeys": []},
+        "userFacingSummary": "입력하신 아이디어를 이렇게 이해했습니다.",
+    }
+
+
+def task_input(mode="INITIAL"):
+    return {
+        "mode": mode,
+        "ideaOverview": "식당 음식물 폐기를 줄이는 서비스",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "식당 음식물 폐기를 줄이는 서비스", "decisionState": "LOCKED"},
+            {"fieldKey": "problem", "value": "음식물 폐기", "decisionState": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "지역 식당", "decisionState": "LOCKED"},
+        ],
+        "attachmentFileIds": [],
+        "fieldMetadata": FIELD_METADATA,
+    }
 
 
 def test_provider_schema_is_closed_and_fully_typed():
@@ -23,119 +63,60 @@ def test_provider_schema_is_closed_and_fully_typed():
         assert Any not in get_type_hints(model).values()
 
 
-def test_provider_to_domain_mapping_is_deterministic():
-    provider = IdeaBriefProviderResult.model_validate({
-        "extractedFields": [{"fieldKey": "problem", "value": "폐기", "decisionState": "OPEN", "sourceReference": "overview"}],
-        "fieldSuggestions": [{"fieldKey": "targetCustomers", "value": "식당", "decisionState": "PREFERRED", "rationale": "입력 기반"}],
-        "clarificationQuestions": [],
-        "contradictions": [],
-        "readiness": {"status": "READY_FOR_REVIEW", "score": 90, "missingFieldKeys": []},
-        "userFacingSummary": "검토할 수 있습니다.",
-    })
-    first = to_domain(provider).model_dump(mode="json")
-    second = to_domain(provider).model_dump(mode="json")
-    assert first == second
-    assert [field["provenance"] for field in first["fields"]] == ["SOURCE_EXTRACTED", "AI_PROPOSED"]
+def test_provider_to_domain_preserves_safety_and_interpretation():
+    provider = IdeaBriefProviderResult.model_validate(provider_result())
+    result = to_domain(provider).model_dump(mode="json")
+    assert result["safetyReview"]["decision"] == "ALLOW"
+    assert result["interpretation"]["interpretedTargetUsers"] == "지역 식당"
+    assert "fields" not in result
 
 
-def test_final_synthesis_uses_strict_mode_prompt_and_rejects_questions(monkeypatch):
-    captured = {}
-    async def prompt(system, _user, **kwargs):
-        captured["system"] = system
-        captured.update(kwargs)
-        return {
-            "extractedFields": [], "fieldSuggestions": [],
-            "clarificationQuestions": [{"targetFieldKey": "problem", "prompt": "more?",
-                "type": "FREE_TEXT", "options": [], "allowUndecided": True}],
-            "contradictions": [],
-            "readiness": {"status": "NEEDS_INPUT", "score": 20, "missingFieldKeys": ["problem"]},
-            "userFacingSummary": "추가 확인이 필요합니다.",
-        }
+def test_optional_legal_details_are_not_follow_up_targets():
+    schema = IdeaBriefProviderResult.model_json_schema()
+    serialized = str(schema)
+    assert "payment" not in serialized
+    assert "personalData" not in serialized
+    assert "requiredPartners" not in serialized
+    assert "targetRegion" not in serialized.split("ClarificationQuestion", 1)[-1].split("Contradiction", 1)[0]
+
+
+def test_blocked_safety_result_removes_questions(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return provider_result("BLOCK_OR_REFRAME", questions=[{
+            "targetFieldKey": "problem", "prompt": "문제를 알려주세요.",
+            "type": "FREE_TEXT", "options": [], "allowUndecided": False,
+        }])
+
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_idea_brief_derivation(task_input()))
+    assert result["safetyReview"]["decision"] == "BLOCK_OR_REFRAME"
+    assert result["questions"] == []
+
+
+def test_complete_minimal_seed_drops_unnecessary_questions(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return provider_result(questions=[{
+            "targetFieldKey": "targetUsers", "prompt": "사용자를 다시 알려주세요.",
+            "type": "FREE_TEXT", "options": [], "allowUndecided": False,
+        }])
+
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_idea_brief_derivation(task_input()))
+    assert result["questions"] == []
+    assert result["readiness"]["status"] == "READY_FOR_REVIEW"
+
+
+def test_final_synthesis_rejects_new_questions(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        return provider_result(questions=[{
+            "targetFieldKey": "problem", "prompt": "문제를 다시 알려주세요.",
+            "type": "FREE_TEXT", "options": [], "allowUndecided": False,
+        }])
+
     monkeypatch.setattr(service, "execute_structured_prompt", prompt)
     with pytest.raises(ProviderFailure) as raised:
-        asyncio.run(service.execute_idea_brief_derivation({
-            "mode": "FINAL_SYNTHESIS", "overview": "idea", "fields": [], "attachmentFileIds": [],
-            "fieldMetadata": FIELD_METADATA,
-        }))
+        asyncio.run(service.execute_idea_brief_derivation(task_input("FINAL_SYNTHESIS")))
     assert raised.value.reason == "FINAL_SYNTHESIS_QUESTIONS_FORBIDDEN"
-    assert "더 이상 새로운 질문을 생성하지 말고" in captured["system"]
-    assert captured["response_schema"]["additionalProperties"] is False
-
-
-def test_clarification_keeps_required_questions_before_optional_questions(monkeypatch):
-    async def prompt(_system, _user, **_kwargs):
-        return {
-            "extractedFields": [], "fieldSuggestions": [],
-            "clarificationQuestions": [
-                {"targetFieldKey": "assumptions", "prompt": "optional", "type": "FREE_TEXT",
-                    "options": [], "allowUndecided": True},
-                {"targetFieldKey": "problem", "prompt": "problem", "type": "FREE_TEXT",
-                    "options": [], "allowUndecided": True},
-                {"targetFieldKey": "physicalActivity", "prompt": "activity", "type": "FREE_TEXT",
-                    "options": [], "allowUndecided": True},
-            ],
-            "contradictions": [],
-            "readiness": {"status": "NEEDS_INPUT", "score": 30,
-                "missingFieldKeys": ["problem", "physicalActivity"]},
-            "userFacingSummary": "필수 정보가 필요합니다.",
-        }
-    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
-
-    result = asyncio.run(service.execute_idea_brief_derivation({
-        "mode": "CLARIFICATION", "overview": "idea", "fields": [], "attachmentFileIds": [],
-        "fieldMetadata": FIELD_METADATA,
-    }))
-
-    assert [value["targetFieldKey"] for value in result["questions"]] == ["physicalActivity", "problem"]
-
-
-def test_final_synthesis_allows_ai_proposal_and_keeps_unresolved_required_missing(monkeypatch):
-    async def prompt(_system, _user, **_kwargs):
-        return {
-            "extractedFields": [],
-            "fieldSuggestions": [{"fieldKey": "physicalActivity", "value": "오프라인 활동 없음",
-                "decisionState": "PREFERRED", "rationale": "현재 설명에서 합리적으로 추론"}],
-            "clarificationQuestions": [], "contradictions": [],
-            "readiness": {"status": "NEEDS_INPUT", "score": 70,
-                "missingFieldKeys": ["personalData"]},
-            "userFacingSummary": "개인정보 항목은 사용자 확인이 필요합니다.",
-        }
-    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
-
-    result = asyncio.run(service.execute_idea_brief_derivation({
-        "mode": "FINAL_SYNTHESIS", "overview": "idea",
-        "fields": [{"fieldKey": "problem", "value": "문제", "decisionState": "PREFERRED"}],
-        "attachmentFileIds": [],
-        "fieldMetadata": FIELD_METADATA,
-    }))
-
-    assert result["questions"] == []
-    assert result["fields"][0]["provenance"] == "AI_PROPOSED"
-    assert result["readiness"]["missingFieldKeys"] == ["personalData"]
-
-
-def test_final_synthesis_normalizes_provider_needs_input_when_required_fields_are_complete(monkeypatch):
-    async def prompt(_system, _user, **_kwargs):
-        return {
-            "extractedFields": [], "fieldSuggestions": [], "clarificationQuestions": [],
-            "contradictions": [],
-            "readiness": {"status": "NEEDS_INPUT", "score": 60, "missingFieldKeys": []},
-            "userFacingSummary": "검토할 수 있습니다.",
-        }
-    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
-
-    result = asyncio.run(service.execute_idea_brief_derivation({
-        "mode": "FINAL_SYNTHESIS", "overview": "idea",
-        "fields": [
-            {"fieldKey": value["fieldKey"], "value": "complete", "decisionState": "PREFERRED"}
-            for value in FIELD_METADATA if value["requiredForConcept"]
-        ],
-        "attachmentFileIds": [], "fieldMetadata": FIELD_METADATA,
-    }))
-
-    assert result["questions"] == []
-    assert result["readiness"]["missingFieldKeys"] == []
-    assert result["readiness"]["status"] == "READY_FOR_REVIEW"
 
 
 def _assert_closed_schema(node: dict, root: dict) -> None:

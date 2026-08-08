@@ -75,7 +75,7 @@ class IdeaBriefCanonicalizationIntegrationTests {
         Project project = projects.saveAndFlush(Project.create(user, "overview separation", null, "AI"));
 
         var response = service.derive(user.getId(), project.getId(),
-            new DeriveRequest("Original overview", List.of(), java.util.Set.of()),
+            new DeriveRequest("Original overview", "Original problem", "Original users", null, java.util.Set.of()),
             "derive-" + suffix, "correlation-" + suffix);
 
         assertThat(response.overview()).isEqualTo("Original overview");

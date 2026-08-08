@@ -1,87 +1,127 @@
-# ASYNC EXECUTION AND JOB EVENT STANDARD v1.0
+# ASYNC EXECUTION AND JOB EVENT STANDARD — V2 authoritative contract
+
+파일명은 기존 참조 호환을 위해 `v1.0`을 유지한다.
 
 ## 1. 유지 기반
 
-TaskRun, Lease, Claim, Retry, Recovery, JobEvent, SSE, Polling fallback, Replay, Idempotency를 유지한다.
+`TaskRun`, `TaskAttempt`, worker lease/claim, bounded retry/recovery, `JobEvent`, SSE, polling fallback, replay, idempotency를 재사용한다. 모든 작은 사용자 Action을 무조건 Task로 만들지 않는다.
 
-## 2. 실행 흐름
+V2에서 비동기 후보인 task type:
 
-API Transaction에서 QUEUED 생성 → Commit 후 Worker Claim → Domain 저장 → Terminal Event.
+- `IDEA_SAFETY_REVIEW`
+- `IDEA_INTERPRETATION`
+- `CONCEPT_CANDIDATE_V2`
+- `CONCEPT_DISTINCTNESS_REVIEW`
+- `CONCEPT_LEGAL_REVIEW`
+- `CONCEPT_HYPOTHESIS_ALTERNATIVE`
+- `CONCEPT_DELTA_LEGAL_REVIEW`
 
-JPA Entity를 Transaction 밖으로 전달하지 않고 Scalar Claim Context를 사용한다.
+외부 Market/BM/TechOps/Finance/Persona/Marketing run은 공통 module handoff/run event 계약을 사용한다.
 
-## 3. Event 정본
+## 2. 실행 흐름과 정본
 
-Event는 상태 변경 신호다. 화면 데이터는 Query API가 정본이다.
+API transaction에서 `QUEUED` execution을 생성하고 commit 후 worker가 scalar claim context로 claim한다. Domain terminal transition과 TaskRun transition을 완료한 뒤 terminal Event를 발행한다. JPA Entity를 transaction 밖으로 넘기지 않는다.
 
-## 4. Event 필드
+Event는 상태 변경 신호다. Seed, Interpretation, Concept Run/Slot, Legal Assessment, Hypothesis Decision, Snapshot, external Module Run의 Query API가 화면 정본이다.
 
-- eventId
-- jobId
-- projectId
-- taskRunId
-- module
-- stageKey
-- eventType
-- status
-- safeMessageKey
-- safeMessageParams
-- sequence
-- occurredAt
+## 3. JobEvent 필드
 
-## 5. 금지 필드
+- `eventId`
+- `jobId`
+- `projectId`
+- `taskRunId`
+- `module`
+- `stageKey`
+- `eventType`
+- `status`
+- `safeMessageKey`
+- `safeMessageParams`
+- `sequence`
+- `occurredAt`
 
-Prompt, Provider Body, 사용자 전체 입력, 첨부 원문, 법률 원문, Authorization, Key, Stack Trace.
+Concept의 안전한 사용자 stage 예시는 candidate design, structure validation, distinctness validation, official-evidence legal review, result preparation이다.
 
-## 6. 사용자 Timeline
+## 4. 금지 정보
 
-내부 `claimed`, lease 갱신 같은 Event는 기본 Timeline에서 숨기거나 상세로 제한한다.
+Prompt, provider request/response body, provider raw error, 사용자 전체 입력, 첨부 원문, 내부 policy/reasoning, 법률 원문 전문, Authorization, API key/secret, stack trace를 Event, SSE, audit metadata, 사용자 query에 노출하지 않는다.
 
-## 7. SSE
+## 5. Terminal immutability
 
-- Last-Event-ID Replay
-- sequence dedupe
-- completion/timeout/error cleanup
-- heartbeat failure emitter 제거
-- SSE commit 뒤 JSON Error 쓰기 금지
+- Terminal TaskRun과 Job ID는 immutable execution history이며 새 사용자 Action에 재사용하지 않는다.
+- 동일 command key replay만 동일 execution을 반환한다. 새 command는 canonical content가 같아도 새 execution identity를 갖는다.
+- JobEvent가 `COMPLETED`, `NEEDS_INPUT`, `FAILED`, `BLOCKED`, `CANCELLED`에 도달하면 동일 jobId에 후속 Event를 발행하지 않는다. 위반은 `TERMINAL_JOB_EVENT_IMMUTABLE`로 거부한다.
+- 과거 raw `NEEDS_INPUT` TaskRun을 후속 입력 때문에 `SUCCEEDED`로 변경하지 않는다.
+- Domain, Attempt, Run, terminal Event의 terminal 의미가 같은 execution에서 일치해야 한다.
 
-## 8. Polling
+## 6. NEEDS_INPUT 의미
 
-SSE 실패 시 bounded fallback. 2초 고정 Polling 금지. 초기·재연결·중요 Event·Terminal·수동 새로고침에서 Query한다.
+`NEEDS_INPUT`은 현재 사용자 행동이 필요한지와 raw terminal outcome을 구분한다.
 
-## 9. 실패 분류
+- active jobs에는 실제 실행 중 상태와 현재 unresolved `NEEDS_INPUT`만 포함한다.
+- 최신 relevant job이며 Domain도 여전히 `NEEDS_INPUT`이고 후속 patch/decision/newer run으로 해결되지 않았을 때만 actionable이다.
+- 해결된 과거 raw outcome은 `rawStatus=NEEDS_INPUT`, `actionable=false`, `presentationStatus=RESOLVED_INPUT`으로 recent history에 표시할 수 있다.
+- Concept 설계 누락은 사용자에게 legal 질문을 던지는 `NEEDS_FACTS`가 아니다. Candidate incomplete/redesign/replacement다.
+- `NEEDS_FACTS`는 인허가 보유, 고정 계약, 실제 지역, 특허·라이선스처럼 AI가 설계할 수 없는 외부 현실 사실에만 사용한다.
 
-- Schema repairable
-- Provider transient
-- Provider permanent
-- Domain needs input
-- Internal permanent
+## 7. Concept validation ordering과 Attempt error
 
-무한 Retry를 금지하고 RUNNING 고착이 없어야 한다.
+Concept pipeline 순서:
 
-## 10. Provider Smoke
+`GENERATE → SCHEMA VALIDATION → LOCKED/ORIGIN VALIDATION → DISTINCTNESS VALIDATION → LEGAL REVIEW`
 
-실제 Provider Output Schema와 모델 호환을 synthetic input으로 검증하는 Smoke를 각 핵심 AI Task의 완료 Gate로 둔다.
+Provider 또는 validation 오류는 Attempt에 다음 중 하나로 기록한다.
 
-## 11. Concept Attempt 오류와 Slot 상태 경계
+- `SCHEMA_INVALID`
+- `TRANSIENT_PROVIDER_FAILURE`
+- `PERMANENT_PROVIDER_FAILURE`
+- `ORIGIN_INVALID`
+- `LOCKED_CONSTRAINT_INVALID`
+- `DUPLICATE_CONCEPT`
+- `LEGAL_REDESIGN_REQUIRED`
+- `LEGAL_REJECTED`
+- `INSUFFICIENT_INFORMATION`
+- `INTERNAL_EXECUTION_ERROR`
 
-Concept Provider 오류는 Attempt에 다음 분류 중 하나로 기록한다: `SCHEMA_INVALID`, `TRANSIENT_PROVIDER_FAILURE`, `PERMANENT_PROVIDER_FAILURE`, `ORIGIN_INVALID`, `LEGAL_REDESIGN_REQUIRED`, `LEGAL_REJECTED`, `INSUFFICIENT_INFORMATION`, `INTERNAL_EXECUTION_ERROR`.
+`PROVIDER_FAILURE`는 Slot registry, 사용자 progress status, query response status로 추가하지 않는다.
 
-- transient retry가 남으면 Slot 상태를 바꾸지 않고 동일 Slot을 최대 1회 재시도한다.
-- transient retry가 소진되면 Slot은 `REPLACING`으로 전이한다.
-- permanent provider failure이면 Slot과 Run은 `FAILED`, terminal `retryable=false`로 종료한다.
-- schema invalid이면 Slot은 `SCHEMA_INVALID`, `REPAIR` Attempt는 최대 1회이며 재실패 시 `REPLACING`으로 전이한다.
-- `PROVIDER_FAILURE`는 Slot registry, 사용자 progress event status, query response 상태로 사용하지 않는다.
+## 8. Bounded retry, repair, redesign, replacement
 
-## 12. Terminal execution immutability and domain alignment
+- transient provider retry는 동일 Slot에서 최대 1회다. 소진 시 replacement로 전이한다.
+- permanent provider failure는 Run/Slot을 retry 불가 `FAILED`로 종료한다.
+- schema repair는 최대 1회이며 재실패 시 replacement로 전이한다.
+- legal redesign은 후보별 최대 1회이며 schema, LOCKED/origin, distinctness, legal을 다시 검사한다.
+- initial candidate 5개, replacement round 최대 2회, 전체 inspected candidate 최대 15개를 유지한다.
+- semantic duplicate는 적격 수에 포함하지 않고 Legal Review task를 만들지 않는다.
+- 한도 내 distinct eligible 5개를 확보하지 못하면 `INSUFFICIENT_DISTINCT_CONCEPTS`로 terminal 처리한다.
+- 무한 retry, repair, redesign, replacement를 금지한다.
 
-- Terminal TaskRun and Job IDs are immutable execution history and must never be reused for a new user action.
-- JobEvent가 `COMPLETED`, `NEEDS_INPUT`, `FAILED`, 또는 `BLOCKED`에 도달하면 동일 jobId에 후속 Event를 publish할 수 없다. 위반은 safe internal code `TERMINAL_JOB_EVENT_IMMUTABLE`로 거부한다.
-- Task result adoption은 payload를 보존하면서 domain terminal 의미를 TaskAttempt와 TaskRun에 동일하게 반영한다. Domain `NEEDS_INPUT`은 Attempt/Run/Event 모두 `NEEDS_INPUT`이어야 한다.
-- Event terminal publish 전에 TaskRun과 domain transaction의 terminal transition이 완료되어야 한다.
-- canonical input hash는 content identity이고 command-derived idempotency key는 execution identity다. 같은 command replay와 새로운 사용자 execution을 혼용하지 않는다.
-- `DERIVING` domain이 terminal active TaskRun을 가리키면 invalid recoverable state다. read path는 이를 RUNNING으로 표시하지 않고 recovery signal을 반환하며, recovery는 새 TaskRun과 sequence 1의 새 job history를 만든다.
-- Terminal TaskRun의 raw outcome과 현재 사용자 actionability는 서로 다른 projection 개념이다. 과거 `NEEDS_INPUT` TaskRun을 사용자의 후속 입력 때문에 `SUCCEEDED`로 갱신하지 않는다.
-- Project active jobs는 실제 실행 중인 `QUEUED`, `READY`, `RUNNING`과 현재 unresolved `NEEDS_INPUT`만 포함한다. `NEEDS_INPUT`은 해당 subject의 최신 relevant job이고 Domain도 현재 `NEEDS_INPUT`이며 후속 answer, field patch, newer TaskRun, Review 또는 Confirm으로 해결되지 않았을 때만 actionable하다.
-- 해결된 raw `NEEDS_INPUT`은 recent history에서 `rawStatus=NEEDS_INPUT`, `actionable=false`, `presentationStatus=RESOLVED_INPUT`으로 표현할 수 있다. 현재 unresolved 항목은 `presentationStatus=NEEDS_INPUT`이다.
-- Job Center의 terminal notice는 refresh된 projection을 따른다. 선택한 raw `NEEDS_INPUT`이 더 이상 actionable하지 않으면 notice를 지우거나 입력 반영 완료로 변경한다.
+## 9. Safety, Interpretation, Hypothesis, Delta Legal
+
+Safety Review와 Legal Review는 task type, status meaning, 사용자 message를 공유하지 않는다. `BLOCK_OR_REFRAME`은 Concept Factory queue를 만들지 않는다.
+
+Interpretation task는 `AI_DERIVED + REVIEWABLE` 결과를 만들며 사용자 입력값으로 위장하지 않는다. legal detail 누락만으로 `NEEDS_INPUT`을 만들지 않는다.
+
+Alternative hypothesis task는 선택 Concept에 새 proposal version을 만들고 기존 rejected proposal을 덮어쓰지 않는다. legal-sensitive edit는 Delta Legal Review execution을 만들며 통과 전 decision을 final acceptance로 전이하지 않는다. non-legal SOM edit는 Delta Legal task를 만들지 않는다.
+
+## 10. SSE, replay, polling
+
+- SSE는 `Last-Event-ID` replay와 sequence dedupe를 지원한다.
+- completion, timeout, error 시 emitter를 정리한다.
+- SSE response commit 뒤 JSON error를 쓰지 않는다.
+- polling은 SSE 실패 시 bounded fallback이다. 2초 고정 polling을 금지한다.
+- 초기 load, 재연결, 중요 Event, terminal Event, 수동 새로고침에서 Query한다.
+- 새로고침은 current Run, domain query, Event replay, SSE reconnect 순서로 복원한다.
+
+## 11. 외부 module event
+
+외부 module event type은 `module.accepted`, `module.queued`, `module.started`, `module.progress`, `module.completed`, `module.failed`다. progress는 가짜 퍼센트 없이 `stageKey`와 `safeMessageKey`를 사용한다.
+
+Idempotency는 `module + inputSnapshotHash + requestedOperation`을 사용한다. callback은 signature/authentication, timestamp, replay protection, project/handoff/input hash 일치를 검증한다. terminal external run 결과는 input Snapshot ID/hash와 result hash를 보존한다.
+
+## 12. Job Center projection
+
+Job Center는 raw execution status와 현재 사용자 actionability를 분리한다. 안전한 summary, 현재 stage, retry 가능 여부, next action만 표시한다. resolved input notice는 지우거나 해결됨으로 바꾸며 provider 내부 오류를 노출하지 않는다.
+
+## 13. 관찰성과 검증
+
+각 비동기 task는 safe progress Event, attempt count, bounded retry reason code, terminal domain alignment를 관찰 가능하게 한다. Provider smoke는 최종 runtime acceptance 항목이지만 V2 Unit fast profile에서는 사용자가 명시적으로 요청하지 않으면 실행하지 않는다.

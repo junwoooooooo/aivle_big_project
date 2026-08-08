@@ -5,6 +5,8 @@ import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import ConceptCard from '../components/ConceptCard.jsx';
 import ConceptComparisonTable from '../components/ConceptComparisonTable.jsx';
 import LegalDetailDialog from '../components/LegalDetailDialog.jsx';
+import HypothesisDecisionPanel from '../components/HypothesisDecisionPanel.jsx';
+import MarketSeedFinalization from '../components/MarketSeedFinalization.jsx';
 import SelectionConfirmation from '../components/SelectionConfirmation.jsx';
 import useConceptSelection from '../hooks/useConceptSelection.js';
 import { MAX_COMPARE_COUNT, MIN_COMPARE_COUNT, toComparisonModel } from '../model/conceptComparisonModel.js';
@@ -47,8 +49,11 @@ export default function ConceptComparisonPage() {
     <section className="selection-guide" aria-live="polite"><strong>비교 대상 {comparedIds.length} / 5</strong><span>2~5개를 고르고, 그중 하나를 선택 후보로 표시하세요.</span></section>
     {view === 'cards' ? <section className="selection-grid" aria-label="컨셉 카드 보기">{models.map((model) => <ConceptCard key={model.conceptId} model={model} compared={comparedIds.includes(model.conceptId)} preferred={preferredId === model.conceptId} compareDisabled={comparedIds.length >= MAX_COMPARE_COUNT} onToggleCompare={toggleCompare} onPrefer={setPreferredId} onDetails={setDetail} />)}</section>
       : comparedModels.length >= MIN_COMPARE_COUNT ? <ConceptComparisonTable models={comparedModels} /> : <section className="comparison-empty"><h2>비교할 컨셉을 먼저 골라주세요.</h2><p>카드 보기에서 2개 이상을 비교 대상으로 선택하면 비교표가 열립니다.</p><button type="button" onClick={() => setView('cards')}>카드에서 선택하기</button></section>}
-    <footer className="selection-draft"><div><strong>R4A 로컬 초안</strong><span>선택 확정, Selection Snapshot 저장, 시장분석 전달은 R4B에서 진행합니다.</span>{draftMessage && <p role="status">{draftMessage}</p>}</div><button type="button" disabled={comparedIds.length < MIN_COMPARE_COUNT || !preferredId} onClick={saveDraft}>선택 준비 초안 저장</button></footer>
-    <SelectionConfirmation preferred={models.find((model) => model.conceptId === preferredId)} currentSelection={selection.currentSelection} marketHref={projectRoutes.market(projectId)} onConfirm={selection.confirmSelection} />
+    <footer className="selection-draft"><div><strong>비교 선택 초안</strong><span>이 초안은 현재 브라우저 세션에만 저장됩니다.</span>{draftMessage && <p role="status">{draftMessage}</p>}</div><button type="button" disabled={comparedIds.length < MIN_COMPARE_COUNT || !preferredId} onClick={saveDraft}>선택 준비 초안 저장</button></footer>
+    <SelectionConfirmation preferred={models.find((model) => model.conceptId === preferredId)} currentSelection={selection.currentSelection} onConfirm={selection.confirmSelection} />
+    {selection.currentSelection && <HypothesisDecisionPanel selection={selection.currentSelection} onAction={selection.decideHypothesis} />}
+    <MarketSeedFinalization projectId={projectId} selection={selection.currentSelection} snapshot={selection.marketSeed}
+      finalizing={selection.finalizing} onFinalize={selection.finalizeMarketSeed} />
     {detail && <LegalDetailDialog model={detail} onClose={() => setDetail(null)} />}
   </main>;
 }

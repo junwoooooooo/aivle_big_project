@@ -1,34 +1,87 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
-from app.tasks.concept_candidate.models import ConceptCandidateResult, StrictModel
-
-
-CANONICAL_LEGAL_FIELDS = {
-    "problem", "targetCustomers", "usageContext", "targetRegion", "fixedConditions",
-    "prohibitedMethods", "physicalActivity", "personalData", "payment", "requiredPartners",
-}
+from app.tasks.concept_candidate.models import (
+    Authority, DecisionStatus, StrictModel, ValueSource,
+)
 
 
-class LegalContextField(StrictModel):
-    fieldKey: str = Field(min_length=1, max_length=80)
+class GovernedText(StrictModel):
+    value: str = Field(min_length=1, max_length=3000)
+    source: ValueSource
+    authority: Authority
+    decision: DecisionStatus
+
+
+class GovernedList(StrictModel):
+    value: list[str] = Field(max_length=30)
+    source: ValueSource
+    authority: Authority
+    decision: DecisionStatus
+
+
+LegalSensitivity = Literal["LEGAL_SENSITIVE", "POTENTIALLY_LEGAL_SENSITIVE"]
+
+
+class LegalSensitiveText(GovernedText):
+    legalSensitivity: LegalSensitivity
+
+
+class CommercialRoleModel(StrictModel):
+    providerRole: GovernedText
+    sellerRole: GovernedText
+    intermediaryRole: GovernedText
+
+
+class PartnerRolesModel(StrictModel):
+    partnerModel: GovernedText
+    partnerRequirements: GovernedList
+
+
+class LegalSensitiveHypotheses(StrictModel):
+    targetRegion: LegalSensitiveText
+    revenueModel: LegalSensitiveText
+    price: LegalSensitiveText
+    channels: LegalSensitiveText
+    differentiators: LegalSensitiveText
+
+
+class LegalFactPattern(StrictModel):
+    schemaVersion: Literal["2.0"]
+    jurisdiction: Literal["KR"]
+    actorRoles: GovernedList
+    platformRole: GovernedText
+    commercialRoles: CommercialRoleModel
+    transactionFlow: GovernedList
+    paymentFlow: GovernedList
+    personalDataUsage: GovernedList
+    physicalActivities: GovernedList
+    partnerRoles: PartnerRolesModel
+    qualificationRequirements: GovernedList
+    advertisingClaims: GovernedList
+    operatingModel: GovernedText
+    hypotheses: LegalSensitiveHypotheses
+
+
+ExternalFactKey = Literal[
+    "existingLicenses", "mandatoryExistingPartners", "fixedJurisdiction",
+    "claimedIntellectualProperty",
+]
+
+
+class ExternalFact(StrictModel):
+    factKey: ExternalFactKey
     value: str = Field(min_length=1, max_length=20_000)
-    provenance: Literal["SOURCE_EXTRACTED", "DERIVED_CONTEXT"]
-
-    @field_validator("fieldKey")
-    @classmethod
-    def canonical_key(cls, value: str) -> str:
-        if value not in CANONICAL_LEGAL_FIELDS:
-            raise ValueError("field is not part of the canonical legal context")
-        return value
+    source: Literal["USER_INPUT"]
+    authority: Literal["LOCKED"]
 
 
-class SharedLegalContext(StrictModel):
+class ExternalFactContext(StrictModel):
     sourceSnapshotHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     registryVersion: str = Field(min_length=1, max_length=80)
-    fields: list[LegalContextField] = Field(min_length=1, max_length=10)
+    facts: list[ExternalFact] = Field(max_length=4)
 
 
 class OfficialEvidence(StrictModel):
@@ -51,9 +104,9 @@ class OfficialEvidence(StrictModel):
 
 
 class ConceptLegalReviewInput(StrictModel):
-    candidate: ConceptCandidateResult
-    sharedContext: SharedLegalContext
-    sharedOfficialEvidence: list[OfficialEvidence] = Field(default_factory=list, max_length=200)
+    legalFactPattern: LegalFactPattern
+    factPatternHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    externalFactContext: ExternalFactContext
 
 
 FindingType = Literal[
@@ -79,10 +132,20 @@ class ConceptLegalReviewProviderResult(StrictModel):
     requiredPartnersAndQualifications: list[EvidenceBackedFinding] = Field(max_length=30)
     requiredDisclosures: list[EvidenceBackedFinding] = Field(max_length=30)
     prohibitedVariants: list[EvidenceBackedFinding] = Field(max_length=30)
+    evidenceReferenceIndexes: list[int] = Field(max_length=200)
+    redesignRequirements: list[str] = Field(max_length=30)
     unknownFacts: list[str] = Field(max_length=30)
     expertReviewRecommended: bool
     reviewBasisDate: date
     safeUserSummary: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def terminal_detail_is_explicit(self):
+        if self.status == "REDESIGNABLE" and not self.redesignRequirements:
+            raise ValueError("REDESIGNABLE requires explicit redesign requirements")
+        if self.status == "NEEDS_FACTS" and not self.unknownFacts:
+            raise ValueError("NEEDS_FACTS requires explicit external facts")
+        return self
 
 
 class ConceptLegalReviewDomainResult(StrictModel):
@@ -92,6 +155,7 @@ class ConceptLegalReviewDomainResult(StrictModel):
     requiredPartnersAndQualifications: list[str]
     requiredDisclosures: list[str]
     prohibitedVariants: list[str]
+    redesignRequirements: list[str]
     unknownFacts: list[str]
     findingEvidence: list[FindingEvidenceCoverage]
     officialEvidence: list[OfficialEvidence]
@@ -99,5 +163,7 @@ class ConceptLegalReviewDomainResult(StrictModel):
     expertReviewRecommended: bool
     reviewBasisDate: date
     safeUserSummary: str
+    reviewedFactPatternSchemaVersion: Literal["2.0"]
+    reviewedFactPatternHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     reviewLabel: Literal["공식 근거 기반 법률 구현 가능성 사전검토"]
     reviewLimitations: str = Field(min_length=1, max_length=1000)

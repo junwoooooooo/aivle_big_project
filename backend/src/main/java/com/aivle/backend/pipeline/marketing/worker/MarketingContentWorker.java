@@ -1,6 +1,8 @@
 package com.aivle.backend.pipeline.marketing.worker;
 
 import com.aivle.backend.jobevent.*;
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.marketing.application.MarketingContentCompletionService;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient;
@@ -47,6 +49,10 @@ public class MarketingContentWorker {
             publish(context,"COMPLETED","job.marketing.completed",JobEvent.Status.COMPLETED,null);
         } catch (ExecutionFailure failure) {
             terminalFailure(claim,context,failure.code(),failure.reason(),failure.retryable());
+        } catch (BusinessException failure) {
+            if (failure.getErrorCode() == ErrorCode.MARKETING_PROHIBITED_CLAIM)
+                terminalFailure(claim, context, "EXECUTION_FAILED", "SAFETY_POLICY_BLOCKED", false);
+            else terminalFailure(claim, context, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
         } catch (RuntimeException failure) {
             log.warn("Marketing content worker failed taskRunId={} type={}",claim.taskRunId(),failure.getClass().getSimpleName());
             terminalFailure(claim,context,"RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",false);
