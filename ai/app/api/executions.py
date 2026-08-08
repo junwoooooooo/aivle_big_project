@@ -20,10 +20,12 @@ router = APIRouter(prefix="/internal/v1/ai", tags=["Internal AI Executions"])
 logger = logging.getLogger(__name__)
 TASK_TYPES = {
     "IDEA_BRIEF_DERIVATION",
-    "CONCEPT_CANDIDATE",
+    "CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE",
     "CONCEPT_LEGAL_REVIEW",
     "CONCEPT_REDESIGN",
     "CONCEPT_HYPOTHESIS_ALTERNATIVE",
+    "TECH_OPS_PROPOSAL",
+    "FINANCE_ESTIMATE",
     "MARKETING_CONTENT_GENERATION",
 }
 
@@ -125,7 +127,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE"}:
+    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
@@ -154,6 +156,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         if body.taskType == "CONCEPT_CANDIDATE":
             from app.tasks.concept_candidate import execute_concept_candidate
             result = await execute_concept_candidate(body.input)
+        elif body.taskType == "CONCEPT_DISTINCTNESS_JUDGE":
+            from app.tasks.concept_distinctness_judge import execute_concept_distinctness_judge
+            result = await execute_concept_distinctness_judge(body.input)
         elif body.taskType == "CONCEPT_LEGAL_REVIEW":
             from app.tasks.concept_legal_review import execute_concept_legal_review
             result = await execute_concept_legal_review(body.input)
@@ -163,6 +168,12 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "CONCEPT_HYPOTHESIS_ALTERNATIVE":
             from app.tasks.concept_hypothesis_alternative import execute_concept_hypothesis_alternative
             result = await execute_concept_hypothesis_alternative(body.input)
+        elif body.taskType == "TECH_OPS_PROPOSAL":
+            from app.tasks.tech_ops_proposal import execute_tech_ops_proposal
+            result = await execute_tech_ops_proposal(body.input)
+        elif body.taskType == "FINANCE_ESTIMATE":
+            from app.tasks.finance_estimate import execute_finance_estimate
+            result = await execute_finance_estimate(body.input)
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)

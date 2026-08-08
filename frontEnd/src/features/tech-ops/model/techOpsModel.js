@@ -14,17 +14,23 @@ export function createFactDraft(facts = {}) {
   const personnel = facts.ownedPersonnel?.value;
   const targets = facts.threeYearTargets?.value;
   return {
+    productSummary: facts.productServiceSpecification?.value?.summary ?? '',
+    productFeatures: Array.isArray(facts.productServiceSpecification?.value?.features)
+      ? facts.productServiceSpecification.value.features.join('\n') : '',
     targetLaunchDate: facts.targetLaunchDate?.value ?? '',
     personnel: Array.isArray(personnel) ? personnel.map((item) => `${item.role}|${item.count}${item.notes ? `|${item.notes}` : ''}`).join('\n') : '',
     assets: Array.isArray(facts.ownedAssetsAndFacilities?.value) ? facts.ownedAssetsAndFacilities.value.join('\n') : '',
     fixedOperatingCost: facts.fixedOperatingCost?.value?.amount ?? '',
     initialInvestment: facts.initialInvestment?.value?.amount ?? '',
-    targets: [1, 2, 3].map((year) => targets?.find?.((item) => item.year === year)?.target ?? ''),
+    targetMetric: targets?.metric ?? 'customerCount',
+    targetUnit: targets?.unit ?? '명',
+    targets: [1, 2, 3].map((year) => targets?.years?.find?.((item) => item.year === year)?.value ?? ''),
   };
 }
 
 export function factsFromDraft(draft) {
   return {
+    productServiceSpecification: { summary: draft.productSummary.trim(), features: lines(draft.productFeatures) },
     targetLaunchDate: draft.targetLaunchDate,
     ownedPersonnel: String(draft.personnel).split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
       const [role, count, notes] = line.split('|').map((item) => item?.trim());
@@ -33,7 +39,10 @@ export function factsFromDraft(draft) {
     ownedAssetsAndFacilities: lines(draft.assets),
     fixedOperatingCost: { amount: numberOrNull(draft.fixedOperatingCost), currency: 'KRW', period: 'MONTHLY' },
     initialInvestment: { amount: numberOrNull(draft.initialInvestment), currency: 'KRW' },
-    threeYearTargets: [1, 2, 3].map((year) => ({ year, target: draft.targets[year - 1]?.trim() })),
+    threeYearTargets: {
+      metric: draft.targetMetric, unit: draft.targetUnit.trim(),
+      years: [1, 2, 3].map((year) => ({ year, value: numberOrNull(draft.targets[year - 1]) })),
+    },
   };
 }
 

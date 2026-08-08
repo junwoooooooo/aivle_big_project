@@ -40,6 +40,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 @RequiredArgsConstructor
@@ -143,6 +145,7 @@ public class IdeaBriefService {
         if (brief.getStatus() != IdeaBriefStatus.READY_FOR_REVIEW) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "아이디어 해석을 수정할 수 있는 상태가 아닙니다.");
         }
+        JsonNode currentInterpretation = objectMapper.readTree(brief.getInterpretationJson());
         brief.updateInterpretation(objectMapper.writeValueAsString(Map.of(
             "interpretedProblem", request.interpretedProblem(),
             "interpretedTargetUsers", request.interpretedTargetUsers(),
@@ -152,9 +155,59 @@ public class IdeaBriefService {
             "conciseIdeaDefinition", request.conciseIdeaDefinition(),
             "targetRegionInterpretation", nullToEmpty(request.targetRegionInterpretation()),
             "relevantKnownCompetitorContext", nullToEmpty(request.relevantKnownCompetitorContext()),
+            "commitmentCandidates", currentInterpretation.path("commitmentCandidates"),
             "userEdited", true
         )));
         brief.recordCommand("PATCH_INTERPRETATION", idempotencyKey, requestHash);
+        return response(brief);
+    }
+
+    @Transactional
+    public IdeaBriefResponse reviewCommitments(Long ownerId, Long projectId,
+            ReviewCommitmentsRequest request, String rawIdempotencyKey) {
+        String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
+        String requestHash = sha256(objectMapper.writeValueAsString(request));
+        IdeaBrief brief = requireCurrentForUpdate(ownerId, projectId);
+        if (replay(brief, "REVIEW_COMMITMENTS", idempotencyKey, requestHash)) return response(brief);
+        if (brief.getStatus() != IdeaBriefStatus.READY_FOR_REVIEW) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "결정 후보를 검토할 수 있는 상태가 아닙니다.");
+        }
+        ObjectNode interpretation = (ObjectNode) objectMapper.readTree(brief.getInterpretationJson());
+        Map<String, JsonNode> candidates = new LinkedHashMap<>();
+        for (JsonNode candidate : interpretation.path("commitmentCandidates")) {
+            candidates.put(candidate.path("fieldKey").asText(), candidate);
+        }
+        for (CommitmentDecisionCommand command : request.commitments()) {
+            IdeaBriefFieldCatalog.FieldDefinition definition = IdeaBriefFieldCatalog.require(command.fieldKey());
+            if (definition.requiredForConcept() || !Set.of("CONFIRM", "EDIT_AND_CONFIRM", "RETURN_TO_OPEN").contains(command.action())) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "결정 후보 Action이 올바르지 않습니다.");
+            }
+            IdeaBriefField field = fields.findByBriefIdAndFieldKey(brief.getId(), command.fieldKey()).orElse(null);
+            if (field != null && field.getProvenance() == com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_INPUT
+                    && field.getDecisionState() == IdeaDecisionState.LOCKED) {
+                candidates.remove(command.fieldKey());
+                continue;
+            }
+            if ("RETURN_TO_OPEN".equals(command.action())) {
+                if (field != null) field.returnCommitmentToOpen();
+                candidates.remove(command.fieldKey());
+                continue;
+            }
+            JsonNode candidate = candidates.get(command.fieldKey());
+            String value = "EDIT_AND_CONFIRM".equals(command.action()) ? command.value()
+                : candidate == null ? null : candidate.path("value").asText();
+            if (value == null || value.isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "확인할 결정값이 없습니다.");
+            }
+            if (field == null) fields.save(IdeaBriefField.confirmedCommitment(brief, command.fieldKey(), value.trim()));
+            else field.confirmCommitment(value.trim());
+            candidates.remove(command.fieldKey());
+        }
+        ArrayNode remaining = objectMapper.createArrayNode();
+        candidates.values().forEach(value -> remaining.add(value.deepCopy()));
+        interpretation.set("commitmentCandidates", remaining);
+        brief.updateInterpretation(objectMapper.writeValueAsString(interpretation));
+        brief.recordCommand("REVIEW_COMMITMENTS", idempotencyKey, requestHash);
         return response(brief);
     }
 
@@ -537,12 +590,25 @@ public class IdeaBriefService {
                 value.path("conciseIdeaDefinition").asText(""),
                 value.path("targetRegionInterpretation").asText(""),
                 value.path("relevantKnownCompetitorContext").asText(""),
+                commitmentCandidates(value),
                 "AI_DERIVED", "REVIEWABLE", value.path("userEdited").asBoolean(false),
                 brief.getInterpretationConfirmedAt() != null
             );
         } catch (RuntimeException invalid) {
             return null;
         }
+    }
+
+    private List<CommitmentCandidateView> commitmentCandidates(JsonNode interpretation) {
+        JsonNode values = interpretation.path("commitmentCandidates");
+        if (!values.isArray()) return List.of();
+        java.util.ArrayList<CommitmentCandidateView> result = new java.util.ArrayList<>();
+        for (JsonNode value : values) result.add(new CommitmentCandidateView(
+            value.path("fieldKey").asText(), value.path("value").asText(),
+            value.path("evidenceQuote").asText(), value.path("source").asText("AI_DERIVED"),
+            value.path("origin").asText("USER_TEXT"), value.path("authority").asText("REVIEWABLE")
+        ));
+        return List.copyOf(result);
     }
 
     private List<String> textArray(String json) {

@@ -14,7 +14,9 @@ channels, differentiators는 AI_HYPOTHESIS + OPEN + PROPOSED로 제안한다. pr
 사용자 원안을 새로운 아이디어로 재해석하지 않고 구조화만 한다. 이름이나 표현만 바꾼 기존
 후보를 만들지 않는다. providerRole, sellerRole, intermediaryRole은 각 참여자의 실제 거래상 역할을
 명시하고 해당 역할이 없으면 그 이유를 포함해 '해당 없음'으로 분명히 쓴다. 증거 ID, 법령 문구,
-최종 법률 상태, 사용자 확인 상태는 만들지 않는다."""
+최종 법률 상태, 사용자 확인 상태는 만들지 않는다. acceptedConceptFingerprints에 이미 채택된 후보가
+있으면 이름이 아니라 solutionMechanism, operatingModel, revenueModel, transactionFlow와 역할 중 실제
+사업 축을 달리 설계한다."""
 
 
 async def execute_concept_candidate(task_input: dict) -> dict:

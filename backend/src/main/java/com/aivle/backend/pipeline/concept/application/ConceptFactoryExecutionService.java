@@ -69,7 +69,7 @@ public class ConceptFactoryExecutionService {
             if (!value.isBlank()) fields.add(Map.of("fieldKey", key, "value", value,
                 "source", "AI_DERIVED", "authority", "REVIEWABLE"));
         }
-        ConceptGenerationStrategy strategy = generationStrategy(fields);
+        ConceptGenerationStrategy strategy = ConceptGenerationStrategyPolicy.decide(fields);
         Map<String, Object> externalFacts = externalFactContext(pack);
         List<SlotWork> slotWork = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
             .filter(value -> value.getStatus() != ConceptSlotStatus.ELIGIBLE)
@@ -83,20 +83,6 @@ public class ConceptFactoryExecutionService {
                     candidate == null ? null : candidate.getResultJson());
             }).toList();
         return new Work(runId, projectId, run.getSourceIdeaBriefSnapshotId(), strategy, fields, externalFacts, slotWork);
-    }
-
-    private ConceptGenerationStrategy generationStrategy(List<Map<String, String>> fields) {
-        Set<String> lockedOptional = new HashSet<>();
-        for (Map<String, String> field : fields) {
-            if ("LOCKED".equals(field.get("authority")) && Set.of(
-                "targetRegion", "knownCompetitors", "revenueModel", "price", "channels", "differentiators",
-                "budgetConstraint", "teamConstraint", "timelineConstraint", "otherConstraint"
-            ).contains(field.get("fieldKey"))) lockedOptional.add(field.get("fieldKey"));
-        }
-        if (lockedOptional.containsAll(Set.of("revenueModel", "price", "channels", "differentiators"))) {
-            return ConceptGenerationStrategy.AS_IS;
-        }
-        return lockedOptional.isEmpty() ? ConceptGenerationStrategy.EXPLORE : ConceptGenerationStrategy.REFINE;
     }
 
     private LegalContextPack createContext(ConceptFactoryRun run) {
@@ -175,7 +161,8 @@ public class ConceptFactoryExecutionService {
         }
         for (Concept existing : concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
                 runId, run.getProject().getId())) {
-            if (ConceptFingerprint.duplicates(candidate, mapper.readTree(existing.getCandidateJson()))) {
+            if (ConceptFingerprint.classify(candidate, mapper.readTree(existing.getCandidateJson()))
+                    == ConceptFingerprint.Classification.DUPLICATE) {
                 rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
                     "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 기존 후보와 같은 후보입니다.");
                 return CandidateDisposition.DUPLICATE;
@@ -188,17 +175,69 @@ public class ConceptFactoryExecutionService {
                     || previous.getResultJson() == null) continue;
                 if (existingSlot.getId().equals(slotId) && currentAttempt.getPhase() == ConceptAttemptPhase.REDESIGN
                     && previous.getErrorClassification() == null) continue;
-                if (ConceptFingerprint.duplicates(candidate, mapper.readTree(previous.getResultJson()))) {
+                if (ConceptFingerprint.classify(candidate, mapper.readTree(previous.getResultJson()))
+                        == ConceptFingerprint.Classification.DUPLICATE) {
                     rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
                         "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 이전 후보와 같은 후보입니다.");
                     return CandidateDisposition.DUPLICATE;
                 }
             }
         }
+        if (!semanticComparisons(runId, slotId, attemptId, candidate).isEmpty()) {
+            return CandidateDisposition.SEMANTIC_REVIEW_REQUIRED;
+        }
         if (slot.getStatus() == ConceptSlotStatus.VALIDATING_DISTINCTNESS) {
             slot.transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
         }
         return CandidateDisposition.ACCEPTED;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> semanticComparisons(String runId, String slotId, String attemptId,
+            JsonNode candidate) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        List<JsonNode> previous = new ArrayList<>();
+        concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(runId, run.getProject().getId())
+            .forEach(value -> previous.add(mapper.readTree(value.getCandidateJson())));
+        for (ConceptSlot existingSlot : slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
+                runId, run.getProject().getId())) {
+            for (ConceptAttempt attempt : attempts.findAllBySlotIdOrderByAttemptNumber(existingSlot.getId())) {
+                if (attempt.getId().equals(attemptId) || attempt.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW
+                        || attempt.getResultJson() == null) continue;
+                previous.add(mapper.readTree(attempt.getResultJson()));
+            }
+        }
+        Set<String> seen = new HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (JsonNode existing : previous) {
+            if (ConceptFingerprint.classify(candidate, existing) != ConceptFingerprint.Classification.AMBIGUOUS) continue;
+            String hash = ConceptFingerprint.from(existing).canonicalHash();
+            if (seen.add(hash)) result.add(ConceptFingerprint.businessSummary(existing));
+        }
+        return List.copyOf(result);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void acceptSemanticDistinctness(String slotId) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        if (slot.getStatus() == ConceptSlotStatus.VALIDATING_DISTINCTNESS) {
+            slot.transitionTo(ConceptSlotStatus.VALIDATING_LEGAL);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void rejectSemanticDuplicate(String slotId, String attemptId, JsonNode candidate) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
+            "DUPLICATE_CONCEPT", "표현과 무관하게 실질적 사업 구조가 기존 후보와 같은 후보입니다.");
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> acceptedFingerprints(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        return concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
+                runId, run.getProject().getId()).stream()
+            .map(value -> ConceptFingerprint.businessSummary(mapper.readTree(value.getCandidateJson()))).toList();
     }
 
     private void rejectCandidate(ConceptSlot slot, String attemptId, JsonNode candidate, ConceptAttemptError error,
@@ -416,7 +455,7 @@ public class ConceptFactoryExecutionService {
     }
 
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
-    public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE }
+    public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE, SEMANTIC_REVIEW_REQUIRED }
     public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
     public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount,
                            String candidateAttemptId, String candidateJson) {

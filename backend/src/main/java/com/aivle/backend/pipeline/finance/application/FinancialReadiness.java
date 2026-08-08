@@ -9,8 +9,11 @@ import tools.jackson.databind.JsonNode;
 public class FinancialReadiness {
     public List<String> missing(JsonNode fields) {
         List<String> missing = new ArrayList<>();
-        for (String key : FinancialPreparationFactory.REQUIRED_KEYS)
-            if (!FinancialPreparationFactory.present(fields.path(key).path("value"))) missing.add(key);
+        for (String key : FinancialPreparationFactory.REQUIRED_KEYS) {
+            JsonNode item=fields.path(key); String decision=item.path("decision").asText();
+            if (!FinancialPreparationFactory.present(item.path("value"))
+                    || !List.of("LOCKED","ACCEPTED","USER_EDITED_ACCEPTED").contains(decision)) missing.add(key);
+        }
         return List.copyOf(missing);
     }
 }

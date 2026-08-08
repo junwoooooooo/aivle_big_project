@@ -68,6 +68,14 @@ public final class IdeaBriefApiModels {
         @Size(max = 20000) String relevantKnownCompetitorContext
     ) {}
 
+    public record ReviewCommitmentsRequest(@NotEmpty @Valid List<CommitmentDecisionCommand> commitments) {}
+
+    public record CommitmentDecisionCommand(
+        @NotBlank @Size(max = 80) String fieldKey,
+        @NotBlank @Size(max = 40) String action,
+        @Size(max = 20000) String value
+    ) {}
+
     public record IdeaBriefResponse(
         String briefId,
         IdeaBriefStatus status,
@@ -116,10 +124,20 @@ public final class IdeaBriefApiModels {
         String conciseIdeaDefinition,
         String targetRegionInterpretation,
         String relevantKnownCompetitorContext,
+        List<CommitmentCandidateView> commitmentCandidates,
         String source,
         String authority,
         boolean userEdited,
         boolean confirmed
+    ) {}
+
+    public record CommitmentCandidateView(
+        String fieldKey,
+        String value,
+        String evidenceQuote,
+        String source,
+        String origin,
+        String authority
     ) {}
 
     public record FieldView(

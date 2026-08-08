@@ -44,6 +44,7 @@ export default function IdeaIntakePage() {
       action={<Button type="button" variant="outline" onClick={intake.reanalyze}>다시 분석하기</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.REVIEW && (
       <IdeaBriefReview draft={intake.draft} onInterpretationChange={intake.updateInterpretation}
+        onCommitmentValueChange={intake.updateCommitmentValue} onCommitmentAction={intake.setCommitmentAction}
         onConfirm={intake.confirmBrief} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.SAFETY_BLOCKED && <StatePanel tone="warning" role="alert"

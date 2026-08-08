@@ -1,6 +1,7 @@
 package com.aivle.backend.pipeline.techops.application;
 
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.pipeline.shared.ThreeYearTargetsContract;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,7 @@ public class TechOpsPreparationFactory {
         JsonNode source = mapper.readTree(snapshot.getSnapshotJson());
         ObjectNode facts = mapper.createObjectNode();
         JsonNode product = productSpecification(source);
-        fact(facts, "productServiceSpecification", product, "CONCEPT_GENERATED", "ACCEPTED", snapshot.getId(), true);
+        fact(facts, "productServiceSpecification", product, "CONCEPT_GENERATED", "REVIEW_REQUIRED", snapshot.getId(), false);
         inheritOrOpen(facts, "targetLaunchDate", source, snapshot);
         inheritOrOpen(facts, "ownedPersonnel", source, snapshot);
         inheritOrOpen(facts, "ownedAssetsAndFacilities", source, snapshot);
@@ -74,7 +75,7 @@ public class TechOpsPreparationFactory {
             case "ownedAssetsAndFacilities" -> value.isArray();
             case "fixedOperatingCost", "initialInvestment" -> value.isObject() && value.path("amount").isNumber()
                 && !value.path("currency").asText("").isBlank();
-            case "threeYearTargets" -> value.isArray() && value.size()==3;
+            case "threeYearTargets" -> ThreeYearTargetsContract.valid(value);
             default -> true;
         };
     }

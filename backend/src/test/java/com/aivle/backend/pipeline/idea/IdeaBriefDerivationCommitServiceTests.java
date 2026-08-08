@@ -111,6 +111,7 @@ class IdeaBriefDerivationCommitServiceTests {
                 "industryCategory":"폐기물 관리","researchScope":"감축 서비스","conciseIdeaDefinition":"폐기를 줄이는 서비스",
                 "targetRegionInterpretation":"","relevantKnownCompetitorContext":""
               },
+              "commitmentCandidates":[],
               "questions":%s,"contradictions":[],
               "readiness":{"status":"READY_FOR_REVIEW","score":90,"missingFieldKeys":[]},
               "userFacingSummary":"입력하신 아이디어를 이렇게 이해했습니다."

@@ -50,6 +50,9 @@
 - 선택 Seed 누락은 Concept 탐색을 막지 않는다.
 - 사용자 선택값은 `USER_INPUT + LOCKED`; AI는 Prompt와 Backend 어느 쪽에서도 변경할 수 없다.
 - `AI_DERIVED + REVIEWABLE`은 입력 해석이고 `AI_HYPOTHESIS + PROPOSED`는 열린 값의 제안이다.
+- 자유문장에 명시된 사용자 결정 후보는 `AI_DERIVED + USER_TEXT + REVIEWABLE`로 시작하며 사용자 확인 전 LOCKED가 아니다.
+- 사용자가 확인하거나 수정 후 확인한 자유문장 결정만 `USER_CONFIRMED + LOCKED`로 승격한다.
+- dedicated `USER_INPUT + LOCKED` 값은 충돌하는 AI 추출 후보보다 항상 우선한다.
 - Evidence는 source/가설이 아니라 독립 근거 resource다.
 - Safety 판단과 Legal Review는 별도 의미와 상태를 갖는다.
 - 플랫폼 역할, 결제·데이터 흐름, 파트너·자격, 광고 주장은 Concept가 설계한다.
@@ -77,16 +80,20 @@
 - Interpretation은 사용자 의미를 축약·변형하지 않고 사용자가 수정할 수 있다.
 - 법률 상세 누락만으로 초기 `NEEDS_INPUT`을 만들지 않는다.
 - 후속 질문은 핵심 문제·사용자·의도가 불명확해 Concept 탐색이 불가능할 때만 생성한다.
+- Review는 사용자 직접 입력, 자유문장 결정 후보, 일반 AI Interpretation을 구분하고 후보에 확인·수정 후 확인·OPEN Action을 제공한다.
 
 ## 6. Concept acceptance criteria
 
 - 최소 Seed로 후보를 생성할 수 있다.
+- 전략은 Backend deterministic rule로 정하며 최소 Seed는 EXPLORE, 일부 확인 구조는 REFINE, 구체 원안과 여러 확인 commitment는 AS_IS다.
 - AS_IS Candidate 1은 사용자 원안을 의미 손실 없이 보존한다.
 - 사용자 LOCKED 수익·가격·채널·차별점·지역·제약을 모든 후보가 지킨다.
 - 열린 수익·가격·채널·차별점은 AI hypothesis로 표시된다.
 - pre-market SOM은 구조화된 가설이며 시장 사실로 표시하지 않는다.
 - payment/platform/data/partner/qualification/claim 구조는 Concept가 만든다.
 - 이름만 변경한 후보와 semantic duplicate를 거부한다.
+- deterministic 결과가 애매한 pair만 `CONCEPT_DISTINCTNESS_JUDGE`의 strict structured 결과로 판정하며 raw reasoning을 저장하거나 노출하지 않는다.
+- 새 후보 생성에는 이미 적격인 후보의 간단 business fingerprint를 전달하고 legal evidence나 내부 attempt history는 전달하지 않는다.
 - distinctness를 통과하지 않은 후보는 Legal Review를 받지 않는다.
 - Legal mapper는 legal-sensitive hypothesis를 포함하고 SOM을 제외한다.
 - `REDESIGNABLE`은 한 번만 재설계하고 전체 검증을 반복한다.
@@ -111,7 +118,12 @@
 - BM 추가 입력은 BM 시작 직전에만 받는다.
 - TechOps와 Finance는 각각 준비 화면, 결정 상태, immutable Snapshot, 외부 handoff boundary를 갖는다.
 - TechOps/Finance에서 이미 확정된 값을 다시 입력시키지 않는다.
+- Concept 제품 사양은 TechOps에서 editable review-required prefill이며 사용자 확인 후에만 LOCKED다.
+- TechOps의 세 운영 제안은 모두 non-null 실제 제안이어야 하고, 대안 요청은 versioned 새 제안을 만든다.
+- TechOps와 Finance의 3개년 목표는 동일 canonical 구조이며 Finance는 이를 read-only로 승계한다.
 - AI 추정값은 사용자 채택 전 user fact가 아니다.
+- Finance AI estimate는 가정·설명·신뢰도와 `AI_ESTIMATE + PROPOSED` provenance를 가지며 ACCEPT/EDIT_AND_ACCEPT/REQUEST_ALTERNATIVE를 지원한다.
+- accepted estimate만 Snapshot 입력이 되고 CAC는 `(marketing + sales) / new customers` 서버 계산만 사용한다.
 - Marketing은 Market Result나 `FinalizedPlanningSnapshot`을 필수로 요구하지 않는다.
 - Marketing 출력은 allowed/prohibited claims, disclosure, communication control을 지킨다.
 

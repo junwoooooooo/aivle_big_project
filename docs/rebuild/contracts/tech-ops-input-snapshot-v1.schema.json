@@ -35,8 +35,12 @@
       "properties": { "amount": { "type": "number", "minimum": 0 }, "currency": { "type": "string", "minLength": 1, "maxLength": 20 }, "period": { "type": "string", "maxLength": 50 }, "description": { "type": "string", "maxLength": 1000 } }
     },
     "target": {
-      "type": "object", "additionalProperties": false, "required": ["year", "target"],
-      "properties": { "year": { "type": "integer", "minimum": 1, "maximum": 3 }, "target": { "type": "string", "minLength": 1, "maxLength": 1000 } }
+      "type": "object", "additionalProperties": false, "required": ["year", "value"],
+      "properties": { "year": { "type": "integer", "minimum": 1, "maximum": 3 }, "value": { "type": "number", "minimum": 0 } }
+    },
+    "targets": {
+      "type": "object", "additionalProperties": false, "required": ["metric", "unit", "years"],
+      "properties": { "metric": { "enum": ["salesVolume", "customerCount", "subscriberCount", "transactionCount"] }, "unit": { "type": "string", "minLength": 1 }, "years": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/target" } } }
     },
     "requiredFacts": {
       "type": "object", "additionalProperties": false,
@@ -48,7 +52,7 @@
         "ownedAssetsAndFacilities": { "$ref": "#/$defs/textArray" },
         "fixedOperatingCost": { "$ref": "#/$defs/cost" },
         "initialInvestment": { "$ref": "#/$defs/cost" },
-        "threeYearTargets": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/target" } }
+        "threeYearTargets": { "$ref": "#/$defs/targets" }
       }
     },
     "provenance": {

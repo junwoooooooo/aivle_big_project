@@ -32,19 +32,23 @@ function TechOpsWorkspace({ techOps }) {
       <span>상위 단계에서 이미 확정된 값은 다시 입력하지 않습니다. 실제 분석 알고리즘은 외부 모듈이 담당합니다.</span></header>
     {techOps.error && <p className="tech-ops-error" role="alert">{getUserErrorMessage(techOps.error)}</p>}
 
-    <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>상위 Snapshot에서 가져옴</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
+    <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>Concept 초안 · 사용자 확인 필요</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
       <strong>{displayValue(product?.value?.summary)}</strong>
       <span>{displayValue(product?.value?.features)}</span>
-      <small>Market Seed Snapshot · {preparation.sourceMarketSeedSnapshotId}</small></section>
+      <small>확정 전에는 수정할 수 있습니다 · Market Seed Snapshot {preparation.sourceMarketSeedSnapshotId}</small></section>
 
     <section className="tech-ops-section" aria-labelledby="tech-facts-title"><div className="tech-ops-section__heading"><div><p>사용자 사실</p><h2 id="tech-facts-title">분석 전 필수 입력</h2></div><span>{locked ? 'Snapshot 확정됨' : '직접 입력'}</span></div>
       <div className="tech-ops-form-grid">
+        <label className="wide"><span>제품·서비스 사양 요약</span><textarea disabled={locked} value={facts.productSummary} onChange={(event) => setFacts({ ...facts, productSummary: event.target.value })} /></label>
+        <label className="wide"><span>핵심 기능</span><textarea disabled={locked} value={facts.productFeatures} onChange={(event) => setFacts({ ...facts, productFeatures: event.target.value })} placeholder="한 줄에 하나씩 입력" /></label>
         <label><span>목표 출시일</span><input type="date" disabled={locked} value={facts.targetLaunchDate} onChange={(event) => setFacts({ ...facts, targetLaunchDate: event.target.value })} /></label>
         <label className="wide"><span>보유 인력</span><textarea disabled={locked} value={facts.personnel} onChange={(event) => setFacts({ ...facts, personnel: event.target.value })} placeholder={'역할|인원|비고\n예: 백엔드 개발|2|내부 인력'} /><small>한 줄에 역할|인원|비고 형식으로 입력합니다. 인력이 없으면 현재 전담 인력 없음|0으로 명시합니다.</small></label>
         <label className="wide"><span>보유 자산·설비</span><textarea disabled={locked} value={facts.assets} onChange={(event) => setFacts({ ...facts, assets: event.target.value })} placeholder={'클라우드 계정\n테스트 장비'} /><small>한 줄에 하나씩 입력합니다. 없으면 “현재 보유 자산 없음”으로 명시합니다.</small></label>
         <label><span>월 고정운영비(KRW)</span><input type="number" min="0" disabled={locked} value={facts.fixedOperatingCost} onChange={(event) => setFacts({ ...facts, fixedOperatingCost: event.target.value })} /></label>
         <label><span>초기투자금(KRW)</span><input type="number" min="0" disabled={locked} value={facts.initialInvestment} onChange={(event) => setFacts({ ...facts, initialInvestment: event.target.value })} /></label>
-        {[1, 2, 3].map((year) => <label key={year}><span>{year}년차 목표</span><input disabled={locked} value={facts.targets[year - 1]} onChange={(event) => { const targets = [...facts.targets]; targets[year - 1] = event.target.value; setFacts({ ...facts, targets }); }} placeholder="목표 고객·판매·처리량" /></label>)}
+        <label><span>3개년 목표 지표</span><select disabled={locked} value={facts.targetMetric} onChange={(event) => setFacts({ ...facts, targetMetric: event.target.value })}><option value="salesVolume">판매량</option><option value="customerCount">고객 수</option><option value="subscriberCount">구독자 수</option><option value="transactionCount">거래 수</option></select></label>
+        <label><span>목표 단위</span><input disabled={locked} value={facts.targetUnit} onChange={(event) => setFacts({ ...facts, targetUnit: event.target.value })} placeholder="명 또는 건" /></label>
+        {[1, 2, 3].map((year) => <label key={year}><span>{year}년차 목표</span><input type="number" min="0" disabled={locked} value={facts.targets[year - 1]} onChange={(event) => { const targets = [...facts.targets]; targets[year - 1] = event.target.value; setFacts({ ...facts, targets }); }} /></label>)}
       </div>
       {!locked && <button className="tech-ops-primary" type="button" disabled={techOps.busy === 'facts'} onClick={() => void safe(() => techOps.saveFacts(factsFromDraft(facts)))}>사용자 사실 저장</button>}
     </section>
@@ -61,7 +65,7 @@ function TechOpsWorkspace({ techOps }) {
             <button type="button" onClick={() => void safe(() => techOps.decide(key, { action: 'REJECT_AND_REQUEST_ALTERNATIVE', value: null }))}>다른 제안 요청</button></div>}
         </article>;
       })}</div>
-      <p className="tech-ops-note">다른 제안 생성기는 이번 외부 분석 준비 경계에 연결되어 있지 않습니다. 요청 상태를 보존하며 직접 수정 후 확정할 수 있습니다.</p>
+      <p className="tech-ops-note">다른 제안 요청은 직전 값과 다른 새 proposal version을 생성합니다.</p>
     </section>
 
     <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>사용자 제공 Evidence</span></div>

@@ -9,8 +9,11 @@ import tools.jackson.databind.JsonNode;
 public class TechOpsReadiness {
     public List<String> missing(JsonNode facts, JsonNode decisions) {
         List<String> missing = new ArrayList<>();
-        for (String key : TechOpsPreparationFactory.REQUIRED_FACT_KEYS)
-            if (!TechOpsPreparationFactory.present(facts.path(key).path("value"))) missing.add(key);
+        for (String key : TechOpsPreparationFactory.REQUIRED_FACT_KEYS) {
+            JsonNode item = facts.path(key);
+            if (!TechOpsPreparationFactory.present(item.path("value"))
+                    || !"LOCKED".equals(item.path("decision").asText())) missing.add(key);
+        }
         for (String key : TechOpsPreparationFactory.PROPOSAL_KEYS) {
             JsonNode item = decisions.path(key); String decision = item.path("decision").asText();
             if (!("ACCEPTED".equals(decision) || "USER_EDITED_ACCEPTED".equals(decision))

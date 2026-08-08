@@ -210,6 +210,16 @@ export default function useIdeaIntake(projectId) {
   const confirmBrief = async (event) => {
     event.preventDefault();
     try {
+      if (draft.commitmentCandidates.length > 0) {
+        const reviewed = await api.reviewCommitments(projectId, {
+          commitments: draft.commitmentCandidates.map((candidate) => ({
+            fieldKey: candidate.fieldKey,
+            action: candidate.action,
+            value: candidate.action === 'EDIT_AND_CONFIRM' ? candidate.editedValue : null,
+          })),
+        }, ideaCommandOptions('idea-commitments'));
+        applyResponse(reviewed.data);
+      }
       const patched = await api.patchInterpretation(
         projectId, draft.interpretation, ideaCommandOptions('idea-interpretation'),
       );
@@ -236,6 +246,8 @@ export default function useIdeaIntake(projectId) {
     },
     updateBriefField: (field, value) => dispatch({ type: 'UPDATE_BRIEF_FIELD', field, value }),
     updateInterpretation: (field, value) => dispatch({ type: 'UPDATE_INTERPRETATION', field, value }),
+    updateCommitmentValue: (fieldKey, value) => dispatch({ type: 'UPDATE_COMMITMENT_VALUE', fieldKey, value }),
+    setCommitmentAction: (fieldKey, action) => dispatch({ type: 'SET_COMMITMENT_ACTION', fieldKey, action }),
     organizeIdea, submitAnswers, submitMissingFields, confirmBrief,
     refresh, reanalyze,
     restart: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),

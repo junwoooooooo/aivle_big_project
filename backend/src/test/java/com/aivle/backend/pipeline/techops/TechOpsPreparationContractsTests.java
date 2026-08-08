@@ -25,7 +25,8 @@ class TechOpsPreparationContractsTests {
              "legalResult":{"requiredControls":["광고 범위 고지"]}}
             """, 7L, Instant.EPOCH);
         var initial = new TechOpsPreparationFactory(mapper).create(source);
-        assertThat(initial.requiredFacts().path("productServiceSpecification").path("readOnly").asBoolean()).isTrue();
+        assertThat(initial.requiredFacts().path("productServiceSpecification").path("readOnly").asBoolean()).isFalse();
+        assertThat(initial.requiredFacts().path("productServiceSpecification").path("decision").asText()).isEqualTo("REVIEW_REQUIRED");
         assertThat(initial.requiredFacts().path("ownedPersonnel").path("value").get(0).path("count").asInt()).isEqualTo(2);
         assertThat(initial.proposalDecisions().path("deliveryOrProductionMethod").path("source").asText()).isEqualTo("CONCEPT_GENERATED");
         assertThat(initial.proposalDecisions().path("technicalSupplyOperationalConstraints").path("proposalValue").toString())
@@ -36,7 +37,7 @@ class TechOpsPreparationContractsTests {
     @Test
     void readinessRequiresAllFactsAndAcceptedDecisions() {
         var facts=mapper.createObjectNode();
-        TechOpsPreparationFactory.REQUIRED_FACT_KEYS.forEach(key -> facts.putObject(key).put("value", key));
+        TechOpsPreparationFactory.REQUIRED_FACT_KEYS.forEach(key -> facts.putObject(key).put("value", key).put("decision", "LOCKED"));
         var decisions=mapper.createObjectNode();
         TechOpsPreparationFactory.PROPOSAL_KEYS.forEach(key -> decisions.putObject(key).put("decision", "ACCEPTED").put("finalValue", key));
         assertThat(new TechOpsReadiness().missing(facts, decisions)).isEmpty();
@@ -52,7 +53,7 @@ class TechOpsPreparationContractsTests {
              "targetLaunchDate":{"value":"2027-03-01"},"ownedPersonnel":{"value":[{"role":"개발","count":2}]},
              "ownedAssetsAndFacilities":{"value":["클라우드"]},"fixedOperatingCost":{"value":{"amount":1,"currency":"KRW"}},
              "initialInvestment":{"value":{"amount":2,"currency":"KRW"}},
-             "threeYearTargets":{"value":[{"year":1,"target":"A"},{"year":2,"target":"B"},{"year":3,"target":"C"}]}}
+             "threeYearTargets":{"value":{"metric":"customerCount","unit":"명","years":[{"year":1,"value":100},{"year":2,"value":500},{"year":3,"value":1500}]}}}
             """;
         String decisions="""
             {"deliveryOrProductionMethod":{"finalValue":{"method":"직접 개발"},"source":"USER_INPUT","decision":"USER_EDITED_ACCEPTED","proposalVersion":1},

@@ -32,6 +32,7 @@ export default function useFinance(projectId) {
   return {
     ...state, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
+    decideEstimate: (fieldKey, payload) => act(`estimate:${fieldKey}`, () => api.decideEstimate(projectId, fieldKey, payload)),
     finalize: () => act('finalize', () => api.finalize(projectId)),
     handoff: () => act('handoff', () => api.handoff(projectId, state.snapshot?.snapshotId)),
   };

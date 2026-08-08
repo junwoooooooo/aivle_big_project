@@ -41,7 +41,9 @@ describe('V2 Market Seed 모델', () => {
       ],
       interpretation: { interpretedProblem: '문제 해석', interpretedTargetUsers: '사용자 해석' },
     });
-    expect(draft.fields.price).toEqual({ value: '월 9,900원', source: 'USER_INPUT', decisionState: 'LOCKED' });
+    expect(draft.fields.price).toEqual({
+      value: '월 9,900원', source: 'USER_INPUT', decisionState: 'LOCKED', provenance: 'USER_INPUT',
+    });
     expect(draft.interpretation.interpretedProblem).toBe('문제 해석');
   });
 });

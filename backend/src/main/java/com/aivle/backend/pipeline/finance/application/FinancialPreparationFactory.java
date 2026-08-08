@@ -1,6 +1,7 @@
 package com.aivle.backend.pipeline.finance.application;
 
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
+import com.aivle.backend.pipeline.shared.ThreeYearTargetsContract;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -76,7 +77,7 @@ public class FinancialPreparationFactory {
 
     private void inheritTargetsOrOpen(ObjectNode fields, JsonNode targets, JsonNode provenance,
             TechOpsInputSnapshot snapshot) {
-        if (validTargets(targets)) inherited(fields, "threeYearTargets", targets, provenance, snapshot,
+        if (ThreeYearTargetsContract.valid(targets)) inherited(fields, "threeYearTargets", targets, provenance, snapshot,
             "requiredFacts.threeYearTargets");
         else open(fields, "threeYearTargets");
     }
@@ -145,19 +146,6 @@ public class FinancialPreparationFactory {
     private boolean validMoney(JsonNode value) {
         return value.isObject() && value.path("amount").isNumber() && value.path("amount").asDouble() >= 0
             && !value.path("currency").asText("").isBlank();
-    }
-
-    private boolean validTargets(JsonNode value) {
-        if (!value.isObject() || !List.of("salesVolume", "customerCount", "subscriberCount", "transactionCount")
-                .contains(value.path("metric").asText()) || !value.path("years").isArray() || value.path("years").size() != 3) return false;
-        boolean[] years = new boolean[4];
-        for (JsonNode item : value.path("years")) {
-            int year = item.path("year").asInt(-1);
-            if (year < 1 || year > 3 || years[year] || !item.path("value").isNumber()
-                    || item.path("value").asDouble() < 0) return false;
-            years[year] = true;
-        }
-        return years[1] && years[2] && years[3];
     }
 
     private String parent(String key) { return key.startsWith("annualFixed") ? "fixedOperatingCost" : "initialInvestment"; }

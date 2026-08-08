@@ -16,11 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Service
 public class IdeaBriefDerivationCommitService {
     private static final Set<String> RESULT_FIELDS = Set.of(
-        "safetyReview", "interpretation", "questions", "contradictions", "readiness", "userFacingSummary"
+        "safetyReview", "interpretation", "commitmentCandidates", "questions", "contradictions", "readiness", "userFacingSummary"
     );
     private static final Set<String> QUESTION_FIELDS = Set.of(
         "targetFieldKey", "prompt", "type", "options"
@@ -90,12 +92,42 @@ public class IdeaBriefDerivationCommitService {
         }
         optionalText(interpretation, "targetRegionInterpretation", 20_000);
         optionalText(interpretation, "relevantKnownCompetitorContext", 20_000);
+        JsonNode commitmentCandidates = requireArray(result, "commitmentCandidates", 10);
+        ArrayNode acceptedCandidates = mapper.createArrayNode();
+        java.util.Map<String, com.aivle.backend.pipeline.idea.domain.IdeaBriefField> currentFields =
+            fields.findAllByBriefIdOrderById(brief.getId()).stream().collect(java.util.stream.Collectors.toMap(
+                com.aivle.backend.pipeline.idea.domain.IdeaBriefField::getFieldKey, value -> value));
+        java.util.Set<String> seenCommitments = new java.util.HashSet<>();
+        for (JsonNode candidate : commitmentCandidates) {
+            requireObject(candidate, Set.of("fieldKey", "value", "evidenceQuote", "source", "origin", "authority"));
+            String fieldKey = text(candidate, "fieldKey", 80);
+            if (IdeaBriefFieldCatalog.require(fieldKey).requiredForConcept()) {
+                throw new IllegalArgumentException("commitment candidate field invalid");
+            }
+            if (!seenCommitments.add(fieldKey)
+                || !"AI_DERIVED".equals(text(candidate, "source", 30))
+                || !"USER_TEXT".equals(text(candidate, "origin", 30))
+                || !"REVIEWABLE".equals(text(candidate, "authority", 30))) {
+                throw new IllegalArgumentException("commitment candidate metadata invalid");
+            }
+            text(candidate, "value", 20_000);
+            text(candidate, "evidenceQuote", 1_000);
+            var explicit = currentFields.get(fieldKey);
+            if (explicit == null || explicit.getProvenance()
+                    != com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance.USER_INPUT
+                    || explicit.getDecisionState()
+                    != com.aivle.backend.pipeline.idea.domain.IdeaDecisionState.LOCKED) {
+                acceptedCandidates.add(candidate.deepCopy());
+            }
+        }
+        ObjectNode storedInterpretation = (ObjectNode) interpretation.deepCopy();
+        storedInterpretation.set("commitmentCandidates", acceptedCandidates);
         brief.applySafetyAndInterpretation(
             safetyDecision,
             mapper.writeValueAsString(safetyCategories),
             mapper.writeValueAsString(safetyRestrictions),
             text(safety, "userFacingReason", 1_000),
-            mapper.writeValueAsString(interpretation)
+            mapper.writeValueAsString(storedInterpretation)
         );
 
         questions.findAllByBriefIdAndActiveTrueOrderByDisplayOrder(brief.getId())

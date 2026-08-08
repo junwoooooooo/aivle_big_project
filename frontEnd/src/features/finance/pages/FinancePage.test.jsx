@@ -13,7 +13,8 @@ vi.mock('../hooks/useFinance.js', () => ({ default: () => ({ loading: false, bus
       totalMarketingCost: money(), totalSalesCost: money(), newCustomerCount: { value: null, readOnly: false },
       threeYearTargets: { value: null, readOnly: false }, unitVariableCost: money(), paymentFee: money(), partnerPayout: money(), shippingCost: money(), customerIncrementalInfraCost: money() },
     upstreamReferences: { fixedOperatingCost: { annualEquivalent: { amount: 120000000, currency: 'KRW' } }, initialInvestment: { value: null }, threeYearTargets: { value: null } },
-    assistance: { cac: { explanation: '비용을 입력하면 CAC를 계산합니다.', example: '계산 예시', proposalValue: null } }, calculatedCac: null },
+    assistance: { cac: { explanation: '비용을 입력하면 CAC를 계산합니다.', example: '계산 예시', proposalValue: null },
+      annualFixedRentAndManagementCost: { explanation: 'AI 추정', proposedValue: { amount: 12000000, currency: 'KRW' }, assumptions: ['월 100만원'], confidence: 'MEDIUM', source: 'AI_ESTIMATE', decision: 'PROPOSED' } }, calculatedCac: null },
   save: vi.fn(), finalize: vi.fn(), handoff: vi.fn() }) }));
 
 describe('FinancePage', () => {
@@ -25,6 +26,8 @@ describe('FinancePage', () => {
     expect(screen.getByText('기술·운영 단계에서 가져옴', { selector: 'small' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '연간 고정비 세부항목' })).toBeInTheDocument();
     expect(screen.getByText('시스템 계산 CAC')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'AI 추정 채택' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다른 추정 요청' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '입력 Snapshot 확정' })).toBeDisabled();
   });
 });

@@ -9,6 +9,7 @@ def to_domain(result: IdeaBriefProviderResult) -> IdeaBriefDomainResult:
     return IdeaBriefDomainResult(
         safetyReview=result.safetyReview,
         interpretation=result.interpretation,
+        commitmentCandidates=list(result.commitmentCandidates),
         questions=[
             DomainQuestion(
                 targetFieldKey=value.targetFieldKey,

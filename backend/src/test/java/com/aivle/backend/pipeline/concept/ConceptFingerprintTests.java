@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.concept;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.aivle.backend.pipeline.concept.domain.ConceptFingerprint;
+import com.aivle.backend.pipeline.concept.domain.ConceptSemanticDistinctnessResult;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -24,6 +25,24 @@ class ConceptFingerprintTests {
         JsonNode paraphrased = candidate("지역 재고 연결", "남은 식재료를 당일 바로 연결한다");
 
         assertThat(ConceptFingerprint.duplicates(first, paraphrased)).isTrue();
+    }
+
+    @Test
+    void structuredSummaryExcludesNameAndIncludesCommercialOperationalAndRoles() {
+        var summary = ConceptFingerprint.businessSummary(candidate("이름", "개인 참가자를 자동 배정"));
+        assertThat(summary).doesNotContainKey("conceptName");
+        assertThat(summary).containsKeys("targetUsers", "solutionMechanism", "revenueModel", "channels",
+            "operatingModel", "transactionFlow", "providerRole", "sellerRole", "intermediaryRole");
+    }
+
+    @Test
+    void semanticJudgeResultHasNoRawReasoningAndAcceptsOnlyStrictDecisionSchema() {
+        JsonNode result = mapper.readTree("""
+            {"decision":"DUPLICATE","overlappingDimensions":["revenueModel","solutionMechanism"],
+             "materiallyDifferentDimensions":[],"safeSummary":"표현만 다르고 사업 구조가 같습니다."}
+            """);
+        assertThat(ConceptSemanticDistinctnessResult.validate(result))
+            .isEqualTo(ConceptSemanticDistinctnessResult.Decision.DUPLICATE);
     }
 
     private JsonNode candidate(String name, String mechanism) {

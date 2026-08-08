@@ -38,6 +38,22 @@ class BriefField(StrictModel):
     authority: Authority
 
 
+class AcceptedConceptFingerprint(StrictModel):
+    targetUsers: str = Field(max_length=2000)
+    problemScenario: str = Field(max_length=3000)
+    coreValue: str = Field(max_length=3000)
+    solutionMechanism: str = Field(max_length=4000)
+    revenueModel: str = Field(max_length=2000)
+    channels: str = Field(max_length=2000)
+    platformRole: str = Field(max_length=2000)
+    operatingModel: str = Field(max_length=3000)
+    partnerModel: str = Field(max_length=3000)
+    transactionFlow: list[str] = Field(max_length=20)
+    providerRole: str = Field(max_length=2000)
+    sellerRole: str = Field(max_length=2000)
+    intermediaryRole: str = Field(max_length=2000)
+
+
 class ConceptCandidateInput(StrictModel):
     ideaBriefSnapshotId: str = Field(min_length=1, max_length=64)
     generationStrategy: ConceptGenerationStrategy
@@ -45,6 +61,7 @@ class ConceptCandidateInput(StrictModel):
     originalCandidate: bool
     diversityFocus: VariationFocus
     fields: list[BriefField] = Field(min_length=3, max_length=32)
+    acceptedConceptFingerprints: list[AcceptedConceptFingerprint] = Field(max_length=5)
 
     @model_validator(mode="after")
     def original_is_only_first_as_is_candidate(self):

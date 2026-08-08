@@ -52,6 +52,12 @@ public class FinancialInputPreparation extends BaseEntity {
         revision++;
     }
 
+    public void updateAssistance(String json, Long userId) {
+        if (blank(json) || userId == null) throw new IllegalArgumentException("재무 AI 추정값이 올바르지 않습니다.");
+        assistanceJson = json;
+        updatedByUserId = userId;
+    }
+
     private static boolean blank(String value) { return value == null || value.isBlank(); }
     private static boolean hash(String value) { return value != null && value.matches("sha256:[0-9a-f]{64}"); }
 }

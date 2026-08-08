@@ -61,6 +61,22 @@ class IdeaInterpretation(StrictModel):
     relevantKnownCompetitorContext: str = Field(max_length=20_000)
 
 
+CommitmentFieldKey = Literal[
+    "targetRegion", "knownCompetitors", "revenueModel", "price", "channels",
+    "differentiators", "budgetConstraint", "teamConstraint", "timelineConstraint",
+    "otherConstraint",
+]
+
+
+class UserTextCommitmentCandidate(StrictModel):
+    fieldKey: CommitmentFieldKey
+    value: str = Field(min_length=1, max_length=20_000)
+    evidenceQuote: str = Field(min_length=1, max_length=1_000)
+    source: Literal["AI_DERIVED"]
+    origin: Literal["USER_TEXT"]
+    authority: Literal["REVIEWABLE"]
+
+
 class ClarificationQuestion(StrictModel):
     targetFieldKey: Literal["ideaOverview", "problem", "targetUsers"]
     prompt: str = Field(min_length=1, max_length=500)
@@ -83,6 +99,7 @@ class Readiness(StrictModel):
 class IdeaBriefProviderResult(StrictModel):
     safetyReview: SafetyReview
     interpretation: IdeaInterpretation
+    commitmentCandidates: list[UserTextCommitmentCandidate] = Field(max_length=10)
     clarificationQuestions: list[ClarificationQuestion] = Field(max_length=4)
     contradictions: list[Contradiction] = Field(max_length=12)
     readiness: Readiness
@@ -99,6 +116,7 @@ class DomainQuestion(StrictModel):
 class IdeaBriefDomainResult(StrictModel):
     safetyReview: SafetyReview
     interpretation: IdeaInterpretation
+    commitmentCandidates: list[UserTextCommitmentCandidate]
     questions: list[DomainQuestion]
     contradictions: list[Contradiction]
     readiness: Readiness

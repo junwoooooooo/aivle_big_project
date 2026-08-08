@@ -1,0 +1,35 @@
+import json
+
+from pydantic import ValidationError
+
+from app.providers import ProviderFailure, execute_structured_prompt
+from app.tasks.concept_distinctness_judge.models import (
+    ConceptDistinctnessJudgeInput,
+    ConceptDistinctnessJudgeResult,
+)
+
+
+SYSTEM_PROMPT = """두 Concept의 이름이나 문체가 아니라 실제 사업 구조가 같은지 판정한다.
+대상 사용자, 문제 상황, 핵심 가치, 해결 mechanism, 수익모델, 채널, 플랫폼·운영·파트너 역할,
+거래 흐름과 제공자/판매자/중개자 역할을 비교한다. 월 정액 멤버십과 매달 비용을 내는 구독 회원제,
+개인 참가자 즉석 팀 연결과 당일 경기 인원 자동 배정처럼 표현만 다른 동일 구조는 DUPLICATE다.
+같은 사용자라도 해결 mechanism, 운영모델 또는 수익모델이 실질적으로 다르면 DISTINCT다.
+strict schema의 안전한 요약만 반환하고 chain-of-thought이나 내부 reasoning을 반환하지 않는다."""
+
+
+async def execute_concept_distinctness_judge(task_input: dict) -> dict:
+    try:
+        value = ConceptDistinctnessJudgeInput.model_validate(task_input)
+    except ValidationError as failure:
+        raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
+    raw = await execute_structured_prompt(
+        SYSTEM_PROMPT,
+        json.dumps(value.model_dump(mode="json"), ensure_ascii=False, sort_keys=True),
+        response_schema=ConceptDistinctnessJudgeResult.model_json_schema(),
+        schema_name="concept_distinctness_judge_v1",
+        task_type="CONCEPT_DISTINCTNESS_JUDGE",
+    )
+    try:
+        return ConceptDistinctnessJudgeResult.model_validate(raw).model_dump(mode="json")
+    except ValidationError as failure:
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure

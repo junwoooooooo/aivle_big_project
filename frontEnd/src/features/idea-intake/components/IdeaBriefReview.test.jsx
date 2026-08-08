@@ -29,4 +29,33 @@ describe('AI 해석 확인', () => {
     fireEvent.change(screen.getByLabelText('AI가 이해한 문제'), { target: { value: '수정한 문제' } });
     expect(onChange).toHaveBeenCalledWith('interpretedProblem', '수정한 문제');
   });
+
+  it('원문 결정 후보를 direct 입력과 구분하고 확인·수정·open 액션을 제공한다', () => {
+    const draft = draftFromIdeaBrief({
+      fields: [
+        { fieldKey: 'ideaOverview', value: '월 9,900원 구독 서비스', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'problem', value: '문제', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+        { fieldKey: 'targetUsers', value: '사용자', decisionState: 'LOCKED', provenance: 'USER_INPUT' },
+      ],
+      interpretation: {
+        interpretedProblem: '문제', interpretedTargetUsers: '사용자', usageContext: '맥락',
+        industryCategory: '업종', researchScope: '범위', conciseIdeaDefinition: '정의',
+        targetRegionInterpretation: '', relevantKnownCompetitorContext: '',
+        commitmentCandidates: [{
+          fieldKey: 'price', value: '월 9,900원', evidenceQuote: '월 9,900원 구독',
+          source: 'AI_DERIVED', origin: 'USER_TEXT', authority: 'REVIEWABLE',
+        }],
+      },
+    }, createIdeaIntakeDraft());
+    const onValue = vi.fn();
+    const onAction = vi.fn();
+    render(<IdeaBriefReview draft={draft} onInterpretationChange={vi.fn()}
+      onCommitmentValueChange={onValue} onCommitmentAction={onAction} onConfirm={vi.fn()} />);
+    expect(screen.getByText('입력 원문에서 발견한 결정 후보')).toBeInTheDocument();
+    expect(screen.getByText('AI 발견 · 확인 필요')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('가격 결정 후보'), { target: { value: '월 10,900원' } });
+    expect(onValue).toHaveBeenCalledWith('price', '월 10,900원');
+    fireEvent.click(screen.getByRole('button', { name: '결정하지 않음' }));
+    expect(onAction).toHaveBeenCalledWith('price', 'RETURN_TO_OPEN');
+  });
 });

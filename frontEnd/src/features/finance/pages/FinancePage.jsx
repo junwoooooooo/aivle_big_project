@@ -27,6 +27,7 @@ function FinanceWorkspace({ finance }) {
   const safe = async (action) => { try { await action(); } catch { /* hook이 사용자용 오류 상태를 제공한다. */ } };
   const change = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const references = preparation.upstreamReferences ?? {};
+  const editedValues = () => financialValuesFromDraft(draft, fields);
 
   return <main className="finance-page">
     <header className="finance-heading"><p>7. 재무 분석</p><h1>이미 확인된 값은 이어받고, 부족한 값만 입력합니다</h1>
@@ -73,9 +74,14 @@ function FinanceWorkspace({ finance }) {
       <div className="finance-form-grid">{CONDITIONAL_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
         value={draft[key]} onChange={change} field={fields[key]} locked={locked} />)}</div></details></section>
 
-    <section className="finance-assistance" aria-labelledby="finance-assistance-title"><div><p>설명·예시·제안</p><h2 id="finance-assistance-title">입력 도움말</h2></div>
+    <section className="finance-assistance" aria-labelledby="finance-assistance-title"><div><p>설명·예시·AI 추정</p><h2 id="finance-assistance-title">입력 도움말</h2></div>
       <div>{Object.entries(preparation.assistance ?? {}).map(([key, item]) => <article key={key}><strong>{item.explanation}</strong>
-        <span>{item.example}</span><small>{item.proposalValue == null ? 'AI 추정 제안 미연결 · 사용자 사실로 처리하지 않음' : `${item.source} · ${item.decision}`}</small></article>)}</div></section>
+        {item.example && <span>{item.example}</span>}<small>{item.proposedValue == null ? '설명' : `${item.source} · ${item.decision} · 신뢰도 ${item.confidence}`}</small>
+        {item.proposedValue != null && fields[key] && <><span>{JSON.stringify(item.proposedValue)} · {item.assumptions?.join(' · ')}</span>
+          {!locked && <div><button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'ACCEPT', value: null }))}>AI 추정 채택</button>
+            <button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'EDIT_AND_ACCEPT', value: editedValues()[key] }))}>입력값으로 수정 후 채택</button>
+            <button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'REQUEST_ALTERNATIVE', value: null }))}>다른 추정 요청</button></div>}</>}
+      </article>)}</div></section>
 
     {!locked && <button className="finance-save" type="button" disabled={finance.busy === 'save'}
       onClick={() => void safe(() => finance.save(financialValuesFromDraft(draft, fields)))}>재무 입력 저장</button>}

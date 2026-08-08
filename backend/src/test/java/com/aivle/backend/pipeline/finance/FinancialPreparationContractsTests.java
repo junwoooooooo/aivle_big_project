@@ -43,7 +43,7 @@ class FinancialPreparationContractsTests {
     @Test
     void readinessRequiresOnlyMandatoryFieldsAndNotConditionalCosts() {
         var fields = mapper.createObjectNode();
-        FinancialPreparationFactory.REQUIRED_KEYS.forEach(key -> fields.putObject(key).put("value", key));
+        FinancialPreparationFactory.REQUIRED_KEYS.forEach(key -> fields.putObject(key).put("value", key).put("decision", "LOCKED"));
         FinancialPreparationFactory.CONDITIONAL_COST_KEYS.forEach(key -> fields.putObject(key).putNull("value"));
         assertThat(new FinancialReadiness().missing(fields)).isEmpty();
         fields.withObject("annualFixedInfrastructureCost").putNull("value");

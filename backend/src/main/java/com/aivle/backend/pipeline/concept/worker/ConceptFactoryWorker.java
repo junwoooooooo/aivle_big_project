@@ -9,6 +9,8 @@ import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionSer
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryExecutionService.Work;
 import com.aivle.backend.pipeline.concept.domain.ConceptAttemptError;
 import com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase;
+import com.aivle.backend.pipeline.concept.domain.ConceptFingerprint;
+import com.aivle.backend.pipeline.concept.domain.ConceptSemanticDistinctnessResult;
 import com.aivle.backend.pipeline.concept.domain.ConceptFactoryLimits;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
@@ -107,7 +109,8 @@ public class ConceptFactoryWorker {
                         "candidateIndex", slot.slotNumber(),
                         "originalCandidate", work.generationStrategy().name().equals("AS_IS") && slot.slotNumber() == 1,
                         "diversityFocus", slot.focus().name(),
-                        "fields", work.fields())));
+                        "fields", work.fields(),
+                        "acceptedConceptFingerprints", execution.acceptedFingerprints(work.runId()))));
                 if (generation.outcome() == GenerationOutcome.FAILED) return SlotOutcome.FAILED;
                 if (generation.outcome() == GenerationOutcome.REPLACE) {
                     if (!replace(context, work, slot, replacementRound, generation.attemptId(),
@@ -124,6 +127,34 @@ public class ConceptFactoryWorker {
             CandidateDisposition candidateDisposition = execution.validateCandidate(
                 work.runId(), slot.slotId(), attemptId, candidate, work.generationStrategy(),
                 slot.slotNumber(), work.fields());
+            if (candidateDisposition == CandidateDisposition.SEMANTIC_REVIEW_REQUIRED) {
+                boolean duplicate = false;
+                for (Map<String, Object> existing : execution.semanticComparisons(
+                        work.runId(), slot.slotId(), attemptId, candidate)) {
+                    JsonNode judged;
+                    try {
+                        judged = ai.execute(TaskType.CONCEPT_DISTINCTNESS_JUDGE,
+                            mapper.writeValueAsString(Map.of(
+                                "candidateA", existing,
+                                "candidateB", ConceptFingerprint.businessSummary(candidate))),
+                            context.correlationId(), attemptId + "-distinctness");
+                        duplicate = ConceptSemanticDistinctnessResult.validate(judged)
+                            == ConceptSemanticDistinctnessResult.Decision.DUPLICATE;
+                    } catch (RuntimeException failure) {
+                        execution.recordAttemptError(work.runId(), slot.slotId(), attemptId,
+                            ConceptAttemptError.RESULT_SCHEMA_INVALID, false);
+                        return SlotOutcome.FAILED;
+                    }
+                    if (duplicate) break;
+                }
+                if (duplicate) {
+                    execution.rejectSemanticDuplicate(slot.slotId(), attemptId, candidate);
+                    candidateDisposition = CandidateDisposition.DUPLICATE;
+                } else {
+                    execution.acceptSemanticDistinctness(slot.slotId());
+                    candidateDisposition = CandidateDisposition.ACCEPTED;
+                }
+            }
             if (candidateDisposition != CandidateDisposition.ACCEPTED) {
                 publishSlot(context, slot, "job.concept.slot.rejected");
                 ConceptAttemptError exhaustion = candidateDisposition == CandidateDisposition.DUPLICATE

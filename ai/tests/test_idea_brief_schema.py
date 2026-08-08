@@ -35,6 +35,7 @@ def provider_result(decision="ALLOW", questions=None, contradictions=None):
             "targetRegionInterpretation": "",
             "relevantKnownCompetitorContext": "",
         },
+        "commitmentCandidates": [],
         "clarificationQuestions": questions or [],
         "contradictions": contradictions or [],
         "readiness": {"status": "READY_FOR_REVIEW", "score": 90, "missingFieldKeys": []},
@@ -69,6 +70,39 @@ def test_provider_to_domain_preserves_safety_and_interpretation():
     assert result["safetyReview"]["decision"] == "ALLOW"
     assert result["interpretation"]["interpretedTargetUsers"] == "지역 식당"
     assert "fields" not in result
+
+
+def test_explicit_user_text_commitment_is_reviewable_not_locked(monkeypatch):
+    candidate = {
+        "fieldKey": "price", "value": "월 9,900원", "evidenceQuote": "월 9,900원 구독",
+        "source": "AI_DERIVED", "origin": "USER_TEXT", "authority": "REVIEWABLE",
+    }
+
+    async def prompt(_system, _user, **_kwargs):
+        result = provider_result()
+        result["commitmentCandidates"] = [candidate]
+        return result
+
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_idea_brief_derivation(task_input()))
+    assert result["commitmentCandidates"] == [candidate]
+    assert result["commitmentCandidates"][0]["authority"] == "REVIEWABLE"
+
+
+def test_locked_form_value_suppresses_conflicting_extraction(monkeypatch):
+    async def prompt(_system, _user, **_kwargs):
+        result = provider_result()
+        result["commitmentCandidates"] = [{
+            "fieldKey": "price", "value": "월 9,900원", "evidenceQuote": "월 9,900원",
+            "source": "AI_DERIVED", "origin": "USER_TEXT", "authority": "REVIEWABLE",
+        }]
+        return result
+
+    value = task_input()
+    value["fields"].append({"fieldKey": "price", "value": "월 12,000원", "decisionState": "LOCKED"})
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_idea_brief_derivation(value))
+    assert result["commitmentCandidates"] == []
 
 
 def test_optional_legal_details_are_not_follow_up_targets():

@@ -36,6 +36,7 @@ public class FinancialService {
     private final FinancialInputSnapshotFactory snapshotFactory;
     private final FinancialReadiness readiness;
     private final FinancialCalculator calculator;
+    private final FinanceEstimateGateway estimateGateway;
     private final ObjectMapper mapper;
 
     @Transactional
@@ -45,6 +46,7 @@ public class FinancialService {
         var existing = preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
         if (existing.isPresent()) return view(existing.get());
         var initial = preparationFactory.create(source);
+        populateEstimates(initial.assistance(), source, 1, "");
         String id = UUID.randomUUID().toString();
         var saved = preparations.save(FinancialInputPreparation.create(id, projectId, source.getId(),
             source.getSourceMarketSeedSnapshotId(), source.getSnapshotHash(),
@@ -80,6 +82,60 @@ public class FinancialService {
         }
         preparation.updateFinancialFields(mapper.writeValueAsString(fields), ownerId);
         return view(preparation);
+    }
+
+    @Transactional
+    public PreparationView decideEstimate(Long ownerId, Long projectId, String fieldKey, EstimateDecisionRequest request) {
+        requireOwnedForUpdate(ownerId, projectId); FinancialInputPreparation preparation=lockedCurrent(projectId); ensureMutable(preparation);
+        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "newCustomerCount".equals(fieldKey))
+            throw invalid("AI 추정 지원 대상이 아닙니다: " + fieldKey);
+        ObjectNode fields=(ObjectNode) mapper.readTree(preparation.getFinancialFieldsJson());
+        ObjectNode assistance=(ObjectNode) mapper.readTree(preparation.getAssistanceJson());
+        ObjectNode proposal=(ObjectNode) assistance.path(fieldKey); String action=request.action().strip().toUpperCase();
+        ObjectNode field=(ObjectNode) fields.path(fieldKey);
+        if (field.path("readOnly").asBoolean(false)) throw invalid("상위 확정값은 AI 추정으로 바꾸지 않습니다.");
+        switch(action) {
+            case "ACCEPT" -> {
+                JsonNode value=proposal.path("proposedValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
+                field.set("value",value.deepCopy()); field.put("source","AI_ESTIMATE"); field.put("decision","ACCEPTED");
+                field.put("provenance","assistance."+fieldKey+".proposalVersion:"+proposal.path("proposalVersion").asInt(1));
+                proposal.put("decision","ACCEPTED");
+            }
+            case "EDIT_AND_ACCEPT" -> {
+                validateField(fieldKey,request.value(),FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
+                field.set("value",request.value().deepCopy()); field.put("source","USER_INPUT"); field.put("decision","USER_EDITED_ACCEPTED");
+                field.put("provenance","user-edited-ai-estimate"); proposal.put("decision","USER_EDITED_ACCEPTED");
+            }
+            case "REQUEST_ALTERNATIVE" -> {
+                int version=proposal.path("proposalVersion").asInt(1)+1;
+                JsonNode input=mapper.createObjectNode().put("contextJson", currentTechOpsSnapshot(projectId).getSnapshotJson())
+                    .put("fieldKey",fieldKey).put("proposalVersion",version)
+                    .put("rejectedProposalJson",mapper.writeValueAsString(proposal.path("proposedValue")));
+                JsonNode alternative=estimateGateway.estimate(input);
+                applyEstimate(proposal, alternative, fieldKey, version);
+            }
+            default -> throw invalid("AI 추정 결정 Action을 확인해 주세요.");
+        }
+        preparation.updateFinancialFields(mapper.writeValueAsString(fields),ownerId);
+        preparation.updateAssistance(mapper.writeValueAsString(assistance),ownerId);
+        return view(preparation);
+    }
+
+    private void populateEstimates(ObjectNode assistance, TechOpsInputSnapshot source, int version, String rejected) {
+        for (String key : FinancialPreparationFactory.ALL_KEYS) {
+            if ("newCustomerCount".equals(key)) continue;
+            JsonNode input=mapper.createObjectNode().put("contextJson",source.getSnapshotJson()).put("fieldKey",key)
+                .put("proposalVersion",version).put("rejectedProposalJson",rejected);
+            applyEstimate((ObjectNode) assistance.withObject(key),estimateGateway.estimate(input),key,version);
+        }
+    }
+    private void applyEstimate(ObjectNode target, JsonNode result, String fieldKey, int version) {
+        if (!fieldKey.equals(result.path("fieldKey").asText())) throw invalid("AI 추정 필드가 일치하지 않습니다.");
+        JsonNode value=result.path("proposedValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
+        if (target.has("proposedValue") && target.path("proposedValue").equals(value) && version>1) throw invalid("새 추정값은 직전 값과 달라야 합니다.");
+        target.set("proposedValue",value.deepCopy()); target.set("assumptions",result.path("assumptions").deepCopy());
+        target.put("explanation",result.path("explanation").asText()); target.put("confidence",result.path("confidence").asText());
+        target.put("source","AI_ESTIMATE"); target.put("decision","PROPOSED"); target.put("proposalVersion",version);
     }
 
     @Transactional

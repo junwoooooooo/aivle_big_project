@@ -65,6 +65,17 @@ public class IdeaBriefController {
             currentUser.currentUserId(), projectId, body, idempotencyKey), request);
     }
 
+    @PatchMapping("/commitments")
+    public ApiResponse<IdeaBriefResponse> reviewCommitments(
+        @PathVariable Long projectId,
+        @RequestHeader("Idempotency-Key") String idempotencyKey,
+        @Valid @RequestBody ReviewCommitmentsRequest body,
+        HttpServletRequest request
+    ) {
+        return success(service.reviewCommitments(
+            currentUser.currentUserId(), projectId, body, idempotencyKey), request);
+    }
+
     @PostMapping("/answers")
     public ApiResponse<IdeaBriefResponse> answer(
         @PathVariable Long projectId,

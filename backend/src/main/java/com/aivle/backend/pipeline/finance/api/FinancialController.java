@@ -36,6 +36,13 @@ public class FinancialController {
         return ApiResponse.success(service.patchFields(user.currentUserId(), projectId, body), request.getHeader("X-Request-Id"));
     }
 
+    @PostMapping("/preparation/assistance/{fieldKey}/decision")
+    public ApiResponse<PreparationView> decideEstimate(@PathVariable Long projectId, @PathVariable String fieldKey,
+            @Valid @RequestBody EstimateDecisionRequest body, HttpServletRequest request) {
+        return ApiResponse.success(service.decideEstimate(user.currentUserId(), projectId, fieldKey, body),
+            request.getHeader("X-Request-Id"));
+    }
+
     @PostMapping("/input-snapshots/finalize")
     public ResponseEntity<ApiResponse<SnapshotView>> finalizeSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(

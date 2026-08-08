@@ -7,6 +7,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
+import com.aivle.backend.pipeline.shared.ThreeYearTargetsContract;
 import com.aivle.backend.pipeline.techops.domain.*;
 import com.aivle.backend.pipeline.techops.repository.*;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -35,6 +36,7 @@ public class TechOpsService {
     private final TechOpsPreparationFactory preparationFactory;
     private final TechOpsInputSnapshotFactory snapshotFactory;
     private final TechOpsReadiness readiness;
+    private final TechOpsProposalGateway proposalGateway;
     private final ObjectMapper mapper;
 
     @Transactional
@@ -42,7 +44,9 @@ public class TechOpsService {
         requireOwnedForUpdate(ownerId, projectId); MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
         var existing = preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.create(source); String id = UUID.randomUUID().toString();
+        var initial = preparationFactory.create(source);
+        fillMissingProposals(initial.proposalDecisions(), source.getSnapshotJson());
+        String id = UUID.randomUUID().toString();
         var saved = preparations.save(TechOpsInputPreparation.create(id, projectId, source.getId(), source.getSnapshotHash(),
             mapper.writeValueAsString(initial.requiredFacts()), mapper.writeValueAsString(initial.proposalDecisions()), ownerId));
         return view(saved);
@@ -84,11 +88,32 @@ public class TechOpsService {
                 field.put("source", "USER_INPUT"); field.put("decision", "USER_EDITED_ACCEPTED"); field.put("alternativeRequested", false);
             }
             case "REJECT_AND_REQUEST_ALTERNATIVE" -> {
-                field.putNull("finalValue"); field.put("decision", "REJECTED"); field.put("alternativeRequested", true);
+                int nextVersion = field.path("proposalVersion").asInt(1) + 1;
+                String previous = mapper.writeValueAsString(field.path("proposalValue"));
+                JsonNode generated = proposalGateway.propose(
+                    currentMarketSeed(projectId).getSnapshotJson(), nextVersion, previous).path(fieldKey);
+                validateDecisionValue(fieldKey, generated);
+                if (generated.equals(field.path("proposalValue"))) throw new BusinessException(ErrorCode.TECH_OPS_PROPOSAL_INVALID,
+                    "새 제안은 직전 제안과 달라야 합니다.");
+                field.set("proposalValue", generated.deepCopy()); field.putNull("finalValue");
+                field.put("source", "AI_HYPOTHESIS"); field.put("decision", "PROPOSED");
+                field.put("proposalVersion", nextVersion); field.put("alternativeRequested", false);
             }
             default -> throw invalid("제안 결정 Action을 확인해 주세요.");
         }
         preparation.updateProposalDecisions(mapper.writeValueAsString(decisions), ownerId); return view(preparation);
+    }
+    private void fillMissingProposals(ObjectNode decisions, String contextJson) {
+        boolean missing = TechOpsPreparationFactory.PROPOSAL_KEYS.stream()
+            .anyMatch(key -> !TechOpsPreparationFactory.present(decisions.path(key).path("proposalValue")));
+        if (!missing) return;
+        JsonNode generated = proposalGateway.propose(contextJson, 1, "");
+        for (String key : TechOpsPreparationFactory.PROPOSAL_KEYS) {
+            ObjectNode field = (ObjectNode) decisions.path(key);
+            if (TechOpsPreparationFactory.present(field.path("proposalValue"))) continue;
+            JsonNode proposal = generated.path(key); validateDecisionValue(key, proposal);
+            field.set("proposalValue", proposal.deepCopy()); field.put("source", "AI_HYPOTHESIS");
+        }
     }
 
     @Transactional
@@ -187,8 +212,8 @@ public class TechOpsService {
         if (("fixedOperatingCost".equals(key) || "initialInvestment".equals(key))
                 && (!value.isObject() || !value.path("amount").isNumber() || value.path("amount").asDouble() < 0
                 || value.path("currency").asText("").isBlank())) throw invalid("비용은 0 이상의 금액과 통화를 포함해야 합니다.");
-        if ("threeYearTargets".equals(key) && (!value.isArray() || value.size()!=3 || !targetsValid(value)))
-            throw invalid("3개년 목표는 1~3년 목표값을 모두 포함해야 합니다.");
+        if ("threeYearTargets".equals(key) && !ThreeYearTargetsContract.valid(value))
+            throw invalid("3개년 목표는 지표·단위와 1~3년 수치를 모두 포함해야 합니다.");
         if (!TechOpsPreparationFactory.present(value)) throw invalid("빈 값은 확정할 수 없습니다.");
     }
     private void validateDecisionValue(String key, JsonNode value) {
@@ -209,15 +234,6 @@ public class TechOpsService {
     private boolean allText(JsonNode values) {
         for (JsonNode value : values) if (!value.isTextual() || value.asText().isBlank()) return false;
         return true;
-    }
-    private boolean targetsValid(JsonNode values) {
-        boolean[] years=new boolean[4];
-        for (JsonNode value : values) {
-            int year=value.path("year").asInt(-1);
-            if (!value.isObject() || year<1 || year>3 || years[year] || value.path("target").asText("").isBlank()) return false;
-            years[year]=true;
-        }
-        return years[1] && years[2] && years[3];
     }
     private BusinessException invalid(String message) { return new BusinessException(ErrorCode.TECH_OPS_INPUT_INVALID, message); }
     private void requireOwnedForUpdate(Long ownerId, Long projectId) {

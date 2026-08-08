@@ -52,6 +52,7 @@ async def main() -> None:
             {"fieldKey": "targetUsers", "value": "예약 서비스를 운영하는 소형 매장", "source": "USER_INPUT", "authority": "LOCKED"},
             {"fieldKey": "targetRegion", "value": "대한민국", "source": "USER_INPUT", "authority": "LOCKED"},
         ],
+        "acceptedConceptFingerprints": [],
     })
     fact_pattern = legal_fact_pattern(candidate)
     serialized_pattern = json.dumps(fact_pattern, ensure_ascii=False, sort_keys=True, separators=(",", ":"))

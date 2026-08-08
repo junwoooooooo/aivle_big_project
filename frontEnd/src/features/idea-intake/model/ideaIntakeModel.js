@@ -73,8 +73,8 @@ const INTERPRETATION_FIELDS = Object.freeze([
   'relevantKnownCompetitorContext',
 ]);
 
-function createBriefField(value = '', source = FIELD_SOURCE.OPEN, decisionState = DECISION_STATE.OPEN) {
-  return { value, source, decisionState };
+function createBriefField(value = '', source = FIELD_SOURCE.OPEN, decisionState = DECISION_STATE.OPEN, provenance = 'MISSING') {
+  return { value, source, decisionState, provenance };
 }
 
 export function createIdeaIntakeDraft() {
@@ -88,6 +88,7 @@ export function createIdeaIntakeDraft() {
     answers: {},
     safetyReview: null,
     interpretation: Object.fromEntries(INTERPRETATION_FIELDS.map((key) => [key, ''])),
+    commitmentCandidates: [],
     assessment: { userFacingSummary: '', contradictions: [], readiness: null, clarificationRound: 0, maxClarificationRounds: 2 },
   };
 }
@@ -103,7 +104,7 @@ export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraf
   for (const field of response?.fields ?? []) {
     if (!fields[field.fieldKey]) continue;
     fields[field.fieldKey] = createBriefField(
-      field.value ?? '', serverSource(field), field.decisionState ?? DECISION_STATE.OPEN,
+      field.value ?? '', serverSource(field), field.decisionState ?? DECISION_STATE.OPEN, field.provenance ?? 'MISSING',
     );
   }
   const answers = {};
@@ -123,6 +124,9 @@ export function draftFromIdeaBrief(response, currentDraft = createIdeaIntakeDraf
     answers,
     safetyReview: response?.safetyReview ?? null,
     interpretation,
+    commitmentCandidates: (response?.interpretation?.commitmentCandidates ?? []).map((candidate) => ({
+      ...candidate, editedValue: candidate.value, action: 'CONFIRM',
+    })),
     assessment: {
       userFacingSummary: response?.userFacingSummary ?? '',
       contradictions: response?.contradictions ?? [],
@@ -156,6 +160,7 @@ export function hydrateBriefFromIntake(draft) {
         value,
         value ? FIELD_SOURCE.USER_INPUT : FIELD_SOURCE.OPEN,
         value ? DECISION_STATE.LOCKED : DECISION_STATE.OPEN,
+        value ? 'USER_INPUT' : 'MISSING',
       )];
     })),
   };
@@ -212,6 +217,15 @@ export function ideaIntakeDraftReducer(draft, action) {
       };
     case 'UPDATE_INTERPRETATION':
       return { ...draft, interpretation: { ...draft.interpretation, [action.field]: action.value } };
+    case 'UPDATE_COMMITMENT_VALUE':
+      return { ...draft, commitmentCandidates: draft.commitmentCandidates.map((candidate) => (
+        candidate.fieldKey === action.fieldKey
+          ? { ...candidate, editedValue: action.value, action: 'EDIT_AND_CONFIRM' } : candidate
+      )) };
+    case 'SET_COMMITMENT_ACTION':
+      return { ...draft, commitmentCandidates: draft.commitmentCandidates.map((candidate) => (
+        candidate.fieldKey === action.fieldKey ? { ...candidate, action: action.action } : candidate
+      )) };
     default:
       return draft;
   }

@@ -111,6 +111,8 @@ AI Interpretation은 다음을 `AI_DERIVED + REVIEWABLE`로 구조화한다.
 - `conciseIdeaDefinition`
 - 필요한 경우 지역·기존 경쟁자 context
 
+사용자 자유문장에 지역, 경쟁자, 수익모델, 가격, 채널, 차별점, 예산·팀·일정·기타 제약의 구체값이 명시되어 있으면 별도 `UserTextCommitmentCandidate`로 추출한다. 최초 의미는 `source=AI_DERIVED`, `origin=USER_TEXT`, `authority=REVIEWABLE`이며 즉시 LOCKED가 아니다. 사용자는 확인, 수정 후 확인, OPEN으로 되돌리기를 선택할 수 있고, 확인한 값만 `USER_CONFIRMED + LOCKED`로 승격한다. dedicated 선택 입력의 `USER_INPUT + LOCKED` 값은 추출 후보보다 항상 우선하며 충돌 후보가 overwrite할 수 없다.
+
 사용자는 “입력하신 아이디어를 이렇게 이해했습니다.” 화면에서 그대로 진행하거나 수정한다. 후속 질문은 문제·사용자·의도가 모호해 Concept 탐색 자체가 불가능한 경우에만 최소화한다. 플랫폼 역할, 결제 주체, 개인정보, 파트너, 물리활동은 초기 질문으로 강제하지 않는다.
 
 ## 6. Concept 전략과 목표 수
@@ -122,6 +124,8 @@ AI Interpretation 후 전략을 `EXPLORE`, `REFINE`, `AS_IS` 중 하나로 정�
 - `AS_IS`: Candidate 1에 사용자 원안을 의미 손실 없이 구조화하고, Candidate 2~5는 열린 사업 축에서만 대안을 탐색한다.
 
 `AS_IS`도 Concept Factory를 생략하지 않는다.
+
+전략은 Backend deterministic policy가 정본이다. 최소 Seed만 있으면 `EXPLORE`, 일부 상업·채널·운영 commitment가 확인되면 `REFINE`, 구체적인 문제·사용자·해결 mechanism과 복수의 확인된 commitment가 함께 있으면 `AS_IS`다. AI가 반환한 strategy 문자열만으로 결정하지 않는다.
 
 목표는 법률 적격이면서 서로 다른 Concept 5개다. 초기 5개, 전체 최대 15개 검사, replacement round 최대 2회, 후보별 법률 재설계 최대 1회의 bounded rule을 유지한다. 의미상 중복은 수에 포함하지 않는다. 한도 내 5개 확보가 불가능하면 `INSUFFICIENT_DISTINCT_CONCEPTS`로 종료한다.
 
@@ -147,7 +151,7 @@ Seed에서 비어 있던 `revenueModel`, `price`, `channels`, `differentiators`�
 
 `GENERATE → SCHEMA VALIDATION → LOCKED/ORIGIN VALIDATION → DISTINCTNESS VALIDATION → LEGAL REVIEW`
 
-Fingerprint는 최소 `targetUsers`, `problemScenario`, `coreValue`, `solutionMechanism`, `revenueModel`, `channels`, `platformRole`, `operatingModel`, `partnerModel`을 사용한다. deterministic normalized fingerprint, semantic similarity, 애매한 경우 structured AI judge의 3계층을 권장한다. 이름·어순·동의어만 다른 후보는 중복이며 Legal API로 보내지 않는다.
+Fingerprint는 `targetUsers`, `problemScenario`, `coreValue`, `solutionMechanism`, `revenueModel`, `channels`, `platformRole`, `operatingModel`, `partnerModel`, `transactionFlow`, provider/seller/intermediary role을 사용한다. deterministic normalized fingerprint와 lexical similarity를 cheap first pass로 유지하고, 애매한 pair만 strict structured AI judge로 판정한다. 이름·어순·동의어만 다른 후보는 중복이며 Legal API로 보내지 않는다. Candidate N 생성 입력에는 이미 적격인 후보들의 이 간단 fingerprint만 제공해 생성 시점부터 중복을 피한다.
 
 Concept별 `LegalFactPattern`은 `jurisdiction/targetRegion`, `actorRoles`, `platformRole`, provider/seller/intermediary role, `transactionFlow`, `paymentFlow`, `personalDataUsage`, `physicalActivities`, `partnerRoles`, `qualificationRequirements`, `advertisingClaims`, `operatingModel`을 포함하고 각 값 source를 보존한다.
 
@@ -193,7 +197,9 @@ BM 알고리즘은 외부 소유다. 추가 필수 입력이 확정되면 BM 시
 
 기술·운영 분석 시작 직전 `TechOpsInputPreparation`에서 다음 사용자 사실을 준비한다: `productServiceSpecification`, `targetLaunchDate`, `ownedPersonnel`, `ownedAssetsAndFacilities`, `fixedOperatingCost`, `initialInvestment`, `threeYearTargets`. 상위 신뢰 Snapshot의 확정값은 자동 승계한다.
 
-`deliveryOrProductionMethod`, `expectedMonthlyThroughputOrSales`, `technicalSupplyOperationalConstraints`는 AI가 제안할 수 있으나 분석 전 사용자가 결정해야 한다. 견적서, BOM, 공급사 정보, 사양서, 파일럿 자료는 optional Evidence이며 AI가 생성한 가짜 자료를 Evidence로 저장하지 않는다. 준비 완료 시 불변 `TechOpsInputSnapshot`을 만든다.
+Concept가 만든 `productServiceSpecification`은 editable `CONCEPT_GENERATED + REVIEW_REQUIRED` prefill이며 사용자의 확인 또는 수정 후 확인 전에는 TechOps 확정 사실이 아니다. 3개년 목표는 TechOps와 Finance가 공통 `{metric, unit, years:[{year,value}]}` 구조를 사용하고, Finance는 유효한 TechOps 확정 목표를 100% read-only로 승계한다.
+
+`deliveryOrProductionMethod`, `expectedMonthlyThroughputOrSales`, `technicalSupplyOperationalConstraints`는 AI가 제안할 수 있으나 분석 전 사용자가 결정해야 한다. 누락 제안은 null 완료형이 아니라 실제 `TECH_OPS_PROPOSAL` 결과로 채운다. 대안 요청은 proposalVersion을 증가시키고 직전 거절값과 다른 제안을 생성한다. 견적서, BOM, 공급사 정보, 사양서, 파일럿 자료는 optional Evidence이며 AI가 생성한 가짜 자료를 Evidence로 저장하지 않는다. 준비 완료 시 불변 `TechOpsInputSnapshot`을 만든다.
 
 재무분석 시작 직전 `FinancialInputPreparation`은 TechOps 값부터 재사용한다. 없는 값만 입력받는다.
 
@@ -203,6 +209,8 @@ BM 알고리즘은 외부 소유다. 추가 필수 입력이 확정되면 BM 시
 - CAC 구성값: `totalMarketingCost`, `totalSalesCost`, `newCustomerCount`; 시스템이 CAC를 계산
 
 `unitVariableCost`, `paymentFee`, `partnerPayout`, `shippingCost`, `customerIncrementalInfraCost`는 계약상 필요할 때만 조건부로 받는다. AI 추정값은 `AI_HYPOTHESIS` 또는 `AI_ESTIMATE + PROPOSED`이고 사용자 채택 전 사실이 아니다. 준비 완료 시 불변 `FinancialInputSnapshot`을 만든다.
+
+Finance assistance는 비용·3개년 목표·마케팅/영업비·조건부 원가에 실제 `FINANCE_ESTIMATE` 제안을 제공한다. 제안은 value, assumptions, explanation, confidence를 포함한다. 수락값은 `AI_ESTIMATE + ACCEPTED`, 사용자 수정값은 `USER_INPUT + USER_EDITED_ACCEPTED`로 구분한다. `PROPOSED` 값은 Snapshot gate를 통과하지 못하며 CAC는 계속 서버 공식 계산이 정본이다.
 
 ## 12. Marketing Source
 
@@ -262,6 +270,10 @@ Legacy 코드는 최종 cleanup 전까지 남을 수 있으나 active route/cont
 8. V2-7 — TechOps Preparation and Snapshot
 9. V2-8 — Financial Preparation and Snapshot
 10. V2-9 — Active Surface Cleanup and Acceptance
+11. V2-10A — Seed Commitment Extraction and Generation Strategy
+12. V2-10B — Concept Semantic Distinctness Hardening
+13. V2-10C — TechOps Confirmation, Proposal and Shared Target Contract
+14. V2-10D — Finance AI Estimate Assistance
 
 각 Unit은 해당 범위만 수행하고 다음 Unit으로 자동 진행하지 않는다.
 

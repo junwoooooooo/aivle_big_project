@@ -36,4 +36,22 @@ class IdeaBriefFieldInvariantTests {
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("NEEDS_INPUT requires");
     }
+
+    @Test
+    void extractedCommitmentOnlyLocksAfterUserConfirmationAndCannotOverrideDirectInput() {
+        IdeaBrief brief = IdeaBrief.initial(null, 7L);
+        IdeaBriefField extracted = IdeaBriefField.aiProposal(
+            brief, "price", "월 9,900원", IdeaDecisionState.REVIEWABLE, IdeaFieldProvenance.AI_DERIVED);
+        assertThat(extracted.getDecisionState()).isEqualTo(IdeaDecisionState.REVIEWABLE);
+
+        extracted.confirmCommitment("월 9,900원");
+        assertThat(extracted.getDecisionState()).isEqualTo(IdeaDecisionState.LOCKED);
+        assertThat(extracted.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_CONFIRMED);
+
+        IdeaBriefField direct = IdeaBriefField.userValue(
+            brief, "price", "월 12,000원", IdeaDecisionState.LOCKED);
+        direct.confirmCommitment("월 9,900원");
+        assertThat(direct.getFieldValue()).isEqualTo("월 12,000원");
+        assertThat(direct.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_INPUT);
+    }
 }

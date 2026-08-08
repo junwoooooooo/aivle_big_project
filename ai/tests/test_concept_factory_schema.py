@@ -60,6 +60,7 @@ def test_minimal_seed_can_start_explore_generation():
             {"fieldKey": "problem", "value": "재고 폐기", "source": "USER_INPUT", "authority": "LOCKED"},
             {"fieldKey": "targetUsers", "value": "동네 가게", "source": "USER_INPUT", "authority": "LOCKED"},
         ],
+        "acceptedConceptFingerprints": [],
     })
     assert value.generationStrategy == "EXPLORE"
 

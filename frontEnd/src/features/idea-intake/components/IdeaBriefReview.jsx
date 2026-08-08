@@ -11,8 +11,11 @@ const INTERPRETATION_FIELDS = Object.freeze([
   ['relevantKnownCompetitorContext', '경쟁자 맥락'],
 ]);
 
-export default function IdeaBriefReview({ draft, onInterpretationChange, onConfirm }) {
-  const enteredSeed = draft.catalog.filter(({ key }) => draft.fields[key]?.value?.trim());
+export default function IdeaBriefReview({ draft, onInterpretationChange, onCommitmentValueChange, onCommitmentAction, onConfirm }) {
+  const enteredSeed = draft.catalog.filter(({ key }) => draft.fields[key]?.value?.trim()
+    && draft.fields[key]?.provenance !== 'USER_CONFIRMED');
+  const confirmedCommitments = draft.catalog.filter(({ key }) => draft.fields[key]?.value?.trim()
+    && draft.fields[key]?.provenance === 'USER_CONFIRMED');
   return (
     <form className="idea-brief-review" onSubmit={onConfirm}>
       <div className="idea-review-summary">
@@ -35,6 +38,38 @@ export default function IdeaBriefReview({ draft, onInterpretationChange, onConfi
           <dd>{draft.fields[key].value}</dd>
         </div>)}</dl>
       </section>
+
+      {confirmedCommitments.length > 0 && <section className="idea-brief-group" aria-labelledby="confirmed-commitment-heading">
+        <h3 id="confirmed-commitment-heading">원문에서 확인한 확정값</h3>
+        <p className="idea-locked-notice">입력 원문에서 발견한 뒤 사용자가 확인하여 잠근 값입니다.</p>
+        <dl className="idea-seed-summary">{confirmedCommitments.map(({ key, label }) => <div key={key}>
+          <dt>{label}<span className="idea-source-badge">사용자 확인 · 확정됨</span></dt>
+          <dd>{draft.fields[key].value}</dd>
+        </div>)}</dl>
+      </section>}
+
+      {draft.commitmentCandidates.length > 0 && <section className="idea-brief-group" aria-labelledby="commitment-heading">
+        <h3 id="commitment-heading">입력 원문에서 발견한 결정 후보</h3>
+        <p className="idea-interpretation-help">입력 내용에서 이렇게 결정된 것으로 이해했습니다. 확인 전에는 잠기지 않습니다.</p>
+        <div className="idea-commitment-list">{draft.commitmentCandidates.map((candidate) => {
+          const label = draft.catalog.find(({ key }) => key === candidate.fieldKey)?.label ?? candidate.fieldKey;
+          return <article className="idea-commitment-card" key={candidate.fieldKey}>
+            <div><strong>{label}</strong><span className="idea-source-badge">AI 발견 · 확인 필요</span></div>
+            <textarea aria-label={`${label} 결정 후보`} value={candidate.editedValue}
+              disabled={candidate.action === 'RETURN_TO_OPEN'}
+              onChange={(event) => onCommitmentValueChange(candidate.fieldKey, event.target.value)} />
+            <small>원문 근거: {candidate.evidenceQuote}</small>
+            <div className="idea-commitment-actions" role="group" aria-label={`${label} 결정`}>
+              <button type="button" aria-pressed={candidate.action === 'CONFIRM'}
+                onClick={() => onCommitmentAction(candidate.fieldKey, 'CONFIRM')}>확인</button>
+              <button type="button" aria-pressed={candidate.action === 'EDIT_AND_CONFIRM'}
+                onClick={() => onCommitmentAction(candidate.fieldKey, 'EDIT_AND_CONFIRM')}>수정 후 확인</button>
+              <button type="button" aria-pressed={candidate.action === 'RETURN_TO_OPEN'}
+                onClick={() => onCommitmentAction(candidate.fieldKey, 'RETURN_TO_OPEN')}>결정하지 않음</button>
+            </div>
+          </article>;
+        })}</div>
+      </section>}
 
       <section className="idea-brief-group" aria-labelledby="interpretation-heading">
         <h3 id="interpretation-heading">AI가 해석한 내용</h3>

@@ -112,6 +112,28 @@ public class IdeaBriefField extends BaseEntity {
         this.provenance = IdeaFieldProvenance.USER_INPUT;
     }
 
+    public static IdeaBriefField confirmedCommitment(IdeaBrief brief, String fieldKey, String value) {
+        return create(brief, fieldKey, value, IdeaDecisionState.LOCKED,
+            IdeaFieldProvenance.USER_CONFIRMED, false);
+    }
+
+    public void confirmCommitment(String value) {
+        brief.requireMutable();
+        if (value == null || value.isBlank()) throw new IllegalArgumentException("confirmed commitment value is required");
+        if (provenance == IdeaFieldProvenance.USER_INPUT && decisionState == IdeaDecisionState.LOCKED) return;
+        this.fieldValue = value.trim();
+        this.decisionState = IdeaDecisionState.LOCKED;
+        this.provenance = IdeaFieldProvenance.USER_CONFIRMED;
+    }
+
+    public void returnCommitmentToOpen() {
+        brief.requireMutable();
+        if (provenance != IdeaFieldProvenance.USER_CONFIRMED) return;
+        this.fieldValue = "";
+        this.decisionState = IdeaDecisionState.OPEN;
+        this.provenance = IdeaFieldProvenance.MISSING;
+    }
+
     public void updateFromAnswer(String value, IdeaDecisionState decisionState, boolean undecided) {
         brief.requireMutable();
         if (decisionState == null) throw new IllegalArgumentException("decision state is required");

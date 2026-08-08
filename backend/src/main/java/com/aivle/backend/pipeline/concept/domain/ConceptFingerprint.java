@@ -11,23 +11,28 @@ import tools.jackson.databind.JsonNode;
 public final class ConceptFingerprint {
     private static final List<String> FIELDS = List.of(
         "targetUsers", "problemScenario", "coreValue", "solutionMechanism", "revenueModel",
-        "channels", "platformRole", "operatingModel", "partnerModel"
+        "channels", "platformRole", "operatingModel", "partnerModel", "transactionFlow",
+        "providerRole", "sellerRole", "intermediaryRole"
     );
 
     private ConceptFingerprint() {}
 
     public static Value from(JsonNode candidate) {
-        List<String> values = FIELDS.stream().map(field -> normalize(candidate.path(field).asText())).toList();
+        List<String> values = FIELDS.stream().map(field -> normalize(stringValue(candidate.path(field)))).toList();
         return new Value(ConceptCanonicalizer.hash(values.toArray(String[]::new)),
             ConceptCanonicalizer.hash(values.get(0), values.get(1), values.get(2), values.get(3), values.get(6)),
             values);
     }
 
     public static boolean duplicates(JsonNode left, JsonNode right) {
+        return classify(left, right) == Classification.DUPLICATE;
+    }
+
+    public static Classification classify(JsonNode left, JsonNode right) {
         Value first = from(left);
         Value second = from(right);
         if (first.canonicalHash().equals(second.canonicalHash()) || first.majorFieldHash().equals(second.majorFieldHash())) {
-            return true;
+            return Classification.DUPLICATE;
         }
         int materiallySimilarFields = 0;
         double total = 0;
@@ -36,8 +41,33 @@ public final class ConceptFingerprint {
             total += score;
             if (score >= 0.72) materiallySimilarFields++;
         }
-        return similarity(String.join(" ", first.values()), String.join(" ", second.values())) >= 0.76
-            || (materiallySimilarFields >= 6 && total / first.values().size() >= 0.64);
+        double aggregate = similarity(String.join(" ", first.values()), String.join(" ", second.values()));
+        double average = total / first.values().size();
+        if (aggregate >= 0.76 || (materiallySimilarFields >= 8 && average >= 0.64)) {
+            return Classification.DUPLICATE;
+        }
+        if (aggregate >= 0.28 || materiallySimilarFields >= 3 || average >= 0.30) {
+            return Classification.AMBIGUOUS;
+        }
+        return Classification.DISTINCT;
+    }
+
+    public static java.util.Map<String, Object> businessSummary(JsonNode candidate) {
+        java.util.LinkedHashMap<String, Object> result = new java.util.LinkedHashMap<>();
+        for (String field : FIELDS) {
+            JsonNode value = candidate.path(field);
+            if (value.isArray()) {
+                result.put(field, java.util.stream.StreamSupport.stream(value.spliterator(), false)
+                    .map(JsonNode::asText).toList());
+            } else result.put(field, value.asText(""));
+        }
+        return java.util.Map.copyOf(result);
+    }
+
+    private static String stringValue(JsonNode value) {
+        if (!value.isArray()) return value.asText("");
+        return java.util.stream.StreamSupport.stream(value.spliterator(), false)
+            .map(JsonNode::asText).collect(java.util.stream.Collectors.joining(" "));
     }
 
     static double similarity(String left, String right) {
@@ -76,4 +106,5 @@ public final class ConceptFingerprint {
     }
 
     public record Value(String canonicalHash, String majorFieldHash, List<String> values) {}
+    public enum Classification { DUPLICATE, AMBIGUOUS, DISTINCT }
 }
