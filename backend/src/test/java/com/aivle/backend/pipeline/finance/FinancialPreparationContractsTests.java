@@ -9,6 +9,7 @@ import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 class FinancialPreparationContractsTests {
     private final ObjectMapper mapper = new ObjectMapper();
@@ -38,6 +39,9 @@ class FinancialPreparationContractsTests {
             .isEqualByComparingTo("1200");
         assertThat(initial.assistance().path("cac").path("proposalValue").isNull()).isTrue();
         assertThat(initial.assistance().path("cac").path("decision").asText()).isEqualTo("PROPOSED");
+        assertThat(initial.assistance().path("threeYearTargets").path("estimateStatus").asText()).isEqualTo("NONE");
+        assertThat(initial.financialFields().path("threeYearTargets").path("readOnly").asBoolean()).isTrue();
+        assertThat(initial.assistance().has("newCustomerCount")).isFalse();
     }
 
     @Test
@@ -68,5 +72,25 @@ class FinancialPreparationContractsTests {
         assertThat(first.hash()).isEqualTo(second.hash()).matches("sha256:[0-9a-f]{64}");
         assertThat(first.body().path("calculatedCac").path("source").asText()).isEqualTo("SYSTEM_CALCULATION");
         assertThat(first.body().path("sourceTechOpsSnapshotId").asText()).isEqualTo("tech-1");
+    }
+
+    @Test
+    void snapshotExcludesUnacceptedProposedEstimate() {
+        ObjectNode fields = mapper.createObjectNode();
+        FinancialPreparationFactory.ALL_KEYS.forEach(key -> fields.putObject(key).putNull("value"));
+        ObjectNode assistance = mapper.createObjectNode();
+        assistance.putObject("totalMarketingCost")
+            .set("proposalValue", mapper.readTree("{\"amount\":1000,\"currency\":\"KRW\"}"));
+        assistance.withObject("totalMarketingCost").put("decision", "PROPOSED");
+        assistance.withObject("totalMarketingCost").put("estimateStatus", "SUCCEEDED");
+        var preparation = FinancialInputPreparation.create("finance-prep-2", 41L, "tech-1", "seed-1",
+            "sha256:" + "a".repeat(64), mapper.writeValueAsString(fields), "{}",
+            mapper.writeValueAsString(assistance), 7L);
+
+        var snapshot = new FinancialInputSnapshotFactory(mapper, new SnapshotHasher(mapper),
+            new FinancialCalculator(mapper)).create("finance-2", Instant.EPOCH, preparation);
+
+        assertThat(snapshot.body().path("assistance").path("totalMarketingCost").has("proposalValue")).isFalse();
+        assertThat(snapshot.body().path("assistance").path("totalMarketingCost").has("estimateStatus")).isFalse();
     }
 }

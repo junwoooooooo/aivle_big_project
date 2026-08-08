@@ -67,6 +67,37 @@ describe('useIdeaIntake async recovery', () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 
+  it('stops at RUNNING after commitment canonicalization and waits for the fresh synthesis', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const review = {
+      ...response('READY_FOR_REVIEW', null, []),
+      interpretation: {
+        ...interpretation(),
+        commitmentCandidates: [{ fieldKey: 'price', value: '월 9,900원', evidenceQuote: '월 9,900원으로',
+          source: 'AI_DERIVED', origin: 'USER_TEXT', authority: 'REVIEWABLE' }],
+      },
+      readiness: { readyForConfirm: true, missingFieldKeys: [] },
+    };
+    const deriving = { ...review, status: 'DERIVING', activeJobId: 'job-reassess', assessmentCurrent: false };
+    const client = {
+      get: vi.fn().mockResolvedValue({ data: review }),
+      patch: vi.fn().mockResolvedValue({ data: deriving }),
+      post: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.REVIEW));
+
+    await act(async () => result.current.confirmBrief({ preventDefault: vi.fn() }));
+
+    expect(client.patch).toHaveBeenCalledTimes(1);
+    expect(client.patch.mock.calls[0][0]).toContain('/commitments');
+    expect(client.patch.mock.calls[0][0]).not.toContain('/interpretation');
+    expect(client.post).not.toHaveBeenCalled();
+    expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RUNNING);
+    expect(result.current.activeJobId).toBe('job-reassess');
+  });
+
   it('routes zero-question missing fields to PATCH and starts final synthesis', async () => {
     useJobEvents.mockReturnValue({ terminal: false, events: [] });
     const needsFields = {

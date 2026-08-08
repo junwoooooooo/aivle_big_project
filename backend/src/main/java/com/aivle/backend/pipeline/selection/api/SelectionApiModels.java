@@ -26,7 +26,11 @@ public final class SelectionApiModels {
 
     public record SelectionResponse(Long selectionId, String conceptId, String selectionReason, Instant selectedAt,
                                     boolean current, boolean decisionComplete,
-                                    List<HypothesisDecisionResponse> hypotheses) {}
+                                    List<HypothesisDecisionResponse> hypotheses,
+                                    String activeActionTaskRunId, String pendingActionType,
+                                    String pendingHypothesisType, String actionStatus, String safeActionError) {}
 
-    public record HypothesisActionResponse(HypothesisDecisionResponse hypothesis, boolean decisionComplete) {}
+    public record HypothesisActionResponse(HypothesisDecisionResponse hypothesis, boolean decisionComplete,
+        String taskRunId, String jobId, String status, String actionType,
+        String hypothesisType, int proposalVersion) {}
 }

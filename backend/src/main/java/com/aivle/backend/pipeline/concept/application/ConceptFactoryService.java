@@ -17,7 +17,12 @@ import com.aivle.backend.pipeline.concept.repository.ConceptSlotRepository;
 import com.aivle.backend.pipeline.legal.repository.ConceptLegalAssessmentRepository;
 import com.aivle.backend.pipeline.legal.repository.ConceptLegalEvidenceLinkRepository;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
+import com.aivle.backend.pipeline.idea.domain.IdeaDecisionState;
+import com.aivle.backend.pipeline.idea.domain.IdeaFieldProvenance;
+import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver.Jurisdiction;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.jobevent.JobEvent;
@@ -40,6 +45,7 @@ public class ConceptFactoryService {
     private final ConceptSlotRepository slots;
     private final ConceptRepository concepts;
     private final IdeaBriefRepository ideaBriefs;
+    private final IdeaBriefFieldRepository ideaBriefFields;
     private final ProjectRepository projects;
     private final ConceptAttemptRepository attempts;
     private final ConceptLegalAssessmentRepository legalAssessments;
@@ -48,6 +54,7 @@ public class ConceptFactoryService {
     private final CanonicalInputHasher inputHasher;
     private final ObjectMapper objectMapper;
     private final JobEventPublisher jobEvents;
+    private final LegalJurisdictionResolver jurisdictions;
 
     @Transactional
     public RunResponse create(Long ownerId, Long projectId, CreateRunRequest request) {
@@ -57,6 +64,12 @@ public class ConceptFactoryService {
         IdeaBrief snapshot = ideaBriefs.findByIdAndProjectIdAndDeletedAtIsNull(request.ideaBriefSnapshotId(), projectId)
             .filter(IdeaBrief::isConfirmed)
             .orElseThrow(() -> new BusinessException(ErrorCode.IDEA_NOT_CONFIRMED));
+        ideaBriefFields.findByBriefIdAndFieldKey(snapshot.getId(), "targetRegion")
+            .filter(field -> field.getDecisionState() == IdeaDecisionState.LOCKED)
+            .filter(field -> field.getProvenance() == IdeaFieldProvenance.USER_INPUT
+                || field.getProvenance() == IdeaFieldProvenance.USER_CONFIRMED)
+            .filter(field -> jurisdictions.resolve(field.getFieldValue()) != Jurisdiction.KR)
+            .ifPresent(field -> { throw new BusinessException(ErrorCode.LEGAL_JURISDICTION_UNSUPPORTED); });
         ConceptFactoryRun current = runs.findCurrentOwned(ownerId, projectId).orElse(null);
         if (current != null && !current.isTerminal()) {
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING, "Concept Factory run is already active.");

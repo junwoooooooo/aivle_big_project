@@ -66,4 +66,13 @@ public class ObjectKeyGenerator {
         }
         return "ai-artifacts/" + UUID.randomUUID() + "." + extension;
     }
+
+    public String projectEvidence(long projectId, String artifactId, String extension) {
+        if (artifactId == null || !artifactId.matches("[0-9a-f-]{36}")
+                || extension == null || !extension.matches("[a-z0-9]{2,5}")) {
+            throw new IllegalArgumentException("invalid project evidence key input");
+        }
+        return "projects/" + projectId + "/evidence/" + artifactId + "/"
+            + UUID.randomUUID() + "." + extension;
+    }
 }

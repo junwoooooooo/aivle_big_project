@@ -177,6 +177,7 @@ public class IdeaBriefService {
         for (JsonNode candidate : interpretation.path("commitmentCandidates")) {
             candidates.put(candidate.path("fieldKey").asText(), candidate);
         }
+        boolean canonicalChanged = false;
         for (CommitmentDecisionCommand command : request.commitments()) {
             IdeaBriefFieldCatalog.FieldDefinition definition = IdeaBriefFieldCatalog.require(command.fieldKey());
             if (definition.requiredForConcept() || !Set.of("CONFIRM", "EDIT_AND_CONFIRM", "RETURN_TO_OPEN").contains(command.action())) {
@@ -189,7 +190,11 @@ public class IdeaBriefService {
                 continue;
             }
             if ("RETURN_TO_OPEN".equals(command.action())) {
-                if (field != null) field.returnCommitmentToOpen();
+                if (field != null) {
+                    String before = canonicalFieldState(field);
+                    field.returnCommitmentToOpen();
+                    canonicalChanged |= !before.equals(canonicalFieldState(field));
+                }
                 candidates.remove(command.fieldKey());
                 continue;
             }
@@ -199,16 +204,31 @@ public class IdeaBriefService {
             if (value == null || value.isBlank()) {
                 throw new BusinessException(ErrorCode.INVALID_REQUEST, "확인할 결정값이 없습니다.");
             }
-            if (field == null) fields.save(IdeaBriefField.confirmedCommitment(brief, command.fieldKey(), value.trim()));
-            else field.confirmCommitment(value.trim());
+            if (field == null) {
+                fields.save(IdeaBriefField.confirmedCommitment(brief, command.fieldKey(), value.trim()));
+                canonicalChanged = true;
+            } else {
+                String before = canonicalFieldState(field);
+                field.confirmCommitment(value.trim());
+                canonicalChanged |= !before.equals(canonicalFieldState(field));
+            }
             candidates.remove(command.fieldKey());
         }
         ArrayNode remaining = objectMapper.createArrayNode();
         candidates.values().forEach(value -> remaining.add(value.deepCopy()));
         interpretation.set("commitmentCandidates", remaining);
         brief.updateInterpretation(objectMapper.writeValueAsString(interpretation));
+        if (canonicalChanged) {
+            queueDerivation(ownerId, projectId, brief, idempotencyKey,
+                IdeaBriefDerivationMode.FINAL_SYNTHESIS);
+        }
         brief.recordCommand("REVIEW_COMMITMENTS", idempotencyKey, requestHash);
         return response(brief);
+    }
+
+    private String canonicalFieldState(IdeaBriefField field) {
+        return (field.getFieldValue() == null ? "" : field.getFieldValue()) + "\u0000"
+            + field.getDecisionState().name() + "\u0000" + field.getProvenance().name();
     }
 
     @Transactional

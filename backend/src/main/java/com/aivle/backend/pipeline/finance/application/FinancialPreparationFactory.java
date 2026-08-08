@@ -65,6 +65,9 @@ public class FinancialPreparationFactory {
             "CAC = (총 마케팅비 + 총 영업비) / 신규 고객 수");
         assistance(assistance, "conditionalCosts", "외부 분석 계약에 필요한 경우에만 조건부 단위원가를 입력하세요.",
             "배송이 없는 서비스라면 shippingCost는 비워 둡니다.");
+        for (String key : ALL_KEYS) {
+            if (!"newCustomerCount".equals(key)) estimateAssistance(assistance, key);
+        }
         return new InitialPreparation(fields, references, assistance);
     }
 
@@ -141,6 +144,16 @@ public class FinancialPreparationFactory {
         item.put("source", "AI_ESTIMATE");
         item.put("decision", "PROPOSED");
         item.put("providerStatus", "NOT_CONNECTED");
+    }
+
+    private void estimateAssistance(ObjectNode root, String key) {
+        ObjectNode item = root.withObject(key);
+        if (!item.has("explanation")) item.put("explanation", "값 입력이 어려우면 AI 추천을 요청할 수 있습니다.");
+        if (!item.has("example")) item.put("example", "추천값은 사용자 확인 전까지 재무 입력으로 사용되지 않습니다.");
+        item.putNull("proposalValue"); item.putNull("assumptions"); item.putNull("confidence");
+        item.put("source", "AI_ESTIMATE"); item.put("decision", "PROPOSED");
+        item.put("proposalVersion", 0); item.put("estimateStatus", "NONE");
+        item.putNull("activeTaskRunId"); item.putNull("safeError");
     }
 
     private boolean validMoney(JsonNode value) {

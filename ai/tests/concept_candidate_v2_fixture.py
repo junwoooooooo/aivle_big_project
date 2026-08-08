@@ -14,7 +14,7 @@ def valid_candidate(strategy="EXPLORE", index=1):
     semantics = []
     for field in SEMANTIC_FIELDS:
         hypothesis = field.startswith("preMarketSom") or field in {
-            "revenueModel", "price", "channels", "differentiators",
+            "targetRegion", "revenueModel", "price", "channels", "differentiators",
         }
         semantics.append({
             "fieldKey": field,

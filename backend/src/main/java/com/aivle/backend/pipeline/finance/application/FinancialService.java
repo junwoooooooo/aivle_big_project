@@ -4,6 +4,8 @@ import static com.aivle.backend.pipeline.finance.api.FinancialApiModels.*;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.finance.domain.*;
 import com.aivle.backend.pipeline.finance.repository.*;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
@@ -11,6 +13,10 @@ import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepositor
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import com.aivle.backend.taskrun.service.TaskRunService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -36,8 +42,10 @@ public class FinancialService {
     private final FinancialInputSnapshotFactory snapshotFactory;
     private final FinancialReadiness readiness;
     private final FinancialCalculator calculator;
-    private final FinanceEstimateGateway estimateGateway;
     private final ObjectMapper mapper;
+    private final TaskRunService taskRuns;
+    private final CanonicalInputHasher inputHasher;
+    private final JobEventPublisher jobEvents;
 
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
@@ -46,7 +54,6 @@ public class FinancialService {
         var existing = preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
         if (existing.isPresent()) return view(existing.get());
         var initial = preparationFactory.create(source);
-        populateEstimates(initial.assistance(), source, 1, "");
         String id = UUID.randomUUID().toString();
         var saved = preparations.save(FinancialInputPreparation.create(id, projectId, source.getId(),
             source.getSourceMarketSeedSnapshotId(), source.getSnapshotHash(),
@@ -68,6 +75,7 @@ public class FinancialService {
         ensureMutable(preparation);
         if (!request.values().isObject()) throw invalid("재무 입력은 필드별 객체여야 합니다.");
         ObjectNode fields = (ObjectNode) mapper.readTree(preparation.getFinancialFieldsJson());
+        ObjectNode assistance = (ObjectNode) mapper.readTree(preparation.getAssistanceJson());
         for (String key : request.values().propertyNames()) {
             if (!FinancialPreparationFactory.ALL_KEYS.contains(key)) throw invalid("지원하지 않는 재무 입력 필드입니다: " + key);
             ObjectNode field = (ObjectNode) fields.path(key);
@@ -79,16 +87,52 @@ public class FinancialService {
             field.put("decision", FinancialPreparationFactory.present(value) ? "LOCKED" : "OPEN");
             field.putNull("sourceSnapshotId");
             field.putNull("provenance");
+            JsonNode assistanceNode = assistance.path(key);
+            if (assistanceNode.isObject()) {
+                ObjectNode estimate = (ObjectNode) assistanceNode;
+                estimate.put("estimateStatus", "NONE"); estimate.putNull("activeTaskRunId");
+                estimate.putNull("safeError");
+            }
         }
         preparation.updateFinancialFields(mapper.writeValueAsString(fields), ownerId);
+        preparation.updateAssistance(mapper.writeValueAsString(assistance), ownerId);
         return view(preparation);
     }
 
     @Transactional
-    public PreparationView decideEstimate(Long ownerId, Long projectId, String fieldKey, EstimateDecisionRequest request) {
+    public EstimateActionResponse generateEstimate(Long ownerId, Long projectId, String fieldKey,
+            String idempotencyKey, String correlationId) {
+        requireOwnedForUpdate(ownerId, projectId);
+        FinancialInputPreparation preparation = lockedCurrent(projectId); ensureMutable(preparation);
+        validateEstimateField(preparation, fieldKey);
+        ObjectNode assistance = (ObjectNode) mapper.readTree(preparation.getAssistanceJson());
+        ObjectNode proposal = (ObjectNode) assistance.withObject(fieldKey);
+        if (active(proposal)) {
+            TaskRun task = taskRuns.getOwned(ownerId, projectId, proposal.path("activeTaskRunId").asText());
+            if (commandKey(idempotencyKey).equals(task.getIdempotencyKey())) {
+                return queued(preparation, task, "GENERATE", fieldKey,
+                    proposal.path("proposalVersion").asInt(0) + 1);
+            }
+            throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
+        }
+        int version = proposal.path("proposalValue").isNull() || proposal.path("proposalValue").isMissingNode()
+            ? 1 : proposal.path("proposalVersion").asInt(1) + 1;
+        JsonNode rejected = version > 1 ? proposal.path("proposalValue") : mapper.nullNode();
+        TaskRunService.CreateResult creation = queueEstimate(ownerId, projectId, preparation, fieldKey, version,
+            rejected, idempotencyKey, correlationId, "GENERATE");
+        TaskRun task = creation.taskRun();
+        if (!creation.createdNew()) return queued(preparation, task, "GENERATE", fieldKey, version);
+        proposal.put("estimateStatus", "QUEUED"); proposal.put("activeTaskRunId", task.getId());
+        proposal.putNull("safeError");
+        preparation.updateAssistance(mapper.writeValueAsString(assistance), ownerId);
+        return queued(preparation, task, "GENERATE", fieldKey, version);
+    }
+
+    @Transactional
+    public EstimateActionResponse decideEstimate(Long ownerId, Long projectId, String fieldKey,
+            EstimateDecisionRequest request, String idempotencyKey, String correlationId) {
         requireOwnedForUpdate(ownerId, projectId); FinancialInputPreparation preparation=lockedCurrent(projectId); ensureMutable(preparation);
-        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "newCustomerCount".equals(fieldKey))
-            throw invalid("AI 추정 지원 대상이 아닙니다: " + fieldKey);
+        validateEstimateField(preparation, fieldKey);
         ObjectNode fields=(ObjectNode) mapper.readTree(preparation.getFinancialFieldsJson());
         ObjectNode assistance=(ObjectNode) mapper.readTree(preparation.getAssistanceJson());
         ObjectNode proposal=(ObjectNode) assistance.path(fieldKey); String action=request.action().strip().toUpperCase();
@@ -96,46 +140,47 @@ public class FinancialService {
         if (field.path("readOnly").asBoolean(false)) throw invalid("상위 확정값은 AI 추정으로 바꾸지 않습니다.");
         switch(action) {
             case "ACCEPT" -> {
-                JsonNode value=proposal.path("proposedValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
+                JsonNode value=proposal.path("proposalValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
                 field.set("value",value.deepCopy()); field.put("source","AI_ESTIMATE"); field.put("decision","ACCEPTED");
                 field.put("provenance","assistance."+fieldKey+".proposalVersion:"+proposal.path("proposalVersion").asInt(1));
-                proposal.put("decision","ACCEPTED");
+                proposal.put("decision","ACCEPTED"); proposal.put("estimateStatus", "ACCEPTED");
+                proposal.putNull("activeTaskRunId"); proposal.putNull("safeError");
             }
             case "EDIT_AND_ACCEPT" -> {
                 validateField(fieldKey,request.value(),FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
                 field.set("value",request.value().deepCopy()); field.put("source","USER_INPUT"); field.put("decision","USER_EDITED_ACCEPTED");
                 field.put("provenance","user-edited-ai-estimate"); proposal.put("decision","USER_EDITED_ACCEPTED");
+                proposal.put("estimateStatus", "ACCEPTED"); proposal.putNull("activeTaskRunId"); proposal.putNull("safeError");
             }
             case "REQUEST_ALTERNATIVE" -> {
+                if (active(proposal)) {
+                    TaskRun active = taskRuns.getOwned(ownerId, projectId, proposal.path("activeTaskRunId").asText());
+                    if (commandKey(idempotencyKey).equals(active.getIdempotencyKey())) {
+                        return queued(preparation, active, "REQUEST_ALTERNATIVE", fieldKey,
+                            proposal.path("proposalVersion").asInt(1) + 1);
+                    }
+                    throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
+                }
+                validateField(fieldKey, proposal.path("proposalValue"),
+                    FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
                 int version=proposal.path("proposalVersion").asInt(1)+1;
-                JsonNode input=mapper.createObjectNode().put("contextJson", currentTechOpsSnapshot(projectId).getSnapshotJson())
-                    .put("fieldKey",fieldKey).put("proposalVersion",version)
-                    .put("rejectedProposalJson",mapper.writeValueAsString(proposal.path("proposedValue")));
-                JsonNode alternative=estimateGateway.estimate(input);
-                applyEstimate(proposal, alternative, fieldKey, version);
+                TaskRunService.CreateResult creation = queueEstimate(ownerId, projectId, preparation, fieldKey, version,
+                    proposal.path("proposalValue"), idempotencyKey, correlationId, "REQUEST_ALTERNATIVE");
+                TaskRun task = creation.taskRun();
+                if (!creation.createdNew()) {
+                    return queued(preparation, task, "REQUEST_ALTERNATIVE", fieldKey, version);
+                }
+                proposal.put("estimateStatus", "QUEUED"); proposal.put("activeTaskRunId", task.getId());
+                proposal.putNull("safeError");
+                preparation.updateAssistance(mapper.writeValueAsString(assistance), ownerId);
+                return queued(preparation, task, "REQUEST_ALTERNATIVE", fieldKey, version);
             }
             default -> throw invalid("AI 추정 결정 Action을 확인해 주세요.");
         }
         preparation.updateFinancialFields(mapper.writeValueAsString(fields),ownerId);
         preparation.updateAssistance(mapper.writeValueAsString(assistance),ownerId);
-        return view(preparation);
-    }
-
-    private void populateEstimates(ObjectNode assistance, TechOpsInputSnapshot source, int version, String rejected) {
-        for (String key : FinancialPreparationFactory.ALL_KEYS) {
-            if ("newCustomerCount".equals(key)) continue;
-            JsonNode input=mapper.createObjectNode().put("contextJson",source.getSnapshotJson()).put("fieldKey",key)
-                .put("proposalVersion",version).put("rejectedProposalJson",rejected);
-            applyEstimate((ObjectNode) assistance.withObject(key),estimateGateway.estimate(input),key,version);
-        }
-    }
-    private void applyEstimate(ObjectNode target, JsonNode result, String fieldKey, int version) {
-        if (!fieldKey.equals(result.path("fieldKey").asText())) throw invalid("AI 추정 필드가 일치하지 않습니다.");
-        JsonNode value=result.path("proposedValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
-        if (target.has("proposedValue") && target.path("proposedValue").equals(value) && version>1) throw invalid("새 추정값은 직전 값과 달라야 합니다.");
-        target.set("proposedValue",value.deepCopy()); target.set("assumptions",result.path("assumptions").deepCopy());
-        target.put("explanation",result.path("explanation").asText()); target.put("confidence",result.path("confidence").asText());
-        target.put("source","AI_ESTIMATE"); target.put("decision","PROPOSED"); target.put("proposalVersion",version);
+        return new EstimateActionResponse(view(preparation), null, null, "COMPLETED", action,
+            fieldKey, proposal.path("proposalVersion").asInt(0));
     }
 
     @Transactional
@@ -144,6 +189,10 @@ public class FinancialService {
         FinancialInputPreparation preparation = lockedCurrent(projectId);
         var existing = snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(preparation.getId(), projectId);
         if (existing.isPresent()) return snapshotView(existing.get());
+        if (hasActiveEstimate(mapper.readTree(preparation.getAssistanceJson()))) {
+            throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING,
+                "AI 추천 작업이 완료된 뒤 Snapshot을 확정해 주세요.");
+        }
         JsonNode fields = mapper.readTree(preparation.getFinancialFieldsJson());
         List<String> missing = readiness.missing(fields);
         if (!missing.isEmpty()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY,
@@ -185,6 +234,72 @@ public class FinancialService {
             value.getProjectId(), value.getPreparationId(), value.getSourceTechOpsSnapshotId(),
             value.getSourceMarketSeedSnapshotId(), value.getSnapshotHash(), value.getFinalizedAt(),
             mapper.readTree(value.getSnapshotJson()));
+    }
+
+    private TaskRunService.CreateResult queueEstimate(Long ownerId, Long projectId, FinancialInputPreparation preparation,
+            String fieldKey, int version, JsonNode rejected, String idempotencyKey,
+            String correlationId, String actionType) {
+        TechOpsInputSnapshot source = currentTechOpsSnapshot(projectId);
+        String contextJson = mapper.writeValueAsString(java.util.Map.of(
+            "techOpsSnapshot", mapper.readTree(source.getSnapshotJson()),
+            "financialFields", mapper.readTree(preparation.getFinancialFieldsJson())));
+        String rejectedJson = rejected == null || rejected.isNull()
+            ? "" : mapper.writeValueAsString(rejected);
+        JsonNode input = mapper.valueToTree(java.util.Map.ofEntries(
+            java.util.Map.entry("preparationId", preparation.getId()),
+            java.util.Map.entry("fieldKey", fieldKey), java.util.Map.entry("proposalVersion", version),
+            java.util.Map.entry("rejectedProposalJson", rejectedJson),
+            java.util.Map.entry("sourceTechOpsSnapshotId", source.getId()),
+            java.util.Map.entry("sourceSnapshotHash", source.getSnapshotHash()),
+            java.util.Map.entry("expectedPreparationRevision", preparation.getRevision()),
+            java.util.Map.entry("contextJson", contextJson),
+            java.util.Map.entry("commandIdempotencyKey", commandKey(idempotencyKey))));
+        String json = mapper.writeValueAsString(input); String key = commandKey(idempotencyKey);
+        TaskRunService.CreateResult created = taskRuns.createWithDisposition(ownerId, projectId,
+            TaskType.FINANCE_ESTIMATE, "FINANCIAL_PREPARATION", preparation.getId(), json,
+            inputHasher.hash(TaskType.FINANCE_ESTIMATE, "1.0", "ko-KR", json), key,
+            correlationId == null || correlationId.isBlank() ? key : correlationId, 1);
+        TaskRun task = created.taskRun();
+        if (created.createdNew()) {
+            jobEvents.publish(new JobEventPublisher.Command(projectId, task.getId(), task.getId(), "QUEUED",
+                "REQUEST_ALTERNATIVE".equals(actionType)
+                    ? "job.finance.estimate.alternative.queued" : "job.finance.estimate.queued",
+                JobEvent.Status.QUEUED, "job.finance.estimate.queued",
+                java.util.Map.of("fieldKey", fieldKey), null));
+        }
+        return created;
+    }
+
+    private EstimateActionResponse queued(FinancialInputPreparation preparation, TaskRun task,
+            String actionType, String fieldKey, int version) {
+        return new EstimateActionResponse(view(preparation), task.getId(), task.getId(), task.getState().name(),
+            actionType, fieldKey, version);
+    }
+
+    private void validateEstimateField(FinancialInputPreparation preparation, String fieldKey) {
+        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "newCustomerCount".equals(fieldKey)) {
+            throw invalid("AI 추정 지원 대상이 아닙니다: " + fieldKey);
+        }
+        JsonNode field = mapper.readTree(preparation.getFinancialFieldsJson()).path(fieldKey);
+        if (field.path("readOnly").asBoolean(false)) throw invalid("상위 확정값은 AI 추정으로 바꾸지 않습니다.");
+    }
+
+    private boolean active(JsonNode proposal) {
+        return !proposal.path("activeTaskRunId").asText("").isBlank()
+            && ("QUEUED".equals(proposal.path("estimateStatus").asText())
+                || "RUNNING".equals(proposal.path("estimateStatus").asText()));
+    }
+
+    private boolean hasActiveEstimate(JsonNode assistance) {
+        for (JsonNode proposal : assistance) if (active(proposal)) return true;
+        return false;
+    }
+
+    private String commandKey(String value) {
+        if (value == null || value.isBlank() || value.strip().length() > 128) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
+        }
+        return value.strip();
     }
 
     private FinancialInputPreparation requireCurrent(Long projectId) {

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver.Jurisdiction;
 import tools.jackson.databind.JsonNode;
 
 public final class ConceptCandidateV2Validator {
@@ -16,7 +18,8 @@ public final class ConceptCandidateV2Validator {
     private static final Set<String> LOCKED_DIRECT = Set.of(
         "targetRegion", "revenueModel", "price", "channels", "differentiators"
     );
-    private static final Set<String> HYPOTHESES = Set.of("revenueModel", "price", "channels", "differentiators");
+    private static final Set<String> HYPOTHESES = Set.of(
+        "targetRegion", "revenueModel", "price", "channels", "differentiators");
     private static final Set<String> CONSTRAINTS = Set.of(
         "budgetConstraint", "teamConstraint", "timelineConstraint", "otherConstraint"
     );
@@ -61,21 +64,26 @@ public final class ConceptCandidateV2Validator {
 
         Map<String, String> seed = new HashMap<>();
         Map<String, String> authorities = new HashMap<>();
+        Map<String, String> sources = new HashMap<>();
         for (Map<String, String> field : fields) {
             seed.put(field.get("fieldKey"), field.getOrDefault("value", ""));
             authorities.put(field.get("fieldKey"), field.getOrDefault("authority", "OPEN"));
+            sources.put(field.get("fieldKey"), field.getOrDefault("source", "AI_DERIVED"));
         }
         for (String field : LOCKED_DIRECT) {
             String value = seed.get(field);
             if (value != null && !value.isBlank() && "LOCKED".equals(authorities.get(field))) {
                 if (!same(value, candidate.path(field).asText())
-                    || !matches(semantics.get(field), "USER_INPUT", "LOCKED", "ACCEPTED")) {
+                    || !matchesAnyUserSource(semantics.get(field), sources.get(field), "LOCKED", "ACCEPTED")) {
                     return Result.lockedInvalid(field);
                 }
             } else if (HYPOTHESES.contains(field)
                 && !matches(semantics.get(field), "AI_HYPOTHESIS", "OPEN", "PROPOSED")) {
                 return Result.originInvalid("MISSING_SEED_HYPOTHESIS_SEMANTICS_INVALID");
             }
+        }
+        if (new LegalJurisdictionResolver().resolve(candidate.path("targetRegion").asText()) != Jurisdiction.KR) {
+            return Result.originInvalid("LEGAL_JURISDICTION_UNSUPPORTED");
         }
         String compliance = candidate.path("constraintCompliance").toString();
         for (String constraint : CONSTRAINTS) {
@@ -123,6 +131,12 @@ public final class ConceptCandidateV2Validator {
     private static boolean matches(JsonNode value, String source, String authority, String decision) {
         return value != null && source.equals(value.path("source").asText())
             && authority.equals(value.path("authority").asText()) && decision.equals(value.path("decision").asText());
+    }
+
+    private static boolean matchesAnyUserSource(JsonNode value, String expectedSource,
+            String authority, String decision) {
+        if (!("USER_INPUT".equals(expectedSource) || "USER_CONFIRMED".equals(expectedSource))) return false;
+        return matches(value, expectedSource, authority, decision);
     }
 
     private static boolean same(String expected, String actual) {

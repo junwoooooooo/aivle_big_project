@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -37,10 +38,13 @@ public class ConceptSelectionController {
     }
 
     @PostMapping("/current/hypotheses/{hypothesisType}/actions")
-    public ApiResponse<HypothesisActionResponse> decide(@PathVariable Long projectId,
+    public ResponseEntity<ApiResponse<HypothesisActionResponse>> decide(@PathVariable Long projectId,
             @PathVariable String hypothesisType, @Valid @RequestBody HypothesisActionRequest body,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             HttpServletRequest request) {
-        return ApiResponse.success(service.decide(currentUser.currentUserId(), projectId, hypothesisType, body),
-            request.getHeader("X-Request-Id"));
+        HypothesisActionResponse result = service.decide(currentUser.currentUserId(), projectId,
+            hypothesisType, body, idempotencyKey, request.getHeader("X-Request-Id"));
+        HttpStatus status = result.taskRunId() == null ? HttpStatus.OK : HttpStatus.ACCEPTED;
+        return ResponseEntity.status(status).body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
     }
 }

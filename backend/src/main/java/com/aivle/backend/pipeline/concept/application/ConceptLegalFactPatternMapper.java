@@ -1,6 +1,8 @@
 package com.aivle.backend.pipeline.concept.application;
 
 import com.aivle.backend.pipeline.concept.domain.ConceptCanonicalizer;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver.Jurisdiction;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -11,9 +13,17 @@ import tools.jackson.databind.node.ObjectNode;
 @Component
 public class ConceptLegalFactPatternMapper {
     private final ObjectMapper mapper;
+    private final com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver jurisdictions;
+
+    @Autowired
+    public ConceptLegalFactPatternMapper(ObjectMapper mapper,
+            com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver jurisdictions) {
+        this.mapper = mapper;
+        this.jurisdictions = jurisdictions;
+    }
 
     public ConceptLegalFactPatternMapper(ObjectMapper mapper) {
-        this.mapper = mapper;
+        this(mapper, new com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver());
     }
 
     public Result map(JsonNode candidate) {
@@ -23,7 +33,11 @@ public class ConceptLegalFactPatternMapper {
         Map<String, JsonNode> semantics = semantics(candidate.path("valueSemantics"));
         ObjectNode pattern = mapper.createObjectNode();
         pattern.put("schemaVersion", "2.0");
-        pattern.put("jurisdiction", "KR");
+        Jurisdiction jurisdiction = jurisdictions.resolve(candidate.path("targetRegion").asText());
+        if (jurisdiction != Jurisdiction.KR) {
+            throw new IllegalArgumentException("LEGAL_JURISDICTION_UNSUPPORTED");
+        }
+        pattern.put("jurisdiction", jurisdiction.name());
         pattern.set("actorRoles", governedList(candidate, semantics, "actorRoles"));
         pattern.set("platformRole", governedText(candidate, semantics, "platformRole"));
 

@@ -161,6 +161,75 @@ class ConceptFactoryWorkerTests {
     }
 
     @Test
+    void ambiguousRedesignUsesSemanticJudgeAndDistinctResultReachesLegal() {
+        Harness h = new Harness();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            TaskType type = invocation.getArgument(0);
+            if (type == TaskType.CONCEPT_LEGAL_REVIEW) return h.legal();
+            if (type == TaskType.CONCEPT_DISTINCTNESS_JUDGE) return h.distinctness("DISTINCT");
+            return h.candidate();
+        });
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.ACCEPTED, CandidateDisposition.SEMANTIC_REVIEW_REQUIRED);
+        when(h.execution.semanticComparisons(anyString(), anyString(), anyString(), any()))
+            .thenReturn(List.of(Map.of("coreValue", "기존 가치")));
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN, LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+        verify(h.ai).execute(eq(TaskType.CONCEPT_DISTINCTNESS_JUDGE), anyString(), anyString(), anyString());
+        verify(h.ai, times(2)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void ambiguousRedesignDuplicateIsReplacedWithoutSendingThatCandidateToLegal() {
+        Harness h = new Harness();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            TaskType type = invocation.getArgument(0);
+            if (type == TaskType.CONCEPT_LEGAL_REVIEW) return h.legal();
+            if (type == TaskType.CONCEPT_DISTINCTNESS_JUDGE) return h.distinctness("DUPLICATE");
+            return h.candidate();
+        });
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.ACCEPTED, CandidateDisposition.SEMANTIC_REVIEW_REQUIRED,
+                CandidateDisposition.ACCEPTED);
+        when(h.execution.semanticComparisons(anyString(), anyString(), anyString(), any()))
+            .thenReturn(List.of(Map.of("coreValue", "기존 가치")));
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN, LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+        verify(h.execution).rejectSemanticDuplicate(eq("slot-1"), anyString(), any());
+        verify(h.execution).beginReplacement("run", "slot-1", 1);
+        verify(h.ai, times(2)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void ambiguousRedesignJudgeFailureNeverPassesTheCandidateToLegal() {
+        Harness h = new Harness();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            TaskType type = invocation.getArgument(0);
+            if (type == TaskType.CONCEPT_LEGAL_REVIEW) return h.legal();
+            if (type == TaskType.CONCEPT_DISTINCTNESS_JUDGE) throw schemaFailure();
+            return h.candidate();
+        });
+        when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
+            .thenReturn(CandidateDisposition.ACCEPTED, CandidateDisposition.SEMANTIC_REVIEW_REQUIRED);
+        when(h.execution.semanticComparisons(anyString(), anyString(), anyString(), any()))
+            .thenReturn(List.of(Map.of("coreValue", "기존 가치")));
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
+        verify(h.ai, times(1)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+        verify(h.execution).recordAttemptError(eq("run"), eq("slot-1"), anyString(),
+            eq(ConceptAttemptError.RESULT_SCHEMA_INVALID), eq("SEMANTIC_DISTINCTNESS_REVIEW_FAILED"), eq(false));
+    }
+
+    @Test
     void legalInputContainsOnlyFactPatternHashAndExternalFacts() {
         Harness h = new Harness();
         h.successfulAi();
@@ -381,6 +450,12 @@ class ConceptFactoryWorkerTests {
 
         JsonNode legal() {
             return mapper.readTree("{\"status\":\"IMPLEMENTABLE\",\"requiredControls\":[],\"prohibitedVariants\":[],\"redesignRequirements\":[\"결제 주체를 명시\"]}");
+        }
+
+        JsonNode distinctness(String decision) {
+            return mapper.readTree("{\"decision\":\"" + decision
+                + "\",\"overlappingDimensions\":[],\"materiallyDifferentDimensions\":[\"coreValue\"],"
+                + "\"safeSummary\":\"사업 구조를 비교했습니다.\"}");
         }
     }
 }

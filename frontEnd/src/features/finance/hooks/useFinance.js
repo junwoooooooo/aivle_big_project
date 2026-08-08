@@ -1,11 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
+import { useJobEvents } from '../../../shared/async-events/index.js';
 import { createFinanceApi } from '../api/financeApi.js';
+
+const commandOptions = () => {
+  const key = globalThis.crypto?.randomUUID?.()
+    ?? `finance-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return { headers: { 'Idempotency-Key': key }, requestId: key };
+};
+
+const activeEstimateTask = (preparation) => Object.values(preparation?.assistance ?? {})
+  .find((item) => ['QUEUED', 'RUNNING'].includes(item?.estimateStatus) && item?.activeTaskRunId)
+  ?.activeTaskRunId ?? null;
 
 export default function useFinance(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createFinanceApi(client), [client]);
   const [state, setState] = useState({ loading: true, busy: null, preparation: null, snapshot: null, run: null, error: null });
+  const estimateEvents = useJobEvents(activeEstimateTask(state.preparation));
   const refresh = useCallback(async () => {
     setState((value) => ({ ...value, loading: true, error: null }));
     try {
@@ -23,6 +35,11 @@ export default function useFinance(projectId) {
     } catch (error) { setState((value) => ({ ...value, loading: false, busy: null, error })); }
   }, [api, projectId]);
   useEffect(() => { const timer = setTimeout(() => void refresh(), 0); return () => clearTimeout(timer); }, [refresh]);
+  useEffect(() => {
+    if (!estimateEvents.terminal) return undefined;
+    const timer = setTimeout(() => void refresh(), 0);
+    return () => clearTimeout(timer);
+  }, [estimateEvents.terminal, refresh]);
 
   const act = async (busy, action) => {
     setState((value) => ({ ...value, busy, error: null }));
@@ -30,9 +47,10 @@ export default function useFinance(projectId) {
     catch (error) { setState((value) => ({ ...value, busy: null, error })); throw error; }
   };
   return {
-    ...state, refresh,
+    ...state, estimateEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
-    decideEstimate: (fieldKey, payload) => act(`estimate:${fieldKey}`, () => api.decideEstimate(projectId, fieldKey, payload)),
+    generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
+    decideEstimate: (fieldKey, payload) => act(`estimate:${fieldKey}`, () => api.decideEstimate(projectId, fieldKey, payload, commandOptions())),
     finalize: () => act('finalize', () => api.finalize(projectId)),
     handoff: () => act('handoff', () => api.handoff(projectId, state.snapshot?.snapshotId)),
   };

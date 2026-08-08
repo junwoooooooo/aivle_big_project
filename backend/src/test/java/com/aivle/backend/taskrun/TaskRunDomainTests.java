@@ -10,19 +10,16 @@ class TaskRunDomainTests {
     private static final String HASH = "sha256:" + "a".repeat(64);
 
     @Test
-    void retryCreatesNewAttemptNumberOnNextClaim() {
+    void terminalFailureCannotBeClaimedAgain() {
         TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now();
         TaskAttempt first = TaskAttempt.claim(run, "worker-1", now, now.plusSeconds(30), now.plusMinutes(2));
         first.start(first.getClaimToken(), now);
         first.fail(first.getClaimToken(), "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true, now.plusSeconds(1));
         run.fail("AI_SERVICE_UNAVAILABLE", true, now.plusSeconds(1));
-        run.queueRetry();
-        TaskAttempt second = TaskAttempt.pending(run, now.plusMinutes(2));
-        second.claim("worker-2", now.plusSeconds(2), now.plusSeconds(32));
-        assertThat(first.getAttemptNumber()).isEqualTo(1);
-        assertThat(second.getAttemptNumber()).isEqualTo(2);
-        assertThat(second.getId()).isNotEqualTo(first.getId());
+        assertThat(run.terminal()).isTrue();
+        assertThatThrownBy(() -> TaskAttempt.claim(run, "worker-2", now.plusSeconds(2),
+            now.plusSeconds(32), now.plusMinutes(2))).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

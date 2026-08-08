@@ -11,7 +11,7 @@
 
 제품 흐름은 다음과 같다.
 
-`최소 Market Seed → Safety Gate → AI Interpretation → 사용자 확인 → Concept 전략 → 후보 생성 → 구조·LOCKED·중복 검증 → 공식 근거 기반 Legal Review → 적격 5개 비교·선택 → 선택 Concept 가설 결정 → 필요한 Delta Legal Review → MarketAnalysisSeedSnapshot → 외부 Market Analysis → 후속 분석 → Marketing`
+`최소 Market Seed → Safety Gate → AI Interpretation → commitment 확인 → Final Synthesis → 사용자 최종 확인 → Concept 전략 → 후보 생성 → 구조·LOCKED·중복 검증 → 공식 근거 기반 Legal Review → 적격 5개 비교·선택 → 선택 Concept 7개 가설 결정 → 필요한 Delta Legal Review → MarketAnalysisSeedSnapshot → 외부 Market Analysis → 후속 분석 → Marketing`
 
 ## 1. 핵심 제품 원칙
 
@@ -50,6 +50,7 @@ Persona 외부 계약이 이미 존재하면 독립적으로 유지한다. 이�
 ### Source
 
 - `USER_INPUT`: 사용자가 제공한 사실 또는 선택
+- `USER_CONFIRMED`: 자유문장에서 추출된 구체값을 사용자가 확인하거나 수정 후 확인한 값
 - `AI_DERIVED`: 사용자 입력 의미를 보존해 구조화한 해석
 - `AI_HYPOTHESIS`: 사용자가 정하지 않은 값을 위한 AI 가설
 - `CONCEPT_GENERATED`: Concept 설계 과정에서 정의된 구조
@@ -113,6 +114,8 @@ AI Interpretation은 다음을 `AI_DERIVED + REVIEWABLE`로 구조화한다.
 
 사용자 자유문장에 지역, 경쟁자, 수익모델, 가격, 채널, 차별점, 예산·팀·일정·기타 제약의 구체값이 명시되어 있으면 별도 `UserTextCommitmentCandidate`로 추출한다. 최초 의미는 `source=AI_DERIVED`, `origin=USER_TEXT`, `authority=REVIEWABLE`이며 즉시 LOCKED가 아니다. 사용자는 확인, 수정 후 확인, OPEN으로 되돌리기를 선택할 수 있고, 확인한 값만 `USER_CONFIRMED + LOCKED`로 승격한다. dedicated 선택 입력의 `USER_INPUT + LOCKED` 값은 추출 후보보다 항상 우선하며 충돌 후보가 overwrite할 수 없다.
 
+commitment action이 field value, provenance 또는 decisionState를 실제로 바꾸면 기존 assessment는 stale이다. 이때 같은 terminal TaskRun을 재사용하지 않고 새 `FINAL_SYNTHESIS` TaskRun을 생성해 `DERIVING → READY_FOR_REVIEW`를 거친다. 사용자는 새 synthesis 이후 Interpretation을 수정하고 최종 Confirm한다. canonical 변경이 없는 동일 action replay는 중복 실행을 만들지 않는다.
+
 사용자는 “입력하신 아이디어를 이렇게 이해했습니다.” 화면에서 그대로 진행하거나 수정한다. 후속 질문은 문제·사용자·의도가 모호해 Concept 탐색 자체가 불가능한 경우에만 최소화한다. 플랫폼 역할, 결제 주체, 개인정보, 파트너, 물리활동은 초기 질문으로 강제하지 않는다.
 
 ## 6. Concept 전략과 목표 수
@@ -141,7 +144,7 @@ Legal Review 전에 각 후보는 다음 구조를 완성한다.
 
 Seed의 `targetRegion`, `revenueModel`, `price`, `channels`, `differentiators`, `constraints`가 LOCKED이면 Prompt와 Backend validation 모두 후보의 동일 의미 보존을 검사한다. 위반 후보는 `ORIGIN_INVALID` 또는 `LOCKED_CONSTRAINT_INVALID`로 거부한다.
 
-Seed에서 비어 있던 `revenueModel`, `price`, `channels`, `differentiators`는 Concept별 `AI_HYPOTHESIS + PROPOSED`로 생성한다. 모든 Concept는 사전 SOM 점유율과 금액 가설을 생성하되 `preMarket` 가설임을 명확히 표시한다.
+Seed에서 비어 있던 `targetRegion`, `revenueModel`, `price`, `channels`, `differentiators`는 Concept별 `AI_HYPOTHESIS + OPEN + PROPOSED`로 생성한다. 현재 Legal 지원 범위 때문에 열린 `targetRegion`은 KR-compatible 지역으로 제안한다. 모든 Concept는 사전 SOM 점유율과 금액 가설을 생성하되 `preMarket` 가설임을 명확히 표시한다.
 
 `preMarketSomShareHypothesis`는 `targetSharePercent`, `horizonYears`, `rationale`, `assumptions`를 포함한다. `preMarketSomHypothesis`는 `amount`, `currency`, `period`, `calculationBasis`, `assumptions`, `confidence`를 포함한다. 외부 시장조사 결과처럼 표현하지 않는다.
 
@@ -153,11 +156,15 @@ Seed에서 비어 있던 `revenueModel`, `price`, `channels`, `differentiators`�
 
 Fingerprint는 `targetUsers`, `problemScenario`, `coreValue`, `solutionMechanism`, `revenueModel`, `channels`, `platformRole`, `operatingModel`, `partnerModel`, `transactionFlow`, provider/seller/intermediary role을 사용한다. deterministic normalized fingerprint와 lexical similarity를 cheap first pass로 유지하고, 애매한 pair만 strict structured AI judge로 판정한다. 이름·어순·동의어만 다른 후보는 중복이며 Legal API로 보내지 않는다. Candidate N 생성 입력에는 이미 적격인 후보들의 이 간단 fingerprint만 제공해 생성 시점부터 중복을 피한다.
 
+INITIAL, REPLACEMENT, REDESIGN 후보는 예외 없이 같은 schema → LOCKED/origin → deterministic distinctness → ambiguous semantic judge → Legal 순서를 사용한다. semantic judge의 schema/technical failure가 난 후보는 Legal로 통과시키지 않는다.
+
 Concept별 `LegalFactPattern`은 `jurisdiction/targetRegion`, `actorRoles`, `platformRole`, provider/seller/intermediary role, `transactionFlow`, `paymentFlow`, `personalDataUsage`, `physicalActivities`, `partnerRoles`, `qualificationRequirements`, `advertisingClaims`, `operatingModel`을 포함하고 각 값 source를 보존한다.
 
 Legal Review는 Concept 구조와 legal-sensitive hypothesis가 모두 생성된 후 “정의된 구조와 통제조건대로 구현하면 법적으로 구현 가능한가”를 공식 근거로 검토한다. `revenueModel`, 가격·결제 구조, `targetRegion`은 기본 legal-sensitive이고, 채널과 차별점·표현은 내용에 따라 민감할 수 있다. pre-market SOM 가설은 non-legal이다.
 
-결과는 `IMPLEMENTABLE`, `IMPLEMENTABLE_WITH_CONTROLS`, `REDESIGNABLE`, `NEEDS_FACTS`, `REJECTED`이다. 사용자에게 공개 가능한 결과는 처음 두 개다. `REDESIGNABLE`은 최대 1회 재설계하고 schema, LOCKED/origin, distinctness, legal을 모두 다시 검사한다. `NEEDS_FACTS`는 보유 인허가·고정 계약·실제 지역·특허처럼 AI가 설계할 수 없는 외부 사실에만 사용한다. Concept 설계 누락은 incomplete/redesign 대상이다.
+결과 schema는 `IMPLEMENTABLE`, `IMPLEMENTABLE_WITH_CONTROLS`, `REDESIGNABLE`, `NEEDS_FACTS`, `REJECTED`를 유지한다. 사용자에게 공개 가능한 결과는 처음 두 개다. `REDESIGNABLE`은 최대 1회 재설계하고 schema, LOCKED/origin, distinctness, legal을 모두 다시 검사한다. V2 active Concept Factory에서 `NEEDS_FACTS`는 사용자 입력 대기로 전이하지 않고 `LEGAL_EXTERNAL_FACT_UNRESOLVED` business rejection 후 replacement한다. Concept 설계 누락은 incomplete/redesign 대상이다. 외부 사실을 추정하지 않고 강제 통제조건으로 구조화할 수 있을 때만 `IMPLEMENTABLE_WITH_CONTROLS`가 가능하다.
+
+현재 공식 Legal jurisdiction은 KR only다. locked `targetRegion`이 KR로 명확히 해석되지 않으면 run/Legal Provider 전에 `LEGAL_JURISDICTION_UNSUPPORTED`로 차단한다. 열린 region 후보가 foreign/unknown이면 candidate 단계에서 reject/replacement하며, 선택 후 unsupported region edit도 Delta Legal Provider 전에 차단한다. unknown을 조용히 KR로 간주하지 않는다.
 
 ## 9. 공개, 선택, 가설 결정
 
@@ -165,6 +172,7 @@ Legal Review는 Concept 구조와 legal-sensitive hypothesis가 모두 생성된
 
 사용자는 5개 provisional hypothesis를 비교해 하나를 선택한다. 선택 전에 모든 후보 가설 확정을 요구하지 않는다. 선택한 Concept에 대해서만 다음 가설을 결정한다.
 
+- `targetRegion`
 - `revenueModel`
 - `price`
 - `channels`
@@ -172,9 +180,11 @@ Legal Review는 Concept 구조와 legal-sensitive hypothesis가 모두 생성된
 - `preMarketSomShareHypothesis`
 - `preMarketSomHypothesis`
 
-Seed의 `USER_INPUT + LOCKED` 값은 이미 확정된 것으로 간주해 다시 묻거나 수정 endpoint로 변경하지 않는다. AI 가설 Action은 채택, 수정 후 채택, 다른 제안이다. 거절하면 `ALTERNATIVE_PROPOSED`를 생성해 dead end를 막는다.
+Seed의 `USER_INPUT 또는 USER_CONFIRMED + LOCKED` 값은 이미 확정된 것으로 간주해 다시 묻거나 수정 endpoint로 변경하지 않는다. AI `targetRegion`을 포함한 열린 가설 Action은 채택, 수정 후 채택, 다른 제안이다. 거절하면 `ALTERNATIVE_PROPOSED`를 생성해 dead end를 막는다.
 
 법률 민감 가설을 수정하면 Delta Legal Review 통과 전 승인 완료로 처리하지 않는다. SOM처럼 non-legal인 변경은 즉시 확정할 수 있다. Delta 결과가 부적격이면 대체 가설을 선택할 수 있어야 한다.
+
+`REQUEST_ALTERNATIVE`와 Delta Legal은 독립 TaskRun으로 실행한다. command 요청은 즉시 `202`와 새 job identity를 반환하고 기존 proposal/final value는 worker의 검증된 성공 commit 전까지 보존한다. worker는 selection, decision ID/version, pending task, concept hash를 재검사하며 stale 결과는 최신 상태를 변경하지 않는다. legal business ineligible은 성공한 provider execution과 실패한 domain acceptance를 분리한다.
 
 ## 10. MarketAnalysisSeedSnapshot과 Market Handoff
 
@@ -185,7 +195,7 @@ Seed의 `USER_INPUT + LOCKED` 값은 이미 확정된 것으로 간주해 다시
 - 필요한 Delta Legal Review 완료
 - 선택 Concept의 legal eligibility 유효
 
-Snapshot은 사용자 원본 Seed와 LOCKED 값, AI Interpretation, 선택 Concept의 solution/operation, 최종 가설 결정, Legal Result와 controls/partner/qualification/prohibited variant/disclosure/official evidence reference를 포함한다. `snapshotId`, `schemaVersion`, `hash`, `createdAt`은 필수다.
+Snapshot은 사용자 원본 Seed와 LOCKED 값, AI Interpretation, 선택 Concept의 solution/operation, 최종 7개 가설 결정, Legal Result와 controls/partner/qualification/prohibited variant/disclosure/official evidence reference를 포함한다. `targetRegion`도 Candidate 값을 직접 복사하지 않고 최종 `TARGET_REGION` decision을 사용한다. `snapshotId`, `schemaVersion`, `hash`, `createdAt`은 필수다.
 
 외부 Market Analysis는 이 Snapshot만 정식 입력으로 받는다. 결과는 최소 `runId`, `inputSnapshotId`, `status`, `resultReference`, `summary`, `competitorProducts`, `marketSizing`, `findings`, `completedAt`, `resultHash`를 포함한다. 시장분석은 분석 결과를 반환하면 끝이며 Concept를 자동 변경하지 않는다.
 
@@ -200,6 +210,10 @@ BM 알고리즘은 외부 소유다. 추가 필수 입력이 확정되면 BM 시
 Concept가 만든 `productServiceSpecification`은 editable `CONCEPT_GENERATED + REVIEW_REQUIRED` prefill이며 사용자의 확인 또는 수정 후 확인 전에는 TechOps 확정 사실이 아니다. 3개년 목표는 TechOps와 Finance가 공통 `{metric, unit, years:[{year,value}]}` 구조를 사용하고, Finance는 유효한 TechOps 확정 목표를 100% read-only로 승계한다.
 
 `deliveryOrProductionMethod`, `expectedMonthlyThroughputOrSales`, `technicalSupplyOperationalConstraints`는 AI가 제안할 수 있으나 분석 전 사용자가 결정해야 한다. 누락 제안은 null 완료형이 아니라 실제 `TECH_OPS_PROPOSAL` 결과로 채운다. 대안 요청은 proposalVersion을 증가시키고 직전 거절값과 다른 제안을 생성한다. 견적서, BOM, 공급사 정보, 사양서, 파일럿 자료는 optional Evidence이며 AI가 생성한 가짜 자료를 Evidence로 저장하지 않는다. 준비 완료 시 불변 `TechOpsInputSnapshot`을 만든다.
+
+TechOps preparation 초기화는 provider를 기다리지 않는다. preparation을 먼저 저장하고 누락 제안이 있으면 세 운영 가설을 한 번에 생성하는 실제 `TECH_OPS_PROPOSAL` TaskRun 하나를 queue한다. 대안 요청도 `202` TaskRun이며 기존 proposal은 worker success 전까지 보존한다. preparation revision, field proposal version, pending task, source Market Seed ID/hash, Snapshot 미확정을 worker commit 전에 재검사한다. AI 실패 뒤에도 사용자는 직접 `EDIT_AND_ACCEPT`할 수 있고 새 command key로 retry할 수 있다.
+
+TechOps preparation 초기화는 provider를 기다리지 않는다. preparation을 먼저 저장하고 누락 제안이 있으면 세 운영 가설을 한 번에 생성하는 실제 `TECH_OPS_PROPOSAL` TaskRun 하나를 queue한다. 대안 요청도 `202` TaskRun이며 기존 proposal은 worker success 전까지 보존한다. preparation revision, field proposal version, pending task, source Market Seed ID/hash, Snapshot 미확정을 worker commit 전에 재검사한다. AI 실패 뒤에도 사용자는 직접 `EDIT_AND_ACCEPT`할 수 있고 새 command key로 retry할 수 있다.
 
 재무분석 시작 직전 `FinancialInputPreparation`은 TechOps 값부터 재사용한다. 없는 값만 입력받는다.
 

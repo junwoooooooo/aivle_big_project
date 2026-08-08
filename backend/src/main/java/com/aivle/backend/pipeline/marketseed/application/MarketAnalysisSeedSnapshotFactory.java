@@ -83,12 +83,8 @@ public class MarketAnalysisSeedSnapshotFactory {
 
     private ObjectNode finalHypotheses(JsonNode candidate, List<ConceptHypothesisDecision> decisions) {
         ObjectNode result = mapper.createObjectNode();
-        ObjectNode region = result.putObject("targetRegion");
-        region.set("value", candidate.path("targetRegion").deepCopy());
-        JsonNode regionSemantics = semantics(candidate, "targetRegion");
-        region.put("source", regionSemantics.path("source").asText("CONCEPT_GENERATED"));
-        region.put("decisionStatus", regionSemantics.path("decision").asText("ACCEPTED"));
         Map<HypothesisType, String> keys = Map.of(
+            HypothesisType.TARGET_REGION, "targetRegion",
             HypothesisType.REVENUE_MODEL, "revenueModel", HypothesisType.PRICE, "price",
             HypothesisType.CHANNELS, "channels", HypothesisType.DIFFERENTIATORS, "differentiators",
             HypothesisType.PRE_MARKET_SOM_SHARE, "preMarketSomShare", HypothesisType.PRE_MARKET_SOM, "preMarketSom");

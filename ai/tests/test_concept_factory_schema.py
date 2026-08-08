@@ -5,6 +5,7 @@ import pytest
 
 from app.providers import ProviderFailure
 from app.tasks.concept_candidate.models import ConceptCandidateInput, ConceptCandidateResult
+from app.tasks.concept_candidate import service as candidate_service
 from app.tasks.concept_legal_review.models import ConceptLegalReviewProviderResult
 from app.tasks.concept_legal_review.service import execute_concept_legal_review
 from app.tasks.concept_hypothesis_alternative.models import ConceptHypothesisAlternativeResult
@@ -70,6 +71,48 @@ def test_missing_revenue_is_a_proposed_ai_hypothesis():
     semantics = {item.fieldKey: item for item in value.valueSemantics}
     assert semantics["revenueModel"].source == "AI_HYPOTHESIS"
     assert semantics["revenueModel"].decision == "PROPOSED"
+
+
+def test_open_target_region_is_a_kr_ai_hypothesis(monkeypatch):
+    async def prompt(*_args, **_kwargs):
+        return valid_candidate()
+    monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
+    result = asyncio.run(candidate_service.execute_concept_candidate({
+        "ideaBriefSnapshotId": "brief-1", "generationStrategy": "EXPLORE", "candidateIndex": 1,
+        "originalCandidate": False, "diversityFocus": "CUSTOMER_EXPERIENCE",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "예약 자동화", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "problem", "value": "확인 반복", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "소형 매장", "source": "USER_INPUT", "authority": "LOCKED"},
+        ], "acceptedConceptFingerprints": [],
+    }))
+    semantics = {item["fieldKey"]: item for item in result["valueSemantics"]}
+    assert result["targetRegion"] == "대한민국"
+    assert semantics["targetRegion"] == {
+        "fieldKey": "targetRegion", "source": "AI_HYPOTHESIS", "authority": "OPEN", "decision": "PROPOSED"}
+
+
+def test_locked_user_confirmed_target_region_must_keep_exact_semantics(monkeypatch):
+    candidate = valid_candidate("REFINE", 1)
+    for item in candidate["valueSemantics"]:
+        if item["fieldKey"] == "targetRegion":
+            item.update(source="USER_CONFIRMED", authority="LOCKED", decision="ACCEPTED")
+    async def prompt(*_args, **_kwargs):
+        return candidate
+    monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
+    result = asyncio.run(candidate_service.execute_concept_candidate({
+        "ideaBriefSnapshotId": "brief-1", "generationStrategy": "REFINE", "candidateIndex": 1,
+        "originalCandidate": False, "diversityFocus": "CUSTOMER_EXPERIENCE",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "예약 자동화", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "problem", "value": "확인 반복", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "소형 매장", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetRegion", "value": "대한민국", "source": "USER_CONFIRMED", "authority": "LOCKED"},
+        ], "acceptedConceptFingerprints": [],
+    }))
+    semantics = {item["fieldKey"]: item for item in result["valueSemantics"]}
+    assert semantics["targetRegion"]["source"] == "USER_CONFIRMED"
+    assert semantics["targetRegion"]["authority"] == "LOCKED"
 
 
 def test_pre_market_som_is_never_labeled_as_analysis_result():

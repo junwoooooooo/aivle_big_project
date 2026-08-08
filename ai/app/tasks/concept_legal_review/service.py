@@ -18,6 +18,8 @@ SYSTEM_PROMPT = """정의된 Concept Legal Fact Pattern과 공식 법령 근거�
 NEEDS_FACTS는 기존 인허가 보유, 기존 필수 계약 파트너, 실제 고정 관할, 보유 특허·라이선스처럼
 Concept가 설계할 수 없는 외부 현실 사실에만 사용한다. 결제 주체, 플랫폼 역할, 개인정보 처리,
 파트너 역할 같은 설계 누락은 REDESIGNABLE과 redesignRequirements로 반환한다. 이 결과는 법률
+외부 사실을 확정하지 않아도 '해당 인허가를 보유한 파트너만 사용' 같은 강제 통제조건으로
+구조적으로 구현할 수 있을 때만 IMPLEMENTABLE_WITH_CONTROLS를 사용할 수 있으며 사실 보유를 추정하지 않는다.
 자문이 아니다. strict schema만 반환한다."""
 
 REVIEW_LABEL = "공식 근거 기반 법률 구현 가능성 사전검토"

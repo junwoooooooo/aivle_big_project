@@ -21,16 +21,23 @@ function TechOpsWorkspace({ techOps }) {
   const [facts, setFacts] = useState(() => createFactDraft(preparation.requiredFacts));
   const [decisionDrafts, setDecisionDrafts] = useState(() => Object.fromEntries(DECISION_FIELDS.map(([key]) => [key,
     proposalDraft(key, preparation.proposalDecisions?.[key]?.finalValue ?? preparation.proposalDecisions?.[key]?.proposalValue)])));
-  const [evidence, setEvidence] = useState({ evidenceType: 'QUOTE', displayName: '', artifactRef: '', description: '' });
+  const [evidence, setEvidence] = useState({ evidenceType: 'QUOTE', file: null, description: '', inputKey: 0 });
   const product = preparation.requiredFacts?.productServiceSpecification;
   const locked = Boolean(preparation.inputSnapshotId);
   const missing = useMemo(() => new Set(preparation.missingRequiredInputs ?? []), [preparation.missingRequiredInputs]);
+  const hasMissingProposal = DECISION_FIELDS.some(([key]) => preparation.proposalDecisions?.[key]?.proposalValue == null);
   const safe = async (action) => { try { await action(); } catch { /* hook가 안전한 오류 상태를 제공한다. */ } };
 
   return <main className="tech-ops-page">
     <header className="tech-ops-heading"><p>6. 기술·운영 분석</p><h1>분석에 전달할 입력을 확정합니다</h1>
       <span>상위 단계에서 이미 확정된 값은 다시 입력하지 않습니다. 실제 분석 알고리즘은 외부 모듈이 담당합니다.</span></header>
     {techOps.error && <p className="tech-ops-error" role="alert">{getUserErrorMessage(techOps.error)}</p>}
+    {['QUEUED', 'RUNNING'].includes(preparation.proposalGenerationStatus) && <p role="status">
+      {Object.values(preparation.proposalDecisions ?? {}).some((item) => item.pendingAlternativeTaskRunId)
+        ? '새 제안 생성 중' : 'AI 운영 가설 생성 중'}
+    </p>}
+    {preparation.proposalGenerationStatus === 'FAILED' && <p role="alert">AI 제안 생성 실패 — 직접 입력하거나 다시 시도할 수 있습니다.
+      {hasMissingProposal && <button type="button" disabled={techOps.busy === 'proposal-retry'} onClick={() => void safe(techOps.retryProposals)}>AI 제안 다시 시도</button>}</p>}
 
     <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>Concept 초안 · 사용자 확인 필요</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
       <strong>{displayValue(product?.value?.summary)}</strong>
@@ -56,13 +63,14 @@ function TechOpsWorkspace({ techOps }) {
     <section className="tech-ops-section" aria-labelledby="tech-decisions-title"><div className="tech-ops-section__heading"><div><p>제안과 결정</p><h2 id="tech-decisions-title">분석 전 확정할 운영 가설</h2></div><span>사용자 결정 필수</span></div>
       <div className="tech-ops-decisions">{DECISION_FIELDS.map(([key, label]) => {
         const item = preparation.proposalDecisions?.[key] ?? {};
+        const pending = Boolean(item.pendingAlternativeTaskRunId);
         return <article key={key} data-missing={missing.has(key)}><div><h3>{label}</h3><span>{decisionComplete(item) ? '확정됨' : item.alternativeRequested ? '다른 제안 요청됨' : '확인 필요'}</span></div>
           <p><b>{item.source === 'CONCEPT_GENERATED' || item.source === 'ANALYSIS_RESULT' ? '상위 단계 제안' : 'AI 제안 영역'}</b> {displayValue(item.proposalValue)}</p>
           <textarea disabled={locked} value={decisionDrafts[key] ?? ''} onChange={(event) => setDecisionDrafts({ ...decisionDrafts, [key]: event.target.value })}
             placeholder={key === 'expectedMonthlyThroughputOrSales' ? '수량|단위 (예: 1000|건)' : '확정할 값을 입력하세요'} />
-          {!locked && <div className="tech-ops-actions">{item.proposalValue != null && <button type="button" onClick={() => void safe(() => techOps.decide(key, { action: 'ACCEPT', value: null }))}>제안 채택</button>}
-            <button type="button" onClick={() => void safe(() => techOps.decide(key, { action: 'EDIT_ACCEPT', value: proposalValue(key, decisionDrafts[key] ?? '') }))}>수정 후 확정</button>
-            <button type="button" onClick={() => void safe(() => techOps.decide(key, { action: 'REJECT_AND_REQUEST_ALTERNATIVE', value: null }))}>다른 제안 요청</button></div>}
+          {!locked && <div className="tech-ops-actions">{item.proposalValue != null && <button type="button" disabled={pending} onClick={() => void safe(() => techOps.decide(key, { action: 'ACCEPT', value: null }))}>제안 채택</button>}
+            <button type="button" onClick={() => void safe(() => techOps.decide(key, { action: 'EDIT_AND_ACCEPT', value: proposalValue(key, decisionDrafts[key] ?? '') }))}>수정 후 확정</button>
+            <button type="button" disabled={pending || item.proposalValue == null} onClick={() => void safe(() => techOps.decide(key, { action: 'REJECT_AND_REQUEST_ALTERNATIVE', value: null }))}>다른 제안 요청</button></div>}
         </article>;
       })}</div>
       <p className="tech-ops-note">다른 제안 요청은 직전 값과 다른 새 proposal version을 생성합니다.</p>
@@ -71,10 +79,16 @@ function TechOpsWorkspace({ techOps }) {
     <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>사용자 제공 Evidence</span></div>
       <p className="tech-ops-note">견적서·BOM·공급사·사양서·파일럿 자료만 등록합니다. AI 제안은 Evidence로 저장되지 않습니다.</p>
       {!locked && <div className="tech-ops-evidence-form"><select aria-label="자료 유형" value={evidence.evidenceType} onChange={(event) => setEvidence({ ...evidence, evidenceType: event.target.value })}>{EVIDENCE_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-        <input aria-label="자료 이름" placeholder="자료 이름" value={evidence.displayName} onChange={(event) => setEvidence({ ...evidence, displayName: event.target.value })} />
-        <input aria-label="파일 또는 자료 참조" placeholder="업로드된 파일 ID 또는 안전한 자료 참조" value={evidence.artifactRef} onChange={(event) => setEvidence({ ...evidence, artifactRef: event.target.value })} />
-        <button type="button" onClick={() => void safe(async () => { await techOps.addEvidence(evidence); setEvidence({ evidenceType: 'QUOTE', displayName: '', artifactRef: '', description: '' }); })}>근거 추가</button></div>}
-      <ul className="tech-ops-evidence-list">{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}><div><strong>{item.displayName}</strong><span>{item.evidenceType} · {item.artifactRef}</span></div>{!locked && <button type="button" onClick={() => void safe(() => techOps.removeEvidence(item.evidenceId))}>삭제</button>}</li>)}</ul>
+        <input key={evidence.inputKey} type="file" aria-label="근거 파일" accept=".pdf,.csv,.xlsx,.xls,.docx,.txt,.png,.jpg,.jpeg"
+          onChange={(event) => setEvidence({ ...evidence, file: event.target.files?.[0] ?? null })} />
+        <input aria-label="자료 설명" placeholder="선택 사항" value={evidence.description} onChange={(event) => setEvidence({ ...evidence, description: event.target.value })} />
+        <button type="button" disabled={!evidence.file || techOps.busy === 'evidence'} onClick={() => void safe(async () => {
+          await techOps.uploadEvidence(evidence.file, evidence.evidenceType, evidence.description);
+          setEvidence({ evidenceType: 'QUOTE', file: null, description: '', inputKey: evidence.inputKey + 1 });
+        })}>파일 업로드 및 근거 추가</button></div>}
+      <ul className="tech-ops-evidence-list">{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}><div><strong>{item.originalFilename ?? item.displayName}</strong>
+        <span>{item.evidenceType} · {item.mediaType ?? '파일 메타데이터 없음'} · {formatBytes(item.sizeBytes)}</span>
+        {item.sha256 && <small>{item.sha256}</small>}</div>{!locked && <button type="button" onClick={() => void safe(() => techOps.removeEvidence(item.evidenceId))}>삭제</button>}</li>)}</ul>
     </section>
 
     <section className="tech-ops-finalize" aria-live="polite"><div><p>TechOpsInputSnapshot</p><h2>{techOps.snapshot ? '분석 입력이 확정되었습니다' : preparation.readyToFinalize ? 'Snapshot을 확정할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 입력 또는 결정이 남았습니다`}</h2>
@@ -84,4 +98,10 @@ function TechOpsWorkspace({ techOps }) {
       {techOps.run && <small>외부 연결 상태: {techOps.run.status}{techOps.run.stale ? ' · 입력 갱신 필요' : ''}</small>}
     </section>
   </main>;
+}
+
+function formatBytes(value) {
+  if (!Number.isFinite(value)) return '크기 확인 불가';
+  if (value < 1024) return `${value} B`;
+  return `${(value / 1024).toFixed(1)} KB`;
 }

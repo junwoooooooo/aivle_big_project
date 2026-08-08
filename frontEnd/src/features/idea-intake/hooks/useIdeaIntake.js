@@ -219,6 +219,7 @@ export default function useIdeaIntake(projectId) {
           })),
         }, ideaCommandOptions('idea-commitments'));
         applyResponse(reviewed.data);
+        if (reviewed.data.status === 'DERIVING') return;
       }
       const patched = await api.patchInterpretation(
         projectId, draft.interpretation, ideaCommandOptions('idea-interpretation'),

@@ -212,16 +212,6 @@ public class TaskRunService {
     }
 
     @Transactional
-    public TaskRun retry(Long ownerId, Long projectId, String id, String idempotencyKey) {
-        TaskRun owned = getOwned(ownerId, projectId, id); TaskRun run = runs.findLocked(owned.getId()).orElseThrow(this::notFound);
-        if (idempotencyKey == null || idempotencyKey.isBlank() || idempotencyKey.length() > 128) throw new TaskRunFailure("VALIDATION_ERROR", "IDEMPOTENCY_KEY_INVALID", HttpStatus.BAD_REQUEST, false);
-        if (run.retryReplay(idempotencyKey)) return run;
-        if (run.retryKeyConflicts(idempotencyKey)) throw new TaskRunFailure("IDEMPOTENCY_CONFLICT", "RETRY_KEY_CONFLICT", HttpStatus.CONFLICT, false);
-        if (!run.isRetryable()) throw new TaskRunFailure("CAPABILITY_NOT_AVAILABLE", "TASK_NOT_RETRYABLE", HttpStatus.CONFLICT, false);
-        LocalDateTime now = LocalDateTime.now(clock); run.queueRetry(now); run.recordRetryKey(idempotencyKey); attempts.save(TaskAttempt.pending(run, now.plusMinutes(2))); return run;
-    }
-
-    @Transactional
     public TaskRun cancel(Long ownerId, Long projectId, String id) { TaskRun owned = getOwned(ownerId, projectId, id); TaskRun run = runs.findLocked(owned.getId()).orElseThrow(this::notFound); LocalDateTime now=LocalDateTime.now(clock); if(run.getCurrentAttemptId()!=null)attempts.findById(run.getCurrentAttemptId()).ifPresent(a->a.cancel(now)); run.cancel(now); return run; }
 
     @Transactional
@@ -252,16 +242,6 @@ public class TaskRunService {
             }
         }
         return recoveredIds;
-    }
-
-    @Transactional
-    public boolean scheduleRetry(String runId, Duration backoff) {
-        TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
-        if (!run.isRetryable()) return false;
-        LocalDateTime eligibleAt = LocalDateTime.now(clock).plus(backoff);
-        run.queueRetry(eligibleAt);
-        attempts.save(TaskAttempt.pending(run, eligibleAt));
-        return true;
     }
 
     private String mapPublic(String internal, String reason) { if ("AI_CONFIGURATION_INVALID".equals(reason)) return "AI_CONFIGURATION_INVALID"; return switch (internal) {

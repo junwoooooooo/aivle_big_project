@@ -9,19 +9,24 @@ import com.aivle.backend.pipeline.concept.domain.Concept;
 import com.aivle.backend.pipeline.concept.domain.ConceptFactoryRunStatus;
 import com.aivle.backend.pipeline.concept.repository.ConceptFactoryRunRepository;
 import com.aivle.backend.pipeline.concept.repository.ConceptRepository;
-import com.aivle.backend.pipeline.concept.worker.ConceptFactoryAiGateway;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.legal.repository.ConceptLegalAssessmentRepository;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver;
+import com.aivle.backend.pipeline.legal.application.LegalJurisdictionResolver.Jurisdiction;
 import com.aivle.backend.pipeline.selection.domain.*;
 import com.aivle.backend.pipeline.selection.repository.ConceptHypothesisDecisionRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import com.aivle.backend.taskrun.service.TaskRunService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,8 +44,11 @@ public class ConceptSelectionService {
     private final ConceptSelectionRepository selections;
     private final ConceptHypothesisDecisionRepository decisions;
     private final ConceptLegalFactPatternMapper legalFactPatterns;
-    private final ConceptFactoryAiGateway ai;
     private final ObjectMapper mapper;
+    private final LegalJurisdictionResolver jurisdictions;
+    private final TaskRunService taskRuns;
+    private final CanonicalInputHasher inputHasher;
+    private final JobEventPublisher jobEvents;
 
     @Transactional
     public SelectionResponse select(Long ownerId, Long projectId, CreateSelectionRequest request) {
@@ -79,9 +87,9 @@ public class ConceptSelectionService {
 
     @Transactional
     public HypothesisActionResponse decide(Long ownerId, Long projectId, String typeText,
-            HypothesisActionRequest request) {
+            HypothesisActionRequest request, String idempotencyKey, String correlationId) {
         requireOwned(ownerId, projectId);
-        ConceptSelection selection = currentSelection(projectId);
+        ConceptSelection selection = currentSelectionLocked(projectId);
         HypothesisType type;
         try {
             type = HypothesisType.valueOf(typeText);
@@ -98,26 +106,29 @@ public class ConceptSelectionService {
         Concept concept = concepts.findByIdAndProjectIdAndPublishedTrueAndDeletedAtIsNull(selection.getConceptId(), projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_NOT_SELECTABLE));
 
-        ConceptHypothesisDecision result;
         if (request.action() == HypothesisAction.REQUEST_ALTERNATIVE) {
-            current.reject();
-            JsonNode alternative = alternative(concept, current);
-            result = decisions.save(ConceptHypothesisDecision.alternative(
-                current, mapper.writeValueAsString(alternative), ownerId));
-        } else {
-            JsonNode finalValue = request.action() == HypothesisAction.ACCEPT
-                ? mapper.readTree(current.getProposedValueJson()) : request.value();
-            validateValue(type, finalValue);
-            boolean edited = request.action() == HypothesisAction.EDIT_AND_ACCEPT;
-            JsonNode baseline = mapper.readTree(concept.getCandidateJson()).path(type.candidateField());
-            boolean baselineChanged = !canonical(baseline).equals(canonical(finalValue));
-            DeltaResult delta = type.legalSensitive() && baselineChanged
-                ? deltaReview(concept, type, finalValue, edited) : DeltaResult.notRequired();
-            current.accept(mapper.writeValueAsString(finalValue), edited, ownerId, Instant.now(),
-                baselineChanged, delta.passed(), delta.resultJson());
-            result = decisions.save(current);
+            return queueAlternative(ownerId, projectId, selection, concept, current,
+                idempotencyKey, correlationId);
         }
-        return new HypothesisActionResponse(decisionResponse(result), allComplete(selection.getId()));
+        JsonNode finalValue = request.action() == HypothesisAction.ACCEPT
+            ? mapper.readTree(current.getProposedValueJson()) : request.value();
+        validateValue(type, finalValue);
+        boolean edited = request.action() == HypothesisAction.EDIT_AND_ACCEPT;
+        JsonNode baseline = mapper.readTree(concept.getCandidateJson()).path(type.candidateField());
+        boolean baselineChanged = !canonical(baseline).equals(canonical(finalValue));
+        if (type.legalSensitive() && baselineChanged) {
+            return queueDeltaLegal(ownerId, projectId, selection, concept, current,
+                finalValue, baseline, edited, idempotencyKey, correlationId);
+        }
+        if (selection.hasActiveAction()) {
+            throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING,
+                "다른 가설 작업이 진행 중입니다.");
+        }
+        current.accept(mapper.writeValueAsString(finalValue), edited, ownerId, Instant.now(),
+            baselineChanged, true, null);
+        selection.completeSynchronousAction();
+        ConceptHypothesisDecision result = decisions.save(current);
+        return completedAction(result, allComplete(selection.getId()), request.action().name());
     }
 
     private void initializeDecisions(ConceptSelection selection, Concept concept, Long ownerId, Instant now) {
@@ -129,35 +140,42 @@ public class ConceptSelectionService {
             validateValue(type, value);
             JsonNode semantic = semantics.get(type.candidateField());
             if (semantic == null) throw new IllegalStateException("hypothesis value semantics is missing");
-            boolean locked = "USER_INPUT".equals(semantic.path("source").asText())
+            boolean locked = ("USER_INPUT".equals(semantic.path("source").asText())
+                || "USER_CONFIRMED".equals(semantic.path("source").asText()))
                 && "LOCKED".equals(semantic.path("authority").asText());
             decisions.save(ConceptHypothesisDecision.initial(selection, type,
                 mapper.writeValueAsString(value), semantic.path("source").asText(), locked, ownerId, now));
         }
     }
 
-    private JsonNode alternative(Concept concept, ConceptHypothesisDecision current) {
-        String attemptId = UUID.randomUUID().toString();
-        JsonNode input = mapper.valueToTree(Map.of(
-            "hypothesisType", current.getHypothesisType().name(),
-            "rejectedValue", mapper.readTree(current.getProposedValueJson()),
-            "proposalVersion", current.getProposalVersion() + 1,
-            "candidate", mapper.readTree(concept.getCandidateJson())));
-        JsonNode result = ai.execute(TaskType.CONCEPT_HYPOTHESIS_ALTERNATIVE,
-            mapper.writeValueAsString(input), UUID.randomUUID().toString(), attemptId);
-        if (!current.getHypothesisType().name().equals(result.path("hypothesisType").asText())
-            || result.path("proposalVersion").asInt() != current.getProposalVersion() + 1) {
-            throw new IllegalStateException("alternative proposal does not match request");
-        }
-        JsonNode proposed = result.path("proposedValue");
-        validateValue(current.getHypothesisType(), proposed);
-        if (canonical(proposed).equals(canonical(mapper.readTree(current.getProposedValueJson())))) {
-            throw new IllegalStateException("alternative proposal must differ from rejected value");
-        }
-        return proposed;
+    private HypothesisActionResponse queueAlternative(Long ownerId, Long projectId, ConceptSelection selection,
+            Concept concept, ConceptHypothesisDecision current, String idempotencyKey, String correlationId) {
+        String key = commandKey(idempotencyKey);
+        JsonNode input = mapper.valueToTree(Map.ofEntries(
+            Map.entry("projectId", projectId), Map.entry("selectionId", selection.getId()),
+            Map.entry("conceptId", concept.getId()),
+            Map.entry("hypothesisType", current.getHypothesisType().name()),
+            Map.entry("currentDecisionId", current.getId()),
+            Map.entry("expectedProposalVersion", current.getProposalVersion()),
+            Map.entry("rejectedValue", mapper.readTree(current.getProposedValueJson())),
+            Map.entry("proposalVersion", current.getProposalVersion() + 1),
+            Map.entry("candidate", mapper.readTree(concept.getCandidateJson())),
+            Map.entry("candidateHash", concept.getCanonicalHash()),
+            Map.entry("commandIdempotencyKey", key)
+        ));
+        return queueAction(ownerId, projectId, selection, current, TaskType.CONCEPT_HYPOTHESIS_ALTERNATIVE,
+            HypothesisAction.REQUEST_ALTERNATIVE.name(), input, key, correlationId);
     }
 
-    private DeltaResult deltaReview(Concept concept, HypothesisType type, JsonNode finalValue, boolean userEdited) {
+    private HypothesisActionResponse queueDeltaLegal(Long ownerId, Long projectId, ConceptSelection selection,
+            Concept concept, ConceptHypothesisDecision current, JsonNode finalValue, JsonNode baseline,
+            boolean userEdited, String idempotencyKey, String correlationId) {
+        HypothesisType type = current.getHypothesisType();
+        String key = commandKey(idempotencyKey);
+        if (type == HypothesisType.TARGET_REGION
+                && jurisdictions.resolve(finalValue.asText()) != Jurisdiction.KR) {
+            throw new BusinessException(ErrorCode.LEGAL_JURISDICTION_UNSUPPORTED);
+        }
         ObjectNode changed = (ObjectNode) mapper.readTree(concept.getCandidateJson()).deepCopy();
         changed.set(type.candidateField(), finalValue);
         for (JsonNode semantic : changed.path("valueSemantics")) {
@@ -171,33 +189,64 @@ public class ConceptSelectionService {
         var assessment = assessments.findByConceptIdAndProjectIdAndDeletedAtIsNull(concept.getId(), concept.getProjectId())
             .orElseThrow(() -> new IllegalStateException("selected concept legal assessment is missing"));
         var pack = assessment.getContextPack();
-        JsonNode input = mapper.valueToTree(Map.of(
-            "legalFactPattern", pattern.factPattern(),
-            "factPatternHash", pattern.factPatternHash(),
-            "externalFactContext", Map.of(
+        JsonNode officialContext = mapper.readTree(pack.getCanonicalContextJson());
+        JsonNode input = mapper.valueToTree(Map.ofEntries(
+            Map.entry("projectId", projectId), Map.entry("selectionId", selection.getId()),
+            Map.entry("conceptId", concept.getId()), Map.entry("candidateHash", concept.getCanonicalHash()),
+            Map.entry("hypothesisType", type.name()), Map.entry("currentDecisionId", current.getId()),
+            Map.entry("expectedProposalVersion", current.getProposalVersion()),
+            Map.entry("requestedFinalValue", finalValue), Map.entry("baselineValue", baseline),
+            Map.entry("userEdited", userEdited),
+            Map.entry("legalFactPattern", pattern.factPattern()),
+            Map.entry("legalFactPatternHash", pattern.factPatternHash()),
+            Map.entry("factPatternHash", pattern.factPatternHash()),
+            Map.entry("officialLegalContextReference", Map.of(
                 "sourceSnapshotHash", pack.getSourceSnapshotHash(),
-                "registryVersion", pack.getRegistryVersion(),
-                "facts", mapper.readTree(pack.getCanonicalContextJson()))));
-        String attemptId = UUID.randomUUID().toString();
-        JsonNode result = ai.execute(TaskType.CONCEPT_LEGAL_REVIEW, mapper.writeValueAsString(input),
-            UUID.randomUUID().toString(), attemptId);
-        boolean passed = "IMPLEMENTABLE".equals(result.path("status").asText())
-            || "IMPLEMENTABLE_WITH_CONTROLS".equals(result.path("status").asText());
-        ObjectNode safe = result.isObject() ? (ObjectNode) result.deepCopy() : mapper.createObjectNode();
-        if (safe.has("officialEvidence")) {
-            var references = mapper.createArrayNode();
-            for (JsonNode source : safe.path("officialEvidence")) {
-                ObjectNode reference = references.addObject();
-                for (String key : List.of("referenceIndex", "sourceType", "lawId", "officialIdentifier",
-                        "lawName", "articleReference", "title", "officialSourceUri", "jurisdiction",
-                        "promulgationDate", "effectiveDate", "retrievedAt", "contentHash", "registryVersion")) {
-                    if (source.has(key) && !source.path(key).isNull()) reference.set(key, source.path(key).deepCopy());
-                }
-            }
-            safe.set("officialEvidenceReferences", references);
+                "registryVersion", pack.getRegistryVersion(), "facts", officialContext)),
+            Map.entry("externalFactContext", Map.of(
+                "sourceSnapshotHash", pack.getSourceSnapshotHash(),
+                "registryVersion", pack.getRegistryVersion(), "facts", officialContext)),
+            Map.entry("commandIdempotencyKey", key)
+        ));
+        return queueAction(ownerId, projectId, selection, current, TaskType.CONCEPT_DELTA_LEGAL_REVIEW,
+            userEdited ? HypothesisAction.EDIT_AND_ACCEPT.name() : HypothesisAction.ACCEPT.name(),
+            input, key, correlationId);
+    }
+
+    private HypothesisActionResponse queueAction(Long ownerId, Long projectId, ConceptSelection selection,
+            ConceptHypothesisDecision current, TaskType taskType, String actionType, JsonNode input,
+            String idempotencyKey, String correlationId) {
+        String inputJson = mapper.writeValueAsString(input);
+        String key = commandKey(idempotencyKey);
+        TaskRunService.CreateResult creation = taskRuns.createWithDisposition(ownerId, projectId, taskType,
+            "CONCEPT_SELECTION", selection.getId().toString(), inputJson,
+            inputHasher.hash(taskType, "1.0", "ko-KR", inputJson), key,
+            correlationId == null || correlationId.isBlank() ? key : correlationId, 1);
+        TaskRun run = creation.taskRun();
+        if (creation.createdNew()) {
+            selection.queueAction(run.getId(), actionType, current.getHypothesisType(),
+                current.getId(), current.getProposalVersion());
+            jobEvents.publish(new JobEventPublisher.Command(projectId, run.getId(), run.getId(), "QUEUED",
+                taskType == TaskType.CONCEPT_HYPOTHESIS_ALTERNATIVE
+                    ? "job.concept-selection.alternative.queued" : "job.concept-selection.delta-legal.queued",
+                JobEvent.Status.QUEUED, "job.concept-selection.queued", Map.of(), null));
         }
-        safe.remove("officialEvidence");
-        return new DeltaResult(passed, mapper.writeValueAsString(safe));
+        return new HypothesisActionResponse(decisionResponse(current), allComplete(selection.getId()),
+            run.getId(), run.getId(), run.getState().name(), actionType,
+            current.getHypothesisType().name(), current.getProposalVersion());
+    }
+
+    private HypothesisActionResponse completedAction(ConceptHypothesisDecision result,
+            boolean complete, String actionType) {
+        return new HypothesisActionResponse(decisionResponse(result), complete,
+            null, null, "COMPLETED", actionType, result.getHypothesisType().name(), result.getProposalVersion());
+    }
+
+    private String commandKey(String value) {
+        if (value == null || value.isBlank() || value.strip().length() > 128) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
+        }
+        return value.strip();
     }
 
     private void validateValue(HypothesisType type, JsonNode value) {
@@ -223,7 +272,9 @@ public class ConceptSelectionService {
         return new SelectionResponse(selection.getId(), selection.getConceptId(), selection.getSelectionReason(),
             selection.getSelectedAt(), selection.isCurrentSelection(), latest.size() == HypothesisType.values().length
                 && latest.stream().allMatch(ConceptHypothesisDecision::accepted),
-            latest.stream().map(this::decisionResponse).toList());
+            latest.stream().map(this::decisionResponse).toList(), selection.getActiveActionTaskRunId(),
+            selection.getPendingActionType(), selection.getPendingHypothesisType() == null ? null
+                : selection.getPendingHypothesisType().name(), selection.getActionStatus(), selection.getSafeActionError());
     }
 
     private HypothesisDecisionResponse decisionResponse(ConceptHypothesisDecision value) {
@@ -253,12 +304,16 @@ public class ConceptSelectionService {
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "현재 컨셉 선택이 없습니다."));
     }
 
+    private ConceptSelection currentSelectionLocked(Long projectId) {
+        ConceptSelection current = currentSelection(projectId);
+        return selections.findByIdAndProjectIdAndDeletedAtIsNull(current.getId(), projectId)
+            .filter(ConceptSelection::isCurrentSelection)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "현재 컨셉 선택이 없습니다."));
+    }
+
     private void requireOwned(Long ownerId, Long projectId) {
         projects.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, ownerId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
     }
 
-    private record DeltaResult(boolean passed, String resultJson) {
-        static DeltaResult notRequired() { return new DeltaResult(true, null); }
-    }
 }

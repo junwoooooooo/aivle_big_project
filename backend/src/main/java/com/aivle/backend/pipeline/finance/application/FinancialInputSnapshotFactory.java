@@ -38,10 +38,28 @@ public class FinancialInputSnapshotFactory {
         }
         body.set("calculatedCac", calculator.calculateCac(fields));
         body.set("upstreamReferences", mapper.readTree(preparation.getUpstreamReferencesJson()));
-        body.set("assistance", mapper.readTree(preparation.getAssistanceJson()));
+        body.set("assistance", finalizedAssistance(mapper.readTree(preparation.getAssistanceJson())));
         String hash = hasher.hash(body);
         body.put("hash", hash);
         return new BuiltSnapshot(body, hash);
+    }
+
+    private JsonNode finalizedAssistance(JsonNode source) {
+        ObjectNode result = (ObjectNode) source.deepCopy();
+        for (String key : FinancialPreparationFactory.ALL_KEYS) {
+            JsonNode item = result.path(key);
+            if (!item.isObject()) continue;
+            ObjectNode assistance = (ObjectNode) item;
+            assistance.remove("activeTaskRunId");
+            assistance.remove("safeError");
+            assistance.remove("estimateStatus");
+            if ("PROPOSED".equals(assistance.path("decision").asText())) {
+                assistance.remove("proposalValue");
+                assistance.remove("assumptions");
+                assistance.remove("confidence");
+            }
+        }
+        return result;
     }
 
     public record BuiltSnapshot(ObjectNode body, String hash) {}

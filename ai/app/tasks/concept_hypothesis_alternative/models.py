@@ -8,7 +8,7 @@ from app.tasks.concept_candidate.models import (
 
 
 HypothesisType = Literal[
-    "REVENUE_MODEL", "PRICE", "CHANNELS", "DIFFERENTIATORS",
+    "TARGET_REGION", "REVENUE_MODEL", "PRICE", "CHANNELS", "DIFFERENTIATORS",
     "PRE_MARKET_SOM_SHARE", "PRE_MARKET_SOM",
 ]
 HypothesisValue = str | PreMarketSomShareHypothesis | PreMarketSomHypothesis

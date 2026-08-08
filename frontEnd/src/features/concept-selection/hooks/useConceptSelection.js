@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
+import { useJobEvents } from '../../../shared/async-events/index.js';
 import { createConceptSelectionApi } from '../api/conceptSelectionApi.js';
 import { createLocalSelectionDraft } from '../model/conceptComparisonModel.js';
 
@@ -19,6 +20,7 @@ export default function useConceptSelection(projectId) {
   const api = useMemo(() => createConceptSelectionApi(client), [client]);
   const [state, setState] = useState({ loading: true, run: null, concepts: [], currentSelection: null, marketSeed: null, error: null, finalizing: false });
   const [draft, setDraft] = useState(() => readDraft(projectId));
+  const actionEvents = useJobEvents(state.currentSelection?.activeActionTaskRunId ?? null);
 
   const refresh = useCallback(async () => {
     try {
@@ -50,6 +52,11 @@ export default function useConceptSelection(projectId) {
   }, [api, projectId]);
 
   useEffect(() => { const timer = setTimeout(refresh, 0); return () => clearTimeout(timer); }, [refresh]);
+  useEffect(() => {
+    if (!actionEvents.terminal) return undefined;
+    const timer = setTimeout(refresh, 0);
+    return () => clearTimeout(timer);
+  }, [actionEvents.terminal, refresh]);
 
   const saveDraft = useCallback((comparedConceptIds, preferredConceptId) => {
     const next = createLocalSelectionDraft(projectId, comparedConceptIds, preferredConceptId);
@@ -65,9 +72,11 @@ export default function useConceptSelection(projectId) {
   }, [api, projectId]);
 
   const decideHypothesis = useCallback(async (hypothesisType, action, expectedProposalVersion, value) => {
+    const commandKey = globalThis.crypto?.randomUUID?.()
+      ?? `concept-selection-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const payload = await api.decideHypothesis(projectId, hypothesisType, {
       action, expectedProposalVersion, ...(value === undefined ? {} : { value }),
-    });
+    }, { headers: { 'Idempotency-Key': commandKey }, requestId: commandKey });
     setState((stateValue) => {
       const current = stateValue.currentSelection;
       if (!current) return stateValue;
@@ -75,6 +84,11 @@ export default function useConceptSelection(projectId) {
       hypotheses.push(payload.data.hypothesis);
       return { ...stateValue, currentSelection: {
         ...current, hypotheses, decisionComplete: payload.data.decisionComplete,
+        activeActionTaskRunId: payload.data.taskRunId ?? null,
+        pendingActionType: payload.data.taskRunId ? payload.data.actionType : null,
+        pendingHypothesisType: payload.data.taskRunId ? payload.data.hypothesisType : null,
+        actionStatus: payload.data.taskRunId ? payload.data.status : 'IDLE',
+        safeActionError: null,
       } };
     });
     return payload.data;
@@ -92,5 +106,5 @@ export default function useConceptSelection(projectId) {
     }
   }, [api, projectId]);
 
-  return { ...state, draft, refresh, saveDraft, confirmSelection, decideHypothesis, finalizeMarketSeed };
+  return { ...state, draft, actionEvents, refresh, saveDraft, confirmSelection, decideHypothesis, finalizeMarketSeed };
 }

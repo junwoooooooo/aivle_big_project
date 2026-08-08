@@ -76,11 +76,11 @@ function FinanceWorkspace({ finance }) {
 
     <section className="finance-assistance" aria-labelledby="finance-assistance-title"><div><p>설명·예시·AI 추정</p><h2 id="finance-assistance-title">입력 도움말</h2></div>
       <div>{Object.entries(preparation.assistance ?? {}).map(([key, item]) => <article key={key}><strong>{item.explanation}</strong>
-        {item.example && <span>{item.example}</span>}<small>{item.proposedValue == null ? '설명' : `${item.source} · ${item.decision} · 신뢰도 ${item.confidence}`}</small>
-        {item.proposedValue != null && fields[key] && <><span>{JSON.stringify(item.proposedValue)} · {item.assumptions?.join(' · ')}</span>
-          {!locked && <div><button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'ACCEPT', value: null }))}>AI 추정 채택</button>
-            <button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'EDIT_AND_ACCEPT', value: editedValues()[key] }))}>입력값으로 수정 후 채택</button>
-            <button type="button" onClick={() => void safe(() => finance.decideEstimate(key, { action: 'REQUEST_ALTERNATIVE', value: null }))}>다른 추정 요청</button></div>}</>}
+        {item.example && <span>{item.example}</span>}<small>{estimateLabel(item)}</small>
+        {item.proposalValue != null && fields[key] && <span>{JSON.stringify(item.proposalValue)} · {item.assumptions?.join(' · ')}</span>}
+        {fields[key] && key !== 'newCustomerCount' && <EstimateControls fieldKey={key} item={item} field={fields[key]}
+          locked={locked} busy={finance.busy === `estimate:${key}`} generate={finance.generateEstimate}
+          decide={finance.decideEstimate} editedValue={editedValues()[key]} safe={safe} />}
       </article>)}</div></section>
 
     {!locked && <button className="finance-save" type="button" disabled={finance.busy === 'save'}
@@ -95,6 +95,25 @@ function FinanceWorkspace({ finance }) {
       {finance.run && <small>외부 연결 상태: {finance.run.status}{finance.run.stale ? ' · 입력 갱신 필요' : ''}</small>}
     </section>
   </main>;
+}
+
+function estimateLabel(item) {
+  if (['QUEUED', 'RUNNING'].includes(item?.estimateStatus)) return '추천 생성 중';
+  if (item?.estimateStatus === 'FAILED') return '추천 생성 실패';
+  if (item?.estimateStatus === 'ACCEPTED' || ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(item?.decision)) return '채택됨';
+  if (item?.proposalValue != null && item?.estimateStatus === 'SUCCEEDED') return 'AI 추천';
+  return '추천 없음';
+}
+
+function EstimateControls({ fieldKey, item, field, locked, busy, generate, decide, editedValue, safe }) {
+  if (locked || field?.readOnly || item?.estimateStatus === 'ACCEPTED') return null;
+  const pending = ['QUEUED', 'RUNNING'].includes(item?.estimateStatus);
+  const proposed = item?.proposalValue != null && item?.estimateStatus === 'SUCCEEDED';
+  if (!proposed) return <button type="button" disabled={busy || pending}
+    onClick={() => void safe(() => generate(fieldKey))}>AI 추천 받기</button>;
+  return <div><button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'ACCEPT', value: null }))}>AI 추천 채택</button>
+    <button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'EDIT_AND_ACCEPT', value: editedValue }))}>입력값으로 수정 후 채택</button>
+    <button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'REQUEST_ALTERNATIVE', value: null }))}>다른 추천 요청</button></div>;
 }
 
 function FinancialSection({ eyebrow, title, fields, draft, change, sourceFields, missing, locked }) {

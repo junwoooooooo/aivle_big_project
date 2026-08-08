@@ -49,6 +49,7 @@
 - 초기 필수 Seed는 정확히 세 필드다.
 - 선택 Seed 누락은 Concept 탐색을 막지 않는다.
 - 사용자 선택값은 `USER_INPUT + LOCKED`; AI는 Prompt와 Backend 어느 쪽에서도 변경할 수 없다.
+- 자유문장 commitment의 canonical 변경은 새 Final Synthesis를 요구하며, 재평가 전 Interpretation patch/Confirm을 이어서 실행하지 않는다.
 - `AI_DERIVED + REVIEWABLE`은 입력 해석이고 `AI_HYPOTHESIS + PROPOSED`는 열린 값의 제안이다.
 - 자유문장에 명시된 사용자 결정 후보는 `AI_DERIVED + USER_TEXT + REVIEWABLE`로 시작하며 사용자 확인 전 LOCKED가 아니다.
 - 사용자가 확인하거나 수정 후 확인한 자유문장 결정만 `USER_CONFIRMED + LOCKED`로 승격한다.
@@ -97,18 +98,26 @@
 - distinctness를 통과하지 않은 후보는 Legal Review를 받지 않는다.
 - Legal mapper는 legal-sensitive hypothesis를 포함하고 SOM을 제외한다.
 - `REDESIGNABLE`은 한 번만 재설계하고 전체 검증을 반복한다.
+- INITIAL/REPLACEMENT/REDESIGN은 동일 distinctness pipeline을 사용하고 ambiguous judge 실패 시 Legal로 보내지 않는다.
 - 설계 누락은 사용자 legal 질문이나 `NEEDS_FACTS`로 전가하지 않는다.
+- active Concept Factory의 `NEEDS_FACTS`는 `LEGAL_EXTERNAL_FACT_UNRESOLVED` replacement이며 사용자 대기 상태가 아니다.
+- 공식 jurisdiction은 KR only이고 foreign/unknown region은 한국 법률검토로 위장하지 않는다.
 
 ## 7. 선택·가설 acceptance criteria
 
 - 사용자에게 legal eligible Concept만 공개한다.
-- 선택 Concept의 `revenueModel`, `price`, `channels`, `differentiators`, `preMarketSomShareHypothesis`, `preMarketSomHypothesis`만 결정한다.
+- 선택 Concept의 `targetRegion`, `revenueModel`, `price`, `channels`, `differentiators`, `preMarketSomShareHypothesis`, `preMarketSomHypothesis` 7개를 결정한다.
 - 사용자는 채택, 수정 후 채택, 다른 제안을 선택할 수 있다.
 - 거절은 `ALTERNATIVE_PROPOSED`를 생성해 dead end가 아니다.
 - LOCKED 값은 hypothesis endpoint로 수정할 수 없다.
 - 수익·결제·지역·법률 민감 claim 변경은 Delta Legal Review를 유발한다.
+- locked foreign region, AI foreign candidate, unsupported region edit는 Provider 전에 `LEGAL_JURISDICTION_UNSUPPORTED`로 차단한다.
 - SOM 변경은 Delta Review를 유발하지 않는다.
 - 실패한 Delta Review는 해당 가설 acceptance를 막고 alternative를 허용한다.
+- 다른 제안과 Delta Legal은 HTTP 요청 안에서 provider를 호출하지 않고 TaskRun으로 실행한다.
+- 다른 제안 생성 실패 전에는 기존 proposal을 보존하며, 성공 commit 뒤에만 versioned alternative로 전환한다.
+- legal ineligible은 provider 기술 실패와 구분하고 사용자가 수정하거나 다른 제안을 요청할 수 있게 한다.
+- worker 결과가 최신 selection/decision/version/pending task/concept hash와 다르면 `STALE_ACTION_RESULT`로 폐기한다.
 
 ## 8. 외부 분석과 Marketing acceptance criteria
 
@@ -120,8 +129,17 @@
 - TechOps/Finance에서 이미 확정된 값을 다시 입력시키지 않는다.
 - Concept 제품 사양은 TechOps에서 editable review-required prefill이며 사용자 확인 후에만 LOCKED다.
 - TechOps의 세 운영 제안은 모두 non-null 실제 제안이어야 하고, 대안 요청은 versioned 새 제안을 만든다.
+- TechOps 초기화는 provider-free 응답이며 누락된 세 운영 제안은 한 batch TaskRun에서 생성한다.
+- TechOps 대안 요청은 `202`이고 기존 proposal을 성공 commit 전까지 보존한다.
+- TechOps AI 실패는 직접 입력을 막지 않으며 새 command key retry를 허용한다.
+- 늦은 TechOps 결과는 preparation revision, field proposal version, pending task, source hash, Snapshot 상태가 바뀌면 폐기한다.
+- TechOps 근거 자료는 project-scoped 실제 파일 artifact를 먼저 업로드한 뒤 견적서/BOM/공급사/사양서/파일럿 evidence로 연결한다. 자유 문자열 artifact reference는 active UI에서 받지 않는다.
+- TechOps Snapshot은 storage path나 raw file이 아니라 artifact ID, 원본 표시명, media type, size, SHA-256만 보존한다. evidence reference 삭제와 artifact lifecycle은 분리한다.
 - TechOps와 Finance의 3개년 목표는 동일 canonical 구조이며 Finance는 이를 read-only로 승계한다.
 - AI 추정값은 사용자 채택 전 user fact가 아니다.
+- Finance 초기화는 provider-free이며 설명·예시와 빈 입력만 준비한다. AI estimate는 사용자가 `AI 추천 받기`를 누른 field에 한해 lazy `FINANCE_ESTIMATE` TaskRun으로 생성한다.
+- Finance estimate 생성과 대안 요청은 `202`이고, ACCEPT/EDIT_AND_ACCEPT는 provider-free 동기 결정이다. `newCustomerCount`와 read-only 상속값은 estimate 대상이 아니다.
+- Finance AI 실패는 field와 기존 proposal을 보존하고 직접 입력 또는 새 command key retry를 허용한다. 늦은 결과는 preparation revision, source Snapshot ID/hash, active field task, Snapshot 상태가 바뀌면 폐기한다.
 - Finance AI estimate는 가정·설명·신뢰도와 `AI_ESTIMATE + PROPOSED` provenance를 가지며 ACCEPT/EDIT_AND_ACCEPT/REQUEST_ALTERNATIVE를 지원한다.
 - accepted estimate만 Snapshot 입력이 되고 CAC는 `(marketing + sales) / new customers` 서버 계산만 사용한다.
 - Marketing은 Market Result나 `FinalizedPlanningSnapshot`을 필수로 요구하지 않는다.
@@ -130,6 +148,7 @@
 ## 9. 비동기와 오류 UX
 
 - Event는 진행 신호이고 Query API가 화면 정본이다.
+- 선택 Query는 pending action을 새로고침 후 복원하고, terminal SSE를 받으면 최신 Query를 다시 조회한다.
 - Terminal TaskRun과 Job ID는 새 사용자 Action에 재사용하지 않는다.
 - terminal Event 뒤 동일 jobId Event를 추가하지 않는다.
 - raw TaskRun 결과와 현재 사용자 actionability를 분리한다.

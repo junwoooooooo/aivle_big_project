@@ -51,7 +51,8 @@ public class ConceptFactoryExecutionService {
                 "fieldKey", value.getFieldKey(),
                 "value", value.getFieldValue(),
                 "source", switch (value.getProvenance()) {
-                    case USER_INPUT, USER_CONFIRMED -> "USER_INPUT";
+                    case USER_INPUT -> "USER_INPUT";
+                    case USER_CONFIRMED -> "USER_CONFIRMED";
                     default -> "AI_DERIVED";
                 },
                 "authority", switch (value.getDecisionState()) {
@@ -261,9 +262,13 @@ public class ConceptFactoryExecutionService {
             run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
         Map<Integer, LegalEvidence> official = persistEvidence(pack, legal.path("officialEvidence"));
         if (status == ConceptLegalStatus.NEEDS_FACTS) {
-            attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.NEEDS_FACTS, "NEEDS_FACTS", false);
-            slot.transitionTo(ConceptSlotStatus.NEEDS_INPUT); run.transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
-            return LegalDisposition.NEEDS_INPUT;
+            attempts.findById(attemptId).orElseThrow().reject(
+                ConceptAttemptError.LEGAL_EXTERNAL_FACT_UNRESOLVED,
+                "LEGAL_EXTERNAL_FACT_UNRESOLVED", mapper.writeValueAsString(legal));
+            slot.transitionTo(ConceptSlotStatus.REPLACING);
+            rejections.save(ConceptRejectionSummary.create(slot, "LEGAL_EXTERNAL_FACT_UNRESOLVED",
+                "외부 사실 확인 없이는 법률 적격성을 판단할 수 없어 다른 후보로 대체합니다."));
+            return LegalDisposition.REPLACE;
         }
         if (status == ConceptLegalStatus.REDESIGNABLE) {
             validateFindingCoverage(legal, official.keySet(), false);

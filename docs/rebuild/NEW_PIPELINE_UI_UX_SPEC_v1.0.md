@@ -92,6 +92,8 @@ BM 입력이 추가로 필요하면 실행 직전 화면에서만 받는다.
 
 TechOps 화면은 상위 값 자동 승계, 사용자 필수 사실, AI 제안 결정, optional Evidence, Snapshot 준비 상태를 구분한다. AI 제안과 실제 견적서/BOM/공급사 자료를 같은 Badge로 표시하지 않는다.
 
+TechOps Evidence는 자유 `artifactRef` 텍스트 입력 대신 allowlist가 표시된 실제 file picker를 사용한다. 업로드 성공으로 받은 project artifact ID를 evidence type과 함께 등록하며, 목록에는 원본 파일명, media type, 크기, SHA-256을 표시한다. reference 제거는 파일 artifact 삭제로 표현하지 않는다.
+
 Finance 화면은 TechOps 승계값에 “기술·운영 단계에서 가져옴”을 표시하고 수정 provenance를 제공한다. 없는 값만 요청한다. CAC는 비용과 신규 고객 수를 입력받아 시스템이 계산하며 사용자에게 CAC 자체 계산을 요구하지 않는다. 조건부 원가는 해당 사업/외부 계약에 필요한 경우만 표시한다.
 
 ## 9. Marketing

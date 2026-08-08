@@ -37,10 +37,24 @@ public class FinancialController {
     }
 
     @PostMapping("/preparation/assistance/{fieldKey}/decision")
-    public ApiResponse<PreparationView> decideEstimate(@PathVariable Long projectId, @PathVariable String fieldKey,
-            @Valid @RequestBody EstimateDecisionRequest body, HttpServletRequest request) {
-        return ApiResponse.success(service.decideEstimate(user.currentUserId(), projectId, fieldKey, body),
-            request.getHeader("X-Request-Id"));
+    public ResponseEntity<ApiResponse<EstimateActionResponse>> decideEstimate(@PathVariable Long projectId,
+            @PathVariable String fieldKey, @Valid @RequestBody EstimateDecisionRequest body,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest request) {
+        EstimateActionResponse result = service.decideEstimate(user.currentUserId(), projectId, fieldKey, body,
+            idempotencyKey, request.getHeader("X-Request-Id"));
+        HttpStatus status = result.taskRunId() == null ? HttpStatus.OK : HttpStatus.ACCEPTED;
+        return ResponseEntity.status(status).body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
+    }
+
+    @PostMapping("/preparation/assistance/{fieldKey}/generate")
+    public ResponseEntity<ApiResponse<EstimateActionResponse>> generateEstimate(@PathVariable Long projectId,
+            @PathVariable String fieldKey, @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        EstimateActionResponse result = service.generateEstimate(user.currentUserId(), projectId, fieldKey,
+            idempotencyKey, request.getHeader("X-Request-Id"));
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
     }
 
     @PostMapping("/input-snapshots/finalize")

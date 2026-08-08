@@ -37,6 +37,7 @@ class ConceptCandidateV2ValidatorTests {
         assertThat(result.accepted()).isTrue();
         assertThat(semantics(candidate, "revenueModel").path("source").asText()).isEqualTo("AI_HYPOTHESIS");
         assertThat(semantics(candidate, "revenueModel").path("decision").asText()).isEqualTo("PROPOSED");
+        assertThat(semantics(candidate, "targetRegion").path("source").asText()).isEqualTo("AI_HYPOTHESIS");
     }
 
     @Test
@@ -64,6 +65,24 @@ class ConceptCandidateV2ValidatorTests {
         var result = ConceptCandidateV2Validator.validate(candidate, ConceptGenerationStrategy.REFINE, 1, seed);
 
         assertThat(result.accepted()).isTrue();
+    }
+
+    @Test
+    void userConfirmedLockedRegionIsPreservedAndAnOpenForeignRegionIsRejectedBeforeLegal() {
+        ObjectNode locked = candidate(ConceptGenerationStrategy.REFINE, 1);
+        locked.put("targetRegion", "대한민국");
+        setSemantics(locked, "targetRegion", "USER_CONFIRMED", "LOCKED", "ACCEPTED");
+        List<Map<String, String>> seed = new ArrayList<>(minimalSeed());
+        seed.add(field("targetRegion", "대한민국", "USER_CONFIRMED", "LOCKED"));
+        assertThat(ConceptCandidateV2Validator.validate(
+            locked, ConceptGenerationStrategy.REFINE, 1, seed).accepted()).isTrue();
+
+        ObjectNode foreign = candidate(ConceptGenerationStrategy.EXPLORE, 1);
+        foreign.put("targetRegion", "미국 캘리포니아");
+        var rejected = ConceptCandidateV2Validator.validate(
+            foreign, ConceptGenerationStrategy.EXPLORE, 1, minimalSeed());
+        assertThat(rejected.accepted()).isFalse();
+        assertThat(rejected.safeCode()).isEqualTo("LEGAL_JURISDICTION_UNSUPPORTED");
     }
 
     @Test
@@ -106,6 +125,7 @@ class ConceptCandidateV2ValidatorTests {
             .isEqualTo("LEGAL_SENSITIVE");
         assertThat(result.factPattern().path("hypotheses").path("revenueModel").path("source").asText())
             .isEqualTo("AI_HYPOTHESIS");
+        assertThat(result.factPattern().path("jurisdiction").asText()).isEqualTo("KR");
         assertThat(result.factPattern().toString()).doesNotContain("preMarketSom");
         assertThat(result.factPatternHash()).matches("sha256:[0-9a-f]{64}");
     }
@@ -181,7 +201,8 @@ class ConceptCandidateV2ValidatorTests {
         for (String field : SEMANTIC_FIELDS) {
             ObjectNode item = semantics.addObject();
             item.put("fieldKey", field);
-            if (field.startsWith("preMarketSom") || Set.of("revenueModel", "price", "channels", "differentiators").contains(field)) {
+            if (field.startsWith("preMarketSom") || Set.of(
+                    "targetRegion", "revenueModel", "price", "channels", "differentiators").contains(field)) {
                 item.put("source", "AI_HYPOTHESIS"); item.put("authority", "OPEN"); item.put("decision", "PROPOSED");
             } else {
                 item.put("source", "CONCEPT_GENERATED"); item.put("authority", "OPEN"); item.put("decision", "PROPOSED");

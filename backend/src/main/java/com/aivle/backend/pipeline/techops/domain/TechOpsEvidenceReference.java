@@ -19,17 +19,18 @@ public class TechOpsEvidenceReference extends BaseEntity {
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Column(name = "evidence_type", nullable = false, length = 30) private String evidenceType;
     @Column(name = "display_name", nullable = false, length = 255) private String displayName;
-    @Column(name = "artifact_ref", nullable = false, length = 1000) private String artifactRef;
+    @Column(name = "artifact_id", length = 64) private String artifactId;
+    @Column(name = "artifact_ref", length = 1000) private String artifactRef;
     @Column(length = 1000) private String description;
     @Column(name = "provided_by_user_id", nullable = false) private Long providedByUserId;
 
     public static TechOpsEvidenceReference create(String id, String preparationId, Long projectId, String type,
-            String displayName, String artifactRef, String description, Long userId) {
+            String displayName, String artifactId, String description, Long userId) {
         if (blank(id) || blank(preparationId) || projectId == null || blank(type) || blank(displayName)
-                || blank(artifactRef) || userId == null) throw new IllegalArgumentException("기술·운영 근거 자료가 올바르지 않습니다.");
+                || blank(artifactId) || userId == null) throw new IllegalArgumentException("기술·운영 근거 자료가 올바르지 않습니다.");
         TechOpsEvidenceReference value = new TechOpsEvidenceReference();
         value.id=id; value.preparationId=preparationId; value.projectId=projectId; value.evidenceType=type;
-        value.displayName=displayName.strip(); value.artifactRef=artifactRef.strip();
+        value.displayName=displayName.strip(); value.artifactId=artifactId.strip(); value.artifactRef=null;
         value.description=description == null ? null : description.strip(); value.providedByUserId=userId;
         return value;
     }

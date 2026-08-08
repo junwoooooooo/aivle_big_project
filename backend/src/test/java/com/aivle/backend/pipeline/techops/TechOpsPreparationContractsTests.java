@@ -3,9 +3,12 @@ package com.aivle.backend.pipeline.techops;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.common.entity.StorageType;
+import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.pipeline.techops.application.*;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputPreparation;
+import com.aivle.backend.pipeline.techops.domain.TechOpsEvidenceReference;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -47,7 +50,7 @@ class TechOpsPreparationContractsTests {
     }
 
     @Test
-    void snapshotHashIsStableAndCarriesNoSyntheticEvidence() {
+    void snapshotHashIsStableAndCarriesOnlyImmutableArtifactMetadata() {
         String facts="""
             {"productServiceSpecification":{"value":{"summary":"서비스","features":["기능"]}},
              "targetLaunchDate":{"value":"2027-03-01"},"ownedPersonnel":{"value":[{"role":"개발","count":2}]},
@@ -62,10 +65,19 @@ class TechOpsPreparationContractsTests {
             """;
         var preparation=TechOpsInputPreparation.create("prep-1",1L,"seed-1","sha256:"+"a".repeat(64),facts,decisions,7L);
         var factory=new TechOpsInputSnapshotFactory(mapper,new SnapshotHasher(mapper));
-        var first=factory.create("snapshot-1",Instant.EPOCH,preparation,List.of());
-        var second=factory.create("snapshot-1",Instant.EPOCH,preparation,List.of());
+        var artifact = ProjectEvidenceArtifact.create("artifact-1", 1L, StorageType.LOCAL,
+            "projects/1/evidence/secret.pdf", "견적서.pdf", "uuid.pdf", "application/pdf", 120L,
+            "sha256:" + "c".repeat(64), 7L);
+        var reference = TechOpsEvidenceReference.create("evidence-1", "prep-1", 1L, "QUOTE",
+            "견적서.pdf", "artifact-1", "공급사 견적", 7L);
+        var first=factory.create("snapshot-1",Instant.EPOCH,preparation,List.of(reference), java.util.Map.of("artifact-1", artifact));
+        var second=factory.create("snapshot-1",Instant.EPOCH,preparation,List.of(reference), java.util.Map.of("artifact-1", artifact));
         assertThat(first.hash()).isEqualTo(second.hash()).matches("sha256:[0-9a-f]{64}");
-        assertThat(first.body().path("evidenceReferences")).isEmpty();
+        var snapshotEvidence = first.body().path("evidenceReferences").get(0);
+        assertThat(snapshotEvidence.path("artifactId").asText()).isEqualTo("artifact-1");
+        assertThat(snapshotEvidence.path("originalFilename").asText()).isEqualTo("견적서.pdf");
+        assertThat(snapshotEvidence.path("sha256").asText()).isEqualTo("sha256:" + "c".repeat(64));
+        assertThat(snapshotEvidence.toString()).doesNotContain("storageKey", "secret.pdf", "projects/1");
         assertThat(first.body().path("requiredDecisions").path("deliveryOrProductionMethod").path("decision").asText())
             .isEqualTo("USER_EDITED_ACCEPTED");
     }

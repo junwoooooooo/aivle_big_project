@@ -105,7 +105,7 @@ class TaskRunServiceIntegrationTests {
     }
 
     @Test
-    void publicV2RetryReplayCancelAndTerminalGetAreOwnerScoped() throws Exception {
+    void terminalTaskRunRemainsImmutableAndPublicGetIsOwnerScoped() throws Exception {
         User owner = users.saveAndFlush(User.create("task-api-owner@example.com", "hash", "owner"));
         User other = users.saveAndFlush(User.create("task-api-other@example.com", "hash", "other"));
         Project project = projects.saveAndFlush(Project.create(owner, "task api project", null, null));
@@ -116,20 +116,14 @@ class TaskRunServiceIntegrationTests {
         service.startExecution(run.getId(), claim.taskAttemptId(), claim.claimToken());
         service.fail(run.getId(), claim.taskAttemptId(), claim.claimToken(), "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true);
 
-        mockMvc.perform(post("/api/v2/projects/{projectId}/task-runs/{taskRunId}/retry", project.getId(), run.getId())
-                .header("X-User-Id", owner.getId()).header("Idempotency-Key", "retry-api"))
-            .andExpect(status().isAccepted()).andExpect(jsonPath("$.data.id").value(run.getId()))
-            .andExpect(jsonPath("$.data.state").value("QUEUED"));
-        mockMvc.perform(post("/api/v2/projects/{projectId}/task-runs/{taskRunId}/retry", project.getId(), run.getId())
-                .header("X-User-Id", owner.getId()).header("Idempotency-Key", "retry-api"))
-            .andExpect(status().isAccepted());
-        assertThat(service.getOwned(owner.getId(), project.getId(), run.getId()).getAttemptCount()).isEqualTo(2);
         mockMvc.perform(post("/api/v2/projects/{projectId}/task-runs/{taskRunId}/cancel", project.getId(), run.getId())
                 .header("X-User-Id", owner.getId()))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("CANCELLED"));
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("FAILED"));
+        assertThat(service.getOwned(owner.getId(), project.getId(), run.getId()).getAttemptCount()).isEqualTo(1);
         mockMvc.perform(get("/api/v2/projects/{projectId}/task-runs/{taskRunId}", project.getId(), run.getId())
                 .header("X-User-Id", owner.getId()))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.data.workerId").doesNotExist())
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("FAILED"))
+            .andExpect(jsonPath("$.data.workerId").doesNotExist())
             .andExpect(jsonPath("$.data.taskAttemptId").doesNotExist());
         mockMvc.perform(get("/api/v2/projects/{projectId}/task-runs/{taskRunId}", project.getId(), run.getId())
                 .header("X-User-Id", other.getId()))

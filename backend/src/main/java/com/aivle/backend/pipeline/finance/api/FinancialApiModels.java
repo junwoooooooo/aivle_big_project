@@ -16,6 +16,8 @@ public final class FinancialApiModels {
         int revision, JsonNode financialFields, JsonNode upstreamReferences, JsonNode assistance,
         JsonNode calculatedCac, List<String> missingRequiredInputs, boolean readyToFinalize,
         String inputSnapshotId, LocalDateTime updatedAt) {}
+    public record EstimateActionResponse(PreparationView preparation, String taskRunId, String jobId,
+        String status, String actionType, String fieldKey, int proposalVersion) {}
     public record SnapshotView(String contract, String snapshotId, String schemaVersion, Long projectId,
         String preparationId, String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId,
         String snapshotHash, Instant createdAt, JsonNode snapshot) {}

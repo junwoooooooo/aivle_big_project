@@ -24,6 +24,7 @@ TASK_TYPES = {
     "CONCEPT_LEGAL_REVIEW",
     "CONCEPT_REDESIGN",
     "CONCEPT_HYPOTHESIS_ALTERNATIVE",
+    "CONCEPT_DELTA_LEGAL_REVIEW",
     "TECH_OPS_PROPOSAL",
     "FINANCE_ESTIMATE",
     "MARKETING_CONTENT_GENERATION",
@@ -127,7 +128,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE"}:
+    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
@@ -167,13 +168,34 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             result = await execute_concept_redesign(body.input)
         elif body.taskType == "CONCEPT_HYPOTHESIS_ALTERNATIVE":
             from app.tasks.concept_hypothesis_alternative import execute_concept_hypothesis_alternative
-            result = await execute_concept_hypothesis_alternative(body.input)
+            result = await execute_concept_hypothesis_alternative({
+                "hypothesisType": body.input.get("hypothesisType"),
+                "rejectedValue": body.input.get("rejectedValue"),
+                "proposalVersion": body.input.get("proposalVersion"),
+                "candidate": body.input.get("candidate"),
+            })
+        elif body.taskType == "CONCEPT_DELTA_LEGAL_REVIEW":
+            from app.tasks.concept_legal_review import execute_concept_legal_review
+            result = await execute_concept_legal_review({
+                "legalFactPattern": body.input.get("legalFactPattern"),
+                "factPatternHash": body.input.get("factPatternHash"),
+                "externalFactContext": body.input.get("externalFactContext"),
+            })
         elif body.taskType == "TECH_OPS_PROPOSAL":
             from app.tasks.tech_ops_proposal import execute_tech_ops_proposal
-            result = await execute_tech_ops_proposal(body.input)
+            result = await execute_tech_ops_proposal({
+                "contextJson": body.input.get("contextJson"),
+                "proposalVersion": body.input.get("proposalVersion"),
+                "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
+            })
         elif body.taskType == "FINANCE_ESTIMATE":
             from app.tasks.finance_estimate import execute_finance_estimate
-            result = await execute_finance_estimate(body.input)
+            result = await execute_finance_estimate({
+                "contextJson": body.input.get("contextJson"),
+                "fieldKey": body.input.get("fieldKey"),
+                "proposalVersion": body.input.get("proposalVersion"),
+                "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
+            })
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)

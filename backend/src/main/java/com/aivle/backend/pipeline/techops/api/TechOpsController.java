@@ -20,9 +20,12 @@ public class TechOpsController {
     private final CurrentUserProvider user;
 
     @PostMapping("/preparation/initialize")
-    public ResponseEntity<ApiResponse<PreparationView>> initialize(@PathVariable Long projectId, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<PreparationView>> initialize(@PathVariable Long projectId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
-            service.initialize(user.currentUserId(), projectId), request.getHeader("X-Request-Id")));
+            service.initialize(user.currentUserId(), projectId, idempotencyKey, request.getHeader("X-Request-Id")),
+            request.getHeader("X-Request-Id")));
     }
     @GetMapping("/preparation")
     public ApiResponse<PreparationView> preparation(@PathVariable Long projectId, HttpServletRequest request) {
@@ -34,9 +37,21 @@ public class TechOpsController {
         return ApiResponse.success(service.patchFacts(user.currentUserId(), projectId, body), request.getHeader("X-Request-Id"));
     }
     @PostMapping("/preparation/proposals/{fieldKey}/decision")
-    public ApiResponse<PreparationView> decide(@PathVariable Long projectId, @PathVariable String fieldKey,
-            @Valid @RequestBody ProposalDecisionRequest body, HttpServletRequest request) {
-        return ApiResponse.success(service.decideProposal(user.currentUserId(), projectId, fieldKey, body), request.getHeader("X-Request-Id"));
+    public ResponseEntity<ApiResponse<ProposalActionResponse>> decide(@PathVariable Long projectId,
+            @PathVariable String fieldKey, @Valid @RequestBody ProposalDecisionRequest body,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            HttpServletRequest request) {
+        ProposalActionResponse result = service.decideProposal(user.currentUserId(), projectId, fieldKey,
+            body, idempotencyKey, request.getHeader("X-Request-Id"));
+        HttpStatus status = result.taskRunId() == null ? HttpStatus.OK : HttpStatus.ACCEPTED;
+        return ResponseEntity.status(status).body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
+    }
+    @PostMapping("/preparation/proposals/retry")
+    public ResponseEntity<ApiResponse<ProposalActionResponse>> retryProposals(@PathVariable Long projectId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey, HttpServletRequest request) {
+        ProposalActionResponse result = service.retryInitialProposals(user.currentUserId(), projectId,
+            idempotencyKey, request.getHeader("X-Request-Id"));
+        return ResponseEntity.accepted().body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
     }
     @PostMapping("/preparation/evidence")
     public ResponseEntity<ApiResponse<PreparationView>> addEvidence(@PathVariable Long projectId,

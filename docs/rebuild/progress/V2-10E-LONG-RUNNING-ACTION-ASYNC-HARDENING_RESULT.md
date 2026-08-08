@@ -1,8 +1,16 @@
 # V2-10E — Long-running Action Async Hardening 결과
 
-## 상태
+## 현재 상태
 
-PARTIAL — 구현 미완료. Fast profile 실행 단위 시간 상한에서 중단했다. V2-10F는 선행 E 완료 조건 때문에 시작하지 않았다.
+IMPLEMENTATION COMPLETE
+
+RUNTIME ACCEPTANCE PENDING
+
+초기 PARTIAL 이후 E1/E2/E3로 분할하여 완료했다. Concept Selection alternative/Delta Legal, TechOps proposal, Finance lazy estimate가 모두 실제 claimed TaskRun worker 경계로 전환되었고 각 분할 Unit의 targeted validation이 통과했다.
+
+## 초기 PARTIAL 이력 (보존)
+
+초기 실행은 Fast profile 실행 단위 시간 상한에서 `PARTIAL — 구현 미완료`로 중단되었으며, 당시 V2-10F는 선행 E 완료 조건 때문에 시작하지 않았다. 아래 조사 내용과 continuation point는 그 시점의 기록으로 보존한다.
 
 ## 확인한 현재 동기 경계
 

@@ -60,6 +60,7 @@ class MarketAnalysisSeedSnapshotFactoryTests {
         assertThat(body.path("originalSeed").path("fields").path("problem").path("source").asText()).isEqualTo("USER_INPUT");
         assertThat(body.path("selectedConcept").path("solution").path("solutionMechanism").asText()).isEqualTo("연결");
         assertThat(body.path("finalHypotheses").path("revenueModel").path("decisionStatus").asText()).isEqualTo("ACCEPTED");
+        assertThat(body.path("finalHypotheses").path("targetRegion").path("value").asText()).isEqualTo("확정값");
         assertThat(body.path("legalResult").path("requiredControls").get(0).asText()).isEqualTo("고지");
         assertThat(body.path("legalResult").path("officialEvidenceReferences")).hasSize(1);
         assertThat(body.path("legalResult").path("officialEvidenceReferences").get(0).path("lawName").asText()).isEqualTo("전자상거래법");

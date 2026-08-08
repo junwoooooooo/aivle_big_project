@@ -79,8 +79,20 @@
       "properties": { "deliveryOrProductionMethod": { "$ref": "#/$defs/decision" }, "expectedMonthlyThroughputOrSales": { "$ref": "#/$defs/decision" }, "technicalSupplyOperationalConstraints": { "$ref": "#/$defs/decision" } }
     },
     "evidence": {
-      "type": "object", "additionalProperties": false, "required": ["evidenceId", "evidenceType", "displayName", "artifactRef", "source"],
-      "properties": { "evidenceId": { "type": "string", "minLength": 1 }, "evidenceType": { "enum": ["QUOTE", "BOM", "SUPPLIER", "SPECIFICATION", "PILOT"] }, "displayName": { "type": "string", "minLength": 1, "maxLength": 255 }, "artifactRef": { "type": "string", "minLength": 1, "maxLength": 1000 }, "description": { "type": "string", "maxLength": 1000 }, "source": { "const": "USER_PROVIDED_EVIDENCE" } }
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceId", "evidenceType", "artifactId", "originalFilename", "displayName", "mediaType", "sizeBytes", "sha256", "source"],
+      "properties": {
+        "evidenceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "evidenceType": { "enum": ["QUOTE", "BOM", "SUPPLIER", "SPECIFICATION", "PILOT"] },
+        "artifactId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "originalFilename": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/hash" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "source": { "const": "USER_PROVIDED_EVIDENCE" }
+      }
     }
   }
 }

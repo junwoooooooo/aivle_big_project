@@ -4,6 +4,10 @@ import static com.aivle.backend.pipeline.techops.api.TechOpsApiModels.*;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.jobevent.JobEvent;
+import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
+import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
@@ -11,9 +15,14 @@ import com.aivle.backend.pipeline.shared.ThreeYearTargetsContract;
 import com.aivle.backend.pipeline.techops.domain.*;
 import com.aivle.backend.pipeline.techops.repository.*;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import com.aivle.backend.taskrun.service.TaskRunService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,23 +41,28 @@ public class TechOpsService {
     private final MarketAnalysisSeedSnapshotRepository marketSeeds;
     private final TechOpsInputPreparationRepository preparations;
     private final TechOpsEvidenceReferenceRepository evidence;
+    private final ProjectEvidenceArtifactRepository artifacts;
     private final TechOpsInputSnapshotRepository snapshots;
     private final TechOpsPreparationFactory preparationFactory;
     private final TechOpsInputSnapshotFactory snapshotFactory;
     private final TechOpsReadiness readiness;
-    private final TechOpsProposalGateway proposalGateway;
     private final ObjectMapper mapper;
+    private final TaskRunService taskRuns;
+    private final CanonicalInputHasher inputHasher;
+    private final JobEventPublisher jobEvents;
 
     @Transactional
-    public PreparationView initialize(Long ownerId, Long projectId) {
+    public PreparationView initialize(Long ownerId, Long projectId, String idempotencyKey, String correlationId) {
         requireOwnedForUpdate(ownerId, projectId); MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
         var existing = preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
         if (existing.isPresent()) return view(existing.get());
         var initial = preparationFactory.create(source);
-        fillMissingProposals(initial.proposalDecisions(), source.getSnapshotJson());
         String id = UUID.randomUUID().toString();
         var saved = preparations.save(TechOpsInputPreparation.create(id, projectId, source.getId(), source.getSnapshotHash(),
             mapper.writeValueAsString(initial.requiredFacts()), mapper.writeValueAsString(initial.proposalDecisions()), ownerId));
+        if (hasMissingProposal(initial.proposalDecisions())) {
+            queueInitial(ownerId, projectId, saved, source, idempotencyKey, correlationId);
+        }
         return view(saved);
     }
 
@@ -73,7 +87,8 @@ public class TechOpsService {
     }
 
     @Transactional
-    public PreparationView decideProposal(Long ownerId, Long projectId, String fieldKey, ProposalDecisionRequest request) {
+    public ProposalActionResponse decideProposal(Long ownerId, Long projectId, String fieldKey,
+            ProposalDecisionRequest request, String idempotencyKey, String correlationId) {
         requireOwnedForUpdate(ownerId, projectId); TechOpsInputPreparation preparation = lockedCurrent(projectId); ensureMutable(preparation);
         if (!TechOpsPreparationFactory.PROPOSAL_KEYS.contains(fieldKey)) throw invalid("지원하지 않는 기술·운영 결정 필드입니다.");
         ObjectNode decisions = (ObjectNode) mapper.readTree(preparation.getProposalDecisionsJson());
@@ -83,37 +98,70 @@ public class TechOpsService {
                 JsonNode proposal = field.path("proposalValue"); validateDecisionValue(fieldKey, proposal);
                 field.set("finalValue", proposal.deepCopy()); field.put("decision", "ACCEPTED"); field.put("alternativeRequested", false);
             }
-            case "EDIT_ACCEPT" -> {
+            case "EDIT_ACCEPT", "EDIT_AND_ACCEPT" -> {
                 validateDecisionValue(fieldKey, request.value()); field.set("finalValue", request.value().deepCopy());
                 field.put("source", "USER_INPUT"); field.put("decision", "USER_EDITED_ACCEPTED"); field.put("alternativeRequested", false);
             }
             case "REJECT_AND_REQUEST_ALTERNATIVE" -> {
+                if (preparation.proposalTaskActive()) {
+                    TaskRun active = taskRuns.getOwned(ownerId, projectId, preparation.getActiveProposalTaskRunId());
+                    if (commandKey(idempotencyKey).equals(active.getIdempotencyKey())
+                            && active.getId().equals(field.path("pendingAlternativeTaskRunId").asText())) {
+                        return queued(preparation, active, "REJECT_AND_REQUEST_ALTERNATIVE", fieldKey,
+                            field.path("proposalVersion").asInt(1) + 1);
+                    }
+                    throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
+                }
                 int nextVersion = field.path("proposalVersion").asInt(1) + 1;
-                String previous = mapper.writeValueAsString(field.path("proposalValue"));
-                JsonNode generated = proposalGateway.propose(
-                    currentMarketSeed(projectId).getSnapshotJson(), nextVersion, previous).path(fieldKey);
-                validateDecisionValue(fieldKey, generated);
-                if (generated.equals(field.path("proposalValue"))) throw new BusinessException(ErrorCode.TECH_OPS_PROPOSAL_INVALID,
-                    "새 제안은 직전 제안과 달라야 합니다.");
-                field.set("proposalValue", generated.deepCopy()); field.putNull("finalValue");
-                field.put("source", "AI_HYPOTHESIS"); field.put("decision", "PROPOSED");
-                field.put("proposalVersion", nextVersion); field.put("alternativeRequested", false);
+                JsonNode previous = field.path("proposalValue"); validateDecisionValue(fieldKey, previous);
+                MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
+                JsonNode input = mapper.valueToTree(java.util.Map.ofEntries(
+                    java.util.Map.entry("mode", "ALTERNATIVE"), java.util.Map.entry("preparationId", preparation.getId()),
+                    java.util.Map.entry("fieldKey", fieldKey), java.util.Map.entry("currentProposalVersion", nextVersion - 1),
+                    java.util.Map.entry("proposalVersion", nextVersion),
+                    java.util.Map.entry("rejectedProposal", previous.deepCopy()),
+                    java.util.Map.entry("rejectedProposalJson", mapper.writeValueAsString(previous)),
+                    java.util.Map.entry("sourceMarketSeedSnapshotId", source.getId()),
+                    java.util.Map.entry("sourceSnapshotHash", source.getSnapshotHash()),
+                    java.util.Map.entry("expectedPreparationRevision", preparation.getRevision() + 1),
+                    java.util.Map.entry("contextJson", source.getSnapshotJson()),
+                    java.util.Map.entry("commandIdempotencyKey", commandKey(idempotencyKey))));
+                TaskRunService.CreateResult creation = createTask(ownerId, projectId, preparation, input,
+                    idempotencyKey, correlationId, "ALTERNATIVE", fieldKey);
+                TaskRun task = creation.taskRun();
+                if (creation.createdNew()) {
+                    field.put("alternativeRequested", true);
+                    field.put("pendingAlternativeTaskRunId", task.getId());
+                    preparation.queueAlternativeTask(task.getId(), mapper.writeValueAsString(decisions), ownerId);
+                }
+                return queued(preparation, task, "REJECT_AND_REQUEST_ALTERNATIVE", fieldKey, nextVersion);
             }
             default -> throw invalid("제안 결정 Action을 확인해 주세요.");
         }
-        preparation.updateProposalDecisions(mapper.writeValueAsString(decisions), ownerId); return view(preparation);
+        preparation.updateProposalDecisions(mapper.writeValueAsString(decisions), ownerId);
+        return new ProposalActionResponse(view(preparation), null, null, "COMPLETED", action,
+            fieldKey, field.path("proposalVersion").asInt(1));
     }
-    private void fillMissingProposals(ObjectNode decisions, String contextJson) {
-        boolean missing = TechOpsPreparationFactory.PROPOSAL_KEYS.stream()
-            .anyMatch(key -> !TechOpsPreparationFactory.present(decisions.path(key).path("proposalValue")));
-        if (!missing) return;
-        JsonNode generated = proposalGateway.propose(contextJson, 1, "");
-        for (String key : TechOpsPreparationFactory.PROPOSAL_KEYS) {
-            ObjectNode field = (ObjectNode) decisions.path(key);
-            if (TechOpsPreparationFactory.present(field.path("proposalValue"))) continue;
-            JsonNode proposal = generated.path(key); validateDecisionValue(key, proposal);
-            field.set("proposalValue", proposal.deepCopy()); field.put("source", "AI_HYPOTHESIS");
+
+    @Transactional
+    public ProposalActionResponse retryInitialProposals(Long ownerId, Long projectId,
+            String idempotencyKey, String correlationId) {
+        requireOwnedForUpdate(ownerId, projectId);
+        TechOpsInputPreparation preparation = lockedCurrent(projectId); ensureMutable(preparation);
+        ObjectNode decisions = (ObjectNode) mapper.readTree(preparation.getProposalDecisionsJson());
+        if (!hasMissingProposal(decisions)) {
+            throw new BusinessException(ErrorCode.TECH_OPS_PROPOSAL_INVALID, "생성할 미확정 AI 제안이 없습니다.");
         }
+        if (preparation.proposalTaskActive()) {
+            TaskRun active = taskRuns.getOwned(ownerId, projectId, preparation.getActiveProposalTaskRunId());
+            if (commandKey(idempotencyKey).equals(active.getIdempotencyKey())) {
+                return queued(preparation, active, "RETRY_INITIAL", null, 1);
+            }
+            throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
+        }
+        MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
+        TaskRun task = queueInitial(ownerId, projectId, preparation, source, idempotencyKey, correlationId);
+        return queued(preparation, task, "RETRY_INITIAL", null, 1);
     }
 
     @Transactional
@@ -121,8 +169,10 @@ public class TechOpsService {
         requireOwnedForUpdate(ownerId, projectId); TechOpsInputPreparation preparation = lockedCurrent(projectId); ensureMutable(preparation);
         String type=request.evidenceType().strip().toUpperCase();
         if (!EVIDENCE_TYPES.contains(type)) throw new BusinessException(ErrorCode.TECH_OPS_EVIDENCE_INVALID);
+        ProjectEvidenceArtifact artifact = artifacts.findByIdAndProjectIdAndDeletedAtIsNull(request.artifactId(), projectId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.EVIDENCE_ARTIFACT_NOT_FOUND));
         evidence.save(TechOpsEvidenceReference.create(UUID.randomUUID().toString(), preparation.getId(), projectId, type,
-            request.displayName(), request.artifactRef(), request.description(), ownerId));
+            artifact.getOriginalFilename(), artifact.getId(), request.description(), ownerId));
         return view(preparation);
     }
 
@@ -139,6 +189,8 @@ public class TechOpsService {
         requireOwnedForUpdate(ownerId, projectId); TechOpsInputPreparation preparation = lockedCurrent(projectId);
         var existing = snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(preparation.getId(), projectId);
         if (existing.isPresent()) return snapshotView(existing.get());
+        if (preparation.proposalTaskActive()) throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING,
+            "AI 운영 가설 작업이 완료된 뒤 Snapshot을 확정해 주세요.");
         JsonNode facts=mapper.readTree(preparation.getRequiredFactsJson()); JsonNode decisions=mapper.readTree(preparation.getProposalDecisionsJson());
         List<String> missing=readiness.missing(facts, decisions);
         if (!missing.isEmpty()) throw new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY,
@@ -146,8 +198,13 @@ public class TechOpsService {
         for (String key : TechOpsPreparationFactory.REQUIRED_FACT_KEYS) validateFact(key, facts.path(key).path("value"));
         for (String key : TechOpsPreparationFactory.PROPOSAL_KEYS) validateDecisionValue(key, decisions.path(key).path("finalValue"));
         String id=UUID.randomUUID().toString(); Instant now=Instant.now();
-        var built=snapshotFactory.create(id, now, preparation,
-            evidence.findAllByPreparationIdAndDeletedAtIsNullOrderByCreatedAtAsc(preparation.getId()));
+        List<TechOpsEvidenceReference> refs = evidence.findAllByPreparationIdAndDeletedAtIsNullOrderByCreatedAtAsc(preparation.getId());
+        Map<String, ProjectEvidenceArtifact> artifactMap = artifacts(refs, projectId);
+        if (refs.stream().anyMatch(ref -> ref.getArtifactId() == null || !artifactMap.containsKey(ref.getArtifactId()))) {
+            throw new BusinessException(ErrorCode.TECH_OPS_EVIDENCE_INVALID,
+                "삭제되었거나 연결되지 않은 근거 파일을 제거하고 다시 시도해 주세요.");
+        }
+        var built=snapshotFactory.create(id, now, preparation, refs, artifactMap);
         return snapshotView(snapshots.save(TechOpsInputSnapshot.create(id, projectId, preparation.getId(),
             preparation.getSourceMarketSeedSnapshotId(), TechOpsInputSnapshotFactory.SCHEMA_VERSION, built.hash(),
             mapper.writeValueAsString(built.body()), ownerId, now)));
@@ -165,12 +222,84 @@ public class TechOpsService {
         List<String> missing=readiness.missing(facts, decisions);
         String snapshotId=snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(value.getId(), value.getProjectId())
             .map(TechOpsInputSnapshot::getId).orElse(null);
-        List<EvidenceView> refs=evidence.findAllByPreparationIdAndDeletedAtIsNullOrderByCreatedAtAsc(value.getId()).stream()
-            .map(item -> new EvidenceView(item.getId(), item.getEvidenceType(), item.getDisplayName(), item.getArtifactRef(),
-                item.getDescription(), "USER_PROVIDED_EVIDENCE", item.getCreatedAt())).toList();
+        List<TechOpsEvidenceReference> evidenceRefs = evidence.findAllByPreparationIdAndDeletedAtIsNullOrderByCreatedAtAsc(value.getId());
+        Map<String, ProjectEvidenceArtifact> artifactMap = artifacts(evidenceRefs, value.getProjectId());
+        List<EvidenceView> refs=evidenceRefs.stream().map(item -> {
+            ProjectEvidenceArtifact artifact = artifactMap.get(item.getArtifactId());
+            return new EvidenceView(item.getId(), item.getEvidenceType(), item.getArtifactId(),
+                artifact == null ? null : artifact.getOriginalFilename(), item.getDisplayName(),
+                artifact == null ? null : artifact.getMediaType(), artifact == null ? null : artifact.getSizeBytes(),
+                artifact == null ? null : artifact.getSha256(), item.getDescription(),
+                "USER_PROVIDED_EVIDENCE", item.getCreatedAt());
+        }).toList();
         return new PreparationView(TechOpsPreparationFactory.CONTRACT, TechOpsPreparationFactory.SCHEMA_VERSION,
             value.getId(), value.getProjectId(), value.getSourceMarketSeedSnapshotId(), value.getSourceSnapshotHash(),
-            value.getRevision(), facts, decisions, refs, missing, missing.isEmpty(), snapshotId, value.getUpdatedAt());
+            value.getRevision(), facts, decisions, refs, missing, missing.isEmpty(), snapshotId,
+            value.getProposalGenerationStatus(), value.getActiveProposalTaskRunId(), value.getSafeProposalError(),
+            value.getUpdatedAt());
+    }
+
+    private Map<String, ProjectEvidenceArtifact> artifacts(List<TechOpsEvidenceReference> refs, Long projectId) {
+        List<String> ids = refs.stream().map(TechOpsEvidenceReference::getArtifactId)
+            .filter(java.util.Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) return Map.of();
+        return artifacts.findAllByIdInAndProjectIdAndDeletedAtIsNull(ids, projectId).stream()
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(ProjectEvidenceArtifact::getId, value -> value));
+    }
+
+    private TaskRun queueInitial(Long ownerId, Long projectId, TechOpsInputPreparation preparation,
+            MarketAnalysisSeedSnapshot source, String idempotencyKey, String correlationId) {
+        if (preparation.proposalTaskActive()) return taskRuns.getOwned(ownerId, projectId,
+            preparation.getActiveProposalTaskRunId());
+        JsonNode input = mapper.valueToTree(java.util.Map.ofEntries(
+            java.util.Map.entry("mode", "INITIAL"), java.util.Map.entry("preparationId", preparation.getId()),
+            java.util.Map.entry("proposalVersion", 1), java.util.Map.entry("rejectedProposalJson", ""),
+            java.util.Map.entry("sourceMarketSeedSnapshotId", source.getId()),
+            java.util.Map.entry("sourceSnapshotHash", source.getSnapshotHash()),
+            java.util.Map.entry("expectedPreparationRevision", preparation.getRevision()),
+            java.util.Map.entry("contextJson", source.getSnapshotJson()),
+            java.util.Map.entry("commandIdempotencyKey", commandKey(idempotencyKey))));
+        TaskRunService.CreateResult creation = createTask(ownerId, projectId, preparation, input,
+            idempotencyKey, correlationId, "INITIAL", null);
+        TaskRun task = creation.taskRun();
+        if (creation.createdNew()) preparation.queueInitialProposalTask(task.getId());
+        return task;
+    }
+
+    private TaskRunService.CreateResult createTask(Long ownerId, Long projectId, TechOpsInputPreparation preparation,
+            JsonNode input, String idempotencyKey, String correlationId, String mode, String fieldKey) {
+        String key = commandKey(idempotencyKey);
+        String json = mapper.writeValueAsString(input);
+        TaskRunService.CreateResult created = taskRuns.createWithDisposition(ownerId, projectId,
+            TaskType.TECH_OPS_PROPOSAL, "TECH_OPS_PREPARATION", preparation.getId(), json,
+            inputHasher.hash(TaskType.TECH_OPS_PROPOSAL, "1.0", "ko-KR", json), key,
+            correlationId == null || correlationId.isBlank() ? key : correlationId, 1);
+        TaskRun task = created.taskRun();
+        if (created.createdNew()) {
+            jobEvents.publish(new JobEventPublisher.Command(projectId, task.getId(), task.getId(), "QUEUED",
+                "INITIAL".equals(mode) ? "job.tech-ops.proposals.queued" : "job.tech-ops.alternative.queued",
+                JobEvent.Status.QUEUED, "job.tech-ops.proposal.queued",
+                fieldKey == null ? java.util.Map.of() : java.util.Map.of("fieldKey", fieldKey), null));
+        }
+        return created;
+    }
+
+    private ProposalActionResponse queued(TechOpsInputPreparation preparation, TaskRun task,
+            String actionType, String fieldKey, int version) {
+        return new ProposalActionResponse(view(preparation), task.getId(), task.getId(), task.getState().name(),
+            actionType, fieldKey, version);
+    }
+
+    private boolean hasMissingProposal(JsonNode decisions) {
+        return TechOpsPreparationFactory.PROPOSAL_KEYS.stream()
+            .anyMatch(key -> !TechOpsPreparationFactory.present(decisions.path(key).path("proposalValue")));
+    }
+
+    private String commandKey(String value) {
+        if (value == null || value.isBlank() || value.strip().length() > 128) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
+        }
+        return value.strip();
     }
     private SnapshotView snapshotView(TechOpsInputSnapshot value) {
         return new SnapshotView(TechOpsInputSnapshotFactory.CONTRACT, value.getId(), value.getSchemaVersion(), value.getProjectId(),
