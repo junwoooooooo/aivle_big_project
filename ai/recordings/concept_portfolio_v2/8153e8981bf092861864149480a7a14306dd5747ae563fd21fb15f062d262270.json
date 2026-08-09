@@ -1,0 +1,274 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v2.1",
+  "promptVersion": "concept-portfolio-candidate-v2.1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:2727edecc3c2d46be7e2f5cce3fbcfc771d4d2d9246098f9aa2342d469b04556",
+  "canonicalRequestHash": "8153e8981bf092861864149480a7a14306dd5747ae563fd21fb15f062d262270",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 발생하는 음식물 쓰레기를 줄이기 위한 문제.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "industryCategory": "식품 및 요리 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 남은 재료 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "특정 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "소량 맞춤형 식재료 배달 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 소량 맞춤형 식재료와 레시피 제공 서비스",
+      "coreMechanism": "소량 패키지 제공",
+      "customerInteraction": "온라인 주문 및 맞춤형 추천",
+      "valueDelivery": "신선한 재료와 요리 레시피 제공",
+      "operatingApproach": "직접 배송 및 재고 관리",
+      "partnerApproach": "지역 농가와 협력",
+      "transactionApproach": "구독 기반 모델",
+      "commercialApproach": "가격 경쟁력 있는 소량 패키지",
+      "fulfillmentApproach": "주문 후 즉시 배송",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "CUSTOMIZED_DELIVERY",
+          "labelKo": "맞춤형 배달",
+          "detailKo": "고객의 요구에 맞춘 소량 식재료 배달 서비스"
+        },
+        "supplyModel": {
+          "code": "LOCAL_FARM_PARTNERSHIP",
+          "labelKo": "지역 농가 파트너십",
+          "detailKo": "지역 농가와의 협력을 통한 신선한 재료 공급"
+        },
+        "fulfillmentModel": {
+          "code": "ON_DEMAND_DELIVERY",
+          "labelKo": "주문형 배송",
+          "detailKo": "주문 후 즉시 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "E_COMMERCE_PLATFORM",
+          "labelKo": "전자상거래 플랫폼",
+          "detailKo": "온라인 플랫폼을 통한 주문 및 결제"
+        },
+        "partnerStructureType": {
+          "code": "DIRECT_PARTNERSHIP",
+          "labelKo": "직접 파트너십",
+          "detailKo": "농가와의 직접적인 파트너십 구조"
+        },
+        "transactionModel": {
+          "code": "SUBSCRIPTION_BASED",
+          "labelKo": "구독 기반 모델",
+          "detailKo": "정기 구독을 통한 지속적인 수익 모델"
+        },
+        "commercialModel": {
+          "code": "COMPETITIVE_PRICING",
+          "labelKo": "경쟁력 있는 가격",
+          "detailKo": "소량 패키지에 대한 가격 경쟁력 확보"
+        },
+        "customerInteractionModel": {
+          "code": "ONLINE_INTERACTION",
+          "labelKo": "온라인 상호작용",
+          "detailKo": "고객과의 온라인 상호작용을 통한 맞춤형 서비스 제공"
+        }
+      },
+      "differentiatingMechanics": [
+        "소량 패키지 제공",
+        "신선한 지역 재료 사용",
+        "맞춤형 레시피 제공",
+        "구독 모델 도입",
+        "온라인 주문 시스템"
+      ],
+      "mainChanges": [
+        "소량 식재료 패키지 도입",
+        "레시피 제공 서비스 추가"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 추천 시스템 도입"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 음식물 쓰레기 문제 해결을 위한 혁신적인 접근.",
+      "planId": "P1",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {}
+    },
+    "index": 1
+  },
+  "providerResponse": {
+    "conceptName": "소량 맞춤형 식재료 배달 서비스",
+    "conceptDefinition": "1~2인 가구를 위한 소량 맞춤형 식재료와 레시피 제공 서비스",
+    "introduction": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스입니다.",
+    "coreValue": "신선한 재료와 요리 레시피를 제공하여 음식물 쓰레기를 줄입니다.",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "식품 및 요리 서비스",
+    "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사.",
+    "targetRegion": "특정 지역에 대한 정보가 필요합니다.",
+    "revenueModel": "구독 기반 모델",
+    "price": "가격 정보가 필요합니다.",
+    "channels": "온라인 주문 시스템",
+    "differentiators": "소량 패키지 제공, 신선한 지역 재료 사용, 맞춤형 레시피 제공, 구독 모델 도입",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "소량 맞춤형 식재료 서비스의 수요 증가로 인한 시장 점유율 확대.",
+      "assumptions": [
+        "소량 식재료에 대한 소비자 수요 증가",
+        "1~2인 가구의 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "시장 조사 기반 추정",
+      "assumptions": [
+        "소량 식재료 서비스에 대한 인식 증가",
+        "온라인 쇼핑의 편리함"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+    "solutionMechanism": "고객의 요구에 맞춘 소량 식재료 배달 서비스입니다.",
+    "featureSet": [
+      "소량 패키지 제공",
+      "맞춤형 레시피 제공",
+      "정기 구독 서비스"
+    ],
+    "actorRoles": [
+      "소비자",
+      "농가",
+      "배송업체"
+    ],
+    "platformRole": "전자상거래 플랫폼",
+    "operatingModel": "직접 배송 및 재고 관리",
+    "partnerModel": "지역 농가와 협력",
+    "providerRole": "식재료 제공업체",
+    "sellerRole": "온라인 판매자",
+    "intermediaryRole": "배송 서비스 제공업체",
+    "transactionFlow": [
+      "고객 주문",
+      "주문 확인",
+      "식재료 준비",
+      "배송"
+    ],
+    "paymentFlow": [
+      "고객 결제",
+      "주문 확인 후 결제 처리"
+    ],
+    "personalDataUsage": [
+      "고객 맞춤형 추천을 위한 데이터 수집"
+    ],
+    "physicalActivities": [
+      "식재료 포장 및 배송"
+    ],
+    "partnerRequirements": [
+      "지역 농가와의 파트너십 체결"
+    ],
+    "qualificationRequirements": [
+      "식품 안전 규정 준수"
+    ],
+    "advertisingClaims": [
+      "신선한 재료 사용",
+      "맞춤형 서비스 제공"
+    ],
+    "constraintCompliance": [
+      "식품 안전 규정 준수 필요"
+    ]
+  },
+  "durationMs": 7107,
+  "timestamp": "2026-08-09T22:07:26.091646+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -29,6 +29,19 @@ def show_seed_analysis(analysis):
                    {"구분": "설명", "값": analysis.rationaleSummary}])
 
 
+def show_idea_interpretation(context):
+    keys = ("interpretedProblem", "interpretedTargetUsers", "usageContext", "industryCategory",
+            "researchScope", "conciseIdeaDefinition", "targetRegionInterpretation",
+            "relevantKnownCompetitorContext")
+    return _table([{"항목": key, "AI 이해 결과": context.interpretation.get(key)} for key in keys])
+
+
+def show_idea_readiness(context):
+    return {"readiness": context.readiness, "userFacingSummary": context.userFacingSummary,
+            "commitmentCandidates": context.commitmentCandidates,
+            "contradictions": context.contradictions, "questions": context.questions}
+
+
 def show_design_space(analysis):
     rows = ([{"분류": "SOURCE_LOCK", "필드": key, "값": value} for key, value in analysis.sourceLocks.items()]
             + [{"분류": "BUSINESS_LOCK", "필드": key, "값": value}
@@ -43,6 +56,21 @@ def show_portfolio_plans(plans):
     return _table([{"planId": p.planId, "제목": p.title, "핵심 mechanics": p.coreMechanism,
                     "운영": p.operatingApproach, "파트너": p.partnerApproach,
                     "거래": p.transactionApproach, "이행": p.fulfillmentApproach} for p in plans])
+
+
+def show_plan_pool_status(status):
+    return _table([_dump(status)]) if status else _table([])
+
+
+def show_mechanics(items):
+    rows = []
+    for item in items:
+        descriptor = item.mechanics
+        for field, value in descriptor:
+            rows.append({"entityId": getattr(item, "candidateId", getattr(item, "planId", "")),
+                         "dimension": field, "code": value.code,
+                         "labelKo": value.labelKo, "detailKo": value.detailKo})
+    return _table(rows)
 
 
 def compare_plans(assessments):
@@ -81,6 +109,19 @@ def show_legal_result(results):
     return _table([{"candidateId": item.candidateId, "route": item.route.value,
                     "source": item.sourceStatus, "요약": item.safeSummary,
                     "통제": ", ".join(item.requiredControls)} for item in results])
+
+
+def show_legal_failure(candidate_id, gateway, official_evidence_count=0):
+    failure = gateway.last_failure or {}
+    allowed = failure.get("allowedEvidenceReferenceIndexes", [])
+    invalid = failure.get("invalidIndexes", [])
+    return _table([{"Legal Candidate": candidate_id, "status": "FAILED",
+                    "failureCode": failure.get("safeProviderMessage") or failure.get("providerErrorType"),
+                    "officialEvidenceCount": official_evidence_count,
+                    "allowedIndexes": allowed, "invalidReturnedIndexes": invalid,
+                    "findingType": failure.get("findingType"),
+                    "findingIndex": failure.get("findingIndex"),
+                    "nextAction": "LEGAL CONTRACT FIX REQUIRED"}])
 
 
 def show_redesign_diff(parent, child):
@@ -124,10 +165,17 @@ def show_trace(events, stage: str | None = None):
 
 
 def show_provider_usage(usage):
-    return _table([{"논리 작업": usage.logicalOperations, "외부 Provider 호출": usage.externalProviderCalls,
-                    "논리 stage별": usage.callsByStage, "외부 stage별": usage.externalCallsByStage,
+    return _table([{"논리 작업": usage.logicalOperations,
+                    "상위 외부 작업": usage.topLevelExternalOperations,
+                    "논리 stage별": usage.callsByStage,
+                    "상위 외부 작업 stage별": usage.topLevelOperationsByStage,
                     "재시도": usage.retries, "소요(ms)": usage.durationMs,
                     "모드별": usage.modeCounts, "token": usage.tokenUsage, "보고 비용": usage.reportedCost}])
+
+
+def show_replay_manifest(gateway):
+    manifest = gateway.replay_manifest()
+    return {"status": manifest["status"], "entries": _table(manifest["entries"])}
 
 
 def show_schema_preflight(report):

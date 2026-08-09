@@ -51,9 +51,9 @@ Notebook 경로는 `ai/notebooks/concept_portfolio_v2_lab.ipynb`입니다.
 2. Kernel Restart 후 Run All을 실행합니다.
 3. `RUN SUMMARY`에서 `READY_FULL` 또는 의도한 `READY_LIMITED/NEEDS_INPUT`을 확인합니다.
 4. Final Portfolio, Plan/Candidate pairwise 표, Legal 결과, Trace를 확인합니다.
-5. Handoff에서 `market-analysis-seed-snapshot-v1`, `marketing-source-snapshot-v1`, `compatibility=PASS`를 확인합니다.
+5. Handoff에서 `market-analysis-seed-snapshot-v1`, `marketing-source-snapshot-v1`, `CONTRACT_PASS`를 확인합니다.
 
-단계별 셀은 `analyze_seed`, `plan_portfolio`, `validate_plans`, `expand_plans`, `validate_candidates`, `review_legal`, `resolve_legal`, `build_downstream_handoff` 순서입니다. 마지막에는 `run_full` 전체 실행 셀이 있습니다.
+단계별 셀은 00~46으로 고정되어 있습니다. Idea Brief 1회 파생 결과의 Safety·Interpretation·Readiness를 먼저 확인하고, Plan pool/reserve, actual Candidate mechanics, Legal C1, 나머지 Legal, 수동 hypothesis, 실제 Delta Legal, downstream 순으로 실행합니다.
 
 ## 6. 입력 변경
 
@@ -102,15 +102,15 @@ $env:LEGAL_REGISTRY_VERSION = "legal-registry-v1"
 12. Market/Marketing handoff의 `CONTRACT_PASS`를 확인합니다.
 13. One-click LIVE Run All은 위 단계가 모두 성공한 뒤 마지막에만 사용합니다.
 
-`auto_confirm_hypotheses=True`는 **Lab shortcut**입니다. MOCK 자동 회귀를 위한 편의 기능일 뿐 사용자 확인이나 production 결정을 뜻하지 않습니다. Notebook은 `AUTO_CONFIRM_HYPOTHESES = MODE == "MOCK"`로 두어 LIVE에서는 기본적으로 7개 hypothesis를 자동 확정하지 않습니다. 법률 민감 hypothesis를 수동 편집하면 delta legal 확인 전까지 downstream 계약은 실패합니다.
+`auto_confirm_hypotheses=True`는 **Lab shortcut**입니다. MOCK 자동 회귀를 위한 편의 기능일 뿐 사용자 확인이나 production 결정을 뜻하지 않습니다. Core 기본값과 Notebook의 `CONFIRM_ALL_PROPOSED`는 모두 `False`입니다. 사용자가 이를 `True`로 바꾸거나 `HYPOTHESIS_EDITS`를 입력해야 확정됩니다. 법률 민감 hypothesis를 편집하면 `RUN_DELTA_LEGAL=True`로 실제 `review_delta_legal`을 완료하기 전까지 downstream 계약은 실패합니다.
 
-상단에는 `LIVE Provider calls enabled`가 표시되고, Provider Usage는 논리 작업 수와 실제 외부 호출 수를 분리해 보여줍니다. Codex 검증에서는 실제 LIVE Provider와 MOLEG를 호출하지 않습니다.
+상단에는 LIVE 외부 작업 활성 여부가 표시됩니다. Provider Usage의 `topLevelExternalOperations`는 orchestration 상위 작업 수이며, Legal 내부의 AI/MOLEG 네트워크 호출 수와 같다고 해석하지 않습니다. Codex 검증에서는 실제 LIVE Provider와 MOLEG를 호출하지 않습니다.
 
 ## 8. REPLAY 사용
 
-LIVE 성공 응답은 설정된 recordings 디렉터리에 task type, schema version, canonical request hash, redacted request, response, duration, timestamp, provider metadata로 저장됩니다. 비밀키·Authorization header는 저장하지 않습니다.
+LIVE 성공 응답은 설정된 recordings 디렉터리에 operation, operationVersion, promptVersion, schemaVersion, canonicalInputHash, canonical request hash, redacted request, response, duration, timestamp, provider metadata로 저장됩니다. 비밀키·Authorization header는 저장하지 않습니다. Idea Brief 파생 결과도 동일 계약에 포함됩니다.
 
-`MODE = "REPLAY"`로 바꾸면 동일 canonical request hash 기록만 사용합니다. 기록이 없으면 `REPLAY_MISS`로 실패하며 MOCK으로 대체하지 않습니다.
+`MODE = "REPLAY"`로 바꾸면 현재 입력과 모든 버전이 일치하는 기록만 사용합니다. 프롬프트 버전이 바뀌거나 기록이 없으면 `REPLAY_MISS`로 실패하며 MOCK으로 대체하지 않습니다. 43번 셀은 현재 디렉터리를 `REPLAY_READY`, `REPLAY_PARTIAL`, `REPLAY_MISS`로 표시합니다.
 
 ## 9. 결과와 로그 읽기
 
@@ -136,6 +136,7 @@ LIVE 성공 응답은 설정된 recordings 디렉터리에 task type, schema ver
 - `MOLEG_AUTHENTICATION_FAILED`: `MOLEG_API_KEY`를 확인합니다.
 - `LEGAL_REGISTRY_VERSION_MISMATCH`: `LEGAL_REGISTRY_VERSION=legal-registry-v1`인지 확인합니다.
 - `LEGAL_SOURCE_EVIDENCE_UNAVAILABLE`: MOLEG 연결과 공식 근거 조회 결과를 확인합니다.
+- `LEGAL_EVIDENCE_BINDING_REPAIR_FAILED`: 표에 표시된 allowed/invalid index를 확인하고 Legal 계약 수정 후 C1부터 재실행합니다.
 - Handoff `FAIL`: 7개 hypothesis가 모두 `ACCEPTED` 또는 `USER_EDITED_ACCEPTED`인지 확인합니다.
 
 ## 11. Colab

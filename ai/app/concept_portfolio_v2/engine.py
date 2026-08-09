@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from app.legal.registry import RegistryError
 from app.providers import ProviderFailure
+from app.tasks.idea_brief.service import execute_idea_brief_derivation
 
 from .adapters import (
     CurrentDownstreamAdapter, CurrentIdeaBriefAdapter, CurrentSafetyAdapter, HYPOTHESIS_FIELDS,
@@ -22,17 +23,22 @@ from .candidate_governance import (
     DIRECT_CANDIDATE_LOCKS, candidate_result_to_draft, normalize_candidate_draft,
 )
 from .distinctness import deterministic_distinctness, descriptor_values
+from .language_policy import candidate_language_failures, plan_language_failures
+from .mechanics import derive_candidate_mechanics
 from .models import (
     CandidateEnvelope, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
-    DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff, ExplorationBreadth, FailureCode,
-    HypothesisDecision, LegalPrecheck, LegalReview, LegalRoute, PlanValidationResult,
-    PortfolioPlan, PortfolioPlanDraft, PortfolioStatus, ProviderMode, RejectedPlan, RunStage,
-    RunSummary, SchemaPreflightReport, TraceEvent,
+    DeltaLegalResult, DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff,
+    ExplorationBreadth, FailureCode, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
+    LegalReview, LegalRoute, PlanPoolStatus, PlanValidationResult, PortfolioPlan,
+    PortfolioPlanDraft, PortfolioStatus, ProviderMode, RejectedPlan, RunStage, RunSummary,
+    SchemaPreflightReport, TraceEvent,
 )
 from .plan_fidelity import deterministic_plan_fidelity
+from .plan_policy import assess_plan_content
 from .planning import normalize_plan_drafts
 from .providers import ProviderGateway, ReplayMiss
 from .schema_preflight import StructuredOutputSchemaCompatibilityError, v2_schema_preflight_report
+from .snapshot_hash import production_compatible_snapshot_hash
 
 
 OPEN_DIMENSIONS = [
@@ -77,6 +83,9 @@ class ConceptPortfolioEngine:
         self._last_plan_drafts: list[PortfolioPlanDraft] = []
         self._last_plan_pool: list[PortfolioPlan] = []
         self._last_design: DesignSpaceAnalysis | None = None
+        self._last_idea_context: IdeaBriefLabContext | None = None
+        self._last_plan_pool_status: PlanPoolStatus | None = None
+        self._delta_legal_results: list[DeltaLegalResult] = []
 
     @property
     def trace(self) -> list[TraceEvent]:
@@ -87,8 +96,12 @@ class ConceptPortfolioEngine:
         self._last_plan_drafts = []
         self._last_plan_pool = []
         self._last_design = None
+        self._last_idea_context = None
+        self._last_plan_pool_status = None
+        self._delta_legal_results = []
         self.gateway.usage = self.gateway.usage.model_copy(update={
-            "logicalOperations": 0, "externalProviderCalls": 0, "totalProviderCalls": 0,
+            "logicalOperations": 0, "topLevelExternalOperations": 0, "topLevelOperationsByStage": {},
+            "externalProviderCalls": 0, "totalProviderCalls": 0,
             "callsByStage": {}, "externalCallsByStage": {}, "retries": 0, "durationMs": 0,
             "modeCounts": {self.mode.value: 0}, "tokenUsage": None, "reportedCost": None})
         self._event(RunStage.CREATED, "CREATED", "RUNNING", "V2 Lab 실행을 생성했습니다.")
@@ -104,15 +117,35 @@ class ConceptPortfolioEngine:
             safeSummary=summary, decision=decision, reasonCode=reason,
         ))
 
+    async def derive_idea_brief(self, seed: CanonicalSeed) -> IdeaBriefLabContext:
+        if self._last_idea_context is not None:
+            return self._last_idea_context
+        if seed.interpretation:
+            context = self.seed_adapter.local_context(seed)
+        elif self.mode == ProviderMode.MOCK:
+            context = await self.gateway.call(
+                "SAFETY_CHECKING", "IDEA_BRIEF_DERIVATION",
+                {"input": self.seed_adapter.current_payload(seed)},
+                lambda: _async_value(self.seed_adapter.local_context(seed)), IdeaBriefLabContext,
+                operation_version="v2", prompt_version="idea-brief-current-v2")
+        else:
+            raw = await self.gateway.call(
+                "SAFETY_CHECKING", "IDEA_BRIEF_DERIVATION",
+                {"input": self.seed_adapter.current_payload(seed)},
+                lambda: execute_idea_brief_derivation(self.seed_adapter.current_payload(seed)),
+                operation_version="v2", prompt_version="idea-brief-current-v2")
+            context = self.seed_adapter.lab_context(raw)
+        seed.interpretation = dict(context.interpretation)
+        self._last_idea_context = context
+        self._event(RunStage.SAFETY_CHECKING, "IDEA_BRIEF_DERIVED", "PASS",
+                    f"Idea interpretation/readiness를 보존했습니다: {context.readiness.get('status')}",
+                    provider_call=True)
+        return context
+
     async def check_safety(self, seed: CanonicalSeed):
         self._event(RunStage.SAFETY_CHECKING, "STARTED", "RUNNING", "현행 Idea Brief Safety 의미로 검사합니다.")
-        self.gateway.usage.logicalOperations += 1
-        self.gateway.usage.callsByStage["SAFETY_CHECKING"] = \
-            self.gateway.usage.callsByStage.get("SAFETY_CHECKING", 0) + 1
-        self.gateway.usage.modeCounts[self.mode.value] = self.gateway.usage.modeCounts.get(self.mode.value, 0) + 1
-        if self.mode == ProviderMode.LIVE:
-            self.gateway.note_external_call("SAFETY_CHECKING")
-        result = await self.safety_adapter.evaluate(seed, self.mode)
+        context = await self.derive_idea_brief(seed)
+        result = context.safetyReview
         self._event(RunStage.SAFETY_CHECKING, "CHECKED", "PASS" if result.passed else "BLOCKED",
                     result.userFacingReason, decision=result.decision)
         return result
@@ -173,6 +206,11 @@ class ConceptPortfolioEngine:
         self._event(RunStage.PLANNING, "STARTED", "RUNNING", f"최대 {max_concepts}개 동적 plan을 요청합니다.")
         pool_size = min(8, max_concepts + 2)
         drafts = await self.gateway.plan_pool(seed, analysis, pool_size)
+        reserve_available = max(0, len(drafts) - max_concepts)
+        self._last_plan_pool_status = PlanPoolStatus(
+            requestedPoolSize=pool_size, returnedPoolSize=len(drafts), initialTarget=max_concepts,
+            reserveTarget=2, reserveAvailable=reserve_available,
+            status="RESERVE_READY" if len(drafts) >= pool_size else "RESERVE_SHORTFALL")
         self._last_plan_drafts = drafts
         self._event(RunStage.PLANNING, "DRAFTS_GENERATED", "PASS", f"Plan draft pool={len(drafts)}",
                     provider_call=True)
@@ -198,12 +236,26 @@ class ConceptPortfolioEngine:
                              max_concepts: int = 5) -> PlanValidationResult:
         self._event(RunStage.PLAN_VALIDATING, "STARTED", "RUNNING", "Lock·Anchor·Mechanics distinctness를 검사합니다.")
         accepted: list[PortfolioPlan] = []
+        reserve: list[PortfolioPlan] = []
         rejected: list[RejectedPlan] = []
         comparisons: list[DiversityAssessment] = []
         for plan in plans:
+            language_failures = plan_language_failures(plan)
+            if language_failures:
+                rejected.append(RejectedPlan(planId=plan.planId,
+                    reasonCode=FailureCode.CONTENT_LANGUAGE_MISMATCH,
+                    safeSummary="한국어 content policy 위반: " + ", ".join(language_failures)))
+                continue
             if any(plan.preservedLocks.get(key) != value for key, value in analysis.explicitBusinessLocks.items()):
                 rejected.append(RejectedPlan(planId=plan.planId, reasonCode=FailureCode.LOCK_VIOLATION,
                                              safeSummary="hard lock을 보존하지 못했습니다."))
+                continue
+            content_decision, content_reasons = assess_plan_content(plan, analysis)
+            if content_decision != "PASS":
+                lock_conflict = any("LOCK" in item for item in content_reasons)
+                rejected.append(RejectedPlan(planId=plan.planId,
+                    reasonCode=FailureCode.LOCK_VIOLATION if lock_conflict else FailureCode.ANCHOR_DRIFT,
+                    safeSummary=" ".join(content_reasons)))
                 continue
             if any(plan.preservedAnchors.get(key) != value for key, value in analysis.semanticAnchors.items()):
                 rejected.append(RejectedPlan(planId=plan.planId, reasonCode=FailureCode.ANCHOR_DRIFT,
@@ -235,11 +287,18 @@ class ConceptPortfolioEngine:
             elif len(accepted) < max_concepts:
                 accepted.append(plan)
             else:
-                rejected.append(RejectedPlan(
-                    planId=plan.planId, reasonCode=FailureCode.VARIATION_SPACE_LIMITED,
-                    safeSummary="요청 최대치 또는 분석된 다양성 수용량 밖의 plan입니다."))
+                reserve.append(plan)
         self._event(RunStage.PLAN_VALIDATING, "SELECTED", "PASS", f"Plans={len(accepted)} Rejected={len(rejected)}")
-        return PlanValidationResult(acceptedPlans=accepted, rejectedPlans=rejected, diversity=comparisons)
+        if (self._last_plan_pool_status is not None
+                and len(plans) == self._last_plan_pool_status.returnedPoolSize):
+            reserve_available = len(reserve)
+            self._last_plan_pool_status = self._last_plan_pool_status.model_copy(update={
+                "reserveAvailable": reserve_available,
+                "status": ("RESERVE_READY" if reserve_available >= self._last_plan_pool_status.reserveTarget
+                           else "RESERVE_SHORTFALL"),
+            })
+        return PlanValidationResult(acceptedPlans=accepted, reservePlans=reserve,
+                                    rejectedPlans=rejected, diversity=comparisons)
 
     async def expand_plans(self, seed: CanonicalSeed, plans: list[PortfolioPlan]) -> list[CandidateEnvelope]:
         self._event(RunStage.EXPANDING, "STARTED", "RUNNING", f"통과 plan {len(plans)}개를 확장합니다.")
@@ -254,9 +313,10 @@ class ConceptPortfolioEngine:
         draft = await self.gateway.expand(seed, plan, candidate_index)
         strategy = self._last_design.explorationBreadth if self._last_design else ExplorationBreadth.EXPLORE
         candidate = normalize_candidate_draft(draft, seed, strategy, candidate_index)
+        actual_mechanics = derive_candidate_mechanics(candidate)
         envelope = CandidateEnvelope(
             candidateId=candidate_id or f"C{candidate_index}", planId=plan.planId,
-            lineageId=lineage_id or f"L{candidate_index}", mechanics=plan.mechanics, candidate=candidate)
+            lineageId=lineage_id or f"L{candidate_index}", mechanics=actual_mechanics, candidate=candidate)
         self._event(RunStage.EXPANDING, "EXPANDED", "PASS", f"{plan.planId} → {envelope.candidateId}",
                     entity_id=envelope.candidateId, parent_id=plan.planId, provider_call=True)
         return envelope
@@ -272,10 +332,13 @@ class ConceptPortfolioEngine:
                                           left.mechanics, right.mechanics)
 
     async def validate_candidates(self, seed: CanonicalSeed, plans: list[PortfolioPlan],
-                                  candidates: list[CandidateEnvelope]) -> tuple[list[CandidateEnvelope], list[CandidateValidation]]:
+                                  candidates: list[CandidateEnvelope], *,
+                                  comparison_context: list[CandidateEnvelope] | None = None
+                                  ) -> tuple[list[CandidateEnvelope], list[CandidateValidation]]:
         self._event(RunStage.CANDIDATE_VALIDATING, "STARTED", "RUNNING", "Candidate 검사를 분리 수행합니다.")
         plan_by_id = {item.planId: item for item in plans}
-        accepted: list[CandidateEnvelope] = []
+        accepted: list[CandidateEnvelope] = list(comparison_context or [])
+        newly_accepted: list[CandidateEnvelope] = []
         reports = []
         locks = {item.fieldKey: item.value for item in seed.fields
                  if item.fieldKey in DIRECT_CANDIDATE_LOCKS
@@ -283,17 +346,29 @@ class ConceptPortfolioEngine:
         anchor = self._last_design.opportunityAnchor if self._last_design else build_opportunity_anchor(seed)
         for envelope in candidates:
             candidate, plan = envelope.candidate, plan_by_id[envelope.planId]
+            actual_mechanics = derive_candidate_mechanics(candidate)
+            if actual_mechanics != envelope.mechanics:
+                envelope = envelope.model_copy(update={"mechanics": actual_mechanics})
+            language_failures = candidate_language_failures(candidate)
             lock_ok = all(not hasattr(candidate, key) or str(getattr(candidate, key)) == value
                           for key, value in locks.items())
-            anchor_decision, _ = assess_anchor(anchor, candidate.problemScenario, candidate.targetUsers)
+            anchor_decision, _ = assess_anchor(
+                anchor, candidate.problemScenario, candidate.targetUsers,
+                " ".join([candidate.conceptDefinition, candidate.solutionMechanism,
+                           candidate.operatingModel, candidate.partnerModel]),
+                self._last_design.explorationBreadth if self._last_design else ExplorationBreadth.EXPLORE)
             anchor_ok = anchor_decision == "PASS"
-            fidelity_decision, matched, missing = deterministic_plan_fidelity(plan, candidate)
+            fidelity_decision, matched, missing = deterministic_plan_fidelity(plan, candidate, actual_mechanics)
             if fidelity_decision == "AMBIGUOUS":
                 semantic_fidelity = await self.gateway.judge_fidelity(plan, candidate)
                 fidelity_decision = semantic_fidelity.decision
             fidelity = fidelity_decision == "PASS"
             duplicate = None
             for previous in accepted:
+                if (previous.lineageId == envelope.lineageId
+                        and (previous.candidateId == envelope.parentCandidateId
+                             or envelope.candidateId == previous.parentCandidateId)):
+                    continue
                 comparison = self.compare_candidates(previous, envelope)
                 if comparison.decision == "AMBIGUOUS":
                     semantic = await self.gateway.judge_distinctness(
@@ -311,18 +386,22 @@ class ConceptPortfolioEngine:
             if not anchor_ok: reasons.append(FailureCode.ANCHOR_DRIFT)
             if not fidelity: reasons.append(FailureCode.PLAN_FIDELITY_FAILED)
             if duplicate: reasons.append(FailureCode.CANDIDATE_DUPLICATE)
+            if language_failures: reasons.append(FailureCode.CONTENT_LANGUAGE_MISMATCH)
             passed = not reasons
-            if passed: accepted.append(envelope)
+            if passed:
+                accepted.append(envelope)
+                newly_accepted.append(envelope)
             reports.append(CandidateValidation(candidateId=envelope.candidateId, schemaValid=True,
                                                hardLockPreserved=lock_ok, semanticAnchorPreserved=anchor_ok,
                                                planFidelity=fidelity, anchorDecision=anchor_decision,
                                                fidelityDecision=fidelity_decision,
+                                               contentLanguageValid=not language_failures,
                                                accepted=passed, reasonCodes=reasons,
                                                safeSummary="검사 통과" if passed else ", ".join(item.value for item in reasons)))
             self._event(RunStage.CANDIDATE_VALIDATING, "VALIDATED", "PASS" if passed else "REJECTED",
                         reports[-1].safeSummary, entity_id=envelope.candidateId,
                         reason=reasons[0] if reasons else None)
-        return accepted, reports
+        return newly_accepted, reports
 
     def legal_precheck(self, envelope: CandidateEnvelope) -> LegalPrecheck:
         candidate = envelope.candidate
@@ -345,7 +424,7 @@ class ConceptPortfolioEngine:
 
     async def review_legal_candidate(self, seed: CanonicalSeed,
                                      envelope: CandidateEnvelope) -> LegalReview:
-        review = await self.gateway.review_legal(envelope.candidateId, envelope.candidate, seed.fixtureName)
+        review = await self.gateway.review_legal(envelope.candidateId, envelope.candidate, seed)
         self._event(RunStage.LEGAL_REVIEWING, "REVIEWED", review.route.value, review.safeSummary,
                     entity_id=envelope.candidateId, decision=review.route.value, provider_call=True)
         return review
@@ -367,8 +446,11 @@ class ConceptPortfolioEngine:
                 final.append(envelope)
                 continue
             if review.route == LegalRoute.NEEDS_INPUT:
-                required_inputs.append({key: getattr(review, key) for key in
-                    ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")})
+                scope = "GLOBAL" if review.conflictingLock else review.inputScope
+                required_inputs.append({"candidateId": envelope.candidateId, "scope": scope,
+                    **{key: getattr(review, key) for key in
+                    ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
+                    "safeSummary": review.safeSummary})
                 continue
             lineage_redesigns = redesigns_by_lineage.get(envelope.lineageId, 0)
             if review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE and lineage_redesigns < self.max_redesigns:
@@ -382,22 +464,19 @@ class ConceptPortfolioEngine:
                 child = CandidateEnvelope(candidateId=child_id, planId=envelope.planId, lineageId=envelope.lineageId,
                                           parentCandidateId=envelope.candidateId,
                                           redesignRound=envelope.redesignRound + 1,
-                                          mechanics=envelope.mechanics, candidate=child_value)
-                validated_children, _ = await self.validate_candidates(
-                    seed, [plan_by_id[envelope.planId]], [child])
-                anchor_decision, _ = assess_anchor(
-                    self._last_design.opportunityAnchor, child.candidate.problemScenario,
-                    child.candidate.targetUsers)
-                duplicate_other = next((item for item in final
-                    if self.compare_candidates(item, child).decision == "DUPLICATE"), None)
-                if not validated_children or anchor_decision != "PASS":
-                    all_reviews.append(LegalReview(candidateId=child_id, route=LegalRoute.SYSTEM_FAILURE,
-                        sourceStatus="VALIDATION", safeSummary="Redesign이 parent identity를 벗어났습니다."))
-                elif duplicate_other:
-                    all_reviews.append(LegalReview(candidateId=child_id, route=LegalRoute.REPLAN_REQUIRED,
-                        sourceStatus="VALIDATION", safeSummary="Redesign이 다른 portfolio concept과 중복됩니다."))
+                                          mechanics=derive_candidate_mechanics(child_value), candidate=child_value)
+                validated_children, child_reports = await self.validate_candidates(
+                    seed, [plan_by_id[envelope.planId]], [child], comparison_context=final)
+                if not validated_children:
+                    duplicate = bool(child_reports and FailureCode.CANDIDATE_DUPLICATE in child_reports[0].reasonCodes)
+                    all_reviews.append(LegalReview(candidateId=child_id,
+                        route=LegalRoute.REPLAN_REQUIRED if duplicate else LegalRoute.SYSTEM_FAILURE,
+                        sourceStatus="VALIDATION",
+                        safeSummary=("Redesign이 다른 portfolio concept과 중복됩니다." if duplicate else
+                            "Redesign이 opportunity/Plan/LOCK 검사를 통과하지 못했습니다.")))
                 else:
-                    child_review = await self.gateway.review_legal(child_id, child.candidate, seed.fixtureName)
+                    child = validated_children[0]
+                    child_review = await self.gateway.review_legal(child_id, child.candidate, seed)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child)
@@ -418,12 +497,40 @@ class ConceptPortfolioEngine:
                 for candidate_plan in self._last_plan_pool:
                     if candidate_plan.planId in used_plan_ids:
                         continue
-                    comparisons = [deterministic_distinctness(
-                        candidate_plan.planId, existing.planId,
-                        candidate_plan.mechanics, existing.mechanics) for existing in plans]
+                    candidate_plan_result = await self.validate_plans(
+                        [candidate_plan], self._last_design, max_concepts=1)
+                    if not candidate_plan_result.acceptedPlans:
+                        continue
+                    comparisons = []
+                    for existing in plans:
+                        comparison = deterministic_distinctness(
+                            candidate_plan.planId, existing.planId,
+                            candidate_plan.mechanics, existing.mechanics)
+                        if comparison.decision == "AMBIGUOUS":
+                            semantic = await self.gateway.judge_distinctness(
+                                "PLAN", candidate_plan.model_dump(mode="json"), existing.model_dump(mode="json"))
+                            comparison = comparison.model_copy(update={"decision": semantic.decision,
+                                "semanticJudgeUsed": True, "whyDistinct": semantic.safeSummary})
+                        comparisons.append(comparison)
                     if all(item.decision == "DISTINCT" for item in comparisons):
                         replacement = candidate_plan
                         break
+                if replacement is None and self._last_design is not None:
+                    targeted = await self.gateway.replacement_plans(
+                        seed, self._last_design, self._last_plan_pool, count=2)
+                    start = len(self._last_plan_pool) + 1
+                    normalized = [PortfolioPlan.model_validate({
+                        **draft.model_dump(mode="json"), "planId": f"RP{start + offset}",
+                        "preservedAnchors": self._last_design.semanticAnchors,
+                        "preservedLocks": self._last_design.explicitBusinessLocks,
+                    }) for offset, draft in enumerate(targeted)]
+                    self._last_plan_pool.extend(normalized)
+                    plan_by_id.update({item.planId: item for item in normalized})
+                    for candidate_plan in normalized:
+                        plan_result = await self.validate_plans([candidate_plan], self._last_design, max_concepts=1)
+                        if plan_result.acceptedPlans:
+                            replacement = candidate_plan
+                            break
                 if replacement:
                     index = min(5, len(final) + 1)
                     plan_result = await self.validate_plans([replacement], self._last_design, max_concepts=1)
@@ -432,13 +539,13 @@ class ConceptPortfolioEngine:
                     child = await self.expand_plan(
                         seed, replacement, index, candidate_id=f"{envelope.candidateId}-REPLAN",
                         lineage_id=f"L-REPLAN-{replanned + 1}")
-                    validated_children, _ = await self.validate_candidates(seed, [replacement], [child])
-                    duplicate_final = any(self.compare_candidates(item, child).decision == "DUPLICATE"
-                                          for item in final)
-                    if not validated_children or duplicate_final:
+                    validated_children, _ = await self.validate_candidates(
+                        seed, [replacement], [child], comparison_context=final)
+                    if not validated_children:
                         continue
+                    child = validated_children[0]
                     child_review = await self.gateway.review_legal(
-                        child.candidateId, child.candidate, seed.fixtureName)
+                        child.candidateId, child.candidate, seed)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child); replanned += 1
@@ -461,7 +568,8 @@ class ConceptPortfolioEngine:
         return result
 
     def confirm_hypotheses(self, hypotheses: list[HypothesisDecision],
-                           edits: dict[str, Any] | None = None) -> list[HypothesisDecision]:
+                           edits: dict[str, Any] | None = None, *,
+                           confirm_all_proposed: bool = False) -> list[HypothesisDecision]:
         edits = edits or {}
         result = []
         for item in hypotheses:
@@ -469,6 +577,9 @@ class ConceptPortfolioEngine:
                 result.append(item)
                 continue
             edited = item.hypothesisType in edits
+            if not edited and not confirm_all_proposed:
+                result.append(item)
+                continue
             value = edits.get(item.hypothesisType, item.proposedValue)
             legal_sensitive = item.hypothesisType in {
                 "TARGET_REGION", "REVENUE_MODEL", "PRICE", "CHANNELS", "DIFFERENTIATORS"}
@@ -482,10 +593,43 @@ class ConceptPortfolioEngine:
         return result
 
     def mark_delta_legal_reviewed(self, hypotheses: list[HypothesisDecision],
-                                  approved_types: set[str]) -> list[HypothesisDecision]:
-        return [item.model_copy(update={"legalReviewStatus": "PASSED"})
+                                  result: DeltaLegalResult) -> list[HypothesisDecision]:
+        if not isinstance(result, DeltaLegalResult) or not result.approved:
+            raise ValueError("실제 ACCEPT DeltaLegalResult가 필요합니다")
+        approved_types = set(result.hypothesisTypes)
+        return [item.model_copy(update={"legalReviewStatus": result.status})
                 if item.hypothesisType in approved_types and item.deltaLegalRequired else item
                 for item in hypotheses]
+
+    async def review_delta_legal(self, seed: CanonicalSeed, selected: CandidateEnvelope,
+                                 hypotheses: list[HypothesisDecision]) -> DeltaLegalResult:
+        pending = [item for item in hypotheses if item.deltaLegalRequired and item.legalReviewStatus == "PENDING"]
+        if not pending:
+            raise ValueError("Delta Legal이 필요한 hypothesis가 없습니다")
+        updates = {HYPOTHESIS_FIELDS[item.hypothesisType]: item.finalValue for item in pending}
+        semantics = []
+        pending_fields = set(updates)
+        for semantic in selected.candidate.valueSemantics:
+            if semantic.fieldKey in pending_fields:
+                semantics.append(semantic.model_copy(update={"source": "USER_INPUT",
+                    "decision": "USER_EDITED_ACCEPTED"}))
+            else:
+                semantics.append(semantic)
+        changed_candidate = selected.candidate.model_copy(update={**updates, "valueSemantics": semantics})
+        review = await self.gateway.review_legal(
+            f"{selected.candidateId}-DELTA", changed_candidate, seed)
+        hypothesis_types = [item.hypothesisType for item in pending]
+        approved = review.route == LegalRoute.ACCEPT
+        token = production_compatible_snapshot_hash({
+            "candidateId": selected.candidateId, "hypothesisTypes": hypothesis_types,
+            "changedCandidate": changed_candidate.model_dump(mode="json"),
+            "legalReview": review.model_dump(mode="json")})
+        result = DeltaLegalResult(reviewToken=token, candidateId=selected.candidateId,
+            hypothesisTypes=hypothesis_types,
+            status=review.productionStatus or ("PASSED" if approved else "FAILED"),
+            approved=approved, legalReview=review)
+        self._delta_legal_results.append(result)
+        return result
 
     def build_downstream_handoff(self, seed: CanonicalSeed, selected: CandidateEnvelope,
                                  hypotheses: list[HypothesisDecision], legal_reviews: list[LegalReview]) -> DownstreamHandoff:
@@ -493,6 +637,10 @@ class ConceptPortfolioEngine:
                       if item.candidateId == selected.candidateId and item.route == LegalRoute.ACCEPT), None)
         if not legal:
             raise ValueError("선택 Concept의 ACCEPT Legal 결과가 없습니다")
+        delta_reviews = [item.model_dump(mode="json") for item in self._delta_legal_results
+                         if item.candidateId == selected.candidateId]
+        if delta_reviews:
+            legal = legal.model_copy(update={"deltaLegalReviews": delta_reviews})
         handoff = self.downstream_adapter.build(seed, selected.candidateId, selected.candidate, hypotheses, legal)
         self._event(RunStage.PORTFOLIO_VALIDATING, "HANDOFF_VALIDATED", handoff.compatibility,
                     f"downstream contract compatibility={handoff.compatibility}", entity_id=selected.candidateId,
@@ -501,7 +649,7 @@ class ConceptPortfolioEngine:
 
     async def run_full(self, payload: dict[str, Any] | CanonicalSeed, max_concepts: int = 5,
                        exploration_override: ExplorationBreadth | str | None = None,
-        auto_confirm_hypotheses: bool = True) -> ConceptPortfolioResult:
+        auto_confirm_hypotheses: bool = False) -> ConceptPortfolioResult:
         self._reset()
         started = time.perf_counter()
         rejected: list[RejectedPlan] = []
@@ -546,7 +694,9 @@ class ConceptPortfolioEngine:
             concepts, legal_reviews, required_inputs, redesigned, replanned = await self.resolve_legal(
                 seed, validated.acceptedPlans, candidates, legal_reviews)
             concepts = concepts[:max_concepts]
-            if required_inputs:
+            global_inputs = [item for item in required_inputs if item.get("scope") == "GLOBAL"]
+            unresolved_candidates = [item for item in required_inputs if item.get("scope") == "CANDIDATE"]
+            if global_inputs:
                 status, terminal = PortfolioStatus.NEEDS_INPUT, RunStage.NEEDS_INPUT
             elif not concepts:
                 status, terminal = PortfolioStatus.FAILED, RunStage.FAILED
@@ -558,7 +708,7 @@ class ConceptPortfolioEngine:
                 selected = concepts[0]
                 hypotheses = self.build_or_load_current_hypothesis_contract(selected)
                 if auto_confirm_hypotheses:
-                    hypotheses = self.confirm_hypotheses(hypotheses)
+                    hypotheses = self.confirm_hypotheses(hypotheses, confirm_all_proposed=True)
                     handoff = self.build_downstream_handoff(seed, selected, hypotheses, legal_reviews)
             self._event(terminal, "COMPLETED", status.value, f"최종 Portfolio={len(concepts)}", decision=status.value)
             duration = int((time.perf_counter() - started) * 1000)
@@ -568,10 +718,11 @@ class ConceptPortfolioEngine:
                 legalRedesigned=redesigned, replanned=replanned, finalPortfolio=len(concepts),
                 portfolioStatus=status, selectedConcept=selected.candidate.conceptName if selected else None,
                 downstreamHandoff=handoff.compatibility if handoff else "PENDING_HYPOTHESIS_CONFIRMATION",
-                providerCalls=self.gateway.usage.totalProviderCalls, totalDurationMs=duration)
+                providerCalls=self.gateway.usage.topLevelExternalOperations, totalDurationMs=duration)
             return ConceptPortfolioResult(runId=self._context.run_id, runStatus=status, runtimeStage=terminal,
                 requestedMaxConcepts=max_concepts, producedConceptCount=len(concepts), concepts=concepts,
                 rejectedPlans=rejected, legalSummaries=legal_reviews, requiredInputs=required_inputs,
+                unresolvedCandidates=unresolved_candidates,
                 trace=self.trace, providerUsage=self.gateway.usage,
                 downstreamReadiness=handoff.compatibility if handoff else "PENDING_HYPOTHESIS_CONFIRMATION",
                 selectedConceptId=selected.candidateId if selected else None, handoff=handoff, runSummary=summary)
@@ -602,8 +753,13 @@ class ConceptPortfolioEngine:
         return ConceptPortfolioResult(runId=self._context.run_id, runStatus=status, runtimeStage=stage,
             requestedMaxConcepts=maximum, producedConceptCount=len(concepts), concepts=concepts,
             rejectedPlans=rejected, legalSummaries=legal, requiredInputs=required, trace=self.trace,
+            unresolvedCandidates=[item for item in required if item.get("scope") == "CANDIDATE"],
             providerUsage=self.gateway.usage, downstreamReadiness=readiness)
 
 
 def _locked_count(seed: CanonicalSeed) -> int:
     return sum(item.decisionState == "LOCKED" and bool(item.value.strip()) for item in seed.fields)
+
+
+async def _async_value(value):
+    return value

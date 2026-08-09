@@ -122,7 +122,7 @@ class FindingEvidenceCoverage(StrictModel):
 
 class EvidenceBackedFinding(StrictModel):
     text: str = Field(min_length=1, max_length=1000)
-    evidenceReferenceIndexes: list[int] = Field(max_length=20)
+    evidenceReferenceIndexes: list[int] = Field(min_length=1, max_length=20)
 
 
 class ConceptLegalReviewProviderResult(StrictModel):

@@ -150,13 +150,15 @@ def test_provider_design_gap_cannot_escalate_to_user(monkeypatch):
 def test_invalid_evidence_index_is_rejected(monkeypatch):
     with pytest.raises(ProviderFailure) as raised:
         execute(monkeypatch, provider_result=provider(index=99))
-    assert raised.value.reason == "EVIDENCE_REFERENCE_INVALID"
+    assert raised.value.reason == "LEGAL_EVIDENCE_BINDING_REPAIR_FAILED"
+    assert raised.value.safe_diagnostics["invalidIndexes"] == [99]
+    assert raised.value.safe_diagnostics["repairAttempted"] is True
 
 
 def test_each_material_finding_requires_evidence(monkeypatch):
     with pytest.raises(ProviderFailure) as raised:
         execute(monkeypatch, provider_result=provider(coverage=False))
-    assert raised.value.reason == "CONCEPT_LEGAL_FINDING_EVIDENCE_REQUIRED"
+    assert raised.value.reason == "PYDANTIC_RESULT_VALIDATION_FAILED"
 
 
 def test_source_timeout_remains_retryable_dependency_failure(monkeypatch):
@@ -178,3 +180,53 @@ def test_user_safe_result_has_source_metadata_without_raw_provider_or_official_t
     assert "boundedOfficialText" not in serialized
     assert "제한된 조문 원문" not in serialized
     assert "providerBody" not in serialized
+
+
+def test_runtime_schema_only_allows_actual_evidence_indexes():
+    schema = service._runtime_provider_schema([0, 2])
+    assert schema["properties"]["evidenceReferenceIndexes"]["items"]["enum"] == [0, 2]
+
+
+def test_runtime_schema_constrains_nested_finding_indexes_and_requires_one():
+    schema = service._runtime_provider_schema([0, 1, 2])
+    nested = schema["$defs"]["EvidenceBackedFinding"]["properties"]["evidenceReferenceIndexes"]
+    assert nested["items"]["enum"] == [0, 1, 2]
+    assert nested["minItems"] == 1
+
+
+def test_targeted_citation_repair_succeeds_without_changing_judgment(monkeypatch):
+    calls = []
+
+    async def fake_source(*_):
+        return source()
+
+    async def fake_provider(_system, _user, **kwargs):
+        calls.append(kwargs["task_type"])
+        return provider(index=99) if len(calls) == 1 else provider(index=0)
+
+    monkeypatch.setattr(service, "execute_legal_source_pipeline", fake_source)
+    monkeypatch.setattr(service, "execute_structured_prompt", fake_provider)
+    result = asyncio.run(service.execute_concept_legal_review(task_input()))
+    assert result["evidenceReferenceIndexes"] == [0]
+    assert calls == ["CONCEPT_LEGAL_REVIEW", "LEGAL_EVIDENCE_BINDING_REPAIR"]
+
+
+def test_targeted_citation_repair_cannot_mutate_legal_judgment(monkeypatch):
+    calls = 0
+
+    async def fake_source(*_):
+        return source()
+
+    async def fake_provider(*_, **__):
+        nonlocal calls
+        calls += 1
+        value = provider(index=99) if calls == 1 else provider(index=0)
+        if calls == 2:
+            value["safeUserSummary"] = "판단까지 바꾼 결과"
+        return value
+
+    monkeypatch.setattr(service, "execute_legal_source_pipeline", fake_source)
+    monkeypatch.setattr(service, "execute_structured_prompt", fake_provider)
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_concept_legal_review(task_input()))
+    assert raised.value.reason == "LEGAL_EVIDENCE_BINDING_REPAIR_MUTATED_RESULT"

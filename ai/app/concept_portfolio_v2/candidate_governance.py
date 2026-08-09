@@ -7,9 +7,13 @@ from app.tasks.concept_candidate.models import (
 )
 
 from .models import CanonicalSeed, ExplorationBreadth
+from .language_policy import is_governance_placeholder
 
 
 DIRECT_CANDIDATE_LOCKS = {"targetRegion", "revenueModel", "price", "channels", "differentiators"}
+HYPOTHESIS_CANDIDATE_FIELDS = DIRECT_CANDIDATE_LOCKS | {
+    "preMarketSomShareHypothesis", "preMarketSomHypothesis",
+}
 CONSTRAINT_FIELDS = {"budgetConstraint", "teamConstraint", "timelineConstraint", "otherConstraint"}
 
 
@@ -18,13 +22,13 @@ def _semantics(seed: CanonicalSeed, strategy: ExplorationBreadth, candidate_inde
     original = strategy == ExplorationBreadth.AS_IS and candidate_index == 1
     result: list[ValueSemantics] = []
     for key in SemanticField.__args__:
-        if key in ("preMarketSomShareHypothesis", "preMarketSomHypothesis"):
+        if key in HYPOTHESIS_CANDIDATE_FIELDS:
+            direct = by_key.get(key)
+            if key in DIRECT_CANDIDATE_LOCKS and direct and direct.decisionState == "LOCKED" and direct.value.strip():
+                source = direct.source if direct.source in {"USER_INPUT", "USER_CONFIRMED"} else "USER_INPUT"
+                result.append(ValueSemantics(fieldKey=key, source=source, authority="LOCKED", decision="ACCEPTED"))
+                continue
             result.append(ValueSemantics(fieldKey=key, source="AI_HYPOTHESIS", authority="OPEN", decision="PROPOSED"))
-            continue
-        direct = by_key.get(key)
-        if key in DIRECT_CANDIDATE_LOCKS and direct and direct.decisionState == "LOCKED" and direct.value.strip():
-            source = direct.source if direct.source in {"USER_INPUT", "USER_CONFIRMED"} else "USER_INPUT"
-            result.append(ValueSemantics(fieldKey=key, source=source, authority="LOCKED", decision="ACCEPTED"))
             continue
         if original and key in {"conceptDefinition", "problemScenario", "targetUsers"}:
             result.append(ValueSemantics(fieldKey=key, source="USER_INPUT", authority="LOCKED", decision="ACCEPTED"))
@@ -42,6 +46,16 @@ def normalize_candidate_draft(draft: ConceptCandidateDraft, seed: CanonicalSeed,
         field = by_key.get(key)
         if field and field.decisionState == "LOCKED" and field.value.strip():
             values[key] = field.value
+    open_defaults = {
+        "targetRegion": "대한민국",
+        "revenueModel": "수익모델 검증 필요",
+        "price": "가격 검증 필요",
+        "channels": "채널 검증 필요",
+        "differentiators": "차별화 가설 검증 필요",
+    }
+    for key, default in open_defaults.items():
+        if not values.get(key) or is_governance_placeholder(values[key]):
+            values[key] = default
     original = strategy == ExplorationBreadth.AS_IS and candidate_index == 1
     if original:
         values["conceptDefinition"] = seed.ideaOverview

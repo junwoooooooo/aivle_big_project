@@ -10,6 +10,7 @@ from app.concept_portfolio_v2.models import (
 )
 from app.concept_portfolio_v2.plan_fidelity import deterministic_plan_fidelity
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
+from app.concept_portfolio_v2.mechanics import dimension
 from app.concept_portfolio_v2.schema_preflight import inspect_strict_schema
 from app.concept_portfolio_v2.snapshot_hash import production_compatible_snapshot_hash
 
@@ -131,7 +132,8 @@ def test_14_clear_distinct_plans_are_distinct():
 def test_15_ambiguous_plan_pair_invokes_semantic_judge():
     engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_minimal")); engine._reset()
     analysis = run(engine.analyze_seed(seed)); plans = run(engine.plan_portfolio(seed, analysis))
-    changed = plans[0].mechanics.model_copy(update={"commercialModel": "A_DIFFERENT_LABEL"})
+    changed = plans[0].mechanics.model_copy(update={
+        "commercialModel": dimension("OTHER", "다른 수익 구조")})
     pair = [plans[0], plans[0].model_copy(update={"planId": "PX", "mechanics": changed})]
     result = run(engine.validate_plans(pair, analysis, max_concepts=2))
     assert result.diversity[0].semanticJudgeUsed is True
@@ -149,7 +151,8 @@ def test_16_candidate_paraphrase_clone_is_duplicate():
 def test_17_candidate_with_two_material_mechanics_differences_is_distinct():
     engine, _, _, _, _, candidates = staged()
     mechanics = candidates[0].mechanics.model_copy(update={
-        "commercialModel": "OTHER_COMMERCIAL", "fulfillmentModel": "OTHER_FULFILLMENT"})
+        "commercialModel": dimension("AD_SUPPORTED", "광고 기반 무료 모델"),
+        "fulfillmentModel": dimension("DIGITAL_ONLY", "디지털 제공")})
     other = candidates[0].model_copy(update={"candidateId": "OTHER", "mechanics": mechanics,
         "candidate": candidates[0].candidate.model_copy(update={
             "conceptName": "다른 구조", "solutionMechanism": "다른 공급 구조",
@@ -161,7 +164,7 @@ def test_18_plan_wording_difference_with_same_mechanics_passes_fidelity():
     _, _, _, plans, _, candidates = staged()
     paraphrased = plans[0].model_copy(update={"coreMechanism": "수요예측 방식의 정기 소분"})
     decision, matched, _ = deterministic_plan_fidelity(paraphrased, candidates[0].candidate)
-    assert decision == "PASS" and "solutionMechanism" in matched
+    assert decision == "PASS" and "solutionMechanismType" in matched
 
 
 def test_19_candidate_breaking_plan_mechanism_fails_fidelity():
@@ -169,7 +172,8 @@ def test_19_candidate_breaking_plan_mechanism_fails_fidelity():
     broken = candidates[0].model_copy(update={"candidate": candidates[0].candidate.model_copy(update={
         "solutionMechanism": "광고 배너 판매", "operatingModel": "광고 게재",
         "partnerModel": "광고주", "transactionFlow": ["광고 노출"],
-        "revenueModel": "광고비", "physicalActivities": ["없음"]})})
+        "featureSet": ["광고 배너"], "conceptDefinition": "광고 배너를 판매하는 서비스",
+        "revenueModel": "광고비", "physicalActivities": ["디지털 광고"]})})
     accepted, reports = run(engine.validate_candidates(seed, validated.acceptedPlans, [broken]))
     assert not accepted and reports[0].fidelityDecision == "FAIL"
     assert any(code.value == "PLAN_FIDELITY_FAILED" for code in reports[0].reasonCodes)
@@ -215,9 +219,9 @@ def test_23_redesign_clone_of_other_final_concept_routes_to_replan():
 def test_24_replan_reenters_full_candidate_validation():
     engine = ConceptPortfolioEngine(); seen = []
     original = engine.validate_candidates
-    async def wrapped(seed, plans, candidates):
+    async def wrapped(seed, plans, candidates, **kwargs):
         seen.extend(item.candidateId for item in candidates)
-        return await original(seed, plans, candidates)
+        return await original(seed, plans, candidates, **kwargs)
     engine.validate_candidates = wrapped
     result = run(engine.run_full(fixture("legal_replan")))
     assert "C1-REPLAN" in seen and any(item.candidateId == "C1-REPLAN" for item in result.concepts)
@@ -264,14 +268,14 @@ def test_30_java_equivalent_float_and_integer_hash_match():
 
 
 def test_31_market_legal_result_includes_partner_qualifications():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal"), auto_confirm_hypotheses=True))
     contract = fixture("downstream_contract_cross_contract")["marketAnalysisSeedSnapshot"]
     legal = result.handoff.marketAnalysisSeedSnapshot["legalResult"]
     assert set(contract["requiredLegalResult"]) <= legal.keys()
 
 
 def test_32_market_analysis_seed_required_shape_passes():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal"), auto_confirm_hypotheses=True))
     handoff = result.handoff
     contract = fixture("downstream_contract_cross_contract")["marketAnalysisSeedSnapshot"]
     assert handoff.structureStatus == "STRUCTURE_PASS"
@@ -280,7 +284,7 @@ def test_32_market_analysis_seed_required_shape_passes():
 
 
 def test_33_marketing_source_required_shape_passes():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal"), auto_confirm_hypotheses=True))
     contract = fixture("downstream_contract_cross_contract")["marketingSourceSnapshot"]
     assert result.handoff.marketingSourceSnapshot["contract"] == contract["contract"]
     assert set(contract["requiredTopLevel"]) <= result.handoff.marketingSourceSnapshot.keys()
@@ -291,7 +295,8 @@ def test_34_incomplete_seven_hypotheses_fail_downstream_contract():
     result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
     selected = result.concepts[0]
     engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_minimal"))
-    hypotheses = engine.confirm_hypotheses(engine.build_or_load_current_hypothesis_contract(selected))[:-1]
+    hypotheses = engine.confirm_hypotheses(
+        engine.build_or_load_current_hypothesis_contract(selected), confirm_all_proposed=True)[:-1]
     legal = next(item for item in result.legalSummaries if item.candidateId == selected.candidateId)
     handoff = engine.downstream_adapter.build(seed, selected.candidateId, selected.candidate, hypotheses, legal)
     assert handoff.contractStatus == "CONTRACT_FAIL"
@@ -299,7 +304,7 @@ def test_34_incomplete_seven_hypotheses_fail_downstream_contract():
 
 
 def test_35_manual_legal_sensitive_edit_requires_delta_legal():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal"), auto_confirm_hypotheses=True))
     engine = ConceptPortfolioEngine()
     hypotheses = engine.build_or_load_current_hypothesis_contract(result.concepts[0])
     edited = engine.confirm_hypotheses(hypotheses, {"CHANNELS": "오프라인 방문판매"})
@@ -333,7 +338,8 @@ def test_38_schema_failure_is_terminal_with_zero_external_calls():
 
 
 def test_39_full_mock_normal_reaches_contract_pass():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    result = run(ConceptPortfolioEngine().run_full(
+        fixture("food_minimal"), auto_confirm_hypotheses=True))
     assert result.runStatus.value in {"READY_FULL", "READY_LIMITED"}
     assert result.handoff.contractStatus == "CONTRACT_PASS"
     assert result.providerUsage.logicalOperations > 0 and result.providerUsage.externalProviderCalls == 0

@@ -11,11 +11,10 @@ from app.legal.registry import LegalRegistry
 from app.tasks.concept_candidate.models import ConceptCandidateResult
 from app.tasks.concept_legal_review.service import execute_concept_legal_review
 from app.tasks.idea_brief.models import FieldKey, IdeaBriefDerivationInput
-from app.tasks.idea_brief.service import execute_idea_brief_derivation
 
 from .models import (
-    CanonicalSeed, DownstreamHandoff, FieldMapping, HypothesisDecision, LegalReview,
-    LegalRoute, ProviderMode, SafetyResult, SeedField,
+    CanonicalSeed, DownstreamHandoff, FieldMapping, HypothesisDecision, IdeaBriefLabContext,
+    LegalReview, LegalRoute, ProviderMode, SafetyResult, SeedField,
 )
 from .snapshot_hash import production_compatible_snapshot_hash
 
@@ -90,20 +89,40 @@ class CurrentIdeaBriefAdapter:
                            for key in FieldKey.__args__],
         ).model_dump(mode="json")
 
+    @staticmethod
+    def lab_context(raw: dict[str, Any]) -> IdeaBriefLabContext:
+        return IdeaBriefLabContext.model_validate(raw)
+
+    @staticmethod
+    def local_context(seed: CanonicalSeed) -> IdeaBriefLabContext:
+        unsafe = any(word in (seed.ideaOverview + " " + seed.problem).casefold()
+                     for word in ("피싱", "불법 무기", "아동 성착취"))
+        interpretation = seed.interpretation or {
+            "interpretedProblem": seed.problem,
+            "interpretedTargetUsers": seed.targetUsers,
+            "usageContext": "사용자가 입력한 문제 상황에서 이용",
+            "industryCategory": "푸드테크",
+            "researchScope": "대한민국 내 관련 시장과 운영 구조",
+            "conciseIdeaDefinition": seed.ideaOverview,
+            "targetRegionInterpretation": next((item.value for item in seed.fields
+                if item.fieldKey == "targetRegion" and item.value.strip()), "대한민국 가설"),
+            "relevantKnownCompetitorContext": next((item.value for item in seed.fields
+                if item.fieldKey == "knownCompetitors" and item.value.strip()), "확인 필요"),
+        }
+        return IdeaBriefLabContext(
+            safetyReview=SafetyResult(
+                decision="BLOCK_OR_REFRAME" if unsafe else "ALLOW",
+                categories=["DANGEROUS_OR_ILLEGAL_DISTRIBUTION"] if unsafe else [], restrictions=[],
+                userFacingReason="안전한 방향으로 재구성이 필요합니다." if unsafe else "안전한 사업 아이디어로 확인했습니다."),
+            interpretation=interpretation, commitmentCandidates=[],
+            readiness={"status": "READY_FOR_REVIEW", "score": 100, "missingFieldKeys": []},
+            userFacingSummary="입력된 아이디어의 핵심 문제·대상·의도를 구조화했습니다.",
+            contradictions=[], questions=[])
+
 
 class CurrentSafetyAdapter:
     async def evaluate(self, seed: CanonicalSeed, mode: ProviderMode) -> SafetyResult:
-        if mode == ProviderMode.LIVE:
-            raw = await execute_idea_brief_derivation(CurrentIdeaBriefAdapter().current_payload(seed))
-            value = raw["safetyReview"]
-            return SafetyResult(**value)
-        unsafe = any(word in (seed.ideaOverview + " " + seed.problem).casefold()
-                     for word in ("피싱", "불법 무기", "아동 성착취"))
-        return SafetyResult(
-            decision="BLOCK_OR_REFRAME" if unsafe else "ALLOW",
-            categories=["DANGEROUS_OR_ILLEGAL_DISTRIBUTION"] if unsafe else [], restrictions=[],
-            userFacingReason="안전한 사업 아이디어로 확인했습니다." if not unsafe else "안전한 방향으로 재구성이 필요합니다.",
-        )
+        return CurrentIdeaBriefAdapter.local_context(seed).safetyReview
 
 
 def business_fingerprint(candidate: ConceptCandidateResult) -> BusinessFingerprint:
@@ -120,7 +139,7 @@ class CurrentLegalAdapter:
         return {"value": getattr(candidate, key), "source": semantic.source,
                 "authority": semantic.authority, "decision": semantic.decision}
 
-    def task_input(self, candidate: ConceptCandidateResult) -> dict[str, Any]:
+    def task_input(self, candidate: ConceptCandidateResult, seed: CanonicalSeed | None = None) -> dict[str, Any]:
         text = lambda key: self._governed(candidate, key)
         listed = lambda key: self._governed(candidate, key)
         sensitive = lambda key: {**text(key), "legalSensitivity": "LEGAL_SENSITIVE"}
@@ -138,13 +157,21 @@ class CurrentLegalAdapter:
             "hypotheses": {key: sensitive(key) for key in
                            ("targetRegion", "revenueModel", "price", "channels", "differentiators")},
         }
+        facts = []
+        if seed:
+            region = seed.by_key().get("targetRegion")
+            if (region and region.value.strip() and region.decisionState == "LOCKED"
+                    and region.source in {"USER_INPUT", "USER_CONFIRMED"}):
+                facts.append({"factKey": "fixedJurisdiction", "value": region.value,
+                              "source": "USER_INPUT", "authority": "LOCKED"})
         registry_version = LegalRegistry().version
         return {"legalFactPattern": pattern, "factPatternHash": _hash(pattern),
-                "externalFactContext": {"sourceSnapshotHash": _hash([]),
-                                        "registryVersion": registry_version, "facts": []}}
+                "externalFactContext": {"sourceSnapshotHash": _hash(facts),
+                                        "registryVersion": registry_version, "facts": facts}}
 
-    async def review(self, candidate_id: str, candidate: ConceptCandidateResult) -> LegalReview:
-        raw = await execute_concept_legal_review(self.task_input(candidate))
+    async def review(self, candidate_id: str, candidate: ConceptCandidateResult,
+                     seed: CanonicalSeed | None = None) -> LegalReview:
+        raw = await execute_concept_legal_review(self.task_input(candidate, seed))
         route = {
             "IMPLEMENTABLE": LegalRoute.ACCEPT, "IMPLEMENTABLE_WITH_CONTROLS": LegalRoute.ACCEPT,
             "REDESIGNABLE": LegalRoute.REDESIGN_WITHIN_LINEAGE,
@@ -177,6 +204,8 @@ class CurrentDownstreamAdapter:
             errors.append("Delta Legal 미완료 hypothesis: " + ", ".join(delta_pending))
         if legal.route != LegalRoute.ACCEPT:
             errors.append("선택 Concept Legal 결과가 ACCEPT가 아닙니다.")
+        if not seed.interpretation:
+            errors.append("Idea Brief AI interpretation이 비어 있습니다.")
         final_hypotheses: dict[str, Any] = {}
         output_keys = {"PRE_MARKET_SOM_SHARE": "preMarketSomShare", "PRE_MARKET_SOM": "preMarketSom"}
         for hypothesis_type, field in HYPOTHESIS_FIELDS.items():

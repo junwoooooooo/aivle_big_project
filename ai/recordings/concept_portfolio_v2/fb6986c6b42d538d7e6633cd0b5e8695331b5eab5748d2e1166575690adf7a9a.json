@@ -1,0 +1,242 @@
+{
+  "taskType": "EXPAND",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "fb6986c6b42d538d7e6633cd0b5e8695331b5eab5748d2e1166575690adf7a9a",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "plan": {
+      "title": "Leftover Recipe Generator",
+      "oneLineConcept": "An app that generates recipes based on leftover ingredients from meal kits.",
+      "coreMechanism": "Recipe generation based on user input",
+      "customerInteraction": "Interactive mobile app",
+      "valueDelivery": "Maximizing ingredient usage and minimizing waste",
+      "operatingApproach": "User-driven recipe suggestions",
+      "partnerApproach": "Partnerships with food bloggers for recipe content",
+      "transactionApproach": "Free app with premium recipe features",
+      "commercialApproach": "Ad-supported model with optional premium subscriptions",
+      "fulfillmentApproach": "Digital content delivery",
+      "mechanics": {
+        "solutionMechanismType": "Recipe generator",
+        "supplyModel": "User-generated content",
+        "fulfillmentModel": "Digital",
+        "platformRoleType": "Content provider",
+        "partnerStructureType": "Food bloggers",
+        "transactionModel": "Freemium",
+        "commercialModel": "Ad-supported",
+        "customerInteractionModel": "Mobile app engagement"
+      },
+      "differentiatingMechanics": [
+        "User-generated recipe suggestions",
+        "Focus on minimizing food waste",
+        "Integration with meal kit services",
+        "Community-driven content",
+        "Premium features for advanced recipes"
+      ],
+      "mainChanges": [
+        "Enhanced user engagement through community features",
+        "Increased recipe variety based on user input"
+      ],
+      "secondaryChanges": [
+        "Potential for partnerships with grocery stores",
+        "Expansion into meal planning services"
+      ],
+      "legalRiskHints": [
+        "Copyright issues with user-generated content",
+        "Privacy concerns with user data"
+      ],
+      "reasonForPortfolioRole": "To provide users with creative ways to use leftover ingredients.",
+      "planId": "P2",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      }
+    },
+    "index": 2
+  },
+  "providerResponse": {
+    "conceptName": "Leftover Recipe Generator",
+    "conceptDefinition": "An app that generates recipes based on leftover ingredients from meal kits.",
+    "introduction": "This service provides personalized small quantities of ingredients and guides users on recipes utilizing leftover ingredients.",
+    "coreValue": "Maximizing ingredient usage and minimizing waste.",
+    "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "Food Tech",
+    "researchScope": "Exploring user engagement and recipe generation based on user input.",
+    "targetRegion": ".",
+    "revenueModel": "Ad-supported model with optional premium subscriptions",
+    "price": "월 19,900원",
+    "channels": "모바일 앱",
+    "differentiators": "User-generated recipe suggestions, Focus on minimizing food waste, Integration with meal kit services, Community-driven content, Premium features for advanced recipes",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 5.0,
+      "horizonYears": 3,
+      "rationale": "Growing trend towards sustainable cooking and reducing food waste.",
+      "assumptions": [
+        "Increased awareness of food waste issues",
+        "Rising popularity of meal kit services",
+        "User engagement through community features"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "Year",
+      "calculationBasis": "Estimated user base growth and engagement metrics",
+      "assumptions": [
+        "Ad revenue will increase with user base",
+        "Premium subscriptions will contribute to revenue"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+    "solutionMechanism": "Recipe generation based on user input",
+    "featureSet": [
+      "Recipe generation",
+      "User-generated content",
+      "Community features",
+      "Premium recipe access"
+    ],
+    "actorRoles": [
+      "User",
+      "Food bloggers",
+      "Advertisers"
+    ],
+    "platformRole": "Content provider",
+    "operatingModel": "User-driven recipe suggestions",
+    "partnerModel": "Partnerships with food bloggers for recipe content",
+    "providerRole": "Recipe generator",
+    "sellerRole": "Premium subscription provider",
+    "intermediaryRole": "Advertiser",
+    "transactionFlow": [
+      "User downloads app",
+      "User inputs leftover ingredients",
+      "App generates recipes",
+      "User can access premium features"
+    ],
+    "paymentFlow": [
+      "User subscribes to premium features",
+      "Ad revenue generated from user engagement"
+    ],
+    "personalDataUsage": [
+      "User data for personalized recipe suggestions",
+      "Data analytics for improving user experience"
+    ],
+    "physicalActivities": [
+      "User interacts with app",
+      "User prepares recipes"
+    ],
+    "partnerRequirements": [
+      "Food bloggers to provide content",
+      "Advertisers for ad-supported model"
+    ],
+    "qualificationRequirements": [
+      "Partnership agreements with food bloggers",
+      "Compliance with data privacy regulations"
+    ],
+    "advertisingClaims": [
+      "Reduce food waste",
+      "Save money on groceries"
+    ],
+    "constraintCompliance": [
+      "Adherence to copyright laws for user-generated content",
+      "Compliance with privacy regulations regarding user data"
+    ]
+  },
+  "durationMs": 5892,
+  "timestamp": "2026-08-09T15:57:14.211269+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

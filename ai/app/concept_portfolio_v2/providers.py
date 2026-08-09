@@ -11,8 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field
-
 from app.providers import ProviderFailure, execute_structured_prompt
 from app.canonical_json import canonical_json
 from app.tasks.concept_candidate.models import (
@@ -20,6 +18,8 @@ from app.tasks.concept_candidate.models import (
 )
 
 from .adapters import CurrentLegalAdapter
+from .language_policy import candidate_language_failures, plan_language_failures
+from .mechanics import dimension
 from .models import (
     CanonicalSeed, DesignSpaceAnalysis, ExplorationBreadth, LegalReview, LegalRoute, MechanicsDescriptor,
     PlanDraftPool, PortfolioPlan, PortfolioPlanDraft, ProviderMode, ProviderUsage,
@@ -28,8 +28,11 @@ from .models import (
 from .schema_preflight import assert_strict_compatible
 
 
-PLAN_PROMPT_VERSION = "concept-portfolio-plan-v2.0"
-CANDIDATE_PROMPT_VERSION = "concept-portfolio-candidate-v2.0"
+PLAN_PROMPT_VERSION = "concept-portfolio-plan-v2.1"
+CANDIDATE_PROMPT_VERSION = "concept-portfolio-candidate-v2.1"
+DISTINCTNESS_PROMPT_VERSION = "concept-portfolio-distinctness-v2.1"
+FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v2.1"
+LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
 
 
 class PortfolioProvider(ABC):
@@ -43,7 +46,7 @@ class PortfolioProvider(ABC):
 
     @abstractmethod
     async def review_legal(self, candidate_id: str, candidate: ConceptCandidateResult,
-                           fixture_name: str) -> LegalReview: ...
+                           seed: CanonicalSeed) -> LegalReview: ...
 
     @abstractmethod
     async def redesign(self, seed: CanonicalSeed, plan: PortfolioPlan, candidate: ConceptCandidateResult,
@@ -56,6 +59,10 @@ class PortfolioProvider(ABC):
     @abstractmethod
     async def judge_fidelity(self, plan: PortfolioPlan,
                              candidate: ConceptCandidateResult) -> SemanticFidelityResult: ...
+
+    @abstractmethod
+    async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
+                                existing_plans: list[PortfolioPlan], count: int) -> list[PortfolioPlanDraft]: ...
 
 
 MECHANICS = [
@@ -80,6 +87,17 @@ MECHANIC_KEYS = [
     ("EXPERT_MEAL_GUIDANCE", "QUALIFIED_EXPERT_NETWORK", "SCHEDULED_DELIVERY", "GUIDANCE_PLATFORM", "QUALIFIED_EXPERT", "CONSULTATION_ORDER", "SERVICE_SUBSCRIPTION", "APPOINTMENT_APP"),
 ]
 
+MECHANIC_LABELS = [
+    ("정기 소분 구독", "중앙 소분 공급", "정기 배송", "직접 운영자", "지역 소분센터", "구독 거래", "구독료", "모바일 직접 이용"),
+    ("공동구매", "지역 소매점 공급망", "거점 수령", "거래 중개 플랫폼", "지역 소매점 제휴", "주문 집계", "거래 수수료", "커뮤니티 앱"),
+    ("레시피·재료 번들", "큐레이션 공급망", "주문형 배송", "큐레이션 마켓", "셰프·생산자 제휴", "번들 구매", "번들 판매", "콘텐츠 커머스"),
+    ("재고 인식·보충 코칭", "리테일 데이터 연계", "매장 픽업", "디지털 코치", "리테일 데이터 파트너", "추천 후 주문", "앱 구독료", "모바일 도우미"),
+    ("기업용 식재료 키트", "기업 공급망", "사무실 일괄 배송", "기업 서비스 운영자", "기업·급식 제휴", "기업 계약 주문", "기업 계약", "직원 포털"),
+    ("생산 전 수요 예약", "생산자 공급망", "생산자 직접 배송", "거래 중개 플랫폼", "생산자 네트워크", "사전 예약", "거래 수수료", "예약형 접점"),
+    ("무인 소분", "생활권 스테이션망", "무인 거점 수령", "스테이션 운영자", "공간·물류 제휴", "사용량 기반 거래", "사용량 기반 과금", "키오스크·앱"),
+    ("전문가 식단 동행", "자격 보유 전문가망", "예약 배송", "전문가 연결 플랫폼", "자격 보유 전문가", "상담 결합 주문", "상담 결합 구독", "상담 예약 앱"),
+]
+
 
 def _locked(seed: CanonicalSeed) -> dict[str, str]:
     return {item.fieldKey: item.value for item in seed.fields
@@ -89,16 +107,22 @@ def _locked(seed: CanonicalSeed) -> dict[str, str]:
 def _plan(seed: CanonicalSeed, index: int, mechanics_index: int | None = None) -> PortfolioPlanDraft:
     name, mechanism, commercial, partner, fulfillment = MECHANICS[mechanics_index if mechanics_index is not None else index]
     keys = MECHANIC_KEYS[mechanics_index if mechanics_index is not None else index]
+    labels = MECHANIC_LABELS[mechanics_index if mechanics_index is not None else index]
     return PortfolioPlanDraft(
-        title=name, oneLineConcept=f"{seed.targetUsers}를 위한 {name}",
+        title=name, oneLineConcept=f"{seed.ideaOverview}를 {name} 방식으로 구현",
         coreMechanism=mechanism, customerInteraction=f"{name} 전용 모바일·현장 접점",
         valueDelivery=f"{seed.problem}을 줄이는 {mechanism}", operatingApproach=mechanism,
         partnerApproach=partner, transactionApproach=commercial, commercialApproach=commercial,
         fulfillmentApproach=fulfillment,
         mechanics=MechanicsDescriptor(
-            solutionMechanismType=keys[0], supplyModel=keys[1], fulfillmentModel=keys[2],
-            platformRoleType=keys[3], partnerStructureType=keys[4], transactionModel=keys[5],
-            commercialModel=keys[6], customerInteractionModel=keys[7]),
+            solutionMechanismType=dimension(keys[0], labels[0]),
+            supplyModel=dimension(keys[1], labels[1]),
+            fulfillmentModel=dimension(keys[2], labels[2]),
+            platformRoleType=dimension(keys[3], labels[3]),
+            partnerStructureType=dimension(keys[4], labels[4]),
+            transactionModel=dimension(keys[5], labels[5]),
+            commercialModel=dimension(keys[6], labels[6]),
+            customerInteractionModel=dimension(keys[7], labels[7])),
         differentiatingMechanics=[mechanism, partner, commercial, fulfillment],
         mainChanges=["solutionMechanism", "operatingModel", "partnerModel"],
         secondaryChanges=["transactionFlow", "fulfillment"], legalRiskHints=[],
@@ -141,7 +165,12 @@ def _candidate(seed: CanonicalSeed, plan: PortfolioPlan, index: int, *, redesign
 class MockPortfolioProvider(PortfolioProvider):
     async def plan_pool(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
                         pool_size: int) -> list[PortfolioPlanDraft]:
-        count = 3 if seed.fixtureName == "limited_unique_plans" else pool_size
+        if seed.fixtureName == "limited_unique_plans":
+            count = 3
+        elif seed.fixtureName in {"plan_pool_shortfall", "no_reserve_legal_replan"}:
+            count = min(5, pool_size)
+        else:
+            count = pool_size
         plans = [_plan(seed, index, index % len(MECHANICS)) for index in range(count)]
         if seed.fixtureName == "duplicate_plans" and len(plans) >= 2:
             plans[1] = _plan(seed, 1, 0)
@@ -156,7 +185,7 @@ class MockPortfolioProvider(PortfolioProvider):
     async def expand(self, seed: CanonicalSeed, plan: PortfolioPlan,
                      candidate_index: int) -> ConceptCandidateDraft:
         draft = _candidate(seed, plan, candidate_index)
-        if seed.fixtureName == "replan_anchor_drift" and plan.planId in {"P6", "P7"}:
+        if seed.fixtureName == "replan_anchor_drift" and (plan.planId == "P7" or plan.planId.startswith("RP")):
             draft = draft.model_copy(update={"targetUsers": "기업 구내식당 담당자",
                                              "problemScenario": "대기업 급식 운영 효율화"})
         if seed.fixtureName == "provider_wrong_lock":
@@ -164,7 +193,8 @@ class MockPortfolioProvider(PortfolioProvider):
         return draft
 
     async def review_legal(self, candidate_id: str, candidate: ConceptCandidateResult,
-                           fixture_name: str) -> LegalReview:
+                           seed: CanonicalSeed) -> LegalReview:
+        fixture_name = seed.fixtureName
         first = candidate_id in {"C1", "C1-R1", "C1-REPLAN"}
         if ((fixture_name == "legal_redesign" and candidate_id == "C1")
                 or (fixture_name == "two_legal_redesigns" and candidate_id in {"C1", "C3"})
@@ -173,7 +203,7 @@ class MockPortfolioProvider(PortfolioProvider):
                                productionStatus="REDESIGNABLE",
                                sourceStatus="MOCK_OFFICIAL_EVIDENCE", safeSummary="동일 lineage 내 통제 보완이 필요합니다.",
                                redesignRequirements=["인허가 보유 파트너로 제공 주체를 제한"])
-        if fixture_name in {"legal_replan", "replan_anchor_drift"} and candidate_id == "C1":
+        if fixture_name in {"legal_replan", "replan_anchor_drift", "no_reserve_legal_replan"} and candidate_id == "C1":
             return LegalReview(candidateId=candidate_id, route=LegalRoute.REPLAN_REQUIRED,
                                productionStatus="REJECTED",
                                sourceStatus="MOCK_OFFICIAL_EVIDENCE", safeSummary="핵심 거래 구조를 유지할 수 없습니다.",
@@ -185,6 +215,13 @@ class MockPortfolioProvider(PortfolioProvider):
                                conflictingLock="channels", currentValue=candidate.channels,
                                requiredLegalChange="자격 보유 파트너 채널로 변경", reason="LOCKED 채널은 엔진이 변경할 수 없습니다.",
                                possibleUserAction="채널 LOCK을 해제하거나 자격 보유 파트너 채널을 확정하세요.")
+        if fixture_name == "candidate_needs_input" and candidate_id == "C1":
+            return LegalReview(candidateId=candidate_id, route=LegalRoute.NEEDS_INPUT,
+                               productionStatus="NEEDS_FACTS", inputScope="CANDIDATE",
+                               sourceStatus="MOCK_OFFICIAL_EVIDENCE",
+                               safeSummary="이 후보에만 필요한 외부 사실 확인이 남아 있습니다.",
+                               reason="후보별 인허가 보유 여부를 확인해야 합니다.",
+                               possibleUserAction="해당 후보의 인허가 보유 여부를 입력하세요.")
         return LegalReview(candidateId=candidate_id, route=LegalRoute.ACCEPT,
                            productionStatus="IMPLEMENTABLE_WITH_CONTROLS",
                            sourceStatus="MOCK_OFFICIAL_EVIDENCE", safeSummary="구조화된 MOCK 공식근거 계약상 수용 가능합니다.",
@@ -222,13 +259,27 @@ class MockPortfolioProvider(PortfolioProvider):
             missingMechanics=[] if passed else ["solutionMechanism"],
             safeSummary="Plan mechanics를 의미상 구현합니다." if passed else "Plan 핵심 mechanism이 구현되지 않았습니다.")
 
+    async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
+                                existing_plans: list[PortfolioPlan], count: int) -> list[PortfolioPlanDraft]:
+        used = {item.mechanics.solutionMechanismType.code for item in existing_plans}
+        result = []
+        for index in range(len(MECHANICS)):
+            draft = _plan(seed, index, index)
+            if draft.mechanics.solutionMechanismType.code not in used:
+                result.append(draft)
+            if len(result) == count:
+                break
+        return result
+
 
 class LivePortfolioProvider(PortfolioProvider):
     async def plan_pool(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
                         pool_size: int) -> list[PortfolioPlanDraft]:
         prompt = """같은 opportunity를 해결하되 business mechanics가 실질적으로 다른 동적 PortfolioPlan pool을 만든다.
 고정 lens나 정확히 5개를 강제하지 않는다. mechanics에는 각 구조를 비교할 짧은 normalized semantic label을 넣는다.
-planId, preservedAnchors, preservedLocks 같은 system metadata는 생성하지 않는다. strict schema만 반환한다."""
+mechanics.code는 안정적인 UPPER_SNAKE_CASE canonical code를, labelKo/detailKo는 한국어 설명을 쓴다.
+requestedPoolSize 수만큼 정확히 반환한다. planId, preservedAnchors, preservedLocks 같은 system metadata는 생성하지 않는다.
+JSON field/key와 internal canonical code를 제외한 모든 사용자-facing 사업 설명은 한국어(ko-KR)로 작성한다. strict schema만 반환한다."""
         schema = PlanDraftPool.model_json_schema()
         assert_strict_compatible(schema, "concept_portfolio_plan_draft_v2")
         raw = await execute_structured_prompt(
@@ -237,12 +288,23 @@ planId, preservedAnchors, preservedLocks 같은 system metadata는 생성하지 
                                ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_portfolio_plan_draft_v2",
             task_type="CONCEPT_PORTFOLIO_V2_PLAN")
-        return PlanDraftPool.model_validate(raw).plans
+        result = PlanDraftPool.model_validate(raw)
+        failures = sorted({field for plan in result.plans for field in plan_language_failures(plan)})
+        if failures:
+            correction = await execute_structured_prompt(
+                "기존 사업 의미와 mechanics.code를 바꾸지 말고 사용자-facing 문구만 한국어(ko-KR)로 1회 교정한다. strict schema만 반환한다.",
+                json.dumps({"previousResult": result.model_dump(mode="json"), "languageFailures": failures}, ensure_ascii=False),
+                response_schema=schema, schema_name="concept_portfolio_plan_draft_v2",
+                task_type="CONCEPT_PORTFOLIO_V2_PLAN_LANGUAGE_CORRECTION")
+            result = PlanDraftPool.model_validate(correction)
+        return result.plans
 
     async def expand(self, seed: CanonicalSeed, plan: PortfolioPlan,
                      candidate_index: int) -> ConceptCandidateDraft:
         prompt = """통과된 PortfolioPlan 하나를 현행 ConceptCandidateDraft 계약으로 확장한다.
-plan의 business mechanics와 사용자 lock/anchor를 보존한다. 법률 결론을 만들지 말고 strict schema만 반환한다."""
+plan의 business mechanics와 사용자 lock/anchor를 보존한다. governance state인 OPEN/LOCKED/MISSING을 사업값으로 쓰지 않는다.
+JSON field/key와 internal canonical code를 제외한 모든 사용자-facing 사업 설명은 한국어(ko-KR)로 작성한다.
+법률 결론을 만들지 말고 strict schema만 반환한다."""
         schema = ConceptCandidateDraft.model_json_schema()
         assert_strict_compatible(schema, "concept_portfolio_candidate_v2")
         raw = await execute_structured_prompt(
@@ -250,16 +312,25 @@ plan의 business mechanics와 사용자 lock/anchor를 보존한다. 법률 결�
                                 "plan": plan.model_dump(mode="json")}, ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_portfolio_candidate_v2",
             task_type="CONCEPT_PORTFOLIO_V2_CANDIDATE")
-        return ConceptCandidateDraft.model_validate(raw)
+        result = ConceptCandidateDraft.model_validate(raw)
+        failures = candidate_language_failures(result)
+        if failures:
+            correction = await execute_structured_prompt(
+                "기존 사업 의미와 수치·LOCK을 바꾸지 말고 사용자-facing 문구만 한국어(ko-KR)로 1회 교정한다. strict schema만 반환한다.",
+                json.dumps({"previousResult": result.model_dump(mode="json"), "languageFailures": failures}, ensure_ascii=False),
+                response_schema=schema, schema_name="concept_portfolio_candidate_v2",
+                task_type="CONCEPT_PORTFOLIO_V2_CANDIDATE_LANGUAGE_CORRECTION")
+            result = ConceptCandidateDraft.model_validate(correction)
+        return result
 
     async def review_legal(self, candidate_id: str, candidate: ConceptCandidateResult,
-                           fixture_name: str) -> LegalReview:
-        return await CurrentLegalAdapter().review(candidate_id, candidate)
+                           seed: CanonicalSeed) -> LegalReview:
+        return await CurrentLegalAdapter().review(candidate_id, candidate, seed)
 
     async def redesign(self, seed: CanonicalSeed, plan: PortfolioPlan, candidate: ConceptCandidateResult,
                        requirements: list[str], candidate_index: int) -> ConceptCandidateResult:
         from app.tasks.concept_redesign.service import execute_concept_redesign
-        legal_input = CurrentLegalAdapter().task_input(candidate)
+        legal_input = CurrentLegalAdapter().task_input(candidate, seed)
         raw = await execute_concept_redesign({"candidate": candidate.model_dump(mode="json"),
             "safeConstraints": requirements, "prohibitedVariants": [], "designGaps": requirements,
             "legalFactPattern": legal_input["legalFactPattern"]})
@@ -288,6 +359,20 @@ plan의 business mechanics와 사용자 lock/anchor를 보존한다. 법률 결�
             task_type="CONCEPT_PORTFOLIO_V2_PLAN_FIDELITY")
         return SemanticFidelityResult.model_validate(raw)
 
+    async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
+                                existing_plans: list[PortfolioPlan], count: int) -> list[PortfolioPlanDraft]:
+        schema = PlanDraftPool.model_json_schema()
+        assert_strict_compatible(schema, "concept_portfolio_replacement_plan_v2")
+        raw = await execute_structured_prompt(
+            "기존 Plan과 controlled mechanics가 다른 대체 Plan을 요청 수만큼 만든다. 모든 사용자-facing 문구는 한국어(ko-KR)로 작성한다. strict schema만 반환한다.",
+            json.dumps({"promptVersion": PLAN_PROMPT_VERSION, "seed": seed.model_dump(mode="json"),
+                        "designSpace": design.model_dump(mode="json"),
+                        "existingPlans": [item.model_dump(mode="json") for item in existing_plans],
+                        "requestedPoolSize": count}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_portfolio_replacement_plan_v2",
+            task_type="CONCEPT_PORTFOLIO_V2_REPLACEMENT_PLAN")
+        return PlanDraftPool.model_validate(raw).plans
+
 
 class ReplayMiss(RuntimeError):
     pass
@@ -297,16 +382,22 @@ class ProviderGateway:
     """호출 집계, LIVE 기록, strict REPLAY lookup을 한 곳에서 소유한다."""
 
     def __init__(self, mode: ProviderMode | str = ProviderMode.MOCK, *,
-                 recordings_dir: Path | None = None, provider: PortfolioProvider | None = None):
+                 recordings_dir: Path | None = None, provider: PortfolioProvider | None = None,
+                 record_mock_fixtures: bool = False):
         self.mode = ProviderMode(mode)
         self.recordings_dir = recordings_dir
         self.provider = provider or (LivePortfolioProvider() if self.mode == ProviderMode.LIVE else MockPortfolioProvider())
+        self.record_mock_fixtures = record_mock_fixtures
         self.usage = ProviderUsage(modeCounts={self.mode.value: 0})
         self.last_failure: dict[str, Any] | None = None
 
     @staticmethod
-    def request_hash(operation: str, payload: Any) -> str:
-        canonical = canonical_json({"operation": operation, "payload": payload})
+    def request_hash(operation: str, payload: Any, *, operation_version: str = "v1",
+                     prompt_version: str = "unversioned", schema_version: str = "2.0") -> str:
+        canonical_input_hash = "sha256:" + hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+        canonical = canonical_json({"operation": operation, "operationVersion": operation_version,
+                                    "promptVersion": prompt_version, "schemaVersion": schema_version,
+                                    "canonicalInputHash": canonical_input_hash})
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @staticmethod
@@ -319,13 +410,29 @@ class ProviderGateway:
             return [ProviderGateway.redact_secrets(item) for item in value]
         return value
 
+    @staticmethod
+    def json_value(value: Any) -> Any:
+        if hasattr(value, "model_dump"):
+            return ProviderGateway.json_value(value.model_dump(mode="json"))
+        if isinstance(value, dict):
+            return {key: ProviderGateway.json_value(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [ProviderGateway.json_value(item) for item in value]
+        return value
+
     def note_external_call(self, stage: str):
+        self.usage.topLevelExternalOperations += 1
+        self.usage.topLevelOperationsByStage[stage] = self.usage.topLevelOperationsByStage.get(stage, 0) + 1
         self.usage.externalProviderCalls += 1
         self.usage.totalProviderCalls = self.usage.externalProviderCalls
         self.usage.externalCallsByStage[stage] = self.usage.externalCallsByStage.get(stage, 0) + 1
 
-    async def call(self, stage: str, operation: str, payload: dict[str, Any], fn, response_model=None):
-        request_hash = self.request_hash(operation, payload)
+    async def call(self, stage: str, operation: str, payload: dict[str, Any], fn, response_model=None, *,
+                   operation_version: str = "v1", prompt_version: str = "unversioned",
+                   schema_version: str = "2.0"):
+        canonical_input_hash = "sha256:" + hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+        request_hash = self.request_hash(operation, payload, operation_version=operation_version,
+                                         prompt_version=prompt_version, schema_version=schema_version)
         started = time.perf_counter()
         self.usage.logicalOperations += 1
         self.usage.callsByStage[stage] = self.usage.callsByStage.get(stage, 0) + 1
@@ -338,7 +445,11 @@ class ProviderGateway:
                 if not path.exists():
                     raise ReplayMiss(f"REPLAY_MISS: {operation} {request_hash}")
                 record = json.loads(path.read_text(encoding="utf-8"))
-                if record.get("canonicalRequestHash") != request_hash:
+                if (record.get("canonicalRequestHash") != request_hash
+                        or record.get("operationVersion") != operation_version
+                        or record.get("promptVersion") != prompt_version
+                        or record.get("schemaVersion") != schema_version
+                        or record.get("canonicalInputHash") != canonical_input_hash):
                     raise ReplayMiss(f"REPLAY_MISS: hash mismatch {request_hash}")
                 raw = record["providerResponse"]
                 return response_model.model_validate(raw) if response_model else raw
@@ -357,15 +468,19 @@ class ProviderGateway:
                     fallback = (2_000, 5_000)[retry_number - 1]
                     delay_ms = min(15_000, max(1_000, failure.retry_after_ms or fallback))
                     await asyncio.sleep(delay_ms / 1000)
-            if self.mode == ProviderMode.LIVE and self.recordings_dir:
+            if (self.mode == ProviderMode.LIVE or self.record_mock_fixtures) and self.recordings_dir:
                 self.recordings_dir.mkdir(parents=True, exist_ok=True)
-                raw = result.model_dump(mode="json") if hasattr(result, "model_dump") else result
-                record = {"taskType": operation, "schemaVersion": "2.0",
+                raw = self.json_value(result)
+                record = {"taskType": operation, "operationVersion": operation_version,
+                          "promptVersion": prompt_version, "schemaVersion": schema_version,
+                          "canonicalInputHash": canonical_input_hash,
                           "canonicalRequestHash": request_hash,
                           "redactedRequest": self.redact_secrets(payload),
                           "providerResponse": raw, "durationMs": int((time.perf_counter() - started) * 1000),
                           "timestamp": datetime.now(timezone.utc).isoformat(),
-                          "providerMetadata": {"mode": "LIVE", "retries": retry_number}}
+                          "providerMetadata": {"mode": (
+                              "LIVE" if self.mode == ProviderMode.LIVE else "TEST_FIXTURE"
+                          ), "retries": retry_number}}
                 (self.recordings_dir / f"{request_hash}.json").write_text(
                     json.dumps(record, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
             return result
@@ -377,6 +492,7 @@ class ProviderGateway:
                 "providerErrorParam": failure.provider_error_param,
                 "safeProviderMessage": getattr(failure, "safe_provider_message", None) or failure.reason,
                 "retryable": failure.retryable,
+                **getattr(failure, "safe_diagnostics", {}),
             }
             raise
         finally:
@@ -386,36 +502,73 @@ class ProviderGateway:
     async def plan_pool(self, seed, design, pool_size):
         payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"), "poolSize": pool_size}
         raw = await self.call("PLANNING", "PLAN_POOL", payload,
-                              lambda: self.provider.plan_pool(seed, design, pool_size))
+                              lambda: self.provider.plan_pool(seed, design, pool_size),
+                              operation_version="v2.1", prompt_version=PLAN_PROMPT_VERSION)
         return [item if isinstance(item, PortfolioPlanDraft) else PortfolioPlanDraft.model_validate(item) for item in raw]
 
     async def expand(self, seed, plan, index):
         payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"), "index": index}
         return await self.call("EXPANDING", "EXPAND", payload,
-                               lambda: self.provider.expand(seed, plan, index), ConceptCandidateDraft)
+                               lambda: self.provider.expand(seed, plan, index), ConceptCandidateDraft,
+                               operation_version="v2.1", prompt_version=CANDIDATE_PROMPT_VERSION)
 
-    async def review_legal(self, candidate_id, candidate, fixture_name):
+    async def review_legal(self, candidate_id, candidate, seed):
         payload = {"candidateId": candidate_id, "candidate": candidate.model_dump(mode="json"),
-                   "fixtureName": fixture_name}
+                   "seed": seed.model_dump(mode="json")}
         return await self.call("LEGAL_REVIEWING", "LEGAL_REVIEW", payload,
-                               lambda: self.provider.review_legal(candidate_id, candidate, fixture_name), LegalReview)
+                               lambda: self.provider.review_legal(candidate_id, candidate, seed), LegalReview,
+                               operation_version="v3", prompt_version=LEGAL_OPERATION_VERSION)
 
     async def redesign(self, seed, plan, candidate, requirements, index):
         payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
                    "candidate": candidate.model_dump(mode="json"), "requirements": requirements, "index": index}
         return await self.call("LEGAL_RECOVERING", "REDESIGN", payload,
                                lambda: self.provider.redesign(seed, plan, candidate, requirements, index),
-                               ConceptCandidateResult)
+                               ConceptCandidateResult, operation_version="v2.1",
+                               prompt_version="concept-redesign-v2.1")
 
     async def judge_distinctness(self, kind, left, right):
         payload = {"kind": kind, "left": left, "right": right}
         return await self.call("DISTINCTNESS", "SEMANTIC_DISTINCTNESS", payload,
                                lambda: self.provider.judge_distinctness(kind, left, right),
-                               SemanticDistinctnessResult)
+                               SemanticDistinctnessResult, operation_version="v2.1",
+                               prompt_version=DISTINCTNESS_PROMPT_VERSION)
 
     async def judge_fidelity(self, plan, candidate):
         payload = {"plan": plan.model_dump(mode="json"),
                    "candidate": candidate.model_dump(mode="json")}
         return await self.call("CANDIDATE_VALIDATING", "PLAN_FIDELITY", payload,
                                lambda: self.provider.judge_fidelity(plan, candidate),
-                               SemanticFidelityResult)
+                               SemanticFidelityResult, operation_version="v2.1",
+                               prompt_version=FIDELITY_PROMPT_VERSION)
+
+    async def replacement_plans(self, seed, design, existing_plans, count=2):
+        payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"),
+                   "existingPlans": [item.model_dump(mode="json") for item in existing_plans], "count": count}
+        raw = await self.call("LEGAL_RECOVERING", "REPLACEMENT_PLAN", payload,
+                              lambda: self.provider.replacement_plans(seed, design, existing_plans, count),
+                              operation_version="v2.1", prompt_version=PLAN_PROMPT_VERSION)
+        return [item if isinstance(item, PortfolioPlanDraft) else PortfolioPlanDraft.model_validate(item) for item in raw]
+
+    def replay_manifest(self) -> dict[str, Any]:
+        entries = []
+        if self.recordings_dir and self.recordings_dir.exists():
+            for path in sorted(self.recordings_dir.glob("*.json")):
+                try:
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    continue
+                versioned = all(record.get(key) for key in (
+                    "operationVersion", "promptVersion", "schemaVersion", "canonicalInputHash"))
+                entries.append({"operation": record.get("taskType"), "hash": record.get("canonicalRequestHash"),
+                                "operationVersion": record.get("operationVersion"),
+                                "promptVersion": record.get("promptVersion"),
+                                "schemaVersion": record.get("schemaVersion"), "recordExists": True,
+                                "timestamp": record.get("timestamp"), "versionCompatible": versioned})
+        if not entries:
+            status = "REPLAY_MISS"
+        elif all(item["versionCompatible"] for item in entries):
+            status = "REPLAY_READY"
+        else:
+            status = "REPLAY_PARTIAL"
+        return {"status": status, "entries": entries}

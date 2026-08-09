@@ -20,7 +20,12 @@ Concept가 설계할 수 없는 외부 현실 사실에만 사용한다. 결제 
 파트너 역할 같은 설계 누락은 REDESIGNABLE과 redesignRequirements로 반환한다. 이 결과는 법률
 외부 사실을 확정하지 않아도 '해당 인허가를 보유한 파트너만 사용' 같은 강제 통제조건으로
 구조적으로 구현할 수 있을 때만 IMPLEMENTABLE_WITH_CONTROLS를 사용할 수 있으며 사실 보유를 추정하지 않는다.
+evidenceReferenceIndexes에는 입력의 allowedEvidenceReferenceIndexes에 있는 정수만 사용한다.
 자문이 아니다. strict schema만 반환한다."""
+
+REPAIR_PROMPT = """법률 판단, 상태, finding 문구, 통제, 요약을 변경하지 않는다.
+이전 결과의 evidenceReferenceIndexes만 supplied officialEvidence에 다시 연결한다.
+allowedEvidenceReferenceIndexes에 없는 번호나 새로운 근거를 만들지 않는다. strict schema만 반환한다."""
 
 REVIEW_LABEL = "공식 근거 기반 법률 구현 가능성 사전검토"
 REVIEW_LIMITATIONS = "공식 법령의 제한된 조문과 확인 시점을 기준으로 한 사전검토이며, 구체적 사실관계와 최신 시행 상태에 대한 전문가 확인이 필요할 수 있습니다."
@@ -134,6 +139,47 @@ def _validate_coverage(provider: ConceptLegalReviewProviderResult,
     return strings, coverage, sorted(cited)
 
 
+def _runtime_provider_schema(allowed_indexes: list[int]) -> dict:
+    schema = ConceptLegalReviewProviderResult.model_json_schema()
+    schema["properties"]["evidenceReferenceIndexes"]["items"]["enum"] = allowed_indexes
+    finding = schema["$defs"]["EvidenceBackedFinding"]["properties"]["evidenceReferenceIndexes"]
+    finding["items"]["enum"] = allowed_indexes
+    finding["minItems"] = 1
+    return schema
+
+
+def _binding_diagnostic(provider: ConceptLegalReviewProviderResult,
+                        evidence: list[OfficialEvidence]) -> dict:
+    allowed = sorted(item.referenceIndex for item in evidence)
+    returned = list(provider.evidenceReferenceIndexes)
+    invalid = sorted({item for item in returned if item not in allowed})
+    duplicates = sorted({item for item in returned if returned.count(item) > 1})
+    finding_type = None
+    finding_index = None
+    for field in ("requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants"):
+        for index, finding in enumerate(getattr(provider, field)):
+            refs = finding.evidenceReferenceIndexes
+            if not refs or len(refs) != len(set(refs)) or any(item not in allowed for item in refs):
+                finding_type, finding_index = field, index
+                invalid.extend(item for item in refs if item not in allowed)
+                duplicates.extend(item for item in refs if refs.count(item) > 1)
+                break
+        if finding_type:
+            break
+    return {"allowedEvidenceReferenceIndexes": allowed,
+            "returnedTopLevelIndexes": returned, "invalidIndexes": sorted(set(invalid)),
+            "duplicateIndexes": sorted(set(duplicates)), "findingType": finding_type,
+            "findingIndex": finding_index}
+
+
+def _judgment_without_references(provider: ConceptLegalReviewProviderResult) -> dict:
+    payload = provider.model_dump(mode="json")
+    payload.pop("evidenceReferenceIndexes", None)
+    for field in ("requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures", "prohibitedVariants"):
+        payload[field] = [item["text"] for item in payload[field]]
+    return payload
+
+
 async def execute_concept_legal_review(task_input: dict) -> dict:
     try:
         value = ConceptLegalReviewInput.model_validate(task_input)
@@ -166,11 +212,14 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
         "legalFactPattern": value.legalFactPattern.model_dump(mode="json"),
         "confirmedExternalFacts": [fact.model_dump(mode="json") for fact in value.externalFactContext.facts],
         "officialEvidence": [item.model_dump(mode="json") for item in evidence],
+        "allowedEvidenceReferenceIndexes": [item.referenceIndex for item in evidence],
         "unresolvedExternalFactQuestions": convertible,
     }
+    allowed_indexes = provider_input["allowedEvidenceReferenceIndexes"]
+    runtime_schema = _runtime_provider_schema(allowed_indexes)
     raw = await execute_structured_prompt(
         SYSTEM_PROMPT, json.dumps(provider_input, ensure_ascii=False, sort_keys=True, default=str),
-        response_schema=ConceptLegalReviewProviderResult.model_json_schema(),
+        response_schema=runtime_schema,
         schema_name="concept_legal_review_v3", task_type="CONCEPT_LEGAL_REVIEW",
     )
     try:
@@ -186,7 +235,40 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
                        if _question_kind(question) != "UNAVOIDABLE_EXTERNAL_FACT"]
         if design_gaps:
             return _terminal_result("REDESIGNABLE", design_gaps, evidence, value)
-    finding_strings, finding_evidence, evidence_union = _validate_coverage(provider, evidence)
+    try:
+        finding_strings, finding_evidence, evidence_union = _validate_coverage(provider, evidence)
+    except ProviderFailure as binding_failure:
+        if binding_failure.reason not in {
+                "EVIDENCE_REFERENCE_INVALID", "CONCEPT_LEGAL_FINDING_EVIDENCE_REQUIRED",
+                "CONCEPT_LEGAL_EVIDENCE_REQUIRED"}:
+            raise
+        first_diagnostic = _binding_diagnostic(provider, evidence)
+        repair_input = {"previousLegalResult": provider.model_dump(mode="json"),
+                        "officialEvidence": provider_input["officialEvidence"],
+                        "allowedEvidenceReferenceIndexes": allowed_indexes,
+                        "failureCode": binding_failure.reason}
+        repaired_raw = await execute_structured_prompt(
+            REPAIR_PROMPT, json.dumps(repair_input, ensure_ascii=False, sort_keys=True, default=str),
+            response_schema=runtime_schema, schema_name="concept_legal_review_v3_citation_repair",
+            task_type="LEGAL_EVIDENCE_BINDING_REPAIR")
+        try:
+            repaired = ConceptLegalReviewProviderResult.model_validate(repaired_raw)
+        except ValidationError as repair_validation:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_EVIDENCE_BINDING_REPAIR_FAILED", 502, False,
+                                  schema_name="concept_legal_review_v3_citation_repair",
+                                  safe_diagnostics={**first_diagnostic, "repairAttempted": True}) from repair_validation
+        if _judgment_without_references(repaired) != _judgment_without_references(provider):
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_EVIDENCE_BINDING_REPAIR_MUTATED_RESULT", 502, False,
+                                  schema_name="concept_legal_review_v3_citation_repair",
+                                  safe_diagnostics={**first_diagnostic, "repairAttempted": True})
+        try:
+            finding_strings, finding_evidence, evidence_union = _validate_coverage(repaired, evidence)
+            provider = repaired
+        except ProviderFailure as second_failure:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_EVIDENCE_BINDING_REPAIR_FAILED", 502, False,
+                                  schema_name="concept_legal_review_v3_citation_repair",
+                                  safe_diagnostics={**_binding_diagnostic(repaired, evidence),
+                                                    "repairAttempted": True}) from second_failure
     provider_values = provider.model_dump(exclude={
         "requiredControls", "requiredPartnersAndQualifications", "requiredDisclosures",
         "prohibitedVariants", "evidenceReferenceIndexes",

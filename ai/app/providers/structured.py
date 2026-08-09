@@ -19,7 +19,8 @@ class ProviderFailure(Exception):
                  upstream_status: int | None = None, provider_error_type: str | None = None,
                  provider_error_param: str | None = None, schema_name: str | None = None,
                  validation_fields: list[dict[str, str]] | None = None,
-                 retry_after_ms: int | None = None, safe_provider_message: str | None = None):
+                 retry_after_ms: int | None = None, safe_provider_message: str | None = None,
+                 safe_diagnostics: dict[str, Any] | None = None):
         super().__init__(reason)
         self.code = code
         self.reason = reason
@@ -32,6 +33,7 @@ class ProviderFailure(Exception):
         self.validation_fields = list(validation_fields or [])[:12]
         self.retry_after_ms = retry_after_ms
         self.safe_provider_message = safe_provider_message
+        self.safe_diagnostics = dict(safe_diagnostics or {})
 
 
 def _configuration(model_override: str | None = None) -> tuple[str, str, str]:

@@ -1,0 +1,237 @@
+{
+  "taskType": "EXPAND",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "1af5fde74ee67196097d4ed11be725ac3964b73a8255f9c2753f135e73d777b8",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "plan": {
+      "title": "Personalized Grocery Box",
+      "oneLineConcept": "A grocery delivery service offering personalized boxes based on user preferences.",
+      "coreMechanism": "Customized grocery delivery",
+      "customerInteraction": "Mobile app for customization",
+      "valueDelivery": "Convenient grocery shopping with reduced waste",
+      "operatingApproach": "Direct delivery from suppliers",
+      "partnerApproach": "Partnerships with local grocery stores",
+      "transactionApproach": "Pay-per-delivery model",
+      "commercialApproach": "Dynamic pricing based on demand",
+      "fulfillmentApproach": "Direct-to-consumer delivery",
+      "mechanics": {
+        "solutionMechanismType": "Grocery delivery",
+        "supplyModel": "Local sourcing",
+        "fulfillmentModel": "Direct delivery",
+        "platformRoleType": "Grocery marketplace",
+        "partnerStructureType": "Local grocery stores",
+        "transactionModel": "Pay-per-delivery",
+        "commercialModel": "Dynamic pricing",
+        "customerInteractionModel": "Mobile app engagement"
+      },
+      "differentiatingMechanics": [
+        "Personalized grocery selections",
+        "Focus on reducing food waste",
+        "Local sourcing of ingredients",
+        "Flexible delivery options",
+        "User-friendly app interface"
+      ],
+      "mainChanges": [
+        "Enhanced personalization features",
+        "Increased partnerships with local stores"
+      ],
+      "secondaryChanges": [
+        "Potential for loyalty programs",
+        "Expansion into meal planning services"
+      ],
+      "legalRiskHints": [
+        "Compliance with food delivery regulations",
+        "Consumer protection laws"
+      ],
+      "reasonForPortfolioRole": "To provide a convenient grocery shopping experience.",
+      "planId": "P4",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      }
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "Personalized Grocery Box",
+    "conceptDefinition": "A grocery delivery service offering personalized boxes based on user preferences.",
+    "introduction": "Convenient grocery shopping with reduced waste.",
+    "coreValue": "To provide a convenient grocery shopping experience.",
+    "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "Food Delivery",
+    "researchScope": "Market analysis on grocery delivery trends and consumer preferences.",
+    "targetRegion": "OPEN",
+    "revenueModel": "Pay-per-delivery model",
+    "price": "월 19,900원",
+    "channels": "모바일 앱",
+    "differentiators": "Personalized grocery selections, Focus on reducing food waste, Local sourcing of ingredients, Flexible delivery options, User-friendly app interface",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "Growing demand for personalized grocery services.",
+      "assumptions": [
+        "Increased awareness of food waste issues",
+        "Rising trend of online grocery shopping"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "Year",
+      "calculationBasis": "Estimated market size based on target demographics",
+      "assumptions": [
+        "Target market is 1-2 person households",
+        "Assumes 10% market penetration in 3 years"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+    "solutionMechanism": "Customized grocery delivery",
+    "featureSet": [
+      "Personalized grocery selections",
+      "Flexible delivery options",
+      "Recipe suggestions based on leftover ingredients"
+    ],
+    "actorRoles": [
+      "Customer",
+      "Local grocery store",
+      "Delivery personnel"
+    ],
+    "platformRole": "Grocery marketplace",
+    "operatingModel": "Direct delivery from suppliers",
+    "partnerModel": "Partnerships with local grocery stores",
+    "providerRole": "Grocery delivery service provider",
+    "sellerRole": "Local grocery stores",
+    "intermediaryRole": "N/A",
+    "transactionFlow": [
+      "Order placement via app",
+      "Payment processing",
+      "Delivery of groceries"
+    ],
+    "paymentFlow": [
+      "Pay-per-delivery"
+    ],
+    "personalDataUsage": [
+      "User preferences for grocery selection",
+      "Delivery address information"
+    ],
+    "physicalActivities": [
+      "Delivery of groceries to customer location"
+    ],
+    "partnerRequirements": [
+      "Local grocery stores must comply with food safety regulations",
+      "Partnership agreements for delivery logistics"
+    ],
+    "qualificationRequirements": [
+      "Vendors must have a valid business license",
+      "Compliance with local food delivery laws"
+    ],
+    "advertisingClaims": [
+      "Reduce food waste with personalized grocery boxes",
+      "Convenient delivery to your doorstep"
+    ],
+    "constraintCompliance": [
+      "Compliance with food delivery regulations",
+      "Consumer protection laws"
+    ]
+  },
+  "durationMs": 5636,
+  "timestamp": "2026-08-09T15:57:26.931257+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

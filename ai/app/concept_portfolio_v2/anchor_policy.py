@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from .models import CanonicalSeed, OpportunityAnchor
+from .models import CanonicalSeed, ExplorationBreadth, OpportunityAnchor
 
 
 STOPWORDS = {"위한", "하고", "싶은", "사용자", "서비스", "문제", "통해", "관련", "발생한다"}
@@ -27,7 +27,9 @@ def build_opportunity_anchor(seed: CanonicalSeed) -> OpportunityAnchor:
                              allowedSpecializations=specializations[:10], forbiddenDrifts=forbidden[:10])
 
 
-def assess_anchor(anchor: OpportunityAnchor, problem: str, target_users: str) -> tuple[str, str]:
+def assess_anchor(anchor: OpportunityAnchor, problem: str, target_users: str,
+                  solution_content: str = "",
+                  breadth: ExplorationBreadth = ExplorationBreadth.EXPLORE) -> tuple[str, str]:
     seed_target, candidate_target = _tokens(anchor.targetUserCore), _tokens(target_users)
     seed_problem, candidate_problem = _tokens(anchor.problemCore), _tokens(problem)
     enterprise_drift = bool(ENTERPRISE_DRIFT & candidate_target) and not bool(ENTERPRISE_DRIFT & seed_target)
@@ -36,7 +38,21 @@ def assess_anchor(anchor: OpportunityAnchor, problem: str, target_users: str) ->
     target_overlap = bool(seed_target & candidate_target)
     problem_overlap = bool(seed_problem & candidate_problem)
     if target_overlap and problem_overlap:
-        return "PASS", "핵심 opportunity를 유지한 허용 specialization입니다."
+        intent_seed = _tokens(anchor.intentCore)
+        intent_actual = _tokens(solution_content)
+        intent_overlap = intent_seed & intent_actual
+        supply_markers = {"식재료", "소량", "소분", "공급", "제공", "배송", "구매", "연결"}
+        if breadth == ExplorationBreadth.REFINE:
+            if intent_seed & supply_markers and not intent_actual & supply_markers:
+                return "FAIL", "REFINE 결과에서 원 아이디어의 공급·연결 intent가 사라졌습니다."
+            if solution_content and len(intent_overlap) < 2:
+                return "AMBIGUOUS", "Opportunity는 유지하지만 REFINE intent 보존이 경계선입니다."
+        if breadth == ExplorationBreadth.AS_IS and solution_content:
+            if intent_seed & supply_markers and not intent_actual & supply_markers:
+                return "FAIL", "AS_IS 결과에서 원 사업의 공급·연결 intent가 사라졌습니다."
+            if not intent_overlap:
+                return "FAIL", "AS_IS 결과가 원 사업 intent를 충분히 보존하지 못했습니다."
+        return "PASS", "핵심 opportunity와 exploration intent를 유지한 허용 specialization입니다."
     if not target_overlap and not problem_overlap:
         return "FAIL", "problem과 target opportunity가 모두 원 anchor에서 이탈했습니다."
     return "AMBIGUOUS", "한 anchor만 명확히 확인되어 semantic 판정이 필요합니다."

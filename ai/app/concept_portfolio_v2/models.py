@@ -61,6 +61,8 @@ class FailureCode(StrEnum):
     RESULT_SCHEMA_INVALID = "RESULT_SCHEMA_INVALID"
     REPLAY_MISS = "REPLAY_MISS"
     DOWNSTREAM_HANDOFF_INVALID = "DOWNSTREAM_HANDOFF_INVALID"
+    CONTENT_LANGUAGE_MISMATCH = "CONTENT_LANGUAGE_MISMATCH"
+    PLAN_POOL_RESERVE_SHORTFALL = "PLAN_POOL_RESERVE_SHORTFALL"
 
 
 class PortfolioStatus(StrEnum):
@@ -109,6 +111,16 @@ class SafetyResult(StrictModel):
         return self.decision != "BLOCK_OR_REFRAME"
 
 
+class IdeaBriefLabContext(StrictModel):
+    safetyReview: SafetyResult
+    interpretation: dict[str, Any]
+    commitmentCandidates: list[dict[str, Any]] = Field(default_factory=list)
+    readiness: dict[str, Any]
+    userFacingSummary: str
+    contradictions: list[dict[str, Any]] = Field(default_factory=list)
+    questions: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class OpportunityAnchor(StrictModel):
     problemCore: str
     targetUserCore: str
@@ -130,15 +142,21 @@ class DesignSpaceAnalysis(StrictModel):
     rationaleSummary: str
 
 
+class MechanicsDimension(StrictModel):
+    code: str = Field(pattern=r"^[A-Z][A-Z0-9_]{1,79}$")
+    labelKo: str = Field(min_length=1, max_length=200)
+    detailKo: str = Field(max_length=500)
+
+
 class MechanicsDescriptor(StrictModel):
-    solutionMechanismType: str
-    supplyModel: str
-    fulfillmentModel: str
-    platformRoleType: str
-    partnerStructureType: str
-    transactionModel: str
-    commercialModel: str
-    customerInteractionModel: str
+    solutionMechanismType: MechanicsDimension
+    supplyModel: MechanicsDimension
+    fulfillmentModel: MechanicsDimension
+    platformRoleType: MechanicsDimension
+    partnerStructureType: MechanicsDimension
+    transactionModel: MechanicsDimension
+    commercialModel: MechanicsDimension
+    customerInteractionModel: MechanicsDimension
 
 
 class PortfolioPlanDraft(StrictModel):
@@ -190,8 +208,18 @@ class RejectedPlan(StrictModel):
 
 class PlanValidationResult(StrictModel):
     acceptedPlans: list[PortfolioPlan]
+    reservePlans: list[PortfolioPlan] = Field(default_factory=list)
     rejectedPlans: list[RejectedPlan]
     diversity: list[DiversityAssessment]
+
+
+class PlanPoolStatus(StrictModel):
+    requestedPoolSize: int
+    returnedPoolSize: int
+    initialTarget: int
+    reserveTarget: int
+    reserveAvailable: int
+    status: str
 
 
 class CandidateEnvelope(StrictModel):
@@ -212,6 +240,7 @@ class CandidateValidation(StrictModel):
     planFidelity: bool
     anchorDecision: str = "PASS"
     fidelityDecision: str = "PASS"
+    contentLanguageValid: bool = True
     accepted: bool
     reasonCodes: list[FailureCode] = Field(default_factory=list)
     safeSummary: str
@@ -246,6 +275,8 @@ class LegalReview(StrictModel):
     requiredLegalChange: str | None = None
     reason: str | None = None
     possibleUserAction: str | None = None
+    inputScope: str = "CANDIDATE"
+    evidenceDiagnostics: dict[str, Any] = Field(default_factory=dict)
 
 
 class HypothesisDecision(StrictModel):
@@ -263,6 +294,15 @@ class HypothesisDecision(StrictModel):
     @property
     def accepted(self) -> bool:
         return self.decisionStatus in {"ACCEPTED", "USER_EDITED_ACCEPTED"} and self.finalValue is not None
+
+
+class DeltaLegalResult(StrictModel):
+    reviewToken: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    candidateId: str
+    hypothesisTypes: list[str] = Field(min_length=1, max_length=5)
+    status: str
+    approved: bool
+    legalReview: LegalReview
 
 
 class FieldMapping(StrictModel):
@@ -302,6 +342,9 @@ class TraceEvent(StrictModel):
 
 class ProviderUsage(StrictModel):
     logicalOperations: int = 0
+    topLevelExternalOperations: int = 0
+    topLevelOperationsByStage: dict[str, int] = Field(default_factory=dict)
+    # 하위 두 필드는 이전 Notebook/recording reader 호환용이다. HTTP call 수를 뜻하지 않는다.
     externalProviderCalls: int = 0
     totalProviderCalls: int = 0
     callsByStage: dict[str, int] = Field(default_factory=dict)
@@ -366,6 +409,7 @@ class ConceptPortfolioResult(StrictModel):
     rejectedPlans: list[RejectedPlan]
     legalSummaries: list[LegalReview]
     requiredInputs: list[dict[str, Any]]
+    unresolvedCandidates: list[dict[str, Any]] = Field(default_factory=list)
     trace: list[TraceEvent]
     providerUsage: ProviderUsage
     downstreamReadiness: str

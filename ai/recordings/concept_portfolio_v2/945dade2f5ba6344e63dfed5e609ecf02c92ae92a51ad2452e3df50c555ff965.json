@@ -1,0 +1,247 @@
+{
+  "taskType": "EXPAND",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "945dade2f5ba6344e63dfed5e609ecf02c92ae92a51ad2452e3df50c555ff965",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "plan": {
+      "title": "Meal Planning Assistant",
+      "oneLineConcept": "An app that assists users in planning meals based on their dietary preferences and leftovers.",
+      "coreMechanism": "Meal planning assistance",
+      "customerInteraction": "Interactive mobile app",
+      "valueDelivery": "Streamlined meal planning with reduced waste",
+      "operatingApproach": "User-driven meal planning",
+      "partnerApproach": "Collaboration with nutritionists",
+      "transactionApproach": "Freemium model with premium features",
+      "commercialApproach": "Ad-supported with optional subscriptions",
+      "fulfillmentApproach": "Digital content delivery",
+      "mechanics": {
+        "solutionMechanismType": "Meal planning",
+        "supplyModel": "User-generated content",
+        "fulfillmentModel": "Digital",
+        "platformRoleType": "Meal planning assistant",
+        "partnerStructureType": "Nutritionists",
+        "transactionModel": "Freemium",
+        "commercialModel": "Ad-supported",
+        "customerInteractionModel": "Mobile app engagement"
+      },
+      "differentiatingMechanics": [
+        "Focus on personalized meal planning",
+        "Integration with leftover recipes",
+        "Community-driven content",
+        "Premium features for advanced planning",
+        "User-friendly interface"
+      ],
+      "mainChanges": [
+        "Enhanced user engagement through community features",
+        "Increased recipe variety based on user input"
+      ],
+      "secondaryChanges": [
+        "Potential for partnerships with health organizations",
+        "Expansion into dietary-specific meal planning"
+      ],
+      "legalRiskHints": [
+        "Privacy concerns with user data",
+        "Compliance with health regulations"
+      ],
+      "reasonForPortfolioRole": "To assist users in effective meal planning.",
+      "planId": "P5",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      }
+    },
+    "index": 5
+  },
+  "providerResponse": {
+    "conceptName": "Meal Planning Assistant",
+    "conceptDefinition": "An app that assists users in planning meals based on their dietary preferences and leftovers.",
+    "introduction": "This service provides personalized ingredients in small quantities and guides users on recipes utilizing leftover ingredients.",
+    "coreValue": "Streamlined meal planning with reduced waste",
+    "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "Food Tech",
+    "researchScope": "Meal planning and food waste reduction",
+    "targetRegion": "OPEN",
+    "revenueModel": "Freemium model with premium features",
+    "price": "월 19,900원",
+    "channels": "모바일 앱",
+    "differentiators": "Focus on personalized meal planning, Integration with leftover recipes, Community-driven content, Premium features for advanced planning, User-friendly interface",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 10.0,
+      "horizonYears": 3,
+      "rationale": "Growing awareness of food waste and demand for personalized meal solutions.",
+      "assumptions": [
+        "Increased smartphone penetration among target users",
+        "Rising trend in health-conscious eating",
+        "Growing interest in meal planning apps"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "Year",
+      "calculationBasis": "Estimated user base growth and average revenue per user",
+      "assumptions": [
+        "Market size for meal planning apps is expanding",
+        "Users are willing to pay for premium features",
+        "Partnerships with nutritionists will enhance credibility"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+    "solutionMechanism": "Meal planning assistance through a mobile app that suggests recipes based on user preferences and available ingredients.",
+    "featureSet": [
+      "Personalized meal suggestions",
+      "Leftover recipe integration",
+      "Community recipe sharing",
+      "Nutritional information",
+      "Shopping list generation"
+    ],
+    "actorRoles": [
+      "User",
+      "Nutritionist",
+      "App Developer",
+      "Advertiser"
+    ],
+    "platformRole": "Meal planning assistant",
+    "operatingModel": "User-driven meal planning",
+    "partnerModel": "Collaboration with nutritionists",
+    "providerRole": "Content provider",
+    "sellerRole": "Subscription service provider",
+    "intermediaryRole": "Advertising partner",
+    "transactionFlow": [
+      "User selects meal preferences",
+      "App suggests recipes",
+      "User purchases ingredients",
+      "User prepares meals"
+    ],
+    "paymentFlow": [
+      "User subscribes to premium features",
+      "Advertisers pay for ad placements"
+    ],
+    "personalDataUsage": [
+      "User dietary preferences",
+      "User location for local ingredient sourcing",
+      "User feedback for app improvement"
+    ],
+    "physicalActivities": [
+      "Meal preparation",
+      "Grocery shopping"
+    ],
+    "partnerRequirements": [
+      "Nutritionists must have relevant certifications",
+      "Content contributors must adhere to quality standards"
+    ],
+    "qualificationRequirements": [
+      "App developers must have experience in food tech",
+      "Marketing team must understand food waste issues"
+    ],
+    "advertisingClaims": [
+      "Reduce food waste",
+      "Save money on groceries",
+      "Eat healthier with personalized meal plans"
+    ],
+    "constraintCompliance": [
+      "Compliance with health regulations",
+      "Adherence to privacy laws regarding user data"
+    ]
+  },
+  "durationMs": 6808,
+  "timestamp": "2026-08-09T15:57:33.741497+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
