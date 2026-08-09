@@ -19,12 +19,28 @@ generationStrategy, candidateIndex, originalCandidate, valueSemantics, source, a
 USER_CONFIRMED + LOCKED 값은 의미와 구체적 조건을 보존한다. 비어 있던 targetRegion은 현재 공식
 법률검토 지원 범위인 대한민국과 호환되는 지역으로 제안한다. pre-market SOM 두 값은 실제
 시장분석 결과가 아닌 사전 가설이다. AS_IS Candidate 1은 사용자 원안을 새 아이디어로 왜곡하지
-않고 구조화한다. 이름이나 표현만 바꾼 avoidCandidates와 같은 사업 구조를 만들지 않는다.
-avoidCandidates의 21개 BusinessFingerprint는 고객 경험, 운영·파트너, 수익·가격, 채널·확장,
+않고 구조화한다. 이름이나 표현만 바꾼 finalConceptsToDifferentiateFrom과 같은 사업 구조를 만들지 않는다.
+BusinessFingerprint 21개 필드는 고객 경험, 운영·파트너, 수익·가격, 채널·확장,
 개인정보·물리활동·필수 파트너·자격 의존도를 비교하는 축이며 현재 diversityFocus의 primaryAxes를
 우선해 실질적 차이를 만든다.
 providerRole, sellerRole, intermediaryRole은 실제 거래상 역할을 명시하고 역할이 없으면 그 이유와
 함께 '해당 없음'으로 쓴다. 증거 ID, 법령 문구, 최종 법률 상태, 사용자 확인 상태는 만들지 않는다."""
+
+
+SYSTEM_PROMPT += """
+finalConceptsToDifferentiateFrom은 최종 적격 Concept이므로 동일한 핵심 사업 작동 구조를 만들지 않는다.
+currentSlotHistory는 현재 슬롯의 반복을 막는 강한 지역 문맥이다.
+softNegativeExamples는 타 슬롯의 실제 거절 예시일 뿐 hard 금지 집합이 아니다.
+replacementFeedback이 있으면 mustChangeDimensions 중 최소 두 축의 작동 방식을 실질적으로 바꾼다.
+같은 문제, 같은 사용자, 같은 LOCKED 원본 조건 자체는 중복의 증거가 아니다.
+"""
+
+
+class CandidateInvariantError(ValueError):
+    def __init__(self, code: str, field: str | None = None):
+        self.code = code
+        self.field = field
+        super().__init__(f"{code}:{field}" if field else code)
 
 
 VARIATION_RULES = {
@@ -76,7 +92,18 @@ async def execute_concept_candidate(task_input: dict) -> dict:
 
     provider_input = value.model_dump(mode="json")
     provider_input["variationRule"] = VARIATION_RULES[value.diversityFocus]
-    provider_input["avoidCandidates"] = _deduplicated_avoid_candidates(value)
+    provider_input["finalConceptsToDifferentiateFrom"] = [
+        item.model_dump(mode="json") for item in value.acceptedConceptFingerprints
+    ]
+    provider_input["currentSlotHistory"] = [
+        item.model_dump(mode="json") for item in value.currentSlotPreviousFingerprints
+    ]
+    provider_input["softNegativeExamples"] = [
+        item.model_dump(mode="json") for item in value.rejectedConceptFingerprints
+    ]
+    provider_input["replacementFeedback"] = (
+        value.replacementContext.model_dump(mode="json") if value.replacementContext else None
+    )
     for key in ("acceptedConceptFingerprints", "rejectedConceptFingerprints",
                 "currentSlotPreviousFingerprints"):
         provider_input.pop(key, None)
@@ -96,6 +123,9 @@ async def execute_concept_candidate(task_input: dict) -> dict:
             schema_name="concept_candidate_v2",
             validation_fields=_validation_fields(failure, "result"),
         ) from failure
+    except CandidateInvariantError as failure:
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", str(failure), 502, False,
+                              schema_name="concept_candidate_v2") from failure
     except ValueError as failure:
         reason = str(failure)
         diagnostic = reason if reason in {
@@ -146,18 +176,18 @@ def _normalize_candidate(value: ConceptCandidateInput, draft: ConceptCandidateDr
         locked = seed.get(field)
         if locked is not None and locked.authority == "LOCKED":
             if locked.source not in {"USER_INPUT", "USER_CONFIRMED"}:
-                raise ValueError("GOVERNANCE_SEMANTICS_MISMATCH")
+                raise CandidateInvariantError("GOVERNANCE_SEMANTICS_MISMATCH", field)
             result[field] = locked.value
 
     if value.generationStrategy == "AS_IS" and value.candidateIndex == 1:
         for candidate_field, seed_field in AS_IS_DIRECT_FIELDS.items():
             locked = seed.get(seed_field)
             if locked is None or locked.authority != "LOCKED":
-                raise ValueError("CANDIDATE_METADATA_INVALID")
+                raise CandidateInvariantError("CANDIDATE_METADATA_INVALID", candidate_field)
             result[candidate_field] = locked.value
 
     if not _kr_compatible(str(result.get("targetRegion", ""))):
-        raise ValueError("LEGAL_JURISDICTION_UNSUPPORTED")
+        raise CandidateInvariantError("LEGAL_JURISDICTION_UNSUPPORTED", "targetRegion")
 
     compliance = list(result.get("constraintCompliance") or [])
     for field in value.fields:

@@ -33,6 +33,7 @@ import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Comparator;
@@ -41,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor
@@ -180,7 +182,9 @@ public class ConceptFactoryService {
         IdeaBrief latestBrief = ideaBriefs.findCurrentOwned(run.getCreatedByUserId(), run.getProject().getId()).orElse(null);
         ConceptFactoryRetryPolicy.Decision retryDecision = retryDecision(run, latestBrief, runSlots);
         boolean resumable = retryDecision.canResume();
-        String nextAction = run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT ? "COMPLETE_IDEA_BRIEF"
+        List<RequiredInput> requiredInputs = requiredInputs(runSlots);
+        String nextAction = run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT
+            ? (requiredInputs.isEmpty() ? "COMPLETE_IDEA_BRIEF" : "PROVIDE_REQUIRED_INPUTS")
             : run.getStatus() == ConceptFactoryRunStatus.STALE ? "START_NEW_RUN"
             : retryDecision.nextAction();
         int generated = (int) allAttempts.stream().filter(value ->
@@ -206,7 +210,27 @@ public class ConceptFactoryService {
             eligible, initialCandidates, generated, generationFailures, redesigns, replacementCandidates,
             rejections.countBySlotRunIdAndDeletedAtIsNull(run.getId()),
             failureScope, latestFailure == null ? null : latestFailure.getSafeErrorCode(),
-            resumable, resumable, run.isTerminal(), nextAction, utc(run.getUpdatedAt()));
+            resumable, resumable, run.isTerminal(), nextAction, requiredInputs, utc(run.getUpdatedAt()));
+    }
+
+    private List<RequiredInput> requiredInputs(List<ConceptSlot> runSlots) {
+        List<RequiredInput> result = new ArrayList<>();
+        for (ConceptSlot slot : runSlots) {
+            attempts.findAllBySlotIdOrderByAttemptNumber(slot.getId()).stream()
+                .filter(value -> value.getPhase()
+                    == com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
+                    && value.getResultJson() != null)
+                .reduce((first, second) -> second).ifPresent(value -> {
+                    JsonNode legal = objectMapper.readTree(value.getResultJson());
+                    if (!"NEEDS_FACTS".equals(legal.path("status").asText())) return;
+                    for (JsonNode question : legal.path("unknownFacts")) {
+                        String text = question.asText("").trim();
+                        if (!text.isBlank()) result.add(new RequiredInput(
+                            "LEGAL_EXTERNAL_FACT_UNRESOLVED", text, "LEGAL_REVIEW", slot.getSlotNumber()));
+                    }
+                });
+        }
+        return List.copyOf(result);
     }
 
     private SlotResponse response(ConceptSlot slot) {

@@ -16,8 +16,12 @@ class ConceptFactoryLimitTests {
     @Test
     void enforcesAllIterationCaps() {
         ConceptFactoryRun run = ConceptFactoryStateMachineTests.run();
-        for (int i = 0; i < ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES + 1; i++) run.recordCandidateInspection();
-        assertThat(run.getInspectedCandidateCount()).isEqualTo(ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES + 1);
+        assertThat(ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES).isEqualTo(20);
+        for (int i = 0; i < ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES; i++) run.recordCandidateInspection();
+        assertThat(run.getInspectedCandidateCount()).isEqualTo(ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES);
+        assertThatThrownBy(run::recordCandidateInspection)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("INSPECTION_BUDGET_EXHAUSTED");
 
         run.recordProviderTransientRetry();
         run.recordProviderTransientRetry();

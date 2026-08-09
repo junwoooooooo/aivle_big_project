@@ -108,6 +108,9 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public void recordCandidateInspection() {
+        if (inspectedCandidateCount >= ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES) {
+            throw new IllegalStateException("INSPECTION_BUDGET_EXHAUSTED");
+        }
         inspectedCandidateCount++;
     }
 

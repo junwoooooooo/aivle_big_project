@@ -19,5 +19,11 @@ class ConceptFactoryMigrationContractTests {
             assertThat(v8).contains("'" + error.name() + "'");
         }
         assertThat(v8).contains("ADD COLUMN attempt_id", "ux_concept_rejection_summary_attempt");
+        String v9 = Files.readString(Path.of("src/main/resources/db/migration/V9__concept_factory_runtime_budget_constraints.sql"));
+        assertThat(v9).contains(
+            "DROP CONSTRAINT ck_concept_run_inspected",
+            "CHECK (inspected_candidate_count >= 0)",
+            "DROP CONSTRAINT ck_concept_run_provider_retry",
+            "CHECK (provider_transient_retry_count >= 0)");
     }
 }

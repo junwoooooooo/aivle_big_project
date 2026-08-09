@@ -3,11 +3,13 @@ package com.aivle.backend.pipeline.concept.domain;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import tools.jackson.databind.ObjectMapper;
 
 public final class ConceptFactoryCompletionPolicy {
     private ConceptFactoryCompletionPolicy() {}
 
-    public static void complete(ConceptFactoryRun run, List<ConceptSlot> slots, List<Concept> concepts) {
+    public static void complete(ConceptFactoryRun run, List<ConceptSlot> slots, List<Concept> concepts,
+            ObjectMapper mapper) {
         if (run.getStatus() != ConceptFactoryRunStatus.VALIDATING) throw new IllegalStateException("run must be validating");
         if (slots.size() != ConceptFactoryLimits.SLOT_COUNT || concepts.size() != ConceptFactoryLimits.SLOT_COUNT) {
             throw new IllegalStateException("exactly five slots and concepts are required");
@@ -31,7 +33,15 @@ public final class ConceptFactoryCompletionPolicy {
             }
             if (!conceptSlotIds.add(concept.getSlot().getId())) throw new IllegalStateException("each slot must expose one concept");
             for (int j = i + 1; j < concepts.size(); j++) {
-                if (ConceptCanonicalizer.duplicates(concept, concepts.get(j))) throw new IllegalStateException("duplicate concepts cannot be published");
+                Concept other = concepts.get(j);
+                var left = mapper.readTree(concept.getCandidateJson());
+                var right = mapper.readTree(other.getCandidateJson());
+                if (ConceptFingerprint.classify(left, right, concept.getSlot().getVariationFocus())
+                        == ConceptFingerprint.Classification.DUPLICATE
+                    || ConceptFingerprint.classify(left, right, other.getSlot().getVariationFocus())
+                        == ConceptFingerprint.Classification.DUPLICATE) {
+                    throw new IllegalStateException("FINAL_CONCEPT_SET_DUPLICATE");
+                }
             }
         }
         run.transitionTo(ConceptFactoryRunStatus.COMPLETED);

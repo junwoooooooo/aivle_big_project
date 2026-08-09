@@ -23,7 +23,7 @@ class ConceptFactoryFingerprintHistoryTests {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void acceptedRejectedAndCurrentSlotHistoryUseTheSameFullBusinessFingerprint() throws Exception {
+    void eligibleAndCurrentSlotHistoryUseFullFingerprintWhileSuccessfulAttemptsAreNotRejectedHistory() throws Exception {
         ConceptFactoryRunRepository runs = mock(ConceptFactoryRunRepository.class);
         ConceptSlotRepository slots = mock(ConceptSlotRepository.class);
         ConceptAttemptRepository attempts = mock(ConceptAttemptRepository.class);
@@ -54,7 +54,7 @@ class ConceptFactoryFingerprintHistoryTests {
         Map<String, Object> expected = ConceptFingerprint.businessSummary(mapper.readTree(candidateJson));
 
         assertThat(service.acceptedFingerprints("run-1")).containsExactly(expected);
-        assertThat(service.rejectedFingerprints("run-1")).containsExactly(expected);
+        assertThat(service.rejectedFingerprints("run-1")).isEmpty();
         assertThat(service.currentSlotPreviousFingerprints("slot-1")).containsExactly(expected);
     }
 
@@ -81,6 +81,32 @@ class ConceptFactoryFingerprintHistoryTests {
         verify(attempt, times(1)).reject(ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED,
             "LEGAL_REDESIGN_EXHAUSTED", "{\"conceptName\":\"폐기 후보\"}");
         verify(rejections, times(1)).save(any(ConceptRejectionSummary.class));
+    }
+
+    @Test
+    void softRejectedExamplesRequireAnAuthoritativeRejectionAndExcludeCurrentSlot() throws Exception {
+        ConceptFactoryRunRepository runs = mock(ConceptFactoryRunRepository.class);
+        ConceptAttemptRepository attempts = mock(ConceptAttemptRepository.class);
+        ConceptRejectionSummaryRepository rejections = mock(ConceptRejectionSummaryRepository.class);
+        ConceptFactoryExecutionService service = service(runs, mock(ConceptSlotRepository.class), attempts,
+            mock(ConceptRepository.class), rejections);
+        String candidateJson = Files.readString(Path.of("../contracts/concept/business-fingerprint-v1.json"));
+        ConceptRejectionSummary summary = mock(ConceptRejectionSummary.class);
+        ConceptSlot rejectedSlot = mock(ConceptSlot.class);
+        ConceptAttempt rejectedAttempt = mock(ConceptAttempt.class);
+        when(summary.getSlot()).thenReturn(rejectedSlot);
+        when(summary.getAttemptId()).thenReturn("attempt-rejected");
+        when(rejectedSlot.getId()).thenReturn("slot-2");
+        when(rejectedAttempt.getResultJson()).thenReturn(candidateJson);
+        when(rejectedAttempt.getPhase()).thenReturn(ConceptAttemptPhase.INITIAL);
+        when(rejectedAttempt.getErrorClassification()).thenReturn(ConceptAttemptError.DUPLICATE_CONCEPT);
+        when(rejections.findAllBySlotRunIdAndDeletedAtIsNullOrderByIdAsc("run-1"))
+            .thenReturn(List.of(summary));
+        when(attempts.findById("attempt-rejected")).thenReturn(Optional.of(rejectedAttempt));
+
+        assertThat(service.softRejectedExamples("run-1", "slot-1"))
+            .containsExactly(ConceptFingerprint.businessSummary(mapper.readTree(candidateJson)));
+        assertThat(service.softRejectedExamples("run-1", "slot-2")).isEmpty();
     }
 
     private ConceptFactoryExecutionService service(ConceptFactoryRunRepository runs,

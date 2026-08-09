@@ -161,7 +161,7 @@ public class ConceptFactoryExecutionService {
             ConceptGenerationStrategy strategy, int candidateIndex, List<Map<String, String>> fields) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
-        ConceptAttempt currentAttempt = attempts.findById(attemptId).orElseThrow();
+        attempts.findById(attemptId).orElseThrow();
         if (slot.getStatus() == ConceptSlotStatus.QUEUED) {
             slot.transitionTo(ConceptSlotStatus.GENERATING);
             slot.transitionTo(ConceptSlotStatus.GENERATED);
@@ -189,20 +189,15 @@ public class ConceptFactoryExecutionService {
                 return CandidateDisposition.DUPLICATE;
             }
         }
-        for (ConceptSlot existingSlot : slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
-                runId, run.getProject().getId())) {
-            for (ConceptAttempt previous : attempts.findAllBySlotIdOrderByAttemptNumber(existingSlot.getId())) {
+        for (ConceptAttempt previous : attempts.findAllBySlotIdOrderByAttemptNumber(slotId)) {
                 if (previous.getId().equals(attemptId) || previous.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW
                     || previous.getResultJson() == null) continue;
-                if (existingSlot.getId().equals(slotId) && currentAttempt.getPhase() == ConceptAttemptPhase.REDESIGN
-                    && previous.getErrorClassification() == null) continue;
                 if (ConceptFingerprint.classify(candidate, mapper.readTree(previous.getResultJson()), slot.getVariationFocus())
                         == ConceptFingerprint.Classification.DUPLICATE) {
                     rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
                         "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 이전 후보와 같은 후보입니다.");
                     return CandidateDisposition.DUPLICATE;
                 }
-            }
         }
         if (!semanticComparisons(runId, slotId, attemptId, candidate).isEmpty()) {
             return CandidateDisposition.SEMANTIC_REVIEW_REQUIRED;
@@ -220,13 +215,10 @@ public class ConceptFactoryExecutionService {
         List<JsonNode> previous = new ArrayList<>();
         concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(runId, run.getProject().getId())
             .forEach(value -> previous.add(mapper.readTree(value.getCandidateJson())));
-        for (ConceptSlot existingSlot : slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
-                runId, run.getProject().getId())) {
-            for (ConceptAttempt attempt : attempts.findAllBySlotIdOrderByAttemptNumber(existingSlot.getId())) {
+        for (ConceptAttempt attempt : attempts.findAllBySlotIdOrderByAttemptNumber(slotId)) {
                 if (attempt.getId().equals(attemptId) || attempt.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW
                         || attempt.getResultJson() == null) continue;
                 previous.add(mapper.readTree(attempt.getResultJson()));
-            }
         }
         Set<String> seen = new HashSet<>();
         List<Map<String, Object>> result = new ArrayList<>();
@@ -256,7 +248,7 @@ public class ConceptFactoryExecutionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> acceptedFingerprints(String runId) {
+    public List<Map<String, Object>> eligibleConceptFingerprints(String runId) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         return concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
                 runId, run.getProject().getId()).stream()
@@ -264,17 +256,44 @@ public class ConceptFactoryExecutionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> rejectedFingerprints(String runId) {
-        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
-        return fingerprintsFromAttempts(slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
-            runId, run.getProject().getId())).stream().limit(15).toList();
+    public List<Map<String, Object>> acceptedFingerprints(String runId) {
+        return eligibleConceptFingerprints(runId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> currentSlotSearchHistory(String slotId) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        List<Map<String, Object>> values = fingerprintsFromAttempts(List.of(slot));
+        return values.stream().skip(Math.max(0, values.size() - 5L)).toList();
     }
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> currentSlotPreviousFingerprints(String slotId) {
-        ConceptSlot slot = slots.findById(slotId).orElseThrow();
-        List<Map<String, Object>> values = fingerprintsFromAttempts(List.of(slot));
-        return values.stream().skip(Math.max(0, values.size() - 5L)).toList();
+        return currentSlotSearchHistory(slotId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> softRejectedExamples(String runId, String currentSlotId) {
+        LinkedHashMap<String, Map<String, Object>> unique = new LinkedHashMap<>();
+        for (ConceptRejectionSummary rejection :
+                rejections.findAllBySlotRunIdAndDeletedAtIsNullOrderByIdAsc(runId)) {
+            if (rejection.getSlot().getId().equals(currentSlotId) || rejection.getAttemptId() == null) continue;
+            attempts.findById(rejection.getAttemptId()).filter(attempt ->
+                    attempt.getResultJson() != null
+                    && attempt.getPhase() != ConceptAttemptPhase.LEGAL_REVIEW
+                    && attempt.getErrorClassification() != null).ifPresent(attempt -> {
+                JsonNode rejected = mapper.readTree(attempt.getResultJson());
+                unique.putIfAbsent(ConceptFingerprint.from(rejected).canonicalHash(),
+                    ConceptFingerprint.businessSummary(rejected));
+            });
+        }
+        List<Map<String, Object>> values = List.copyOf(unique.values());
+        return values.stream().skip(Math.max(0, values.size() - 15L)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> rejectedFingerprints(String runId) {
+        return softRejectedExamples(runId, "");
     }
 
     private List<Map<String, Object>> fingerprintsFromAttempts(List<ConceptSlot> sourceSlots) {
@@ -289,6 +308,74 @@ public class ConceptFactoryExecutionService {
         }
         return List.copyOf(unique.values());
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> replacementFeedback(String runId, String slotId, String attemptId,
+            JsonNode candidate, ConceptAttemptError reason, int nextRound) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        List<ConflictCandidate> conflicts = new ArrayList<>();
+        for (Concept concept : concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
+                runId, run.getProject().getId())) {
+            conflicts.add(new ConflictCandidate("ELIGIBLE_CONCEPT", concept.getSlot().getId(),
+                mapper.readTree(concept.getCandidateJson())));
+        }
+        for (ConceptAttempt previous : attempts.findAllBySlotIdOrderByAttemptNumber(slotId)) {
+            if (previous.getId().equals(attemptId) || previous.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW
+                    || previous.getResultJson() == null) continue;
+            conflicts.add(new ConflictCandidate("CURRENT_SLOT_HISTORY", slotId,
+                mapper.readTree(previous.getResultJson())));
+        }
+        ConflictCandidate closest = null;
+        ConceptFingerprint.DistinctnessEvaluation evaluation = null;
+        double best = -1;
+        for (ConflictCandidate conflict : conflicts) {
+            ConceptFingerprint.DistinctnessEvaluation current = ConceptFingerprint.evaluate(
+                candidate, conflict.candidate(), slot.getVariationFocus());
+            double score = current.focusSimilarity() + current.mechanicsSimilarity();
+            if (score > best) {
+                best = score;
+                closest = conflict;
+                evaluation = current;
+            }
+        }
+        List<String> required = evaluation == null
+            ? ConceptFingerprint.focusFieldNames(slot.getVariationFocus()).stream().limit(2).toList()
+            : evaluation.requiredChangeDimensions();
+        DistinctnessEvaluation distinctness = new DistinctnessEvaluation(
+            evaluation == null ? ConceptFingerprint.Classification.DISTINCT : evaluation.classification(),
+            closest == null ? rejectionScope(reason) : closest.source(),
+            closest == null ? null : ConceptFingerprint.businessSummary(closest.candidate()),
+            closest == null ? null : closest.slotId(),
+            evaluation == null ? 0 : evaluation.focusSimilarity(),
+            evaluation == null ? 0 : evaluation.mechanicsSimilarity(),
+            evaluation == null ? List.of() : evaluation.overlappingDimensions(),
+            evaluation == null ? List.of() : evaluation.materiallyDifferentDimensions(),
+            required);
+        Map<String, Object> feedback = new LinkedHashMap<>();
+        feedback.put("round", nextRound);
+        feedback.put("previousCandidate", ConceptFingerprint.businessSummary(candidate));
+        feedback.put("rejectionReason", reason.name());
+        feedback.put("conflictSource", distinctness.conflictScope());
+        feedback.put("closestConflict", distinctness.conflictingCandidate());
+        feedback.put("overlappingDimensions", distinctness.overlappingDimensions());
+        feedback.put("materiallyDifferentDimensions", distinctness.materiallyDifferentDimensions());
+        feedback.put("mustChangeDimensions", distinctness.requiredChangeDimensions());
+        feedback.put("safeCorrectionInstruction",
+            "LOCKED 원본 조건은 유지하고 지정된 두 개 이상의 축에서 사업 작동 방식을 실질적으로 변경하세요.");
+        return Collections.unmodifiableMap(feedback);
+    }
+
+    private String rejectionScope(ConceptAttemptError reason) {
+        return reason.name().startsWith("LEGAL_") ? "LEGAL_REVIEW" : "CANDIDATE_VALIDATION";
+    }
+
+    public record DistinctnessEvaluation(ConceptFingerprint.Classification classification,
+            String conflictScope, Map<String, Object> conflictingCandidate, String conflictingSlotId,
+            double focusSimilarity, double mechanicsSimilarity, List<String> overlappingDimensions,
+            List<String> materiallyDifferentDimensions, List<String> requiredChangeDimensions) {}
+
+    private record ConflictCandidate(String source, String slotId, JsonNode candidate) {}
 
     private void rejectCandidate(ConceptSlot slot, String attemptId, JsonNode candidate, ConceptAttemptError error,
             String safeCode, String safeSummary) {
@@ -330,13 +417,8 @@ public class ConceptFactoryExecutionService {
             run.getProject().getId(), run.getSourceIdeaBriefSnapshotId()).orElseThrow();
         Map<Integer, LegalEvidence> official = persistEvidence(pack, legal.path("officialEvidence"));
         if (status == ConceptLegalStatus.NEEDS_FACTS) {
-            attempts.findById(attemptId).orElseThrow().reject(
-                ConceptAttemptError.LEGAL_EXTERNAL_FACT_UNRESOLVED,
-                "LEGAL_EXTERNAL_FACT_UNRESOLVED", mapper.writeValueAsString(legal));
-            slot.transitionTo(ConceptSlotStatus.REPLACING);
-            saveRejectionSummary(slot, attemptId, "LEGAL_EXTERNAL_FACT_UNRESOLVED",
-                "외부 사실 확인 없이는 법률 적격성을 판단할 수 없어 다른 후보로 대체합니다.");
-            return LegalDisposition.REPLACE;
+            attempts.findById(attemptId).orElseThrow().succeed(mapper.writeValueAsString(legal));
+            return LegalDisposition.NEEDS_INPUT;
         }
         if (status == ConceptLegalStatus.REDESIGNABLE) {
             validateFindingCoverage(legal, official.keySet(), false);
@@ -565,7 +647,7 @@ public class ConceptFactoryExecutionService {
         List<ConceptSlot> allSlots = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, run.getProject().getId());
         List<Concept> allConcepts = concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(runId, run.getProject().getId());
         if (allSlots.stream().allMatch(value -> value.getStatus() == ConceptSlotStatus.ELIGIBLE)) {
-            ConceptFactoryCompletionPolicy.complete(run, allSlots, allConcepts); return true;
+            ConceptFactoryCompletionPolicy.complete(run, allSlots, allConcepts, mapper); return true;
         }
         return false;
     }

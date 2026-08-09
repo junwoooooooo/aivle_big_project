@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Tag("postgres")
 class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport {
@@ -24,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -32,8 +33,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .map(info -> info.getVersion().getVersion())
             .toList();
 
-        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -71,12 +72,51 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isOne();
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(2);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             assertThat(columnCount(connection, schema, "concept_slots", "replacement_rounds")).isOne();
             assertThat(columnCount(connection, schema, "concept_rejection_summaries", "attempt_id")).isOne();
+        }
+    }
+
+    @Test
+    void upgradesAnExistingV8SchemaWithRuntimeBudgetConstraints() throws Exception {
+        String schema = "upgrade_v8_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV8 = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
+            .target("8").load();
+        assertThat(throughV8.migrate().migrationsExecuted).isEqualTo(8);
+
+        Flyway latest = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isOne();
+        latest.validate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            statement.execute("SET session_replication_role = replica");
+            statement.execute("""
+                INSERT INTO concept_factory_runs (
+                    id, project_id, source_idea_brief_snapshot_id, source_snapshot_hash, status,
+                    replacement_rounds, inspected_candidate_count, provider_transient_retry_count,
+                    created_by_user_id, created_at, updated_at, version
+                ) VALUES ('budget-run', 1, 'brief-1',
+                    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                    'VALIDATING', 0, 16, 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("UPDATE concept_factory_runs SET inspected_candidate_count = 20, provider_transient_retry_count = 3 WHERE id = 'budget-run'");
+            assertThatThrownBy(() -> statement.execute(
+                "UPDATE concept_factory_runs SET inspected_candidate_count = -1 WHERE id = 'budget-run'"))
+                .hasMessageContaining("ck_concept_run_inspected");
+            assertThatThrownBy(() -> statement.execute(
+                "UPDATE concept_factory_runs SET provider_transient_retry_count = -1 WHERE id = 'budget-run'"))
+                .hasMessageContaining("ck_concept_run_provider_retry");
+            statement.execute("SET session_replication_role = origin");
         }
     }
 

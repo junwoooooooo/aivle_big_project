@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -430,6 +431,9 @@ class ConceptFactoryWorkerTests {
     void duplicateIsReplacedBeforeLegalReviewAndTargetSlotCanStillBecomeEligible() {
         Harness h = new Harness();
         h.successfulAi();
+        when(h.execution.replacementFeedback(anyString(), anyString(), anyString(), any(), any(), anyInt()))
+            .thenReturn(Map.of("round", 1, "mustChangeDimensions",
+                List.of("problemScenario", "solutionMechanism")));
         when(h.execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
             .thenReturn(CandidateDisposition.DUPLICATE, CandidateDisposition.ACCEPTED);
         when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
@@ -440,6 +444,10 @@ class ConceptFactoryWorkerTests {
         verify(h.execution).beginReplacement("run", "slot-1", 1);
         verify(h.execution, times(2)).recordCandidateInspection("run");
         verify(h.ai, times(1)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
+        ArgumentCaptor<String> input = ArgumentCaptor.forClass(String.class);
+        verify(h.ai, times(2)).execute(eq(TaskType.CONCEPT_CANDIDATE), input.capture(), anyString(), anyString());
+        JsonNode replacementInput = h.mapper.readTree(input.getAllValues().get(1));
+        assertThat(replacementInput.path("replacementContext").path("mustChangeDimensions")).hasSize(2);
     }
 
     @Test

@@ -60,6 +60,33 @@ class ProjectJobQueryServiceTests {
     }
 
     @Test
+    void failedConceptFactoryTaskIsAbsentFromActiveAndVisibleInRecent() {
+        TaskRun run = mock(TaskRun.class);
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(9L);
+        when(run.getProject()).thenReturn(project);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
+        when(taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+                eq(9L), any(), any(Pageable.class))).thenAnswer(invocation -> {
+            List<TaskRunState> states = invocation.getArgument(1);
+            return states.contains(TaskRunState.FAILED) ? List.of(run) : List.of();
+        });
+        when(run.getId()).thenReturn("job-failed");
+        when(run.getTaskType()).thenReturn(TaskType.CONCEPT_FACTORY_RUN);
+        when(run.getSubjectType()).thenReturn("CONCEPT_FACTORY_RUN");
+        when(run.getSubjectId()).thenReturn("run-failed");
+        when(run.getState()).thenReturn(TaskRunState.FAILED);
+        when(run.terminal()).thenReturn(true);
+
+        assertThat(service.active(2L, 9L)).isEmpty();
+        assertThat(service.recent(2L, 9L)).singleElement().satisfies(job -> {
+            assertThat(job.jobId()).isEqualTo("job-failed");
+            assertThat(job.rawStatus()).isEqualTo("FAILED");
+            assertThat(job.terminal()).isTrue();
+        });
+    }
+
+    @Test
     void nonOwnerCannotQueryProjectJobs() {
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 3L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.active(3L, 9L)).isInstanceOf(BusinessException.class);

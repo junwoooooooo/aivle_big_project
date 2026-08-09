@@ -1,6 +1,8 @@
 from typing import Any, get_type_hints
 
 import asyncio
+import json
+from pathlib import Path
 import pytest
 
 from app.providers import ProviderFailure
@@ -140,6 +142,45 @@ def test_provider_schema_excludes_system_owned_governance(monkeypatch):
     assert "valueSemantics" not in properties
     assert "candidateIndex" not in properties
     assert "generationStrategy" not in properties
+
+
+def test_provider_receives_separated_search_roles_and_targeted_replacement(monkeypatch):
+    observed = {}
+    fingerprint = json.loads((Path(__file__).parents[2] / "contracts" / "concept"
+                              / "business-fingerprint-v1.json").read_text(encoding="utf-8"))
+
+    async def prompt(_system, provider_text, **_kwargs):
+        observed.update(json.loads(provider_text))
+        return candidate_draft()
+
+    monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
+    asyncio.run(candidate_service.execute_concept_candidate({
+        "ideaBriefSnapshotId": "brief-1", "generationStrategy": "EXPLORE", "candidateIndex": 1,
+        "originalCandidate": False, "diversityFocus": "CUSTOMER_EXPERIENCE",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "예약 자동화", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "problem", "value": "반복 확인", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "소형 매장", "source": "USER_INPUT", "authority": "LOCKED"},
+        ],
+        "acceptedConceptFingerprints": [fingerprint],
+        "rejectedConceptFingerprints": [fingerprint],
+        "currentSlotPreviousFingerprints": [fingerprint],
+        "replacementContext": {
+            "round": 1, "previousCandidate": fingerprint, "rejectionReason": "DUPLICATE_CONCEPT",
+            "conflictSource": "ELIGIBLE_CONCEPT", "closestConflict": fingerprint,
+            "overlappingDimensions": ["problemScenario", "solutionMechanism"],
+            "materiallyDifferentDimensions": [],
+            "mustChangeDimensions": ["problemScenario", "solutionMechanism"],
+            "safeCorrectionInstruction": "두 축의 작동 방식을 변경하세요.",
+        },
+    }))
+
+    assert len(observed["finalConceptsToDifferentiateFrom"]) == 1
+    assert len(observed["currentSlotHistory"]) == 1
+    assert len(observed["softNegativeExamples"]) == 1
+    assert observed["replacementFeedback"]["mustChangeDimensions"] == [
+        "problemScenario", "solutionMechanism"]
+    assert "avoidCandidates" not in observed
 
 
 def test_pre_market_som_is_never_labeled_as_analysis_result():

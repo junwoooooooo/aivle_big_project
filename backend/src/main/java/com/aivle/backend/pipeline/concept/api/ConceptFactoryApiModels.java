@@ -22,8 +22,9 @@ public final class ConceptFactoryApiModels {
         int candidateGenerationFailureCount,
         int redesignCount, int replacementCandidateCount, long discardedCandidateCount,
         String failureScope, String failureCode, boolean retryable, boolean canResume,
-        boolean canStartNew, String nextAction, Instant updatedAt
+        boolean canStartNew, String nextAction, List<RequiredInput> requiredInputs, Instant updatedAt
     ) {}
+    public record RequiredInput(String code, String question, String source, int candidateSlot) {}
     public record SlotResponse(int slotNumber, VariationFocus variationFocus, ConceptSlotStatus status,
         String currentAttemptPhase, int candidateCount, int legalReviewAttemptCount,
         int legalRedesignCount, int replacementCount, String latestFailurePhase,

@@ -81,21 +81,47 @@ public final class ConceptFingerprint {
     }
 
     public static Classification classify(JsonNode candidate, JsonNode existing, VariationFocus focus) {
+        return evaluate(candidate, existing, focus).classification();
+    }
+
+    public static DistinctnessEvaluation evaluate(JsonNode candidate, JsonNode existing, VariationFocus focus) {
         Value first = from(candidate);
         Value second = from(existing);
-        if (first.canonicalHash().equals(second.canonicalHash())
-                || first.majorFieldHash().equals(second.majorFieldHash())) {
-            return Classification.DUPLICATE;
-        }
         List<String> focusFields = FOCUS_FIELDS.get(focus);
+        List<String> overlapping = new ArrayList<>();
+        List<String> different = new ArrayList<>();
+        for (String field : focusFields) {
+            double fieldSimilarity = similarity(normalize(stringValue(candidate.path(field))),
+                normalize(stringValue(existing.path(field))));
+            if (fieldSimilarity >= 0.72) overlapping.add(field);
+            if (fieldSimilarity <= 0.35) different.add(field);
+        }
         double focusSimilarity = averageSimilarity(candidate, existing, focusFields);
         double mechanicsSimilarity = averageSimilarity(candidate, existing, MECHANICS);
-        if (focusSimilarity <= 0.45 || materiallyDifferentFields(candidate, existing, focusFields) >= 2) {
-            return Classification.DISTINCT;
+        Classification classification;
+        if (first.canonicalHash().equals(second.canonicalHash())
+                || first.majorFieldHash().equals(second.majorFieldHash())) {
+            classification = Classification.DUPLICATE;
+        } else if (focusSimilarity >= 0.86 && mechanicsSimilarity >= 0.78 && different.size() < 2) {
+            classification = Classification.DUPLICATE;
+        } else if (focusSimilarity <= 0.45 || different.size() >= 2) {
+            classification = Classification.DISTINCT;
+        } else if (focusSimilarity >= 0.50 || mechanicsSimilarity >= 0.55) {
+            classification = Classification.AMBIGUOUS;
+        } else {
+            classification = Classification.DISTINCT;
         }
-        if (focusSimilarity >= 0.78 && mechanicsSimilarity >= 0.68) return Classification.DUPLICATE;
-        if (focusSimilarity >= 0.35 || mechanicsSimilarity >= 0.40) return Classification.AMBIGUOUS;
-        return Classification.DISTINCT;
+        List<String> required = new ArrayList<>();
+        for (String field : overlapping) {
+            if (required.size() == 2) break;
+            required.add(field);
+        }
+        for (String field : focusFields) {
+            if (required.size() == 2) break;
+            if (!required.contains(field)) required.add(field);
+        }
+        return new DistinctnessEvaluation(classification, focusSimilarity, mechanicsSimilarity,
+            List.copyOf(overlapping), List.copyOf(different), List.copyOf(required));
     }
 
     private static int materiallyDifferentFields(JsonNode left, JsonNode right, List<String> fields) {
@@ -143,6 +169,10 @@ public final class ConceptFingerprint {
         return FIELDS;
     }
 
+    public static List<String> focusFieldNames(VariationFocus focus) {
+        return FOCUS_FIELDS.get(focus);
+    }
+
     private static String stringValue(JsonNode value) {
         if (!value.isArray()) return value.asText("");
         return java.util.stream.StreamSupport.stream(value.spliterator(), false)
@@ -185,5 +215,9 @@ public final class ConceptFingerprint {
     }
 
     public record Value(String canonicalHash, String majorFieldHash, List<String> values) {}
+    public record DistinctnessEvaluation(Classification classification, double focusSimilarity,
+                                         double mechanicsSimilarity, List<String> overlappingDimensions,
+                                         List<String> materiallyDifferentDimensions,
+                                         List<String> requiredChangeDimensions) {}
     public enum Classification { DUPLICATE, AMBIGUOUS, DISTINCT }
 }

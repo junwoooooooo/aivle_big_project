@@ -69,6 +69,30 @@ def _is_external_fact_question(question: str) -> bool:
     return fixed_jurisdiction or held_external_fact
 
 
+def _question_kind(question: str) -> str:
+    normalized = " ".join(question.casefold().split())
+    unavoidable_markers = (
+        "현재 보유", "기존 보유", "실제 고정 관할", "보유 특허", "보유 라이선스",
+        "인허가가 있", "인허가를 보유", "기존 필수 계약", "이미 체결",
+    )
+    design_markers = (
+        "결제 주체", "정산 흐름", "처리 방식", "플랫폼 역할", "판매자 역할",
+        "개인정보 처리", "파트너 역할", "거래 흐름", "운영 주체",
+    )
+    convertible_markers = (
+        "보유 사업자와 계약", "자격 보유 파트너", "통제 조건으로", "필수 통제로",
+    )
+    if any(marker in normalized for marker in unavoidable_markers):
+        return "UNAVOIDABLE_EXTERNAL_FACT"
+    if any(marker in normalized for marker in design_markers):
+        return "DESIGN_GAP"
+    if any(marker in normalized for marker in convertible_markers):
+        return "CONTROL_CONVERTIBLE_EXTERNAL_FACT"
+    if _is_external_fact_question(question):
+        return "UNAVOIDABLE_EXTERNAL_FACT"
+    return "DESIGN_GAP"
+
+
 def _terminal_result(status: str, requirements: list[str], evidence: list[OfficialEvidence],
                      value: ConceptLegalReviewInput) -> dict:
     needs_facts = status == "NEEDS_FACTS"
@@ -124,18 +148,25 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
     evidence = _official_evidence(source)
     questions = [item.get("question", "").strip() for item in source.get("requiredUserInputs", [])
                  if item.get("question", "").strip()]
-    design_gaps = [question for question in questions if not _is_external_fact_question(question)]
+    design_gaps = [question for question in questions if _question_kind(question) == "DESIGN_GAP"]
+    unavoidable = [question for question in questions
+                   if _question_kind(question) == "UNAVOIDABLE_EXTERNAL_FACT"]
+    convertible = [question for question in questions
+                   if _question_kind(question) == "CONTROL_CONVERTIBLE_EXTERNAL_FACT"]
     if design_gaps:
         return _terminal_result("REDESIGNABLE", design_gaps, evidence, value)
-    if questions:
-        return _terminal_result("NEEDS_FACTS", questions, evidence, value)
+    if unavoidable:
+        return _terminal_result("NEEDS_FACTS", unavoidable, evidence, value)
     if not evidence:
+        if convertible:
+            return _terminal_result("REDESIGNABLE", convertible, evidence, value)
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "LEGAL_SOURCE_EVIDENCE_UNAVAILABLE", 503, True)
 
     provider_input = {
         "legalFactPattern": value.legalFactPattern.model_dump(mode="json"),
         "confirmedExternalFacts": [fact.model_dump(mode="json") for fact in value.externalFactContext.facts],
         "officialEvidence": [item.model_dump(mode="json") for item in evidence],
+        "unresolvedExternalFactQuestions": convertible,
     }
     raw = await execute_structured_prompt(
         SYSTEM_PROMPT, json.dumps(provider_input, ensure_ascii=False, sort_keys=True, default=str),
@@ -151,7 +182,8 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
             validation_fields=_validation_fields(failure, "result"),
         ) from failure
     if provider.status == "NEEDS_FACTS":
-        design_gaps = [question for question in provider.unknownFacts if not _is_external_fact_question(question)]
+        design_gaps = [question for question in provider.unknownFacts
+                       if _question_kind(question) != "UNAVOIDABLE_EXTERNAL_FACT"]
         if design_gaps:
             return _terminal_result("REDESIGNABLE", design_gaps, evidence, value)
     finding_strings, finding_evidence, evidence_union = _validate_coverage(provider, evidence)

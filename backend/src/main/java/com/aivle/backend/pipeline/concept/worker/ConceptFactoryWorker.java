@@ -116,6 +116,7 @@ public class ConceptFactoryWorker {
     }
 
     SlotOutcome processSlot(TaskRunWorkerContext context, Work work, SlotWork slot) {
+        Map<String, Object> replacementContext = null;
         for (int replacementRound = slot.replacementRounds(); replacementRound <= ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS; replacementRound++) {
             ConceptAttemptPhase phase = replacementRound == 0 ? ConceptAttemptPhase.INITIAL : ConceptAttemptPhase.REPLACEMENT;
             JsonNode candidate;
@@ -124,17 +125,19 @@ public class ConceptFactoryWorker {
                 candidate = mapper.readTree(slot.candidateJson());
                 attemptId = slot.candidateAttemptId();
             } else {
+                Map<String, Object> generationInput = new LinkedHashMap<>();
+                generationInput.put("ideaBriefSnapshotId", work.snapshotId());
+                generationInput.put("generationStrategy", work.generationStrategy().name());
+                generationInput.put("candidateIndex", slot.slotNumber());
+                generationInput.put("originalCandidate", work.generationStrategy().name().equals("AS_IS") && slot.slotNumber() == 1);
+                generationInput.put("diversityFocus", slot.focus().name());
+                generationInput.put("fields", work.fields());
+                generationInput.put("acceptedConceptFingerprints", safeList(execution.eligibleConceptFingerprints(work.runId())));
+                generationInput.put("rejectedConceptFingerprints", safeList(execution.softRejectedExamples(work.runId(), slot.slotId())));
+                generationInput.put("currentSlotPreviousFingerprints", safeList(execution.currentSlotSearchHistory(slot.slotId())));
+                if (replacementContext != null) generationInput.put("replacementContext", replacementContext);
                 Generation generation = generate(context, work, slot, phase, TaskType.CONCEPT_CANDIDATE,
-                    mapper.writeValueAsString(Map.of(
-                        "ideaBriefSnapshotId", work.snapshotId(),
-                        "generationStrategy", work.generationStrategy().name(),
-                        "candidateIndex", slot.slotNumber(),
-                        "originalCandidate", work.generationStrategy().name().equals("AS_IS") && slot.slotNumber() == 1,
-                        "diversityFocus", slot.focus().name(),
-                        "fields", work.fields(),
-                        "acceptedConceptFingerprints", execution.acceptedFingerprints(work.runId()),
-                        "rejectedConceptFingerprints", execution.rejectedFingerprints(work.runId()),
-                        "currentSlotPreviousFingerprints", execution.currentSlotPreviousFingerprints(slot.slotId()))));
+                    mapper.writeValueAsString(generationInput));
                 if (generation.outcome() == GenerationOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
                 if (generation.outcome() == GenerationOutcome.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
                 if (generation.outcome() == GenerationOutcome.RUN_FATAL_PROVIDER_FAILURE) return SlotOutcome.FATAL_FAILURE;
@@ -166,6 +169,8 @@ public class ConceptFactoryWorker {
                     : candidateDisposition == CandidateDisposition.LOCKED_INVALID
                         ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
                 publishRejection(context, slot, attemptId, exhaustion);
+                replacementContext = execution.replacementFeedback(work.runId(), slot.slotId(), attemptId,
+                    candidate, exhaustion, replacementRound + 1);
                 if (!replace(context, work, slot, replacementRound, attemptId, exhaustion)) return SlotOutcome.FAILED;
                 continue;
             }
@@ -181,6 +186,8 @@ public class ConceptFactoryWorker {
             if (review.outcome() == ReviewOutcome.REPLACE) {
                 publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
                     review.attemptId(), "REJECTED", review.durationMs(), null);
+                replacementContext = execution.replacementFeedback(work.runId(), slot.slotId(), review.attemptId(),
+                    candidate, review.failureClassification(), replacementRound + 1);
                 if (!replace(context, work, slot, replacementRound, review.attemptId(),
                     review.failureClassification())) return SlotOutcome.FAILED;
                 continue;
@@ -231,6 +238,8 @@ public class ConceptFactoryWorker {
                             : redesignedValidation == CandidateDisposition.LOCKED_INVALID
                                 ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
                         publishRejection(context, slot, redesign.attemptId(), exhaustion);
+                        replacementContext = execution.replacementFeedback(work.runId(), slot.slotId(),
+                            redesign.attemptId(), redesign.result(), exhaustion, replacementRound + 1);
                         if (!replace(context, work, slot, replacementRound, redesign.attemptId(), exhaustion)) {
                             return SlotOutcome.FAILED;
                         }
@@ -248,6 +257,8 @@ public class ConceptFactoryWorker {
                     if (redesigned.outcome() == ReviewOutcome.REPLACE) {
                         publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
                             redesigned.attemptId(), "REJECTED", redesigned.durationMs(), null);
+                        replacementContext = execution.replacementFeedback(work.runId(), slot.slotId(),
+                            redesigned.attemptId(), redesign.result(), redesigned.failureClassification(), replacementRound + 1);
                         if (!replace(context, work, slot, replacementRound, redesigned.attemptId(),
                                 redesigned.failureClassification())) return SlotOutcome.FAILED;
                         continue;
@@ -264,6 +275,8 @@ public class ConceptFactoryWorker {
             execution.discardCandidate(slot.slotId(), attemptId, ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED,
                 "허용된 법률 재설계를 모두 사용했으나 적격 상태에 도달하지 못해 후보를 폐기합니다.");
             publishRejection(context, slot, attemptId, ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED);
+            replacementContext = execution.replacementFeedback(work.runId(), slot.slotId(), attemptId,
+                candidate, ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED, replacementRound + 1);
             if (!replace(context, work, slot, replacementRound, attemptId,
                 ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED)) return SlotOutcome.FAILED;
         }
@@ -534,7 +547,7 @@ public class ConceptFactoryWorker {
         params.put("variationFocus", slot.focus().name());
         params.put("runId", context.subjectId());
         params.put("phase", trace == null ? "UNKNOWN" : trace.phase());
-        params.put("taskType", "CONCEPT_CANDIDATE");
+        params.put("taskType", rejectionTaskType(trace == null ? null : trace.phase()));
         params.put("attemptNumber", trace == null ? 0 : trace.attemptNumber());
         params.put("conceptAttemptId", attemptId);
         params.put("correlationId", context.correlationId());
@@ -550,6 +563,16 @@ public class ConceptFactoryWorker {
         params.put("retryable", false);
         publish(context, "SLOT_" + slot.slotNumber(), "job.concept.slot.rejected",
             JobEvent.Status.RUNNING, params, reason.name());
+    }
+
+    private String rejectionTaskType(String phase) {
+        if (ConceptAttemptPhase.LEGAL_REVIEW.name().equals(phase)) return TaskType.CONCEPT_LEGAL_REVIEW.name();
+        if (ConceptAttemptPhase.REDESIGN.name().equals(phase)) return TaskType.CONCEPT_REDESIGN.name();
+        return TaskType.CONCEPT_CANDIDATE.name();
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        return values == null ? List.of() : values;
     }
 
     private void publishAttempt(TaskRunWorkerContext context, SlotWork slot, String key, TaskType taskType,

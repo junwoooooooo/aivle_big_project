@@ -18,6 +18,13 @@ BusinessFingerprint v1의 21개 축 전체를 비교한다. 대상 사용자, �
 strict schema의 안전한 요약만 반환하고 chain-of-thought이나 내부 reasoning을 반환하지 않는다."""
 
 
+SYSTEM_PROMPT += """
+같은 문제, 같은 대상 사용자, 같은 Idea Brief 및 LOCKED 원본 조건은 그 자체로 DUPLICATE 증거가 아니다.
+실제 해결 메커니즘, 기능 조합, 운영·파트너 역할, 거래·결제 흐름, 수익·가격 구조와 채널을 비교한다.
+두 개 이상의 핵심 작동 축이 실질적으로 다르면 DISTINCT로 판정한다.
+"""
+
+
 async def execute_concept_distinctness_judge(task_input: dict) -> dict:
     try:
         value = ConceptDistinctnessJudgeInput.model_validate(task_input)

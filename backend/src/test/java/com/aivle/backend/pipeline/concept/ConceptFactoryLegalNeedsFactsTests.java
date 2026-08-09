@@ -17,7 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 
 class ConceptFactoryLegalNeedsFactsTests {
     @Test
-    void needsFactsIsABusinessRejectionThatRequestsReplacementWithoutUserInputState() {
+    void needsFactsPausesForUserInputWithoutDiscardOrReplacement() {
         ConceptFactoryRunRepository runs = mock(ConceptFactoryRunRepository.class);
         ConceptSlotRepository slots = mock(ConceptSlotRepository.class);
         ConceptAttemptRepository attempts = mock(ConceptAttemptRepository.class);
@@ -52,11 +52,10 @@ class ConceptFactoryLegalNeedsFactsTests {
 
         var result = service.legal("run-1", "slot-1", "attempt-1", candidate, legal);
 
-        assertThat(result).isEqualTo(ConceptFactoryExecutionService.LegalDisposition.REPLACE);
-        verify(attempt).reject(eq(ConceptAttemptError.LEGAL_EXTERNAL_FACT_UNRESOLVED),
-            eq("LEGAL_EXTERNAL_FACT_UNRESOLVED"), contains("NEEDS_FACTS"));
-        verify(slot).transitionTo(ConceptSlotStatus.REPLACING);
+        assertThat(result).isEqualTo(ConceptFactoryExecutionService.LegalDisposition.NEEDS_INPUT);
+        verify(attempt).succeed(contains("NEEDS_FACTS"));
+        verify(slot, never()).transitionTo(ConceptSlotStatus.REPLACING);
         verify(run, never()).transitionTo(ConceptFactoryRunStatus.NEEDS_INPUT);
-        verify(rejections).save(any(ConceptRejectionSummary.class));
+        verify(rejections, never()).save(any(ConceptRejectionSummary.class));
     }
 }

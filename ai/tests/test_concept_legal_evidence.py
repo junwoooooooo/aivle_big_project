@@ -126,6 +126,13 @@ def test_only_external_reality_fact_can_be_needs_facts(monkeypatch):
     assert "providerInput" not in captured
 
 
+def test_control_convertible_external_fact_is_sent_to_evidence_backed_provider(monkeypatch):
+    question = "필요한 경우 자격 보유 파트너와 계약하는 통제 조건으로 전환할 수 있습니까?"
+    result, captured = execute(monkeypatch, source(questions=[question]))
+    assert result["status"] == "IMPLEMENTABLE_WITH_CONTROLS"
+    assert captured["providerInput"]["unresolvedExternalFactQuestions"] == [question]
+
+
 def test_empty_evidence_without_questions_is_retryable_source_failure(monkeypatch):
     with pytest.raises(ProviderFailure) as raised:
         execute(monkeypatch, source([]))

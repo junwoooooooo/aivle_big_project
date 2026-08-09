@@ -40,6 +40,20 @@ class BriefField(StrictModel):
     authority: Authority
 
 
+class ReplacementContext(StrictModel):
+    round: int = Field(strict=True, ge=1, le=2)
+    previousCandidate: BusinessFingerprint
+    rejectionReason: str = Field(min_length=1, max_length=80)
+    conflictSource: Literal[
+        "ELIGIBLE_CONCEPT", "CURRENT_SLOT_HISTORY", "CANDIDATE_VALIDATION", "LEGAL_REVIEW",
+    ]
+    closestConflict: BusinessFingerprint | None = None
+    overlappingDimensions: list[str] = Field(max_length=21)
+    materiallyDifferentDimensions: list[str] = Field(max_length=21)
+    mustChangeDimensions: list[str] = Field(min_length=2, max_length=7)
+    safeCorrectionInstruction: str = Field(min_length=1, max_length=1000)
+
+
 class ConceptCandidateInput(StrictModel):
     ideaBriefSnapshotId: str = Field(min_length=1, max_length=64)
     generationStrategy: ConceptGenerationStrategy
@@ -50,6 +64,7 @@ class ConceptCandidateInput(StrictModel):
     acceptedConceptFingerprints: list[BusinessFingerprint] = Field(default_factory=list, max_length=5)
     rejectedConceptFingerprints: list[BusinessFingerprint] = Field(default_factory=list, max_length=15)
     currentSlotPreviousFingerprints: list[BusinessFingerprint] = Field(default_factory=list, max_length=5)
+    replacementContext: ReplacementContext | None = None
 
     @model_validator(mode="after")
     def original_is_only_first_as_is_candidate(self):
