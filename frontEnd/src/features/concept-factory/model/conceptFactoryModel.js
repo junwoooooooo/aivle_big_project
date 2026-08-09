@@ -39,14 +39,16 @@ export function slotNumberFromEvent(event) {
   return Number.isInteger(value) && value >= 1 && value <= 5 ? value : null;
 }
 
-export function workboardSummary(run, slots = [], events = []) {
-  const ordered = dedupeTimeline(events);
+export function workboardSummary(run, slots = []) {
   return {
-    eligible: slots.filter((slot) => slot.status === 'ELIGIBLE').length,
-    inspected: Number(run?.inspectedCandidateCount) || slots.reduce((sum, slot) => sum + (slot.candidateCount || 0), 0),
-    redesigned: slots.reduce((sum, slot) => sum + (slot.legalRedesignCount || 0), 0),
-    replaced: Number(run?.replacementRounds) || 0,
-    discarded: ordered.filter((event) => event.eventType === 'job.concept.slot.rejected').length,
+    eligible: Number(run?.eligibleCount) || slots.filter((slot) => slot.status === 'ELIGIBLE').length,
+    generated: Number(run?.generatedCandidateCount) || 0,
+    generationFailed: Number(run?.candidateGenerationFailureCount) || 0,
+    inspected: Number(run?.inspectedCandidateCount) || 0,
+    redesigned: Number(run?.redesignCount) || 0,
+    replaced: Number(run?.replacementCandidateCount) || 0,
+    discarded: Number(run?.discardedCandidateCount) || 0,
+    providerRetries: Number(run?.providerTransientRetryCount) || 0,
   };
 }
 

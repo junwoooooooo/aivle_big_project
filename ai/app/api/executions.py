@@ -1,7 +1,5 @@
-import hashlib
 import json
 import os
-import unicodedata
 import re
 import logging
 from datetime import datetime, timezone
@@ -14,6 +12,7 @@ from pydantic import ValidationError
 
 from app.models.executions import InternalExecutionRequestV1, InternalExecutionSuccessResponseV1
 from app.providers import ProviderFailure
+from app.canonical_json import canonical_input_hash
 
 
 router = APIRouter(prefix="/internal/v1/ai", tags=["Internal AI Executions"])
@@ -34,10 +33,13 @@ TASK_TYPES = {
 def internal_error(correlation_id: str, code: str, reason: str, status_code: int,
                    retryable: bool, task_run_id: str | None = None,
                    task_attempt_id: str | None = None,
-                   validation_fields: list[dict[str, str]] | None = None) -> JSONResponse:
+                   validation_fields: list[dict[str, str]] | None = None,
+                   retry_after_ms: int | None = None) -> JSONResponse:
     detail: dict[str, Any] = {"reason": reason}
     if validation_fields:
         detail["fields"] = validation_fields[:12]
+    if retry_after_ms is not None:
+        detail["retryAfterMs"] = retry_after_ms
     return JSONResponse(status_code=status_code, content={"error": {
         "code": code, "message": "Internal execution request could not be processed.",
         "correlationId": correlation_id, "taskRunId": task_run_id,
@@ -66,28 +68,14 @@ def safe_validation_fields(failure: ValidationError, prefix: str = "input") -> l
     return fields
 
 
-def canonical_value(value: Any) -> Any:
-    if isinstance(value, str):
-        return unicodedata.normalize("NFC", value)
-    if isinstance(value, list):
-        return [canonical_value(item) for item in value]
-    if isinstance(value, dict):
-        normalized = {}
-        for key, item in value.items():
-            normalized_key = unicodedata.normalize("NFC", key)
-            if normalized_key in normalized:
-                raise ValueError("normalized key collision")
-            normalized[normalized_key] = canonical_value(item)
-        return normalized
-    return value
-
-
 def canonical_hash(body: InternalExecutionRequestV1) -> str:
-    value = {key: getattr(body, key) for key in (
-        "contractVersion", "taskType", "taskSchemaVersion", "locale", "input"
-    )}
-    normalized = json.dumps(canonical_value(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    return "sha256:" + hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+    return canonical_input_hash(
+        contract_version=body.contractVersion,
+        task_type=body.taskType,
+        task_schema_version=body.taskSchemaVersion,
+        locale=body.locale,
+        input_value=body.input,
+    )
 
 
 @router.post("/executions", response_model=InternalExecutionSuccessResponseV1)
@@ -209,14 +197,16 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         logger.warning(
             "AI execution failed taskType=%s taskRunId=%s taskAttemptId=%s correlationId=%s "
             "code=%s reason=%s retryable=%s schemaName=%s upstreamStatus=%s "
-            "providerErrorType=%s providerErrorParam=%s validationFields=%s",
+            "providerErrorType=%s providerErrorParam=%s retryAfterMs=%s validationFields=%s",
             body.taskType, body.taskRunId, body.taskAttemptId, correlation,
             failure.code, failure.reason, failure.retryable, failure.schema_name,
             failure.upstream_status, failure.provider_error_type, failure.provider_error_param,
+            failure.retry_after_ms,
             failure.validation_fields,
         )
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
-                              body.taskRunId, body.taskAttemptId, failure.validation_fields)
+                              body.taskRunId, body.taskAttemptId, failure.validation_fields,
+                              failure.retry_after_ms)
     return InternalExecutionSuccessResponseV1(contractVersion="1.0", taskType=body.taskType,
         taskSchemaVersion="1.0", taskRunId=body.taskRunId, taskAttemptId=body.taskAttemptId,
         correlationId=body.correlationId, canonicalInputHash=body.canonicalInputHash,

@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("postgres")
 class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport {
     @Test
-    void appliesAndValidatesTheSingleNewPipelineBaselineOnAnEmptySchema() throws Exception {
+    void appliesAndValidatesAllNewPipelineMigrationsOnAnEmptySchema() throws Exception {
         String schema = "baseline_" + UUID.randomUUID().toString().replace("-", "");
         Flyway flyway = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
@@ -24,7 +24,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(7);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -32,8 +32,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .map(info -> info.getVersion().getVersion())
             .toList();
 
-        assertThat(appliedVersions).containsExactly("1");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -59,6 +59,26 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         }
     }
 
+    @Test
+    void upgradesAnExistingV1ThroughV6SchemaWithRuntimeCompletionMigration() throws Exception {
+        String schema = "upgrade_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV6 = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
+            .target("6").load();
+        assertThat(throughV6.migrate().migrationsExecuted).isEqualTo(6);
+
+        Flyway latest = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isOne();
+        latest.validate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            assertThat(columnCount(connection, schema, "concept_slots", "replacement_rounds")).isOne();
+        }
+    }
+
     private void assertTables(Connection connection, String schema, String... tables) throws Exception {
         for (String table : tables) {
             assertThat(tableCount(connection, schema, table)).as("table %s", table).isEqualTo(1);
@@ -78,6 +98,21 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             """)) {
             statement.setString(1, schema);
             statement.setString(2, table);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1);
+            }
+        }
+    }
+
+    private int columnCount(Connection connection, String schema, String table, String column) throws Exception {
+        try (var statement = connection.prepareStatement("""
+            select count(*) from information_schema.columns
+            where table_schema = ? and table_name = ? and column_name = ?
+            """)) {
+            statement.setString(1, schema);
+            statement.setString(2, table);
+            statement.setString(3, column);
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
                 return result.getInt(1);

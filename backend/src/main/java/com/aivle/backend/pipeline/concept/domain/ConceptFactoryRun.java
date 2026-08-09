@@ -88,7 +88,7 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public boolean retryReplay(String key) {
-        return key != null && key.equals(lastRetryIdempotencyKey) && status == ConceptFactoryRunStatus.QUEUED;
+        return key != null && key.equals(lastRetryIdempotencyKey);
     }
 
     public void attachRetryTaskRun(String taskRunId, String key) {
@@ -108,7 +108,6 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public void recordCandidateInspection() {
-        if (inspectedCandidateCount >= ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES) throw new IllegalStateException("candidate inspection limit exceeded");
         inspectedCandidateCount++;
     }
 
@@ -124,7 +123,6 @@ public class ConceptFactoryRun extends BaseEntity {
     }
 
     public void recordProviderTransientRetry() {
-        if (providerTransientRetryCount >= ConceptFactoryLimits.MAX_PROVIDER_TRANSIENT_RETRIES) throw new IllegalStateException("provider transient retry limit exceeded");
         providerTransientRetryCount++;
     }
 

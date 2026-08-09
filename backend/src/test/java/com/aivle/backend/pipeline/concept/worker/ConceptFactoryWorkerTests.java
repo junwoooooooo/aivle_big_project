@@ -62,20 +62,60 @@ class ConceptFactoryWorkerTests {
     }
 
     @Test
-    void exhaustedTransientRetryUsesReplacementAndSucceeds() {
+    void transientRetriesAreBoundedPerCallRatherThanOncePerRun() {
         Harness h = new Harness();
-        AtomicInteger candidates = new AtomicInteger();
+        Map<String, AtomicInteger> calls = new java.util.concurrent.ConcurrentHashMap<>();
         when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
             TaskType type = invocation.getArgument(0);
-            if (type == TaskType.CONCEPT_CANDIDATE && candidates.getAndIncrement() < 2) throw transientFailure();
+            String attempt = invocation.getArgument(3);
+            if (type == TaskType.CONCEPT_CANDIDATE) {
+                String slot = attempt.substring(0, attempt.indexOf('-', 5));
+                if (calls.computeIfAbsent(slot, ignored -> new AtomicInteger()).getAndIncrement() == 0) {
+                    throw transientFailure();
+                }
+            }
             return type == TaskType.CONCEPT_LEGAL_REVIEW ? h.legal() : h.candidate();
         });
         when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
             .thenReturn(LegalDisposition.ELIGIBLE);
 
-        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
-            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
-        verify(h.execution).beginReplacement("run", "slot-1", 1);
+        assertThat(h.worker.processSlots(h.context, h.work(3)))
+            .isEqualTo(ConceptFactoryWorker.WorkerOutcome.COMPLETED);
+        verify(h.execution, times(3)).recordProviderTransientRetry("run");
+        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+    }
+
+    @Test
+    void exhaustedTransientRetryStopsRunWithoutReplacementOrRemainingSlotCalls() {
+        Harness h = new Harness();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            TaskType type = invocation.getArgument(0);
+            if (type == TaskType.CONCEPT_CANDIDATE) throw transientFailure();
+            return type == TaskType.CONCEPT_LEGAL_REVIEW ? h.legal() : h.candidate();
+        });
+
+        assertThat(h.worker.processSlots(h.context, h.work(5)))
+            .isEqualTo(ConceptFactoryWorker.WorkerOutcome.RETRY_LATER);
+        verify(h.ai, times(3)).execute(eq(TaskType.CONCEPT_CANDIDATE), anyString(), anyString(), anyString());
+        verify(h.execution, times(2)).recordProviderTransientRetry("run");
+        verify(h.execution, never()).recordCandidateInspection(anyString());
+        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+        verify(h.execution, never()).beginAttempt(eq("slot-2"), any(), anyString());
+    }
+
+    @Test
+    void rateLimitAndDeadlineExhaustionNeverBecomeCandidateReplacement() {
+        for (ExecutionFailure failure : List.of(
+                new ExecutionFailure("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED", true),
+                new ExecutionFailure("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true))) {
+            Harness h = new Harness();
+            when(h.ai.execute(eq(TaskType.CONCEPT_CANDIDATE), anyString(), anyString(), anyString()))
+                .thenThrow(failure);
+            assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+                .isEqualTo(ConceptFactoryWorker.SlotOutcome.RETRY_LATER);
+            verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+            verify(h.execution, never()).recordCandidateInspection(anyString());
+        }
     }
 
     @Test
@@ -124,6 +164,34 @@ class ConceptFactoryWorkerTests {
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
         verify(h.ai).execute(eq(TaskType.CONCEPT_REDESIGN), anyString(), anyString(), anyString());
         verify(h.execution).beginAttempt("slot-1", ConceptAttemptPhase.REDESIGN, "task");
+        verify(h.execution, atLeastOnce()).recordCompletedRedesign(eq("slot-1"), anyString());
+    }
+
+    @Test
+    void redesignTransientFailureConsumesNoCandidateOrRedesignBudgetAndCanResume() {
+        Harness h = new Harness();
+        AtomicInteger redesignCalls = new AtomicInteger();
+        when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
+            TaskType type = invocation.getArgument(0);
+            if (type == TaskType.CONCEPT_REDESIGN && redesignCalls.getAndIncrement() < 3) {
+                throw transientFailure();
+            }
+            return type == TaskType.CONCEPT_LEGAL_REVIEW ? h.legal() : h.candidate();
+        });
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN, LegalDisposition.REDESIGN, LegalDisposition.ELIGIBLE);
+
+        assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.RETRY_LATER);
+        verify(h.execution, times(1)).recordCandidateInspection("run");
+        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+
+        SlotWork preserved = new SlotWork("slot-1", 1, VariationFocus.CUSTOMER_EXPERIENCE,
+            0, 0, "slot-1-preserved", h.candidate().toString());
+        assertThat(h.worker.processSlot(h.context, h.work(1), preserved))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
+        verify(h.execution, times(2)).recordCandidateInspection("run");
+        verify(h.execution, times(2)).recordCompletedRedesign(eq("slot-1"), contains("attempt"));
     }
 
     @Test
@@ -226,7 +294,7 @@ class ConceptFactoryWorkerTests {
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
         verify(h.ai, times(1)).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());
         verify(h.execution).recordAttemptError(eq("run"), eq("slot-1"), anyString(),
-            eq(ConceptAttemptError.RESULT_SCHEMA_INVALID), eq("SEMANTIC_DISTINCTNESS_REVIEW_FAILED"), eq(false));
+            eq(ConceptAttemptError.SCHEMA_INVALID), eq("PROVIDER_RESPONSE_SCHEMA_REJECTED"), eq(false));
     }
 
     @Test
@@ -332,7 +400,7 @@ class ConceptFactoryWorkerTests {
         verify(h.execution).generated(eq("slot-1"), anyString(), any());
         verify(h.execution).failLegalReview(eq("run"), eq("slot-1"), anyString(),
             eq(ConceptAttemptError.RESULT_SCHEMA_INVALID),
-            eq("PROVIDER_RESPONSE_SCHEMA_REJECTED"), eq(true));
+            eq("PROVIDER_RESPONSE_SCHEMA_REJECTED"), eq(false));
         verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
     }
 
@@ -397,13 +465,15 @@ class ConceptFactoryWorkerTests {
         final ConceptFactoryAiGateway ai = mock(ConceptFactoryAiGateway.class);
         final JobEventPublisher events = mock(JobEventPublisher.class);
         final ObjectMapper mapper = new ObjectMapper();
+        final ProviderRetryPolicy retryPolicy = mock(ProviderRetryPolicy.class);
         final AtomicInteger attemptSequence = new AtomicInteger();
-        final ConceptFactoryWorker worker = new ConceptFactoryWorker(tasks, execution, ai, events, mapper);
+        final ConceptFactoryWorker worker = new ConceptFactoryWorker(tasks, execution, ai, events, mapper, retryPolicy);
         final TaskRunWorkerContext context = new TaskRunWorkerContext("task", 1L, 2L, TaskType.CONCEPT_FACTORY_RUN,
             "CONCEPT_FACTORY_RUN", "run", "{}", "sha256:" + "a".repeat(64), "key", "correlation",
             "1.0", "1.0", "ko-KR", 1, 1);
 
         Harness() {
+            when(retryPolicy.canRetry(anyInt())).thenAnswer(invocation -> invocation.<Integer>getArgument(0) < 2);
             when(execution.validateCandidate(anyString(), anyString(), anyString(), any(), any(), anyInt(), anyList()))
                 .thenReturn(CandidateDisposition.ACCEPTED);
             when(execution.beginAttempt(anyString(), any(), anyString())).thenAnswer(invocation ->

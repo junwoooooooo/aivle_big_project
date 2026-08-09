@@ -20,6 +20,10 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
         if (!current) return null;
         const job = [...active, ...recent].find((value) => value.jobId === current.jobId);
         if (!job) return null;
+        const newerActive = active.some((value) => value.jobId !== job.jobId
+          && value.subjectType === job.subjectType && value.subjectId === job.subjectId
+          && value.latestForSubject);
+        if (newerActive) return null;
         if (job.rawStatus === 'NEEDS_INPUT' && job.actionable === false) {
           return { jobId: job.jobId, status: 'RESOLVED_INPUT' };
         }

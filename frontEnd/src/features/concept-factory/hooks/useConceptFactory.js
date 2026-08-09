@@ -8,6 +8,8 @@ export default function useConceptFactory(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createConceptFactoryApi(client), [client]);
   const [state, setState] = useState({ loading: true, run: null, slots: [], concepts: [], error: null, confirmedSnapshotId: null });
+  const [actionPending, setActionPending] = useState(false);
+  const actionPendingRef = useRef(false);
   const refreshedSequence = useRef(0);
   const jobEvents = useJobEvents(state.run?.activeJobId ?? null);
 
@@ -44,22 +46,34 @@ export default function useConceptFactory(projectId) {
   }, [jobEvents.events, jobEvents.lastSequence, jobEvents.terminal, refresh]);
 
   const start = async () => {
-    if (!state.confirmedSnapshotId) return;
-    await api.create(projectId, state.confirmedSnapshotId);
-    await refresh();
+    if (!state.confirmedSnapshotId || actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending(true);
+    try {
+      await api.create(projectId, state.confirmedSnapshotId);
+      await refresh();
+    } finally { actionPendingRef.current = false; setActionPending(false); }
   };
   const retry = async () => {
-    if (!state.run) return;
-    await api.retry(projectId, state.run.runId, crypto.randomUUID());
-    jobEvents.reconnect();
-    await refresh();
+    if (!state.run || actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending(true);
+    try {
+      await api.retry(projectId, state.run.runId, crypto.randomUUID());
+      jobEvents.reconnect();
+      await refresh();
+    } finally { actionPendingRef.current = false; setActionPending(false); }
   };
 
   const startNew = async () => {
-    if (!state.confirmedSnapshotId) return;
-    await api.create(projectId, state.confirmedSnapshotId);
-    await refresh();
+    if (!state.confirmedSnapshotId || actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setActionPending(true);
+    try {
+      await api.create(projectId, state.confirmedSnapshotId);
+      await refresh();
+    } finally { actionPendingRef.current = false; setActionPending(false); }
   };
 
-  return { ...state, jobEvents, refresh, start, retry, startNew };
+  return { ...state, jobEvents, refresh, start, retry, startNew, actionPending };
 }

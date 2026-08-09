@@ -39,6 +39,7 @@ public class ConceptFactoryWorker {
     private final ConceptFactoryAiGateway ai;
     private final JobEventPublisher events;
     private final ObjectMapper mapper;
+    private final ProviderRetryPolicy providerRetryPolicy;
     private final String workerId = "concept-factory-" + UUID.randomUUID();
 
     @Scheduled(fixedDelayString = "${app.task-run.concept-factory-poll-interval-ms:1000}")
@@ -83,6 +84,7 @@ public class ConceptFactoryWorker {
             try {
                 SlotOutcome outcome = processSlot(context, work, slot);
                 if (outcome == SlotOutcome.NEEDS_INPUT) return failed ? WorkerOutcome.FAILED : WorkerOutcome.NEEDS_INPUT;
+                if (outcome == SlotOutcome.RETRY_LATER) return WorkerOutcome.RETRY_LATER;
                 if (outcome == SlotOutcome.FAILED) failed = true;
             } catch (RuntimeException isolated) {
                 execution.failActiveAttempt(slot.slotId(), ConceptAttemptError.INTERNAL_STATE_FAILURE,
@@ -112,15 +114,14 @@ public class ConceptFactoryWorker {
     }
 
     SlotOutcome processSlot(TaskRunWorkerContext context, Work work, SlotWork slot) {
-        for (int replacementRound = 0; replacementRound <= ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS; replacementRound++) {
+        for (int replacementRound = slot.replacementRounds(); replacementRound <= ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS; replacementRound++) {
             ConceptAttemptPhase phase = replacementRound == 0 ? ConceptAttemptPhase.INITIAL : ConceptAttemptPhase.REPLACEMENT;
             JsonNode candidate;
             String attemptId;
-            if (replacementRound == 0 && slot.candidateJson() != null) {
+            if (slot.candidateJson() != null) {
                 candidate = mapper.readTree(slot.candidateJson());
                 attemptId = slot.candidateAttemptId();
             } else {
-                execution.recordCandidateInspection(work.runId());
                 Generation generation = generate(context, work, slot, phase, TaskType.CONCEPT_CANDIDATE,
                     mapper.writeValueAsString(Map.of(
                         "ideaBriefSnapshotId", work.snapshotId(),
@@ -132,8 +133,9 @@ public class ConceptFactoryWorker {
                         "acceptedConceptFingerprints", execution.acceptedFingerprints(work.runId()),
                         "rejectedConceptFingerprints", execution.rejectedFingerprints(work.runId()),
                         "currentSlotPreviousFingerprints", execution.currentSlotPreviousFingerprints(slot.slotId()))));
-                if (generation.outcome() == GenerationOutcome.FAILED) return SlotOutcome.FAILED;
-                if (generation.outcome() == GenerationOutcome.REPLACE) {
+                if (generation.outcome() == GenerationOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                if (generation.outcome() == GenerationOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
+                if (generation.outcome() == GenerationOutcome.DOMAIN_FAILURE) {
                     if (!replace(context, work, slot, replacementRound, generation.attemptId(),
                         generation.failureClassification())) return SlotOutcome.FAILED;
                     continue;
@@ -141,6 +143,7 @@ public class ConceptFactoryWorker {
                 candidate = generation.result();
                 attemptId = generation.attemptId();
                 execution.generated(slot.slotId(), attemptId, candidate);
+                execution.recordCandidateInspection(work.runId());
                 publishAttempt(context, slot, "job.concept.slot.generated", TaskType.CONCEPT_CANDIDATE,
                     attemptId, "SUCCESS", generation.durationMs(), null);
             }
@@ -149,20 +152,24 @@ public class ConceptFactoryWorker {
             CandidateDisposition candidateDisposition = validateDistinctness(
                 context, work, slot, attemptId, candidate);
             if (candidateDisposition == null) return SlotOutcome.FAILED;
+            if (candidateDisposition == CandidateDisposition.PROVIDER_RETRY_LATER) return SlotOutcome.RETRY_LATER;
+            if (candidateDisposition == CandidateDisposition.PROVIDER_PERMANENT_FAILURE) return SlotOutcome.FAILED;
             if (candidateDisposition != CandidateDisposition.ACCEPTED) {
-                publishSlot(context, slot, "job.concept.slot.rejected");
                 ConceptAttemptError exhaustion = candidateDisposition == CandidateDisposition.DUPLICATE
                     ? ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS
                     : candidateDisposition == CandidateDisposition.LOCKED_INVALID
                         ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
+                publishRejection(context, slot, attemptId, exhaustion);
                 if (!replace(context, work, slot, replacementRound, attemptId, exhaustion)) return SlotOutcome.FAILED;
                 continue;
             }
+            execution.recordCompletedRedesign(slot.slotId(), attemptId);
             publishSlot(context, slot, "job.concept.slot.validating_distinctness");
             publishSlot(context, slot, "job.concept.slot.validating_legal");
 
             Review review = review(context, work, slot, phase, attemptId, candidate);
-            if (review.outcome() == ReviewOutcome.FAILED) return SlotOutcome.FAILED;
+            if (review.outcome() == ReviewOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+            if (review.outcome() == ReviewOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
             if (review.outcome() == ReviewOutcome.REPLACE) {
                 publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
                     review.attemptId(), "REJECTED", review.durationMs(), null);
@@ -187,32 +194,43 @@ public class ConceptFactoryWorker {
                         "prohibitedVariants", review.legal().path("prohibitedVariants"),
                         "designGaps", review.legal().path("redesignRequirements"),
                         "legalFactPattern", reviewedPattern.factPattern())));
-                if (redesign.outcome() == GenerationOutcome.FAILED) return SlotOutcome.FAILED;
+                if (redesign.outcome() == GenerationOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                if (redesign.outcome() == GenerationOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
+                if (redesign.outcome() == GenerationOutcome.DOMAIN_FAILURE) {
+                    if (!replace(context, work, slot, replacementRound, redesign.attemptId(),
+                            redesign.failureClassification())) return SlotOutcome.FAILED;
+                    continue;
+                }
                 attemptId = redesign.attemptId();
                 if (redesign.outcome() == GenerationOutcome.SUCCESS) {
                     execution.generated(slot.slotId(), redesign.attemptId(), redesign.result());
+                    execution.recordCandidateInspection(work.runId());
                     publishAttempt(context, slot, "job.concept.slot.generated", TaskType.CONCEPT_REDESIGN,
                         redesign.attemptId(), "SUCCESS", redesign.durationMs(), null);
                     publishSlot(context, slot, "job.concept.slot.validating_origin");
                     CandidateDisposition redesignedValidation = validateDistinctness(
                         context, work, slot, redesign.attemptId(), redesign.result());
                     if (redesignedValidation == null) return SlotOutcome.FAILED;
+                    if (redesignedValidation == CandidateDisposition.PROVIDER_RETRY_LATER) return SlotOutcome.RETRY_LATER;
+                    if (redesignedValidation == CandidateDisposition.PROVIDER_PERMANENT_FAILURE) return SlotOutcome.FAILED;
                     if (redesignedValidation != CandidateDisposition.ACCEPTED) {
-                        publishSlot(context, slot, "job.concept.slot.rejected");
                         ConceptAttemptError exhaustion = redesignedValidation == CandidateDisposition.DUPLICATE
                             ? ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS
                             : redesignedValidation == CandidateDisposition.LOCKED_INVALID
                                 ? ConceptAttemptError.LOCKED_CONSTRAINT_INVALID : ConceptAttemptError.ORIGIN_INVALID;
+                        publishRejection(context, slot, redesign.attemptId(), exhaustion);
                         if (!replace(context, work, slot, replacementRound, redesign.attemptId(), exhaustion)) {
                             return SlotOutcome.FAILED;
                         }
                         continue;
                     }
+                    execution.recordCompletedRedesign(slot.slotId(), redesign.attemptId());
                     publishSlot(context, slot, "job.concept.slot.validating_distinctness");
                     publishSlot(context, slot, "job.concept.slot.validating_legal");
                     Review redesigned = review(context, work, slot, ConceptAttemptPhase.REDESIGN,
                         redesign.attemptId(), redesign.result());
-                    if (redesigned.outcome() == ReviewOutcome.FAILED) return SlotOutcome.FAILED;
+                    if (redesigned.outcome() == ReviewOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                    if (redesigned.outcome() == ReviewOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
                     if (redesigned.outcome() == ReviewOutcome.REPLACE) {
                         publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
                             redesigned.attemptId(), "REJECTED", redesigned.durationMs(), null);
@@ -247,16 +265,28 @@ public class ConceptFactoryWorker {
         boolean duplicate = false;
         for (Map<String, Object> existing : execution.semanticComparisons(
                 work.runId(), slot.slotId(), attemptId, candidate)) {
+            String judgeAttemptId = execution.beginRetryAttempt(slot.slotId(), ConceptAttemptPhase.REPAIR,
+                context.taskRunId());
+            AiCall call = callWithTransientRetry(context, work, slot, ConceptAttemptPhase.REPAIR,
+                TaskType.CONCEPT_DISTINCTNESS_JUDGE, mapper.writeValueAsString(Map.of(
+                    "candidateA", existing,
+                    "candidateB", ConceptFingerprint.businessSummary(candidate))), judgeAttemptId);
+            if (call.result() == null) {
+                ConceptAttemptError classification = classify(call.failure());
+                execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
+                    call.failure().reason(), call.failure().retryable());
+                if (call.failure().retryable()) {
+                    execution.pauseGenerationForRetry(slot.slotId());
+                    return CandidateDisposition.PROVIDER_RETRY_LATER;
+                }
+                execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
+                return CandidateDisposition.PROVIDER_PERMANENT_FAILURE;
+            }
             try {
-                JsonNode judged = ai.execute(TaskType.CONCEPT_DISTINCTNESS_JUDGE,
-                    mapper.writeValueAsString(Map.of(
-                        "candidateA", existing,
-                        "candidateB", ConceptFingerprint.businessSummary(candidate))),
-                    context.correlationId(), attemptId + "-distinctness");
-                duplicate = ConceptSemanticDistinctnessResult.validate(judged)
+                duplicate = ConceptSemanticDistinctnessResult.validate(call.result())
                     == ConceptSemanticDistinctnessResult.Decision.DUPLICATE;
-            } catch (RuntimeException failure) {
-                execution.recordAttemptError(work.runId(), slot.slotId(), attemptId,
+            } catch (RuntimeException invalidResult) {
+                execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(),
                     ConceptAttemptError.RESULT_SCHEMA_INVALID, "SEMANTIC_DISTINCTNESS_REVIEW_FAILED", false);
                 return null;
             }
@@ -289,11 +319,16 @@ public class ConceptFactoryWorker {
             execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
                 call.failure().reason(), false);
             execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
-            return new Generation(GenerationOutcome.FAILED, call.attemptId(), null, classification, call.durationMs());
+            return new Generation(GenerationOutcome.PERMANENT_PROVIDER_FAILURE, call.attemptId(), null, classification, call.durationMs());
         }
         execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
             call.failure().reason(), classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE);
-        return new Generation(GenerationOutcome.REPLACE, call.attemptId(), null, classification, call.durationMs());
+        if (classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE) {
+            execution.pauseGenerationForRetry(slot.slotId());
+        }
+        return new Generation(classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE
+            ? GenerationOutcome.TRANSIENT_PROVIDER_FAILURE : GenerationOutcome.DOMAIN_FAILURE,
+            call.attemptId(), null, classification, call.durationMs());
     }
 
     private Review review(TaskRunWorkerContext context, Work work, SlotWork slot, ConceptAttemptPhase phase,
@@ -310,10 +345,11 @@ public class ConceptFactoryWorker {
         if (call.result() == null) {
             ConceptAttemptError classification = classifyLegal(call.failure());
             execution.failLegalReview(work.runId(), slot.slotId(), call.attemptId(), classification,
-                call.failure().reason(), call.failure().retryable() || isSchema(call.failure()));
+                call.failure().reason(), call.failure().retryable());
             publishAttempt(context, slot, "job.concept.slot.review_failed", TaskType.CONCEPT_LEGAL_REVIEW,
                 call.attemptId(), "FAILED", call.durationMs(), call.failure());
-            return new Review(ReviewOutcome.FAILED, null, null, call.attemptId(), classification,
+            return new Review(call.failure().retryable() ? ReviewOutcome.TRANSIENT_PROVIDER_FAILURE
+                : ReviewOutcome.PERMANENT_PROVIDER_FAILURE, null, null, call.attemptId(), classification,
                 call.durationMs());
         }
         LegalDisposition disposition = execution.legal(work.runId(), slot.slotId(), call.attemptId(), candidate, call.result());
@@ -329,23 +365,26 @@ public class ConceptFactoryWorker {
     private AiCall callWithTransientRetry(TaskRunWorkerContext context, Work work, SlotWork slot,
             ConceptAttemptPhase phase, TaskType type, String input, String attemptId) {
         long started = System.nanoTime();
-        try {
-            return new AiCall(attemptId, ai.execute(type, input, context.correlationId(), attemptId), null,
-                elapsedMillis(started), context, type);
-        } catch (ExecutionFailure failure) {
-            if (!failure.retryable()) return new AiCall(attemptId, null, failure,
-                elapsedMillis(started), context, type);
-            execution.recordAttemptError(work.runId(), slot.slotId(), attemptId,
-                ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE, failure.reason(), true);
-            String retryAttempt = execution.beginRetryAttempt(slot.slotId(), phase, context.taskRunId());
-            publishAttempt(context, slot, "job.concept.slot.retrying", type, retryAttempt,
-                "RETRY", null, failure);
-            long retryStarted = System.nanoTime();
+        String currentAttemptId = attemptId;
+        int retries = 0;
+        while (true) {
             try {
-                return new AiCall(retryAttempt, ai.execute(type, input, context.correlationId(), retryAttempt), null,
-                    elapsedMillis(retryStarted), context, type);
-            } catch (ExecutionFailure exhausted) {
-                return new AiCall(retryAttempt, null, exhausted, elapsedMillis(retryStarted), context, type);
+                return new AiCall(currentAttemptId,
+                    ai.execute(type, input, context.correlationId(), currentAttemptId), null,
+                    elapsedMillis(started), context, type);
+            } catch (ExecutionFailure failure) {
+                if (!failure.retryable() || !providerRetryPolicy.canRetry(retries)) {
+                    return new AiCall(currentAttemptId, null, failure,
+                        elapsedMillis(started), context, type);
+                }
+                execution.recordAttemptError(work.runId(), slot.slotId(), currentAttemptId,
+                    ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE, failure.reason(), true);
+                execution.recordProviderTransientRetry(work.runId());
+                retries++;
+                providerRetryPolicy.pause(retries, failure.retryAfterMillis());
+                currentAttemptId = execution.beginRetryAttempt(slot.slotId(), phase, context.taskRunId());
+                publishAttempt(context, slot, "job.concept.slot.retrying", type, currentAttemptId,
+                    "RETRY", null, failure);
             }
         }
     }
@@ -370,8 +409,12 @@ public class ConceptFactoryWorker {
             publish(context, "NEEDS_INPUT", "job.concept.run.needs_input", JobEvent.Status.NEEDS_INPUT, Map.of(), null);
             return;
         }
+        if (outcome == WorkerOutcome.RETRY_LATER) {
+            terminalizeFailed(claim, context, work.runId(), execution.failureCode(work.runId()), true);
+            return;
+        }
         if (outcome == WorkerOutcome.FAILED || !execution.completeIfEligible(work.runId())) {
-            terminalizeFailed(claim, context, work.runId(), execution.failureCode(work.runId()));
+            terminalizeFailed(claim, context, work.runId(), execution.failureCode(work.runId()), false);
             return;
         }
         taskRuns.adopt(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
@@ -381,14 +424,20 @@ public class ConceptFactoryWorker {
     }
 
     private void terminalizeFailed(TaskRunService.Claim claim, TaskRunWorkerContext context, String runId, String code) {
+        terminalizeFailed(claim, context, runId, code, false);
+    }
+
+    private void terminalizeFailed(TaskRunService.Claim claim, TaskRunWorkerContext context, String runId, String code,
+            boolean retryable) {
         try {
             execution.failRun(runId);
         } catch (RuntimeException domainFailure) {
             log.warn("Concept Factory run failure transition failed runId={} type={}", runId, domainFailure.getClass().getSimpleName());
         }
         taskRuns.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
-            taskFailureFamily(code), code, false);
-        publish(context, "FAILED", "job.concept.run.failed", JobEvent.Status.FAILED, Map.of(), code);
+            taskFailureFamily(code), code, retryable);
+        publish(context, "FAILED", "job.concept.run.failed", JobEvent.Status.FAILED,
+            Map.of("retryable", retryable), code);
     }
 
     private ConceptAttemptError classify(ExecutionFailure failure) {
@@ -418,6 +467,34 @@ public class ConceptFactoryWorker {
                 "event", eventName(key)), null);
     }
 
+    private void publishRejection(TaskRunWorkerContext context, SlotWork slot, String attemptId,
+            ConceptAttemptError reason) {
+        var trace = execution.attemptTrace(attemptId);
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("slot", slot.slotNumber());
+        params.put("slotNumber", slot.slotNumber());
+        params.put("slotId", slot.slotId());
+        params.put("variationFocus", slot.focus().name());
+        params.put("runId", context.subjectId());
+        params.put("phase", trace == null ? "UNKNOWN" : trace.phase());
+        params.put("taskType", "CONCEPT_CANDIDATE");
+        params.put("attemptNumber", trace == null ? 0 : trace.attemptNumber());
+        params.put("conceptAttemptId", attemptId);
+        params.put("correlationId", context.correlationId());
+        params.put("event", "REJECTED");
+        String classification = trace == null || trace.errorClassification() == null
+            ? reason.name() : trace.errorClassification();
+        String safeCode = trace == null || trace.safeErrorCode() == null
+            ? reason.name() : trace.safeErrorCode();
+        params.put("errorClassification", classification);
+        params.put("safeErrorCode", safeCode);
+        params.put("safeReason", safeCode);
+        if (safeCode.contains(":")) params.put("failedField", safeCode.substring(safeCode.indexOf(':') + 1));
+        params.put("retryable", false);
+        publish(context, "SLOT_" + slot.slotNumber(), "job.concept.slot.rejected",
+            JobEvent.Status.RUNNING, params, reason.name());
+    }
+
     private void publishAttempt(TaskRunWorkerContext context, SlotWork slot, String key, TaskType taskType,
             String attemptId, String event, Long durationMs, ExecutionFailure failure) {
         var trace = execution.attemptTrace(attemptId);
@@ -443,7 +520,14 @@ public class ConceptFactoryWorker {
                 params.put("failedField", failure.validationFields().get(0).path());
             }
         } else if (trace != null && trace.safeErrorCode() != null) {
+            if (trace.errorClassification() != null) {
+                params.put("errorClassification", trace.errorClassification());
+            }
             params.put("safeErrorCode", trace.safeErrorCode());
+            params.put("safeReason", trace.safeErrorCode());
+            if (trace.safeErrorCode().contains(":")) {
+                params.put("failedField", trace.safeErrorCode().substring(trace.safeErrorCode().indexOf(':') + 1));
+            }
             params.put("retryable", trace.retryable());
         }
         publish(context, "SLOT_" + slot.slotNumber(), key, JobEvent.Status.RUNNING,
@@ -479,15 +563,18 @@ public class ConceptFactoryWorker {
                  "PROVIDER_JSON_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", "CONTENT_FIELD_MISSING",
                  "VALUE_SEMANTICS_INCOMPLETE", "GOVERNANCE_SEMANTICS_MISMATCH",
                  "CANDIDATE_METADATA_INVALID" -> "RESULT_SCHEMA_INVALID";
-            case "MODEL_DEPENDENCY_UNAVAILABLE", "TRANSIENT_PROVIDER_FAILURE" -> "DEPENDENCY_UNAVAILABLE";
+            case "MODEL_DEPENDENCY_UNAVAILABLE", "DEPENDENCY_RATE_LIMITED",
+                 "REQUEST_DEADLINE_EXCEEDED", "TRANSIENT_EXECUTION_FAILURE",
+                 "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "MOLEG_DEPENDENCY_UNAVAILABLE",
+                 "MOLEG_RATE_LIMITED", "TRANSIENT_PROVIDER_FAILURE" -> "DEPENDENCY_UNAVAILABLE";
             default -> "EXECUTION_FAILED";
         };
     }
 
-    enum WorkerOutcome { COMPLETED, NEEDS_INPUT, FAILED }
-    enum SlotOutcome { ELIGIBLE, NEEDS_INPUT, FAILED }
-    private enum GenerationOutcome { SUCCESS, REPLACE, FAILED }
-    private enum ReviewOutcome { DISPOSITION, REPLACE, FAILED }
+    enum WorkerOutcome { COMPLETED, NEEDS_INPUT, RETRY_LATER, FAILED }
+    enum SlotOutcome { ELIGIBLE, NEEDS_INPUT, RETRY_LATER, FAILED }
+    private enum GenerationOutcome { SUCCESS, DOMAIN_FAILURE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE }
+    private enum ReviewOutcome { DISPOSITION, REPLACE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE }
     private record AiCall(String attemptId, JsonNode result, ExecutionFailure failure, long durationMs,
                           TaskRunWorkerContext context, TaskType taskType) {}
     private record Generation(GenerationOutcome outcome, String attemptId, JsonNode result,

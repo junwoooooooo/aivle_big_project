@@ -80,7 +80,8 @@ public class ConceptFactoryExecutionService {
                         && attempt.getResultJson() != null && attempt.getErrorClassification() == null)
                     .reduce((first, second) -> second).orElse(null);
                 return new SlotWork(value.getId(), value.getSlotNumber(), value.getVariationFocus(),
-                    value.getLegalRedesignCount(), candidate == null ? null : candidate.getId(),
+                    value.getLegalRedesignCount(), value.getReplacementRounds(),
+                    candidate == null ? null : candidate.getId(),
                     candidate == null ? null : candidate.getResultJson());
             }).toList();
         return new Work(runId, projectId, run.getSourceIdeaBriefSnapshotId(), strategy, fields, externalFacts, slotWork);
@@ -129,6 +130,25 @@ public class ConceptFactoryExecutionService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordProviderTransientRetry(String runId) {
+        runs.findById(runId).orElseThrow().recordProviderTransientRetry();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordCompletedRedesign(String slotId, String attemptId) {
+        ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
+        if (attempt.getPhase() == ConceptAttemptPhase.REDESIGN && attempt.getResultJson() != null
+                && attempt.getErrorClassification() == null) {
+            slots.findById(slotId).orElseThrow().recordCompletedRedesign();
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void pauseGenerationForRetry(String slotId) {
+        slots.findById(slotId).orElseThrow().fail();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void generated(String slotId, String attemptId, JsonNode candidate) {
         attempts.findById(attemptId).orElseThrow().succeed(mapper.writeValueAsString(candidate));
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
@@ -162,7 +182,7 @@ public class ConceptFactoryExecutionService {
         }
         for (Concept existing : concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotSlotNumber(
                 runId, run.getProject().getId())) {
-            if (ConceptFingerprint.classify(candidate, mapper.readTree(existing.getCandidateJson()))
+            if (ConceptFingerprint.classify(candidate, mapper.readTree(existing.getCandidateJson()), slot.getVariationFocus())
                     == ConceptFingerprint.Classification.DUPLICATE) {
                 rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
                     "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 기존 후보와 같은 후보입니다.");
@@ -176,7 +196,7 @@ public class ConceptFactoryExecutionService {
                     || previous.getResultJson() == null) continue;
                 if (existingSlot.getId().equals(slotId) && currentAttempt.getPhase() == ConceptAttemptPhase.REDESIGN
                     && previous.getErrorClassification() == null) continue;
-                if (ConceptFingerprint.classify(candidate, mapper.readTree(previous.getResultJson()))
+                if (ConceptFingerprint.classify(candidate, mapper.readTree(previous.getResultJson()), slot.getVariationFocus())
                         == ConceptFingerprint.Classification.DUPLICATE) {
                     rejectCandidate(slot, attemptId, candidate, ConceptAttemptError.DUPLICATE_CONCEPT,
                         "DUPLICATE_CONCEPT", "이름이나 표현 외의 실질적 사업 구조가 이전 후보와 같은 후보입니다.");
@@ -210,8 +230,10 @@ public class ConceptFactoryExecutionService {
         }
         Set<String> seen = new HashSet<>();
         List<Map<String, Object>> result = new ArrayList<>();
+        ConceptSlot currentSlot = slots.findById(slotId).orElseThrow();
         for (JsonNode existing : previous) {
-            if (ConceptFingerprint.classify(candidate, existing) != ConceptFingerprint.Classification.AMBIGUOUS) continue;
+            if (ConceptFingerprint.classify(candidate, existing, currentSlot.getVariationFocus())
+                    != ConceptFingerprint.Classification.AMBIGUOUS) continue;
             String hash = ConceptFingerprint.from(existing).canonicalHash();
             if (seen.add(hash)) result.add(ConceptFingerprint.businessSummary(existing));
         }
@@ -449,6 +471,7 @@ public class ConceptFactoryExecutionService {
     public void beginReplacement(String runId, String slotId, int replacementRound) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        slot.ensureReplacementRound(replacementRound);
         if (slot.getStatus() != ConceptSlotStatus.REPLACING) slot.transitionTo(ConceptSlotStatus.REPLACING);
         if (run.getStatus() == ConceptFactoryRunStatus.VALIDATING) run.ensureReplacementRound(replacementRound);
         if (run.getStatus() == ConceptFactoryRunStatus.REPLACING) {
@@ -483,6 +506,7 @@ public class ConceptFactoryExecutionService {
     public AttemptTrace attemptTrace(String attemptId) {
         ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
         return new AttemptTrace(attempt.getAttemptNumber(), attempt.getPhase().name(),
+            attempt.getErrorClassification() == null ? null : attempt.getErrorClassification().name(),
             attempt.getSafeErrorCode(), attempt.isRetryable());
     }
 
@@ -527,13 +551,16 @@ public class ConceptFactoryExecutionService {
     }
 
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
-    public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE, SEMANTIC_REVIEW_REQUIRED }
+    public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE,
+        SEMANTIC_REVIEW_REQUIRED, PROVIDER_RETRY_LATER, PROVIDER_PERMANENT_FAILURE }
     public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
-    public record AttemptTrace(int attemptNumber, String phase, String safeErrorCode, boolean retryable) {}
+    public record AttemptTrace(int attemptNumber, String phase, String errorClassification,
+                               String safeErrorCode, boolean retryable) {}
     public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount,
+                           int replacementRounds,
                            String candidateAttemptId, String candidateJson) {
         public SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount) {
-            this(slotId, slotNumber, focus, redesignCount, null, null);
+            this(slotId, slotNumber, focus, redesignCount, 0, null, null);
         }
     }
     public record Work(String runId, Long projectId, String snapshotId, ConceptGenerationStrategy generationStrategy,

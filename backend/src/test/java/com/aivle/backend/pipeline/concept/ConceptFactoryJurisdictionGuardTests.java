@@ -8,6 +8,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.concept.api.ConceptFactoryApiModels.CreateRunRequest;
 import com.aivle.backend.pipeline.concept.application.ConceptFactoryService;
+import com.aivle.backend.pipeline.concept.application.ConceptFactoryRetryPolicy;
 import com.aivle.backend.pipeline.concept.repository.*;
 import com.aivle.backend.pipeline.idea.domain.*;
 import com.aivle.backend.pipeline.idea.repository.*;
@@ -33,9 +34,11 @@ class ConceptFactoryJurisdictionGuardTests {
         TaskRunService tasks = mock(TaskRunService.class);
         ConceptFactoryService service = new ConceptFactoryService(
             runs, slots, mock(ConceptRepository.class), briefs, fields, projects,
-            mock(ConceptAttemptRepository.class), mock(ConceptLegalAssessmentRepository.class),
+            mock(ConceptAttemptRepository.class), mock(ConceptRejectionSummaryRepository.class),
+            mock(ConceptLegalAssessmentRepository.class),
             mock(ConceptLegalEvidenceLinkRepository.class), tasks, mock(CanonicalInputHasher.class),
-            new ObjectMapper(), mock(JobEventPublisher.class), new LegalJurisdictionResolver());
+            new ObjectMapper(), mock(JobEventPublisher.class), new LegalJurisdictionResolver(),
+            new ConceptFactoryRetryPolicy());
         Project project = mock(Project.class); User owner = mock(User.class); IdeaBrief brief = mock(IdeaBrief.class);
         IdeaBriefField region = mock(IdeaBriefField.class);
         when(owner.getId()).thenReturn(7L); when(project.getOwner()).thenReturn(owner);

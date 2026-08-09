@@ -12,10 +12,16 @@ const concepts = Array.from({ length: 5 }, (_, index) => ({
 }));
 
 describe('concept factory workboard model', () => {
-  it('deduplicates replayed events and calculates bounded counters', () => {
+  it('deduplicates replayed events but calculates business metrics only from backend state', () => {
     const events = [{ sequence: 2, eventType: 'job.concept.slot.rejected' }, { sequence: 1 }, { sequence: 2, eventType: 'job.concept.slot.rejected' }];
     expect(dedupeTimeline(events).map((event) => event.sequence)).toEqual([1, 2]);
-    expect(workboardSummary({ replacementRounds: 2 }, slots, events)).toEqual({ eligible: 5, inspected: 15, redesigned: 1, replaced: 2, discarded: 1 });
+    expect(workboardSummary({ eligibleCount: 5, generatedCandidateCount: 9,
+      candidateGenerationFailureCount: 3, inspectedCandidateCount: 9, redesignCount: 1,
+      replacementCandidateCount: 4, discardedCandidateCount: 4,
+      providerTransientRetryCount: 2 }, slots, events)).toEqual({
+      eligible: 5, generated: 9, generationFailed: 3, inspected: 9,
+      redesigned: 1, replaced: 4, discarded: 4, providerRetries: 2,
+    });
   });
 
   it('reveals only one complete, non-stale, non-duplicate snapshot set', () => {

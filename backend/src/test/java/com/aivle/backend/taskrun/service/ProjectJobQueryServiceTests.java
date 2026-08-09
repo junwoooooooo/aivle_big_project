@@ -18,6 +18,7 @@ import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,10 @@ class ProjectJobQueryServiceTests {
     @Test
     void ownerCanRestoreActiveJobsFromTaskRunTruth() {
         TaskRun run = mock(TaskRun.class);
-        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(mock(Project.class)));
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(9L);
+        when(run.getProject()).thenReturn(project);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
         when(taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(eq(9L), any(), any(Pageable.class)))
             .thenReturn(List.of(run));
         when(run.getId()).thenReturn("job-1");
@@ -40,6 +44,7 @@ class ProjectJobQueryServiceTests {
         when(run.getSubjectType()).thenReturn("CONCEPT_FACTORY_RUN");
         when(run.getSubjectId()).thenReturn("run-1");
         when(run.getState()).thenReturn(TaskRunState.RUNNING);
+        when(run.getStartedAt()).thenReturn(LocalDateTime.of(2026, 8, 7, 6, 21));
         when(run.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 8, 7, 11, 0));
 
         var jobs = service.active(2L, 9L);
@@ -49,6 +54,8 @@ class ProjectJobQueryServiceTests {
             assertThat(job.module()).isEqualTo("CONCEPT_FACTORY");
             assertThat(job.targetRoute()).isEqualTo("/concepts");
             assertThat(job.terminal()).isFalse();
+            assertThat(job.startedAt()).isEqualTo(Instant.parse("2026-08-07T06:21:00Z"));
+            assertThat(job.updatedAt()).isEqualTo(Instant.parse("2026-08-07T11:00:00Z"));
         });
     }
 

@@ -167,6 +167,43 @@ class InternalAiExecutionClientTests {
         }
     }
 
+    @Test
+    void acceptsSafeRetryAfterFromRateLimitFailure() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/internal/v1/ai/executions", exchange -> {
+            byte[] bytes = """
+                {"error":{"code":"RATE_LIMITED","message":"safe internal failure",
+                "correlationId":"correlation-1","taskRunId":"task-run","taskAttemptId":"attempt-1",
+                "retryable":true,"details":[{"reason":"DEPENDENCY_RATE_LIMITED","retryAfterMs":7000}]}}
+                """.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(429, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
+        server.start();
+        try {
+            AiServerProperties properties = new AiServerProperties(
+                "http://127.0.0.1:" + server.getAddress().getPort(),
+                Duration.ofSeconds(1), Duration.ofSeconds(2), "test-token");
+            InternalAiExecutionClient client = new InternalAiExecutionClient(
+                RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
+            TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION,
+                "IDEA_BRIEF_DERIVATION_RUN", "1", "{}", "sha256:" + "a".repeat(64),
+                "key", "correlation-1", 3);
+
+            assertThatThrownBy(() -> client.execute(run, "attempt-1",
+                    LocalDateTime.of(2035, 1, 1, 0, 0)))
+                .isInstanceOfSatisfying(ExecutionFailure.class, failure -> {
+                    assertThat(failure.reason()).isEqualTo("DEPENDENCY_RATE_LIMITED");
+                    assertThat(failure.retryable()).isTrue();
+                    assertThat(failure.retryAfterMillis()).isEqualTo(7_000L);
+                });
+        } finally {
+            server.stop(0);
+        }
+    }
+
     private void assertResponseIdentityRejected(String responseAttemptId, String responseHash) throws Exception {
         AtomicReference<String> runId = new AtomicReference<>();
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);

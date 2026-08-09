@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import re
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -16,7 +18,8 @@ class ProviderFailure(Exception):
     def __init__(self, code: str, reason: str, status_code: int, retryable: bool, *,
                  upstream_status: int | None = None, provider_error_type: str | None = None,
                  provider_error_param: str | None = None, schema_name: str | None = None,
-                 validation_fields: list[dict[str, str]] | None = None):
+                 validation_fields: list[dict[str, str]] | None = None,
+                 retry_after_ms: int | None = None):
         super().__init__(reason)
         self.code = code
         self.reason = reason
@@ -27,6 +30,7 @@ class ProviderFailure(Exception):
         self.provider_error_param = provider_error_param
         self.schema_name = schema_name
         self.validation_fields = list(validation_fields or [])[:12]
+        self.retry_after_ms = retry_after_ms
 
 
 def _configuration(model_override: str | None = None) -> tuple[str, str, str]:
@@ -69,6 +73,25 @@ def _safe_provider_error(response) -> tuple[str | None, str | None]:
         return None, None
 
 
+def _retry_after_ms(response) -> int | None:
+    raw = response.headers.get("Retry-After", "").strip()
+    if not raw:
+        return None
+    try:
+        seconds = float(raw)
+    except ValueError:
+        try:
+            retry_at = parsedate_to_datetime(raw)
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=timezone.utc)
+            seconds = (retry_at - datetime.now(timezone.utc)).total_seconds()
+        except (TypeError, ValueError, OverflowError):
+            return None
+    if seconds <= 0:
+        return None
+    return min(15_000, max(1_000, int(seconds * 1000)))
+
+
 async def execute_structured_prompt(system: str, user: str, model_override: str | None = None,
                                     response_schema: dict[str, Any] | None = None,
                                     schema_name: str | None = None,
@@ -98,7 +121,9 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
     if response.status_code in (401, 403):
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", 503, False)
     if response.status_code == 429:
-        raise ProviderFailure("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED", 429, True)
+        raise ProviderFailure("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED", 429, True,
+                              upstream_status=429, schema_name=schema_name,
+                              retry_after_ms=_retry_after_ms(response))
     if response.status_code >= 500:
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
                               upstream_status=response.status_code, schema_name=schema_name)

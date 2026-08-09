@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { jobEventMessage } from '../../shared/async-events/index.js';
+import { formatLocalTime } from '../../shared/async-events/formatLocalTime.js';
 import { useProjectJobs } from './useProjectJobs.js';
 
 const STATUS_LABELS = {
@@ -26,6 +27,7 @@ function JobList({ title, jobs, selectedJobId, onSelect, projectId }) {
         <strong>{job.taskType.replaceAll('_', ' ')}</strong>
         <span>{STATUS_LABELS[displayStatus(job)] ?? displayStatus(job)}</span>
         <small>서버 상태: {STATUS_LABELS[job.rawStatus ?? job.status] ?? (job.rawStatus ?? job.status)}</small>
+        <small>{job.latestForSubject ? '현재 실행' : '이전 실행'} · {formatLocalTime(job.startedAt ?? job.updatedAt)}</small>
       </button>
       <Link to={targetHref(projectId, job.targetRoute)}>모듈로 이동</Link>
     </li>)}</ul>}
@@ -43,7 +45,7 @@ export default function JobCenter({ projectId, onTerminal }) {
 
   return <section id="project-task-center" className="pipeline-task-center job-center" aria-labelledby="task-center-title">
     <header><div><p>작업 센터</p><h2 id="task-center-title">프로젝트 비동기 작업</h2></div><button type="button" onClick={jobs.refresh}>수동 새로고침</button></header>
-    {jobs.notice && <p className="job-center__notice" role="status" aria-live="polite">작업이 {STATUS_LABELS[jobs.notice.status] ?? jobs.notice.status} 상태로 종료되었습니다.</p>}
+    {jobs.notice && <p className="job-center__notice" role="status" aria-live="polite">선택한 작업이 {STATUS_LABELS[jobs.notice.status] ?? jobs.notice.status} 상태로 종료되었습니다.</p>}
     {jobs.loading && <p>서버에서 작업 목록을 복원하고 있습니다.</p>}
     {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
     {!jobs.loading && !jobs.error && <div className="job-center__groups">

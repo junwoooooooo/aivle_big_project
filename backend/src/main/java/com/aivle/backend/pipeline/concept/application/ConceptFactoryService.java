@@ -14,6 +14,7 @@ import com.aivle.backend.pipeline.concept.repository.ConceptFactoryRunRepository
 import com.aivle.backend.pipeline.concept.repository.ConceptAttemptRepository;
 import com.aivle.backend.pipeline.concept.repository.ConceptRepository;
 import com.aivle.backend.pipeline.concept.repository.ConceptSlotRepository;
+import com.aivle.backend.pipeline.concept.repository.ConceptRejectionSummaryRepository;
 import com.aivle.backend.pipeline.legal.repository.ConceptLegalAssessmentRepository;
 import com.aivle.backend.pipeline.legal.repository.ConceptLegalEvidenceLinkRepository;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
@@ -32,6 +33,9 @@ import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import java.util.Arrays;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,6 +52,7 @@ public class ConceptFactoryService {
     private final IdeaBriefFieldRepository ideaBriefFields;
     private final ProjectRepository projects;
     private final ConceptAttemptRepository attempts;
+    private final ConceptRejectionSummaryRepository rejections;
     private final ConceptLegalAssessmentRepository legalAssessments;
     private final ConceptLegalEvidenceLinkRepository legalEvidenceLinks;
     private final TaskRunService taskRuns;
@@ -55,6 +60,7 @@ public class ConceptFactoryService {
     private final ObjectMapper objectMapper;
     private final JobEventPublisher jobEvents;
     private final LegalJurisdictionResolver jurisdictions;
+    private final ConceptFactoryRetryPolicy retryPolicy;
 
     @Transactional
     public RunResponse create(Long ownerId, Long projectId, CreateRunRequest request) {
@@ -72,6 +78,7 @@ public class ConceptFactoryService {
             .ifPresent(field -> { throw new BusinessException(ErrorCode.LEGAL_JURISDICTION_UNSUPPORTED); });
         ConceptFactoryRun current = runs.findCurrentOwned(ownerId, projectId).orElse(null);
         if (current != null && !current.isTerminal()) {
+            if (current.getSourceIdeaBriefSnapshotId().equals(snapshot.getId())) return response(current);
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING, "Concept Factory run is already active.");
         }
         ConceptFactoryRun run = runs.save(ConceptFactoryRun.create(
@@ -123,8 +130,8 @@ public class ConceptFactoryService {
             throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED,
                 "Idea Brief snapshot changed; start a new Concept Factory run.");
         }
-        if (run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT || run.getStatus() == ConceptFactoryRunStatus.STALE
-            || run.getStatus() != ConceptFactoryRunStatus.FAILED) {
+        ConceptFactoryRetryPolicy.Decision retryDecision = retryDecision(run, latestBrief);
+        if (!retryDecision.canResume()) {
             throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED);
         }
         slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(runId, projectId).stream()
@@ -163,21 +170,36 @@ public class ConceptFactoryService {
     }
 
     private RunResponse response(ConceptFactoryRun run) {
-        List<com.aivle.backend.pipeline.concept.domain.ConceptAttempt> allAttempts = slots
-            .findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(run.getId(), run.getProject().getId()).stream()
+        List<ConceptSlot> runSlots = slots
+            .findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(run.getId(), run.getProject().getId());
+        List<com.aivle.backend.pipeline.concept.domain.ConceptAttempt> allAttempts = runSlots.stream()
             .flatMap(slot -> attempts.findAllBySlotIdOrderByAttemptNumber(slot.getId()).stream()).toList();
         var latestFailure = allAttempts.stream().filter(value -> value.getSafeErrorCode() != null)
-            .reduce((first, second) -> second).orElse(null);
-        boolean resumable = run.getStatus() == ConceptFactoryRunStatus.FAILED
-            && latestFailure != null && latestFailure.isRetryable();
+            .max(Comparator.comparing(com.aivle.backend.pipeline.concept.domain.ConceptAttempt::getUpdatedAt,
+                Comparator.nullsFirst(Comparator.naturalOrder()))).orElse(null);
+        IdeaBrief latestBrief = ideaBriefs.findCurrentOwned(run.getCreatedByUserId(), run.getProject().getId()).orElse(null);
+        ConceptFactoryRetryPolicy.Decision retryDecision = retryDecision(run, latestBrief, runSlots);
+        boolean resumable = retryDecision.canResume();
         String nextAction = run.getStatus() == ConceptFactoryRunStatus.NEEDS_INPUT ? "COMPLETE_IDEA_BRIEF"
             : run.getStatus() == ConceptFactoryRunStatus.STALE ? "START_NEW_RUN"
-            : resumable ? "RESUME_LEGAL_REVIEW" : run.getStatus() == ConceptFactoryRunStatus.FAILED
-                ? "START_NEW_RUN" : "WAIT";
+            : retryDecision.nextAction();
+        int generated = (int) allAttempts.stream().filter(value ->
+            value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
+                && value.getResultJson() != null).count();
+        int generationFailures = (int) allAttempts.stream().filter(value ->
+            value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
+                && value.getResultJson() == null && value.getErrorClassification() != null).count();
+        int replacementCandidates = (int) allAttempts.stream().filter(value ->
+            value.getPhase() == com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.REPLACEMENT
+                && value.getResultJson() != null).count();
+        int redesigns = runSlots.stream().mapToInt(ConceptSlot::getLegalRedesignCount).sum();
+        int eligible = (int) runSlots.stream().filter(value -> value.getStatus() == ConceptSlotStatus.ELIGIBLE).count();
         return new RunResponse(run.getId(), run.getSourceIdeaBriefSnapshotId(), run.getSourceSnapshotHash(), run.getStatus(),
-            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getTaskRunId(),
+            run.getReplacementRounds(), generated, run.getProviderTransientRetryCount(), run.getTaskRunId(),
+            eligible, generated, generationFailures, redesigns, replacementCandidates,
+            rejections.countBySlotRunIdAndDeletedAtIsNull(run.getId()),
             latestFailure == null ? null : "SLOT", latestFailure == null ? null : latestFailure.getSafeErrorCode(),
-            resumable, resumable, run.isTerminal(), nextAction, run.getUpdatedAt());
+            resumable, resumable, run.isTerminal(), nextAction, utc(run.getUpdatedAt()));
     }
 
     private SlotResponse response(ConceptSlot slot) {
@@ -196,7 +218,7 @@ public class ConceptFactoryService {
             latest == null ? null : latest.getPhase().name(), candidateCount, legalReviewCount,
             slot.getLegalRedesignCount(), replacementCount,
             failure == null ? null : failure.getPhase().name(), failure == null ? null : failure.getSafeErrorCode(),
-            failure != null && failure.isRetryable(), preserved, slot.getUpdatedAt());
+            failure != null && failure.isRetryable(), preserved, utc(slot.getUpdatedAt()));
     }
 
     private ConceptResponse response(Concept concept) {
@@ -207,12 +229,39 @@ public class ConceptFactoryService {
             .map(link -> new EvidenceView(link.getEvidence().getSourceType(), link.getEvidence().getLawId(),
                 link.getEvidence().getLawName(), link.getEvidence().getArticleReference(),
                 link.getEvidence().getTitle(), link.getEvidence().getEffectiveDate(),
-                link.getEvidence().getRetrievedAt(), link.getEvidence().getOfficialSourceUri())).toList();
+                utc(link.getEvidence().getRetrievedAt()), link.getEvidence().getOfficialSourceUri())).toList();
         LegalReviewView legal = new LegalReviewView(assessment.getStatus(), assessment.getSafeSummary(),
             objectMapper.readTree(assessment.getAssessmentJson()), evidence);
         return new ConceptResponse(concept.getId(), concept.getSlot().getSlotNumber(), concept.getSlot().getVariationFocus(),
             concept.getTitle(), concept.getSummary(), concept.getLegalStatus(), concept.getSourceSnapshotHash(),
             concept.getCanonicalHash(), concept.getMajorFieldHash(), concept.getRun().getStatus() == ConceptFactoryRunStatus.STALE,
             objectMapper.readTree(concept.getCandidateJson()), legal);
+    }
+
+    private ConceptFactoryRetryPolicy.Decision retryDecision(ConceptFactoryRun run, IdeaBrief latestBrief) {
+        return retryDecision(run, latestBrief, slots
+            .findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(run.getId(), run.getProject().getId()));
+    }
+
+    private ConceptFactoryRetryPolicy.Decision retryDecision(ConceptFactoryRun run, IdeaBrief latestBrief,
+            List<ConceptSlot> runSlots) {
+        boolean snapshotCurrent = latestBrief != null && latestBrief.isConfirmed()
+            && latestBrief.getId().equals(run.getSourceIdeaBriefSnapshotId());
+        List<ConceptFactoryRetryPolicy.SlotState> states = runSlots.stream().map(slot -> {
+            List<com.aivle.backend.pipeline.concept.domain.ConceptAttempt> values =
+                attempts.findAllBySlotIdOrderByAttemptNumber(slot.getId());
+            var latest = values.isEmpty() ? null : values.get(values.size() - 1);
+            boolean preserved = values.stream().anyMatch(value ->
+                value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
+                    && value.getResultJson() != null && value.getErrorClassification() == null);
+            return new ConceptFactoryRetryPolicy.SlotState(slot.getStatus(),
+                latest == null ? null : latest.getErrorClassification(),
+                latest != null && latest.isRetryable(), preserved);
+        }).toList();
+        return retryPolicy.evaluate(run.getStatus(), snapshotCurrent, states);
+    }
+
+    private Instant utc(java.time.LocalDateTime value) {
+        return value == null ? null : value.toInstant(ZoneOffset.UTC);
     }
 }

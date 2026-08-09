@@ -47,6 +47,7 @@ public class ConceptSlot extends BaseEntity {
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private ConceptSlotStatus status;
     @Column(nullable = false) private int attemptCount;
     @Column(nullable = false) private int legalRedesignCount;
+    @Column(nullable = false) private int replacementRounds;
 
     public static ConceptSlot create(ConceptFactoryRun run, int slotNumber, VariationFocus focus) {
         if (slotNumber < 1 || slotNumber > ConceptFactoryLimits.SLOT_COUNT) throw new IllegalArgumentException("slot number must be 1..5");
@@ -67,12 +68,20 @@ public class ConceptSlot extends BaseEntity {
     }
 
     public int beginAttempt(ConceptAttemptPhase phase) {
-        if (phase == ConceptAttemptPhase.REDESIGN) {
-            if (legalRedesignCount >= ConceptFactoryLimits.MAX_LEGAL_REDESIGNS_PER_SLOT) throw new IllegalStateException("legal redesign limit exceeded");
-            legalRedesignCount++;
-        }
         attemptCount++;
         return attemptCount;
+    }
+
+    public void recordCompletedRedesign() {
+        if (legalRedesignCount >= ConceptFactoryLimits.MAX_LEGAL_REDESIGNS_PER_SLOT) return;
+        legalRedesignCount++;
+    }
+
+    public void ensureReplacementRound(int round) {
+        if (round < 1 || round > ConceptFactoryLimits.MAX_REPLACEMENT_ROUNDS) {
+            throw new IllegalStateException("slot replacement round limit exceeded");
+        }
+        replacementRounds = Math.max(replacementRounds, round);
     }
 
     public int beginRetry() {

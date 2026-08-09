@@ -16,11 +16,12 @@ class ConceptFactoryLimitTests {
     @Test
     void enforcesAllIterationCaps() {
         ConceptFactoryRun run = ConceptFactoryStateMachineTests.run();
-        for (int i = 0; i < ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES; i++) run.recordCandidateInspection();
-        assertThatThrownBy(run::recordCandidateInspection).isInstanceOf(IllegalStateException.class);
+        for (int i = 0; i < ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES + 1; i++) run.recordCandidateInspection();
+        assertThat(run.getInspectedCandidateCount()).isEqualTo(ConceptFactoryLimits.MAX_INSPECTED_CANDIDATES + 1);
 
         run.recordProviderTransientRetry();
-        assertThatThrownBy(run::recordProviderTransientRetry).isInstanceOf(IllegalStateException.class);
+        run.recordProviderTransientRetry();
+        assertThat(run.getProviderTransientRetryCount()).isEqualTo(2);
 
         run.transitionTo(ConceptFactoryRunStatus.GENERATING);
         run.transitionTo(ConceptFactoryRunStatus.VALIDATING);
@@ -34,8 +35,9 @@ class ConceptFactoryLimitTests {
 
         ConceptSlot slot = ConceptSlot.create(run, 1, VariationFocus.CUSTOMER_EXPERIENCE);
         ConceptAttempt.begin(slot, ConceptAttemptPhase.REDESIGN, null);
-        assertThatThrownBy(() -> ConceptAttempt.begin(slot, ConceptAttemptPhase.REDESIGN, null))
-            .isInstanceOf(IllegalStateException.class);
+        assertThat(slot.getLegalRedesignCount()).isZero();
+        slot.recordCompletedRedesign();
+        slot.recordCompletedRedesign();
         assertThat(slot.getLegalRedesignCount()).isOne();
     }
 }

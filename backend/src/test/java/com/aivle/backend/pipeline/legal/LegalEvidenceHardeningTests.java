@@ -14,6 +14,7 @@ import com.aivle.backend.pipeline.legal.domain.LegalContextPack;
 import com.aivle.backend.pipeline.legal.domain.LegalEvidence;
 import com.aivle.backend.project.entity.Project;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
@@ -72,7 +73,7 @@ class LegalEvidenceHardeningTests {
     @Test
     void userEvidenceResponseContainsSourceMetadataButNoProviderBodyOrProvisionText() {
         EvidenceView response = new EvidenceView("OFFICIAL_LAW", "LAW-100", "개인정보 보호법", "제30조",
-            "개인정보 처리방침", "20250313", LocalDateTime.of(2026, 8, 7, 12, 0),
+            "개인정보 처리방침", "20250313", LocalDateTime.of(2026, 8, 7, 12, 0).toInstant(ZoneOffset.UTC),
             "https://www.law.go.kr/법령/개인정보보호법");
         String json = new ObjectMapper().writeValueAsString(response);
 

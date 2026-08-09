@@ -199,11 +199,12 @@ public class InternalAiExecutionClient {
                 || RETRYABLE_REASONS.contains(reason) != retryable)
                 return invalid("RESULT_DOMAIN_INVARIANT_VIOLATION");
             List<ValidationIssue> fields = validationIssues(details);
+            Long retryAfterMs = retryAfterMillis(details);
             if ("INVALID_REQUEST".equals(code) && !fields.isEmpty()) {
                 log.warn("Internal AI request rejected taskType={} code=REQUEST_SCHEMA_INVALID fields={}",
                     taskType.name(), fields);
             }
-            return new ExecutionFailure(code, reason, retryable, fields);
+            return new ExecutionFailure(code, reason, retryable, fields, retryAfterMs);
         } catch (ExecutionFailure known) {
             return known;
         } catch (RuntimeException invalidError) {
@@ -226,6 +227,14 @@ public class InternalAiExecutionClient {
             }
         }
         return List.copyOf(safe);
+    }
+
+    private Long retryAfterMillis(JsonNode details) {
+        if (details == null || !details.isArray() || details.isEmpty()) return null;
+        JsonNode value = details.get(0).get("retryAfterMs");
+        if (value == null || !value.isIntegralNumber()) return null;
+        long milliseconds = value.asLong();
+        return milliseconds >= 1_000 && milliseconds <= 15_000 ? milliseconds : null;
     }
 
     private String safeDiagnostic(JsonNode node, String field, int maxLength) {
@@ -256,24 +265,32 @@ public class InternalAiExecutionClient {
         private final String reason;
         private final boolean retryable;
         private final List<ValidationIssue> validationFields;
+        private final Long retryAfterMillis;
 
         public ExecutionFailure(String code, String reason, boolean retryable) {
-            this(code, reason, retryable, List.of());
+            this(code, reason, retryable, List.of(), null);
         }
 
         public ExecutionFailure(String code, String reason, boolean retryable,
                 List<ValidationIssue> validationFields) {
+            this(code, reason, retryable, validationFields, null);
+        }
+
+        public ExecutionFailure(String code, String reason, boolean retryable,
+                List<ValidationIssue> validationFields, Long retryAfterMillis) {
             super(code + ":" + reason);
             this.code = code;
             this.reason = reason;
             this.retryable = retryable;
             this.validationFields = List.copyOf(validationFields);
+            this.retryAfterMillis = retryAfterMillis;
         }
 
         public String code() { return code; }
         public String reason() { return reason; }
         public boolean retryable() { return retryable; }
         public List<ValidationIssue> validationFields() { return validationFields; }
+        public Long retryAfterMillis() { return retryAfterMillis; }
     }
 
     public record ValidationIssue(String path, String expectedType, String category) { }

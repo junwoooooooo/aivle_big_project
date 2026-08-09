@@ -1,4 +1,5 @@
 import { SLOT_STATUS_COPY, VARIATION_LABELS } from '../model/conceptFactoryModel.js';
+import { formatLocalTime } from '../../../shared/async-events/formatLocalTime.js';
 
 export default function ConceptSlotCard({ slot }) {
   const ready = slot.status === 'ELIGIBLE';
@@ -12,13 +13,7 @@ export default function ConceptSlotCard({ slot }) {
       <div><dt>후보 생성 횟수</dt><dd>{slot.candidateCount ?? 0}</dd></div>
       <div><dt>법률 검토 상태</dt><dd>{slot.status === 'REVIEW_RETRY_PENDING' ? '다시 시도 필요' : slot.status}</dd></div>
       <div><dt>재설계 횟수</dt><dd>{slot.legalRedesignCount ?? 0}</dd></div>
-      <div><dt>최근 갱신</dt><dd><time dateTime={slot.updatedAt}>{formatTime(slot.updatedAt)}</time></dd></div>
+      <div><dt>최근 갱신</dt><dd><time dateTime={slot.updatedAt}>{formatLocalTime(slot.updatedAt) || '아직 없음'}</time></dd></div>
     </dl>
   </article>;
-}
-
-function formatTime(value) {
-  if (!value) return '아직 없음';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? '확인 중' : new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit' }).format(parsed);
 }

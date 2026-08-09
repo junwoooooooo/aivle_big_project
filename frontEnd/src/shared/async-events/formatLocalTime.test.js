@@ -10,4 +10,9 @@ describe('formatLocalTime', () => {
     expect(formatLocalTime(messageOccurredAt)).toBe(formatLocalTime(eventOccurredAt));
     expect(formatLocalTime(messageOccurredAt)).not.toBe('');
   });
+
+  it('converts a UTC API timestamp to Asia/Seoul local time', () => {
+    expect(formatLocalTime('2026-08-09T06:21:00Z', { timeZone: 'Asia/Seoul' }))
+      .toBe('오후 03:21');
+  });
 });

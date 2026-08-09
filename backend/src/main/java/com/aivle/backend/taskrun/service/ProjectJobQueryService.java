@@ -11,6 +11,9 @@ import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.util.List;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,13 +70,21 @@ public class ProjectJobQueryService {
         boolean actionable = actionable(run);
         String presentationStatus = presentationStatus(run.getState(), actionable);
         String stateKey = presentationStatus.toLowerCase();
+        boolean latestForSubject = taskRuns
+            .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                run.getProject().getId(), run.getSubjectType(), run.getSubjectId())
+            .map(latest -> latest.getId().equals(run.getId())).orElse(false);
         return new ProjectJobView(
             run.getId(), run.getId(), run.getTaskType().name(), run.getSubjectType(), run.getSubjectId(),
             rawStatus, rawStatus, actionable, presentationStatus,
             "job.title." + module.name().toLowerCase(),
-            "job.status." + stateKey, module.name(), run.getStartedAt(), run.getUpdatedAt(),
+            "job.status." + stateKey, module.name(), utc(run.getStartedAt()), utc(run.getUpdatedAt()), latestForSubject,
             run.terminal(), run.isRetryable(), module.route
         );
+    }
+
+    private Instant utc(LocalDateTime value) {
+        return value == null ? null : value.toInstant(ZoneOffset.UTC);
     }
 
     private boolean actionable(TaskRun run) {

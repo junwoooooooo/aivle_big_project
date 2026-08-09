@@ -41,4 +41,26 @@ describe('JobCenter', () => {
     expect(screen.getByText('입력 필요')).toBeInTheDocument();
     expect(screen.getByText('입력 반영 완료')).toBeInTheDocument();
   });
+
+  it('shows failed initial and running retry as separate task runs', () => {
+    useProjectJobs.mockReturnValue({
+      loading: false, error: null, notice: null,
+      active: [{ jobId: 'retry-1', taskType: 'CONCEPT_FACTORY_RUN', status: 'RUNNING',
+        rawStatus: 'RUNNING', subjectType: 'CONCEPT_FACTORY_RUN', subjectId: 'run-1',
+        latestForSubject: true, startedAt: '2026-08-09T06:21:00Z', targetRoute: '/concepts' }],
+      recent: [{ jobId: 'initial', taskType: 'CONCEPT_FACTORY_RUN', status: 'FAILED',
+        rawStatus: 'FAILED', subjectType: 'CONCEPT_FACTORY_RUN', subjectId: 'run-1',
+        latestForSubject: false, startedAt: '2026-08-09T06:10:00Z', targetRoute: '/concepts' }],
+      selectedJobId: 'retry-1', selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'SSE', error: null, events: [{ jobId: 'retry-1', sequence: 1,
+        status: 'RUNNING', eventType: 'job.concept.run.started',
+        messageKey: 'job.concept.run.started' }], reconnect: vi.fn() },
+    });
+
+    render(<MemoryRouter><JobCenter projectId="41" /></MemoryRouter>);
+
+    expect(screen.getByText(/현재 실행/)).toBeInTheDocument();
+    expect(screen.getByText(/이전 실행/)).toBeInTheDocument();
+    expect(screen.getByText('컨셉 생성과 법률 근거 확인을 시작했습니다.')).toBeInTheDocument();
+  });
 });

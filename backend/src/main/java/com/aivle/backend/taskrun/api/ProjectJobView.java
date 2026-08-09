@@ -1,6 +1,6 @@
 package com.aivle.backend.taskrun.api;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ProjectJobView(
     String jobId,
@@ -15,8 +15,9 @@ public record ProjectJobView(
     String titleKey,
     String messageKey,
     String module,
-    LocalDateTime startedAt,
-    LocalDateTime updatedAt,
+    Instant startedAt,
+    Instant updatedAt,
+    boolean latestForSubject,
     boolean terminal,
     boolean retryable,
     String targetRoute

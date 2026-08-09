@@ -62,10 +62,12 @@ function TraceDetails({ event }) {
   const params = event?.messageParams ?? event?.safeMessageParams ?? {};
   const details = [
     ['단계', params.phase], ['작업', params.taskType], ['시도', params.attemptNumber],
-    ['결과', params.event], ['오류', params.safeErrorCode], ['진단', params.safeReason],
+    ['결과', params.event], ['분류', params.errorClassification],
+    ['오류', params.safeErrorCode], ['진단', params.safeReason],
     ['필드', params.failedField], ['재시도 가능', typeof params.retryable === 'boolean'
       ? (params.retryable ? '예' : '아니요') : null],
     ['소요', Number.isFinite(params.durationMs) ? `${params.durationMs}ms` : null],
+    ['상관 ID', params.correlationId],
   ].filter(([, value]) => value !== null && value !== undefined && value !== '');
   if (details.length === 0) return null;
   return <dl className="concept-timeline__trace">

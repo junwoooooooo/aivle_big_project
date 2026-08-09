@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import tools.jackson.databind.JsonNode;
 
@@ -12,7 +13,29 @@ public final class ConceptFingerprint {
     private static final List<String> FIELDS = List.of(
         "targetUsers", "problemScenario", "coreValue", "solutionMechanism", "revenueModel",
         "channels", "platformRole", "operatingModel", "partnerModel", "transactionFlow",
-        "providerRole", "sellerRole", "intermediaryRole"
+        "providerRole", "sellerRole", "intermediaryRole", "featureSet", "actorRoles", "price",
+        "paymentFlow", "personalDataUsage", "physicalActivities", "partnerRequirements",
+        "qualificationRequirements"
+    );
+    private static final List<String> MECHANICS = List.of(
+        "solutionMechanism", "revenueModel", "channels", "platformRole", "operatingModel",
+        "partnerModel", "transactionFlow", "providerRole", "sellerRole", "intermediaryRole",
+        "price", "paymentFlow", "personalDataUsage", "physicalActivities", "partnerRequirements",
+        "qualificationRequirements"
+    );
+    private static final Map<VariationFocus, List<String>> FOCUS_FIELDS = Map.of(
+        VariationFocus.CUSTOMER_EXPERIENCE,
+            List.of("problemScenario", "solutionMechanism", "featureSet", "coreValue"),
+        VariationFocus.OPERATING_MODEL_AND_PARTNERS,
+            List.of("actorRoles", "operatingModel", "partnerModel", "providerRole", "sellerRole",
+                "intermediaryRole", "transactionFlow"),
+        VariationFocus.REVENUE_AND_PRICING,
+            List.of("revenueModel", "price", "paymentFlow"),
+        VariationFocus.CHANNEL_AND_SCALE,
+            List.of("channels", "platformRole", "transactionFlow", "operatingModel"),
+        VariationFocus.LOW_RISK_FAST_EXECUTION,
+            List.of("personalDataUsage", "physicalActivities", "partnerRequirements",
+                "qualificationRequirements", "operatingModel")
     );
 
     private ConceptFingerprint() {}
@@ -20,7 +43,8 @@ public final class ConceptFingerprint {
     public static Value from(JsonNode candidate) {
         List<String> values = FIELDS.stream().map(field -> normalize(stringValue(candidate.path(field)))).toList();
         return new Value(ConceptCanonicalizer.hash(values.toArray(String[]::new)),
-            ConceptCanonicalizer.hash(values.get(0), values.get(1), values.get(2), values.get(3), values.get(6)),
+            ConceptCanonicalizer.hash(MECHANICS.stream()
+                .map(field -> normalize(stringValue(candidate.path(field)))).toArray(String[]::new)),
             values);
     }
 
@@ -50,6 +74,47 @@ public final class ConceptFingerprint {
             return Classification.AMBIGUOUS;
         }
         return Classification.DISTINCT;
+    }
+
+    public static Classification classify(JsonNode candidate, JsonNode existing, VariationFocus focus) {
+        Value first = from(candidate);
+        Value second = from(existing);
+        if (first.canonicalHash().equals(second.canonicalHash())
+                || first.majorFieldHash().equals(second.majorFieldHash())) {
+            return Classification.DUPLICATE;
+        }
+        List<String> focusFields = FOCUS_FIELDS.get(focus);
+        double focusSimilarity = averageSimilarity(candidate, existing, focusFields);
+        double mechanicsSimilarity = averageSimilarity(candidate, existing, MECHANICS);
+        if (focusSimilarity <= 0.45 || materiallyDifferentFields(candidate, existing, focusFields) >= 2) {
+            return Classification.DISTINCT;
+        }
+        if (focusSimilarity >= 0.78 && mechanicsSimilarity >= 0.68) return Classification.DUPLICATE;
+        if (focusSimilarity >= 0.35 || mechanicsSimilarity >= 0.40) return Classification.AMBIGUOUS;
+        return Classification.DISTINCT;
+    }
+
+    private static int materiallyDifferentFields(JsonNode left, JsonNode right, List<String> fields) {
+        int different = 0;
+        for (String field : fields) {
+            String first = normalize(stringValue(left.path(field)));
+            String second = normalize(stringValue(right.path(field)));
+            if ((!first.isBlank() || !second.isBlank()) && similarity(first, second) <= 0.35) different++;
+        }
+        return different;
+    }
+
+    private static double averageSimilarity(JsonNode left, JsonNode right, List<String> fields) {
+        double total = 0;
+        int populated = 0;
+        for (String field : fields) {
+            String first = normalize(stringValue(left.path(field)));
+            String second = normalize(stringValue(right.path(field)));
+            if (first.isBlank() && second.isBlank()) continue;
+            total += similarity(first, second);
+            populated++;
+        }
+        return populated == 0 ? 1.0 : total / populated;
     }
 
     public static java.util.Map<String, Object> businessSummary(JsonNode candidate) {
