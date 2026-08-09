@@ -202,6 +202,7 @@ Run은 `QUEUED`, `GENERATING`, `VALIDATING`, `REPLACING`, `COMPLETED`, `NEEDS_IN
 Attempt error classification:
 
 - `SCHEMA_INVALID`
+- `REQUEST_CONTRACT_INVALID`
 - `TRANSIENT_PROVIDER_FAILURE`
 - `PERMANENT_PROVIDER_FAILURE`
 - `ORIGIN_INVALID`
@@ -213,7 +214,7 @@ Attempt error classification:
 - `INSUFFICIENT_INFORMATION`
 - `INTERNAL_EXECUTION_ERROR`
 
-transient retry 1회, schema repair 1회, legal redesign 1회, replacement round 2회, 전체 inspected candidate 15개로 bounded한다. permanent provider failure는 retry 불가 terminal failure다.
+transient retry, schema repair, legal redesign, replacement round, 전체 inspected candidate는 구현 limit로 bounded한다. `REQUEST_CONTRACT_INVALID`는 Backend가 AI 내부 입력 계약을 위반한 run-global fatal 오류이므로 남은 Slot 호출을 즉시 중단하고 같은 Run의 resume을 허용하지 않는다. permanent provider/config failure는 retry 불가 terminal failure다.
 
 ## 13. 보안과 immutability
 

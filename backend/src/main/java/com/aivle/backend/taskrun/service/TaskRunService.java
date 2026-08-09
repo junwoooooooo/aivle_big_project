@@ -248,7 +248,7 @@ public class TaskRunService {
         if (java.util.Set.of("INSUFFICIENT_DISTINCT_CONCEPTS", "LOCKED_CONSTRAINT_INVALID",
             "ORIGIN_INVALID", "LEGAL_REJECTED", "LEGAL_EXTERNAL_FACT_UNRESOLVED",
             "LEGAL_REDESIGN_EXHAUSTED", "REPLACEMENT_EXHAUSTED", "DISTINCTNESS_EXHAUSTED",
-            "SCHEMA_REPAIR_EXHAUSTED", "INTERNAL_STATE_FAILURE").contains(reason)) return reason;
+            "SCHEMA_REPAIR_EXHAUSTED", "INTERNAL_STATE_FAILURE", "REQUEST_CONTRACT_INVALID").contains(reason)) return reason;
         return switch (internal) {
         case "PAYLOAD_TOO_LARGE" -> "PAYLOAD_TOO_LARGE";
         case "DEADLINE_EXCEEDED" -> "TASK_TIMEOUT";

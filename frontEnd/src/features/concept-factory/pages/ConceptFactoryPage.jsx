@@ -26,19 +26,21 @@ export default function ConceptFactoryPage() {
       <button type="button" onClick={factory.refresh}>새로고침</button></header>
     {terminal && <div className="concept-workboard__alert" role="alert">
       <strong>{factory.run.status === 'NEEDS_INPUT' ? '추가 정보가 필요합니다.' : '작업을 완료하지 못했습니다.'}</strong>
-      <span>현재까지 통과된 결과는 보존되었습니다.</span>
+      <span>{factory.run.failureCode === 'REQUEST_CONTRACT_INVALID'
+        ? '컨셉 생성 중 내부 입력 계약 오류가 발생했습니다. 새로 시도해도 같은 문제가 반복될 수 있습니다.'
+        : '현재까지 통과된 결과는 보존되었습니다.'}</span>
       {factory.run.status === 'NEEDS_INPUT' && <Link to={projectRoutes.idea(projectId)}>Idea Brief 확인</Link>}
       {factory.run.canResume && <button type="button" disabled={factory.actionPending} onClick={factory.retry}>이어서 시도</button>}
       {factory.run.canStartNew && <button type="button" disabled={factory.actionPending} onClick={factory.startNew}>처음부터 새로 만들기</button>}
     </div>}
     <section className="concept-summary" aria-label="Concept Factory 요약" aria-live="polite">
       <Metric label="법률검토 통과" value={`${summary.eligible} / 5`} />
-      <Metric label="생성 성공 후보" value={summary.generated} />
-      <Metric label="생성 실패" value={summary.generationFailed} />
-      <Metric label="검토 후보" value={summary.inspected} />
-      <Metric label="재설계" value={summary.redesigned} />
-      <Metric label="대체 생성" value={summary.replaced} />
-      <Metric label="폐기" value={summary.discarded} />
+      <Metric label="신규 후보 생성" value={summary.initialGenerated} />
+      <Metric label="대체 후보 생성" value={summary.replaced} />
+      <Metric label="재설계 성공" value={summary.redesigned} />
+      <Metric label="검토 완료 후보" value={summary.inspected} />
+      <Metric label="폐기 후보" value={summary.discarded} />
+      <Metric label="생성/시스템 실패" value={summary.generationFailed} />
       <Metric label="Provider 재시도" value={summary.providerRetries} />
     </section>
     {!reveal.canReveal && <p className="concept-workboard__gate" aria-live="polite">5개 컨셉이 모두 준비되면 상세를 동시에 공개합니다.</p>}

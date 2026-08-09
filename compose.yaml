@@ -152,6 +152,8 @@ services:
     build:
       context: .
       dockerfile: frontEnd/Dockerfile
+      args:
+        VITE_ENABLE_PIPELINE_DEBUG: ${VITE_ENABLE_PIPELINE_DEBUG:-false}
     depends_on:
       backend:
         condition: service_healthy

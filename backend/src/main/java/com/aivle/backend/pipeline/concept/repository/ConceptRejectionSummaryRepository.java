@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConceptRejectionSummaryRepository extends JpaRepository<ConceptRejectionSummary, Long> {
     long countBySlotRunIdAndDeletedAtIsNull(String runId);
+    boolean existsByAttemptId(String attemptId);
 }

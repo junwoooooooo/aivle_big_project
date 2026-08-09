@@ -15,11 +15,11 @@ describe('concept factory workboard model', () => {
   it('deduplicates replayed events but calculates business metrics only from backend state', () => {
     const events = [{ sequence: 2, eventType: 'job.concept.slot.rejected' }, { sequence: 1 }, { sequence: 2, eventType: 'job.concept.slot.rejected' }];
     expect(dedupeTimeline(events).map((event) => event.sequence)).toEqual([1, 2]);
-    expect(workboardSummary({ eligibleCount: 5, generatedCandidateCount: 9,
+    expect(workboardSummary({ eligibleCount: 5, initialCandidateSuccessCount: 4, generatedCandidateCount: 9,
       candidateGenerationFailureCount: 3, inspectedCandidateCount: 9, redesignCount: 1,
       replacementCandidateCount: 4, discardedCandidateCount: 4,
       providerTransientRetryCount: 2 }, slots, events)).toEqual({
-      eligible: 5, generated: 9, generationFailed: 3, inspected: 9,
+      eligible: 5, initialGenerated: 4, generatedTotal: 9, generationFailed: 3, inspected: 9,
       redesigned: 1, replaced: 4, discarded: 4, providerRetries: 2,
     });
   });

@@ -49,3 +49,12 @@
   - schema invalid는 `SCHEMA_INVALID` 후 `REPAIR` 1회를 허용하고 재실패 시 `REPLACING`으로 전이한다.
 - 근거: Provider 장애는 사용자 작업 진행 상태가 아니라 Attempt 실행 결과이며, Slot 상태로 영속화하면 복구 정책과 사용자 진행 표시가 결합된다.
 - 영향: R3A enum과 V8 constraint는 변경하지 않는다. R3B Worker는 Attempt error classification을 저장하고 이 ADR의 전이만 적용한다.
+
+## D-019 Concept 내부 요청 계약 오류 경계
+
+- 상태: 승인
+- 결정: Backend가 생성한 AI 내부 DTO가 AI 입력 schema를 위반한 경우 `PERMANENT_PROVIDER_FAILURE`가 아니라 `REQUEST_CONTRACT_INVALID`로 기록한다.
+- 전이: 첫 요청 계약 오류에서 현재 Run을 즉시 `FAILED`로 종료하며, 아직 시작하지 않은 Slot의 Attempt나 AI 호출을 만들지 않는다.
+- 재시도: `retryable=false`, `canResume=false`, `nextAction=FIX_SYSTEM_AND_START_NEW_RUN`이다.
+- 근거: AI 서비스와 Provider의 가용성 문제가 아니라 producer/consumer contract drift인 run-global deterministic system failure다.
+- 계약 소유권: Backend `ConceptFingerprint.businessSummary`가 producer이며 AI Candidate와 Distinctness 입력이 `BusinessFingerprint v1` consumer다. `contracts/concept` fixture를 양쪽 테스트가 공유한다.

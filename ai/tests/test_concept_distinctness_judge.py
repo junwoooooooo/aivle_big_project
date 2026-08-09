@@ -12,6 +12,11 @@ def fingerprint(revenue="월 정액 멤버십", mechanism="개인 참가자를 �
         "operatingModel": "당일 수요를 모아 팀 구성", "partnerModel": "풋살장 제휴",
         "transactionFlow": ["개인 신청", "팀 자동 구성"], "providerRole": "풋살장",
         "sellerRole": "플랫폼", "intermediaryRole": "참가자와 구장 연결",
+        "featureSet": ["즉석 팀 구성", "구장 예약"],
+        "actorRoles": ["참가자", "풋살장", "중개 플랫폼"], "price": "경기당 1만원",
+        "paymentFlow": ["참가자가 플랫폼에 결제", "플랫폼이 구장에 정산"],
+        "personalDataUsage": ["연락처와 경기 선호"], "physicalActivities": ["풋살 경기 참여"],
+        "partnerRequirements": ["제휴 풋살장"], "qualificationRequirements": [],
     }
 
 

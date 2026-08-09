@@ -11,6 +11,7 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [notice, setNotice] = useState(null);
   const handledTerminal = useRef(null);
+  const manualSelection = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -25,12 +26,15 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
           && value.latestForSubject);
         if (newerActive) return null;
         if (job.rawStatus === 'NEEDS_INPUT' && job.actionable === false) {
-          return { jobId: job.jobId, status: 'RESOLVED_INPUT' };
+          return { ...current, jobId: job.jobId, status: 'RESOLVED_INPUT', taskType: job.taskType };
         }
         return current;
       });
       setSelectedJobId((current) => {
-        if (current && [...active, ...recent].some((job) => job.jobId === current)) return current;
+        const available = [...active, ...recent];
+        if (manualSelection.current && current && available.some((job) => job.jobId === current)) return current;
+        if (active[0]?.jobId && active[0].jobId !== current) return active[0].jobId;
+        if (current && available.some((job) => job.jobId === current)) return current;
         return active[0]?.jobId ?? recent[0]?.jobId ?? null;
       });
     } catch (error) {
@@ -43,6 +47,7 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
     setSelectedJobId(null);
     setNotice(null);
     handledTerminal.current = null;
+    manualSelection.current = false;
     const timer = setTimeout(refresh, 0);
     return () => clearTimeout(timer);
   }, [projectId, refresh]);
@@ -52,10 +57,16 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
     if (!events.terminal || !selectedJobId || handledTerminal.current === selectedJobId) return;
     handledTerminal.current = selectedJobId;
     const latest = events.events.at(-1);
-    setNotice({ jobId: selectedJobId, status: latest?.status ?? 'COMPLETED' });
+    const selected = [...state.active, ...state.recent].find((job) => job.jobId === selectedJobId);
+    setNotice({ jobId: selectedJobId, status: latest?.status ?? 'COMPLETED', taskType: selected?.taskType });
     refresh();
     onTerminal?.();
-  }, [events.events, events.terminal, onTerminal, refresh, selectedJobId]);
+  }, [events.events, events.terminal, onTerminal, refresh, selectedJobId, state.active, state.recent]);
 
-  return { ...state, selectedJobId, selectJob: setSelectedJobId, events, notice, refresh };
+  const selectJob = useCallback((jobId) => {
+    manualSelection.current = true;
+    setSelectedJobId(jobId);
+  }, []);
+
+  return { ...state, selectedJobId, selectJob, events, notice, refresh };
 }

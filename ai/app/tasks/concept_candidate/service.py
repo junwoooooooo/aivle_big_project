@@ -20,6 +20,9 @@ USER_CONFIRMED + LOCKED 값은 의미와 구체적 조건을 보존한다. 비�
 법률검토 지원 범위인 대한민국과 호환되는 지역으로 제안한다. pre-market SOM 두 값은 실제
 시장분석 결과가 아닌 사전 가설이다. AS_IS Candidate 1은 사용자 원안을 새 아이디어로 왜곡하지
 않고 구조화한다. 이름이나 표현만 바꾼 avoidCandidates와 같은 사업 구조를 만들지 않는다.
+avoidCandidates의 21개 BusinessFingerprint는 고객 경험, 운영·파트너, 수익·가격, 채널·확장,
+개인정보·물리활동·필수 파트너·자격 의존도를 비교하는 축이며 현재 diversityFocus의 primaryAxes를
+우선해 실질적 차이를 만든다.
 providerRole, sellerRole, intermediaryRole은 실제 거래상 역할을 명시하고 역할이 없으면 그 이유와
 함께 '해당 없음'으로 쓴다. 증거 ID, 법령 문구, 최종 법률 상태, 사용자 확인 상태는 만들지 않는다."""
 

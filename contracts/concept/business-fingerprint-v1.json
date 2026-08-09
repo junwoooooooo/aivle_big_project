@@ -1,0 +1,45 @@
+{
+  "targetUsers": "동네 소형 식품점 운영자",
+  "problemScenario": "마감 재고가 매일 폐기된다",
+  "coreValue": "남은 재고를 당일 수요와 연결한다",
+  "solutionMechanism": "재고 등록 즉시 인근 구매자에게 소량 묶음을 추천한다",
+  "revenueModel": "거래 건별 중개 수수료",
+  "channels": "지역 상인회와 동네 커뮤니티",
+  "platformRole": "재고와 주문을 연결하고 정산을 중개한다",
+  "operatingModel": "가게가 재고를 등록하고 구매자가 매장에서 수령한다",
+  "partnerModel": "지역 상인회와 참여 매장이 공급 파트너로 참여한다",
+  "transactionFlow": [
+    "가게가 마감 재고를 등록한다",
+    "구매자가 주문하고 매장에서 수령한다"
+  ],
+  "providerRole": "참여 매장이 재고 정보와 상품을 제공한다",
+  "sellerRole": "참여 매장이 판매와 현장 인도를 담당한다",
+  "intermediaryRole": "플랫폼이 탐색과 주문 및 정산을 중개한다",
+  "featureSet": [
+    "마감 재고 즉시 등록",
+    "거리 기반 소량 묶음 추천"
+  ],
+  "actorRoles": [
+    "매장 운영자",
+    "구매자",
+    "중개 플랫폼"
+  ],
+  "price": "주문 금액의 5퍼센트",
+  "paymentFlow": [
+    "구매자가 플랫폼에서 결제한다",
+    "플랫폼이 수수료를 제외하고 매장에 정산한다"
+  ],
+  "personalDataUsage": [
+    "추천을 위한 대략적 위치",
+    "주문 확인을 위한 연락처"
+  ],
+  "physicalActivities": [
+    "구매자가 매장을 방문해 상품을 수령한다"
+  ],
+  "partnerRequirements": [
+    "당일 재고를 정확히 등록할 참여 매장"
+  ],
+  "qualificationRequirements": [
+    "식품 판매에 필요한 사업자 자격"
+  ]
+}

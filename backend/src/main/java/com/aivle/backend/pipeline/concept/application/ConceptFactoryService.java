@@ -186,6 +186,9 @@ public class ConceptFactoryService {
         int generated = (int) allAttempts.stream().filter(value ->
             value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
                 && value.getResultJson() != null).count();
+        int initialCandidates = (int) allAttempts.stream().filter(value ->
+            value.getPhase() == com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.INITIAL
+                && value.getResultJson() != null).count();
         int generationFailures = (int) allAttempts.stream().filter(value ->
             value.getPhase() != com.aivle.backend.pipeline.concept.domain.ConceptAttemptPhase.LEGAL_REVIEW
                 && value.getResultJson() == null && value.getErrorClassification() != null).count();
@@ -194,11 +197,15 @@ public class ConceptFactoryService {
                 && value.getResultJson() != null).count();
         int redesigns = runSlots.stream().mapToInt(ConceptSlot::getLegalRedesignCount).sum();
         int eligible = (int) runSlots.stream().filter(value -> value.getStatus() == ConceptSlotStatus.ELIGIBLE).count();
+        String failureScope = latestFailure != null
+            && latestFailure.getErrorClassification()
+                == com.aivle.backend.pipeline.concept.domain.ConceptAttemptError.REQUEST_CONTRACT_INVALID
+            ? "RUN" : latestFailure == null ? null : "SLOT";
         return new RunResponse(run.getId(), run.getSourceIdeaBriefSnapshotId(), run.getSourceSnapshotHash(), run.getStatus(),
-            run.getReplacementRounds(), generated, run.getProviderTransientRetryCount(), run.getTaskRunId(),
-            eligible, generated, generationFailures, redesigns, replacementCandidates,
+            run.getReplacementRounds(), run.getInspectedCandidateCount(), run.getProviderTransientRetryCount(), run.getTaskRunId(),
+            eligible, initialCandidates, generated, generationFailures, redesigns, replacementCandidates,
             rejections.countBySlotRunIdAndDeletedAtIsNull(run.getId()),
-            latestFailure == null ? null : "SLOT", latestFailure == null ? null : latestFailure.getSafeErrorCode(),
+            failureScope, latestFailure == null ? null : latestFailure.getSafeErrorCode(),
             resumable, resumable, run.isTerminal(), nextAction, utc(run.getUpdatedAt()));
     }
 

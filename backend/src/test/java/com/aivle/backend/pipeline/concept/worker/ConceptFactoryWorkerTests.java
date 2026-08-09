@@ -18,6 +18,7 @@ import com.aivle.backend.pipeline.concept.domain.ConceptGenerationStrategy;
 import com.aivle.backend.pipeline.concept.domain.VariationFocus;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
+import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ValidationIssue;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.util.Arrays;
@@ -354,6 +355,75 @@ class ConceptFactoryWorkerTests {
         verify(h.execution).failSlot(eq("run"), eq("slot-1"), isNull(),
             eq(ConceptAttemptError.PERMANENT_PROVIDER_FAILURE), eq(false), eq(true));
         verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+    }
+
+    @Test
+    void requestContractFailureIsRunFatalAndNeverCallsRemainingSlots() {
+        Harness h = new Harness();
+        when(h.execution.attemptTrace(anyString())).thenReturn(
+            new ConceptFactoryExecutionService.AttemptTrace(1, "INITIAL",
+                "REQUEST_CONTRACT_INVALID", "REQUEST_CONTRACT_INVALID", false));
+        when(h.ai.execute(eq(TaskType.CONCEPT_CANDIDATE), anyString(), anyString(), anyString()))
+            .thenThrow(new ExecutionFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", false,
+                List.of(new ValidationIssue(
+                    "input.rejectedConceptFingerprints.0.partnerRequirements",
+                    "valid contract value", "extra_forbidden"))));
+
+        assertThat(h.worker.processSlots(h.context, h.work(5)))
+            .isEqualTo(ConceptFactoryWorker.WorkerOutcome.FATAL_FAILURE);
+
+        verify(h.ai, times(1)).execute(eq(TaskType.CONCEPT_CANDIDATE), anyString(), anyString(), anyString());
+        verify(h.execution).recordAttemptError(eq("run"), eq("slot-1"), anyString(),
+            eq(ConceptAttemptError.REQUEST_CONTRACT_INVALID), eq("REQUEST_CONTRACT_INVALID"), eq(false));
+        verify(h.execution).failSlot("run", "slot-1", null,
+            ConceptAttemptError.REQUEST_CONTRACT_INVALID, false, true);
+        verify(h.execution, never()).beginAttempt(eq("slot-2"), any(), anyString());
+        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+        verify(h.execution, never()).recordCandidateInspection(anyString());
+        var event = org.mockito.ArgumentCaptor.forClass(JobEventPublisher.Command.class);
+        verify(h.events, atLeastOnce()).publish(event.capture());
+        JobEventPublisher.Command failed = event.getAllValues().stream()
+            .filter(value -> value.eventType().equals("job.concept.slot.generation_failed"))
+            .findFirst().orElseThrow();
+        assertThat(failed.messageParams().get("errorClassification")).isEqualTo("REQUEST_CONTRACT_INVALID");
+        assertThat(failed.messageParams().get("safeErrorCode")).isEqualTo("REQUEST_CONTRACT_INVALID");
+        assertThat(failed.messageParams().get("safeReason")).isEqualTo("FIELD_CONSTRAINT_VIOLATION");
+        assertThat(failed.messageParams().get("failedField"))
+            .isEqualTo("input.rejectedConceptFingerprints.0.partnerRequirements");
+        assertThat(failed.messageParams().get("retryable")).isEqualTo(false);
+    }
+
+    @Test
+    void requestContractFatalUsesExecutionFailedParentTaxonomy() {
+        Harness h = new Harness();
+        h.claim();
+        when(h.execution.prepare("run", 1L)).thenReturn(h.work(5));
+        when(h.execution.failureCode("run")).thenReturn("REQUEST_CONTRACT_INVALID");
+        when(h.ai.execute(eq(TaskType.CONCEPT_CANDIDATE), anyString(), anyString(), anyString()))
+            .thenThrow(new ExecutionFailure("INVALID_REQUEST", "UNKNOWN_FIELD", false));
+
+        assertThat(h.worker.processOne()).isTrue();
+
+        verify(h.tasks).fail("task", "task-attempt", "claim",
+            "EXECUTION_FAILED", "REQUEST_CONTRACT_INVALID", false);
+        verify(h.execution, never()).beginAttempt(eq("slot-2"), any(), anyString());
+    }
+
+    @Test
+    void legalRedesignExhaustionCreatesOneCanonicalDiscardBeforeReplacement() {
+        Harness h = new Harness();
+        h.successfulAi();
+        when(h.execution.legal(anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(LegalDisposition.REDESIGN);
+
+        SlotWork exhausted = new SlotWork("slot-1", 1, VariationFocus.CUSTOMER_EXPERIENCE,
+            0, 2, null, null);
+        assertThat(h.worker.processSlot(h.context, h.work(1), exhausted))
+            .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
+
+        verify(h.execution, times(1)).discardCandidate(eq("slot-1"), anyString(),
+            eq(ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED), anyString());
+        verify(h.execution, never()).recordCandidateExhaustion(anyString(), any());
     }
 
     @Test

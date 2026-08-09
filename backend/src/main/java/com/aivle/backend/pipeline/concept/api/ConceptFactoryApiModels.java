@@ -18,7 +18,8 @@ public final class ConceptFactoryApiModels {
         String runId, String sourceIdeaBriefSnapshotId, String sourceSnapshotHash,
         ConceptFactoryRunStatus status, int replacementRounds, int inspectedCandidateCount,
         int providerTransientRetryCount, String activeJobId,
-        int eligibleCount, int generatedCandidateCount, int candidateGenerationFailureCount,
+        int eligibleCount, int initialCandidateSuccessCount, int generatedCandidateCount,
+        int candidateGenerationFailureCount,
         int redesignCount, int replacementCandidateCount, long discardedCandidateCount,
         String failureScope, String failureCode, boolean retryable, boolean canResume,
         boolean canStartNew, String nextAction, Instant updatedAt

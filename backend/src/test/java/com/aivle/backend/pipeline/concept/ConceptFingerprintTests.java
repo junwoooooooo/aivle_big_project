@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.aivle.backend.pipeline.concept.domain.ConceptFingerprint;
 import com.aivle.backend.pipeline.concept.domain.ConceptSemanticDistinctnessResult;
 import com.aivle.backend.pipeline.concept.domain.VariationFocus;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -34,6 +38,42 @@ class ConceptFingerprintTests {
         assertThat(summary).doesNotContainKey("conceptName");
         assertThat(summary).containsKeys("targetUsers", "solutionMechanism", "revenueModel", "channels",
             "operatingModel", "transactionFlow", "providerRole", "sellerRole", "intermediaryRole");
+    }
+
+    @Test
+    void sharedFixtureAndBackendProducerHaveExactlyTheSame21FieldsAndTypes() throws Exception {
+        JsonNode fixture = mapper.readTree(Files.readString(
+            Path.of("../contracts/concept/business-fingerprint-v1.json")));
+
+        Map<String, Object> summary = ConceptFingerprint.businessSummary(fixture);
+
+        assertThat(ConceptFingerprint.businessFieldNames()).hasSize(21);
+        assertThat(summary.keySet()).containsExactlyInAnyOrderElementsOf(ConceptFingerprint.businessFieldNames());
+        assertThat(summary.keySet()).containsExactlyInAnyOrderElementsOf(
+            mapper.convertValue(fixture, Map.class).keySet());
+        for (String field : List.of("transactionFlow", "featureSet", "actorRoles", "paymentFlow",
+                "personalDataUsage", "physicalActivities", "partnerRequirements", "qualificationRequirements")) {
+            assertThat(summary.get(field)).isInstanceOf(List.class);
+        }
+        for (String field : ConceptFingerprint.businessFieldNames()) {
+            if (!List.of("transactionFlow", "featureSet", "actorRoles", "paymentFlow",
+                    "personalDataUsage", "physicalActivities", "partnerRequirements", "qualificationRequirements").contains(field)) {
+                assertThat(summary.get(field)).isInstanceOf(String.class);
+            }
+        }
+    }
+
+    @Test
+    void actualCandidateInputFixtureUsesBackendSummaryForAllThreeNonEmptyHistoryFamilies() throws Exception {
+        JsonNode input = mapper.readTree(Files.readString(
+            Path.of("../contracts/concept/concept-candidate-input-v1.json")));
+        Map<String, Object> expected = ConceptFingerprint.businessSummary(
+            input.path("rejectedConceptFingerprints").get(0));
+
+        for (String family : List.of("acceptedConceptFingerprints", "rejectedConceptFingerprints",
+                "currentSlotPreviousFingerprints")) {
+            assertThat(mapper.convertValue(input.path(family).get(0), Map.class)).isEqualTo(expected);
+        }
     }
 
     @Test

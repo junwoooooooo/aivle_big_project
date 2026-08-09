@@ -22,13 +22,15 @@ public class ConceptRejectionSummary extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "slot_id", nullable = false) private ConceptSlot slot;
     @Column(name = "project_id", nullable = false) private Long projectId;
+    @Column(name = "attempt_id", length = 64) private String attemptId;
     @Column(nullable = false, length = 80) private String reasonCode;
     @Column(nullable = false, length = 500) private String safeSummary;
 
-    public static ConceptRejectionSummary create(ConceptSlot slot, String reasonCode, String safeSummary) {
+    public static ConceptRejectionSummary create(ConceptSlot slot, String attemptId, String reasonCode, String safeSummary) {
         ConceptRejectionSummary value = new ConceptRejectionSummary();
         value.slot = slot;
         value.projectId = slot.getProjectId();
+        value.attemptId = attemptId;
         value.reasonCode = reasonCode;
         value.safeSummary = safeSummary;
         return value;

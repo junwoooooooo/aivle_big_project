@@ -294,7 +294,26 @@ public class ConceptFactoryExecutionService {
             String safeCode, String safeSummary) {
         attempts.findById(attemptId).orElseThrow().reject(error, safeCode, mapper.writeValueAsString(candidate));
         if (slot.getStatus() != ConceptSlotStatus.REPLACING) slot.transitionTo(ConceptSlotStatus.REPLACING);
-        rejections.save(ConceptRejectionSummary.create(slot, error.name(), safeSummary));
+        saveRejectionSummary(slot, attemptId, error.name(), safeSummary);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void discardCandidate(String slotId, String attemptId, ConceptAttemptError error, String safeSummary) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
+        if (rejections.existsByAttemptId(attemptId)) return;
+        if (attempt.getResultJson() == null) {
+            throw new IllegalStateException("discarded candidate requires a persisted candidate result");
+        }
+        attempt.reject(error, error.name(), attempt.getResultJson());
+        if (slot.getStatus() != ConceptSlotStatus.REPLACING) slot.transitionTo(ConceptSlotStatus.REPLACING);
+        rejections.save(ConceptRejectionSummary.create(slot, attemptId, error.name(), safeSummary));
+    }
+
+    private void saveRejectionSummary(ConceptSlot slot, String attemptId, String reasonCode, String safeSummary) {
+        if (!rejections.existsByAttemptId(attemptId)) {
+            rejections.save(ConceptRejectionSummary.create(slot, attemptId, reasonCode, safeSummary));
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -315,8 +334,8 @@ public class ConceptFactoryExecutionService {
                 ConceptAttemptError.LEGAL_EXTERNAL_FACT_UNRESOLVED,
                 "LEGAL_EXTERNAL_FACT_UNRESOLVED", mapper.writeValueAsString(legal));
             slot.transitionTo(ConceptSlotStatus.REPLACING);
-            rejections.save(ConceptRejectionSummary.create(slot, "LEGAL_EXTERNAL_FACT_UNRESOLVED",
-                "외부 사실 확인 없이는 법률 적격성을 판단할 수 없어 다른 후보로 대체합니다."));
+            saveRejectionSummary(slot, attemptId, "LEGAL_EXTERNAL_FACT_UNRESOLVED",
+                "외부 사실 확인 없이는 법률 적격성을 판단할 수 없어 다른 후보로 대체합니다.");
             return LegalDisposition.REPLACE;
         }
         if (status == ConceptLegalStatus.REDESIGNABLE) {
@@ -330,7 +349,8 @@ public class ConceptFactoryExecutionService {
             attempts.findById(attemptId).orElseThrow().reject(ConceptAttemptError.LEGAL_REJECTED,
                 "LEGAL_REJECTED", mapper.writeValueAsString(legal));
             slot.transitionTo(ConceptSlotStatus.REJECTED); slot.transitionTo(ConceptSlotStatus.REPLACING);
-            rejections.save(ConceptRejectionSummary.create(slot, "LEGAL_REJECTED", legal.path("safeUserSummary").asText("재설계가 필요합니다.")));
+            saveRejectionSummary(slot, attemptId, "LEGAL_REJECTED",
+                legal.path("safeUserSummary").asText("재설계가 필요합니다."));
             return LegalDisposition.REPLACE;
         }
         validateFindingCoverage(legal, official.keySet(), true);
@@ -552,7 +572,8 @@ public class ConceptFactoryExecutionService {
 
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
     public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE,
-        SEMANTIC_REVIEW_REQUIRED, PROVIDER_RETRY_LATER, PROVIDER_PERMANENT_FAILURE }
+        SEMANTIC_REVIEW_REQUIRED, PROVIDER_RETRY_LATER, PROVIDER_PERMANENT_FAILURE,
+        REQUEST_CONTRACT_FAILURE, PROVIDER_FATAL_FAILURE }
     public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
     public record AttemptTrace(int attemptNumber, String phase, String errorClassification,
                                String safeErrorCode, boolean retryable) {}

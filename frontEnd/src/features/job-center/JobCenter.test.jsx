@@ -23,6 +23,22 @@ describe('JobCenter', () => {
     expect(screen.getByText('최근 실패')).toBeInTheDocument();
     expect(screen.getAllByText('모듈로 이동')[0]).toHaveAttribute('href', '/app/projects/41/idea');
     expect(screen.getByText('SSE')).toBeInTheDocument();
+    expect(screen.getByText(/IDEA BRIEF DERIVATION · 진행 중/)).toBeInTheDocument();
+  });
+
+  it('names the terminal task in the notice', () => {
+    useProjectJobs.mockReturnValue({
+      loading: false, error: null,
+      notice: { jobId: 'failed-1', status: 'FAILED', taskType: 'CONCEPT_FACTORY_RUN' },
+      active: [],
+      recent: [{ jobId: 'failed-1', taskType: 'CONCEPT_FACTORY_RUN', status: 'FAILED', targetRoute: '/concepts' }],
+      selectedJobId: 'failed-1', selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'SSE', error: null, events: [], reconnect: vi.fn() },
+    });
+
+    render(<MemoryRouter><JobCenter projectId="41" /></MemoryRouter>);
+
+    expect(screen.getByText('CONCEPT FACTORY RUN 작업이 실패 상태로 종료되었습니다.')).toBeInTheDocument();
   });
 
   it('separates current and resolved needs-input presentation', () => {

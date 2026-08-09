@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,7 @@ public class ConceptFactoryWorker {
                 SlotOutcome outcome = processSlot(context, work, slot);
                 if (outcome == SlotOutcome.NEEDS_INPUT) return failed ? WorkerOutcome.FAILED : WorkerOutcome.NEEDS_INPUT;
                 if (outcome == SlotOutcome.RETRY_LATER) return WorkerOutcome.RETRY_LATER;
+                if (outcome == SlotOutcome.FATAL_FAILURE) return WorkerOutcome.FATAL_FAILURE;
                 if (outcome == SlotOutcome.FAILED) failed = true;
             } catch (RuntimeException isolated) {
                 execution.failActiveAttempt(slot.slotId(), ConceptAttemptError.INTERNAL_STATE_FAILURE,
@@ -134,6 +136,8 @@ public class ConceptFactoryWorker {
                         "rejectedConceptFingerprints", execution.rejectedFingerprints(work.runId()),
                         "currentSlotPreviousFingerprints", execution.currentSlotPreviousFingerprints(slot.slotId()))));
                 if (generation.outcome() == GenerationOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                if (generation.outcome() == GenerationOutcome.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+                if (generation.outcome() == GenerationOutcome.RUN_FATAL_PROVIDER_FAILURE) return SlotOutcome.FATAL_FAILURE;
                 if (generation.outcome() == GenerationOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
                 if (generation.outcome() == GenerationOutcome.DOMAIN_FAILURE) {
                     if (!replace(context, work, slot, replacementRound, generation.attemptId(),
@@ -153,6 +157,8 @@ public class ConceptFactoryWorker {
                 context, work, slot, attemptId, candidate);
             if (candidateDisposition == null) return SlotOutcome.FAILED;
             if (candidateDisposition == CandidateDisposition.PROVIDER_RETRY_LATER) return SlotOutcome.RETRY_LATER;
+            if (candidateDisposition == CandidateDisposition.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+            if (candidateDisposition == CandidateDisposition.PROVIDER_FATAL_FAILURE) return SlotOutcome.FATAL_FAILURE;
             if (candidateDisposition == CandidateDisposition.PROVIDER_PERMANENT_FAILURE) return SlotOutcome.FAILED;
             if (candidateDisposition != CandidateDisposition.ACCEPTED) {
                 ConceptAttemptError exhaustion = candidateDisposition == CandidateDisposition.DUPLICATE
@@ -169,6 +175,8 @@ public class ConceptFactoryWorker {
 
             Review review = review(context, work, slot, phase, attemptId, candidate);
             if (review.outcome() == ReviewOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+            if (review.outcome() == ReviewOutcome.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+            if (review.outcome() == ReviewOutcome.RUN_FATAL_PROVIDER_FAILURE) return SlotOutcome.FATAL_FAILURE;
             if (review.outcome() == ReviewOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
             if (review.outcome() == ReviewOutcome.REPLACE) {
                 publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
@@ -195,6 +203,8 @@ public class ConceptFactoryWorker {
                         "designGaps", review.legal().path("redesignRequirements"),
                         "legalFactPattern", reviewedPattern.factPattern())));
                 if (redesign.outcome() == GenerationOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                if (redesign.outcome() == GenerationOutcome.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+                if (redesign.outcome() == GenerationOutcome.RUN_FATAL_PROVIDER_FAILURE) return SlotOutcome.FATAL_FAILURE;
                 if (redesign.outcome() == GenerationOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
                 if (redesign.outcome() == GenerationOutcome.DOMAIN_FAILURE) {
                     if (!replace(context, work, slot, replacementRound, redesign.attemptId(),
@@ -212,6 +222,8 @@ public class ConceptFactoryWorker {
                         context, work, slot, redesign.attemptId(), redesign.result());
                     if (redesignedValidation == null) return SlotOutcome.FAILED;
                     if (redesignedValidation == CandidateDisposition.PROVIDER_RETRY_LATER) return SlotOutcome.RETRY_LATER;
+                    if (redesignedValidation == CandidateDisposition.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+                    if (redesignedValidation == CandidateDisposition.PROVIDER_FATAL_FAILURE) return SlotOutcome.FATAL_FAILURE;
                     if (redesignedValidation == CandidateDisposition.PROVIDER_PERMANENT_FAILURE) return SlotOutcome.FAILED;
                     if (redesignedValidation != CandidateDisposition.ACCEPTED) {
                         ConceptAttemptError exhaustion = redesignedValidation == CandidateDisposition.DUPLICATE
@@ -230,6 +242,8 @@ public class ConceptFactoryWorker {
                     Review redesigned = review(context, work, slot, ConceptAttemptPhase.REDESIGN,
                         redesign.attemptId(), redesign.result());
                     if (redesigned.outcome() == ReviewOutcome.TRANSIENT_PROVIDER_FAILURE) return SlotOutcome.RETRY_LATER;
+                    if (redesigned.outcome() == ReviewOutcome.REQUEST_CONTRACT_FAILURE) return SlotOutcome.FATAL_FAILURE;
+                    if (redesigned.outcome() == ReviewOutcome.RUN_FATAL_PROVIDER_FAILURE) return SlotOutcome.FATAL_FAILURE;
                     if (redesigned.outcome() == ReviewOutcome.PERMANENT_PROVIDER_FAILURE) return SlotOutcome.FAILED;
                     if (redesigned.outcome() == ReviewOutcome.REPLACE) {
                         publishAttempt(context, slot, "job.concept.slot.rejected", TaskType.CONCEPT_LEGAL_REVIEW,
@@ -247,7 +261,9 @@ public class ConceptFactoryWorker {
                 }
             }
 
-            publishSlot(context, slot, "job.concept.slot.rejected");
+            execution.discardCandidate(slot.slotId(), attemptId, ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED,
+                "허용된 법률 재설계를 모두 사용했으나 적격 상태에 도달하지 못해 후보를 폐기합니다.");
+            publishRejection(context, slot, attemptId, ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED);
             if (!replace(context, work, slot, replacementRound, attemptId,
                 ConceptAttemptError.LEGAL_REDESIGN_EXHAUSTED)) return SlotOutcome.FAILED;
         }
@@ -274,13 +290,20 @@ public class ConceptFactoryWorker {
             if (call.result() == null) {
                 ConceptAttemptError classification = classify(call.failure());
                 execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
-                    call.failure().reason(), call.failure().retryable());
-                if (call.failure().retryable()) {
+                    safeAttemptCode(classification, call.failure()),
+                    classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE);
+                publishAttempt(context, slot, "job.concept.slot.generation_failed", TaskType.CONCEPT_DISTINCTNESS_JUDGE,
+                    call.attemptId(), "FAILED", call.durationMs(), call.failure());
+                if (classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE) {
                     execution.pauseGenerationForRetry(slot.slotId());
                     return CandidateDisposition.PROVIDER_RETRY_LATER;
                 }
                 execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
-                return CandidateDisposition.PROVIDER_PERMANENT_FAILURE;
+                return classification == ConceptAttemptError.REQUEST_CONTRACT_INVALID
+                    ? CandidateDisposition.REQUEST_CONTRACT_FAILURE
+                    : isRunGlobalProviderConfiguration(call.failure())
+                        ? CandidateDisposition.PROVIDER_FATAL_FAILURE
+                    : CandidateDisposition.PROVIDER_PERMANENT_FAILURE;
             }
             try {
                 duplicate = ConceptSemanticDistinctnessResult.validate(call.result())
@@ -313,16 +336,22 @@ public class ConceptFactoryWorker {
 
     private Generation generationFailure(Work work, SlotWork slot, AiCall call) {
         ConceptAttemptError classification = classify(call.failure());
+        boolean retryable = classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE;
+        execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
+            safeAttemptCode(classification, call.failure()), retryable);
         publishAttempt(call.context(), slot, "job.concept.slot.generation_failed", call.taskType(),
             call.attemptId(), "FAILED", call.durationMs(), call.failure());
-        if (classification == ConceptAttemptError.PERMANENT_PROVIDER_FAILURE) {
-            execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
-                call.failure().reason(), false);
+        if (classification == ConceptAttemptError.REQUEST_CONTRACT_INVALID) {
             execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
-            return new Generation(GenerationOutcome.PERMANENT_PROVIDER_FAILURE, call.attemptId(), null, classification, call.durationMs());
+            return new Generation(GenerationOutcome.REQUEST_CONTRACT_FAILURE, call.attemptId(), null,
+                classification, call.durationMs());
         }
-        execution.recordAttemptError(work.runId(), slot.slotId(), call.attemptId(), classification,
-            call.failure().reason(), classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE);
+        if (classification == ConceptAttemptError.PERMANENT_PROVIDER_FAILURE) {
+            execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
+            return new Generation(isRunGlobalProviderConfiguration(call.failure())
+                ? GenerationOutcome.RUN_FATAL_PROVIDER_FAILURE : GenerationOutcome.PERMANENT_PROVIDER_FAILURE,
+                call.attemptId(), null, classification, call.durationMs());
+        }
         if (classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE) {
             execution.pauseGenerationForRetry(slot.slotId());
         }
@@ -345,12 +374,20 @@ public class ConceptFactoryWorker {
         if (call.result() == null) {
             ConceptAttemptError classification = classifyLegal(call.failure());
             execution.failLegalReview(work.runId(), slot.slotId(), call.attemptId(), classification,
-                call.failure().reason(), call.failure().retryable());
+                safeAttemptCode(classification, call.failure()),
+                classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE);
             publishAttempt(context, slot, "job.concept.slot.review_failed", TaskType.CONCEPT_LEGAL_REVIEW,
                 call.attemptId(), "FAILED", call.durationMs(), call.failure());
-            return new Review(call.failure().retryable() ? ReviewOutcome.TRANSIENT_PROVIDER_FAILURE
-                : ReviewOutcome.PERMANENT_PROVIDER_FAILURE, null, null, call.attemptId(), classification,
-                call.durationMs());
+            if (classification == ConceptAttemptError.REQUEST_CONTRACT_INVALID) {
+                execution.failSlot(work.runId(), slot.slotId(), null, classification, false, true);
+                return new Review(ReviewOutcome.REQUEST_CONTRACT_FAILURE, null, null, call.attemptId(),
+                    classification, call.durationMs());
+            }
+            return new Review(classification == ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE
+                    ? ReviewOutcome.TRANSIENT_PROVIDER_FAILURE
+                    : isRunGlobalProviderConfiguration(call.failure())
+                        ? ReviewOutcome.RUN_FATAL_PROVIDER_FAILURE : ReviewOutcome.PERMANENT_PROVIDER_FAILURE,
+                null, null, call.attemptId(), classification, call.durationMs());
         }
         LegalDisposition disposition = execution.legal(work.runId(), slot.slotId(), call.attemptId(), candidate, call.result());
         ConceptAttemptError replacementError = null;
@@ -413,7 +450,8 @@ public class ConceptFactoryWorker {
             terminalizeFailed(claim, context, work.runId(), execution.failureCode(work.runId()), true);
             return;
         }
-        if (outcome == WorkerOutcome.FAILED || !execution.completeIfEligible(work.runId())) {
+        if (outcome == WorkerOutcome.FAILED || outcome == WorkerOutcome.FATAL_FAILURE
+                || !execution.completeIfEligible(work.runId())) {
             terminalizeFailed(claim, context, work.runId(), execution.failureCode(work.runId()), false);
             return;
         }
@@ -441,12 +479,14 @@ public class ConceptFactoryWorker {
     }
 
     private ConceptAttemptError classify(ExecutionFailure failure) {
+        if (isRequestContract(failure)) return ConceptAttemptError.REQUEST_CONTRACT_INVALID;
         if (isSchema(failure)) return ConceptAttemptError.SCHEMA_INVALID;
         return failure.retryable() ? ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE
             : ConceptAttemptError.PERMANENT_PROVIDER_FAILURE;
     }
 
     private ConceptAttemptError classifyLegal(ExecutionFailure failure) {
+        if (isRequestContract(failure)) return ConceptAttemptError.REQUEST_CONTRACT_INVALID;
         if (isSchema(failure)) return ConceptAttemptError.RESULT_SCHEMA_INVALID;
         if (failure.reason().startsWith("MOLEG_") || failure.reason().startsWith("LEGAL_SOURCE_")) {
             return ConceptAttemptError.LEGAL_SOURCE_FAILURE;
@@ -457,6 +497,23 @@ public class ConceptFactoryWorker {
 
     private boolean isSchema(ExecutionFailure failure) {
         return "RESULT_SCHEMA_INVALID".equals(failure.code());
+    }
+
+    private boolean isRequestContract(ExecutionFailure failure) {
+        return Set.of("INVALID_REQUEST", "UNSUPPORTED_CONTRACT_VERSION", "UNSUPPORTED_TASK_TYPE",
+            "UNSUPPORTED_TASK_SCHEMA_VERSION").contains(failure.code());
+    }
+
+    private String safeAttemptCode(ConceptAttemptError classification, ExecutionFailure failure) {
+        return classification == ConceptAttemptError.REQUEST_CONTRACT_INVALID
+            ? ConceptAttemptError.REQUEST_CONTRACT_INVALID.name() : failure.reason();
+    }
+
+    private boolean isRunGlobalProviderConfiguration(ExecutionFailure failure) {
+        return "UNAUTHORIZED_INTERNAL_CALL".equals(failure.code())
+            || Set.of("AI_CONFIGURATION_INVALID", "LEGAL_CONFIGURATION_INVALID",
+                "SERVICE_TOKEN_MISSING", "SERVICE_TOKEN_INVALID", "INTERNAL_PRINCIPAL_FORBIDDEN")
+                .contains(failure.reason());
     }
 
     private void publishSlot(TaskRunWorkerContext context, SlotWork slot, String key) {
@@ -512,17 +569,18 @@ public class ConceptFactoryWorker {
         params.put("correlationId", context.correlationId());
         params.put("event", event);
         if (durationMs != null) params.put("durationMs", durationMs);
+        if (trace != null && trace.errorClassification() != null) {
+            params.put("errorClassification", trace.errorClassification());
+        }
         if (failure != null) {
-            params.put("safeErrorCode", failure.code());
+            params.put("safeErrorCode", trace != null && trace.safeErrorCode() != null
+                ? trace.safeErrorCode() : failure.code());
             params.put("safeReason", failure.reason());
-            params.put("retryable", failure.retryable());
+            params.put("retryable", trace != null ? trace.retryable() : failure.retryable());
             if (!failure.validationFields().isEmpty()) {
                 params.put("failedField", failure.validationFields().get(0).path());
             }
         } else if (trace != null && trace.safeErrorCode() != null) {
-            if (trace.errorClassification() != null) {
-                params.put("errorClassification", trace.errorClassification());
-            }
             params.put("safeErrorCode", trace.safeErrorCode());
             params.put("safeReason", trace.safeErrorCode());
             if (trace.safeErrorCode().contains(":")) {
@@ -563,6 +621,7 @@ public class ConceptFactoryWorker {
                  "PROVIDER_JSON_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", "CONTENT_FIELD_MISSING",
                  "VALUE_SEMANTICS_INCOMPLETE", "GOVERNANCE_SEMANTICS_MISMATCH",
                  "CANDIDATE_METADATA_INVALID" -> "RESULT_SCHEMA_INVALID";
+            case "REQUEST_CONTRACT_INVALID" -> "EXECUTION_FAILED";
             case "MODEL_DEPENDENCY_UNAVAILABLE", "DEPENDENCY_RATE_LIMITED",
                  "REQUEST_DEADLINE_EXCEEDED", "TRANSIENT_EXECUTION_FAILURE",
                  "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "MOLEG_DEPENDENCY_UNAVAILABLE",
@@ -571,10 +630,16 @@ public class ConceptFactoryWorker {
         };
     }
 
-    enum WorkerOutcome { COMPLETED, NEEDS_INPUT, RETRY_LATER, FAILED }
-    enum SlotOutcome { ELIGIBLE, NEEDS_INPUT, RETRY_LATER, FAILED }
-    private enum GenerationOutcome { SUCCESS, DOMAIN_FAILURE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE }
-    private enum ReviewOutcome { DISPOSITION, REPLACE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE }
+    enum WorkerOutcome { COMPLETED, NEEDS_INPUT, RETRY_LATER, FAILED, FATAL_FAILURE }
+    enum SlotOutcome { ELIGIBLE, NEEDS_INPUT, RETRY_LATER, FAILED, FATAL_FAILURE }
+    private enum GenerationOutcome {
+        SUCCESS, DOMAIN_FAILURE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE,
+        REQUEST_CONTRACT_FAILURE, RUN_FATAL_PROVIDER_FAILURE
+    }
+    private enum ReviewOutcome {
+        DISPOSITION, REPLACE, TRANSIENT_PROVIDER_FAILURE, PERMANENT_PROVIDER_FAILURE,
+        REQUEST_CONTRACT_FAILURE, RUN_FATAL_PROVIDER_FAILURE
+    }
     private record AiCall(String attemptId, JsonNode result, ExecutionFailure failure, long durationMs,
                           TaskRunWorkerContext context, TaskType taskType) {}
     private record Generation(GenerationOutcome outcome, String attemptId, JsonNode result,

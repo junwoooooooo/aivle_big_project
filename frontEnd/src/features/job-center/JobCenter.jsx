@@ -36,6 +36,7 @@ function JobList({ title, jobs, selectedJobId, onSelect, projectId }) {
 
 export default function JobCenter({ projectId, onTerminal }) {
   const jobs = useProjectJobs(projectId, { onTerminal });
+  const selectedJob = [...jobs.active, ...jobs.recent].find((job) => job.jobId === jobs.selectedJobId);
   const props = { selectedJobId: jobs.selectedJobId, onSelect: jobs.selectJob, projectId };
   const running = jobs.active.filter((job) => job.status === 'RUNNING');
   const queued = jobs.active.filter((job) => ['QUEUED', 'READY'].includes(job.status));
@@ -45,7 +46,9 @@ export default function JobCenter({ projectId, onTerminal }) {
 
   return <section id="project-task-center" className="pipeline-task-center job-center" aria-labelledby="task-center-title">
     <header><div><p>작업 센터</p><h2 id="task-center-title">프로젝트 비동기 작업</h2></div><button type="button" onClick={jobs.refresh}>수동 새로고침</button></header>
-    {jobs.notice && <p className="job-center__notice" role="status" aria-live="polite">선택한 작업이 {STATUS_LABELS[jobs.notice.status] ?? jobs.notice.status} 상태로 종료되었습니다.</p>}
+    {jobs.notice && <p className="job-center__notice" role="status" aria-live="polite">
+      {(jobs.notice.taskType ?? selectedJob?.taskType ?? '선택한 작업').replaceAll('_', ' ')} 작업이 {STATUS_LABELS[jobs.notice.status] ?? jobs.notice.status} 상태로 종료되었습니다.
+    </p>}
     {jobs.loading && <p>서버에서 작업 목록을 복원하고 있습니다.</p>}
     {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
     {!jobs.loading && !jobs.error && <div className="job-center__groups">
@@ -56,7 +59,9 @@ export default function JobCenter({ projectId, onTerminal }) {
       <JobList title="최근 실패" jobs={failed} {...props} />
     </div>}
     {jobs.selectedJobId && <section className="job-center__timeline" aria-live="polite">
-      <header><h3>선택한 작업 타임라인</h3><span>{jobs.events.transport ?? '연결 준비'}</span></header>
+      <header><div><h3>선택한 작업 타임라인</h3>{selectedJob && <small>
+        {selectedJob.taskType.replaceAll('_', ' ')} · {STATUS_LABELS[displayStatus(selectedJob)] ?? displayStatus(selectedJob)} · {formatLocalTime(selectedJob.startedAt ?? selectedJob.updatedAt)}
+      </small>}</div><span>{jobs.events.transport ?? '연결 준비'}</span></header>
       {jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>연결 재시도</button>}
       {jobs.events.events.length === 0 ? <p>수신된 이벤트가 없습니다. 작업 상태는 서버 조회 결과를 기준으로 표시합니다.</p>
         : <ol>{jobs.events.events.map((event) => <li key={event.sequence}><strong>{jobEventMessage(event)}</strong><span>{STATUS_LABELS[event.status] ?? event.status}</span></li>)}</ol>}

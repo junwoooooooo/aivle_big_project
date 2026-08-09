@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
@@ -63,5 +63,29 @@ describe('useProjectJobs', () => {
     rerender();
 
     await waitFor(() => expect(result.current.notice?.status).toBe('RESOLVED_INPUT'));
+  });
+
+  it('auto-selects a new active job but preserves an explicit historical selection', async () => {
+    const oldActive = { jobId: 'active-old', status: 'RUNNING' };
+    const newActive = { jobId: 'active-new', status: 'RUNNING' };
+    const historical = { jobId: 'history-1', status: 'FAILED' };
+    const client = { get: vi.fn()
+      .mockResolvedValueOnce({ data: [oldActive] })
+      .mockResolvedValueOnce({ data: [historical] })
+      .mockResolvedValueOnce({ data: [newActive, oldActive] })
+      .mockResolvedValueOnce({ data: [historical] })
+      .mockResolvedValueOnce({ data: [newActive, oldActive] })
+      .mockResolvedValueOnce({ data: [historical] }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockReturnValue({ terminal: false, events: [], reconnect: vi.fn() });
+    const { result } = renderHook(() => useProjectJobs('41'));
+    await waitFor(() => expect(result.current.selectedJobId).toBe('active-old'));
+
+    await act(async () => result.current.refresh());
+    expect(result.current.selectedJobId).toBe('active-new');
+
+    act(() => result.current.selectJob('history-1'));
+    await act(async () => result.current.refresh());
+    expect(result.current.selectedJobId).toBe('history-1');
   });
 });

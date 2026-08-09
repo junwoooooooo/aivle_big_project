@@ -17,6 +17,10 @@ public final class ConceptFingerprint {
         "paymentFlow", "personalDataUsage", "physicalActivities", "partnerRequirements",
         "qualificationRequirements"
     );
+    private static final Set<String> ARRAY_FIELDS = Set.of(
+        "transactionFlow", "featureSet", "actorRoles", "paymentFlow", "personalDataUsage",
+        "physicalActivities", "partnerRequirements", "qualificationRequirements"
+    );
     private static final List<String> MECHANICS = List.of(
         "solutionMechanism", "revenueModel", "channels", "platformRole", "operatingModel",
         "partnerModel", "transactionFlow", "providerRole", "sellerRole", "intermediaryRole",
@@ -121,12 +125,22 @@ public final class ConceptFingerprint {
         java.util.LinkedHashMap<String, Object> result = new java.util.LinkedHashMap<>();
         for (String field : FIELDS) {
             JsonNode value = candidate.path(field);
-            if (value.isArray()) {
-                result.put(field, java.util.stream.StreamSupport.stream(value.spliterator(), false)
-                    .map(JsonNode::asText).toList());
+            if (ARRAY_FIELDS.contains(field)) {
+                if (value.isArray()) {
+                    result.put(field, java.util.stream.StreamSupport.stream(value.spliterator(), false)
+                        .map(JsonNode::asText).toList());
+                } else if (value.isMissingNode() || value.isNull() || value.asText("").isBlank()) {
+                    result.put(field, List.of());
+                } else {
+                    result.put(field, List.of(value.asText()));
+                }
             } else result.put(field, value.asText(""));
         }
         return java.util.Map.copyOf(result);
+    }
+
+    public static List<String> businessFieldNames() {
+        return FIELDS;
     }
 
     private static String stringValue(JsonNode value) {

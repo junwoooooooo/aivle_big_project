@@ -24,7 +24,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(7);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(8);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -32,8 +32,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .map(info -> info.getVersion().getVersion())
             .toList();
 
-        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
+        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -60,13 +60,13 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
     }
 
     @Test
-    void upgradesAnExistingV1ThroughV6SchemaWithRuntimeCompletionMigration() throws Exception {
+    void upgradesAnExistingV1ThroughV7SchemaWithContractHardeningMigration() throws Exception {
         String schema = "upgrade_" + UUID.randomUUID().toString().replace("-", "");
-        Flyway throughV6 = Flyway.configure()
+        Flyway throughV7 = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
-            .target("6").load();
-        assertThat(throughV6.migrate().migrationsExecuted).isEqualTo(6);
+            .target("7").load();
+        assertThat(throughV7.migrate().migrationsExecuted).isEqualTo(7);
 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
@@ -76,6 +76,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             assertThat(columnCount(connection, schema, "concept_slots", "replacement_rounds")).isOne();
+            assertThat(columnCount(connection, schema, "concept_rejection_summaries", "attempt_id")).isOne();
         }
     }
 

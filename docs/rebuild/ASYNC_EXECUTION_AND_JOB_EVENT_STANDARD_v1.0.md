@@ -74,6 +74,7 @@ Concept pipeline 순서:
 Provider 또는 validation 오류는 Attempt에 다음 중 하나로 기록한다.
 
 - `SCHEMA_INVALID`
+- `REQUEST_CONTRACT_INVALID`
 - `TRANSIENT_PROVIDER_FAILURE`
 - `PERMANENT_PROVIDER_FAILURE`
 - `ORIGIN_INVALID`

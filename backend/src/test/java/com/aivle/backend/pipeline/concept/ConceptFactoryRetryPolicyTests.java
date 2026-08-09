@@ -44,4 +44,16 @@ class ConceptFactoryRetryPolicyTests {
                 ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE, true, false))).nextAction())
             .isEqualTo("START_NEW_RUN");
     }
+
+    @Test
+    void requestContractFailureCannotResumeTheSameBrokenRun() {
+        var result = policy.evaluate(ConceptFactoryRunStatus.FAILED, true, List.of(
+            new SlotState(ConceptSlotStatus.FAILED,
+                ConceptAttemptError.REQUEST_CONTRACT_INVALID, false, false),
+            new SlotState(ConceptSlotStatus.QUEUED, null, false, false)));
+
+        assertThat(result.canResume()).isFalse();
+        assertThat(result.nextAction()).isEqualTo("FIX_SYSTEM_AND_START_NEW_RUN");
+        assertThat(result.reason()).isEqualTo("REQUEST_CONTRACT_INVALID");
+    }
 }

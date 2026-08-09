@@ -42,7 +42,8 @@ export function slotNumberFromEvent(event) {
 export function workboardSummary(run, slots = []) {
   return {
     eligible: Number(run?.eligibleCount) || slots.filter((slot) => slot.status === 'ELIGIBLE').length,
-    generated: Number(run?.generatedCandidateCount) || 0,
+    initialGenerated: Number(run?.initialCandidateSuccessCount) || 0,
+    generatedTotal: Number(run?.generatedCandidateCount) || 0,
     generationFailed: Number(run?.candidateGenerationFailureCount) || 0,
     inspected: Number(run?.inspectedCandidateCount) || 0,
     redesigned: Number(run?.redesignCount) || 0,
