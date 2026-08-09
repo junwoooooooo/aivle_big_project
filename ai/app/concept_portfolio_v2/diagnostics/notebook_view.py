@@ -1,0 +1,134 @@
+"""Notebook용 사람이 읽을 수 있는 표/요약 helper."""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+try:
+    import pandas as pd
+except ImportError:  # Core import는 pandas 없이도 동작한다.
+    pd = None
+
+
+def _dump(value: Any) -> Any:
+    return value.model_dump(mode="json") if hasattr(value, "model_dump") else value
+
+
+def _table(rows: list[dict[str, Any]]):
+    return pd.DataFrame(rows) if pd is not None else rows
+
+
+def show_seed_input(seed):
+    return _table([_dump(item) for item in seed.fields])
+
+
+def show_seed_analysis(analysis):
+    return _table([{"구분": "탐색 폭", "값": analysis.explorationBreadth.value},
+                   {"구분": "다양성 수용량", "값": analysis.diversityCapacity},
+                   {"구분": "설명", "값": analysis.rationaleSummary}])
+
+
+def show_design_space(analysis):
+    rows = ([{"분류": "HARD_LOCK", "필드": key, "값": value} for key, value in analysis.hardLocks.items()]
+            + [{"분류": "SEMANTIC_ANCHOR", "필드": key, "값": value}
+               for key, value in analysis.semanticAnchors.items()]
+            + [{"분류": "OPEN", "필드": value, "값": "변경 가능"} for value in analysis.openDimensions])
+    return _table(rows)
+
+
+def show_portfolio_plans(plans):
+    return _table([{"planId": p.planId, "제목": p.title, "핵심 mechanics": p.coreMechanism,
+                    "운영": p.operatingApproach, "파트너": p.partnerApproach,
+                    "거래": p.transactionApproach, "이행": p.fulfillmentApproach} for p in plans])
+
+
+def compare_plans(assessments):
+    return show_plan_diversity(assessments)
+
+
+def show_plan_diversity(assessments):
+    return _table([{"A": item.entityA, "B": item.entityB, "판정": item.decision,
+                    "겹침": ", ".join(item.overlap), "실질 차이": ", ".join(item.materialDifferences),
+                    "설명": item.whyDistinct} for item in assessments])
+
+
+def show_candidates(candidates):
+    return _table([{"candidateId": item.candidateId, "lineageId": item.lineageId,
+                    "parentCandidateId": item.parentCandidateId, "이름": item.candidate.conceptName,
+                    "핵심 작동방식": item.candidate.solutionMechanism,
+                    "수익": item.candidate.revenueModel, "운영": item.candidate.operatingModel}
+                   for item in candidates])
+
+
+def compare_candidates(assessments):
+    return show_plan_diversity(assessments)
+
+
+def show_candidate_validation(reports):
+    return _table([_dump(item) for item in reports])
+
+
+def show_legal_precheck(results):
+    return _table([_dump(item) for item in results])
+
+
+def show_legal_result(results):
+    return _table([{"candidateId": item.candidateId, "route": item.route.value,
+                    "source": item.sourceStatus, "요약": item.safeSummary,
+                    "통제": ", ".join(item.requiredControls)} for item in results])
+
+
+def show_redesign_diff(parent, child):
+    fields = ("conceptName", "targetUsers", "problemScenario", "solutionMechanism", "operatingModel",
+              "partnerModel", "qualificationRequirements")
+    return _table([{"필드": field, "이전": getattr(parent.candidate, field),
+                    "이후": getattr(child.candidate, field),
+                    "변경": getattr(parent.candidate, field) != getattr(child.candidate, field)} for field in fields])
+
+
+def show_replan(result):
+    return _table([{"candidateId": item.candidateId, "planId": item.planId, "lineageId": item.lineageId}
+                   for item in result.concepts if "REPLAN" in item.candidateId])
+
+
+def show_final_portfolio(result):
+    return show_candidates(result.concepts)
+
+
+def show_hypotheses(hypotheses):
+    return _table([_dump(item) for item in hypotheses])
+
+
+def show_downstream_handoff(handoff):
+    return {"호환성": handoff.compatibility,
+            "필드 매핑": _table([_dump(item) for item in handoff.fieldMapping]),
+            "Market payload": handoff.marketAnalysisSeedSnapshot,
+            "Marketing payload": handoff.marketingSourceSnapshot,
+            "오류": handoff.validationErrors}
+
+
+def show_trace(events, stage: str | None = None):
+    selected = [item for item in events if stage is None or item.stage.value == stage]
+    return _table([{"순서": index, "시각": item.timestamp.isoformat(), "stage": item.stage.value,
+                    "action": item.action, "entity": item.entityId, "parent": item.parentId,
+                    "status": item.status, "mode": item.providerMode.value, "호출": item.providerCallNumber,
+                    "요약": item.safeSummary, "decision": item.decision,
+                    "reasonCode": item.reasonCode.value if item.reasonCode else None}
+                   for index, item in enumerate(selected, 1)])
+
+
+def show_provider_usage(usage):
+    return _table([{"전체 호출": usage.totalProviderCalls, "stage별": usage.callsByStage,
+                    "재시도": usage.retries, "소요(ms)": usage.durationMs,
+                    "모드별": usage.modeCounts, "token": usage.tokenUsage, "보고 비용": usage.reportedCost}])
+
+
+def show_run_summary(result):
+    return _table([_dump(result.runSummary) if result.runSummary else {
+        "portfolioStatus": result.runStatus.value, "finalPortfolio": result.producedConceptCount,
+        "downstreamHandoff": result.downstreamReadiness}])
+
+
+def show_raw_json(value):
+    return json.dumps(_dump(value), ensure_ascii=False, indent=2, default=str)

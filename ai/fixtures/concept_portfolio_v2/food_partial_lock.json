@@ -1,0 +1,9 @@
+{
+  "fixtureName": "food_partial_lock",
+  "ideaOverview": "개인 맞춤형 소량 식재료와 남은 재료 레시피 서비스",
+  "problem": "소가구가 포장 단위 때문에 식재료를 남긴다",
+  "targetUsers": "도시의 1~2인 가구",
+  "revenueModel": {"value": "월 구독", "decisionState": "LOCKED", "source": "USER_CONFIRMED"},
+  "price": {"value": "월 19,900원", "decisionState": "LOCKED", "source": "USER_INPUT"},
+  "channels": {"value": "모바일 앱", "decisionState": "LOCKED", "source": "USER_INPUT"}
+}

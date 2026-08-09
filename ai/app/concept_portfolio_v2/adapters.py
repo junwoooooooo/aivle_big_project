@@ -1,0 +1,260 @@
+"""현재 production 계약을 V2 Lab에서 재사용하기 위한 얇은 adapter."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from typing import Any
+
+from app.contracts.concept_fingerprint import BUSINESS_FINGERPRINT_FIELDS, BusinessFingerprint
+from app.legal.registry import LegalRegistry
+from app.tasks.concept_candidate.models import ConceptCandidateResult
+from app.tasks.concept_legal_review.service import execute_concept_legal_review
+from app.tasks.idea_brief.models import FieldKey, IdeaBriefDerivationInput
+from app.tasks.idea_brief.service import execute_idea_brief_derivation
+
+from .models import (
+    CanonicalSeed, DownstreamHandoff, FieldMapping, HypothesisDecision, LegalReview,
+    LegalRoute, ProviderMode, SafetyResult, SeedField,
+)
+
+
+REQUIRED_SEED = ("ideaOverview", "problem", "targetUsers")
+OPTIONAL_FIELDS = tuple(key for key in FieldKey.__args__ if key not in REQUIRED_SEED)
+HYPOTHESIS_FIELDS = {
+    "TARGET_REGION": "targetRegion", "REVENUE_MODEL": "revenueModel", "PRICE": "price",
+    "CHANNELS": "channels", "DIFFERENTIATORS": "differentiators",
+    "PRE_MARKET_SOM_SHARE": "preMarketSomShareHypothesis",
+    "PRE_MARKET_SOM": "preMarketSomHypothesis",
+}
+
+
+def _hash(value: Any) -> str:
+    body = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return "sha256:" + hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+class CurrentIdeaBriefAdapter:
+    """현행 13개 FieldKey와 LOCKED/OPEN 의미를 보존한다."""
+
+    def adapt(self, payload: dict[str, Any]) -> CanonicalSeed:
+        fixture_name = str(payload.get("fixtureName") or "custom")
+        if "fields" in payload and "mode" in payload:
+            current = IdeaBriefDerivationInput.model_validate(payload)
+            values = {item.fieldKey: item for item in current.fields}
+            overview = current.ideaOverview
+            fields = [SeedField(fieldKey=item.fieldKey, value=item.value,
+                                source="USER_INPUT" if item.value.strip() else "MISSING",
+                                decisionState=item.decisionState) for item in current.fields]
+        else:
+            overview = str(payload.get("ideaOverview") or "").strip()
+            fields = []
+            values = {}
+            for key in FieldKey.__args__:
+                raw = payload.get(key, "")
+                if isinstance(raw, dict):
+                    value = str(raw.get("value") or "").strip()
+                    decision = str(raw.get("decisionState") or ("LOCKED" if value else "OPEN"))
+                    source = str(raw.get("source") or raw.get("provenance") or
+                                 ("USER_INPUT" if value else "MISSING"))
+                else:
+                    value = str(raw or "").strip()
+                    decision = "LOCKED" if value else "OPEN"
+                    source = "USER_INPUT" if value else "MISSING"
+                if key == "ideaOverview" and not value:
+                    value = overview
+                item = SeedField(fieldKey=key, value=value, source=source, decisionState=decision)
+                fields.append(item)
+                values[key] = item
+        by_key = {item.fieldKey: item for item in fields}
+        missing = [key for key in REQUIRED_SEED if not by_key.get(key) or not by_key[key].value.strip()]
+        if missing:
+            raise ValueError("필수 Idea Brief 필드가 비었습니다: " + ", ".join(missing))
+        return CanonicalSeed(
+            ideaBriefSnapshotId=str(payload.get("ideaBriefSnapshotId") or "lab-idea-brief"),
+            ideaOverview=overview or by_key["ideaOverview"].value,
+            problem=by_key["problem"].value,
+            targetUsers=by_key["targetUsers"].value,
+            fields=fields,
+            interpretation=dict(payload.get("interpretation") or {}), fixtureName=fixture_name,
+        )
+
+    def current_payload(self, seed: CanonicalSeed, mode: str = "FINAL_SYNTHESIS") -> dict[str, Any]:
+        return IdeaBriefDerivationInput(
+            mode=mode, ideaOverview=seed.ideaOverview,
+            fields=[{"fieldKey": item.fieldKey, "value": item.value,
+                     "decisionState": item.decisionState} for item in seed.fields],
+            attachmentFileIds=[],
+            fieldMetadata=[{"fieldKey": key, "requiredForConcept": key in REQUIRED_SEED,
+                            "regulatorySensitive": key in {"targetRegion", "revenueModel", "price", "channels"}}
+                           for key in FieldKey.__args__],
+        ).model_dump(mode="json")
+
+
+class CurrentSafetyAdapter:
+    async def evaluate(self, seed: CanonicalSeed, mode: ProviderMode) -> SafetyResult:
+        if mode == ProviderMode.LIVE:
+            raw = await execute_idea_brief_derivation(CurrentIdeaBriefAdapter().current_payload(seed))
+            value = raw["safetyReview"]
+            return SafetyResult(**value)
+        unsafe = any(word in (seed.ideaOverview + " " + seed.problem).casefold()
+                     for word in ("피싱", "불법 무기", "아동 성착취"))
+        return SafetyResult(
+            decision="BLOCK_OR_REFRAME" if unsafe else "ALLOW",
+            categories=["DANGEROUS_OR_ILLEGAL_DISTRIBUTION"] if unsafe else [], restrictions=[],
+            userFacingReason="안전한 사업 아이디어로 확인했습니다." if not unsafe else "안전한 방향으로 재구성이 필요합니다.",
+        )
+
+
+def business_fingerprint(candidate: ConceptCandidateResult) -> BusinessFingerprint:
+    return BusinessFingerprint.model_validate({key: getattr(candidate, key) for key in BUSINESS_FINGERPRINT_FIELDS})
+
+
+class CurrentLegalAdapter:
+    """현행 공식 근거/MOLEG legal task와 동일한 입력 계약을 만든다."""
+
+    @staticmethod
+    def _governed(candidate: ConceptCandidateResult, key: str) -> dict[str, Any]:
+        semantics = {item.fieldKey: item for item in candidate.valueSemantics}
+        semantic = semantics[key]
+        return {"value": getattr(candidate, key), "source": semantic.source,
+                "authority": semantic.authority, "decision": semantic.decision}
+
+    def task_input(self, candidate: ConceptCandidateResult) -> dict[str, Any]:
+        text = lambda key: self._governed(candidate, key)
+        listed = lambda key: self._governed(candidate, key)
+        sensitive = lambda key: {**text(key), "legalSensitivity": "LEGAL_SENSITIVE"}
+        pattern = {
+            "schemaVersion": "2.0", "jurisdiction": "KR", "actorRoles": listed("actorRoles"),
+            "platformRole": text("platformRole"),
+            "commercialRoles": {"providerRole": text("providerRole"), "sellerRole": text("sellerRole"),
+                                "intermediaryRole": text("intermediaryRole")},
+            "transactionFlow": listed("transactionFlow"), "paymentFlow": listed("paymentFlow"),
+            "personalDataUsage": listed("personalDataUsage"), "physicalActivities": listed("physicalActivities"),
+            "partnerRoles": {"partnerModel": text("partnerModel"),
+                             "partnerRequirements": listed("partnerRequirements")},
+            "qualificationRequirements": listed("qualificationRequirements"),
+            "advertisingClaims": listed("advertisingClaims"), "operatingModel": text("operatingModel"),
+            "hypotheses": {key: sensitive(key) for key in
+                           ("targetRegion", "revenueModel", "price", "channels", "differentiators")},
+        }
+        registry_version = LegalRegistry().version
+        return {"legalFactPattern": pattern, "factPatternHash": _hash(pattern),
+                "externalFactContext": {"sourceSnapshotHash": _hash([]),
+                                        "registryVersion": registry_version, "facts": []}}
+
+    async def review(self, candidate_id: str, candidate: ConceptCandidateResult) -> LegalReview:
+        raw = await execute_concept_legal_review(self.task_input(candidate))
+        route = {
+            "IMPLEMENTABLE": LegalRoute.ACCEPT, "IMPLEMENTABLE_WITH_CONTROLS": LegalRoute.ACCEPT,
+            "REDESIGNABLE": LegalRoute.REDESIGN_WITHIN_LINEAGE,
+            "REJECTED": LegalRoute.REPLAN_REQUIRED, "NEEDS_FACTS": LegalRoute.NEEDS_INPUT,
+        }[raw["status"]]
+        return LegalReview(
+            candidateId=candidate_id, route=route, productionStatus=raw["status"], sourceStatus="OFFICIAL_EVIDENCE",
+            safeSummary=raw["safeUserSummary"], requiredControls=raw["requiredControls"],
+            redesignRequirements=raw["redesignRequirements"], prohibitedVariants=raw["prohibitedVariants"],
+            requiredDisclosures=raw["requiredDisclosures"],
+            officialEvidenceReferences=raw["officialEvidence"],
+        )
+
+
+class CurrentDownstreamAdapter:
+    """market-analysis-seed-snapshot-v1과 marketing-source-snapshot-v1을 그대로 투영한다."""
+
+    def build(self, seed: CanonicalSeed, candidate_id: str, candidate: ConceptCandidateResult,
+              hypotheses: list[HypothesisDecision], legal: LegalReview) -> DownstreamHandoff:
+        errors: list[str] = []
+        by_type = {item.hypothesisType: item for item in hypotheses}
+        missing = [key for key in HYPOTHESIS_FIELDS if key not in by_type or not by_type[key].accepted]
+        if missing:
+            errors.append("확정되지 않은 hypothesis: " + ", ".join(missing))
+        final_hypotheses: dict[str, Any] = {}
+        output_keys = {"PRE_MARKET_SOM_SHARE": "preMarketSomShare", "PRE_MARKET_SOM": "preMarketSom"}
+        for hypothesis_type, field in HYPOTHESIS_FIELDS.items():
+            item = by_type.get(hypothesis_type)
+            if not item:
+                continue
+            final_hypotheses[output_keys.get(hypothesis_type, field)] = {
+                "value": item.finalValue, "source": item.source, "decisionStatus": item.decisionStatus,
+                "proposalVersion": item.proposalVersion, "legalImpact": item.legalImpact,
+                "legalReviewStatus": item.legalReviewStatus,
+            }
+        now = datetime.now(timezone.utc).isoformat()
+        semantics = [item.model_dump(mode="json") for item in candidate.valueSemantics]
+        selected = {
+            "identity": {key: getattr(candidate, key) for key in
+                         ("conceptName", "conceptDefinition", "introduction", "coreValue", "targetUsers",
+                          "industryCategory", "researchScope")},
+            "solution": {key: getattr(candidate, key) for key in
+                         ("problemScenario", "solutionMechanism", "featureSet")},
+            "operation": {key: getattr(candidate, key) for key in
+                          ("actorRoles", "platformRole", "operatingModel", "partnerModel", "providerRole",
+                           "sellerRole", "intermediaryRole", "transactionFlow", "paymentFlow", "personalDataUsage",
+                           "physicalActivities", "partnerRequirements", "qualificationRequirements")},
+            "valueSemantics": semantics, "canonicalHash": _hash(candidate.model_dump(mode="json")),
+        }
+        original_fields = {item.fieldKey: {"value": item.value, "source": item.source,
+                                           "decisionState": item.decisionState}
+                           for item in seed.fields if item.fieldKey in REQUIRED_SEED or item.decisionState == "LOCKED"}
+        production_status = legal.productionStatus or {
+            LegalRoute.ACCEPT: "IMPLEMENTABLE_WITH_CONTROLS",
+            LegalRoute.REDESIGN_WITHIN_LINEAGE: "REDESIGNABLE",
+            LegalRoute.REPLAN_REQUIRED: "REJECTED",
+            LegalRoute.NEEDS_INPUT: "NEEDS_FACTS",
+            LegalRoute.SYSTEM_FAILURE: "REJECTED",
+        }[legal.route]
+        legal_result = {"legalStatus": production_status, "safeSummary": legal.safeSummary,
+                        "requiredControls": legal.requiredControls,
+                        "prohibitedVariants": legal.prohibitedVariants,
+                        "requiredDisclosures": legal.requiredDisclosures,
+                        "officialEvidenceReferences": legal.officialEvidenceReferences, "deltaLegalReviews": []}
+        market = {"contract": "market-analysis-seed-snapshot-v1", "schemaVersion": "2.0",
+                  "snapshotId": "lab-market-seed", "projectId": 0, "selectionId": 0,
+                  "conceptId": candidate_id, "createdAt": now, "sourceSnapshotHash": _hash(seed.model_dump()),
+                  "originalSeed": {"ideaOverview": seed.ideaOverview, "fields": original_fields},
+                  "aiInterpretation": seed.interpretation, "selectedConcept": selected,
+                  "finalHypotheses": final_hypotheses, "legalResult": legal_result}
+        value = lambda key: final_hypotheses.get(key, {}).get("value")
+        evidence_fields = ("referenceIndex", "sourceType", "lawId", "officialIdentifier", "lawName",
+                           "articleReference", "title", "officialSourceUri", "jurisdiction", "promulgationDate",
+                           "effectiveDate", "retrievedAt", "contentHash", "registryVersion")
+        marketing_evidence = [{key: item[key] for key in evidence_fields if key in item}
+                              for item in legal.officialEvidenceReferences if isinstance(item, dict)]
+        marketing = {"contract": "marketing-source-snapshot-v1", "schemaVersion": "2.0",
+                     "snapshotId": "lab-marketing-source", "projectId": 0, "selectionId": 0,
+                     "conceptId": candidate_id, "marketAnalysisSeedSnapshotId": market["snapshotId"],
+                     "marketAnalysisSeedSnapshotHash": _hash(market), "createdAt": now,
+                     "conceptName": candidate.conceptName, "targetSegment": candidate.targetUsers,
+                     "problem": candidate.problemScenario, "valueProposition": candidate.coreValue,
+                     "positioning": candidate.conceptDefinition, "keyFeatures": candidate.featureSet,
+                     "targetRegion": value("targetRegion"), "revenueModel": value("revenueModel"),
+                     "price": value("price"), "pricing": f'{value("revenueModel")} · {value("price")}',
+                     "channels": [value("channels")] if isinstance(value("channels"), str) else value("channels"),
+                     "competitorDifferentiators": [value("differentiators")] if isinstance(value("differentiators"), str) else value("differentiators"),
+                     "preMarketSomShare": value("preMarketSomShare"), "preMarketSom": value("preMarketSom"),
+                     "legalStatus": production_status, "allowedClaims": candidate.advertisingClaims,
+                     "prohibitedClaims": legal.prohibitedVariants, "requiredDisclosures": legal.requiredDisclosures,
+                     "requiredControls": legal.requiredControls,
+                     "communicationRequiredControls": legal.requiredControls,
+                     "officialEvidenceReferences": marketing_evidence}
+        marketing["hash"] = _hash(marketing)
+        marketing["sourceSnapshotHash"] = marketing["hash"]
+        mappings = [
+            FieldMapping(v2Field="candidate.conceptName", downstreamField="selectedConcept.identity.conceptName",
+                         source="CONCEPT_GENERATED", transformed=False, required=True),
+            FieldMapping(v2Field="candidate.solutionMechanism", downstreamField="selectedConcept.solution.solutionMechanism",
+                         source="CONCEPT_GENERATED", transformed=False, required=True),
+            FieldMapping(v2Field="hypotheses[*]", downstreamField="finalHypotheses", source="USER_CONFIRMED",
+                         transformed=True, required=True),
+            FieldMapping(v2Field="legal", downstreamField="legalResult", source="OFFICIAL_EVIDENCE",
+                         transformed=True, required=True),
+        ]
+        return DownstreamHandoff(
+            compatibility="PASS" if not errors else "FAIL", marketAnalysisSeedSnapshot=market,
+            marketingSourceSnapshot=marketing,
+            sourceProvenance={"ideaBriefSnapshotId": seed.ideaBriefSnapshotId,
+                              "candidateHash": selected["canonicalHash"], "generatedAt": now},
+            fieldMapping=mappings, validationErrors=errors,
+        )

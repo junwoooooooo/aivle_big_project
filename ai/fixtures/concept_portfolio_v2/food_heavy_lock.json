@@ -1,0 +1,14 @@
+{
+  "fixtureName": "food_heavy_lock",
+  "ideaOverview": "서울 직장인을 위한 앱 기반 주간 식재료 구독 서비스",
+  "problem": "직장인이 요리 계획 없이 장을 봐 재료를 버린다",
+  "targetUsers": "서울에서 혼자 사는 직장인",
+  "targetRegion": {"value": "서울", "decisionState": "LOCKED"},
+  "knownCompetitors": {"value": "기존 밀키트 업체", "decisionState": "LOCKED"},
+  "revenueModel": {"value": "주간 구독", "decisionState": "LOCKED"},
+  "price": {"value": "주 29,000원", "decisionState": "LOCKED"},
+  "channels": {"value": "자체 앱", "decisionState": "LOCKED"},
+  "budgetConstraint": {"value": "초기 5천만원", "decisionState": "LOCKED"},
+  "teamConstraint": {"value": "운영 3명", "decisionState": "LOCKED"},
+  "timelineConstraint": {"value": "3개월 내 출시", "decisionState": "LOCKED"}
+}
