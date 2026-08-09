@@ -1,57 +1,245 @@
 import json
+from typing import Any
 
 from pydantic import ValidationError
 
 from app.providers import ProviderFailure, execute_structured_prompt
-from app.tasks.concept_candidate.models import ConceptCandidateInput, ConceptCandidateResult
+from app.tasks.concept_candidate.models import (
+    ConceptCandidateDraft,
+    ConceptCandidateInput,
+    ConceptCandidateResult,
+    SemanticField,
+)
 
 
-SYSTEM_PROMPT = """입력된 Market Seed로 서로 구별되는 하나의 ConceptCandidateV2를 설계한다.
-반드시 한국어 사용자 문구와 strict schema만 반환한다. USER_INPUT 또는 USER_CONFIRMED + LOCKED 값은
-source까지 포함하여 의미와 구체적 조건을 그대로 보존하며 임의로 일반화하거나 변경하지 않는다. 비어 있던 targetRegion은 현재 공식
-법률검토 지원 범위인 대한민국으로 제안하고, revenueModel, price, channels, differentiators와 함께
-AI_HYPOTHESIS + OPEN + PROPOSED로 표시한다. pre-market SOM 두 값은
-실제 시장분석 결과가 아닌 AI_HYPOTHESIS + OPEN + PROPOSED로 명시한다. AS_IS의 Candidate 1은
-사용자 원안을 새로운 아이디어로 재해석하지 않고 구조화만 한다. 이름이나 표현만 바꾼 기존
-후보를 만들지 않는다. providerRole, sellerRole, intermediaryRole은 각 참여자의 실제 거래상 역할을
-명시하고 해당 역할이 없으면 그 이유를 포함해 '해당 없음'으로 분명히 쓴다. 증거 ID, 법령 문구,
-최종 법률 상태, 사용자 확인 상태는 만들지 않는다. acceptedConceptFingerprints에 이미 채택된 후보가
-있으면 이름이 아니라 solutionMechanism, operatingModel, revenueModel, transactionFlow와 역할 중 실제
-사업 축을 달리 설계한다."""
+SYSTEM_PROMPT = """입력된 Market Seed로 서로 구별되는 하나의 Concept 후보 초안을 설계한다.
+반드시 한국어 사용자 문구와 strict schema만 반환한다. 사업 내용만 생성하고 schemaVersion,
+generationStrategy, candidateIndex, originalCandidate, valueSemantics, source, authority, decision은
+생성하지 않는다. 이 메타데이터와 거버넌스는 시스템이 결정한다. USER_INPUT 또는
+USER_CONFIRMED + LOCKED 값은 의미와 구체적 조건을 보존한다. 비어 있던 targetRegion은 현재 공식
+법률검토 지원 범위인 대한민국과 호환되는 지역으로 제안한다. pre-market SOM 두 값은 실제
+시장분석 결과가 아닌 사전 가설이다. AS_IS Candidate 1은 사용자 원안을 새 아이디어로 왜곡하지
+않고 구조화한다. 이름이나 표현만 바꾼 avoidCandidates와 같은 사업 구조를 만들지 않는다.
+providerRole, sellerRole, intermediaryRole은 실제 거래상 역할을 명시하고 역할이 없으면 그 이유와
+함께 '해당 없음'으로 쓴다. 증거 ID, 법령 문구, 최종 법률 상태, 사용자 확인 상태는 만들지 않는다."""
+
+
+VARIATION_RULES = {
+    "CUSTOMER_EXPERIENCE": {
+        "primaryAxes": ["problemScenario", "solutionMechanism", "featureSet", "coreValue"],
+        "minimumChange": "고객의 문제 상황과 해결 작동 방식 중 최소 두 축을 기존 후보와 실질적으로 다르게 설계한다.",
+    },
+    "OPERATING_MODEL_AND_PARTNERS": {
+        "primaryAxes": ["actorRoles", "operatingModel", "partnerModel", "providerRole",
+                        "sellerRole", "intermediaryRole", "transactionFlow"],
+        "minimumChange": "운영 주체, 파트너 관계, 거래 역할 중 최소 두 축을 기존 후보와 실질적으로 다르게 설계한다.",
+    },
+    "REVENUE_AND_PRICING": {
+        "primaryAxes": ["revenueModel", "price", "paymentFlow"],
+        "minimumChange": "수익 발생 주체와 과금 단위 또는 결제 흐름을 기존 후보와 실질적으로 다르게 설계한다.",
+    },
+    "CHANNEL_AND_SCALE": {
+        "primaryAxes": ["channels", "platformRole", "transactionFlow", "operatingModel"],
+        "minimumChange": "획득 채널과 유통·확장 메커니즘 중 최소 두 축을 기존 후보와 실질적으로 다르게 설계한다.",
+    },
+    "LOW_RISK_FAST_EXECUTION": {
+        "primaryAxes": ["personalDataUsage", "physicalActivities", "partnerRequirements",
+                        "qualificationRequirements", "operatingModel"],
+        "minimumChange": "개인정보·물리활동·필수 파트너 의존을 줄이고 단기 실행 가능한 운영 구조를 명시한다.",
+    },
+}
+
+HYPOTHESIS_FIELDS = {
+    "targetRegion", "revenueModel", "price", "channels", "differentiators",
+    "preMarketSomShareHypothesis", "preMarketSomHypothesis",
+}
+DIRECT_LOCK_FIELDS = {"targetRegion", "revenueModel", "price", "channels", "differentiators"}
+AS_IS_DIRECT_FIELDS = {
+    "conceptDefinition": "ideaOverview",
+    "problemScenario": "problem",
+    "targetUsers": "targetUsers",
+}
+CONSTRAINT_FIELDS = {"budgetConstraint", "teamConstraint", "timelineConstraint", "otherConstraint"}
 
 
 async def execute_concept_candidate(task_input: dict) -> dict:
     try:
         value = ConceptCandidateInput.model_validate(task_input)
     except ValidationError as failure:
-        raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
+        raise ProviderFailure(
+            "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
+            validation_fields=_validation_fields(failure, "input"),
+        ) from failure
+
+    provider_input = value.model_dump(mode="json")
+    provider_input["variationRule"] = VARIATION_RULES[value.diversityFocus]
+    provider_input["avoidCandidates"] = _deduplicated_avoid_candidates(value)
+    for key in ("acceptedConceptFingerprints", "rejectedConceptFingerprints",
+                "currentSlotPreviousFingerprints"):
+        provider_input.pop(key, None)
+
     raw = await execute_structured_prompt(
-        SYSTEM_PROMPT, json.dumps(value.model_dump(mode="json"), ensure_ascii=False, sort_keys=True),
-        response_schema=ConceptCandidateResult.model_json_schema(),
-        schema_name="concept_candidate_v2", task_type="CONCEPT_CANDIDATE",
+        SYSTEM_PROMPT, json.dumps(provider_input, ensure_ascii=False, sort_keys=True),
+        response_schema=ConceptCandidateDraft.model_json_schema(),
+        schema_name="concept_candidate_draft_v1", task_type="CONCEPT_CANDIDATE",
     )
+    draft = await _validated_draft(raw, value)
     try:
-        result = ConceptCandidateResult.model_validate(raw)
-        by_key = {item.fieldKey: item for item in result.valueSemantics}
-        region_seed = next((item for item in value.fields if item.fieldKey == "targetRegion"), None)
-        region_semantics = by_key["targetRegion"]
-        if region_seed is not None and region_seed.authority == "LOCKED":
-            if (region_seed.source not in ("USER_INPUT", "USER_CONFIRMED")
-                    or result.targetRegion.strip().casefold() != region_seed.value.strip().casefold()
-                    or region_semantics.source != region_seed.source
-                    or region_semantics.authority != "LOCKED"
-                    or region_semantics.decision != "ACCEPTED"):
-                raise ValueError("locked targetRegion semantics must be preserved")
-        elif (region_semantics.source != "AI_HYPOTHESIS"
-                or region_semantics.authority != "OPEN"
-                or region_semantics.decision != "PROPOSED"
-                or not _kr_compatible(result.targetRegion)):
-            raise ValueError("open targetRegion must be a KR-compatible AI hypothesis")
-        return result.model_dump(mode="json")
+        normalized = _normalize_candidate(value, draft)
+        return ConceptCandidateResult.model_validate(normalized).model_dump(mode="json")
     except ValidationError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", 502, False,
+            schema_name="concept_candidate_v2",
+            validation_fields=_validation_fields(failure, "result"),
+        ) from failure
     except ValueError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        reason = str(failure)
+        diagnostic = reason if reason in {
+            "LEGAL_JURISDICTION_UNSUPPORTED", "CONTENT_FIELD_MISSING",
+            "CANDIDATE_METADATA_INVALID", "GOVERNANCE_SEMANTICS_MISMATCH",
+        } else "RESULT_DOMAIN_INVARIANT_VIOLATION"
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", diagnostic, 502, False,
+                              schema_name="concept_candidate_v2") from failure
+
+
+async def _validated_draft(raw: dict[str, Any], value: ConceptCandidateInput) -> ConceptCandidateDraft:
+    try:
+        return ConceptCandidateDraft.model_validate(raw)
+    except ValidationError as first_failure:
+        fields = _validation_fields(first_failure, "draft")
+        repair_input = {
+            "previousCandidate": raw,
+            "failureCode": "CONTENT_FIELD_MISSING",
+            "failedFields": fields,
+            "requiredCorrection": "누락되거나 계약에 맞지 않는 사업 내용 필드만 보완하고 완전한 초안을 반환한다.",
+            "generationStrategy": value.generationStrategy,
+            "candidateIndex": value.candidateIndex,
+            "diversityFocus": value.diversityFocus,
+            "variationRule": VARIATION_RULES[value.diversityFocus],
+            "lockedConstraints": _locked_constraints(value),
+        }
+        repaired = await execute_structured_prompt(
+            SYSTEM_PROMPT + "\n이 호출은 이전 초안의 실제 content 오류를 고치는 1회 한정 repair다.",
+            json.dumps(repair_input, ensure_ascii=False, sort_keys=True),
+            response_schema=ConceptCandidateDraft.model_json_schema(),
+            schema_name="concept_candidate_draft_repair_v1", task_type="CONCEPT_CANDIDATE",
+        )
+        try:
+            return ConceptCandidateDraft.model_validate(repaired)
+        except ValidationError as repaired_failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "CONTENT_FIELD_MISSING", 502, False,
+                schema_name="concept_candidate_draft_v1",
+                validation_fields=_validation_fields(repaired_failure, "draft"),
+            ) from repaired_failure
+
+
+def _normalize_candidate(value: ConceptCandidateInput, draft: ConceptCandidateDraft) -> dict[str, Any]:
+    result = draft.model_dump(mode="json")
+    seed = {field.fieldKey: field for field in value.fields}
+
+    for field in DIRECT_LOCK_FIELDS:
+        locked = seed.get(field)
+        if locked is not None and locked.authority == "LOCKED":
+            if locked.source not in {"USER_INPUT", "USER_CONFIRMED"}:
+                raise ValueError("GOVERNANCE_SEMANTICS_MISMATCH")
+            result[field] = locked.value
+
+    if value.generationStrategy == "AS_IS" and value.candidateIndex == 1:
+        for candidate_field, seed_field in AS_IS_DIRECT_FIELDS.items():
+            locked = seed.get(seed_field)
+            if locked is None or locked.authority != "LOCKED":
+                raise ValueError("CANDIDATE_METADATA_INVALID")
+            result[candidate_field] = locked.value
+
+    if not _kr_compatible(str(result.get("targetRegion", ""))):
+        raise ValueError("LEGAL_JURISDICTION_UNSUPPORTED")
+
+    compliance = list(result.get("constraintCompliance") or [])
+    for field in value.fields:
+        if field.fieldKey in CONSTRAINT_FIELDS and field.authority == "LOCKED":
+            if not any(_same_or_contains(field.value, item) for item in compliance):
+                compliance.append(f"확정 제약 준수: {field.value}")
+    result["constraintCompliance"] = compliance
+
+    semantics = []
+    for field in SemanticField.__args__:
+        source, authority, decision = "CONCEPT_GENERATED", "OPEN", "PROPOSED"
+        seed_field = seed.get(field)
+        if field in DIRECT_LOCK_FIELDS and seed_field is not None and seed_field.authority == "LOCKED":
+            source, authority, decision = seed_field.source, "LOCKED", "ACCEPTED"
+        elif field in HYPOTHESIS_FIELDS:
+            source, authority, decision = "AI_HYPOTHESIS", "OPEN", "PROPOSED"
+        elif value.generationStrategy == "AS_IS" and value.candidateIndex == 1 \
+                and field in AS_IS_DIRECT_FIELDS:
+            original = seed[AS_IS_DIRECT_FIELDS[field]]
+            source, authority, decision = original.source, "LOCKED", "ACCEPTED"
+        semantics.append({"fieldKey": field, "source": source,
+                          "authority": authority, "decision": decision})
+
+    result.update({
+        "schemaVersion": "2.0",
+        "generationStrategy": value.generationStrategy,
+        "candidateIndex": value.candidateIndex,
+        "originalCandidate": value.generationStrategy == "AS_IS" and value.candidateIndex == 1,
+        "valueSemantics": semantics,
+    })
+    return result
+
+
+def normalize_redesign(original: ConceptCandidateResult, draft: ConceptCandidateDraft) -> dict[str, Any]:
+    """Preserve system metadata and every authoritative value while accepting redesigned content."""
+    result = draft.model_dump(mode="json")
+    original_payload = original.model_dump(mode="json")
+    semantics = {item.fieldKey: item.model_dump(mode="json") for item in original.valueSemantics}
+    for field, semantic in semantics.items():
+        if semantic["authority"] == "LOCKED":
+            result[field] = original_payload[field]
+        elif field in HYPOTHESIS_FIELDS:
+            semantic.update(source="AI_HYPOTHESIS", authority="OPEN", decision="PROPOSED")
+        else:
+            semantic.update(source="CONCEPT_GENERATED", authority="OPEN", decision="PROPOSED")
+    result.update({
+        "schemaVersion": "2.0",
+        "generationStrategy": original.generationStrategy,
+        "candidateIndex": original.candidateIndex,
+        "originalCandidate": original.originalCandidate,
+        "valueSemantics": [semantics[field] for field in SemanticField.__args__],
+    })
+    return result
+
+
+def _deduplicated_avoid_candidates(value: ConceptCandidateInput) -> list[dict[str, Any]]:
+    unique: dict[str, dict[str, Any]] = {}
+    for item in (*value.acceptedConceptFingerprints, *value.rejectedConceptFingerprints,
+                 *value.currentSlotPreviousFingerprints):
+        payload = item.model_dump(mode="json")
+        key = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        unique.setdefault(key, payload)
+    return list(unique.values())
+
+
+def _locked_constraints(value: ConceptCandidateInput) -> list[dict[str, str]]:
+    return [field.model_dump(mode="json") for field in value.fields if field.authority == "LOCKED"]
+
+
+def _validation_fields(failure: ValidationError, prefix: str) -> list[dict[str, str]]:
+    fields = []
+    for issue in failure.errors()[:12]:
+        location = ".".join(str(part) for part in issue.get("loc", ()))
+        fields.append({
+            "path": f"{prefix}.{location}" if location else prefix,
+            "category": str(issue.get("type", "invalid"))[:80],
+            "expectedType": "valid contract value",
+        })
+    return fields
+
+
+def _same_or_contains(expected: str, actual: str) -> bool:
+    first = " ".join(expected.casefold().split())
+    second = " ".join(str(actual).casefold().split())
+    return first == second or first in second
 
 
 def _kr_compatible(value: str) -> bool:

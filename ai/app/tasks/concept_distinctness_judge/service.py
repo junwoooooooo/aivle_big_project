@@ -32,4 +32,12 @@ async def execute_concept_distinctness_judge(task_input: dict) -> dict:
     try:
         return ConceptDistinctnessJudgeResult.model_validate(raw).model_dump(mode="json")
     except ValidationError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        fields = [{
+            "path": "result." + ".".join(str(part) for part in issue.get("loc", ())),
+            "category": str(issue.get("type", "invalid"))[:80],
+            "expectedType": "valid contract value",
+        } for issue in failure.errors()[:12]]
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", 502, False,
+            schema_name="concept_distinctness_judge_v1", validation_fields=fields,
+        ) from failure

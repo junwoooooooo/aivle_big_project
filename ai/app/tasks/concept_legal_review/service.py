@@ -145,7 +145,11 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
     try:
         provider = ConceptLegalReviewProviderResult.model_validate(raw)
     except ValidationError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", 502, False,
+            schema_name="concept_legal_review_v3",
+            validation_fields=_validation_fields(failure, "result"),
+        ) from failure
     if provider.status == "NEEDS_FACTS":
         design_gaps = [question for question in provider.unknownFacts if not _is_external_fact_question(question)]
         if design_gaps:
@@ -161,3 +165,11 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
         reviewedFactPatternSchemaVersion="2.0", reviewedFactPatternHash=value.factPatternHash,
         reviewLabel=REVIEW_LABEL, reviewLimitations=REVIEW_LIMITATIONS,
     ).model_dump(mode="json")
+
+
+def _validation_fields(failure: ValidationError, prefix: str) -> list[dict[str, str]]:
+    return [{
+        "path": f"{prefix}." + ".".join(str(part) for part in issue.get("loc", ())),
+        "category": str(issue.get("type", "invalid"))[:80],
+        "expectedType": "valid contract value",
+    } for issue in failure.errors()[:12]]

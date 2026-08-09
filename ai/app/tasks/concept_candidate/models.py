@@ -61,7 +61,9 @@ class ConceptCandidateInput(StrictModel):
     originalCandidate: bool
     diversityFocus: VariationFocus
     fields: list[BriefField] = Field(min_length=3, max_length=32)
-    acceptedConceptFingerprints: list[AcceptedConceptFingerprint] = Field(max_length=5)
+    acceptedConceptFingerprints: list[AcceptedConceptFingerprint] = Field(default_factory=list, max_length=5)
+    rejectedConceptFingerprints: list[AcceptedConceptFingerprint] = Field(default_factory=list, max_length=15)
+    currentSlotPreviousFingerprints: list[AcceptedConceptFingerprint] = Field(default_factory=list, max_length=5)
 
     @model_validator(mode="after")
     def original_is_only_first_as_is_candidate(self):
@@ -94,11 +96,9 @@ class PreMarketSomHypothesis(StrictModel):
     confidence: Literal["LOW", "MEDIUM", "HIGH"]
 
 
-class ConceptCandidateResult(StrictModel):
-    schemaVersion: Literal["2.0"]
-    generationStrategy: ConceptGenerationStrategy
-    candidateIndex: int = Field(strict=True, ge=1, le=5)
-    originalCandidate: bool
+class ConceptCandidateDraft(StrictModel):
+    """Provider-owned business content without system-owned governance metadata."""
+
     conceptName: str = Field(min_length=1, max_length=200)
     conceptDefinition: str = Field(min_length=1, max_length=1000)
     introduction: str = Field(min_length=1, max_length=2000)
@@ -131,6 +131,15 @@ class ConceptCandidateResult(StrictModel):
     qualificationRequirements: list[str] = Field(max_length=20)
     advertisingClaims: list[str] = Field(max_length=20)
     constraintCompliance: list[str] = Field(max_length=20)
+
+
+class ConceptCandidateResult(ConceptCandidateDraft):
+    """Canonical CandidateV2 after deterministic normalization."""
+
+    schemaVersion: Literal["2.0"]
+    generationStrategy: ConceptGenerationStrategy
+    candidateIndex: int = Field(strict=True, ge=1, le=5)
+    originalCandidate: bool
     valueSemantics: list[ValueSemantics] = Field(min_length=31, max_length=31)
 
     @model_validator(mode="after")
@@ -150,6 +159,7 @@ class ConceptCandidateResult(StrictModel):
         if expected_original:
             for key in ("conceptDefinition", "problemScenario", "targetUsers"):
                 item = by_key[key]
-                if item.source != "USER_INPUT" or item.authority != "LOCKED" or item.decision != "ACCEPTED":
+                if item.source not in ("USER_INPUT", "USER_CONFIRMED") \
+                        or item.authority != "LOCKED" or item.decision != "ACCEPTED":
                     raise ValueError("AS_IS Candidate 1 must preserve original user value semantics")
         return self

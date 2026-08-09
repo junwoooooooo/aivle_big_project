@@ -206,8 +206,17 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             return internal_error(correlation, "UNSUPPORTED_TASK_TYPE", "TASK_TYPE_UNSUPPORTED", 422, False,
                                   body.taskRunId, body.taskAttemptId)
     except ProviderFailure as failure:
+        logger.warning(
+            "AI execution failed taskType=%s taskRunId=%s taskAttemptId=%s correlationId=%s "
+            "code=%s reason=%s retryable=%s schemaName=%s upstreamStatus=%s "
+            "providerErrorType=%s providerErrorParam=%s validationFields=%s",
+            body.taskType, body.taskRunId, body.taskAttemptId, correlation,
+            failure.code, failure.reason, failure.retryable, failure.schema_name,
+            failure.upstream_status, failure.provider_error_type, failure.provider_error_param,
+            failure.validation_fields,
+        )
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
-                              body.taskRunId, body.taskAttemptId)
+                              body.taskRunId, body.taskAttemptId, failure.validation_fields)
     return InternalExecutionSuccessResponseV1(contractVersion="1.0", taskType=body.taskType,
         taskSchemaVersion="1.0", taskRunId=body.taskRunId, taskAttemptId=body.taskAttemptId,
         correlationId=body.correlationId, canonicalInputHash=body.canonicalInputHash,

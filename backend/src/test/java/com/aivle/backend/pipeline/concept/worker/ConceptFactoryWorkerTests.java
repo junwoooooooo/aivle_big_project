@@ -57,7 +57,7 @@ class ConceptFactoryWorkerTests {
         assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
         verify(h.execution).recordAttemptError(eq("run"), eq("slot-1"), anyString(),
-            eq(ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE), eq(true));
+            eq(ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE), eq("MODEL_DEPENDENCY_UNAVAILABLE"), eq(true));
         verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
     }
 
@@ -79,7 +79,7 @@ class ConceptFactoryWorkerTests {
     }
 
     @Test
-    void schemaRepairSucceedsWithoutReplacement() {
+    void schemaFailureUsesReplacementInsteadOfBlindRepair() {
         Harness h = new Harness();
         AtomicInteger candidates = new AtomicInteger();
         when(h.ai.execute(any(), anyString(), anyString(), anyString())).thenAnswer(invocation -> {
@@ -92,8 +92,8 @@ class ConceptFactoryWorkerTests {
 
         assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.ELIGIBLE);
-        verify(h.execution).beginAttempt("slot-1", ConceptAttemptPhase.REPAIR, "task");
-        verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
+        verify(h.execution, never()).beginAttempt("slot-1", ConceptAttemptPhase.REPAIR, "task");
+        verify(h.execution).beginReplacement("run", "slot-1", 1);
     }
 
     @Test
@@ -270,9 +270,7 @@ class ConceptFactoryWorkerTests {
         assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
         verify(h.execution).failSlot("run", "slot-1", null,
-            ConceptAttemptError.INTERNAL_EXECUTION_ERROR, false, false);
-        verify(h.execution).recordAttemptError(eq("run"), eq("slot-1"), anyString(),
-            eq(ConceptAttemptError.INTERNAL_EXECUTION_ERROR), eq(false));
+            ConceptAttemptError.LEGAL_REJECTED, false, false);
         verify(h.execution).beginReplacement("run", "slot-1", 1);
         verify(h.execution).beginReplacement("run", "slot-1", 2);
     }
@@ -285,7 +283,7 @@ class ConceptFactoryWorkerTests {
 
         assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
-        verify(h.execution).failSlot(eq("run"), eq("slot-1"), anyString(),
+        verify(h.execution).failSlot(eq("run"), eq("slot-1"), isNull(),
             eq(ConceptAttemptError.PERMANENT_PROVIDER_FAILURE), eq(false), eq(true));
         verify(h.execution, never()).beginReplacement(anyString(), anyString(), anyInt());
     }
@@ -315,8 +313,7 @@ class ConceptFactoryWorkerTests {
 
         assertThat(h.worker.processSlot(h.context, h.work(1), h.slot(1)))
             .isEqualTo(ConceptFactoryWorker.SlotOutcome.FAILED);
-        verify(h.execution).recordCandidateExhaustion(anyString(),
-            eq(ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS));
+        verify(h.execution, never()).recordCandidateExhaustion(anyString(), any());
         verify(h.execution).failSlot("run", "slot-1", null,
             ConceptAttemptError.INSUFFICIENT_DISTINCT_CONCEPTS, false, false);
         verify(h.ai, never()).execute(eq(TaskType.CONCEPT_LEGAL_REVIEW), anyString(), anyString(), anyString());

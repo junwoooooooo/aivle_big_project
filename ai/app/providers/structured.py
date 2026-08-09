@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 class ProviderFailure(Exception):
     def __init__(self, code: str, reason: str, status_code: int, retryable: bool, *,
                  upstream_status: int | None = None, provider_error_type: str | None = None,
-                 provider_error_param: str | None = None, schema_name: str | None = None):
+                 provider_error_param: str | None = None, schema_name: str | None = None,
+                 validation_fields: list[dict[str, str]] | None = None):
         super().__init__(reason)
         self.code = code
         self.reason = reason
@@ -25,6 +26,7 @@ class ProviderFailure(Exception):
         self.provider_error_type = provider_error_type
         self.provider_error_param = provider_error_param
         self.schema_name = schema_name
+        self.validation_fields = list(validation_fields or [])[:12]
 
 
 def _configuration(model_override: str | None = None) -> tuple[str, str, str]:
@@ -91,13 +93,15 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
                                          headers={"Authorization": f"Bearer {api_key}",
                                                   "Content-Type": "application/json"}, json=body)
     except (httpx.TimeoutException, httpx.NetworkError) as failure:
-        raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True) from failure
+        raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
+                              schema_name=schema_name) from failure
     if response.status_code in (401, 403):
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", 503, False)
     if response.status_code == 429:
         raise ProviderFailure("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED", 429, True)
     if response.status_code >= 500:
-        raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True)
+        raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
+                              upstream_status=response.status_code, schema_name=schema_name)
     if response.status_code == 400 and response_schema is not None:
         error_type, error_param = _safe_provider_error(response)
         if error_type == "invalid_request_error" and error_param == "response_format":
@@ -110,7 +114,8 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
     if response.status_code >= 400:
         raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
     if len(response.content) > 2 * 1024 * 1024:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_JSON_INVALID", 502, False,
+                              upstream_status=response.status_code, schema_name=schema_name)
     try:
         payload = response.json()
         content = payload["choices"][0]["message"]["content"]
@@ -118,4 +123,5 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
             content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
         return _extract_json(content)
     except (KeyError, IndexError, TypeError, AttributeError, ValueError, json.JSONDecodeError) as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_JSON_INVALID", 502, False,
+                              upstream_status=response.status_code, schema_name=schema_name) from failure

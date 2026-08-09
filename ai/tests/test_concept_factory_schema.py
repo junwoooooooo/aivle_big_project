@@ -4,7 +4,7 @@ import asyncio
 import pytest
 
 from app.providers import ProviderFailure
-from app.tasks.concept_candidate.models import ConceptCandidateInput, ConceptCandidateResult
+from app.tasks.concept_candidate.models import ConceptCandidateDraft, ConceptCandidateInput, ConceptCandidateResult
 from app.tasks.concept_candidate import service as candidate_service
 from app.tasks.concept_legal_review.models import ConceptLegalReviewProviderResult
 from app.tasks.concept_legal_review.service import execute_concept_legal_review
@@ -13,8 +13,15 @@ from app.tasks.concept_redesign.models import ConceptRedesignResult
 from concept_candidate_v2_fixture import valid_candidate
 
 
-MODELS = [ConceptCandidateResult, ConceptLegalReviewProviderResult, ConceptRedesignResult,
+MODELS = [ConceptCandidateDraft, ConceptCandidateResult, ConceptLegalReviewProviderResult, ConceptRedesignResult,
           ConceptHypothesisAlternativeResult]
+
+
+def candidate_draft(candidate=None):
+    value = dict(candidate or valid_candidate())
+    for key in ("schemaVersion", "generationStrategy", "candidateIndex", "originalCandidate", "valueSemantics"):
+        value.pop(key, None)
+    return value
 
 
 def _assert_closed(schema: dict, root: dict) -> None:
@@ -75,7 +82,7 @@ def test_missing_revenue_is_a_proposed_ai_hypothesis():
 
 def test_open_target_region_is_a_kr_ai_hypothesis(monkeypatch):
     async def prompt(*_args, **_kwargs):
-        return valid_candidate()
+        return candidate_draft()
     monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
     result = asyncio.run(candidate_service.execute_concept_candidate({
         "ideaBriefSnapshotId": "brief-1", "generationStrategy": "EXPLORE", "candidateIndex": 1,
@@ -94,11 +101,9 @@ def test_open_target_region_is_a_kr_ai_hypothesis(monkeypatch):
 
 def test_locked_user_confirmed_target_region_must_keep_exact_semantics(monkeypatch):
     candidate = valid_candidate("REFINE", 1)
-    for item in candidate["valueSemantics"]:
-        if item["fieldKey"] == "targetRegion":
-            item.update(source="USER_CONFIRMED", authority="LOCKED", decision="ACCEPTED")
+    candidate["targetRegion"] = "서울"
     async def prompt(*_args, **_kwargs):
-        return candidate
+        return candidate_draft(candidate)
     monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
     result = asyncio.run(candidate_service.execute_concept_candidate({
         "ideaBriefSnapshotId": "brief-1", "generationStrategy": "REFINE", "candidateIndex": 1,
@@ -111,8 +116,30 @@ def test_locked_user_confirmed_target_region_must_keep_exact_semantics(monkeypat
         ], "acceptedConceptFingerprints": [],
     }))
     semantics = {item["fieldKey"]: item for item in result["valueSemantics"]}
+    assert result["targetRegion"] == "대한민국"
     assert semantics["targetRegion"]["source"] == "USER_CONFIRMED"
     assert semantics["targetRegion"]["authority"] == "LOCKED"
+
+
+def test_provider_schema_excludes_system_owned_governance(monkeypatch):
+    observed = {}
+    async def prompt(*_args, **kwargs):
+        observed["schema"] = kwargs["response_schema"]
+        return candidate_draft()
+    monkeypatch.setattr(candidate_service, "execute_structured_prompt", prompt)
+    asyncio.run(candidate_service.execute_concept_candidate({
+        "ideaBriefSnapshotId": "brief-1", "generationStrategy": "EXPLORE", "candidateIndex": 1,
+        "originalCandidate": False, "diversityFocus": "CUSTOMER_EXPERIENCE",
+        "fields": [
+            {"fieldKey": "ideaOverview", "value": "예약 자동화", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "problem", "value": "확인 반복", "source": "USER_INPUT", "authority": "LOCKED"},
+            {"fieldKey": "targetUsers", "value": "소형 매장", "source": "USER_INPUT", "authority": "LOCKED"},
+        ],
+    }))
+    properties = observed["schema"]["properties"]
+    assert "valueSemantics" not in properties
+    assert "candidateIndex" not in properties
+    assert "generationStrategy" not in properties
 
 
 def test_pre_market_som_is_never_labeled_as_analysis_result():

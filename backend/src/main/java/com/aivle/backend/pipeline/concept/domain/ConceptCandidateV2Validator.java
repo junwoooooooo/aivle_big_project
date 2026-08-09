@@ -99,8 +99,13 @@ public final class ConceptCandidateV2Validator {
                 || !preserves(seed.get("ideaOverview"), candidate.path("conceptDefinition").asText())) {
                 return Result.originInvalid("AS_IS_ORIGINAL_NOT_PRESERVED");
             }
+            Map<String, String> originalSources = Map.of(
+                "conceptDefinition", sources.getOrDefault("ideaOverview", "USER_INPUT"),
+                "problemScenario", sources.getOrDefault("problem", "USER_INPUT"),
+                "targetUsers", sources.getOrDefault("targetUsers", "USER_INPUT"));
             for (String field : List.of("conceptDefinition", "problemScenario", "targetUsers")) {
-                if (!matches(semantics.get(field), "USER_INPUT", "LOCKED", "ACCEPTED")) {
+                if (!matchesAnyUserSource(semantics.get(field), originalSources.get(field),
+                        "LOCKED", "ACCEPTED")) {
                     return Result.originInvalid("AS_IS_ORIGINAL_SEMANTICS_INVALID");
                 }
             }

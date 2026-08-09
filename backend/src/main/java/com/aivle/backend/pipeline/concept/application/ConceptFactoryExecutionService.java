@@ -241,6 +241,33 @@ public class ConceptFactoryExecutionService {
             .map(value -> ConceptFingerprint.businessSummary(mapper.readTree(value.getCandidateJson()))).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> rejectedFingerprints(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        return fingerprintsFromAttempts(slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
+            runId, run.getProject().getId())).stream().limit(15).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> currentSlotPreviousFingerprints(String slotId) {
+        ConceptSlot slot = slots.findById(slotId).orElseThrow();
+        List<Map<String, Object>> values = fingerprintsFromAttempts(List.of(slot));
+        return values.stream().skip(Math.max(0, values.size() - 5L)).toList();
+    }
+
+    private List<Map<String, Object>> fingerprintsFromAttempts(List<ConceptSlot> sourceSlots) {
+        LinkedHashMap<String, Map<String, Object>> unique = new LinkedHashMap<>();
+        for (ConceptSlot sourceSlot : sourceSlots) {
+            for (ConceptAttempt attempt : attempts.findAllBySlotIdOrderByAttemptNumber(sourceSlot.getId())) {
+                if (attempt.getPhase() == ConceptAttemptPhase.LEGAL_REVIEW || attempt.getResultJson() == null) continue;
+                JsonNode candidate = mapper.readTree(attempt.getResultJson());
+                ConceptFingerprint.Value fingerprint = ConceptFingerprint.from(candidate);
+                unique.putIfAbsent(fingerprint.canonicalHash(), ConceptFingerprint.businessSummary(candidate));
+            }
+        }
+        return List.copyOf(unique.values());
+    }
+
     private void rejectCandidate(ConceptSlot slot, String attemptId, JsonNode candidate, ConceptAttemptError error,
             String safeCode, String safeSummary) {
         attempts.findById(attemptId).orElseThrow().reject(error, safeCode, mapper.writeValueAsString(candidate));
@@ -272,12 +299,14 @@ public class ConceptFactoryExecutionService {
         }
         if (status == ConceptLegalStatus.REDESIGNABLE) {
             validateFindingCoverage(legal, official.keySet(), false);
-            attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.LEGAL_REDESIGN_REQUIRED, "REDESIGN_REQUIRED", false);
+            attempts.findById(attemptId).orElseThrow().reject(ConceptAttemptError.LEGAL_REDESIGN_REQUIRED,
+                "REDESIGN_REQUIRED", mapper.writeValueAsString(legal));
             slot.transitionTo(ConceptSlotStatus.REDESIGNING); return LegalDisposition.REDESIGN;
         }
         if (status == ConceptLegalStatus.REJECTED) {
             validateFindingCoverage(legal, official.keySet(), false);
-            attempts.findById(attemptId).orElseThrow().fail(ConceptAttemptError.LEGAL_REJECTED, "LEGAL_REJECTED", false);
+            attempts.findById(attemptId).orElseThrow().reject(ConceptAttemptError.LEGAL_REJECTED,
+                "LEGAL_REJECTED", mapper.writeValueAsString(legal));
             slot.transitionTo(ConceptSlotStatus.REJECTED); slot.transitionTo(ConceptSlotStatus.REPLACING);
             rejections.save(ConceptRejectionSummary.create(slot, "LEGAL_REJECTED", legal.path("safeUserSummary").asText("재설계가 필요합니다.")));
             return LegalDisposition.REPLACE;
@@ -374,7 +403,7 @@ public class ConceptFactoryExecutionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failSlot(String runId, String slotId, String attemptId, ConceptAttemptError error, boolean retryable, boolean permanent) {
-        if (attemptId != null) attempts.findById(attemptId).ifPresent(value -> value.fail(error, error.name(), retryable));
+        if (attemptId != null) attempts.findById(attemptId).ifPresent(value -> terminalizeAttempt(value, error, error.name(), retryable));
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         slot.fail();
         if (permanent) {
@@ -391,7 +420,7 @@ public class ConceptFactoryExecutionService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordAttemptError(String runId, String slotId, String attemptId, ConceptAttemptError error,
             String safeErrorCode, boolean retryable) {
-        attempts.findById(attemptId).orElseThrow().fail(error, safeErrorCode, retryable);
+        terminalizeAttempt(attempts.findById(attemptId).orElseThrow(), error, safeErrorCode, retryable);
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         if (error == ConceptAttemptError.SCHEMA_INVALID && slot.getStatus() == ConceptSlotStatus.GENERATING) {
             slot.transitionTo(ConceptSlotStatus.SCHEMA_INVALID);
@@ -401,13 +430,15 @@ public class ConceptFactoryExecutionService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordCandidateExhaustion(String attemptId, ConceptAttemptError error) {
         ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
-        attempt.reject(error, error.name(), attempt.getResultJson());
+        if (attempt.getErrorClassification() == null) {
+            terminalizeAttempt(attempt, error, error.name(), false);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failLegalReview(String runId, String slotId, String attemptId,
             ConceptAttemptError error, String safeErrorCode, boolean retryable) {
-        attempts.findById(attemptId).orElseThrow().fail(error, safeErrorCode, retryable);
+        terminalizeAttempt(attempts.findById(attemptId).orElseThrow(), error, safeErrorCode, retryable);
         ConceptSlot slot = slots.findById(slotId).orElseThrow();
         if (slot.getStatus() == ConceptSlotStatus.VALIDATING_LEGAL) {
             slot.transitionTo(ConceptSlotStatus.REVIEW_RETRY_PENDING);
@@ -448,6 +479,42 @@ public class ConceptFactoryExecutionService {
             latest == null || latest.getSafeErrorCode() == null ? "INTERNAL_STATE_FAILURE" : latest.getSafeErrorCode());
     }
 
+    @Transactional(readOnly = true)
+    public AttemptTrace attemptTrace(String attemptId) {
+        ConceptAttempt attempt = attempts.findById(attemptId).orElseThrow();
+        return new AttemptTrace(attempt.getAttemptNumber(), attempt.getPhase().name(),
+            attempt.getSafeErrorCode(), attempt.isRetryable());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failActiveAttempt(String slotId, ConceptAttemptError error, String safeErrorCode) {
+        attempts.findFirstBySlotIdOrderByAttemptNumberDesc(slotId).ifPresent(attempt -> {
+            if (attempt.getResultJson() == null && attempt.getErrorClassification() == null) {
+                attempt.fail(error, safeErrorCode, false);
+            }
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public String failureCode(String runId) {
+        ConceptFactoryRun run = runs.findById(runId).orElseThrow();
+        return slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(
+                runId, run.getProject().getId()).stream()
+            .flatMap(slot -> attempts.findAllBySlotIdOrderByAttemptNumber(slot.getId()).stream())
+            .filter(attempt -> attempt.getErrorClassification() != null)
+            .max(Comparator.comparing(ConceptAttempt::getUpdatedAt,
+                Comparator.nullsFirst(Comparator.naturalOrder())))
+            .map(attempt -> attempt.getSafeErrorCode() == null
+                ? attempt.getErrorClassification().name() : attempt.getSafeErrorCode())
+            .orElse("INTERNAL_STATE_FAILURE");
+    }
+
+    private void terminalizeAttempt(ConceptAttempt attempt, ConceptAttemptError error,
+            String safeErrorCode, boolean retryable) {
+        if (attempt.getResultJson() == null) attempt.fail(error, safeErrorCode, retryable);
+        else attempt.reject(error, safeErrorCode, attempt.getResultJson());
+    }
+
     @Transactional
     public boolean completeIfEligible(String runId) {
         ConceptFactoryRun run = runs.findById(runId).orElseThrow();
@@ -462,6 +529,7 @@ public class ConceptFactoryExecutionService {
     public enum LegalDisposition { ELIGIBLE, REDESIGN, REPLACE, NEEDS_INPUT }
     public enum CandidateDisposition { ACCEPTED, ORIGIN_INVALID, LOCKED_INVALID, DUPLICATE, SEMANTIC_REVIEW_REQUIRED }
     public record FailureDiagnostic(String runStatus, String slotStatus, String phase, String safeErrorCode) {}
+    public record AttemptTrace(int attemptNumber, String phase, String safeErrorCode, boolean retryable) {}
     public record SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount,
                            String candidateAttemptId, String candidateJson) {
         public SlotWork(String slotId, int slotNumber, VariationFocus focus, int redesignCount) {
