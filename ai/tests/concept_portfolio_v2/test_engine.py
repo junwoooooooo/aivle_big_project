@@ -5,12 +5,12 @@ from pathlib import Path
 from app.concept_portfolio_v2 import ConceptPortfolioEngine, ProviderGateway, ProviderMode
 from app.concept_portfolio_v2.anchor_policy import assess_anchor, build_opportunity_anchor
 from app.concept_portfolio_v2.models import (
-    LegalReview, LegalRoute, MechanicsDescriptor, PlanDraftPool, PortfolioPlanDraft,
+    LegalReview, LegalRoute, PlanDraftPool, PortfolioPlanDraft,
     RunStage, SchemaCompatibilityItem, SchemaPreflightReport,
 )
 from app.concept_portfolio_v2.plan_fidelity import deterministic_plan_fidelity
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
-from app.concept_portfolio_v2.mechanics import dimension
+from app.concept_portfolio_v2.mechanics import derive_candidate_descriptor
 from app.concept_portfolio_v2.schema_preflight import inspect_strict_schema
 from app.concept_portfolio_v2.snapshot_hash import production_compatible_snapshot_hash
 
@@ -102,10 +102,10 @@ def test_09_target_specialization_is_anchor_valid():
     assert decision == "PASS"
 
 
-def test_10_target_domain_drift_is_rejected():
+def test_10_unrelated_target_and_problem_is_semantic_boundary_not_domain_rule():
     seed = ConceptPortfolioEngine().seed_adapter.adapt(fixture("anchor_drift"))
     decision, _ = assess_anchor(build_opportunity_anchor(seed), "대기업 급식 운영 효율화", "기업 구내식당 담당자")
-    assert decision == "FAIL"
+    assert decision == "AMBIGUOUS"
 
 
 def test_11_three_optional_locks_do_not_cap_valid_portfolio():
@@ -123,21 +123,25 @@ def test_13_near_duplicate_paraphrase_is_not_automatically_distinct():
     assert any(item.reasonCode.value == "PLAN_DUPLICATE" for item in result.rejectedPlans)
 
 
-def test_14_clear_distinct_plans_are_distinct():
+def test_14_same_family_meaningful_plan_is_variant():
     engine, _, _, plans, _, _ = staged()
     assessment = engine.compare_plans(plans[0], plans[1])
-    assert assessment.decision == "DISTINCT" and len(assessment.materialDifferences) >= 2
+    assert assessment.decision == "VARIANT" and assessment.familyA == assessment.familyB
 
 
-def test_15_ambiguous_plan_pair_invokes_semantic_judge():
+def test_15_same_architecture_meaningful_thesis_is_variant_and_accepted():
     engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_minimal")); engine._reset()
     analysis = run(engine.analyze_seed(seed)); plans = run(engine.plan_portfolio(seed, analysis))
-    changed = plans[0].mechanics.model_copy(update={
-        "commercialModel": dimension("OTHER", "다른 수익 구조")})
-    pair = [plans[0], plans[0].model_copy(update={"planId": "PX", "mechanics": changed})]
+    thesis = plans[0].descriptor.thesis.model_copy(update={
+        "targetSegmentThesis": "도입 장벽이 높은 특정 우선 사용자",
+        "useCaseThesis": "긴급하게 해결해야 하는 사용 상황"})
+    changed = plans[0].descriptor.model_copy(update={"thesis": thesis})
+    pair = [plans[0], plans[0].model_copy(update={
+        "planId": "PX", "targetSegment": thesis.targetSegmentThesis,
+        "useContext": thesis.useCaseThesis, "descriptor": changed})]
     result = run(engine.validate_plans(pair, analysis, max_concepts=2))
-    assert result.diversity[0].semanticJudgeUsed is True
-    assert engine.gateway.usage.callsByStage["DISTINCTNESS"] == 1
+    assert result.diversity[0].decision == "VARIANT"
+    assert len(result.acceptedPlans) == 2
 
 
 def test_16_candidate_paraphrase_clone_is_duplicate():
@@ -148,15 +152,15 @@ def test_16_candidate_paraphrase_clone_is_duplicate():
     assert engine.compare_candidates(candidates[0], clone).decision == "DUPLICATE"
 
 
-def test_17_candidate_with_two_material_mechanics_differences_is_distinct():
+def test_17_candidate_with_primary_business_role_difference_is_distinct():
     engine, _, _, _, _, candidates = staged()
-    mechanics = candidates[0].mechanics.model_copy(update={
-        "commercialModel": dimension("AD_SUPPORTED", "광고 기반 무료 모델"),
-        "fulfillmentModel": dimension("DIGITAL_ONLY", "디지털 제공")})
-    other = candidates[0].model_copy(update={"candidateId": "OTHER", "mechanics": mechanics,
-        "candidate": candidates[0].candidate.model_copy(update={
-            "conceptName": "다른 구조", "solutionMechanism": "다른 공급 구조",
-            "revenueModel": "다른 과금 구조"})})
+    changed_candidate = candidates[0].candidate.model_copy(update={
+        "conceptName": "마켓플레이스 구조", "solutionMechanism": "다수 파트너를 매칭하는 마켓플레이스",
+        "operatingModel": "파트너 네트워크 운영", "platformRole": "거래 마켓플레이스 중개",
+        "partnerModel": "다수 제휴 파트너", "transactionFlow": ["사용자 요청", "파트너 매칭"],
+        "revenueModel": "거래 수수료"})
+    other = candidates[0].model_copy(update={"candidateId": "OTHER",
+        "descriptor": derive_candidate_descriptor(changed_candidate), "candidate": changed_candidate})
     assert engine.compare_candidates(candidates[0], other).decision == "DISTINCT"
 
 
@@ -164,7 +168,7 @@ def test_18_plan_wording_difference_with_same_mechanics_passes_fidelity():
     _, _, _, plans, _, candidates = staged()
     paraphrased = plans[0].model_copy(update={"coreMechanism": "수요예측 방식의 정기 소분"})
     decision, matched, _ = deterministic_plan_fidelity(paraphrased, candidates[0].candidate)
-    assert decision == "PASS" and "solutionMechanismType" in matched
+    assert decision in {"PASS", "ADAPTED"} and "solutionThesis" in matched
 
 
 def test_19_candidate_breaking_plan_mechanism_fails_fidelity():

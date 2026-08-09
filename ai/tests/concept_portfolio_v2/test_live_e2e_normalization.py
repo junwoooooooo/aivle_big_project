@@ -13,9 +13,9 @@ from app.concept_portfolio_v2.distinctness import deterministic_distinctness
 from app.concept_portfolio_v2.language_policy import (
     candidate_language_failures, is_governance_placeholder, plan_language_failures,
 )
-from app.concept_portfolio_v2.mechanics import derive_candidate_mechanics, dimension
+from app.concept_portfolio_v2.mechanics import GENERIC_CODE_SETS, derive_candidate_descriptor
 from app.concept_portfolio_v2.models import (
-    ExplorationBreadth, IdeaBriefLabContext, LegalRoute, MechanicsDescriptor,
+    ExplorationBreadth, IdeaBriefLabContext, LegalRoute,
 )
 from app.concept_portfolio_v2.plan_policy import assess_plan_content
 from app.concept_portfolio_v2.providers import MockPortfolioProvider, ReplayMiss
@@ -78,10 +78,11 @@ def test_42_korean_candidate_content():
 
 
 def test_43_machine_code_remains_stable_when_korean_label_changes():
-    _, _, _, plans, _, _ = staged()
-    left = plans[0].mechanics
-    right = left.model_copy(update={"commercialModel": dimension(left.commercialModel.code, "다른 한국어 표시")})
-    assert deterministic_distinctness("A", "B", left, right).decision == "DUPLICATE"
+    engine, _, _, plans, _, _ = staged()
+    assert "mechanics" not in engine._last_plan_drafts[0].model_dump()
+    architecture = plans[0].descriptor.architecture.model_dump()
+    assert all(value in GENERIC_CODE_SETS[key] for key, value in architecture.items()
+               if key in GENERIC_CODE_SETS)
 
 
 def test_44_target_region_open_placeholder_is_rejected():
@@ -147,11 +148,11 @@ def test_51_empty_interpretation_cannot_contract_pass():
     assert any("interpretation" in error for error in handoff.validationErrors)
 
 
-def test_52_refine_intent_drift_is_rejected():
+def test_52_refine_intent_drift_is_semantic_boundary_without_domain_keywords():
     seed = ConceptPortfolioEngine().seed_adapter.adapt(fixture())
     decision, _ = assess_anchor(build_opportunity_anchor(seed), seed.problem, seed.targetUsers,
                                 "남은 재료의 레시피만 보여주는 앱", ExplorationBreadth.REFINE)
-    assert decision == "FAIL"
+    assert decision == "AMBIGUOUS"
 
 
 def test_53_explore_allows_broader_solution():
@@ -165,16 +166,16 @@ def test_54_as_is_strongly_preserves_intent():
     seed = ConceptPortfolioEngine().seed_adapter.adapt(fixture())
     decision, _ = assess_anchor(build_opportunity_anchor(seed), seed.problem, seed.targetUsers,
                                 "남은 재료의 레시피만 보여주는 앱", ExplorationBreadth.AS_IS)
-    assert decision == "FAIL"
+    assert decision == "OUT_OF_SCOPE"
 
 
-def test_55_metadata_anchor_copy_alone_does_not_satisfy_content_validator():
+def test_55_explicit_plan_thesis_not_metadata_is_used_for_scope_validation():
     _, _, analysis, plans, _, _ = staged(breadth=ExplorationBreadth.REFINE)
-    updates = {key: "남은 재료의 레시피만 추천하는 앱" for key in (
-        "title", "oneLineConcept", "coreMechanism", "valueDelivery", "operatingApproach",
-        "partnerApproach", "transactionApproach", "commercialApproach", "fulfillmentApproach")}
+    updates = {"problemFocus": "원 문제와 표면상 다른 표현",
+               "targetSegment": "새로운 하위 대상 표현",
+               "solutionThesis": "별도 해결 방식"}
     decision, _ = assess_plan_content(plans[0].model_copy(update=updates), analysis)
-    assert decision == "FAIL"
+    assert decision == "AMBIGUOUS"
 
 
 def test_56_locked_commercial_or_channel_conflict_is_rejected():
@@ -185,25 +186,25 @@ def test_56_locked_commercial_or_channel_conflict_is_rejected():
     assert decision == "FAIL" and any("LOCK" in reason for reason in reasons)
 
 
-def test_57_candidate_mechanics_is_derived_from_candidate_not_plan_identity():
+def test_57_candidate_descriptor_is_derived_from_candidate_not_plan_identity():
     _, _, _, _, validated, candidates = staged()
-    assert candidates[0].mechanics is not validated.acceptedPlans[0].mechanics
-    assert candidates[0].mechanics == derive_candidate_mechanics(candidates[0].candidate)
+    assert candidates[0].descriptor is not validated.acceptedPlans[0].descriptor
+    assert candidates[0].descriptor == derive_candidate_descriptor(candidates[0].candidate)
 
 
 def test_58_changing_actual_candidate_mechanics_changes_descriptor():
     candidate = staged()[-1][0].candidate
     changed = candidate.model_copy(update={"solutionMechanism": "광고 배너만 제공",
                                            "featureSet": ["광고 배너"]})
-    assert derive_candidate_mechanics(candidate) != derive_candidate_mechanics(changed)
+    assert derive_candidate_descriptor(candidate) != derive_candidate_descriptor(changed)
 
 
 def test_59_candidate_pair_result_can_differ_from_plan_pair_result():
     engine, _, _, plans, _, candidates = staged()
     clone = candidates[0].model_copy(update={"candidateId": "CLONE", "planId": plans[1].planId,
         "lineageId": "LX", "candidate": candidates[0].candidate.model_copy(update={"conceptName": "복제 사업"})})
-    assert engine.compare_plans(plans[0], plans[1]).decision == "DISTINCT"
-    assert engine.compare_candidates(candidates[0], clone).decision != "DISTINCT"
+    assert engine.compare_plans(plans[0], plans[1]).decision == "VARIANT"
+    assert engine.compare_candidates(candidates[0], clone).decision == "DUPLICATE"
 
 
 def test_60_requested_seven_returned_five_reports_reserve_shortfall():
@@ -280,17 +281,16 @@ def test_69_global_missing_input_yields_needs_input():
 
 
 @pytest.mark.parametrize(("candidate_id", "lineage_id"), [("C1-R1", "LR"), ("C1-REPLAN", "LX")])
-def test_70_71_recovery_candidate_is_compared_against_final_context_with_semantic_fallback(candidate_id, lineage_id):
+def test_70_71_recovery_candidate_is_compared_against_final_context(candidate_id, lineage_id):
     engine, seed, _, _, validated, candidates = staged()
     base = candidates[0]
     changed_candidate = base.candidate.model_copy(update={"price": "광고 기반 무료 요금"})
     changed = base.model_copy(update={"candidateId": candidate_id, "lineageId": lineage_id,
                                       "candidate": changed_candidate,
-                                      "mechanics": derive_candidate_mechanics(changed_candidate)})
+                                      "descriptor": derive_candidate_descriptor(changed_candidate)})
     _, reports = run(engine.validate_candidates(seed, validated.acceptedPlans, [changed],
                                                 comparison_context=[base]))
-    assert engine.gateway.usage.callsByStage.get("DISTINCTNESS", 0) >= 1
-    assert reports[0].candidateId == candidate_id
+    assert reports[0].candidateId == candidate_id and not reports[0].accepted
 
 
 def test_72_replay_hash_includes_prompt_version():

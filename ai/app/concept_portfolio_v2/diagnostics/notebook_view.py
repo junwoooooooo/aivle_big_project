@@ -53,9 +53,13 @@ def show_design_space(analysis):
 
 
 def show_portfolio_plans(plans):
-    return _table([{"planId": p.planId, "제목": p.title, "핵심 mechanics": p.coreMechanism,
-                    "운영": p.operatingApproach, "파트너": p.partnerApproach,
-                    "거래": p.transactionApproach, "이행": p.fulfillmentApproach} for p in plans])
+    return _table([{"planId": p.planId, "제목": p.title,
+                    "Concept Family": p.descriptor.familyLabelKo,
+                    "Target Thesis": p.targetSegment, "Use Context": p.useContext,
+                    "Value Thesis": p.valueProposition, "Offer Thesis": p.offerThesis,
+                    "Solution Thesis": p.solutionThesis,
+                    "Architecture": p.descriptor.architecture.model_dump(mode="json"),
+                    "비교 가치": p.reasonForPortfolioRole} for p in plans])
 
 
 def show_plan_pool_status(status):
@@ -65,12 +69,14 @@ def show_plan_pool_status(status):
 def show_mechanics(items):
     rows = []
     for item in items:
-        descriptor = item.mechanics
-        for field, value in descriptor:
+        descriptor = item.descriptor
+        for field, value in descriptor.architecture:
             rows.append({"entityId": getattr(item, "candidateId", getattr(item, "planId", "")),
-                         "dimension": field, "code": value.code,
-                         "labelKo": value.labelKo, "detailKo": value.detailKo})
+                         "family": descriptor.familyId, "dimension": field, "code": value})
     return _table(rows)
+
+
+show_concept_descriptors = show_mechanics
 
 
 def compare_plans(assessments):
@@ -79,16 +85,18 @@ def compare_plans(assessments):
 
 def show_plan_diversity(assessments):
     return _table([{"A": item.entityA, "B": item.entityB, "판정": item.decision,
+                    "Family A": item.familyA, "Family B": item.familyB,
                     "겹침": ", ".join(item.overlap), "실질 차이": ", ".join(item.materialDifferences),
                     "단계": item.deterministicLevel, "semantic judge": item.semanticJudgeUsed,
-                    "설명": item.whyDistinct} for item in assessments])
+                    "관계 설명": item.whyDistinct} for item in assessments])
 
 
 def show_candidates(candidates):
     return _table([{"candidateId": item.candidateId, "lineageId": item.lineageId,
                     "parentCandidateId": item.parentCandidateId, "이름": item.candidate.conceptName,
                     "핵심 작동방식": item.candidate.solutionMechanism,
-                    "mechanics": item.mechanics.model_dump(mode="json"),
+                    "family": item.descriptor.familyLabelKo,
+                    "descriptor": item.descriptor.model_dump(mode="json"),
                     "수익": item.candidate.revenueModel, "운영": item.candidate.operatingModel}
                    for item in candidates])
 

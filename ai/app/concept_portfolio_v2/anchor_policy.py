@@ -1,58 +1,68 @@
-"""Source authority와 business opportunity anchor를 분리한 정책."""
+"""도메인 독립 OpportunityKernel 생성과 관계 판정."""
 
 from __future__ import annotations
 
 import re
 
-from .models import CanonicalSeed, ExplorationBreadth, OpportunityAnchor
+from .models import CanonicalSeed, ExplorationBreadth, OpportunityKernel
 
 
-STOPWORDS = {"위한", "하고", "싶은", "사용자", "서비스", "문제", "통해", "관련", "발생한다"}
-ENTERPRISE_DRIFT = {"기업", "법인", "구내식당", "급식", "공장", "학교급식"}
+GENERIC_STOPWORDS = {"위한", "통해", "관련", "사용자", "서비스", "문제", "제공", "기반"}
 
 
 def _tokens(value: str) -> set[str]:
     return {token for token in re.findall(r"[0-9a-z가-힣]+", value.casefold())
-            if len(token) >= 2 and token not in STOPWORDS}
+            if len(token) >= 2 and token not in GENERIC_STOPWORDS}
 
 
-def build_opportunity_anchor(seed: CanonicalSeed) -> OpportunityAnchor:
-    specializations = ["핵심 대상군의 구체 하위 세그먼트", "사용 상황이나 빈도에 따른 세분화"]
-    forbidden = ["핵심 문제를 다른 문제로 교체", "핵심 대상군을 무관한 고객군으로 교체"]
-    if "가구" in seed.targetUsers:
-        specializations.extend(["직장인 1인 가구", "대학생 1인 가구", "집밥 빈도가 높은 2인 가구"])
-        forbidden.append("기업 급식만을 고객으로 전환")
-    return OpportunityAnchor(problemCore=seed.problem, targetUserCore=seed.targetUsers,
-                             intentCore=seed.ideaOverview,
-                             allowedSpecializations=specializations[:10], forbiddenDrifts=forbidden[:10])
+def _components(value: str) -> list[str]:
+    parts = [item.strip() for item in re.split(r"[,·/]|(?:\s+및\s+)|(?:\s+그리고\s+)", value) if item.strip()]
+    return (parts or [value.strip()])[:12]
 
 
-def assess_anchor(anchor: OpportunityAnchor, problem: str, target_users: str,
+def build_opportunity_kernel(seed: CanonicalSeed) -> OpportunityKernel:
+    interpretation = seed.interpretation
+    problem = str(interpretation.get("interpretedProblem") or seed.problem)
+    target = str(interpretation.get("interpretedTargetUsers") or seed.targetUsers)
+    usage = str(interpretation.get("usageContext") or "입력된 문제 상황")
+    definition = str(interpretation.get("conciseIdeaDefinition") or seed.ideaOverview)
+    return OpportunityKernel(
+        problemCore=problem,
+        targetCore=target,
+        useContexts=[usage],
+        intentComponents=_components(definition),
+        mustPreserve=[problem, target, definition],
+        maySpecialize=["핵심 대상의 의미 있는 하위 세그먼트", "핵심 사용 맥락의 구체화", "가치 제안 또는 offer의 구체화"],
+        forbiddenDriftSummary="핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다.",
+    )
+
+
+def assess_anchor(kernel: OpportunityKernel, problem: str, target_users: str,
                   solution_content: str = "",
                   breadth: ExplorationBreadth = ExplorationBreadth.EXPLORE) -> tuple[str, str]:
-    seed_target, candidate_target = _tokens(anchor.targetUserCore), _tokens(target_users)
-    seed_problem, candidate_problem = _tokens(anchor.problemCore), _tokens(problem)
-    enterprise_drift = bool(ENTERPRISE_DRIFT & candidate_target) and not bool(ENTERPRISE_DRIFT & seed_target)
-    if enterprise_drift:
-        return "FAIL", "핵심 대상군이 무관한 기업·급식 고객군으로 이동했습니다."
-    target_overlap = bool(seed_target & candidate_target)
-    problem_overlap = bool(seed_problem & candidate_problem)
-    if target_overlap and problem_overlap:
-        intent_seed = _tokens(anchor.intentCore)
-        intent_actual = _tokens(solution_content)
-        intent_overlap = intent_seed & intent_actual
-        supply_markers = {"식재료", "소량", "소분", "공급", "제공", "배송", "구매", "연결"}
-        if breadth == ExplorationBreadth.REFINE:
-            if intent_seed & supply_markers and not intent_actual & supply_markers:
-                return "FAIL", "REFINE 결과에서 원 아이디어의 공급·연결 intent가 사라졌습니다."
-            if solution_content and len(intent_overlap) < 2:
-                return "AMBIGUOUS", "Opportunity는 유지하지만 REFINE intent 보존이 경계선입니다."
-        if breadth == ExplorationBreadth.AS_IS and solution_content:
-            if intent_seed & supply_markers and not intent_actual & supply_markers:
-                return "FAIL", "AS_IS 결과에서 원 사업의 공급·연결 intent가 사라졌습니다."
-            if not intent_overlap:
-                return "FAIL", "AS_IS 결과가 원 사업 intent를 충분히 보존하지 못했습니다."
-        return "PASS", "핵심 opportunity와 exploration intent를 유지한 허용 specialization입니다."
-    if not target_overlap and not problem_overlap:
-        return "FAIL", "problem과 target opportunity가 모두 원 anchor에서 이탈했습니다."
-    return "AMBIGUOUS", "한 anchor만 명확히 확인되어 semantic 판정이 필요합니다."
+    """명확한 관계만 결정론적으로 판정하고 나머지는 semantic 경계로 남긴다."""
+    if not problem.strip() or not target_users.strip():
+        return "OUT_OF_SCOPE", "핵심 problem 또는 target이 비어 있습니다."
+    source_problem, actual_problem = _tokens(kernel.problemCore), _tokens(problem)
+    source_target, actual_target = _tokens(kernel.targetCore), _tokens(target_users)
+    problem_overlap = source_problem & actual_problem
+    target_overlap = source_target & actual_target
+    opportunity_match = bool(problem_overlap) and bool(target_overlap)
+    specialization = bool(problem_overlap) and bool(source_target & actual_target)
+    if not opportunity_match and not specialization:
+        return "AMBIGUOUS", "표면 token만으로 Opportunity 관계를 확정할 수 없어 semantic 판정이 필요합니다."
+
+    if solution_content:
+        intent = _tokens(" ".join(kernel.intentComponents))
+        actual_intent = _tokens(solution_content)
+        intent_overlap = intent & actual_intent
+        intent_ratio = len(intent_overlap) / max(1, len(intent))
+        if breadth == ExplorationBreadth.AS_IS and intent and intent_ratio < 0.50:
+            return "OUT_OF_SCOPE", "AS_IS에서 원 Concept intent를 확인할 수 없습니다."
+        if breadth == ExplorationBreadth.REFINE and intent and intent_ratio < 0.30:
+            return "AMBIGUOUS", "REFINE intent 보존 여부에 semantic 판정이 필요합니다."
+    return "PASS", "OpportunityKernel의 problem·target·intent와 호환됩니다."
+
+
+# 이전 import 지점을 위한 이름 호환이며 반환 계약은 OpportunityKernel이다.
+build_opportunity_anchor = build_opportunity_kernel

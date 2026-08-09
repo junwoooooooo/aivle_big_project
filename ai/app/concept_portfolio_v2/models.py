@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -49,6 +49,7 @@ class FailureCode(StrEnum):
     CANDIDATE_DUPLICATE = "CANDIDATE_DUPLICATE"
     ANCHOR_DRIFT = "ANCHOR_DRIFT"
     LOCK_VIOLATION = "LOCK_VIOLATION"
+    LOCK_CONFLICT = "LOCK_CONFLICT"
     PLAN_FIDELITY_FAILED = "PLAN_FIDELITY_FAILED"
     LEGAL_REDESIGN_REQUIRED = "LEGAL_REDESIGN_REQUIRED"
     LEGAL_REPLAN_REQUIRED = "LEGAL_REPLAN_REQUIRED"
@@ -63,6 +64,7 @@ class FailureCode(StrEnum):
     DOWNSTREAM_HANDOFF_INVALID = "DOWNSTREAM_HANDOFF_INVALID"
     CONTENT_LANGUAGE_MISMATCH = "CONTENT_LANGUAGE_MISMATCH"
     PLAN_POOL_RESERVE_SHORTFALL = "PLAN_POOL_RESERVE_SHORTFALL"
+    OUT_OF_SCOPE = "OUT_OF_SCOPE"
 
 
 class PortfolioStatus(StrEnum):
@@ -121,16 +123,18 @@ class IdeaBriefLabContext(StrictModel):
     questions: list[dict[str, Any]] = Field(default_factory=list)
 
 
-class OpportunityAnchor(StrictModel):
+class OpportunityKernel(StrictModel):
     problemCore: str
-    targetUserCore: str
-    intentCore: str
-    allowedSpecializations: list[str] = Field(max_length=10)
-    forbiddenDrifts: list[str] = Field(max_length=10)
+    targetCore: str
+    useContexts: list[str] = Field(min_length=1, max_length=10)
+    intentComponents: list[str] = Field(min_length=1, max_length=12)
+    mustPreserve: list[str] = Field(min_length=2, max_length=12)
+    maySpecialize: list[str] = Field(max_length=10)
+    forbiddenDriftSummary: str
 
 
 class DesignSpaceAnalysis(StrictModel):
-    opportunityAnchor: OpportunityAnchor
+    opportunityKernel: OpportunityKernel
     semanticAnchors: dict[str, str]
     sourceLocks: dict[str, str]
     explicitBusinessLocks: dict[str, str]
@@ -142,26 +146,69 @@ class DesignSpaceAnalysis(StrictModel):
     rationaleSummary: str
 
 
-class MechanicsDimension(StrictModel):
-    code: str = Field(pattern=r"^[A-Z][A-Z0-9_]{1,79}$")
-    labelKo: str = Field(min_length=1, max_length=200)
-    detailKo: str = Field(max_length=500)
+class ConceptThesis(StrictModel):
+    targetSegmentThesis: str = Field(min_length=1, max_length=1000)
+    useCaseThesis: str = Field(min_length=1, max_length=2000)
+    valuePropositionThesis: str = Field(min_length=1, max_length=2000)
+    offerThesis: str = Field(min_length=1, max_length=2000)
+    solutionThesis: str = Field(min_length=1, max_length=3000)
 
 
-class MechanicsDescriptor(StrictModel):
-    solutionMechanismType: MechanicsDimension
-    supplyModel: MechanicsDimension
-    fulfillmentModel: MechanicsDimension
-    platformRoleType: MechanicsDimension
-    partnerStructureType: MechanicsDimension
-    transactionModel: MechanicsDimension
-    commercialModel: MechanicsDimension
-    customerInteractionModel: MechanicsDimension
+BusinessRoleCode = Literal[
+    "PRINCIPAL_OPERATOR", "MARKETPLACE", "INTERMEDIARY", "SAAS_TOOL", "ADVISORY",
+    "AGGREGATOR", "PLATFORM_INFRASTRUCTURE", "OTHER",
+]
+OperatingModelCode = Literal[
+    "OWN_OPERATED", "PARTNER_NETWORK", "PEER_TO_PEER", "AUTOMATED_DIGITAL",
+    "EXPERT_NETWORK", "HYBRID", "OTHER",
+]
+DeliveryModelCode = Literal[
+    "DIGITAL", "PHYSICAL_DELIVERY", "PARTNER_FULFILLED", "PICKUP", "ON_SITE",
+    "SELF_SERVICE", "HYBRID", "OTHER",
+]
+TransactionModelCode = Literal[
+    "ONE_OFF", "RECURRING", "BOOKING", "MATCHING", "PREORDER", "AUCTION",
+    "USAGE_BASED", "OTHER",
+]
+MonetizationModelCode = Literal[
+    "SUBSCRIPTION", "DIRECT_SALE", "COMMISSION", "SERVICE_FEE", "USAGE_FEE",
+    "LICENSING", "ADVERTISING", "B2B_CONTRACT", "FREEMIUM", "OTHER",
+]
+CustomerInteractionCode = Literal[
+    "APP", "WEB", "API", "OFFLINE", "OMNICHANNEL", "COMMUNITY", "ASSISTED",
+    "SELF_SERVICE", "OTHER",
+]
+
+
+class BusinessArchitecture(StrictModel):
+    businessRole: BusinessRoleCode
+    operatingModel: OperatingModelCode
+    partnerModel: OperatingModelCode
+    deliveryModel: DeliveryModelCode
+    transactionModel: TransactionModelCode
+    monetizationModel: MonetizationModelCode
+    customerInteractionModel: CustomerInteractionCode
+    dataDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"] = "LOW"
+    physicalDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"] = "LOW"
+
+
+class CanonicalConceptDescriptor(StrictModel):
+    thesis: ConceptThesis
+    architecture: BusinessArchitecture
+    mechanismFamily: str = Field(min_length=1, max_length=300)
+    familyId: str = Field(pattern=r"^[A-Z0-9_:-]{2,160}$")
+    familyLabelKo: str = Field(min_length=1, max_length=300)
 
 
 class PortfolioPlanDraft(StrictModel):
     title: str
     oneLineConcept: str
+    targetSegment: str
+    problemFocus: str
+    useContext: str
+    valueProposition: str
+    offerThesis: str
+    solutionThesis: str
     coreMechanism: str
     customerInteraction: str
     valueDelivery: str
@@ -170,7 +217,6 @@ class PortfolioPlanDraft(StrictModel):
     transactionApproach: str
     commercialApproach: str
     fulfillmentApproach: str
-    mechanics: MechanicsDescriptor
     differentiatingMechanics: list[str] = Field(min_length=2, max_length=12)
     mainChanges: list[str]
     secondaryChanges: list[str]
@@ -184,6 +230,7 @@ class PlanDraftPool(StrictModel):
 
 class PortfolioPlan(PortfolioPlanDraft):
     planId: str
+    descriptor: CanonicalConceptDescriptor
     preservedAnchors: dict[str, str]
     preservedLocks: dict[str, str]
 
@@ -197,6 +244,8 @@ class DiversityAssessment(StrictModel):
     whyDistinct: str
     deterministicLevel: str = "LEVEL_1"
     semanticJudgeUsed: bool = False
+    familyA: str | None = None
+    familyB: str | None = None
 
 
 class RejectedPlan(StrictModel):
@@ -211,6 +260,8 @@ class PlanValidationResult(StrictModel):
     reservePlans: list[PortfolioPlan] = Field(default_factory=list)
     rejectedPlans: list[RejectedPlan]
     diversity: list[DiversityAssessment]
+    planningRounds: int = 1
+    replenishmentRequested: int = 0
 
 
 class PlanPoolStatus(StrictModel):
@@ -228,7 +279,7 @@ class CandidateEnvelope(StrictModel):
     lineageId: str
     parentCandidateId: str | None = None
     redesignRound: int = Field(default=0, ge=0, le=2)
-    mechanics: MechanicsDescriptor
+    descriptor: CanonicalConceptDescriptor
     candidate: ConceptCandidateResult
 
 

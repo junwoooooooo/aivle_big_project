@@ -1,0 +1,251 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:6df6216a01aeb20b744954fe4e13f0970c822d8d83527c818473816c934b4c6a",
+  "canonicalRequestHash": "56691ac0644f2037ba4073abb93e5c41db18feb2695b749323b20a863a9cfa9b",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 발생하는 음식물 쓰레기를 줄이기 위한 문제.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "industryCategory": "식품 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "1~2인 가구 맞춤형 요리 키트",
+      "oneLineConcept": "1~2인 가구를 위한 맞춤형 요리 키트 서비스",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+      "valueProposition": "필요한 재료와 레시피를 한 번에 제공하여 요리를 간편하게 한다",
+      "offerThesis": "요리 키트를 통해 요리의 번거로움을 줄인다",
+      "solutionThesis": "소량 식재료와 레시피를 통해 요리의 효율성을 높인다",
+      "coreMechanism": "고객 맞춤형 요리 키트 구성",
+      "customerInteraction": "온라인 플랫폼을 통한 주문 및 피드백",
+      "valueDelivery": "정기 배송 서비스로 고객에게 직접 전달",
+      "operatingApproach": "효율적인 재료 조달 및 키트 구성",
+      "partnerApproach": "지역 농가 및 생산자와의 협력",
+      "transactionApproach": "구독 모델을 통한 지속적인 수익 창출",
+      "commercialApproach": "가격 경쟁력을 갖춘 요리 키트 판매",
+      "fulfillmentApproach": "주문 후 3일 이내 배송",
+      "differentiatingMechanics": [
+        "개인 맞춤형 요리 키트 제공",
+        "요리 난이도에 따른 키트 구성"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식.",
+      "planId": "P3",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "useCaseThesis": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+          "valuePropositionThesis": "필요한 재료와 레시피를 한 번에 제공하여 요리를 간편하게 한다",
+          "offerThesis": "요리 키트를 통해 요리의 번거로움을 줄인다",
+          "solutionThesis": "소량 식재료와 레시피를 통해 요리의 효율성을 높인다"
+        },
+        "architecture": {
+          "businessRole": "PRINCIPAL_OPERATOR",
+          "operatingModel": "OWN_OPERATED",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "소량 식재료와 레시피를 통해 요리의 효율성을 높인다",
+        "familyId": "PRINCIPAL_OPERATOR:OWN_OPERATED",
+        "familyLabelKo": "직접 운영 · 자체 운영"
+      },
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {}
+    },
+    "index": 3
+  },
+  "providerResponse": {
+    "conceptName": "1~2인 가구 맞춤형 요리 키트",
+    "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+    "introduction": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 위한 맞춤형 요리 키트 서비스입니다.",
+    "coreValue": "필요한 재료와 레시피를 한 번에 제공하여 요리를 간편하게 합니다.",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "식품 서비스",
+    "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사.",
+    "targetRegion": "대상 지역은 명시되지 않음.",
+    "revenueModel": "구독 모델을 통한 지속적인 수익 창출",
+    "price": "가격 경쟁력을 갖춘 요리 키트 판매",
+    "channels": "온라인 플랫폼을 통한 주문 및 피드백",
+    "differentiators": "개인 맞춤형 요리 키트 제공, 요리 난이도에 따른 키트 구성",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 10.0,
+      "horizonYears": 3,
+      "rationale": "1~2인 가구의 증가와 요리 키트 시장의 성장 가능성.",
+      "assumptions": [
+        "소량 식재료에 대한 수요 증가",
+        "온라인 쇼핑의 편리함"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "시장 조사에 기반한 예측",
+      "assumptions": [
+        "1~2인 가구의 요리 키트 수요 증가",
+        "경쟁사 대비 가격 경쟁력 확보"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+    "solutionMechanism": "소량 식재료와 레시피를 통해 요리의 효율성을 높인다.",
+    "featureSet": [
+      "고객 맞춤형 요리 키트 구성",
+      "주문 후 3일 이내 배송",
+      "정기 배송 서비스"
+    ],
+    "actorRoles": [
+      "소비자",
+      "주문 처리 시스템",
+      "배송 서비스"
+    ],
+    "platformRole": "온라인 플랫폼을 통한 주문 및 피드백 제공",
+    "operatingModel": "효율적인 재료 조달 및 키트 구성",
+    "partnerModel": "지역 농가 및 생산자와의 협력",
+    "providerRole": "요리 키트 제공자",
+    "sellerRole": "온라인 판매자",
+    "intermediaryRole": "배송 서비스 제공자",
+    "transactionFlow": [
+      "소비자가 온라인에서 주문",
+      "주문 정보가 처리 시스템으로 전송",
+      "주문에 따라 키트 구성 및 배송"
+    ],
+    "paymentFlow": [
+      "소비자가 온라인 결제",
+      "결제 정보가 처리 시스템으로 전송"
+    ],
+    "personalDataUsage": [
+      "고객 맞춤형 서비스 제공을 위한 데이터 수집"
+    ],
+    "physicalActivities": [
+      "재료 조달 및 키트 구성",
+      "배송 준비"
+    ],
+    "partnerRequirements": [
+      "지역 농가와의 협력 계약"
+    ],
+    "qualificationRequirements": [
+      "식품 안전 기준 준수"
+    ],
+    "advertisingClaims": [
+      "신선한 재료 사용",
+      "요리의 간편함 강조"
+    ],
+    "constraintCompliance": [
+      "식품 안전 규정 준수"
+    ]
+  },
+  "durationMs": 7263,
+  "timestamp": "2026-08-09T23:09:15.058753+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

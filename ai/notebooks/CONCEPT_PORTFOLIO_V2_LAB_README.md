@@ -2,7 +2,7 @@
 
 ## 1. 무엇을 실행하는가
 
-이 Lab은 기존 production Concept Factory를 바꾸지 않고, 격리된 Python V2 Core를 Notebook에서 단계별 또는 한 번에 실행합니다. 기본 `MOCK`은 비용과 DB 없이 전체 상태·Legal recovery·downstream 계약을 검증합니다.
+이 Lab은 기존 production Concept Factory를 바꾸지 않고, 향후 AI Server가 그대로 import할 generic Python V2 Core를 Notebook에서 단계별 또는 한 번에 실행합니다. 기본 `MOCK`은 비용과 DB 없이 adaptive planning, Concept Family/Variant, Legal recovery, downstream 계약을 검증합니다.
 
 ## 2. 요구 환경
 
@@ -53,7 +53,7 @@ Notebook 경로는 `ai/notebooks/concept_portfolio_v2_lab.ipynb`입니다.
 4. Final Portfolio, Plan/Candidate pairwise 표, Legal 결과, Trace를 확인합니다.
 5. Handoff에서 `market-analysis-seed-snapshot-v1`, `marketing-source-snapshot-v1`, `CONTRACT_PASS`를 확인합니다.
 
-단계별 셀은 00~46으로 고정되어 있습니다. Idea Brief 1회 파생 결과의 Safety·Interpretation·Readiness를 먼저 확인하고, Plan pool/reserve, actual Candidate mechanics, Legal C1, 나머지 Legal, 수동 hypothesis, 실제 Delta Legal, downstream 순으로 실행합니다.
+단계별 셀은 00~46으로 고정되어 있습니다. Idea Brief 1회 파생 결과와 generic OpportunityKernel을 먼저 확인하고, adaptive Plan pool, Family/Variant/Distinct, actual Candidate descriptor, Legal C1, 나머지 Legal, 수동 hypothesis, 실제 Delta Legal, downstream 순으로 실행합니다.
 
 ## 6. 입력 변경
 
@@ -92,7 +92,7 @@ $env:LEGAL_REGISTRY_VERSION = "legal-registry-v1"
 2. `MODE = "LIVE"`로 바꾼 뒤 Schema Preflight까지만 실행합니다.
 3. Safety와 Seed Analysis를 실행합니다.
 4. Plan pool LIVE 1회만 실행하고 Draft/정규화 Plan 및 locks를 확인합니다.
-5. Plan Diversity를 확인합니다.
+5. Portfolio Family와 `DUPLICATE/VARIANT/DISTINCT` 관계, adaptive replenishment 여부를 확인합니다. VARIANT는 정상 후보입니다.
 6. Candidate 1-only smoke를 실행해 31개 semantics, user lock, provenance, plan fidelity를 확인합니다.
 7. 확인 후 remaining Candidates를 실행합니다.
 8. Legal Candidate 1-only smoke를 실행해 evidence, route, controls, redesign requirements를 확인합니다.
@@ -104,7 +104,7 @@ $env:LEGAL_REGISTRY_VERSION = "legal-registry-v1"
 
 `auto_confirm_hypotheses=True`는 **Lab shortcut**입니다. MOCK 자동 회귀를 위한 편의 기능일 뿐 사용자 확인이나 production 결정을 뜻하지 않습니다. Core 기본값과 Notebook의 `CONFIRM_ALL_PROPOSED`는 모두 `False`입니다. 사용자가 이를 `True`로 바꾸거나 `HYPOTHESIS_EDITS`를 입력해야 확정됩니다. 법률 민감 hypothesis를 편집하면 `RUN_DELTA_LEGAL=True`로 실제 `review_delta_legal`을 완료하기 전까지 downstream 계약은 실패합니다.
 
-상단에는 LIVE 외부 작업 활성 여부가 표시됩니다. Provider Usage의 `topLevelExternalOperations`는 orchestration 상위 작업 수이며, Legal 내부의 AI/MOLEG 네트워크 호출 수와 같다고 해석하지 않습니다. Codex 검증에서는 실제 LIVE Provider와 MOLEG를 호출하지 않습니다.
+상단에는 LIVE 외부 작업 활성 여부가 표시됩니다. Notebook과 production entrypoint는 동일 `ConceptPortfolioEngine`과 `prepare_portfolio_plans`를 사용합니다. MODE는 Gateway 구현만 바꾸며 Portfolio 정책을 바꾸지 않습니다. Provider Usage의 `topLevelExternalOperations`는 orchestration 상위 작업 수이며, Legal 내부 네트워크 호출 수와 같다고 해석하지 않습니다.
 
 ## 8. REPLAY 사용
 
@@ -118,7 +118,10 @@ LIVE 성공 응답은 설정된 recordings 디렉터리에 operation, operationV
 - `READY_LIMITED`: 유효한 대안만 반환해 최대치 미만
 - `NEEDS_INPUT`: 사용자 LOCK, Legal 또는 필수 입력 결정 필요
 - `FAILED`: Provider/schema/replay/system 실패
-- `PLAN_DUPLICATE`: problem/target이 아니라 business mechanics 중복
+- `PLAN_DUPLICATE`: Concept Thesis와 Business Architecture가 사실상 동일
+- `VARIANT`: 같은 Family/Architecture를 공유하지만 target/use/value/offer가 의미 있게 다른 정상 후보
+- `DISTINCT`: solution 또는 주요 Architecture 선택이 다른 정상 후보
+- `OUT_OF_SCOPE`: OpportunityKernel을 실제로 벗어나 제외된 Plan/Candidate
 - `LEGAL_REDESIGN_REQUIRED`: 같은 lineage 안에서 최소 mechanics 보완
 - `LEGAL_REPLAN_REQUIRED`: 실패 plan을 다른 plan으로 교체
 - Trace에는 chain-of-thought, 키, 토큰, Authorization header가 포함되지 않습니다.
@@ -139,11 +142,20 @@ LIVE 성공 응답은 설정된 recordings 디렉터리에 operation, operationV
 - `LEGAL_EVIDENCE_BINDING_REPAIR_FAILED`: 표에 표시된 allowed/invalid index를 확인하고 Legal 계약 수정 후 C1부터 재실행합니다.
 - Handoff `FAIL`: 7개 hypothesis가 모두 `ACCEPTED` 또는 `USER_EDITED_ACCEPTED`인지 확인합니다.
 
-## 11. Colab
+## 11. Generic canonicalization과 adaptive planning
+
+- Provider Plan draft는 canonical code나 Family를 생성하지 않습니다.
+- System-owned `GenericConceptNormalizer`가 Plan과 actual Candidate를 같은 `ConceptThesis + BusinessArchitecture` 계약으로 정규화합니다.
+- 같은 Family 최대 2개는 선택 preference이며 hard reject가 아닙니다.
+- 초기 validation 후 최대치가 부족하면 제한된 round에서 새 Thesis 또는 Architecture Plan을 보충합니다.
+- 의미 있는 후보가 더 없으면 5개를 억지로 만들지 않고 `READY_LIMITED`로 종료합니다.
+- 관계 기반 Plan reject는 `DUPLICATE`, `OUT_OF_SCOPE`, `LOCK_CONFLICT`입니다.
+
+## 12. Colab
 
 1차 지원 환경은 repository local Jupyter입니다. Colab에서는 저장소를 clone하거나 Drive에 mount한 뒤 `ai`를 Python path에 추가하고 `requirements-dev.txt`를 설치합니다. Colab 전용 코드는 Core에 포함하지 않았습니다.
 
-## 12. 절대 하지 말아야 할 것
+## 13. 절대 하지 말아야 할 것
 
 - DB volume이나 migration을 삭제·변경하지 않습니다.
 - 기존 Concept Factory route/worker/UI를 V2로 교체하지 않습니다.

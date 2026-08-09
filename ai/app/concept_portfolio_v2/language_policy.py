@@ -12,7 +12,8 @@ from .models import PortfolioPlanDraft
 
 PLACEHOLDER_VALUES = {"OPEN", "LOCKED", "MISSING", "UNDECIDED", "TBD", "N/A", "NONE", "NULL"}
 PLAN_FIELDS = (
-    "title", "oneLineConcept", "coreMechanism", "customerInteraction", "valueDelivery",
+    "title", "oneLineConcept", "targetSegment", "problemFocus", "useContext", "valueProposition",
+    "offerThesis", "solutionThesis", "coreMechanism", "customerInteraction", "valueDelivery",
     "operatingApproach", "partnerApproach", "transactionApproach", "commercialApproach",
     "fulfillmentApproach", "reasonForPortfolioRole",
 )
@@ -42,11 +43,6 @@ def plan_language_failures(plan: PortfolioPlanDraft) -> list[str]:
         values = getattr(plan, field)
         if values and not is_korean_user_content(values):
             failures.append(field)
-    labels = [value.labelKo for _, value in plan.mechanics if hasattr(value, "labelKo")]
-    if len(labels) != len(type(plan.mechanics).model_fields):
-        failures.append("mechanics.contract")
-    if not is_korean_user_content(labels):
-        failures.append("mechanics.labelKo")
     return failures
 
 

@@ -1,4 +1,4 @@
-"""문장 exact equality 없이 Plan의 핵심 mechanics 구현 여부를 판정한다."""
+"""Plan identity와 Candidate actual descriptor 사이의 generic fidelity."""
 
 from __future__ import annotations
 
@@ -6,25 +6,45 @@ import re
 
 from app.tasks.concept_candidate.models import ConceptCandidateResult
 
-from .distinctness import descriptor_values
-from .models import MechanicsDescriptor, PortfolioPlan
+from .mechanics import GenericConceptNormalizer
+from .models import CanonicalConceptDescriptor, PortfolioPlan
 
 
-def _tokens(value) -> set[str]:
-    text = " ".join(value) if isinstance(value, list) else str(value)
-    return {token for token in re.findall(r"[0-9a-z가-힣]+", text.casefold()) if len(token) >= 2}
+def _tokens(value: str) -> set[str]:
+    return {item for item in re.findall(r"[0-9a-z가-힣]+", value.casefold()) if len(item) >= 2}
 
 
-def deterministic_plan_fidelity(plan: PortfolioPlan, candidate: ConceptCandidateResult,
-                                candidate_mechanics: MechanicsDescriptor | None = None) -> tuple[str, list[str], list[str]]:
-    if candidate_mechanics is None:
-        from .mechanics import derive_candidate_mechanics
-        candidate_mechanics = derive_candidate_mechanics(candidate)
-    planned, actual = descriptor_values(plan.mechanics), descriptor_values(candidate_mechanics)
-    matched = [key for key in planned if planned[key] == actual[key] and planned[key] != "OTHER"]
-    missing = [key for key in planned if key not in matched]
-    if "solutionMechanismType" in matched and len(matched) >= 3:
-        return "PASS", matched, missing
-    if "solutionMechanismType" not in matched and len(matched) <= 1:
-        return "FAIL", matched, missing
-    return "AMBIGUOUS", matched, missing
+def _overlap(left: str, right: str) -> float:
+    a, b = _tokens(left), _tokens(right)
+    return len(a & b) / max(1, min(len(a), len(b)))
+
+
+def deterministic_plan_fidelity(
+    plan: PortfolioPlan,
+    candidate: ConceptCandidateResult,
+    candidate_descriptor: CanonicalConceptDescriptor | None = None,
+) -> tuple[str, list[str], list[str]]:
+    actual = candidate_descriptor or GenericConceptNormalizer.from_candidate(candidate)
+    planned = plan.descriptor
+    scores = {
+        "targetSegmentThesis": _overlap(planned.thesis.targetSegmentThesis,
+                                         actual.thesis.targetSegmentThesis),
+        "useCaseThesis": _overlap(planned.thesis.useCaseThesis, actual.thesis.useCaseThesis),
+        "valuePropositionThesis": _overlap(planned.thesis.valuePropositionThesis,
+                                            actual.thesis.valuePropositionThesis),
+        "offerThesis": _overlap(planned.thesis.offerThesis, actual.thesis.offerThesis),
+        "solutionThesis": _overlap(planned.thesis.solutionThesis, actual.thesis.solutionThesis),
+    }
+    matched = [key for key, score in scores.items() if score >= 0.35]
+    missing = [key for key in scores if key not in matched]
+    identity_preserved = (scores["valuePropositionThesis"] >= 0.35
+                          and scores["solutionThesis"] >= 0.35
+                          and max(scores["targetSegmentThesis"], scores["useCaseThesis"]) >= 0.25)
+    if identity_preserved:
+        architecture_same = planned.architecture == actual.architecture
+        return ("PASS" if architecture_same else "ADAPTED"), matched, missing
+    if (scores["valuePropositionThesis"] >= 0.20
+            and scores["solutionThesis"] >= 0.20
+            and scores["offerThesis"] >= 0.20):
+        return "ADAPTED", matched, missing
+    return "FAIL", matched, missing
