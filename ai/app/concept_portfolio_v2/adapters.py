@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -18,6 +17,7 @@ from .models import (
     CanonicalSeed, DownstreamHandoff, FieldMapping, HypothesisDecision, LegalReview,
     LegalRoute, ProviderMode, SafetyResult, SeedField,
 )
+from .snapshot_hash import production_compatible_snapshot_hash
 
 
 REQUIRED_SEED = ("ideaOverview", "problem", "targetUsers")
@@ -31,8 +31,7 @@ HYPOTHESIS_FIELDS = {
 
 
 def _hash(value: Any) -> str:
-    body = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
-    return "sha256:" + hashlib.sha256(body.encode("utf-8")).hexdigest()
+    return production_compatible_snapshot_hash(value)
 
 
 class CurrentIdeaBriefAdapter:
@@ -154,6 +153,7 @@ class CurrentLegalAdapter:
         return LegalReview(
             candidateId=candidate_id, route=route, productionStatus=raw["status"], sourceStatus="OFFICIAL_EVIDENCE",
             safeSummary=raw["safeUserSummary"], requiredControls=raw["requiredControls"],
+            requiredPartnersAndQualifications=raw["requiredPartnersAndQualifications"],
             redesignRequirements=raw["redesignRequirements"], prohibitedVariants=raw["prohibitedVariants"],
             requiredDisclosures=raw["requiredDisclosures"],
             officialEvidenceReferences=raw["officialEvidence"],
@@ -170,6 +170,13 @@ class CurrentDownstreamAdapter:
         missing = [key for key in HYPOTHESIS_FIELDS if key not in by_type or not by_type[key].accepted]
         if missing:
             errors.append("확정되지 않은 hypothesis: " + ", ".join(missing))
+        delta_pending = [item.hypothesisType for item in hypotheses
+                         if item.deltaLegalRequired and item.legalReviewStatus not in {
+                             "IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS", "PASSED"}]
+        if delta_pending:
+            errors.append("Delta Legal 미완료 hypothesis: " + ", ".join(delta_pending))
+        if legal.route != LegalRoute.ACCEPT:
+            errors.append("선택 Concept Legal 결과가 ACCEPT가 아닙니다.")
         final_hypotheses: dict[str, Any] = {}
         output_keys = {"PRE_MARKET_SOM_SHARE": "preMarketSomShare", "PRE_MARKET_SOM": "preMarketSom"}
         for hypothesis_type, field in HYPOTHESIS_FIELDS.items():
@@ -207,9 +214,11 @@ class CurrentDownstreamAdapter:
         }[legal.route]
         legal_result = {"legalStatus": production_status, "safeSummary": legal.safeSummary,
                         "requiredControls": legal.requiredControls,
+                        "requiredPartnersAndQualifications": legal.requiredPartnersAndQualifications,
                         "prohibitedVariants": legal.prohibitedVariants,
                         "requiredDisclosures": legal.requiredDisclosures,
-                        "officialEvidenceReferences": legal.officialEvidenceReferences, "deltaLegalReviews": []}
+                        "officialEvidenceReferences": legal.officialEvidenceReferences,
+                        "deltaLegalReviews": legal.deltaLegalReviews}
         market = {"contract": "market-analysis-seed-snapshot-v1", "schemaVersion": "2.0",
                   "snapshotId": "lab-market-seed", "projectId": 0, "selectionId": 0,
                   "conceptId": candidate_id, "createdAt": now, "sourceSnapshotHash": _hash(seed.model_dump()),
@@ -251,8 +260,29 @@ class CurrentDownstreamAdapter:
             FieldMapping(v2Field="legal", downstreamField="legalResult", source="OFFICIAL_EVIDENCE",
                          transformed=True, required=True),
         ]
+        required_market = {"contract", "schemaVersion", "snapshotId", "projectId", "selectionId", "conceptId",
+                           "createdAt", "sourceSnapshotHash", "originalSeed", "aiInterpretation",
+                           "selectedConcept", "finalHypotheses", "legalResult"}
+        required_marketing = {"contract", "schemaVersion", "snapshotId", "projectId", "selectionId", "conceptId",
+                              "marketAnalysisSeedSnapshotId", "marketAnalysisSeedSnapshotHash", "createdAt",
+                              "conceptName", "targetSegment", "problem", "valueProposition", "positioning",
+                              "keyFeatures", "targetRegion", "revenueModel", "price", "pricing", "channels",
+                              "competitorDifferentiators", "preMarketSomShare", "preMarketSom", "legalStatus",
+                              "allowedClaims", "prohibitedClaims", "requiredDisclosures", "requiredControls",
+                              "communicationRequiredControls", "officialEvidenceReferences", "hash", "sourceSnapshotHash"}
+        structure_errors = []
+        if not required_market <= market.keys(): structure_errors.append("Market Seed required field 누락")
+        if not required_marketing <= marketing.keys(): structure_errors.append("Marketing required field 누락")
+        if not {"requiredControls", "requiredPartnersAndQualifications", "prohibitedVariants",
+                "requiredDisclosures", "officialEvidenceReferences", "deltaLegalReviews"} <= legal_result.keys():
+            structure_errors.append("Market Seed legalResult required field 누락")
+        errors = structure_errors + errors
+        structure_status = "STRUCTURE_PASS" if not structure_errors else "STRUCTURE_FAIL"
+        contract_status = "CONTRACT_PASS" if not errors else "CONTRACT_FAIL"
         return DownstreamHandoff(
-            compatibility="PASS" if not errors else "FAIL", marketAnalysisSeedSnapshot=market,
+            compatibility="PASS" if contract_status == "CONTRACT_PASS" else "FAIL",
+            structureStatus=structure_status, contractStatus=contract_status,
+            marketAnalysisSeedSnapshot=market,
             marketingSourceSnapshot=marketing,
             sourceProvenance={"ideaBriefSnapshotId": seed.ideaBriefSnapshotId,
                               "candidateHash": selected["canonicalHash"], "generatedAt": now},

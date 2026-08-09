@@ -109,10 +109,19 @@ class SafetyResult(StrictModel):
         return self.decision != "BLOCK_OR_REFRAME"
 
 
+class OpportunityAnchor(StrictModel):
+    problemCore: str
+    targetUserCore: str
+    intentCore: str
+    allowedSpecializations: list[str] = Field(max_length=10)
+    forbiddenDrifts: list[str] = Field(max_length=10)
+
+
 class DesignSpaceAnalysis(StrictModel):
-    opportunityAnchors: dict[str, str]
+    opportunityAnchor: OpportunityAnchor
     semanticAnchors: dict[str, str]
-    hardLocks: dict[str, str]
+    sourceLocks: dict[str, str]
+    explicitBusinessLocks: dict[str, str]
     openDimensions: list[str]
     constrainedDimensions: list[str]
     explorationBreadth: ExplorationBreadth
@@ -121,8 +130,18 @@ class DesignSpaceAnalysis(StrictModel):
     rationaleSummary: str
 
 
-class PortfolioPlan(StrictModel):
-    planId: str
+class MechanicsDescriptor(StrictModel):
+    solutionMechanismType: str
+    supplyModel: str
+    fulfillmentModel: str
+    platformRoleType: str
+    partnerStructureType: str
+    transactionModel: str
+    commercialModel: str
+    customerInteractionModel: str
+
+
+class PortfolioPlanDraft(StrictModel):
     title: str
     oneLineConcept: str
     coreMechanism: str
@@ -133,13 +152,22 @@ class PortfolioPlan(StrictModel):
     transactionApproach: str
     commercialApproach: str
     fulfillmentApproach: str
+    mechanics: MechanicsDescriptor
     differentiatingMechanics: list[str] = Field(min_length=2, max_length=12)
-    preservedAnchors: dict[str, str]
-    preservedLocks: dict[str, str]
     mainChanges: list[str]
     secondaryChanges: list[str]
     legalRiskHints: list[str]
     reasonForPortfolioRole: str
+
+
+class PlanDraftPool(StrictModel):
+    plans: list[PortfolioPlanDraft] = Field(min_length=1, max_length=8)
+
+
+class PortfolioPlan(PortfolioPlanDraft):
+    planId: str
+    preservedAnchors: dict[str, str]
+    preservedLocks: dict[str, str]
 
 
 class DiversityAssessment(StrictModel):
@@ -149,6 +177,8 @@ class DiversityAssessment(StrictModel):
     overlap: list[str]
     materialDifferences: list[str]
     whyDistinct: str
+    deterministicLevel: str = "LEVEL_1"
+    semanticJudgeUsed: bool = False
 
 
 class RejectedPlan(StrictModel):
@@ -170,6 +200,7 @@ class CandidateEnvelope(StrictModel):
     lineageId: str
     parentCandidateId: str | None = None
     redesignRound: int = Field(default=0, ge=0, le=2)
+    mechanics: MechanicsDescriptor
     candidate: ConceptCandidateResult
 
 
@@ -179,6 +210,8 @@ class CandidateValidation(StrictModel):
     hardLockPreserved: bool
     semanticAnchorPreserved: bool
     planFidelity: bool
+    anchorDecision: str = "PASS"
+    fidelityDecision: str = "PASS"
     accepted: bool
     reasonCodes: list[FailureCode] = Field(default_factory=list)
     safeSummary: str
@@ -202,10 +235,12 @@ class LegalReview(StrictModel):
     sourceStatus: str
     safeSummary: str
     requiredControls: list[str] = Field(default_factory=list)
+    requiredPartnersAndQualifications: list[str] = Field(default_factory=list)
     redesignRequirements: list[str] = Field(default_factory=list)
     prohibitedVariants: list[str] = Field(default_factory=list)
     requiredDisclosures: list[str] = Field(default_factory=list)
     officialEvidenceReferences: list[dict[str, Any]] = Field(default_factory=list)
+    deltaLegalReviews: list[dict[str, Any]] = Field(default_factory=list)
     conflictingLock: str | None = None
     currentValue: str | None = None
     requiredLegalChange: str | None = None
@@ -223,6 +258,7 @@ class HypothesisDecision(StrictModel):
     locked: bool = False
     legalImpact: str = "NONE"
     legalReviewStatus: str = "NOT_REQUIRED"
+    deltaLegalRequired: bool = False
 
     @property
     def accepted(self) -> bool:
@@ -239,6 +275,8 @@ class FieldMapping(StrictModel):
 
 class DownstreamHandoff(StrictModel):
     compatibility: str
+    structureStatus: str
+    contractStatus: str
     marketAnalysisSeedSnapshot: dict[str, Any]
     marketingSourceSnapshot: dict[str, Any]
     sourceProvenance: dict[str, Any]
@@ -263,13 +301,42 @@ class TraceEvent(StrictModel):
 
 
 class ProviderUsage(StrictModel):
+    logicalOperations: int = 0
+    externalProviderCalls: int = 0
     totalProviderCalls: int = 0
     callsByStage: dict[str, int] = Field(default_factory=dict)
+    externalCallsByStage: dict[str, int] = Field(default_factory=dict)
     retries: int = 0
     durationMs: int = 0
     modeCounts: dict[str, int] = Field(default_factory=dict)
     tokenUsage: dict[str, int] | None = None
     reportedCost: float | None = None
+
+
+class SchemaCompatibilityItem(StrictModel):
+    schemaName: str
+    status: str
+    failures: list[dict[str, str]] = Field(default_factory=list)
+
+
+class SchemaPreflightReport(StrictModel):
+    status: str
+    schemas: list[SchemaCompatibilityItem]
+    providerCalls: int = 0
+
+
+class SemanticDistinctnessResult(StrictModel):
+    decision: str
+    overlappingMechanics: list[str] = Field(max_length=12)
+    materiallyDifferentMechanics: list[str] = Field(max_length=12)
+    safeSummary: str
+
+
+class SemanticFidelityResult(StrictModel):
+    decision: str
+    matchedMechanics: list[str] = Field(max_length=12)
+    missingMechanics: list[str] = Field(max_length=12)
+    safeSummary: str
 
 
 class RunSummary(StrictModel):

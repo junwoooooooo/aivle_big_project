@@ -30,7 +30,9 @@ def show_seed_analysis(analysis):
 
 
 def show_design_space(analysis):
-    rows = ([{"분류": "HARD_LOCK", "필드": key, "값": value} for key, value in analysis.hardLocks.items()]
+    rows = ([{"분류": "SOURCE_LOCK", "필드": key, "값": value} for key, value in analysis.sourceLocks.items()]
+            + [{"분류": "BUSINESS_LOCK", "필드": key, "값": value}
+               for key, value in analysis.explicitBusinessLocks.items()]
             + [{"분류": "SEMANTIC_ANCHOR", "필드": key, "값": value}
                for key, value in analysis.semanticAnchors.items()]
             + [{"분류": "OPEN", "필드": value, "값": "변경 가능"} for value in analysis.openDimensions])
@@ -50,6 +52,7 @@ def compare_plans(assessments):
 def show_plan_diversity(assessments):
     return _table([{"A": item.entityA, "B": item.entityB, "판정": item.decision,
                     "겹침": ", ".join(item.overlap), "실질 차이": ", ".join(item.materialDifferences),
+                    "단계": item.deterministicLevel, "semantic judge": item.semanticJudgeUsed,
                     "설명": item.whyDistinct} for item in assessments])
 
 
@@ -57,6 +60,7 @@ def show_candidates(candidates):
     return _table([{"candidateId": item.candidateId, "lineageId": item.lineageId,
                     "parentCandidateId": item.parentCandidateId, "이름": item.candidate.conceptName,
                     "핵심 작동방식": item.candidate.solutionMechanism,
+                    "mechanics": item.mechanics.model_dump(mode="json"),
                     "수익": item.candidate.revenueModel, "운영": item.candidate.operatingModel}
                    for item in candidates])
 
@@ -101,7 +105,8 @@ def show_hypotheses(hypotheses):
 
 
 def show_downstream_handoff(handoff):
-    return {"호환성": handoff.compatibility,
+    return {"호환성": handoff.compatibility, "구조": handoff.structureStatus,
+            "계약": handoff.contractStatus,
             "필드 매핑": _table([_dump(item) for item in handoff.fieldMapping]),
             "Market payload": handoff.marketAnalysisSeedSnapshot,
             "Marketing payload": handoff.marketingSourceSnapshot,
@@ -119,9 +124,20 @@ def show_trace(events, stage: str | None = None):
 
 
 def show_provider_usage(usage):
-    return _table([{"전체 호출": usage.totalProviderCalls, "stage별": usage.callsByStage,
+    return _table([{"논리 작업": usage.logicalOperations, "외부 Provider 호출": usage.externalProviderCalls,
+                    "논리 stage별": usage.callsByStage, "외부 stage별": usage.externalCallsByStage,
                     "재시도": usage.retries, "소요(ms)": usage.durationMs,
                     "모드별": usage.modeCounts, "token": usage.tokenUsage, "보고 비용": usage.reportedCost}])
+
+
+def show_schema_preflight(report):
+    return _table([{"스키마": item.schemaName, "상태": item.status,
+                    "실패": item.failures, "Provider 호출": report.providerCalls}
+                   for item in report.schemas])
+
+
+def show_provider_failure(gateway):
+    return gateway.last_failure or {"상태": "기록된 Provider 실패 없음"}
 
 
 def show_run_summary(result):

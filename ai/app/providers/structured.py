@@ -19,7 +19,7 @@ class ProviderFailure(Exception):
                  upstream_status: int | None = None, provider_error_type: str | None = None,
                  provider_error_param: str | None = None, schema_name: str | None = None,
                  validation_fields: list[dict[str, str]] | None = None,
-                 retry_after_ms: int | None = None):
+                 retry_after_ms: int | None = None, safe_provider_message: str | None = None):
         super().__init__(reason)
         self.code = code
         self.reason = reason
@@ -31,6 +31,7 @@ class ProviderFailure(Exception):
         self.schema_name = schema_name
         self.validation_fields = list(validation_fields or [])[:12]
         self.retry_after_ms = retry_after_ms
+        self.safe_provider_message = safe_provider_message
 
 
 def _configuration(model_override: str | None = None) -> tuple[str, str, str]:
@@ -59,18 +60,22 @@ def _extract_json(content: str) -> dict[str, Any]:
     return value
 
 
-def _safe_provider_error(response) -> tuple[str | None, str | None]:
+def _safe_provider_error(response) -> tuple[str | None, str | None, str | None]:
     try:
         payload = response.json()
         error = payload.get("error") if isinstance(payload, dict) else None
         if not isinstance(error, dict):
-            return None, None
+            return None, None, None
         error_type = error.get("type")
         error_param = error.get("param")
+        message = error.get("message")
+        safe_message = None
+        if isinstance(message, str):
+            safe_message = re.sub(r"(?i)(bearer\s+|sk-)[a-z0-9._-]+", r"\1[REDACTED]", message.strip())[:500]
         return (error_type if error_type == "invalid_request_error" else None,
-                error_param if error_param == "response_format" else None)
+                error_param if error_param == "response_format" else None, safe_message)
     except (TypeError, ValueError, AttributeError):
-        return None, None
+        return None, None, None
 
 
 def _retry_after_ms(response) -> int | None:
@@ -128,14 +133,15 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
                               upstream_status=response.status_code, schema_name=schema_name)
     if response.status_code == 400 and response_schema is not None:
-        error_type, error_param = _safe_provider_error(response)
+        error_type, error_param, safe_message = _safe_provider_error(response)
         if error_type == "invalid_request_error" and error_param == "response_format":
             logger.warning("Provider response schema rejected taskType=%s model=%s schemaName=%s",
                            task_type or "STRUCTURED_TASK", model, schema_name or "structured_result")
             raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False,
                                   upstream_status=400, provider_error_type=error_type,
                                   provider_error_param=error_param,
-                                  schema_name=schema_name or "structured_result")
+                                  schema_name=schema_name or "structured_result",
+                                  safe_provider_message=safe_message)
     if response.status_code >= 400:
         raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
     if len(response.content) > 2 * 1024 * 1024:

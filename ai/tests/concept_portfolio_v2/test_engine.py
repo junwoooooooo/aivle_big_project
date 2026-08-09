@@ -3,12 +3,19 @@ import json
 from pathlib import Path
 
 from app.concept_portfolio_v2 import ConceptPortfolioEngine, ProviderGateway, ProviderMode
-from app.concept_portfolio_v2.adapters import CurrentIdeaBriefAdapter
-from app.concept_portfolio_v2.models import CandidateEnvelope, RunStage
+from app.concept_portfolio_v2.anchor_policy import assess_anchor, build_opportunity_anchor
+from app.concept_portfolio_v2.models import (
+    LegalReview, LegalRoute, MechanicsDescriptor, PlanDraftPool, PortfolioPlanDraft,
+    RunStage, SchemaCompatibilityItem, SchemaPreflightReport,
+)
+from app.concept_portfolio_v2.plan_fidelity import deterministic_plan_fidelity
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
+from app.concept_portfolio_v2.schema_preflight import inspect_strict_schema
+from app.concept_portfolio_v2.snapshot_hash import production_compatible_snapshot_hash
 
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "concept_portfolio_v2"
+README = Path(__file__).resolve().parents[2] / "notebooks" / "CONCEPT_PORTFOLIO_V2_LAB_README.md"
 
 
 def fixture(name):
@@ -19,161 +26,319 @@ def run(value):
     return asyncio.run(value)
 
 
-def test_current_seed_adapter_uses_authoritative_field_contract():
-    adapter = CurrentIdeaBriefAdapter()
-    seed = adapter.adapt(fixture("food_partial_lock"))
-    current = adapter.current_payload(seed)
-    assert {item["fieldKey"] for item in current["fields"]} >= {"ideaOverview", "problem", "targetUsers", "price"}
-    assert next(item for item in current["fields"] if item["fieldKey"] == "price")["decisionState"] == "LOCKED"
-
-
-def test_hard_lock_classification():
-    engine = ConceptPortfolioEngine()
-    seed = engine.seed_adapter.adapt(fixture("food_partial_lock"))
+def staged(name="food_minimal", *, gateway=None):
+    engine = ConceptPortfolioEngine(gateway=gateway)
+    seed = engine.seed_adapter.adapt(fixture(name))
     engine._reset()
     analysis = run(engine.analyze_seed(seed))
-    assert analysis.hardLocks["price"] == "월 19,900원"
+    plans = run(engine.plan_portfolio(seed, analysis))
+    validated = run(engine.validate_plans(plans, analysis))
+    candidates = run(engine.expand_plans(seed, validated.acceptedPlans))
+    return engine, seed, analysis, plans, validated, candidates
 
 
-def test_anchor_and_open_design_are_separate():
+def test_01_portfolio_plan_draft_schema_strict_preflight_passes():
+    assert inspect_strict_schema(PortfolioPlanDraft.model_json_schema(), "PortfolioPlanDraft").status == "PASS"
+
+
+def test_02_plan_draft_pool_schema_strict_preflight_passes():
+    assert inspect_strict_schema(PlanDraftPool.model_json_schema(), "PlanDraftPool").status == "PASS"
+
+
+def test_03_dynamic_map_provider_schema_fails_preflight():
+    schema = {"type": "object", "properties": {"owned": {
+        "type": "object", "additionalProperties": {"type": "string"}}},
+        "required": ["owned"], "additionalProperties": False}
+    result = inspect_strict_schema(schema, "DynamicMap")
+    assert result.status == "FAIL"
+    assert any(item["reason"] == "DYNAMIC_OBJECT_NOT_STRICT_COMPATIBLE" for item in result.failures)
+
+
+def test_04_draft_normalization_owns_ids_anchors_and_locks():
     engine = ConceptPortfolioEngine()
-    seed = engine.seed_adapter.adapt(fixture("food_minimal"))
-    engine._reset()
+    seed = engine.seed_adapter.adapt(fixture("food_partial_lock")); engine._reset()
     analysis = run(engine.analyze_seed(seed))
-    assert analysis.semanticAnchors["problem"] == seed.problem
-    assert "solutionMechanism" in analysis.openDimensions
+    drafts = run(engine.generate_plan_drafts(seed, analysis))
+    plans = engine.normalize_plan_drafts(drafts, analysis)
+    assert [item.planId for item in plans[:3]] == ["P1", "P2", "P3"]
+    assert plans[0].preservedAnchors == analysis.semanticAnchors
+    assert plans[0].preservedLocks == analysis.explicitBusinessLocks
 
 
-def test_max_concepts_never_exceeds_five():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal"), max_concepts=5))
-    assert result.producedConceptCount <= 5
+def test_05_provider_wrong_lock_is_overwritten_by_user_authority():
+    result = run(ConceptPortfolioEngine().run_full(fixture("provider_wrong_lock")))
+    assert all(item.candidate.price == "월 19,900원" for item in result.concepts)
+    assert all(item.candidate.channels == "모바일 앱" for item in result.concepts)
 
 
-def test_dynamic_plans_do_not_require_fixed_lens():
+def test_06_explore_concept_definition_has_generated_provenance():
     result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    assert result.producedConceptCount == 5
-    assert all(not hasattr(item, "diversityFocus") for item in result.concepts)
+    semantics = {item.fieldKey: item for item in result.concepts[0].candidate.valueSemantics}
+    assert semantics["conceptDefinition"].source == "CONCEPT_GENERATED"
+    assert semantics["conceptDefinition"].authority == "REVIEWABLE"
 
 
-def test_plan_diversity_uses_business_mechanics():
-    engine = ConceptPortfolioEngine()
-    seed = engine.seed_adapter.adapt(fixture("food_minimal")); engine._reset()
-    analysis = run(engine.analyze_seed(seed)); plans = run(engine.plan_portfolio(seed, analysis))
-    assert engine.compare_plans(plans[0], plans[1]).decision == "DISTINCT"
+def test_07_as_is_candidate_one_preserves_original_authoritative_semantics():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_heavy_lock")))
+    candidate = result.concepts[0].candidate
+    semantics = {item.fieldKey: item for item in candidate.valueSemantics}
+    assert candidate.originalCandidate is True
+    assert candidate.conceptDefinition == fixture("food_heavy_lock")["ideaOverview"]
+    assert semantics["conceptDefinition"].source == "USER_INPUT"
+    assert semantics["conceptDefinition"].authority == "LOCKED"
 
 
-def test_plan_clone_is_rejected():
-    result = run(ConceptPortfolioEngine().run_full(fixture("duplicate_plans")))
+def test_08_source_locks_and_business_locks_are_separate():
+    engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_partial_lock")); engine._reset()
+    analysis = run(engine.analyze_seed(seed))
+    assert "problem" in analysis.sourceLocks and "problem" not in analysis.explicitBusinessLocks
+    assert analysis.explicitBusinessLocks["price"] == "월 19,900원"
+
+
+def test_09_target_specialization_is_anchor_valid():
+    seed = ConceptPortfolioEngine().seed_adapter.adapt(fixture("valid_specialization"))
+    decision, _ = assess_anchor(build_opportunity_anchor(seed), seed.problem, "식재료 낭비가 많은 직장인 1인 가구")
+    assert decision == "PASS"
+
+
+def test_10_target_domain_drift_is_rejected():
+    seed = ConceptPortfolioEngine().seed_adapter.adapt(fixture("anchor_drift"))
+    decision, _ = assess_anchor(build_opportunity_anchor(seed), "대기업 급식 운영 효율화", "기업 구내식당 담당자")
+    assert decision == "FAIL"
+
+
+def test_11_three_optional_locks_do_not_cap_valid_portfolio():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_partial_lock")))
+    assert result.producedConceptCount == 5 and result.runStatus.value == "READY_FULL"
+
+
+def test_12_only_three_unique_plans_returns_ready_limited_three():
+    result = run(ConceptPortfolioEngine().run_full(fixture("limited_unique_plans")))
+    assert result.runStatus.value == "READY_LIMITED" and result.producedConceptCount == 3
+
+
+def test_13_near_duplicate_paraphrase_is_not_automatically_distinct():
+    result = run(ConceptPortfolioEngine().run_full(fixture("near_duplicate_paraphrase")))
     assert any(item.reasonCode.value == "PLAN_DUPLICATE" for item in result.rejectedPlans)
 
 
-def test_same_problem_and_target_are_allowed_for_distinct_candidates():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    engine = ConceptPortfolioEngine()
-    comparison = engine.compare_candidates(result.concepts[0], result.concepts[1])
-    assert result.concepts[0].candidate.problemScenario == result.concepts[1].candidate.problemScenario
-    assert comparison.decision == "DISTINCT"
+def test_14_clear_distinct_plans_are_distinct():
+    engine, _, _, plans, _, _ = staged()
+    assessment = engine.compare_plans(plans[0], plans[1])
+    assert assessment.decision == "DISTINCT" and len(assessment.materialDifferences) >= 2
 
 
-def test_candidate_plan_fidelity():
+def test_15_ambiguous_plan_pair_invokes_semantic_judge():
     engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_minimal")); engine._reset()
-    analysis = run(engine.analyze_seed(seed)); pool = run(engine.plan_portfolio(seed, analysis))
-    plans = run(engine.validate_plans(pool, analysis)).acceptedPlans
-    candidates = run(engine.expand_plans(seed, plans)); _, reports = run(engine.validate_candidates(seed, plans, candidates))
-    assert all(item.planFidelity for item in reports)
+    analysis = run(engine.analyze_seed(seed)); plans = run(engine.plan_portfolio(seed, analysis))
+    changed = plans[0].mechanics.model_copy(update={"commercialModel": "A_DIFFERENT_LABEL"})
+    pair = [plans[0], plans[0].model_copy(update={"planId": "PX", "mechanics": changed})]
+    result = run(engine.validate_plans(pair, analysis, max_concepts=2))
+    assert result.diversity[0].semanticJudgeUsed is True
+    assert engine.gateway.usage.callsByStage["DISTINCTNESS"] == 1
 
 
-def test_candidate_preserves_lock():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_partial_lock")))
-    assert all(item.candidate.price == "월 19,900원" and item.candidate.channels == "모바일 앱" for item in result.concepts)
+def test_16_candidate_paraphrase_clone_is_duplicate():
+    engine, _, _, _, _, candidates = staged()
+    clone = candidates[0].model_copy(update={
+        "candidateId": "CLONE",
+        "candidate": candidates[0].candidate.model_copy(update={"conceptName": "같은 구조의 다른 표현"})})
+    assert engine.compare_candidates(candidates[0], clone).decision == "DUPLICATE"
 
 
-def test_candidate_mechanics_clone_is_duplicate():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    clone = result.concepts[0].model_copy(update={"candidateId": "CLONE", "lineageId": "CLONE"})
-    assert ConceptPortfolioEngine().compare_candidates(result.concepts[0], clone).decision == "DUPLICATE"
+def test_17_candidate_with_two_material_mechanics_differences_is_distinct():
+    engine, _, _, _, _, candidates = staged()
+    mechanics = candidates[0].mechanics.model_copy(update={
+        "commercialModel": "OTHER_COMMERCIAL", "fulfillmentModel": "OTHER_FULFILLMENT"})
+    other = candidates[0].model_copy(update={"candidateId": "OTHER", "mechanics": mechanics,
+        "candidate": candidates[0].candidate.model_copy(update={
+            "conceptName": "다른 구조", "solutionMechanism": "다른 공급 구조",
+            "revenueModel": "다른 과금 구조"})})
+    assert engine.compare_candidates(candidates[0], other).decision == "DISTINCT"
 
 
-def test_legal_redesign_stays_in_same_lineage():
+def test_18_plan_wording_difference_with_same_mechanics_passes_fidelity():
+    _, _, _, plans, _, candidates = staged()
+    paraphrased = plans[0].model_copy(update={"coreMechanism": "수요예측 방식의 정기 소분"})
+    decision, matched, _ = deterministic_plan_fidelity(paraphrased, candidates[0].candidate)
+    assert decision == "PASS" and "solutionMechanism" in matched
+
+
+def test_19_candidate_breaking_plan_mechanism_fails_fidelity():
+    engine, seed, _, plans, validated, candidates = staged()
+    broken = candidates[0].model_copy(update={"candidate": candidates[0].candidate.model_copy(update={
+        "solutionMechanism": "광고 배너 판매", "operatingModel": "광고 게재",
+        "partnerModel": "광고주", "transactionFlow": ["광고 노출"],
+        "revenueModel": "광고비", "physicalActivities": ["없음"]})})
+    accepted, reports = run(engine.validate_candidates(seed, validated.acceptedPlans, [broken]))
+    assert not accepted and reports[0].fidelityDecision == "FAIL"
+    assert any(code.value == "PLAN_FIDELITY_FAILED" for code in reports[0].reasonCodes)
+
+
+def test_20_two_lineages_each_receive_one_redesign():
+    result = run(ConceptPortfolioEngine().run_full(fixture("two_legal_redesigns")))
+    children = [item for item in result.concepts if item.parentCandidateId]
+    assert {(item.lineageId, item.redesignRound) for item in children} == {("L1", 1), ("L3", 1)}
+
+
+def test_21_same_lineage_second_redesign_exhausts_budget():
+    result = run(ConceptPortfolioEngine().run_full(fixture("second_redesign")))
+    assert any(item.sourceStatus == "REDESIGN_BUDGET" for item in result.legalSummaries)
+    assert not any(item.redesignRound > 1 for item in result.concepts)
+
+
+def test_22_redesign_parent_is_not_rejected_as_self_duplicate():
     result = run(ConceptPortfolioEngine().run_full(fixture("legal_redesign")))
     child = next(item for item in result.concepts if item.parentCandidateId == "C1")
     assert child.lineageId == "L1" and child.redesignRound == 1
 
 
-def test_redesign_parent_is_not_self_duplicate_rejected():
-    result = run(ConceptPortfolioEngine().run_full(fixture("legal_redesign")))
-    assert any(item.parentCandidateId == "C1" for item in result.concepts)
+def test_23_redesign_clone_of_other_final_concept_routes_to_replan():
+    class CloneProvider(MockPortfolioProvider):
+        clone = None
+        async def redesign(self, seed, plan, candidate, requirements, candidate_index):
+            return self.clone
+
+    provider = CloneProvider(); gateway = ProviderGateway(ProviderMode.MOCK, provider=provider)
+    engine, seed, _, plans, validated, candidates = staged(gateway=gateway)
+    target = candidates[0]
+    other = target.model_copy(update={"candidateId": "C2", "lineageId": "L2"})
+    provider.clone = other.candidate
+    reviews = [LegalReview(candidateId="C2", route=LegalRoute.ACCEPT, sourceStatus="TEST", safeSummary="통과"),
+               LegalReview(candidateId="C1", route=LegalRoute.REDESIGN_WITHIN_LINEAGE,
+                           sourceStatus="TEST", safeSummary="재설계", redesignRequirements=["통제"])]
+    _, all_reviews, _, _, _ = run(engine.resolve_legal(
+        seed, validated.acceptedPlans, [other, target], reviews))
+    assert any(item.candidateId == "C1-R1" and item.route == LegalRoute.REPLAN_REQUIRED for item in all_reviews)
 
 
-def test_redesign_is_checked_against_other_portfolio_candidate():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    other = result.concepts[1]
-    redesign = CandidateEnvelope(candidateId="C1-R1", planId=result.concepts[0].planId,
-                                 lineageId=result.concepts[0].lineageId, parentCandidateId="C1",
-                                 redesignRound=1, candidate=other.candidate)
-    assert ConceptPortfolioEngine().compare_candidates(other, redesign).decision == "DUPLICATE"
+def test_24_replan_reenters_full_candidate_validation():
+    engine = ConceptPortfolioEngine(); seen = []
+    original = engine.validate_candidates
+    async def wrapped(seed, plans, candidates):
+        seen.extend(item.candidateId for item in candidates)
+        return await original(seed, plans, candidates)
+    engine.validate_candidates = wrapped
+    result = run(engine.run_full(fixture("legal_replan")))
+    assert "C1-REPLAN" in seen and any(item.candidateId == "C1-REPLAN" for item in result.concepts)
 
 
-def test_legal_replan_uses_replacement_plan():
-    result = run(ConceptPortfolioEngine().run_full(fixture("legal_replan")))
-    replacement = next(item for item in result.concepts if "REPLAN" in item.candidateId)
-    assert replacement.planId not in {"P1", "P2", "P3", "P4", "P5"}
+def test_25_replan_lock_violation_skips_legal_call():
+    payload = fixture("food_partial_lock"); payload["fixtureName"] = "legal_replan"
+    engine = ConceptPortfolioEngine(); original = engine.expand_plan
+    async def corrupt(*args, **kwargs):
+        envelope = await original(*args, **kwargs)
+        if "REPLAN" in envelope.candidateId:
+            envelope = envelope.model_copy(update={"candidate": envelope.candidate.model_copy(update={"price": "LOCK 위반"})})
+        return envelope
+    engine.expand_plan = corrupt
+    result = run(engine.run_full(payload))
+    assert not any(item.candidateId == "C1-REPLAN" for item in result.legalSummaries)
+    assert result.producedConceptCount == 4
 
 
-def test_legal_lock_conflict_needs_input():
+def test_26_replan_anchor_drift_skips_legal_call():
+    result = run(ConceptPortfolioEngine().run_full(fixture("replan_anchor_drift")))
+    assert not any(item.candidateId == "C1-REPLAN" for item in result.legalSummaries)
+    assert result.producedConceptCount == 4
+
+
+def test_27_legal_lock_conflict_needs_input_without_regeneration():
     result = run(ConceptPortfolioEngine().run_full(fixture("lock_legal_conflict")))
     assert result.runStatus.value == "NEEDS_INPUT"
     assert result.requiredInputs[0]["conflictingLock"] == "channels"
+    assert result.runSummary is not None and result.runSummary.replanned == 0
 
 
-def test_ready_limited_portfolio():
-    result = run(ConceptPortfolioEngine().run_full(fixture("food_heavy_lock")))
-    assert result.runStatus.value == "READY_LIMITED"
-    assert 1 <= result.producedConceptCount < 5
+def test_28_snapshot_hash_matches_fixed_cross_contract_fixture():
+    contract = fixture("snapshot_hash_cross_contract")
+    assert production_compatible_snapshot_hash(contract["payload"]) == contract["expectedHash"]
 
 
-def test_ready_full_portfolio():
+def test_29_unicode_nfc_produces_same_hash():
+    assert production_compatible_snapshot_hash({"text": "é"}) == production_compatible_snapshot_hash({"text": "e\u0301"})
+
+
+def test_30_java_equivalent_float_and_integer_hash_match():
+    assert production_compatible_snapshot_hash({"value": 1.0}) == production_compatible_snapshot_hash({"value": 1})
+
+
+def test_31_market_legal_result_includes_partner_qualifications():
     result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    assert result.runStatus.value == "READY_FULL" and result.producedConceptCount == 5
+    contract = fixture("downstream_contract_cross_contract")["marketAnalysisSeedSnapshot"]
+    legal = result.handoff.marketAnalysisSeedSnapshot["legalResult"]
+    assert set(contract["requiredLegalResult"]) <= legal.keys()
 
 
-def test_replay_is_deterministic_and_hash_bound(tmp_path):
-    seed = CurrentIdeaBriefAdapter().adapt(fixture("food_minimal"))
-    setup = ConceptPortfolioEngine(); setup._reset(); design = run(setup.analyze_seed(seed)); pool_size = 7
-    plans = run(MockPortfolioProvider().plan_pool(seed, design, pool_size))
-    payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"), "poolSize": pool_size}
-    request_hash = ProviderGateway.request_hash("PLAN_POOL", payload)
-    record = {"canonicalRequestHash": request_hash,
-              "providerResponse": [item.model_dump(mode="json") for item in plans]}
-    (tmp_path / f"{request_hash}.json").write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
-    gateway = ProviderGateway(ProviderMode.REPLAY, recordings_dir=tmp_path)
-    first = run(gateway.plan_pool(seed, design, pool_size)); second = run(gateway.plan_pool(seed, design, pool_size))
-    assert first == second
-
-
-def test_downstream_handoff_mapping():
+def test_32_market_analysis_seed_required_shape_passes():
     result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    assert result.handoff.compatibility == "PASS"
-    assert any(item.downstreamField == "finalHypotheses" for item in result.handoff.fieldMapping)
+    handoff = result.handoff
+    contract = fixture("downstream_contract_cross_contract")["marketAnalysisSeedSnapshot"]
+    assert handoff.structureStatus == "STRUCTURE_PASS"
+    assert handoff.marketAnalysisSeedSnapshot["contract"] == contract["contract"]
+    assert set(contract["requiredTopLevel"]) <= handoff.marketAnalysisSeedSnapshot.keys()
 
 
-def test_current_downstream_schema_compatibility():
+def test_33_marketing_source_required_shape_passes():
     result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
-    assert result.handoff.marketAnalysisSeedSnapshot["contract"] == "market-analysis-seed-snapshot-v1"
-    assert result.handoff.marketingSourceSnapshot["contract"] == "marketing-source-snapshot-v1"
-    assert result.handoff.marketAnalysisSeedSnapshot["legalResult"]["legalStatus"] in {
-        "IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"}
-    assert len(result.handoff.marketAnalysisSeedSnapshot["finalHypotheses"]) == 7
+    contract = fixture("downstream_contract_cross_contract")["marketingSourceSnapshot"]
+    assert result.handoff.marketingSourceSnapshot["contract"] == contract["contract"]
+    assert set(contract["requiredTopLevel"]) <= result.handoff.marketingSourceSnapshot.keys()
+    assert result.handoff.contractStatus == "CONTRACT_PASS"
 
 
-def test_full_mock_run_exercises_real_validators():
-    result = run(ConceptPortfolioEngine().run_full(fixture("duplicate_plans")))
+def test_34_incomplete_seven_hypotheses_fail_downstream_contract():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    selected = result.concepts[0]
+    engine = ConceptPortfolioEngine(); seed = engine.seed_adapter.adapt(fixture("food_minimal"))
+    hypotheses = engine.confirm_hypotheses(engine.build_or_load_current_hypothesis_contract(selected))[:-1]
+    legal = next(item for item in result.legalSummaries if item.candidateId == selected.candidateId)
+    handoff = engine.downstream_adapter.build(seed, selected.candidateId, selected.candidate, hypotheses, legal)
+    assert handoff.contractStatus == "CONTRACT_FAIL"
+    assert any("확정되지 않은 hypothesis" in item for item in handoff.validationErrors)
+
+
+def test_35_manual_legal_sensitive_edit_requires_delta_legal():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
+    engine = ConceptPortfolioEngine()
+    hypotheses = engine.build_or_load_current_hypothesis_contract(result.concepts[0])
+    edited = engine.confirm_hypotheses(hypotheses, {"CHANNELS": "오프라인 방문판매"})
+    channel = next(item for item in edited if item.hypothesisType == "CHANNELS")
+    assert channel.deltaLegalRequired and channel.legalReviewStatus == "PENDING"
+
+
+def test_36_auto_confirm_is_documented_as_lab_shortcut():
+    text = README.read_text(encoding="utf-8")
+    assert "Lab shortcut" in text and "auto_confirm_hypotheses" in text
+
+
+def test_37_provider_recording_redacts_secrets_recursively():
+    raw = {"AI_API_KEY": "sk-secret", "nested": {"Authorization": "Bearer secret"},
+           "safe": "visible", "items": [{"moleg_key": "secret"}]}
+    redacted = ProviderGateway.redact_secrets(raw)
+    assert redacted["AI_API_KEY"] == "[REDACTED]"
+    assert redacted["nested"]["Authorization"] == "[REDACTED]"
+    assert redacted["items"][0]["moleg_key"] == "[REDACTED]" and redacted["safe"] == "visible"
+
+
+def test_38_schema_failure_is_terminal_with_zero_external_calls():
+    engine = ConceptPortfolioEngine()
+    engine.schema_preflight_report = lambda: SchemaPreflightReport(status="FAIL", providerCalls=0, schemas=[
+        SchemaCompatibilityItem(schemaName="PlanDraftPool", status="FAIL",
+                                failures=[{"path": "$.properties.x", "reason": "TEST_FAILURE"}])])
+    result = run(engine.run_full(fixture("food_minimal")))
+    assert result.runStatus.value == "FAILED" and result.runtimeStage == RunStage.FAILED
+    assert result.providerUsage.externalProviderCalls == 0
+    assert result.trace[-1].action == "SCHEMA_PREFLIGHT_FAILED"
+
+
+def test_39_full_mock_normal_reaches_contract_pass():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_minimal")))
     assert result.runStatus.value in {"READY_FULL", "READY_LIMITED"}
-    assert result.providerUsage.totalProviderCalls > 0
-    assert result.rejectedPlans
+    assert result.handoff.contractStatus == "CONTRACT_PASS"
+    assert result.providerUsage.logicalOperations > 0 and result.providerUsage.externalProviderCalls == 0
 
 
-def test_no_nonterminal_zombie_state():
-    for name in ("food_minimal", "food_heavy_lock", "legal_redesign", "legal_replan", "lock_legal_conflict"):
-        result = run(ConceptPortfolioEngine().run_full(fixture(name)))
-        assert result.runtimeStage in {RunStage.READY, RunStage.NEEDS_INPUT, RunStage.FAILED}
+def test_40_full_mock_heavy_lock_has_no_arbitrary_lock_count_cap():
+    result = run(ConceptPortfolioEngine().run_full(fixture("food_heavy_lock")))
+    assert result.runStatus.value == "READY_FULL" and result.producedConceptCount == 5
