@@ -141,6 +141,10 @@ public class ModuleIntegrationService {
     }
 
     private String currentMarketSeedId(Long projectId) {
+        var portfolio = marketSeedSnapshots
+            .findFirstByProjectIdAndSourceTypeAndStaleAtIsNullAndDeletedAtIsNullOrderByFinalizedAtDesc(
+                projectId, "CONCEPT_PORTFOLIO_V2");
+        if (portfolio.isPresent()) return portfolio.get().getId();
         return selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
             .flatMap(selection -> marketSeedSnapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(
                 selection.getId(), projectId))
@@ -149,6 +153,10 @@ public class ModuleIntegrationService {
     }
 
     private MarketAnalysisSeedSnapshot currentMarketSeed(Long projectId) {
+        var portfolio = marketSeedSnapshots
+            .findFirstByProjectIdAndSourceTypeAndStaleAtIsNullAndDeletedAtIsNullOrderByFinalizedAtDesc(
+                projectId, "CONCEPT_PORTFOLIO_V2");
+        if (portfolio.isPresent()) return portfolio.get();
         var selection = selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
         return marketSeedSnapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)

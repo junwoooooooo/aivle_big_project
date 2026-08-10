@@ -4,7 +4,7 @@ import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { useJobEvents } from '../../shared/async-events/index.js';
 import { createJobCenterApi } from './jobCenterApi.js';
 
-export function useProjectJobs(projectId, { onTerminal } = {}) {
+export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
   const client = useApiClient();
   const api = useMemo(() => createJobCenterApi(client), [client]);
   const [state, setState] = useState({ loading: true, active: [], recent: [], error: null });
@@ -50,7 +50,7 @@ export function useProjectJobs(projectId, { onTerminal } = {}) {
     manualSelection.current = false;
     const timer = setTimeout(refresh, 0);
     return () => clearTimeout(timer);
-  }, [projectId, refresh]);
+  }, [projectId, refresh, refreshKey]);
 
   const events = useJobEvents(selectedJobId);
   useEffect(() => {

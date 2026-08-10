@@ -81,13 +81,14 @@ public class ConceptPortfolioSelectionMaterializationService {
                 boolean approved=delta.path("approved").asBoolean();
                 String json=mapper.writeValueAsString(result);
                 deltas.save(ConceptPortfolioDeltaLegalReview.create(selection,context.taskRunId(),
-                    delta.path("reviewToken").asText(),mapper.writeValueAsString(delta.path("hypothesisTypes")),
+                    input.path("expectedHypothesisRevision").asInt(), delta.path("reviewToken").asText(),
+                    mapper.writeValueAsString(delta.path("hypothesisTypes")),
                     delta.path("status").asText(),approved,json,hasher.hash(result)));
                 if(approved) applyHypotheses(selection,result.path("hypotheses"),context.ownerId());
                 boolean allReady = approved && selectionService.latestRequired(selection.getId()).stream()
                     .allMatch(ConceptPortfolioHypothesisDecision::ready);
                 selection.completeTask(context.taskRunId(),allReady?ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT:
-                    ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED,approved); adopt(claim,context,response);
+                    ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED,false); adopt(claim,context,response);
             }
             case "BUILD_HANDOFF" -> {
                 JsonNode handoff=result.path("handoff"); JsonNode market=handoff.path("marketAnalysisSeedSnapshot");

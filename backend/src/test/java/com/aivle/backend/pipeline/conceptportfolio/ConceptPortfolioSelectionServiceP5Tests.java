@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -106,6 +107,45 @@ class ConceptPortfolioSelectionServiceP5Tests {
         assertThat(previous.isCurrent()).isFalse();assertThat(previous.getStatus()).isEqualTo(ConceptPortfolioSelectionStatus.STALE);
         verify(selections).flush();}
 
+    @Test
+    void buildHandoffUsesOnlyLatestApprovedDeltaForCurrentHypothesisRevision(){Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
+        ConceptPortfolioSelection selection=portfolioSelection(f,"selection",HASH);ReflectionTestUtils.setField(selection,"id",17L);
+        ReflectionTestUtils.setField(selection,"status",ConceptPortfolioSelectionStatus.LEGAL_REPORT_READY);
+        ReflectionTestUtils.setField(selection,"hypothesisRevision",3);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(42L,7L)).thenReturn(Optional.of(f.run.getProject()));
+        when(selections.findLocked(17L)).thenReturn(Optional.of(selection));when(runs.findLocked(f.run.getId())).thenReturn(Optional.of(f.run));
+        when(concepts.findByIdAndProjectIdAndDeletedAtIsNull(f.concept.getId(),42L)).thenReturn(Optional.of(f.concept));
+        when(hypotheses.findAllBySelectionIdAndDeletedAtIsNullOrderByHypothesisTypeAscProposalVersionDesc(17L)).thenReturn(readyHypotheses(selection));
+        ConceptLegalRegulatoryReport report=ConceptLegalRegulatoryReport.create("report",selection,HASH,null,HASH,"{}",HASH,7L,LocalDate.of(2026,8,11));
+        when(reports.findBySelectionIdAndStatusAndDeletedAtIsNull(17L,"CURRENT")).thenReturn(Optional.of(report));
+        String deltaJson="{\"deltaLegalResult\":{\"reviewToken\":\"sha256:"+"3".repeat(64)+"\",\"candidateId\":\"candidate\",\"hypothesisTypes\":[\"PRICE\"],\"status\":\"PASSED\",\"approved\":true,\"legalReview\":{\"candidateId\":\"candidate\",\"route\":\"ACCEPT\",\"sourceStatus\":\"OFFICIAL_EVIDENCE\",\"safeSummary\":\"ok\"}}}";
+        ConceptPortfolioDeltaLegalReview effective=ConceptPortfolioDeltaLegalReview.create(selection,"delta-3",3,HASH,"[\"PRICE\"]","PASSED",true,deltaJson,HASH);
+        when(deltas.findFirstBySelectionIdAndHypothesisRevisionAndApprovedTrueAndDeletedAtIsNullOrderByCreatedAtDesc(17L,3)).thenReturn(Optional.of(effective));
+        List<ConceptPortfolioDeltaLegalReview> sixHistorical = IntStream.range(0,6)
+            .mapToObj(index -> ConceptPortfolioDeltaLegalReview.create(selection,"history-"+index,2,HASH,
+                "[\"PRICE\"]","PASSED",true,deltaJson,HASH)).toList();
+        when(deltas.findAllBySelectionIdAndDeletedAtIsNullOrderByCreatedAtAsc(17L)).thenReturn(sixHistorical);
+        ArgumentCaptor<tools.jackson.databind.JsonNode> input=ArgumentCaptor.forClass(tools.jackson.databind.JsonNode.class);
+        service.finalizeMarketSeed(7L,42L,17L,new ActionRequest("market-key"));
+        verify(taskFactory).create(eq(7L),eq(selection),eq("BUILD_HANDOFF"),input.capture(),eq("market-key"),isNull());
+        assertThat(input.getValue().path("approvedDeltaLegalResults")).hasSize(1);
+        assertThat(input.getValue().path("approvedDeltaLegalResults").get(0).path("reviewToken").asText()).endsWith("3".repeat(64));
+        verify(deltas,never()).findAllBySelectionIdAndDeletedAtIsNullOrderByCreatedAtAsc(17L);}
+
+    @Test
+    void activeActionAlwaysExposesWaitAndRejectsConcurrentDifferentAction(){Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
+        ConceptPortfolioSelection selection=portfolioSelection(f,"selection",HASH);ReflectionTestUtils.setField(selection,"id",17L);
+        ReflectionTestUtils.setField(selection,"status",ConceptPortfolioSelectionStatus.READY_FOR_MARKET);
+        selection.attachTask("active-task","PROPOSE_ALTERNATIVE");
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(42L,7L)).thenReturn(Optional.of(f.run.getProject()));
+        when(selections.findByIdAndProjectIdAndDeletedAtIsNull(17L,42L)).thenReturn(Optional.of(selection));
+        when(selections.findLocked(17L)).thenReturn(Optional.of(selection));
+        TaskRun active=mock(TaskRun.class);when(active.getId()).thenReturn("active-task");when(active.getIdempotencyKey()).thenReturn("alternative-key");
+        when(taskRuns.getOwned(7L,42L,"active-task")).thenReturn(active);
+        assertThat(service.get(7L,42L,17L).nextAction()).isEqualTo("WAIT");
+        assertThatThrownBy(()->service.confirm(7L,42L,17L,new ConfirmHypothesesRequest(mapper.createObjectNode(),true,"confirm-key")))
+            .isInstanceOf(BusinessException.class);}
+
     private Fixture fixture(ConceptPortfolioRunStatus status,int produced,boolean selectable){User user=User.create("owner@example.com","hash","owner");ReflectionTestUtils.setField(user,"id",7L);
         Project project=Project.create(user,"project","desc","industry");ReflectionTestUtils.setField(project,"id",42L);
         IdeaBrief brief=IdeaBrief.initial(project,7L);ReflectionTestUtils.setField(brief,"status",IdeaBriefStatus.CONFIRMED);ReflectionTestUtils.setField(brief,"snapshotHash",HASH);
@@ -114,5 +154,6 @@ class ConceptPortfolioSelectionServiceP5Tests {
         ReflectionTestUtils.setField(concept,"selectable",selectable);when(projects.findByIdForUpdate(42L)).thenReturn(Optional.of(project));when(runs.findOwned(7L,42L,run.getId())).thenReturn(Optional.of(run));when(concepts.findByIdAndProjectIdAndDeletedAtIsNull(concept.getId(),42L)).thenReturn(Optional.of(concept));
         return new Fixture(run,concept);}
     private ConceptPortfolioSelection portfolioSelection(Fixture f,String key,String requestHash){return ConceptPortfolioSelection.create(42L,f.run.getId(),f.concept.getId(),f.concept.getCandidateId(),HASH,HASH,"reason",requestHash,key,7L,Instant.now(clock));}
+    private List<ConceptPortfolioHypothesisDecision> readyHypotheses(ConceptPortfolioSelection selection){return Arrays.stream(PortfolioHypothesisType.values()).map(type->ConceptPortfolioHypothesisDecision.create(selection.getId(),42L,selection.getConceptId(),type,"\"proposed\"","\"final\"","USER_INPUT","USER_EDITED_ACCEPTED",1,false,"VALID","valid","NONE","PASSED",false,7L,Instant.now(clock))).toList();}
     private record Fixture(ConceptPortfolioRun run,ConceptPortfolioConcept concept){}
 }

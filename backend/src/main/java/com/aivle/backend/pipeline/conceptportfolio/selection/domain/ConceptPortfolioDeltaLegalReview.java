@@ -17,6 +17,7 @@ public class ConceptPortfolioDeltaLegalReview extends BaseEntity {
     @Column(nullable = false) private Long projectId;
     @Column(nullable = false, length = 64) private String conceptId;
     @Column(nullable = false, length = 64) private String taskRunId;
+    @Column(nullable = false) private int hypothesisRevision;
     @Column(nullable = false, length = 71) private String reviewToken;
     @Column(nullable = false, columnDefinition = "TEXT") private String hypothesisTypesJson;
     @Column(nullable = false, length = 40) private String status;
@@ -25,11 +26,14 @@ public class ConceptPortfolioDeltaLegalReview extends BaseEntity {
     @Column(nullable = false, length = 71) private String resultHash;
 
     public static ConceptPortfolioDeltaLegalReview create(ConceptPortfolioSelection selection, String taskRunId,
-            String token, String types, String status, boolean approved, String legal, String hash) {
+            int hypothesisRevision, String token, String types, String status, boolean approved,
+            String legal, String hash) {
+        if (hypothesisRevision < 0) throw new IllegalArgumentException("Hypothesis revision is invalid");
         ConceptPortfolioDeltaLegalReview value = new ConceptPortfolioDeltaLegalReview();
         value.id = UUID.randomUUID().toString(); value.selectionId = selection.getId();
         value.projectId = selection.getProjectId(); value.conceptId = selection.getConceptId();
-        value.taskRunId = taskRunId; value.reviewToken = token; value.hypothesisTypesJson = types;
+        value.taskRunId = taskRunId; value.hypothesisRevision = hypothesisRevision;
+        value.reviewToken = token; value.hypothesisTypesJson = types;
         value.status = status; value.approved = approved; value.legalReviewJson = legal; value.resultHash = hash;
         return value;
     }

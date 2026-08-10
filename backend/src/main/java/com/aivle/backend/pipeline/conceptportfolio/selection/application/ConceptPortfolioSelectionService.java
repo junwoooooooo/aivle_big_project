@@ -114,6 +114,8 @@ public class ConceptPortfolioSelectionService {
     @Transactional
     public ActionAccepted confirm(Long ownerId, Long projectId, Long selectionId, ConfirmHypothesesRequest body) {
         ConceptPortfolioSelection selection = lockedCurrent(ownerId, projectId, selectionId);
+        ActionAccepted replay = activeReplay(ownerId, projectId, selection, "CONFIRM_HYPOTHESES", body.idempotencyKey());
+        if (replay != null) return replay;
         if (!body.changes().isObject() || body.changes().size() > 7)
             throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
         ObjectNode input = mapper.createObjectNode(); input.put("action", "CONFIRM_HYPOTHESES");
@@ -130,6 +132,8 @@ public class ConceptPortfolioSelectionService {
     public ActionAccepted alternative(Long ownerId, Long projectId, Long selectionId,
             String typeText, ActionRequest body) {
         ConceptPortfolioSelection selection = lockedCurrent(ownerId, projectId, selectionId);
+        ActionAccepted replay = activeReplay(ownerId, projectId, selection, "PROPOSE_ALTERNATIVE", body.idempotencyKey());
+        if (replay != null) return replay;
         PortfolioHypothesisType type = hypothesisType(typeText);
         ConceptPortfolioHypothesisDecision current = hypotheses
             .findFirstBySelectionIdAndHypothesisTypeAndDeletedAtIsNullOrderByProposalVersionDesc(selectionId, type)
@@ -230,9 +234,10 @@ public class ConceptPortfolioSelectionService {
         ObjectNode input = baseInput("BUILD_HANDOFF", run, concept);
         input.set("hypotheses", hypothesisArray(latestRequired(selectionId)));
         ArrayNode approved = input.putArray("approvedDeltaLegalResults");
-        deltas.findAllBySelectionIdAndDeletedAtIsNullOrderByCreatedAtAsc(selectionId).stream()
-            .filter(ConceptPortfolioDeltaLegalReview::isApproved)
-            .forEach(value -> approved.add(mapper.readTree(value.getLegalReviewJson()).path("deltaResult")));
+        deltas.findFirstBySelectionIdAndHypothesisRevisionAndApprovedTrueAndDeletedAtIsNullOrderByCreatedAtDesc(
+                selectionId, selection.getHypothesisRevision())
+            .ifPresent(value -> approved.add(
+                mapper.readTree(value.getLegalReviewJson()).path("deltaLegalResult")));
         String snapshotId=UUID.randomUUID().toString(); ObjectNode binding=input.putObject("productionBinding");
         binding.put("projectId", projectId); binding.put("portfolioSelectionId", selectionId);
         binding.put("portfolioConceptId", concept.getId()); binding.put("marketSeedSnapshotId", snapshotId);
@@ -297,7 +302,8 @@ public class ConceptPortfolioSelectionService {
         return new SelectionView(value.getId(),value.getRunId(),value.getConceptId(),name,value.getStatus().name(),list.size(),confirmed,delta,
             value.getStatus()==ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED?"FAILED":delta?"REQUIRED":"NOT_REQUIRED",
             reports.findBySelectionIdAndStatusAndDeletedAtIsNull(value.getId(),"CURRENT").isPresent()?"CURRENT":"NOT_READY",
-            marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(value.getId()).isPresent()?"READY":"NOT_READY",task,next(value.getStatus()),utc(value.getUpdatedAt()));}
+            marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(value.getId()).isPresent()?"READY":"NOT_READY",task,
+            task != null ? "WAIT" : next(value.getStatus()),utc(value.getUpdatedAt()));}
     private String next(ConceptPortfolioSelectionStatus s){return switch(s){case HYPOTHESES_PREPARING,DELTA_LEGAL_PENDING,MARKET_SEED_FINALIZING->"WAIT";case PENDING_HYPOTHESIS_CONFIRMATION->"CONFIRM_VALIDATION_ASSUMPTIONS";case DELTA_LEGAL_FAILED->"REVISE_OR_RETRY";case READY_FOR_LEGAL_REPORT->"REVIEW_LEGAL_REPORT";case LEGAL_REPORT_READY->"FINALIZE_MARKET_SEED";case READY_FOR_MARKET->"START_MARKET_ANALYSIS";default->"NONE";};}
     private HypothesisView hypothesisView(ConceptPortfolioHypothesisDecision v){return new HypothesisView(v.getId(),v.getHypothesisType().name(),mapper.readTree(v.getProposedValueJson()),v.getFinalValueJson()==null?null:mapper.readTree(v.getFinalValueJson()),v.getSource(),v.getDecisionStatus(),v.getProposalVersion(),v.isLocked(),v.getSemanticStatus(),v.getSemanticReason(),v.getLegalImpact(),v.getLegalReviewStatus(),v.isDeltaLegalRequired(),v.getDecidedAt());}
     private LegalReportView reportView(ConceptLegalRegulatoryReport v){return new LegalReportView(v.getId(),v.getSelectionId(),v.getConceptId(),v.getStatus(),v.getSchemaVersion(),v.getReportHash(),v.getBasisDate(),mapper.readTree(v.getReportJson()));}

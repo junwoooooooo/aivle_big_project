@@ -15,6 +15,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 class ConceptPortfolioSelectionP5P6ContractTests {
     private static final Path MIGRATION = Path.of(
         "src/main/resources/db/migration/V12__add_concept_portfolio_selection_and_legal_handoff.sql");
+    private static final Path REVISION_MIGRATION = Path.of(
+        "src/main/resources/db/migration/V13__bind_concept_portfolio_delta_legal_revision.sql");
 
     @Test
     void migrationCreatesDedicatedPortfolioAuthoritiesAndSevenHypotheses() throws Exception {
@@ -39,6 +41,12 @@ class ConceptPortfolioSelectionP5P6ContractTests {
         assertThat(Arrays.stream(PortfolioHypothesisType.values()).filter(PortfolioHypothesisType::legalSensitive)
             .map(Enum::name)).containsExactly(
                 "TARGET_REGION", "REVENUE_MODEL", "PRICE", "CHANNELS", "DIFFERENTIATORS");
+    }
+
+    @Test
+    void additiveMigrationBindsDeltaReviewToHypothesisRevision() throws Exception {
+        String sql = Files.readString(REVISION_MIGRATION, StandardCharsets.UTF_8);
+        assertThat(sql).contains("hypothesis_revision", "NOT NULL", "concept_portfolio_delta_legal_reviews");
     }
 
     @Test

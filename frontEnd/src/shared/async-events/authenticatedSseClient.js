@@ -1,6 +1,7 @@
 export async function consumeAuthenticatedSse({
   client,
   jobId,
+  path,
   after = 0,
   signal,
   onOpen,
@@ -8,7 +9,7 @@ export async function consumeAuthenticatedSse({
   onActivity,
 }) {
   const response = await client.stream(
-    `/api/v2/jobs/${encodeURIComponent(jobId)}/events`,
+    path ?? `/api/v2/jobs/${encodeURIComponent(jobId)}/events`,
     {
       signal,
       headers: {

@@ -16,7 +16,7 @@
 | `backend/.../taskrun/domain/**`, `repository/**`, `service/TaskRunService.java` | durable task, claim, heartbeat, recovery, terminal history | KEEP | V2 Run/Continuation 공통 execution 기반 | 새 TaskType·worker | 해당 없음 | P4 새 continuation TaskRun/Job도 immutable terminal·claim·heartbeat·recovery 재사용 |
 | `backend/.../taskrun/integration/InternalAiExecutionClient.java` | AI Server 동기 HTTP client | REWORK | V2 장기 실행에 안전한 전용 호출 정책 | configurable runtime/heartbeat 설계 | 해당 없음 | P4 initial/continuation 모두 V2 15분 long-read client 사용; 일반 30초 유지 |
 | `backend/.../taskrun/domain/TaskType.java` | task type registry | REWORK | Portfolio initial/continuation/selection action 포함 | 공통 V2 worker 기반 | 해당 없음 | P5+P6 Selection 이후 5개 action은 하나의 TaskType/worker가 처리 |
-| `backend/.../jobevent/**` | JobEvent 저장, sequence, job SSE/replay/poll | KEEP | V2 job event 기반 | Product event projection | 해당 없음 | project-level stream은 별도 추가 |
+| `backend/.../jobevent/**` | JobEvent 저장, sequence, job SSE/replay/poll | KEEP | job stream 유지 + project invalidation stream | `job_events.id` project cursor | 해당 없음 | Project stream은 terminal job 뒤에도 유지; REST state가 정본 |
 | `backend/.../pipeline/concept/api/ConceptFactoryController.java` | Slot Factory 공식 API | REPLACE | `/concept-portfolio-runs` resource API | 새 `pipeline/conceptportfolio/api` | 새 Frontend caller 0 | P3 독립 공식 Run 생성·조회 API 완료; legacy history 조회만 adapter 가능 |
 | `backend/.../pipeline/concept/application/ConceptFactoryService.java` | 5 Slot run 생성·retry·공개 | REPLACE | Portfolio Run service와 Product status mapper | 새 Portfolio persistence | controller/worker caller 0 | `COMPLETED` 전 concepts 빈 목록 규칙 폐기 |
 | `backend/.../pipeline/concept/application/ConceptFactoryExecutionService.java` | Slot 상태와 attempt orchestration | REPLACE | V2 result materialization/continuation merge | V2 facade result | worker caller 0 | P4 독립 Candidate continuation 원자 merge·retry 구현; Spring 알고리즘 재구현 없음 |
@@ -38,16 +38,16 @@
 | 같은 migration의 `concept_legal_assessments`, `legal_evidence`, links | Concept legal 근거 | REWORK | immutable legal snapshots/report evidence | report tables | 해당 없음 | official evidence 유지 |
 | 같은 migration의 `market_analysis_seed_snapshots` | Market canonical input | REWORK | LEGACY/V2 source invariant와 current Report FK | V12 additive bridge | legacy source adapter 유지 | 기존 history 유지; V2 legacy IDs NULL, Portfolio IDs/Report ID 필수 |
 | `frontEnd/src/features/idea-intake/**` | Idea 입력·확인 UX | KEEP | CPV2 시작 전 Confirmed Brief UX | Portfolio start action | 해당 없음 | 필수 3개와 선택 field 구조 재사용 |
-| `frontEnd/src/features/concept-factory/**` | Slot Workboard와 5개 reveal UI | REPLACE | Business Proposal Workspace | 새 Portfolio API/hooks/components | 새 route caller 전환 | Slot 용어·수동 refresh 정상 UX 제거 |
+| `frontEnd/src/features/concept-factory/**` | Slot Workboard와 5개 reveal UI | REPLACE | Business Proposal Workspace | 새 Portfolio API/hooks/components | 새 route caller 전환 | 공식 `/concepts` caller 전환 완료; 파일 삭제는 Final Cutover Gate |
 | `frontEnd/src/features/concept-factory/components/ConceptSlotCard.jsx` | Slot 상태 카드 | DELETE | 사업안 카드 | 신규 proposal card | caller 0 | 관리자 기술 상세에도 기본 재사용하지 않음 |
 | `frontEnd/src/features/concept-factory/components/ConceptTimeline.jsx` | Slot별 기술 timeline | DELETE | 사용자 단계형 진행과 Job Center 상세 | trace stage mapper | caller 0 | Slot filter 제거 |
-| `frontEnd/src/features/concept-selection/pages/ConceptComparisonPage.jsx` | 정확히 5개 비교·선택 화면 | REWORK | 1개 직접 선택, 2~3개 선택 비교 | Portfolio query/API | exact-5 test 제거 후 대체 | route 호환 가능 |
+| `frontEnd/src/features/concept-selection/pages/ConceptComparisonPage.jsx` | 정확히 5개 비교·선택 화면 | REPLACE | Business Proposal Workspace compare mode | Portfolio query/API | 공식 route caller 0 | `/concepts/compare` URL만 호환 유지; 파일 삭제는 Final Cutover Gate |
 | `frontEnd/src/features/concept-selection/model/conceptComparisonModel.js` | 비교 model, 최대 5 | REWORK | 최소 2·최대 3 비교 | `MAX_COMPARE_COUNT=3` | 해당 없음 | 임시 tray는 local state 가능 |
 | `frontEnd/src/features/concept-selection/hooks/useConceptSelection.js` | session draft, selection/hypothesis/market query | REWORK | 서버 selection authority와 project live invalidation | Portfolio API/project events | 해당 없음 | session draft는 authority 아님 |
 | `frontEnd/src/features/concept-selection/components/LegalDetailDialog.jsx` | 후보 Legal 상세 dialog | REPLACE | 독립 Legal Regulatory Report view | P6 report API/print CSS | report view 완료 | 후보 상세 보조로만 일부 추출 로직 재사용 가능 |
 | `frontEnd/src/shared/async-events/**` | job SSE/replay/polling | KEEP | job event 공통 client | project event client 확장 | 해당 없음 | bounded fallback 유지 |
 | `frontEnd/src/features/job-center/**` | 선택 job 하나의 상세/수동 refresh | REWORK | 프로젝트 전체 요약과 Bottom Drawer | project events + query invalidation | 해당 없음 | 선택 job 단일 추적 한계 해소 |
-| `frontEnd/src/app/project-shell/ProjectLayout.jsx` | 큰 module sidebar와 중앙 Job Center | REWORK | 좁은 Journey Rail, 중앙 업무, 우측 작업 요약 | P7/P8 UI | 해당 없음 | 단계 수보다 사용자 Journey 우선 |
+| `frontEnd/src/app/project-shell/ProjectLayout.jsx` | 큰 module sidebar와 중앙 Job Center | REWORK | 좁은 Journey Rail, 중앙 업무, 우측 Work Center | Project Event invalidation | 해당 없음 | Project-level 구독 1개와 drawer형 실제 JobEvent 상세 연결 완료 |
 | `frontEnd/src/app/module-status/**` | mount/retry 기반 module 상태 | REWORK | project event 수신 후 canonical query 재조회 | project-level SSE | 해당 없음 | 수동 refresh는 오류 복구용만 유지 |
 | `frontEnd/src/features/market-integration/**` | Market handoff/status UI | REWORK | current Market Seed/Report gate와 live refresh | P6/P7 APIs | 해당 없음 | Snapshot boundary 유지 |
 

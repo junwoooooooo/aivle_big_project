@@ -9,11 +9,12 @@ import static org.mockito.Mockito.when;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.concept.domain.ConceptFactoryRun;
-import com.aivle.backend.pipeline.concept.domain.ConceptFactoryRunStatus;
-import com.aivle.backend.pipeline.concept.domain.ConceptSlotStatus;
-import com.aivle.backend.pipeline.concept.repository.ConceptFactoryRunRepository;
-import com.aivle.backend.pipeline.concept.repository.ConceptSlotRepository;
+import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioRun;
+import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioRunStatus;
+import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptPortfolioRunRepository;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelectionStatus;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
@@ -40,8 +41,8 @@ import org.junit.jupiter.api.Test;
 class ProjectModuleStatusServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
     private final IdeaBriefRepository briefs = mock(IdeaBriefRepository.class);
-    private final ConceptFactoryRunRepository conceptRuns = mock(ConceptFactoryRunRepository.class);
-    private final ConceptSlotRepository slots = mock(ConceptSlotRepository.class);
+    private final ConceptPortfolioRunRepository conceptRuns = mock(ConceptPortfolioRunRepository.class);
+    private final ConceptPortfolioSelectionRepository portfolioSelections = mock(ConceptPortfolioSelectionRepository.class);
     private final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
     private final MarketAnalysisSeedSnapshotRepository snapshots = mock(MarketAnalysisSeedSnapshotRepository.class);
     private final ModuleRunRepository runs = mock(ModuleRunRepository.class);
@@ -52,14 +53,14 @@ class ProjectModuleStatusServiceTests {
     private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
     private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
-        projects, briefs, conceptRuns, slots, selections, snapshots, runs, marketing, marketingSources,
+        projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs, marketing, marketingSources,
         techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
         Project project = mock(Project.class);
         IdeaBrief brief = mock(IdeaBrief.class);
-        ConceptFactoryRun run = mock(ConceptFactoryRun.class);
+        ConceptPortfolioRun run = mock(ConceptPortfolioRun.class);
         LocalDateTime updatedAt = LocalDateTime.of(2026, 8, 7, 10, 0);
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
         when(briefs.findCurrentOwned(7L, 41L)).thenReturn(Optional.of(brief));
@@ -68,15 +69,16 @@ class ProjectModuleStatusServiceTests {
         when(brief.getUpdatedAt()).thenReturn(updatedAt);
         when(conceptRuns.findCurrentOwned(7L, 41L)).thenReturn(Optional.of(run));
         when(run.getId()).thenReturn("run-1");
-        when(run.getTaskRunId()).thenReturn("task-1");
-        when(run.getSourceIdeaBriefSnapshotId()).thenReturn("brief-snapshot");
-        when(run.getStatus()).thenReturn(ConceptFactoryRunStatus.GENERATING);
-        when(slots.countByRunIdAndStatusAndDeletedAtIsNull("run-1", ConceptSlotStatus.ELIGIBLE)).thenReturn(3L);
+        when(run.getActiveTaskRunId()).thenReturn("task-1");
+        when(run.getSourceIdeaBrief()).thenReturn(brief);
+        when(brief.getId()).thenReturn("brief-snapshot");
+        when(run.getProductStatus()).thenReturn(ConceptPortfolioRunStatus.RUNNING);
+        when(run.getProducedConceptCount()).thenReturn(3);
 
         var modules = service.findAll(7L, 41L);
 
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
-            PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_FACTORY, PipelineModuleType.CONCEPT_SELECTION,
+            PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
             PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
             PipelineModuleType.FINANCE, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
@@ -98,7 +100,38 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(4).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+    }
+
+    @Test
+    void mapsCurrentV2SelectionAndMarketSeedToCanonicalPortfolioModule() {
+        Project project = mock(Project.class);
+        ConceptPortfolioRun run = mock(ConceptPortfolioRun.class);
+        IdeaBrief brief = mock(IdeaBrief.class);
+        ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
+        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
+        when(briefs.findCurrentOwned(7L, 41L)).thenReturn(Optional.of(brief));
+        when(brief.getStatus()).thenReturn(IdeaBriefStatus.CONFIRMED);
+        when(brief.getConfirmedSnapshotId()).thenReturn("brief-v2");
+        when(conceptRuns.findCurrentOwned(7L, 41L)).thenReturn(Optional.of(run));
+        when(run.getSourceIdeaBrief()).thenReturn(brief);
+        when(brief.getId()).thenReturn("brief-v2");
+        when(run.getProductStatus()).thenReturn(ConceptPortfolioRunStatus.RESULTS_AVAILABLE);
+        when(run.getProducedConceptCount()).thenReturn(2);
+        when(portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
+        when(selection.getId()).thenReturn(17L);
+        when(selection.getStatus()).thenReturn(ConceptPortfolioSelectionStatus.READY_FOR_MARKET);
+        when(snapshots.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(17L)).thenReturn(Optional.of(seed));
+        when(seed.getId()).thenReturn("seed-v2");
+
+        var modules = service.findAll(7L, 41L);
+
+        assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.CONCEPT_PORTFOLIO)
+            .findFirst().orElseThrow().status()).isEqualTo(PipelineModuleStatus.COMPLETED);
+        assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.MARKET_ANALYSIS)
+            .findFirst().orElseThrow().sourceSnapshotId()).isEqualTo("seed-v2");
+        verify(selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L);
     }
 
     @Test

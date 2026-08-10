@@ -155,6 +155,18 @@ P1 AI facade/continuation/trace → P2 additive persistence → P3 durable orche
 - AI/Backend/Frontend/DB 영향 경로 static grep
 - `git diff --check`
 
+## Cutover Bundle 4 implementation status — PASS
+
+- P5+P6 hotfix: Delta Legal 결과의 canonical `deltaLegalResult` 경로를 BUILD_HANDOFF까지 유지한다. V13은 Delta review에 `hypothesis_revision`을 추가하며, Delta 승인 자체는 가설 값 revision을 올리지 않는다. Market Seed에는 현재 revision의 최신 approved Delta 한 건만 적용하고 전체 Delta history는 Final Legal Report의 감사 이력으로 보존한다.
+- Active action: Selection에 `activeTaskRunId`가 있으면 상태와 무관하게 `nextAction=WAIT`이다. 같은 Selection의 동시 요청은 기존 `ANALYSIS_ALREADY_RUNNING` Business error로 정규화한다.
+- Project live sync: `GET /api/v2/projects/{projectId}/events`는 SSE, `?after={cursor}`는 replay/polling이다. Project cursor는 `job_events.id`이며 terminal job event는 project stream을 닫지 않는다. 이벤트는 invalidation 신호이고 Product state 정본은 REST query다.
+- Frontend invalidation: `ProjectLayout`에서 project stream을 한 번 구독한다. event revision이 바뀌면 module status, Work Center, Portfolio/Selection/Report/Market Seed query가 canonical REST를 다시 읽는다.
+- Business Proposal UI: 공식 `/concepts`와 `/concepts/compare`는 동일 Workspace의 목록/비교 모드다. 1~5개를 정상 표시하고 빈 Slot을 만들지 않으며, 직접 선택과 2~3개 비교를 지원한다. OPEN Candidate input은 다른 ACCEPT 사업안의 선택을 막지 않는다.
+- Selection/Legal/Market: V2 Selection API만 사용자 선택 authority로 사용한다. 정확히 7개 검증 가정, 실제 async Delta 대기, server Final Legal Report, READY_FOR_MARKET 및 V2 Market Seed를 렌더링한다. V2 Seed는 legacy Concept/Selection으로 변환하지 않는다.
+- Journey/Work Center: 아이디어 → 사업안 → 시장 분석 → 사업 모델 → 기술·운영 → 재무 → 마케팅으로 정리했다. 우측 compact Work Center와 실제 JobEvent 기반 drawer를 사용하며 가짜 진행률은 만들지 않는다.
+- Legacy: 기존 legacy 소스는 삭제하지 않았지만 새 공식 route는 legacy execution/UI를 호출하지 않는다. 물리 삭제는 Final Cutover Gate에서 caller 0을 재확인한 뒤 수행한다.
+- 검증: AI/Backend/Frontend targeted test, Backend `compileJava`, Frontend production build, `git diff --check`, Frozen Core diff를 실행한다. LIVE/전체 regression/browser E2E는 제외한다.
+
 Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않는다.
 
 ## 7. P1 implementation status — FINAL PASS

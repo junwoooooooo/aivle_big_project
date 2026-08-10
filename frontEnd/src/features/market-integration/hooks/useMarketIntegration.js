@@ -9,8 +9,13 @@ export default function useMarketIntegration(projectId) {
   const [state, setState] = useState({ loading: true, marketSeed: null, runs: [], result: null, handoff: null, error: null, preparing: false });
   const refresh = useCallback(async () => {
     try {
+      const portfolioSelection = await api.currentPortfolioSelection(projectId)
+        .then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error));
       const [marketSeed, runPayload, result] = await Promise.all([
-        api.currentMarketSeed(projectId).then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error)),
+        (portfolioSelection
+          ? api.currentPortfolioMarketSeed(projectId, portfolioSelection.selectionId)
+          : api.currentMarketSeed(projectId))
+          .then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error)),
         api.runs(projectId),
         api.result(projectId).then((payload) => payload.data).catch((error) => error?.status === 404 ? null : Promise.reject(error)),
       ]);

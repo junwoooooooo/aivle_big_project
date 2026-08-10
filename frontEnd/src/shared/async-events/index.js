@@ -4,3 +4,4 @@ export * from './jobEventsApi.js';
 export * from './jobEventsReducer.js';
 export * from './JobTimeline.jsx';
 export * from './useJobEvents.js';
+export * from './useProjectEvents.js';
