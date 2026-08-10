@@ -1,0 +1,176 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fff9ae8133d9fbb0b05377a8110657bff859dd0fd9443e8d49b419b4454c5be7",
+  "canonicalRequestHash": "e723fb19def22ae08bf8b2ff044e71a20a797f56f9f169ddc8db6e427907053d",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1-F1",
+        "field": "intermediaryRole",
+        "value": "고객과의 소통 및 지원 역할",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영",
+          "providerRole": "서비스 제공자",
+          "sellerRole": "장비 판매 및 대여 담당",
+          "intermediaryRole": "고객과의 소통 및 지원 역할"
+        },
+        "actorRoles": [
+          "고객",
+          "서비스 제공자",
+          "장비 제조사"
+        ],
+        "transactionFlow": [
+          "고객 주문 접수",
+          "장비 준비 및 배송",
+          "설치 및 사용 안내",
+          "고장 발생 시 교체 요청",
+          "장비 회수"
+        ],
+        "paymentFlow": [
+          "고객 월간 요금 결제",
+          "장비 대여료 수취",
+          "정산 및 회계 처리"
+        ],
+        "operatingModel": "고객의 요구에 맞춘 맞춤형 서비스 제공",
+        "partnerModel": "장비 제조사와의 협력을 통해 최신 장비를 확보합니다.",
+        "solutionMechanism": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "HYBRID",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "MEDIUM",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C4-F1",
+        "field": "intermediaryRole",
+        "value": "고객과의 계약 및 서비스 조정",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통한 서비스 제공",
+          "providerRole": "서비스 제공 및 장비 관리",
+          "sellerRole": "장비 대여 및 판매",
+          "intermediaryRole": "고객과의 계약 및 서비스 조정"
+        },
+        "actorRoles": [
+          "소형 사무실 운영자",
+          "장비 제조사",
+          "AI 기술 개발 업체"
+        ],
+        "transactionFlow": [
+          "고객이 온라인 플랫폼을 통해 서비스 신청",
+          "서비스 제공자가 장비를 배송 및 설치",
+          "고객이 장비를 사용",
+          "AI 시스템이 장비 상태를 모니터링",
+          "고장 발생 시 자동으로 유지보수 일정 조정"
+        ],
+        "paymentFlow": [
+          "고객이 월간 요금제에 따라 결제",
+          "서비스 제공자가 결제 확인 후 장비 배송 및 설치 진행",
+          "정기적인 유지보수 서비스 제공 후 추가 비용 청구"
+        ],
+        "operatingModel": "AI 기술을 활용한 맞춤형 서비스 제공",
+        "partnerModel": "장비 제조사와의 협력을 통해 최신 장비를 확보하고, AI 기술 개발 업체와 협력합니다.",
+        "solutionMechanism": "AI 모니터링 시스템을 통해 고장 예측 및 예방 유지보수를 제공합니다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C5-F1",
+        "field": "intermediaryRole",
+        "value": "물류 서비스 제공업체와 협력하여 배송 및 설치 지원",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통한 서비스 제공 및 관리",
+          "providerRole": "장비 대여 및 유지보수 서비스 제공",
+          "sellerRole": "고객에게 서비스 판매 및 계약 체결",
+          "intermediaryRole": "물류 서비스 제공업체와 협력하여 배송 및 설치 지원"
+        },
+        "actorRoles": [
+          "소형 사무실 운영자",
+          "장비 제조사",
+          "물류 서비스 제공업체"
+        ],
+        "transactionFlow": [
+          "고객 주문 접수",
+          "장비 준비 및 배송",
+          "설치 및 사용 안내",
+          "정기 점검 및 유지보수",
+          "고장 발생 시 즉시 교체"
+        ],
+        "paymentFlow": [
+          "고객 월간 요금 결제",
+          "장비 대여 계약 체결",
+          "정기 점검 서비스 요금 청구"
+        ],
+        "operatingModel": "고객의 요구에 맞춘 맞춤형 서비스 제공",
+        "partnerModel": "장비 제조사와의 협력을 통해 최신 장비를 확보합니다.",
+        "solutionMechanism": "고장 시 즉시 교체하여 회의의 연속성을 보장합니다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "HYBRID",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "고객과의 소통 및 지원 역할이 intermediaryRole의 정의와 일치합니다."
+    },
+    {
+      "candidateId": "C4-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "고객과의 계약 및 서비스 조정이 intermediaryRole의 정의와 일치합니다."
+    },
+    {
+      "candidateId": "C5-F1",
+      "field": "intermediaryRole",
+      "decision": "MISMATCH",
+      "safeReason": "물류 서비스 제공업체와 협력하여 배송 및 설치 지원은 intermediaryRole의 정의와 맞지 않습니다."
+    }
+  ],
+  "durationMs": 2577,
+  "timestamp": "2026-08-10T05:10:41.342514+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

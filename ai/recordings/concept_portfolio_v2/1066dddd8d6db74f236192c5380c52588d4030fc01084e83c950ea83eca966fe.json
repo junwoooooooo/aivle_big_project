@@ -1,0 +1,96 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:99a22263f2d47e5ce8e759aa830d786c58149e6b96805030bf1320751863be30",
+  "canonicalRequestHash": "1066dddd8d6db74f236192c5380c52588d4030fc01084e83c950ea83eca966fe",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3",
+        "businessText": "디지털 플랫폼 운영자 여행 계획 서비스 제공자 여행 상품 판매자 예약 중개자 디지털 플랫폼을 통해 서비스 운영 여행사 및 숙박업체와 협력하여 예약 서비스를 제공 사용자가 앱에 정보 입력 시스템이 일정 생성 사용자가 예약 진행 예약 확인 메시지 발송 사용자가 결제 진행 결제 정보 전송 예약 완료 후 확인 메시지 발송 제휴 업체로부터 발생하는 수익 모델 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "여행 추천 및 예약 플랫폼 제공 여행 추천 서비스 제공자 여행사 및 숙박업체 플랫폼 운영자 온라인 플랫폼을 통해 서비스 제공. 여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다. 사용자가 앱에서 여행지 검색 추천된 여행지 확인 후 예약 진행 예약 완료 후 확인 메시지 발송 사용자가 앱 내에서 결제 진행 여행사 및 숙박업체에 결제 수취 정산 후 수익 배분 제휴 업체로부터 발생하는 수익 모델. 모바일 앱 및 웹사이트를 통한 직접 예약.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "디지털 플랫폼을 통해 여행 상품 예약 서비스를 제공하는 중개자 역할을 수행하며, 파트너 네트워크를 통해 운영된다."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "여행 추천 및 예약 플랫폼으로서 중개자 역할을 하며, 파트너 네트워크를 통해 운영된다."
+    }
+  ],
+  "durationMs": 3805,
+  "timestamp": "2026-08-10T05:15:38.528259+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:b2bfdfba1ea7f3de84f7c404896970abf348e859acd01a280056d8818b03a57f",
+  "canonicalRequestHash": "75bf99accd024e6f720e077a1d414fcb22f6c3493471061750e382cef2176c73",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+      "valueProposition": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+      "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+      "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다.",
+      "differentiatingMechanics": [
+        "지역 기반 매칭 시스템",
+        "학생 전용 커뮤니티 기능"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "coreValue": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공합니다.",
+      "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+      "solutionMechanism": "지역 기반 매칭 시스템을 통해 사용자 간의 거래를 지원한다.",
+      "featureSet": [
+        "지역 기반 등록 기능",
+        "사용자 간 직접 거래 기능",
+        "거래 완료 후 피드백 시스템"
+      ],
+      "operatingModel": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valuePropositionThesis": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+        "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+        "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다",
+      "familyId": "OTHER:PARTNER_NETWORK",
+      "familyLabelKo": "기타 역할 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "ADAPTED",
+    "matchedMechanics": [
+      "지역 기반 매칭 시스템",
+      "학생 전용 커뮤니티 기능"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "대학가에서 이사하거나 기숙사를 옮기는 학생들을 위한 지역 기반 중고 거래 플랫폼으로, 저렴한 가격에 가구와 생활용품을 거래할 수 있도록 지원한다."
+  },
+  "durationMs": 2519,
+  "timestamp": "2026-08-10T05:04:22.366271+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:58a8d6c8399f8236b759189c020c5689b459fce919b6b9f43274f7abba7b84cb",
+  "canonicalRequestHash": "559612edf9a6929c94388f4a4308b7d4d86fcb1f08715e9a03dd6a2167961eb1",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 식재료 공급 및 배송 관리 고객과의 거래 및 서비스 제공 물류 및 배송 관리 고객의 피드백을 반영하여 지속적으로 서비스 개선 및 마케팅 전략을 조정한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 공급받는다. 고객이 앱을 통해 식재료와 레시피를 선택하고 주문한다. 주문이 접수되면 식재료가 준비된다. 식재료가 고객에게 배송된다. 고객이 앱에서 결제한다. 결제 확인 후 식재료가 배송된다. 구독 모델을 통해 정기적으로 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "요리 교육 및 레시피 공유 플랫폼 제공 교육 콘텐츠 제공자 프리미엄 콘텐츠 판매자 고객과 교육 콘텐츠 제공자 간의 중개 역할 온라인 플랫폼을 통해 교육 및 레시피 공유를 관리한다. 요리 전문가와 협력하여 교육 콘텐츠를 제공한다. 고객이 앱에서 교육 콘텐츠를 선택한다. 고객이 결제를 진행한다. 고객이 교육 콘텐츠를 수신한다. 고객이 레시피를 공유한다. 고객이 결제 정보를 입력한다. 결제 시스템이 결제를 처리한다. 고객에게 결제 확인이 전송된다. 프리미엄 교육 콘텐츠를 통해 수익을 창출한다. 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "레시피 추천 및 관리 플랫폼 제공 레시피 및 식재료 제공자 프리미엄 서비스 판매자 고객과 레시피 개발자 간의 중개 역할 온라인 플랫폼을 통해 레시피 추천 및 관리한다. 레시피 개발자와 협력하여 다양한 요리법을 제공한다. 고객이 앱에 가입한다. 고객이 남은 재료를 입력한다. 시스템이 맞춤형 레시피를 추천한다. 고객이 레시피를 선택하고 요리를 시작한다. 고객이 프리미엄 서비스에 가입한다. 결제 정보가 처리된다. 고객이 프리미엄 레시피에 접근한다. 무료 서비스와 프리미엄 서비스 모델을 혼합하여 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 서비스 제공",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 식재료 및 조리법 제공 고객에게 요리 키트를 판매 배송 서비스 제공 주문 접수, 식재료 준비, 배송, 고객 피드백 수집의 순환 구조로 운영된다. 신선한 재료를 공급하기 위해 지역 농가와 협력한다. 고객이 앱에서 키트 선택 및 주문 주문 정보가 시스템에 전달 주문 처리 및 식재료 준비 배송 파트너가 키트 배송 고객이 키트 수령 후 조리 고객이 앱에서 결제 결제 정보가 시스템에 전달 결제 확인 후 주문 처리 시작 배송 완료 후 정산 구독 모델을 통해 지속적인 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 신선한 재료를 공급하는 역할을 수행한다. 고객에게 서비스를 판매하는 역할을 수행한다. 배송 및 물류 관리를 담당하는 역할을 수행한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 신선한 재료를 공급하기 위해 지역 농가와 협력한다. 고객이 앱에서 주문 주문 정보가 배송업체에 전달 배송업체가 재료를 준비 및 배송 고객이 재료 수령 후 피드백 제공 고객이 앱에서 결제 결제 정보가 처리됨 배송업체에 수익 분배 구독 모델을 통해 지속적인 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "An online platform managing orders and deliveries, collaborating with local farms for fresh ingredients, and utilizing a subscription model for revenue."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "A cooking education and recipe sharing platform acting as an intermediary between customers and content providers, generating revenue through premium content."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "A recipe recommendation and management platform that acts as an intermediary, generating revenue through a mix of free and premium services."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "An online platform managing orders and deliveries of cooking kits, collaborating with local farms, and utilizing a subscription model for revenue."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "An online platform managing orders and deliveries, supplying fresh ingredients, and generating revenue through a subscription model."
+    }
+  ],
+  "durationMs": 6268,
+  "timestamp": "2026-08-10T05:24:12.686742+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

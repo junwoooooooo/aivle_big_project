@@ -1,0 +1,575 @@
+{
+  "taskType": "LEGAL_FACT_COMPLETION",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-completion-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:85165485fb6ebd5e3c1389e1a664378f789e1738ffb3d2c6988332fc90b06772",
+  "canonicalRequestHash": "eb1e3a8e1fc8b259de54cc43e2ef5b9d29ba13e1e55eccdd79d7a8745c57f16c",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+      "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "10~50인 규모의 소형 사무실 운영자",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "interpretedTargetUsers": "10~50인 규모의 소형 사무실 운영자",
+        "usageContext": "소형 사무실에서 화상회의를 원활하게 진행하기 위한 장비 대여 서비스",
+        "industryCategory": "서비스업",
+        "researchScope": "소형 사무실의 화상회의 장비 수요",
+        "conciseIdeaDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 서비스",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음"
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "소형 사무실 화상회의 장비 구독 서비스",
+      "oneLineConcept": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 원활하게 진행하기 위한 장비 대여 서비스",
+      "valueProposition": "비용 부담 없이 최신 화상회의 장비를 이용할 수 있는 기회를 제공합니다.",
+      "offerThesis": "정기 구독 모델을 통해 소형 사무실 운영자에게 필요한 장비를 제공합니다.",
+      "solutionThesis": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다.",
+      "coreMechanism": "정기 대여 및 유지보수 서비스 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 주문 및 관리가 가능합니다.",
+      "valueDelivery": "정기적으로 장비를 배송하고, 고장 시 신속하게 교체합니다.",
+      "operatingApproach": "고객의 요구에 맞춘 맞춤형 서비스 제공",
+      "partnerApproach": "장비 제조사와의 협력을 통해 최신 장비를 확보합니다.",
+      "transactionApproach": "구독 기반의 월간 요금제로 운영됩니다.",
+      "commercialApproach": "소형 사무실을 대상으로 한 마케팅 전략을 수립합니다.",
+      "fulfillmentApproach": "고객의 요청에 따라 신속한 배송 및 설치 서비스를 제공합니다.",
+      "differentiatingMechanics": [
+        "고장 시 즉시 교체 서비스",
+        "정기적인 장비 점검 서비스"
+      ],
+      "mainChanges": [
+        "정기 대여 서비스 도입",
+        "고장 시 즉시 교체 서비스 제공"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 장비 추천 서비스"
+      ],
+      "legalRiskHints": [
+        "장비 대여 계약서 작성 시 주의 필요"
+      ],
+      "reasonForPortfolioRole": "소형 사무실 운영자에게 필요한 화상회의 장비를 제공하여 비즈니스 운영을 지원합니다.",
+      "planId": "P1",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "10~50인 규모의 소형 사무실 운영자",
+          "useCaseThesis": "소형 사무실에서 화상회의를 원활하게 진행하기 위한 장비 대여 서비스",
+          "valuePropositionThesis": "비용 부담 없이 최신 화상회의 장비를 이용할 수 있는 기회를 제공합니다.",
+          "offerThesis": "정기 구독 모델을 통해 소형 사무실 운영자에게 필요한 장비를 제공합니다.",
+          "solutionThesis": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다",
+        "familyId": "OTHER:OTHER",
+        "familyLabelKo": "기타 역할 · 기타 운영",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "PHYSICAL_DELIVERY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+        "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "targetUsers": "10~50인 규모의 소형 사무실 운영자"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "UNSELECTED",
+      "selectionScore": 0.0,
+      "selectionReason": "선택 평가 전",
+      "relationToPortfolio": "NOT_EVALUATED"
+    },
+    "candidate": {
+      "conceptName": "소형 사무실 화상회의 장비 구독 서비스",
+      "conceptDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 서비스",
+      "introduction": "소형 사무실 운영자에게 필요한 화상회의 장비를 정기적으로 대여하여 운영의 연속성을 보장합니다.",
+      "coreValue": "비용 부담 없이 최신 화상회의 장비를 이용할 수 있는 기회를 제공합니다.",
+      "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+      "industryCategory": "서비스업",
+      "researchScope": "소형 사무실의 화상회의 장비 수요",
+      "targetRegion": "대한민국 전역",
+      "revenueModel": "구독 기반의 월간 요금제",
+      "price": "월 10만원~20만원 (장비 종류에 따라 상이)",
+      "channels": "온라인 플랫폼 및 고객 상담 센터",
+      "differentiators": "고장 시 즉시 교체 서비스, 정기적인 장비 점검 서비스",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "소형 사무실의 화상회의 장비 수요 증가에 따른 시장 점유율 확보",
+        "assumptions": [
+          "소형 사무실의 화상회의 수요 증가",
+          "경쟁사 대비 차별화된 서비스 제공"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 50000000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "소형 사무실의 화상회의 장비 대여 시장 규모",
+        "assumptions": [
+          "소형 사무실의 평균 장비 대여 수요",
+          "시장 성장률"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "solutionMechanism": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다.",
+      "featureSet": [
+        "정기 대여 서비스",
+        "고장 시 즉시 교체 서비스",
+        "정기적인 장비 점검 서비스",
+        "고객 맞춤형 장비 추천 서비스"
+      ],
+      "actorRoles": [
+        "고객",
+        "서비스 제공자",
+        "장비 제조사"
+      ],
+      "platformRole": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영",
+      "operatingModel": "고객의 요구에 맞춘 맞춤형 서비스 제공",
+      "partnerModel": "장비 제조사와의 협력을 통해 최신 장비를 확보합니다.",
+      "providerRole": "서비스 제공자",
+      "sellerRole": "장비 판매 및 대여 담당",
+      "intermediaryRole": "고객과의 소통 및 지원 역할",
+      "transactionFlow": [
+        "고객 주문 접수",
+        "장비 준비 및 배송",
+        "설치 및 사용 안내",
+        "고장 발생 시 교체 요청",
+        "장비 회수"
+      ],
+      "paymentFlow": [
+        "고객 월간 요금 결제",
+        "장비 대여료 수취",
+        "정산 및 회계 처리"
+      ],
+      "personalDataUsage": [],
+      "physicalActivities": [
+        "장비 배송",
+        "장비 설치",
+        "장비 회수"
+      ],
+      "partnerRequirements": [
+        "장비 제조사와의 계약 체결",
+        "정기적인 장비 점검 및 유지보수 협력"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "비용 부담 없이 최신 화상회의 장비를 이용할 수 있습니다.",
+        "정기적인 장비 점검으로 안정적인 운영을 보장합니다."
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 1,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "requirements": [
+      "서비스 흐름에서 처리하는 개인정보와 목적을 personalDataUsage에 명시해야 합니다."
+    ],
+    "index": 1
+  },
+  "providerResponse": {
+    "conceptName": "소형 사무실 화상회의 장비 구독 서비스",
+    "conceptDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 서비스",
+    "introduction": "소형 사무실 운영자에게 필요한 화상회의 장비를 정기적으로 대여하여 운영의 연속성을 보장합니다.",
+    "coreValue": "비용 부담 없이 최신 화상회의 장비를 이용할 수 있는 기회를 제공합니다.",
+    "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+    "industryCategory": "서비스업",
+    "researchScope": "소형 사무실의 화상회의 장비 수요",
+    "targetRegion": "대한민국 전역",
+    "revenueModel": "구독 기반의 월간 요금제",
+    "price": "월 10만원~20만원 (장비 종류에 따라 상이)",
+    "channels": "온라인 플랫폼 및 고객 상담 센터",
+    "differentiators": "고장 시 즉시 교체 서비스, 정기적인 장비 점검 서비스",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "소형 사무실의 화상회의 장비 수요 증가에 따른 시장 점유율 확보",
+      "assumptions": [
+        "소형 사무실의 화상회의 수요 증가",
+        "경쟁사 대비 차별화된 서비스 제공"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 50000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "소형 사무실의 화상회의 장비 대여 시장 규모",
+      "assumptions": [
+        "소형 사무실의 평균 장비 대여 수요",
+        "시장 성장률"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+    "solutionMechanism": "고장 시 즉시 교체 및 회수 서비스를 통해 운영의 연속성을 보장합니다.",
+    "featureSet": [
+      "정기 대여 서비스",
+      "고장 시 즉시 교체 서비스",
+      "정기적인 장비 점검 서비스",
+      "고객 맞춤형 장비 추천 서비스"
+    ],
+    "actorRoles": [
+      "고객",
+      "서비스 제공자",
+      "장비 제조사"
+    ],
+    "platformRole": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영",
+    "operatingModel": "고객의 요구에 맞춘 맞춤형 서비스 제공",
+    "partnerModel": "장비 제조사와의 협력을 통해 최신 장비를 확보합니다.",
+    "providerRole": "서비스 제공자",
+    "sellerRole": "장비 판매 및 대여 담당",
+    "intermediaryRole": "고객과의 소통 및 지원 역할",
+    "transactionFlow": [
+      "고객 주문 접수",
+      "장비 준비 및 배송",
+      "설치 및 사용 안내",
+      "고장 발생 시 교체 요청",
+      "장비 회수"
+    ],
+    "paymentFlow": [
+      "고객 월간 요금 결제",
+      "장비 대여료 수취",
+      "정산 및 회계 처리"
+    ],
+    "personalDataUsage": [],
+    "physicalActivities": [
+      "장비 배송",
+      "장비 설치",
+      "장비 회수"
+    ],
+    "partnerRequirements": [
+      "장비 제조사와의 계약 체결",
+      "정기적인 장비 점검 및 유지보수 협력"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "비용 부담 없이 최신 화상회의 장비를 이용할 수 있습니다.",
+      "정기적인 장비 점검으로 안정적인 운영을 보장합니다."
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 12967,
+  "timestamp": "2026-08-10T05:09:36.706462+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

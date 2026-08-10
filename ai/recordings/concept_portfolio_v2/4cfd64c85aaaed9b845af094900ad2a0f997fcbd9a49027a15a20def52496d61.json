@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:10436204c299a94ecc7a0fe3cc93c2370e91e0e7c023f1d780e346a3ca6d1d5d",
+  "canonicalRequestHash": "4cfd64c85aaaed9b845af094900ad2a0f997fcbd9a49027a15a20def52496d61",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-R1",
+        "businessText": "중고 거래 플랫폼으로서 사용자 간의 거래를 지원한다. 플랫폼 운영자 중고품 판매자 거래 중개 역할을 수행하지 않음 대학가 내 커뮤니티와 협력하여 신뢰성을 높인다. 대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다. 사용자가 앱에 중고품 등록 사용자가 검색 및 필터링 기능을 통해 거래 상대방 찾기 직거래를 통해 거래 완료 사용자가 거래를 완료하고 결제 결제 후 거래 내역과 피드백 요청 전송 프리미엄 서비스와 광고를 통해 수익을 창출한다. 모바일 앱과 웹사이트를 통해 사용자에게 접근한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "ADVERTISING",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "중고 거래 플랫폼으로서 사용자 간의 거래를 지원하며, 대학가 커뮤니티와 협력하여 신뢰성을 높이고 다양한 상품을 제공한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다."
+    }
+  ],
+  "durationMs": 2484,
+  "timestamp": "2026-08-10T05:04:36.892807+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

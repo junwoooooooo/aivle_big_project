@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f6a53076d6f480554f88695d600499ff3638d0b4a2d9d7bca8f35cf6d00b190f",
+  "canonicalRequestHash": "829328d387c3e013d869d1d2f08320c4a8ecf480287ec3e88c4029853c7caf12",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 서비스 제공 및 장비 관리 장비 대여 및 판매 고객과의 계약 및 서비스 조정 AI 기술을 활용한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, AI 기술 개발 업체와 협력합니다. 고객이 온라인 플랫폼을 통해 서비스 신청 서비스 제공자가 장비를 배송 및 설치 고객이 장비를 사용 AI 시스템이 장비 상태를 모니터링 고장 발생 시 자동으로 유지보수 일정 조정 고객이 월간 요금제에 따라 결제 서비스 제공자가 결제 확인 후 장비 배송 및 설치 진행 정기적인 유지보수 서비스 제공 후 추가 비용 청구 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "HYBRID",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "An online platform providing services and equipment management, utilizing AI for personalized service, with a subscription-based monetization model."
+    }
+  ],
+  "durationMs": 3132,
+  "timestamp": "2026-08-10T05:10:28.401765+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

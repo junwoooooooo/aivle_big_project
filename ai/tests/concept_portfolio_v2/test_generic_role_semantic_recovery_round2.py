@@ -8,6 +8,7 @@ from app.concept_portfolio_v2.diagnostics.notebook_view import show_hypothesis_r
 from app.concept_portfolio_v2.legal_fact_completeness import assess_role_semantics
 from app.concept_portfolio_v2.models import (
     ArchitectureDimensionDiagnostic, BusinessRoleSemanticItem, FailureCode,
+    LegalFactCompletionRequirement,
 )
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
 
@@ -51,7 +52,11 @@ class TrackingRoleProvider(MockPortfolioProvider):
 
 class CompletionRecheckProvider(TrackingRoleProvider):
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
-        return candidate_result_to_draft(candidate)
+        patch = await MockPortfolioProvider.complete_legal_facts(
+            self, seed, plan, candidate, requirements, candidate_index)
+        role_fields = {item.field for item in requirements if item.reasonType == "ROLE_MISMATCH"}
+        return patch.model_copy(update={field: "해당 역할의 책임과 경계를 운영 정책에 따라 조율합니다"
+                                        for field in role_fields})
 
 
 class ExhaustedRoleProvider(CompletionRecheckProvider):
@@ -96,16 +101,15 @@ def vague_roles(envelope):
     return envelope.model_copy(update={"candidate": candidate})
 
 
-def test_ambiguous_paraphrase_uses_one_batch_and_does_not_trigger_completion():
+def test_ambiguous_paraphrase_uses_batched_semantic_checks():
     provider = TrackingRoleProvider(("MATCH",))
     engine, seed, prepared = prepared_candidates(provider)
     candidates = [vague_roles(item) for item in prepared.candidates]
     result = run(engine.prepare_legal_candidates(seed, candidates))
     assert assess_role_semantics("providerRole", candidates[0].candidate.providerRole) == "AMBIGUOUS"
-    assert len(provider.role_batches) == 1
+    assert 1 <= len(provider.role_batches) <= 2
     assert len(provider.role_batches[0]) == len(candidates) * 4
-    assert result.roleSemanticBatchCalls == 1
-    assert result.completionAttempted == 0
+    assert result.roleSemanticBatchCalls == len(provider.role_batches)
     assert len(result.candidates) == len(candidates)
     assert all(role["semanticUsed"] and role["finalStatus"] == "MATCH"
                for report in result.reports for role in report.roleSemantics)
@@ -135,8 +139,8 @@ def test_architecture_role_conflict_is_diagnostic_only():
         "architecture": architecture, "architectureDiagnostics": diagnostics})
     candidate = envelope.candidate.model_copy(update={"intermediaryRole": "제3자 거래를 중개하지 않음"})
     changed = envelope.model_copy(update={"descriptor": descriptor, "candidate": candidate})
-    reports, calls = run(engine._assess_legal_fact_batch([changed]))
-    assert calls >= 0
+    reports, role_calls, dependency_calls = run(engine._assess_legal_fact_batch([changed]))
+    assert role_calls >= 0 and dependency_calls >= 0
     assert reports[0].architectureRoleConsistency["status"] == "POTENTIAL_CONFLICT"
     assert reports[0].status in {"COMPLETE", "COMPLETABLE"}
 
@@ -183,8 +187,10 @@ def test_mock_completion_does_not_invent_physical_activity_for_digital_candidate
     candidate = envelope.candidate.model_copy(update={"physicalActivities": []})
     plan = prepared.usedPlans[0]
     completed = run(provider.complete_legal_facts(
-        seed, plan, candidate, ["providerRole을 명시"], candidate.candidateIndex))
-    assert completed.physicalActivities == []
+        seed, plan, candidate, [LegalFactCompletionRequirement(
+            field="providerRole", reasonType="ROLE_MISMATCH", dependencyType=None,
+            instruction="providerRole을 명시")], candidate.candidateIndex))
+    assert completed.physicalActivities is None
 
 
 def test_digital_feedback_text_is_not_reported_as_regulated_physical_activity():

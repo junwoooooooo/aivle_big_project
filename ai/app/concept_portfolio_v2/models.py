@@ -69,6 +69,11 @@ class FailureCode(StrEnum):
     CANDIDATE_REGENERATION_EXHAUSTED = "CANDIDATE_REGENERATION_EXHAUSTED"
     CANONICALIZATION_LOW_CONFIDENCE = "CANONICALIZATION_LOW_CONFIDENCE"
     LEGAL_FACT_COMPLETION_EXHAUSTED = "LEGAL_FACT_COMPLETION_EXHAUSTED"
+    LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT = "LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT"
+    LEGAL_FACT_COMPLETION_RECHECK_FAILED = "LEGAL_FACT_COMPLETION_RECHECK_FAILED"
+    LEGAL_FACT_DEPENDENCY_UNRESOLVED = "LEGAL_FACT_DEPENDENCY_UNRESOLVED"
+    LEGAL_FACT_COMPLETION_CANDIDATE_INVALID = "LEGAL_FACT_COMPLETION_CANDIDATE_INVALID"
+    LEGAL_FACT_COMPLETION_SCOPE_VIOLATION = "LEGAL_FACT_COMPLETION_SCOPE_VIOLATION"
     NO_LEGAL_READY_CANDIDATES = "NO_LEGAL_READY_CANDIDATES"
     LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED = "LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED"
     LEGAL_REDESIGN_LOOP_DETECTED = "LEGAL_REDESIGN_LOOP_DETECTED"
@@ -354,6 +359,8 @@ class LegalFactCompletenessResult(StrictModel):
     completionRequirements: list[str] = Field(default_factory=list)
     affectedFields: list[str] = Field(default_factory=list)
     roleSemantics: list[dict[str, Any]] = Field(default_factory=list)
+    dependencyAssessments: list["LegalFactDependencyAssessment"] = Field(default_factory=list)
+    structuredCompletionRequirements: list["LegalFactCompletionRequirement"] = Field(default_factory=list)
     architectureRoleConsistency: dict[str, str] | None = None
     safeSummary: str
 
@@ -367,6 +374,8 @@ class LegalCandidatePreparation(StrictModel):
     completionAccepted: int = 0
     completionExhausted: int = 0
     roleSemanticBatchCalls: int = 0
+    dependencySemanticBatchCalls: int = 0
+    completionCompliance: list["LegalFactCompletionCompliance"] = Field(default_factory=list)
 
 
 class BusinessRoleSemanticItem(StrictModel):
@@ -378,6 +387,80 @@ class BusinessRoleSemanticItem(StrictModel):
 
 class BusinessRoleSemanticBatch(StrictModel):
     results: list[BusinessRoleSemanticItem] = Field(min_length=1, max_length=20)
+
+
+LegalFactDependencyType = Literal["PERSONAL_DATA", "PHYSICAL_ACTIVITY", "BUSINESS_PARTNER"]
+
+
+class LegalFactDependencyAssessment(StrictModel):
+    candidateId: str | None = None
+    dependencyType: LegalFactDependencyType
+    deterministicDecision: Literal["REQUIRED", "NOT_REQUIRED", "AMBIGUOUS"]
+    semanticUsed: bool = False
+    semanticDecision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN", "NOT_RUN"] = "NOT_RUN"
+    finalDecision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN"]
+    safeReason: str
+    consistencyStatus: Literal["CONSISTENT", "POTENTIAL_CONFLICT", "NOT_ENOUGH_EVIDENCE"] = "NOT_ENOUGH_EVIDENCE"
+
+
+class LegalFactDependencySemanticItem(StrictModel):
+    candidateId: str
+    dependencyType: LegalFactDependencyType
+    decision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN"]
+    safeReason: str
+
+
+class LegalFactDependencySemanticBatch(StrictModel):
+    results: list[LegalFactDependencySemanticItem] = Field(min_length=1, max_length=15)
+
+
+class LegalFactCompletionRequirement(StrictModel):
+    field: Literal[
+        "platformRole", "providerRole", "sellerRole", "intermediaryRole",
+        "transactionFlow", "paymentFlow", "personalDataUsage", "physicalActivities",
+        "partnerRequirements", "targetRegion", "channels",
+    ]
+    reasonType: Literal[
+        "MISSING_REQUIRED_FACT", "DEPENDENCY_UNKNOWN", "ROLE_MISMATCH",
+        "TRANSACTION_INCOMPLETE", "PAYMENT_INCOMPLETE", "GENERAL_FACT_INCOMPLETE",
+    ]
+    dependencyType: LegalFactDependencyType | None
+    instruction: str
+
+
+class LegalFactCompletionPatch(StrictModel):
+    platformRole: str | None
+    providerRole: str | None
+    sellerRole: str | None
+    intermediaryRole: str | None
+    transactionFlow: list[str] | None
+    paymentFlow: list[str] | None
+    personalDataUsage: list[str] | None
+    physicalActivities: list[str] | None
+    partnerRequirements: list[str] | None
+    targetRegion: str | None
+    channels: str | None
+
+
+class LegalFactCompletionCompliance(StrictModel):
+    candidateId: str
+    status: Literal["PASS", "FAIL", "AMBIGUOUS"]
+    satisfiedRequirements: list[str] = Field(default_factory=list)
+    unsatisfiedRequirements: list[str] = Field(default_factory=list)
+    changedFields: list[str] = Field(default_factory=list)
+    unchangedRequiredFields: list[str] = Field(default_factory=list)
+    safeSummary: str
+
+
+class LegalLineageResolution(StrictModel):
+    candidateId: str
+    initialRoute: str
+    recoveryAction: str
+    recoveryCandidateId: str | None = None
+    finalRoute: str
+    finalResolution: Literal["ACCEPTED", "NEEDS_INPUT", "EXCLUDED_LEGAL", "SYSTEM_FAILURE"]
+    finalAccepted: bool
+    sourceStatus: str
 
 
 class RedesignRequirementCompliance(StrictModel):
@@ -587,6 +670,10 @@ class RunSummary(StrictModel):
     legalFactCompletionAccepted: int = 0
     legalFactCompletionExhausted: int = 0
     legalReady: int = 0
+    legalFactDependencySemanticCalls: int = 0
+    legalFactCompletionCompliancePassed: int = 0
+    legalFactCompletionProviderNoncompliant: int = 0
+    legalFactCompletionRecheckFailed: int = 0
     legalRedesignAttempted: int = 0
     legalRedesignValidated: int = 0
     legalRedesignAccepted: int = 0
@@ -597,6 +684,11 @@ class RunSummary(StrictModel):
     legalReplanExhausted: int = 0
     legalAccepted: int
     legalReviewed: int = 0
+    legalInitialReviewed: int = 0
+    legalRecoveryReviewed: int = 0
+    totalLegalReviewEvents: int = 0
+    legalInitialAccepted: int = 0
+    legalRecoveredAccepted: int = 0
     legalRedesigned: int
     replanned: int
     finalPortfolio: int
@@ -618,6 +710,7 @@ class FailureDiagnostics(StrictModel):
     lastSuccessfulStage: str | None = None
     firstFailedStage: str | None = None
     lastTraceEvents: list[TraceEvent] = Field(default_factory=list, max_length=20)
+    preLegalExclusionCountsByReason: dict[str, int] = Field(default_factory=dict)
 
 
 class ConceptPortfolioResult(StrictModel):
@@ -629,6 +722,7 @@ class ConceptPortfolioResult(StrictModel):
     concepts: list[CandidateEnvelope]
     rejectedPlans: list[RejectedPlan]
     legalSummaries: list[LegalReview]
+    legalResolutions: list[LegalLineageResolution] = Field(default_factory=list)
     requiredInputs: list[dict[str, Any]]
     preLegalExclusions: list[dict[str, Any]] = Field(default_factory=list)
     unresolvedCandidates: list[dict[str, Any]] = Field(default_factory=list)
