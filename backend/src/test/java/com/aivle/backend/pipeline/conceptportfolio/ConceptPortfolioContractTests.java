@@ -8,6 +8,9 @@ import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioR
 import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioRunStatus;
 import com.aivle.backend.pipeline.idea.domain.*;
 import java.util.List;
+import java.time.Duration;
+import com.aivle.backend.integration.ai.AiServerProperties;
+import com.aivle.backend.pipeline.conceptportfolio.worker.*;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -51,12 +54,31 @@ class ConceptPortfolioContractTests {
             .isEqualTo(ConceptPortfolioRunStatus.RESULTS_WITH_OPEN_INPUT);
         assertThat(mapper.map(result("FAILED", 0, 1, null)))
             .isEqualTo(ConceptPortfolioRunStatus.NEEDS_INPUT);
+        assertThat(mapper.map(result("FAILED", 2, 1, null)))
+            .isEqualTo(ConceptPortfolioRunStatus.FAILED);
         assertThat(mapper.map(result("NEEDS_INPUT", 0, 0, null)))
             .isEqualTo(ConceptPortfolioRunStatus.NEEDS_INPUT);
         assertThat(mapper.map(result("FAILED", 0, 0, "RESULT_SCHEMA_INVALID")))
             .isEqualTo(ConceptPortfolioRunStatus.FAILED);
         assertThat(mapper.map(result("FAILED", 0, 0, "NO_LEGAL_READY_CANDIDATES")))
             .isEqualTo(ConceptPortfolioRunStatus.FAILED);
+    }
+
+    @Test
+    void enforcesSafeTimeoutOrderingAndFourteenMinuteDefaultDeadline() {
+        ConceptPortfolioExecutionProperties defaults = new ConceptPortfolioExecutionProperties(
+            null, null, null, null, null, null);
+        AiServerProperties ai = new AiServerProperties("http://localhost", Duration.ofSeconds(3),
+            Duration.ofSeconds(30), Duration.ofMinutes(15), "token");
+
+        assertThat(defaults.aiDeadline()).isEqualTo(Duration.ofMinutes(14));
+        assertThatCode(() -> new ConceptPortfolioTimingValidator(defaults, ai))
+            .doesNotThrowAnyException();
+        ConceptPortfolioExecutionProperties invalid = new ConceptPortfolioExecutionProperties(
+            Duration.ofSeconds(90), Duration.ofSeconds(20), Duration.ofMinutes(20),
+            Duration.ofMinutes(15), 2, 4);
+        assertThatThrownBy(() -> new ConceptPortfolioTimingValidator(invalid, ai))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -15,6 +15,10 @@ import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.Execution
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.time.Duration;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,6 +81,20 @@ class ConceptPortfolioWorkerTests {
         } finally { harness.executor.shutdownNow(); }
     }
 
+    @Test
+    void computesAiDeadlineFromInjectedUtcClock() {
+        Harness harness = new Harness();
+        when(harness.ai.executeWorker(any(), eq("attempt"), any())).thenReturn(harness.response());
+        when(harness.materialization.complete(any(), any(), any()))
+            .thenReturn(ConceptPortfolioRunStatus.RESULTS_AVAILABLE);
+        try {
+            assertThat(harness.worker.processOne()).isTrue();
+            ArgumentCaptor<LocalDateTime> deadline = ArgumentCaptor.forClass(LocalDateTime.class);
+            verify(harness.ai).executeWorker(any(), eq("attempt"), deadline.capture());
+            assertThat(deadline.getValue()).isEqualTo(LocalDateTime.parse("2026-08-10T00:00:01"));
+        } finally { harness.executor.shutdownNow(); }
+    }
+
     @ParameterizedTest
     @EnumSource(value = ConceptPortfolioRunStatus.class, names = {
         "RESULTS_AVAILABLE", "RESULTS_WITH_OPEN_INPUT", "NEEDS_INPUT", "FAILED"
@@ -121,7 +139,8 @@ class ConceptPortfolioWorkerTests {
                 Duration.ofMillis(300), Duration.ofMillis(50), Duration.ofSeconds(2),
                 Duration.ofSeconds(1), 1, 1);
             worker = new ConceptPortfolioWorker(taskRuns, ai, materialization, publisher,
-                properties, executor);
+                properties, executor,
+                Clock.fixed(Instant.parse("2026-08-10T00:00:00Z"), ZoneOffset.UTC));
         }
 
         ExecutionResponse response() {

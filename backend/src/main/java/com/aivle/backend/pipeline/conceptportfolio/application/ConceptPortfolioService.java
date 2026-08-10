@@ -122,8 +122,9 @@ public class ConceptPortfolioService {
         int selectable = Math.toIntExact(concepts.countByRunIdAndSelectableTrueAndDeletedAtIsNull(run.getId()));
         return new RunResponse(run.getId(), run.getSourceIdeaBrief().getId(), run.getSourceSnapshotHash(),
             run.getProductStatus(), run.getRequestedMaxConcepts(), run.getProducedConceptCount(), selectable,
-            run.getOpenInputCount(), run.getInitialTaskRunId(), run.getDownstreamReadiness(),
-            run.getFailureCode(), nextAction(run.getProductStatus()),
+            run.getOpenInputCount(), run.getInitialTaskRunId(), run.getInitialTaskRunId(),
+            run.getActiveTaskRunId(), run.getDownstreamReadiness(),
+            run.getFailureCode(), nextAction(run),
             run.getUpdatedAt() == null ? null : run.getUpdatedAt().toInstant(ZoneOffset.UTC));
     }
 
@@ -134,12 +135,13 @@ public class ConceptPortfolioService {
             mapper.readTree(value.getLegalReviewJson()));
     }
 
-    private String nextAction(ConceptPortfolioRunStatus status) {
-        return switch (status) {
+    private String nextAction(ConceptPortfolioRun run) {
+        return switch (run.getProductStatus()) {
             case QUEUED, RUNNING -> "WAIT";
             case RESULTS_AVAILABLE, RESULTS_WITH_OPEN_INPUT -> "REVIEW_CONCEPTS";
             case NEEDS_INPUT -> "PROVIDE_REQUIRED_INPUTS";
-            case FAILED -> "RETRY_OR_START_NEW";
+            case FAILED -> "NO_ACCEPTED_CONCEPTS".equals(run.getFailureCode())
+                ? "EXPLORE_NEW_DIRECTIONS" : "RETRY_OR_START_NEW";
             case STALE -> "START_NEW_RUN";
         };
     }

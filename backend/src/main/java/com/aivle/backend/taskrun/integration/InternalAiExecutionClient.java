@@ -144,7 +144,9 @@ public class InternalAiExecutionClient {
     }
 
     RestClient clientFor(TaskType taskType) {
-        return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN ? conceptPortfolioClient : client;
+        return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN
+            || taskType == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE
+            ? conceptPortfolioClient : client;
     }
 
     JsonNode requestPayload(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {

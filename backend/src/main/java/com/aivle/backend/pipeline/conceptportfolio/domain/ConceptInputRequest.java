@@ -4,6 +4,7 @@ import com.aivle.backend.common.entity.BaseEntity;
 import com.aivle.backend.project.entity.Project;
 import jakarta.persistence.*;
 import java.util.UUID;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,8 @@ public class ConceptInputRequest extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT") private String affectedFieldsJson;
     @Column(columnDefinition = "TEXT") private String artifactJson;
     @Column(nullable = false, length = 71) private String requestHash;
+    private LocalDateTime answeredAt;
+    private LocalDateTime resolvedAt;
     @Column(length = 64) private String continuationTaskRunId;
 
     public static ConceptInputRequest open(ConceptPortfolioRun run,
@@ -63,5 +66,38 @@ public class ConceptInputRequest extends BaseEntity {
         value.artifactJson = artifactJson;
         value.requestHash = requestHash;
         return value;
+    }
+
+    public void answer(String taskRunId, LocalDateTime now) {
+        if (status != ConceptInputRequestStatus.OPEN || taskRunId == null || taskRunId.isBlank()) {
+            throw new IllegalStateException("Only an OPEN InputRequest can be answered");
+        }
+        status = ConceptInputRequestStatus.ANSWERED;
+        answeredAt = now;
+        continuationTaskRunId = taskRunId;
+    }
+
+    public void attachRetry(String taskRunId) {
+        if (status != ConceptInputRequestStatus.ANSWERED
+                || taskRunId == null || taskRunId.isBlank()) {
+            throw new IllegalStateException("Only an ANSWERED InputRequest can be retried");
+        }
+        continuationTaskRunId = taskRunId;
+    }
+
+    public void resolve(LocalDateTime now) {
+        if (status != ConceptInputRequestStatus.ANSWERED) {
+            throw new IllegalStateException("Only an ANSWERED InputRequest can be resolved");
+        }
+        status = ConceptInputRequestStatus.RESOLVED;
+        resolvedAt = now;
+    }
+
+    public void cancel(LocalDateTime now) {
+        if (status != ConceptInputRequestStatus.OPEN && status != ConceptInputRequestStatus.ANSWERED) {
+            throw new IllegalStateException("InputRequest cannot be cancelled");
+        }
+        status = ConceptInputRequestStatus.CANCELLED;
+        resolvedAt = now;
     }
 }

@@ -16,7 +16,7 @@ public record ConceptPortfolioExecutionProperties(
         lease = lease == null ? Duration.ofSeconds(90) : lease;
         heartbeatInterval = heartbeatInterval == null ? Duration.ofSeconds(20) : heartbeatInterval;
         taskTimeout = taskTimeout == null ? Duration.ofMinutes(20) : taskTimeout;
-        aiDeadline = aiDeadline == null ? Duration.ofMinutes(15) : aiDeadline;
+        aiDeadline = aiDeadline == null ? Duration.ofMinutes(14) : aiDeadline;
         executorThreads = executorThreads == null ? 2 : executorThreads;
         queueCapacity = queueCapacity == null ? 4 : queueCapacity;
         if (lease.isZero() || lease.isNegative() || heartbeatInterval.isZero()

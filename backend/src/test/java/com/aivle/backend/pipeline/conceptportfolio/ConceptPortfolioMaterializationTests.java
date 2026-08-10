@@ -118,7 +118,7 @@ class ConceptPortfolioMaterializationTests {
 
     @Test
     void technicalGlobalFailureFailsTaskAndPortfolioRun() {
-        ObjectNode result = acceptedResult(0);
+        ObjectNode result = acceptedResult(2);
         result.put("engineStatus", "FAILED");
         result.putObject("runSummary").put("failureCode", "RESULT_SCHEMA_INVALID");
 
@@ -126,6 +126,7 @@ class ConceptPortfolioMaterializationTests {
             .isEqualTo(ConceptPortfolioRunStatus.FAILED);
         verify(taskRuns).fail("task", "attempt", "token", "RESULT_SCHEMA_INVALID",
             "AI_RESULT_INVALID", false);
+        verifyNoInteractions(concepts, continuations, inputs);
         verify(run).materialize(eq(ConceptPortfolioRunStatus.FAILED), eq(0), eq(0),
             any(), any(), any(), any(), any(), any(), any(), any(),
             eq("RESULT_SCHEMA_INVALID"));

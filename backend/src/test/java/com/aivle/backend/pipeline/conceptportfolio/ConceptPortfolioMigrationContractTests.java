@@ -28,4 +28,14 @@ class ConceptPortfolioMigrationContractTests {
         assertThat(sql).contains("where is_current = true and deleted_at is null");
         assertThat(sql).doesNotContain("slot");
     }
+
+    @Test
+    void v11AddsOnlyRunLineageUniqueness() throws IOException {
+        String sql = Files.readString(Path.of(
+            "src/main/resources/db/migration/V11__harden_concept_portfolio_lineage.sql"))
+            .toLowerCase();
+        assertThat(sql).contains("alter table concept_portfolio_concepts");
+        assertThat(sql).contains("unique (run_id, lineage_id)");
+        assertThat(sql).doesNotContain("create table", "drop table", "truncate table");
+    }
 }

@@ -119,4 +119,37 @@ public class ConceptPortfolioRun extends BaseEntity {
         productStatus = ConceptPortfolioRunStatus.STALE;
         isCurrent = false;
     }
+
+    public void attachContinuationTask(String taskRunId) {
+        if (taskRunId == null || taskRunId.isBlank() || activeTaskRunId != null
+                || productStatus == ConceptPortfolioRunStatus.STALE) {
+            throw new IllegalStateException("Portfolio continuation cannot be attached");
+        }
+        activeTaskRunId = taskRunId;
+        if (producedConceptCount == 0) productStatus = ConceptPortfolioRunStatus.RUNNING;
+    }
+
+    public void completeContinuation(ConceptPortfolioRunStatus status, int produced, int openInputs,
+            String failureCode) {
+        if (status == null || status == ConceptPortfolioRunStatus.QUEUED
+                || status == ConceptPortfolioRunStatus.RUNNING || status == ConceptPortfolioRunStatus.STALE
+                || produced < 0 || produced > requestedMaxConcepts || openInputs < 0) {
+            throw new IllegalArgumentException("Portfolio continuation state is invalid");
+        }
+        productStatus = status;
+        producedConceptCount = produced;
+        openInputCount = openInputs;
+        this.failureCode = failureCode;
+        activeTaskRunId = null;
+    }
+
+    public void continuationFailed(int produced, int openInputs) {
+        producedConceptCount = produced;
+        openInputCount = openInputs;
+        productStatus = produced > 0
+            ? (openInputs > 0 ? ConceptPortfolioRunStatus.RESULTS_WITH_OPEN_INPUT
+                : ConceptPortfolioRunStatus.RESULTS_AVAILABLE)
+            : ConceptPortfolioRunStatus.NEEDS_INPUT;
+        activeTaskRunId = null;
+    }
 }

@@ -177,3 +177,16 @@ Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않�
 - Event 경계: 실제 Backend lifecycle에 근거한 queued/running/heartbeat/terminal JobEvent만 사용한다. P1 observer의 상세 trace는 아직 Python process 내부 seam이므로 cross-process progress transport는 후속 integration 과제이며 시간 기반 가짜 단계 event는 만들지 않는다.
 - 확인: CPV2 migration/seed/API/materialization/status/worker와 AI client routing 표적 테스트, 기존 Internal AI client 직접 영향 테스트 및 Java compile을 통과했다. Provider/MOLEG LIVE, Docker/Testcontainers, Backend 전체 테스트, Frontend 작업은 수행하지 않았다.
 - 다음 시작점: P4 Candidate 추가정보 응답·새 continuation TaskRun·동일 lineage merge다. P2+P3에서는 InputResponse schema만 준비했으며 continuation API/worker는 시작하지 않았다.
+
+## 9. P4 implementation status — PASS
+
+- P2/P3 hardening: Worker deadline은 UTC `Clock` 기준으로 계산하며 기본 AI deadline 14분, V2 read timeout 15분, Task timeout 20분 순서를 강제한다. Engine `FAILED`는 0 Concept와 actionable Candidate input이 있고 failureCode가 없는 경우만 `NEEDS_INPUT`으로 해석하며, 그 외 FAILED 결과에서는 Concept/InputRequest를 신규 materialize하지 않는다.
+- AI continuation: `CONCEPT_PORTFOLIO_V2_CONTINUE` strict task 계약을 추가했다. 저장된 Canonical Seed hash와 `DesignSpaceAnalysis`를 공개 `analyze_seed()`로 복원·대조하고 shared Context의 실제 `PortfolioPlan`을 사용한다. 사용자 `confirmedFacts`는 허용된 8개 business fact field에만 `USER_INPUT / LOCKED / ACCEPTED` semantics로 patch한 후 descriptor를 재생성한다.
+- Candidate-only 실행: 전체 `run_full()`이나 replan을 호출하지 않고 `max_replans=0`인 fresh engine에서 해당 Candidate의 `validate_candidates()`와 `review_legal_candidate()`만 실행한다. 기존 accepted Candidate snapshot은 comparison context로 전달한다.
+- 사용자 API: InputRequest 목록 조회, Candidate response 제출, technical failure retry API를 추가했다. Browser는 `confirmedFacts`, idempotency key, 선택적 note만 제출하며 Context/Artifact/Plan/Legal snapshot은 Backend DB에서 조립한다. GLOBAL input은 Candidate continuation으로 처리하지 않는다.
+- Durable continuation: 답변은 `concept_input_responses`에 저장하고 기존 terminal TaskRun을 변경하지 않은 채 같은 Portfolio subject의 새 TaskRun/Job을 만든다. initial/active Task ID를 Run API에서 구분하며 continuation도 V2 long-read client, shared bounded executor, heartbeat와 lease recovery를 사용한다.
+- 원자 merge: active claim 확인, TaskRun terminal, 이전 InputRequest resolve, ACCEPT Concept merge 또는 후속 OPEN InputRequest 생성, Run count/status 갱신을 한 transaction에서 처리한다. V11은 `(run_id, lineage_id)` uniqueness만 additive하게 추가했다.
+- 결과 의미: `ACCEPTED`는 기존 Concept를 보존하며 다음 display order로 추가하고, `NEEDS_INPUT`은 과거 질문을 resolve한 뒤 새 질문을 만든다. `EXCLUDED`는 Candidate-local 종료이며 0 Concept이면 `NO_ACCEPTED_CONCEPTS`; `SYSTEM_FAILURE`는 기존 Portfolio와 ANSWERED response를 보존해 retry할 수 있다.
+- Job actionability: 과거 immutable NEEDS_INPUT Job은 동일 subject의 latest TaskRun과 실제 OPEN InputRequest를 함께 확인해 actionable 여부를 결정한다. 상세 Core trace transport 없이 실제 queued/running/AI executing/materializing/terminal event만 발행한다.
+- 확인: P4 AI task-layer와 P1 직접 영향 테스트, CPV2 Backend API/domain/materialization/worker, long-read routing, Job query 표적 테스트 및 compile/static gate를 수행했다. Provider/MOLEG LIVE, Docker/Testcontainers, 전체 regression, Frontend는 실행하지 않았다.
+- 다음 시작점: 별도 지시의 P5+P6 명시적 Portfolio Concept selection, 7 Hypothesis, Delta Legal, 최종 Legal Report, Market Analysis Seed Snapshot이다.

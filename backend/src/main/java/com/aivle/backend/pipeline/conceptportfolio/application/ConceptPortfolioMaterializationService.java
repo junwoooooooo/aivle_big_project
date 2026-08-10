@@ -67,13 +67,18 @@ public class ConceptPortfolioMaterializationService {
                 || !run.getProject().getId().equals(context.projectId())) {
             throw new ContractViolation("PORTFOLIO_RUN_REFERENCE_INVALID");
         }
-        materializeConcepts(run, result.path("concepts"), result.path("legalSummaries"));
-        ConceptPortfolioContinuation continuation = materializeContinuation(run,
-            result.get("continuationContext"));
-        int openInputs = materializeInputs(run, continuation, result.path("requiredInputs"),
-            result.path("continuationArtifacts"));
+        int openInputs = 0;
+        if (productStatus != ConceptPortfolioRunStatus.FAILED) {
+            materializeConcepts(run, result.path("concepts"), result.path("legalSummaries"));
+            ConceptPortfolioContinuation continuation = materializeContinuation(run,
+                result.get("continuationContext"));
+            openInputs = materializeInputs(run, continuation, result.path("requiredInputs"),
+                result.path("continuationArtifacts"));
+        }
         JsonNode summary = result.path("runSummary");
-        run.materialize(productStatus, result.path("producedConceptCount").intValue(), openInputs,
+        int productConceptCount = productStatus == ConceptPortfolioRunStatus.FAILED
+            ? 0 : result.path("producedConceptCount").intValue();
+        run.materialize(productStatus, productConceptCount, openInputs,
             result.path("engineRunId").asText(null), result.path("engineStatus").asText(null),
             result.path("runtimeStage").asText(null), result.path("downstreamReadiness").asText(null),
             nullableText(result.get("engineDefaultConceptId")), result.path("contract").asText(),

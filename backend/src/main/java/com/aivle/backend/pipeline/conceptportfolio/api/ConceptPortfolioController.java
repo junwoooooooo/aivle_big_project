@@ -5,6 +5,7 @@ import static com.aivle.backend.pipeline.conceptportfolio.api.ConceptPortfolioAp
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioService;
+import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioContinuationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ConceptPortfolioController {
     private final ConceptPortfolioService service;
+    private final ConceptPortfolioContinuationService continuationService;
     private final CurrentUserProvider currentUser;
 
     @PostMapping
@@ -42,6 +44,33 @@ public class ConceptPortfolioController {
     public ApiResponse<List<ConceptResponse>> concepts(@PathVariable Long projectId,
             @PathVariable String runId, HttpServletRequest request) {
         return ApiResponse.success(service.concepts(currentUser.currentUserId(), projectId, runId), requestId(request));
+    }
+
+    @GetMapping("/{runId}/input-requests")
+    public ApiResponse<List<InputRequestResponse>> inputRequests(@PathVariable Long projectId,
+            @PathVariable String runId, HttpServletRequest request) {
+        return ApiResponse.success(continuationService.list(currentUser.currentUserId(), projectId, runId),
+            requestId(request));
+    }
+
+    @PostMapping("/{runId}/input-requests/{inputRequestId}/responses")
+    public ResponseEntity<ApiResponse<ContinuationAcceptedResponse>> respond(
+            @PathVariable Long projectId, @PathVariable String runId,
+            @PathVariable String inputRequestId, @Valid @RequestBody SubmitInputResponseRequest body,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
+            continuationService.submit(currentUser.currentUserId(), projectId, runId, inputRequestId, body),
+            requestId(request)));
+    }
+
+    @PostMapping("/{runId}/input-requests/{inputRequestId}/retry")
+    public ResponseEntity<ApiResponse<ContinuationAcceptedResponse>> retry(
+            @PathVariable Long projectId, @PathVariable String runId,
+            @PathVariable String inputRequestId, @Valid @RequestBody RetryContinuationRequest body,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
+            continuationService.retry(currentUser.currentUserId(), projectId, runId, inputRequestId, body),
+            requestId(request)));
     }
 
     private String requestId(HttpServletRequest request) { return request.getHeader("X-Request-Id"); }
