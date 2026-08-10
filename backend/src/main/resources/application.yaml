@@ -54,7 +54,7 @@ app:
       lease: ${CONCEPT_PORTFOLIO_TASK_LEASE:90s}
       heartbeat-interval: ${CONCEPT_PORTFOLIO_HEARTBEAT_INTERVAL:20s}
       task-timeout: ${CONCEPT_PORTFOLIO_TASK_TIMEOUT:20m}
-        ai-deadline: ${CONCEPT_PORTFOLIO_AI_DEADLINE:14m}
+      ai-deadline: ${CONCEPT_PORTFOLIO_AI_DEADLINE:14m}
       executor-threads: ${CONCEPT_PORTFOLIO_EXECUTOR_THREADS:2}
       queue-capacity: ${CONCEPT_PORTFOLIO_EXECUTOR_QUEUE_CAPACITY:4}
   cors:
