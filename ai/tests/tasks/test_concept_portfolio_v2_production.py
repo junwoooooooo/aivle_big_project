@@ -417,7 +417,7 @@ def test_dispatcher_accepts_cpv2_and_preserves_existing_task_types(monkeypatch):
 
     called = []
 
-    async def fake_execute(value):
+    async def fake_execute(value, **_kwargs):
         called.append(value)
         return {"contract": "concept-portfolio-v2-production-result-v1", "schemaVersion": "1.0"}
 
@@ -466,7 +466,7 @@ def test_dispatcher_reuses_safe_validation_error_for_invalid_input(monkeypatch):
 def test_dispatcher_normalizes_production_contract_error(monkeypatch):
     import app.tasks.concept_portfolio_v2 as task_module
 
-    async def invalid_result(_value):
+    async def invalid_result(_value, **_kwargs):
         raise ConceptPortfolioProductionContractError("CONTINUATION_CONTEXT_INCOMPLETE")
 
     monkeypatch.setattr(task_module, "execute_concept_portfolio_v2", invalid_result)
@@ -490,7 +490,7 @@ def test_dispatcher_normalizes_production_contract_error(monkeypatch):
 def test_dispatcher_keeps_provider_failure_handling(monkeypatch):
     import app.tasks.concept_portfolio_v2 as task_module
 
-    async def provider_failure(_value):
+    async def provider_failure(_value, **_kwargs):
         raise ProviderFailure(
             "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True
         )

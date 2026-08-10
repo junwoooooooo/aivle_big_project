@@ -227,3 +227,27 @@ Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않�
 - Trace 경계: P1 Observer는 여전히 Python process 내부 seam이다. Cross-process 상세 trace transport와 Project-level SSE는 후속 UI/live-sync 단계 과제이며, 연결 전 Backend는 시간 기반 가짜 중간 단계를 생성하지 않는다.
 - 확인: P5+P6 AI task-layer targeted test, V12/domain/Market bridge Backend targeted test, P4 continuation 직접 영향 test, Python compile, Java compile과 static gate를 실행했다. Provider/MOLEG LIVE, Docker/Testcontainers, 전체 regression, Frontend는 실행하지 않았다.
 - 다음 시작점: 별도 지시의 Production UI Cutover + Project Live Sync다. 이번 단계에서는 Market Analysis 실제 실행, Frontend, legacy retirement를 시작하지 않는다.
+
+## 11. Browser Runtime Verification Findings
+
+- Work Center의 compact 목록과 상세 drawer가 서로 다른 렌더 경계를 사용해 실제 선택 작업의 event log가 열리지 않았고, mount/replay/manual refresh를 모두 새 상태처럼 알리는 비정본 notice가 있었다.
+- Idea Brief 확정 직후 module status query가 즉시 갱신되지 않았고, 다음 공식 단계인 사업안 검토로 이동하는 명시적 CTA가 부족했다.
+- P1 observer는 Python process 내부 hook까지만 존재해 Core trace가 Backend `JobEvent`와 browser SSE까지 전달되지 않았다.
+- Candidate 추가정보 화면은 질문의 대상 사업안·요약·이유를 충분히 보여주지 못했고, `affectedFields`가 비어 있으면 허용 8개 field 전체를 임의 선택지로 제시했다.
+- 비교 화면, 구조화 SOM, 최종 Legal Report가 저장된 정본을 사용자용 구조로 충분히 투영하지 못했다.
+- `BUILD_HANDOFF` 502의 직접 원인은 Python production canonical hash가 숫자의 trailing zero/exponent와 Unicode NFC를 정규화하는 반면 Java 검증 hash는 Jackson 표기 그대로 계산한 cross-language hash 불일치였다. 구조화 SOM의 `240000000.0` 같은 값이 이 경로를 재현했다.
+- C4 provenance 감사에서 `physicalActivities`는 선택된 `ConceptPortfolioConcept.candidateSnapshotJson.candidate`에서 Final Report로 deep-copy된다. Backend adapter의 기본값, 다른 Candidate, stale selection의 합성 경로는 없었다. 따라서 관찰된 비정상 배송/방문/설치 의미는 Provider가 만든 선택 Candidate snapshot의 semantic quality 이슈이며 Frozen Core/provider prompt 변경이 필요한 별도 품질 backlog다.
+
+## 12. Runtime Remediation Status — IMPLEMENTATION READY
+
+- Work Center는 `ProjectLayout`이 소유하는 단일 bottom sheet로 통합했다. 목록·상세는 같은 `useProjectJobs` 정본을 사용하며 backdrop/ESC/닫기, 240ms opening/closing phase, body scroll lock과 trigger focus 복귀를 지원한다. replay나 단순 선택으로 가짜 갱신 notice를 만들지 않는다.
+- Idea Brief 확정은 module status를 다시 읽고 `/concepts`로 이동하는 `사업안 검토로 이동` CTA를 표시한다. 자동 redirect는 하지 않으며 프로젝트 목록은 window focus 때 canonical REST를 조용히 재조회한다.
+- Initial CPV2 run은 기존 read-only observer의 event를 bounded in-process queue에 넣는다. 별도 async sender가 고정 internal endpoint `POST /internal/v1/ai/task-progress`로 전달하며 2초 timeout·bounded flush를 적용한다. callback 실패나 queue 포화는 경고만 남기고 Core 결과 authority를 깨지 않는다.
+- Backend callback은 internal bearer token, TaskRun/correlation/current TaskAttempt/RUNNING authority를 검증한다. stale 또는 terminal attempt trace는 무시하고 기존 `JobEventPublisher`에 RUNNING event만 추가한다. trace는 terminal Product state authority가 아니며 기존 job/project SSE와 replay cursor를 그대로 사용한다.
+- Trace UI는 실제 stage/action/reason을 coarse 사용자 문구로 매핑한다. raw prompt/provider payload/secret/내부 Candidate·lineage 용어와 가짜 percent는 전달하지 않는다. terminal materialization 직전에는 reviewed/prepared/needs-input/excluded 실제 집계 summary를 남긴다.
+- Candidate InputRequest projection은 대상 사업안 이름·한 줄 요약·실제 question/reason/safe summary를 제공한다. 비어 있는 `affectedFields`는 `INPUT_TARGET_UNRESOLVED`로 표현하고 Browser는 8개 전체 fallback이나 제출 UI를 만들지 않는다.
+- 비교는 선택한 2~3개 사업안의 실제 Candidate/Legal field를 행 단위로 보여주며 4번째 추가를 차단한다. SOM 가정은 typed number/currency/period/basis/assumption control로 편집하고 raw JSON을 노출하지 않는다.
+- Final Legal Report는 결론, 역할, 거래·결제 흐름, 개인정보·물리 활동, 파트너·자격, 통제·고지·금지, 광고 주의, 미확정 사실, 공식 근거 링크, Delta 이력을 사람용 section으로 표시한다. `SOURCE_PARTIAL`을 명시하고 source hash는 접힌 기술 정보에만 둔다.
+- `BUILD_HANDOFF`의 Market Seed cross-language 검증에만 Python과 동일한 number/NFC canonical hash를 적용했다. 기존 저장 hash semantics는 변경하지 않았다. 실제 AI result → Backend materialization → `CONCEPT_PORTFOLIO_V2` Market Seed 저장 연결을 표적 테스트로 고정했다.
+- 현재 Selection이 없는 정상 초기 조회는 `RESOURCE_NOT_FOUND`로 정규화해 validation 422로 오인되지 않게 했다. Project event burst는 180ms 창에서 한 번의 revision으로 합치고 duplicate/old event ID는 무시한다.
+- DB migration V10~V13, Frozen Core 알고리즘, Market Analysis 알고리즘과 selection authority는 변경하지 않았다. Provider/MOLEG LIVE와 browser full E2E는 사용자 runtime 재검증 단계로 남긴다.

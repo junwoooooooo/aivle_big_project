@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 
 import { Button, LoadingState } from '../../../shared/ui/index.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
@@ -8,6 +9,7 @@ import MissingRequiredFieldsForm from '../components/MissingRequiredFieldsForm.j
 import QuestionGroup from '../components/QuestionGroup.jsx';
 import useIdeaIntake, { IDEA_FAILURE_KIND } from '../hooks/useIdeaIntake.js';
 import { IDEA_INTAKE_SCREEN_STATE } from '../model/ideaIntakeModel.js';
+import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import '../styles/idea-intake.css';
 
 function StatePanel({ tone = 'info', title, description, action, role = 'status' }) {
@@ -16,10 +18,22 @@ function StatePanel({ tone = 'info', title, description, action, role = 'status'
 
 export default function IdeaIntakePage() {
   const { projectId } = useParams();
+  const outlet = useOutletContext() ?? {};
   const intake = useIdeaIntake(projectId);
+  const confirmedRefreshed = useRef(false);
+  useEffect(() => {
+    if (intake.screenState !== IDEA_INTAKE_SCREEN_STATE.CONFIRMED) {
+      confirmedRefreshed.current = false;
+      return;
+    }
+    if (!confirmedRefreshed.current) {
+      confirmedRefreshed.current = true;
+      outlet.moduleState?.retry?.();
+    }
+  }, [intake.screenState, outlet.moduleState]);
 
   return <section className="idea-intake-page" aria-labelledby="idea-intake-title">
-    <header className="idea-page-heading"><p>1단계 · Market Seed</p><h2 id="idea-intake-title">아이디어 입력</h2><span>최소 Seed를 입력하고 안전 확인과 AI 해석을 검토합니다.</span></header>
+    <header className="idea-page-heading"><p>1단계 · 아이디어 정리</p><h2 id="idea-intake-title">아이디어 입력</h2><span>핵심 조건을 입력하고 안전 확인과 AI 해석을 검토합니다.</span></header>
     <div className="visually-hidden" aria-live="polite">현재 화면 상태: {intake.screenState}</div>
 
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.LOADING && <LoadingState label="아이디어 Draft를 준비하고 있습니다." />}
@@ -52,6 +66,6 @@ export default function IdeaIntakePage() {
       description={intake.draft.safetyReview?.userFacingReason || '안전한 방향으로 아이디어를 다시 구성해 주세요.'}
       action={<Button type="button" variant="outline" onClick={intake.restart}>아이디어 다시 입력</Button>} />}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.FAILED && <StatePanel tone="danger" role="alert" title="아이디어 상태를 확인하지 못했습니다" description={intake.failureMessage || '잠시 후 다시 시도해 주세요.'} action={<Button type="button" variant="outline" onClick={intake.failureKind === IDEA_FAILURE_KIND.DERIVATION_FAILURE ? intake.reanalyze : intake.refresh}>{intake.failureKind === IDEA_FAILURE_KIND.DERIVATION_FAILURE ? '다시 분석하기' : '상태 다시 확인하기'}</Button>} />}
-    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="Market Seed와 AI 해석을 확인했습니다." description="이제 확정 조건을 보존하며 컨셉 후보를 만들 수 있습니다." />}
+    {intake.screenState === IDEA_INTAKE_SCREEN_STATE.CONFIRMED && <StatePanel tone="success" title="아이디어 정리가 완료되었습니다." description="확정한 조건을 보존한 상태로 사업안 검토를 시작할 수 있습니다." action={<Link className="ui-button ui-button--primary" to={projectRoutes.concepts(projectId)}>사업안 검토로 이동</Link>} />}
   </section>;
 }

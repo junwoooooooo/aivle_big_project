@@ -1,10 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import BusinessProposalWorkspace, { CandidateInput, LegalReport } from './BusinessProposalWorkspace.jsx';
+import BusinessProposalWorkspace, { CandidateInput, HypothesisField, LegalReport } from './BusinessProposalWorkspace.jsx';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 
 vi.mock('../hooks/useConceptPortfolio.js', () => ({ useConceptPortfolio: vi.fn() }));
+vi.mock('../../../shared/async-events/index.js', () => ({
+  jobEventMessage: (event) => event.message ?? event.messageKey,
+  useJobEvents: () => ({ events: [], transport: 'idle' }),
+}));
 
 const base = (overrides = {}) => ({ loading: false, error: null, busy: false,
   run: { runId: 'run', productStatus: 'RESULTS_AVAILABLE', producedConceptCount: 1, openInputCount: 0 },
@@ -30,12 +34,31 @@ describe('CandidateInput', () => {
     fireEvent.change(screen.getByLabelText('답변할 사업정보'), { target: { value: 'paymentFlow' } });
     expect(onDraft).toHaveBeenCalledWith({ field: 'paymentFlow', value: '' });
   });
+  it('does not offer a guessed eight-field selector when the target is unresolved', () => {
+    render(<CandidateInput request={{ status: 'OPEN', question: '실제 운영 정보를 확인해 주세요.', reason: '법률 판단에 필요합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ field: '', value: '' }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
+    expect(screen.getByText('방문 돌봄 연결')).toBeInTheDocument();
+    expect(screen.getByText('돌봄 제공자를 연결합니다.')).toBeInTheDocument();
+    expect(screen.getByText('법률 판단에 필요합니다.')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('필요한 정보 항목을 특정하지 못했습니다.');
+    expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '정보 제출' })).not.toBeInTheDocument();
+  });
   it('retries an answered continuation without asking for the same fact', () => {
     const onRetry = vi.fn();
     render(<CandidateInput request={{ status: 'ANSWERED', nextAction: 'RETRY_CONTINUATION' }} draft={{ field: '', value: '' }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={onRetry} busy={false} />);
     fireEvent.click(screen.getByText('추가 사업정보 반영 다시 시도'));
     expect(onRetry).toHaveBeenCalled();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+});
+
+describe('structured hypothesis fields', () => {
+  it('renders SOM as typed controls rather than raw JSON', () => {
+    const view = render(<HypothesisField type="PRE_MARKET_SOM" value={{ proposedValue: { amount: 240000000, currency: 'KRW', period: '3년', calculationBasis: '시장 × 점유율', assumptions: ['초기 지역'] }, decisionStatus: 'PROPOSED' }} onEdit={vi.fn()} onAlternative={vi.fn()} disabled={false} />);
+    expect(screen.getByDisplayValue('240000000')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('KRW')).toBeInTheDocument();
+    expect(view.container.textContent).toContain('240,000,000 KRW · 3년');
+    expect(view.container.textContent).not.toContain('{"amount"');
   });
 });
 
@@ -62,15 +85,20 @@ describe('BusinessProposalWorkspace', () => {
 describe('Final Legal Report actual contract', () => {
   it('renders actual Backend keys and values', () => {
     const report = { basisDate: '2026-08-11', report: {
-      finalLegalConclusion: '조건부 가능', personalDataUsage: ['예약 정보 이용'],
+      finalLegalConclusion: { productionStatus: 'CONDITIONAL', safeSummary: '조건부 가능', legalSourceStatus: 'SOURCE_PARTIAL' }, personalDataUsage: ['예약 정보 이용'],
       requiredPartnersAndQualifications: ['자격 보유 파트너'], prohibitedVariants: ['무자격 직접 제공'],
-      advertisingExpressionCautions: ['보장 표현 금지'], unknownFacts: ['판매 주체 미확정'],
-      officialEvidenceReferences: [{ title: '공식 근거' }], deltaLegalHistory: [{ revision: 3 }],
+      advertisingExpressionCautions: { allowedClaims: ['검토된 범위 표현'], requiredDisclosures: ['보장 표현 금지'] }, unknownFacts: ['판매 주체 미확정'],
+      officialEvidenceReferences: [{ lawName: '전자상거래법', articleReference: '제13조', boundedProvisionSummary: '사업자 정보를 고지합니다.', officialSourceUri: 'https://law.go.kr/example' }],
+      deltaLegalHistory: [{ reviewToken: 'delta-3', safeSummary: '가격 변경 영향 검토 완료' }], sourceHashes: { selectedConcept: 'sha256:abc' },
       transactionFlow: ['고객→플랫폼'], paymentFlow: ['고객→판매자'],
     } };
     const view = render(<LegalReport report={report} />);
-    for (const text of ['조건부 가능', '예약 정보 이용', '자격 보유 파트너', '무자격 직접 제공', '보장 표현 금지', '판매 주체 미확정', '공식 근거', 'revision', '고객→플랫폼', '고객→판매자']) {
+    for (const text of ['조건부 가능', '예약 정보 이용', '자격 보유 파트너', '무자격 직접 제공', '보장 표현 금지', '판매 주체 미확정', '전자상거래법', '가격 변경 영향 검토 완료', '고객→플랫폼', '고객→판매자']) {
       expect(view.container.textContent).toContain(text);
     }
+    expect(screen.getByRole('alert')).toHaveTextContent('조회 범위에는 제한');
+    expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/example');
+    expect(view.container.querySelector('pre')).toBeNull();
+    expect(screen.getByText('정본 검증 정보').closest('details')).not.toHaveAttribute('open');
   });
 });

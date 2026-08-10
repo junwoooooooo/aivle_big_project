@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
@@ -15,27 +14,41 @@ const STATUS_LABELS = {
 const displayStatus = (job) => job.presentationStatus ?? job.status;
 const targetHref = (projectId, route) => `/app/projects/${encodeURIComponent(projectId)}${route || '/overview'}`;
 
-function JobList({ title, jobs, selectedJobId, onSelect, projectId }) {
-  return <section className="job-center__group"><h3>{title}</h3>{jobs.length === 0 ? <p>해당 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId} data-status={displayStatus(job)}><button type="button" aria-pressed={selectedJobId === job.jobId} onClick={() => onSelect(job.jobId)}><strong>{jobTaskLabel(job.taskType)}</strong><span>{STATUS_LABELS[displayStatus(job)] ?? displayStatus(job)}</span><small>{formatLocalTime(job.startedAt ?? job.updatedAt)}</small></button><Link to={targetHref(projectId, job.targetRoute)}>이동</Link></li>)}</ul>}</section>;
+function JobList({ title, jobs, selectedJobId, onSelect, projectId, links = true }) {
+  return <section className="job-center__group"><h3>{title}</h3>{jobs.length === 0 ? <p>해당 작업이 없습니다.</p> : <ul>{jobs.map((job) => <li key={job.jobId} data-status={displayStatus(job)}><button type="button" aria-pressed={selectedJobId === job.jobId} onClick={(event) => onSelect(job.jobId, event.currentTarget)}><strong>{jobTaskLabel(job.taskType)}</strong><span>{STATUS_LABELS[displayStatus(job)] ?? displayStatus(job)}</span><small>{formatLocalTime(job.startedAt ?? job.updatedAt)}</small></button>{links && <Link to={targetHref(projectId, job.targetRoute)}>이동</Link>}</li>)}</ul>}</section>;
 }
 
-export default function JobCenter({ projectId, onTerminal, refreshKey = 0, compact = false }) {
-  const jobs = useProjectJobs(projectId, { onTerminal, refreshKey });
-  const [detailOpen, setDetailOpen] = useState(false);
-  const selectedJob = [...jobs.active, ...jobs.recent].find((job) => job.jobId === jobs.selectedJobId);
-  const select = (jobId) => { jobs.selectJob(jobId); if (compact) setDetailOpen(true); };
-  const props = { selectedJobId: jobs.selectedJobId, onSelect: select, projectId };
+function JobGroups({ jobs, projectId, onSelect, links = true }) {
+  const props = { selectedJobId: jobs.selectedJobId, onSelect, projectId, links };
   const running = jobs.active.filter((job) => ['QUEUED', 'READY', 'RUNNING'].includes(job.status));
   const needsInput = jobs.active.filter((job) => job.status === 'NEEDS_INPUT' && job.actionable !== false);
-  const recent = jobs.recent.slice(0, 5);
+  return <div className="job-center__groups"><JobList title="현재 진행" jobs={running} {...props} /><JobList title="입력 필요" jobs={needsInput} {...props} /><JobList title="최근 작업" jobs={jobs.recent.slice(0, 10)} {...props} /></div>;
+}
 
-  return <section id="project-task-center" className={`pipeline-task-center job-center${compact ? ' job-center--compact' : ''}`} aria-labelledby="task-center-title">
-    <header><div><p>WORK CENTER</p><h2 id="task-center-title">프로젝트 작업</h2></div><button type="button" onClick={jobs.refresh}>새로고침</button></header>
-    {jobs.notice && <p className="job-center__notice" role="status">작업 상태가 갱신되었습니다.</p>}
-    {jobs.loading && <p>작업 목록을 불러오고 있습니다.</p>}
-    {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
-    {!jobs.loading && !jobs.error && <div className="job-center__groups"><JobList title="현재 진행" jobs={running} {...props} /><JobList title="입력 필요" jobs={needsInput} {...props} /><JobList title="최근 작업" jobs={recent} {...props} /></div>}
-    {compact && jobs.selectedJobId && <button type="button" className="job-center__detail-button" onClick={() => setDetailOpen(true)}>선택 작업 상세 보기</button>}
-    {jobs.selectedJobId && (!compact || detailOpen) && <div className={compact ? 'job-center__drawer-backdrop' : undefined} onClick={compact ? () => setDetailOpen(false) : undefined}><section className={`job-center__timeline${compact ? ' job-center__drawer' : ''}`} aria-live="polite" onClick={(event) => event.stopPropagation()}><header><div><h3>작업 상세</h3>{selectedJob && <small>{jobTaskLabel(selectedJob.taskType)} · {STATUS_LABELS[displayStatus(selectedJob)] ?? displayStatus(selectedJob)} · {formatLocalTime(selectedJob.startedAt ?? selectedJob.updatedAt)}</small>}</div><span>{jobs.events.transport ?? '연결 준비'}</span>{compact && <button type="button" onClick={() => setDetailOpen(false)}>닫기</button>}</header>{jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>연결 재시도</button>}{jobs.events.events.length === 0 ? <p>수신된 상세 이벤트가 없습니다. 서버의 작업 상태를 기준으로 표시합니다.</p> : <ol>{jobs.events.events.map((event) => <li key={`${event.eventId ?? event.sequence}-${event.occurredAt}`}><time>{formatLocalTime(event.occurredAt)}</time><strong>{jobEventMessage(event)}</strong><span>{STATUS_LABELS[event.status] ?? event.status}</span></li>)}</ol>}</section></div>}
-  </section>;
+function JobDetail({ jobs, selectedJob, onBack }) {
+  return <section className="job-center__timeline" aria-live="polite"><header><div><button type="button" onClick={onBack}>← 전체 작업</button><h3>작업 상세</h3>{selectedJob && <small>{jobTaskLabel(selectedJob.taskType)} · {STATUS_LABELS[displayStatus(selectedJob)] ?? displayStatus(selectedJob)} · 시작 {formatLocalTime(selectedJob.startedAt ?? selectedJob.updatedAt)}</small>}</div><span>연결 {jobs.events.transport ?? '준비 중'}</span></header>{jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>연결 재시도</button>}{jobs.events.events.length === 0 ? <p>수신된 상세 이벤트가 없습니다. 서버의 작업 상태를 기준으로 표시합니다.</p> : <ol>{jobs.events.events.map((event) => <li key={`${event.eventId ?? event.sequence}-${event.occurredAt}`}><time>{formatLocalTime(event.occurredAt)}</time><strong>{jobEventMessage(event)}</strong><span>{STATUS_LABELS[event.status] ?? event.status}</span></li>)}</ol>}</section>;
+}
+
+export default function JobCenter({ projectId, onTerminal, refreshKey = 0, compact = false,
+  sheet, onOpenList, onOpenJob, onCloseSheet, onShowList }) {
+  const jobs = useProjectJobs(projectId, { onTerminal, refreshKey });
+  const selectedJob = [...jobs.active, ...jobs.recent].find((job) => job.jobId === jobs.selectedJobId);
+  const select = (jobId, trigger) => { jobs.selectJob(jobId); if (compact) onOpenJob?.(jobId, trigger); };
+
+  return <>
+    <section id="project-task-center" className={`pipeline-task-center job-center${compact ? ' job-center--compact' : ''}`} aria-labelledby="task-center-title">
+      <header><div><p>WORK CENTER</p><h2 id="task-center-title">프로젝트 작업</h2></div><button type="button" onClick={jobs.refresh}>새로고침</button></header>
+      {jobs.loading && <p>작업 목록을 불러오고 있습니다.</p>}
+      {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
+      {!jobs.loading && !jobs.error && <JobGroups jobs={jobs} projectId={projectId} onSelect={select} links={!compact} />}
+      {compact && <button type="button" className="job-center__detail-button" onClick={onOpenList}>전체 작업 보기</button>}
+    </section>
+    {sheet?.mounted && <div className="work-center-sheet__backdrop" data-phase={sheet.phase} onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}>
+      <section className="work-center-sheet" data-phase={sheet.phase} role="dialog" aria-modal="true" aria-labelledby="work-center-sheet-title">
+        <header><div><p>WORK CENTER</p><h2 id="work-center-sheet-title">{sheet.focusJobId ? '작업 상세' : '프로젝트 작업 전체'}</h2></div><button type="button" aria-label="작업 센터 닫기" onClick={onCloseSheet}>닫기</button></header>
+        {sheet.focusJobId ? <JobDetail jobs={jobs} selectedJob={selectedJob} onBack={onShowList} />
+          : <JobGroups jobs={jobs} projectId={projectId} onSelect={(jobId, trigger) => { jobs.selectJob(jobId); onOpenJob(jobId, trigger); }} />}
+      </section>
+    </div>}
+  </>;
 }

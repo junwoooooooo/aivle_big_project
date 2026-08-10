@@ -294,7 +294,7 @@ public class ConceptPortfolioSelectionService {
     private ConceptPortfolioSelection lockedCurrent(Long owner,Long project,Long id){ requireOwned(owner,project); ConceptPortfolioSelection value=selections.findLocked(id).orElseThrow(()->new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
         if(!value.getProjectId().equals(project)||!value.isCurrent())throw new BusinessException(ErrorCode.MODULE_INPUT_STALE); return value; }
     private ConceptPortfolioSelection requireSelection(Long owner,Long project,Long id){requireOwned(owner,project);return selections.findByIdAndProjectIdAndDeletedAtIsNull(id,project).orElseThrow(()->new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));}
-    private ConceptPortfolioSelection currentSelection(Long project){return selections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(project).orElseThrow(()->new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));}
+    private ConceptPortfolioSelection currentSelection(Long project){return selections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(project).orElseThrow(()->new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));}
     private ConceptPortfolioConcept concept(ConceptPortfolioSelection selection){return concepts.findByIdAndProjectIdAndDeletedAtIsNull(selection.getConceptId(),selection.getProjectId()).orElseThrow();}
     private PortfolioHypothesisType hypothesisType(String text){try{return PortfolioHypothesisType.valueOf(text);}catch(Exception e){throw new BusinessException(ErrorCode.HYPOTHESIS_NOT_FOUND);}}
     private SelectionView view(ConceptPortfolioSelection value){return view(value,concept(value).getConceptName(),value.getActiveTaskRunId());}

@@ -1,0 +1,69 @@
+package com.aivle.backend.jobevent;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.aivle.backend.project.entity.Project;
+import com.aivle.backend.taskrun.domain.*;
+import com.aivle.backend.taskrun.repository.*;
+import java.time.Instant;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+
+class AiTaskProgressServiceTests {
+    private final TaskRunRepository runs = mock(TaskRunRepository.class);
+    private final TaskAttemptRepository attempts = mock(TaskAttemptRepository.class);
+    private final JobEventPublisher events = mock(JobEventPublisher.class);
+    private final AiTaskProgressService service = new AiTaskProgressService(runs, attempts, events);
+
+    @Test
+    void acceptsOnlyCurrentRunningAttemptAndPublishesThroughExistingJobEvent() {
+        TaskRun run = run(TaskRunState.RUNNING, "attempt");
+        TaskAttempt attempt = mock(TaskAttempt.class);
+        when(attempt.getState()).thenReturn(TaskAttemptState.RUNNING);
+        when(runs.findById("run")).thenReturn(Optional.of(run));
+        when(attempts.findByIdAndTaskRunId("attempt", "run")).thenReturn(Optional.of(attempt));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
+        verify(events).publish(argThat(command -> command.jobId().equals("run")
+            && command.messageKey().equals("job.concept-portfolio.trace.directions")
+            && command.messageParams().get("traceSequence").equals(1)));
+    }
+
+    @Test
+    void ignoresStaleAttemptAndLateTerminalProgress() {
+        TaskRun current = run(TaskRunState.RUNNING, "new-attempt");
+        when(runs.findById("run")).thenReturn(Optional.of(current));
+        assertThat(service.accept(request("old-attempt"))).isEqualTo(AiTaskProgressService.Outcome.IGNORED);
+        TaskRun terminal = run(TaskRunState.SUCCEEDED, "attempt");
+        when(runs.findById("run")).thenReturn(Optional.of(terminal));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.IGNORED);
+        verifyNoInteractions(events);
+    }
+
+    @Test
+    void rejectsUnknownRunAndMapsActualReasonCodes() {
+        when(runs.findById("run")).thenReturn(Optional.empty());
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.NOT_FOUND);
+        assertThat(AiTaskProgressService.messageKey("PLAN_VALIDATING", "REJECTED", "DUPLICATE"))
+            .isEqualTo("job.concept-portfolio.trace.excluded-duplicate");
+    }
+
+    private AiTaskProgressController.ProgressRequest request(String attemptId) {
+        return new AiTaskProgressController.ProgressRequest("run", attemptId, "correlation", 1,
+            "PLANNING", "DRAFTS_GENERATED", "PASS", "safe", null, null, null, null, Instant.now());
+    }
+
+    private TaskRun run(TaskRunState state, String attemptId) {
+        TaskRun run = mock(TaskRun.class);
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(42L);
+        when(run.getId()).thenReturn("run"); when(run.getProject()).thenReturn(project);
+        when(run.getTaskType()).thenReturn(TaskType.CONCEPT_PORTFOLIO_V2_RUN);
+        when(run.getCorrelationId()).thenReturn("correlation");
+        when(run.getState()).thenReturn(state); when(run.getCurrentAttemptId()).thenReturn(attemptId);
+        when(run.terminal()).thenReturn(state == TaskRunState.SUCCEEDED || state == TaskRunState.FAILED
+            || state == TaskRunState.NEEDS_INPUT || state == TaskRunState.CANCELLED || state == TaskRunState.TIMED_OUT);
+        return run;
+    }
+}

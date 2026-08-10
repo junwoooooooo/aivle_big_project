@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import ValidationError
+
 from app.concept_portfolio_v2 import ConceptPortfolioEngine, ProviderGateway, ProviderMode
 from app.concept_portfolio_v2.adapters import CurrentDownstreamAdapter
 from app.concept_portfolio_v2.models import HypothesisDecision
@@ -87,6 +89,16 @@ class ConceptPortfolioSelectionActionFacade:
             value.hypotheses,
             legal,
         )
+        if handoff.compatibility != "PASS":
+            from .service import ConceptPortfolioProductionContractError
+            raise ConceptPortfolioProductionContractError(
+                "AI_RESULT_INVALID",
+                validation_fields=[{
+                    "path": "result.handoff.compatibility",
+                    "expectedType": "PASS",
+                    "category": "domain_invariant",
+                }],
+            )
         market = handoff.marketAnalysisSeedSnapshot
         binding = value.productionBinding
         source_hash = production_compatible_snapshot_hash({
@@ -121,9 +133,29 @@ def _require_seven(values: list[HypothesisDecision]) -> None:
 async def execute_concept_portfolio_v2_selection_action(
     task_input: dict[str, Any], *, engine: ConceptPortfolioEngine | None = None
 ) -> dict[str, Any]:
+    from .service import ConceptPortfolioProductionContractError
     try:
         result = await ConceptPortfolioSelectionActionFacade(engine=engine).run(task_input)
         return result.model_dump(mode="json")
+    except ConceptPortfolioProductionContractError:
+        raise
+    except ValidationError as failure:
+        fields = []
+        for issue in failure.errors()[:12]:
+            fields.append({
+                "path": "result." + ".".join(str(part) for part in issue.get("loc", ())),
+                "expectedType": "valid contract value",
+                "category": str(issue.get("type", "invalid"))[:80],
+            })
+        raise ConceptPortfolioProductionContractError(
+            "AI_RESULT_INVALID", validation_fields=fields
+        ) from failure
     except (AttributeError, KeyError, TypeError, ValueError) as failure:
-        from .service import ConceptPortfolioProductionContractError
-        raise ConceptPortfolioProductionContractError("AI_RESULT_INVALID") from failure
+        raise ConceptPortfolioProductionContractError(
+            "AI_RESULT_INVALID",
+            validation_fields=[{
+                "path": "result.handoff",
+                "expectedType": "valid production handoff",
+                "category": failure.__class__.__name__,
+            }],
+        ) from failure

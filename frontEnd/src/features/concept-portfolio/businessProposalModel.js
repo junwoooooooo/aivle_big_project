@@ -45,7 +45,7 @@ export function openCandidateRequests(requests, candidateId) {
 export function candidateFieldOptions(request) {
   const affected = Array.isArray(request?.affectedFields) ? request.affectedFields : [];
   const allowed = [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
-  return allowed.length > 0 ? allowed : Object.keys(CANDIDATE_FACT_FIELDS);
+  return allowed;
 }
 
 export function candidateDefaultField(request) {
@@ -66,7 +66,10 @@ export function serializeCandidateFact(field, rawValue) {
 }
 
 export function hypothesisValueText(value) {
-  return typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2);
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.join(', ');
+  if (value == null) return '';
+  return String(value);
 }
 
 export function parseHypothesisValue(value) {
@@ -79,9 +82,52 @@ export function buildHypothesisChanges(hypotheses, edits) {
     const hypothesis = byType[type];
     if (!hypothesis || hypothesis.locked || !HYPOTHESIS_TYPES.includes(type)) return [];
     const original = hypothesis.finalValue ?? hypothesis.proposedValue;
-    const edited = parseHypothesisValue(rawValue);
+    const edited = typeof rawValue === 'string' ? parseHypothesisValue(rawValue) : rawValue;
     return JSON.stringify(edited) === JSON.stringify(original) ? [] : [[type, edited]];
   }));
+}
+
+export function hypothesisDisplay(type, value) {
+  if (value == null) return '';
+  if (type === 'PRE_MARKET_SOM_SHARE' && typeof value === 'object') {
+    const share = value.targetSharePercent == null ? '미입력' : `${value.targetSharePercent}%`;
+    const horizon = value.horizonYears == null ? '' : ` · ${value.horizonYears}년`;
+    return `${share}${horizon}`;
+  }
+  if (type === 'PRE_MARKET_SOM' && typeof value === 'object') {
+    const amount = Number(value.amount);
+    const formatted = Number.isFinite(amount) ? new Intl.NumberFormat('ko-KR').format(amount) : '미입력';
+    return `${formatted} ${value.currency ?? ''}${value.period ? ` · ${value.period}` : ''}`.trim();
+  }
+  return hypothesisValueText(value);
+}
+
+const displayValue = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean).join(' · ');
+  if (value && typeof value === 'object') return Object.values(value).filter((item) => typeof item !== 'object' && item != null).join(' · ');
+  return value == null || value === '' ? '정보 없음' : String(value);
+};
+
+export function comparisonRows(concepts) {
+  const definitions = [
+    ['사업안 한 줄 정의', (c) => c.conceptDefinition ?? c.summary],
+    ['주요 사용자', (c) => c.targetUsers], ['해결 문제', (c) => c.problemScenario],
+    ['사용 상황', (c) => c.useContext ?? c.researchScope], ['핵심 가치', (c) => c.coreValue],
+    ['제공 방식', (c) => c.solutionMechanism], ['핵심 기능', (c) => c.featureSet],
+    ['플랫폼 역할', (c) => c.platformRole], ['서비스 제공 주체', (c) => c.providerRole],
+    ['판매·중개 구조', (c) => [c.sellerRole, c.intermediaryRole].filter(Boolean)],
+    ['거래 흐름', (c) => c.transactionFlow], ['결제 흐름', (c) => c.paymentFlow],
+    ['수익 모델', (c) => c.revenueModel], ['가격·과금 구조', (c) => c.price],
+    ['파트너 의존', (c) => c.partnerRequirements], ['운영 방식', (c) => c.operatingModel],
+    ['개인정보 이용', (c) => c.personalDataUsage], ['물리 활동', (c) => c.physicalActivities],
+    ['선택 전 법률·규제 요약', (_, concept) => concept.legalReview?.safeSummary],
+    ['필수 통제', (_, concept) => concept.legalReview?.requiredControls],
+    ['필수 파트너·자격', (_, concept) => concept.legalReview?.requiredPartnersAndQualifications],
+  ];
+  return definitions.map(([label, read]) => ({
+    label,
+    values: concepts.map((concept) => displayValue(read(concept.candidate?.candidate ?? concept.candidate ?? {}, concept))),
+  })).filter((row) => row.values.some((value) => value !== '정보 없음'));
 }
 
 export function hypothesisDecisionLabel(hypothesis) {

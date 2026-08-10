@@ -6,17 +6,25 @@ import { createProjectEventsApi } from './projectEventsApi.js';
 
 const RECONNECT_MS = 1500;
 const POLL_MS = 5000;
+const INVALIDATION_WINDOW_MS = 180;
 
 export function useProjectEvents(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createProjectEventsApi(client), [client]);
   const cursor = useRef(0);
+  const pendingCursor = useRef(0);
+  const invalidationTimer = useRef(null);
   const [state, setState] = useState({ revision: 0, transport: 'connecting', error: null });
   const invalidate = useCallback((event) => {
     const next = Number(event?.eventId ?? event?.sseId);
-    if (!Number.isSafeInteger(next) || next <= cursor.current) return;
-    cursor.current = next;
-    setState((value) => ({ ...value, revision: value.revision + 1, error: null }));
+    if (!Number.isSafeInteger(next) || next <= cursor.current || next <= pendingCursor.current) return;
+    pendingCursor.current = next;
+    clearTimeout(invalidationTimer.current);
+    invalidationTimer.current = setTimeout(() => {
+      if (pendingCursor.current <= cursor.current) return;
+      cursor.current = pendingCursor.current;
+      setState((value) => ({ ...value, revision: value.revision + 1, error: null }));
+    }, INVALIDATION_WINDOW_MS);
   }, []);
 
   useEffect(() => {
@@ -28,7 +36,7 @@ export function useProjectEvents(projectId) {
       try {
         const page = await api.poll(projectId, cursor.current, { signal: controller.signal });
         for (const event of page.events ?? []) invalidate(event);
-        if (Number.isSafeInteger(page.nextEventId)) cursor.current = Math.max(cursor.current, page.nextEventId);
+        if (Number.isSafeInteger(page.nextEventId)) invalidate({ eventId: page.nextEventId });
         setState((value) => ({ ...value, transport: 'polling', error: null }));
       } catch (error) {
         if (!controller.signal.aborted) setState((value) => ({ ...value, transport: 'offline', error }));
@@ -53,12 +61,14 @@ export function useProjectEvents(projectId) {
       }
     };
     cursor.current = 0;
+    pendingCursor.current = 0;
     setState({ revision: 0, transport: 'connecting', error: null });
     connect();
     return () => {
       controller.abort();
       clearTimeout(reconnectTimer);
       clearTimeout(pollTimer);
+      clearTimeout(invalidationTimer.current);
     };
   }, [api, client, invalidate, projectId]);
 

@@ -76,6 +76,7 @@ public class ConceptPortfolioWorker {
             publish(context, "MATERIALIZING", "job.concept-portfolio.materializing",
                 JobEvent.Status.RUNNING, null);
             ConceptPortfolioRunStatus status = materialization.complete(claim, context, response);
+            publishSummary(context, response);
             if (status == ConceptPortfolioRunStatus.NEEDS_INPUT) {
                 publish(context, "NEEDS_INPUT", "job.concept-portfolio.needs-input",
                     JobEvent.Status.NEEDS_INPUT, null);
@@ -170,5 +171,22 @@ public class ConceptPortfolioWorker {
             JobEvent.Status status, String code) {
         events.publish(new JobEventPublisher.Command(context.projectId(), context.taskRunId(),
             context.taskRunId(), stage, key, status, key, Map.of(), code));
+    }
+
+    private void publishSummary(TaskRunWorkerContext context, ExecutionResponse response) {
+        var result = response.result();
+        Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("prepared", result.path("producedConceptCount").asInt(0));
+        params.put("needsInput", result.path("requiredInputs").isArray()
+            ? result.path("requiredInputs").size() : 0);
+        params.put("excluded", result.path("preLegalExclusions").isArray()
+            ? result.path("preLegalExclusions").size() : 0);
+        var summary = result.path("runSummary");
+        if (summary.path("candidateGenerated").isIntegralNumber()) {
+            params.put("reviewed", summary.path("candidateGenerated").asInt());
+        }
+        events.publish(new JobEventPublisher.Command(context.projectId(), context.taskRunId(),
+            context.taskRunId(), "SUMMARY", "job.concept-portfolio.summary",
+            JobEvent.Status.RUNNING, "job.concept-portfolio.summary", params, null));
     }
 }

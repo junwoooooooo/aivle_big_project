@@ -11,6 +11,7 @@ from app.concept_portfolio_v2.snapshot_hash import production_compatible_snapsho
 from app.tasks.concept_portfolio_v2.observer import ProductionObservedConceptPortfolioEngine
 from app.tasks.concept_portfolio_v2.selection_models import ConceptPortfolioSelectionActionInput
 from app.tasks.concept_portfolio_v2.selection_service import ConceptPortfolioSelectionActionFacade
+from app.tasks.concept_portfolio_v2.service import ConceptPortfolioProductionContractError
 from tests.tasks.test_concept_portfolio_v2_production import PRODUCTION_INPUT
 
 
@@ -114,8 +115,9 @@ def test_alternative_increments_version_without_auto_confirmation(selected_bundl
 @pytest.mark.parametrize("approved,expected_status", [(True, "PASSED"), (False, "REJECTED")])
 def test_delta_legal_preserves_approved_and_nonapproved_domain_result(selected_bundle, approved, expected_status):
     candidate, legal = selected_bundle
-    prepared = asyncio.run(ConceptPortfolioSelectionActionFacade().run(prepare_input(selected_bundle)))
-    confirmed = asyncio.run(ConceptPortfolioSelectionActionFacade().run({
+    facade = ConceptPortfolioSelectionActionFacade(engine=ProductionObservedConceptPortfolioEngine())
+    prepared = asyncio.run(facade.run(prepare_input(selected_bundle)))
+    confirmed = asyncio.run(facade.run({
         "action": "CONFIRM_HYPOTHESES",
         "hypotheses": [item.model_dump(mode="json") for item in prepared.hypotheses],
         "edits": {"TARGET_REGION": "서울"}, "confirmAll": True,
@@ -174,6 +176,67 @@ def test_build_handoff_binds_real_product_ids_and_keeps_canonical_contract(selec
     assert (market["projectId"], market["selectionId"], market["conceptId"], market["snapshotId"]) == (
         42, 17, "product-concept", "market-seed")
     assert result.marketSeedSnapshotHash == production_compatible_snapshot_hash(market)
+
+
+def test_build_handoff_applies_only_supplied_delta_result(selected_bundle):
+    candidate, legal = selected_bundle
+    facade = ConceptPortfolioSelectionActionFacade(engine=ProductionObservedConceptPortfolioEngine())
+    prepared = asyncio.run(facade.run(prepare_input(selected_bundle)))
+    confirmed = asyncio.run(facade.run({
+        "action": "CONFIRM_HYPOTHESES",
+        "hypotheses": [item.model_dump(mode="json") for item in prepared.hypotheses],
+        "edits": {}, "confirmAll": True,
+    }))
+    delta = DeltaLegalResult(
+        reviewToken="sha256:" + "d" * 64,
+        candidateId=candidate.candidateId,
+        hypothesisTypes=["PRICE"], status="PASSED", approved=True,
+        legalReview=legal,
+    )
+    result = asyncio.run(facade.run({
+        "action": "BUILD_HANDOFF", "seed": PRODUCTION_INPUT.seed.model_dump(mode="json"),
+        "selectedCandidate": candidate.model_dump(mode="json"),
+        "baseLegalReview": legal.model_dump(mode="json"),
+        "hypotheses": [item.model_dump(mode="json") for item in confirmed.hypotheses],
+        "approvedDeltaLegalResults": [delta.model_dump(mode="json")],
+        "productionBinding": {"projectId": 42, "portfolioSelectionId": 17,
+            "portfolioConceptId": "product-concept", "marketSeedSnapshotId": "market-seed"},
+    }))
+    assert result.handoff.marketAnalysisSeedSnapshot["legalResult"]["deltaLegalReviews"] == [
+        delta.model_dump(mode="json")
+    ]
+
+
+def test_handoff_domain_failure_exposes_only_safe_field_diagnostic(selected_bundle, monkeypatch):
+    candidate, legal = selected_bundle
+    prepared = asyncio.run(ConceptPortfolioSelectionActionFacade().run(prepare_input(selected_bundle)))
+    confirmed = asyncio.run(ConceptPortfolioSelectionActionFacade().run({
+        "action": "CONFIRM_HYPOTHESES",
+        "hypotheses": [item.model_dump(mode="json") for item in prepared.hypotheses],
+        "edits": {}, "confirmAll": True,
+    }))
+    class FailedAdapter:
+        def build(self, *args):
+            from app.concept_portfolio_v2.models import DownstreamHandoff
+            return DownstreamHandoff(compatibility="FAIL", structureStatus="STRUCTURE_PASS",
+                contractStatus="CONTRACT_FAIL", marketAnalysisSeedSnapshot={},
+                marketingSourceSnapshot={}, sourceProvenance={}, fieldMapping=[],
+                validationErrors=["sensitive business detail"])
+    monkeypatch.setattr("app.tasks.concept_portfolio_v2.selection_service.CurrentDownstreamAdapter", FailedAdapter)
+    facade = ConceptPortfolioSelectionActionFacade()
+    with pytest.raises(ConceptPortfolioProductionContractError) as raised:
+        asyncio.run(facade.run({
+            "action": "BUILD_HANDOFF", "seed": PRODUCTION_INPUT.seed.model_dump(mode="json"),
+            "selectedCandidate": candidate.model_dump(mode="json"),
+            "baseLegalReview": legal.model_dump(mode="json"),
+            "hypotheses": [item.model_dump(mode="json") for item in confirmed.hypotheses],
+            "productionBinding": {"projectId": 42, "portfolioSelectionId": 17,
+                "portfolioConceptId": "product-concept", "marketSeedSnapshotId": "market-seed"},
+        }))
+    assert raised.value.validation_fields == [{
+        "path": "result.handoff.compatibility", "expectedType": "PASS",
+        "category": "domain_invariant",
+    }]
 
 
 def test_selection_action_contract_is_strict_and_dispatcher_registered(selected_bundle):

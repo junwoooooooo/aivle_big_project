@@ -90,6 +90,15 @@ class ConceptPortfolioSelectionServiceP5Tests {
         verifyNoInteractions(runs,concepts);}
 
     @Test
+    void noCurrentSelectionUsesResourceNotFoundInsteadOfAValidationError(){
+        Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(42L,7L)).thenReturn(Optional.of(f.run.getProject()));
+        assertThatThrownBy(()->service.current(7L,42L))
+            .isInstanceOfSatisfying(BusinessException.class,
+                failure->assertThat(failure.getErrorCode()).isEqualTo(com.aivle.backend.common.exception.ErrorCode.RESOURCE_NOT_FOUND));
+    }
+
+    @Test
     void replaysSameSelectionKeyAndRejectsDifferentPayload(){Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
         ConceptPortfolioSelection existing=portfolioSelection(f,"same-key",HASH);ReflectionTestUtils.setField(existing,"id",99L);
         when(selections.findByProjectIdAndIdempotencyKeyAndDeletedAtIsNull(42L,"same-key")).thenReturn(Optional.of(existing));
@@ -145,6 +154,32 @@ class ConceptPortfolioSelectionServiceP5Tests {
         assertThat(service.get(7L,42L,17L).nextAction()).isEqualTo("WAIT");
         assertThatThrownBy(()->service.confirm(7L,42L,17L,new ConfirmHypothesesRequest(mapper.createObjectNode(),true,"confirm-key")))
             .isInstanceOf(BusinessException.class);}
+
+    @Test
+    void finalReportPreservesPhysicalActivityAndPrivacyOnlyFromTheSelectedCandidateSnapshot(){
+        Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
+        String candidateJson="{\"candidateId\":\"candidate\",\"candidate\":{\"physicalActivities\":[\"방문 설치 없음\"],\"personalDataUsage\":[\"예약 연락처만 사용\"],\"transactionFlow\":[\"고객→플랫폼\"],\"paymentFlow\":[\"고객→판매자\"]}}";
+        ConceptPortfolioConcept selected=ConceptPortfolioConcept.create(f.run,1,"candidate","lineage","plan",null,
+            "사업안","summary","IMPLEMENTABLE",candidateJson,"{\"candidateId\":\"candidate\",\"route\":\"ACCEPT\"}",HASH);
+        ConceptPortfolioSelection selection=ConceptPortfolioSelection.create(42L,f.run.getId(),selected.getId(),
+            selected.getCandidateId(),HASH,HASH,"reason",HASH,"selection",7L,clock.instant());
+        ReflectionTestUtils.setField(selection,"id",17L);
+        ReflectionTestUtils.setField(selection,"status",ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(42L,7L)).thenReturn(Optional.of(f.run.getProject()));
+        when(selections.findLocked(17L)).thenReturn(Optional.of(selection));
+        when(runs.findLocked(f.run.getId())).thenReturn(Optional.of(f.run));
+        when(concepts.findByIdAndProjectIdAndDeletedAtIsNull(selected.getId(),42L)).thenReturn(Optional.of(selected));
+        when(hypotheses.findAllBySelectionIdAndDeletedAtIsNullOrderByHypothesisTypeAscProposalVersionDesc(17L))
+            .thenReturn(readyHypotheses(selection));
+        when(deltas.findAllBySelectionIdAndDeletedAtIsNullOrderByCreatedAtAsc(17L)).thenReturn(List.of());
+        when(reports.save(any())).thenAnswer(invocation->invocation.getArgument(0));
+
+        LegalReportView view=service.finalizeReport(7L,42L,17L);
+        assertThat(view.report().path("physicalActivities")).hasSize(1);
+        assertThat(view.report().path("physicalActivities").get(0).asText()).isEqualTo("방문 설치 없음");
+        assertThat(view.report().path("personalDataUsage").get(0).asText()).isEqualTo("예약 연락처만 사용");
+        assertThat(view.report().toString()).doesNotContain("배송", "다른 후보");
+    }
 
     private Fixture fixture(ConceptPortfolioRunStatus status,int produced,boolean selectable){User user=User.create("owner@example.com","hash","owner");ReflectionTestUtils.setField(user,"id",7L);
         Project project=Project.create(user,"project","desc","industry");ReflectionTestUtils.setField(project,"id",42L);

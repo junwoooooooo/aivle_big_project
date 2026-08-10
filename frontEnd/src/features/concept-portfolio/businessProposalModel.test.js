@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
-  candidateFieldOptions, candidateRequests, hypothesisDecisionLabel, portfolioRunPresentation,
-  serializeCandidateFact,
+  candidateFieldOptions, candidateRequests, comparisonRows, hypothesisDecisionLabel,
+  hypothesisDisplay, portfolioRunPresentation, serializeCandidateFact, toggleComparedConcept,
 } from './businessProposalModel.js';
 
 describe('candidate input strict contract', () => {
@@ -17,7 +17,7 @@ describe('candidate input strict contract', () => {
     expect(candidateDefaultField({ affectedFields: ['sellerRole', 'paymentFlow'] })).toBe('');
     expect(candidateFieldOptions({ affectedFields: ['sellerRole', 'paymentFlow'] })).toEqual(['sellerRole', 'paymentFlow']);
     expect(candidateDefaultField({ affectedFields: [] })).toBe('');
-    expect(candidateFieldOptions({ affectedFields: [] })).toEqual(Object.keys(CANDIDATE_FACT_FIELDS));
+    expect(candidateFieldOptions({ affectedFields: [] })).toEqual([]);
   });
   it('never creates a field outside the eight-field contract', () => {
     expect(serializeCandidateFact('unknownField', 'value')).toBeNull();
@@ -27,6 +27,21 @@ describe('candidate input strict contract', () => {
   });
   it('keeps answered technical failures retryable without reopening input', () => {
     expect(candidateRequests([{ scope: 'CANDIDATE', status: 'ANSWERED', nextAction: 'RETRY_CONTINUATION' }])).toHaveLength(1);
+  });
+});
+
+describe('proposal comparison and structured SOM', () => {
+  it('keeps comparison to three and uses actual candidate and legal fields', () => {
+    expect(toggleComparedConcept(['a', 'b', 'c'], 'd')).toEqual(['a', 'b', 'c']);
+    const rows = comparisonRows([{ conceptId: 'a', candidate: { targetUsers: ['소상공인'], paymentFlow: ['고객→플랫폼'] }, legalReview: { safeSummary: '중개 고지 필요' } },
+      { conceptId: 'b', candidate: { targetUsers: ['창업자'], paymentFlow: ['고객→판매자'] }, legalReview: { safeSummary: '판매자 책임' } }]);
+    expect(rows.find((row) => row.label === '주요 사용자').values).toEqual(['소상공인', '창업자']);
+    expect(rows.find((row) => row.label === '결제 흐름').values).toEqual(['고객→플랫폼', '고객→판매자']);
+    expect(rows.find((row) => row.label === '선택 전 법률·규제 요약').values).toEqual(['중개 고지 필요', '판매자 책임']);
+  });
+  it('formats structured SOM without exposing JSON', () => {
+    expect(hypothesisDisplay('PRE_MARKET_SOM_SHARE', { targetSharePercent: 2.5, horizonYears: 3 })).toBe('2.5% · 3년');
+    expect(hypothesisDisplay('PRE_MARKET_SOM', { amount: 240000000, currency: 'KRW', period: '3년' })).toBe('240,000,000 KRW · 3년');
   });
 });
 

@@ -183,9 +183,20 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 ConceptPortfolioProductionContractError,
                 execute_concept_portfolio_v2,
             )
+            from app.tasks.concept_portfolio_v2.progress_sender import (
+                progress_sender_from_environment,
+            )
             try:
-                result = await execute_concept_portfolio_v2(body.input)
-            except ConceptPortfolioProductionContractError:
+                async with progress_sender_from_environment(
+                    task_run_id=body.taskRunId,
+                    task_attempt_id=body.taskAttemptId,
+                    correlation_id=correlation,
+                ) as progress:
+                    result = await execute_concept_portfolio_v2(
+                        body.input,
+                        event_sink=progress.emit if progress.enabled else None,
+                    )
+            except ConceptPortfolioProductionContractError as failure:
                 logger.warning(
                     "CPV2 production result contract invalid taskRunId=%s taskAttemptId=%s correlationId=%s",
                     body.taskRunId,
@@ -195,7 +206,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 )
                 return internal_error(
                     correlation, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
-                    body.taskRunId, body.taskAttemptId,
+                    body.taskRunId, body.taskAttemptId, failure.validation_fields,
                 )
         elif body.taskType == "CONCEPT_PORTFOLIO_V2_CONTINUE":
             from app.tasks.concept_portfolio_v2 import (
@@ -204,14 +215,14 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             )
             try:
                 result = await execute_concept_portfolio_v2_continuation(body.input)
-            except ConceptPortfolioProductionContractError:
+            except ConceptPortfolioProductionContractError as failure:
                 logger.warning(
                     "CPV2 continuation result contract invalid taskRunId=%s taskAttemptId=%s correlationId=%s",
                     body.taskRunId, body.taskAttemptId, correlation, exc_info=True,
                 )
                 return internal_error(
                     correlation, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
-                    body.taskRunId, body.taskAttemptId,
+                    body.taskRunId, body.taskAttemptId, failure.validation_fields,
                 )
         elif body.taskType == "CONCEPT_PORTFOLIO_V2_SELECTION_ACTION":
             from app.tasks.concept_portfolio_v2 import (
@@ -220,14 +231,14 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             )
             try:
                 result = await execute_concept_portfolio_v2_selection_action(body.input)
-            except ConceptPortfolioProductionContractError:
+            except ConceptPortfolioProductionContractError as failure:
                 logger.warning(
                     "CPV2 selection action result contract invalid taskRunId=%s taskAttemptId=%s correlationId=%s",
                     body.taskRunId, body.taskAttemptId, correlation, exc_info=True,
                 )
                 return internal_error(
                     correlation, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
-                    body.taskRunId, body.taskAttemptId,
+                    body.taskRunId, body.taskAttemptId, failure.validation_fields,
                 )
         elif body.taskType == "CONCEPT_CANDIDATE":
             from app.tasks.concept_candidate import execute_concept_candidate

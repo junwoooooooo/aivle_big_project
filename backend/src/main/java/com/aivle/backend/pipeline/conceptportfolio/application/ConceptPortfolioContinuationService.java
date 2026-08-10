@@ -254,18 +254,33 @@ public class ConceptPortfolioContinuationService {
         String question = first(value.getPresentationQuestionKo(), value.getSourceQuestion(),
             value.getSafeSummary());
         String nextAction;
+        JsonNode affectedFields = mapper.readTree(value.getAffectedFieldsJson());
         if ("GLOBAL".equals(value.getScope())) nextAction = "UPDATE_IDEA_BRIEF";
+        else if (value.getStatus() == ConceptInputRequestStatus.OPEN && affectedFields.isEmpty())
+            nextAction = "INPUT_TARGET_UNRESOLVED";
         else if (value.getStatus() == ConceptInputRequestStatus.OPEN) nextAction = "PROVIDE_REQUIRED_INPUT";
         else if (value.getStatus() == ConceptInputRequestStatus.ANSWERED
                 && value.getContinuationTaskRunId() != null
                 && value.getContinuationTaskRunId().equals(run.getActiveTaskRunId())) nextAction = "WAIT";
         else if (value.getStatus() == ConceptInputRequestStatus.ANSWERED) nextAction = "RETRY_CONTINUATION";
         else nextAction = "NONE";
+        JsonNode artifact = value.getArtifactJson() == null ? mapper.missingNode()
+            : mapper.readTree(value.getArtifactJson());
+        JsonNode candidate = artifact.path("candidateSnapshot").path("candidate");
+        String displayName = first(text(candidate, "conceptName"), "추가 검토 중인 사업안");
+        String oneLine = first(text(candidate, "conceptDefinition"), text(candidate, "introduction"),
+            value.getSafeSummary());
         return new InputRequestResponse(value.getId(), value.getCandidateId(), value.getLineageId(),
-            value.getScope(), value.getStatus().name(), question,
-            mapper.readTree(value.getUnknownFactsJson()), mapper.readTree(value.getAffectedFieldsJson()),
+            displayName, oneLine, value.getScope(), value.getStatus().name(), question,
+            value.getReason(), value.getSafeSummary(),
+            mapper.readTree(value.getUnknownFactsJson()), affectedFields,
             nextAction, value.getContinuationTaskRunId(), utc(value.getCreatedAt()),
             utc(value.getAnsweredAt()), utc(value.getResolvedAt()));
+    }
+
+    private String text(JsonNode value, String field) {
+        JsonNode child = value.path(field);
+        return child.isTextual() && !child.asText().isBlank() ? child.asText() : null;
     }
 
     private String first(String... values) {

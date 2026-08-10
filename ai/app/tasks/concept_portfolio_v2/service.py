@@ -27,6 +27,11 @@ from .observer import ProductionObservedConceptPortfolioEngine, TraceSink
 class ConceptPortfolioProductionContractError(RuntimeError):
     """Core 실패와 구분되는 Production result materialization 계약 오류."""
 
+    def __init__(self, reason: str, *, validation_fields: list[dict[str, str]] | None = None):
+        super().__init__(reason)
+        self.reason = reason
+        self.validation_fields = list(validation_fields or [])[:12]
+
 
 class ConceptPortfolioProductionFacade:
     def __init__(

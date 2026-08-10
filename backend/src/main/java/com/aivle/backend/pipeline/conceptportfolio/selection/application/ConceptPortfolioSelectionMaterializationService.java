@@ -98,7 +98,7 @@ public class ConceptPortfolioSelectionMaterializationService {
                 var report=reports.findBySelectionIdAndStatusAndDeletedAtIsNull(selection.getId(),"CURRENT")
                     .orElseThrow(ContractViolation::new);
                 String id=market.path("snapshotId").asText(); String snapshotHash=result.path("marketSeedSnapshotHash").asText();
-                require(snapshotHash.equals(hasher.hash(market)));
+                require(snapshotHash.equals(hasher.productionCompatibleHash(market)));
                 marketSeeds.save(MarketAnalysisSeedSnapshot.createPortfolio(id,selection.getProjectId(),selection.getId(),
                     selection.getConceptId(),report.getId(),"2.0",market.path("sourceSnapshotHash").asText(),snapshotHash,
                     mapper.writeValueAsString(market),context.ownerId(),Instant.now(clock)));
