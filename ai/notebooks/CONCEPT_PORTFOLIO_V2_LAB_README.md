@@ -93,14 +93,17 @@ $env:LEGAL_REGISTRY_VERSION = "legal-registry-v1"
 3. Safety와 Seed Analysis를 실행합니다.
 4. Plan pool LIVE 1회만 실행하고 Draft/정규화 Plan 및 locks를 확인합니다.
 5. Portfolio Family와 `DUPLICATE/VARIANT/DISTINCT` 관계, adaptive replenishment 여부를 확인합니다. VARIANT는 정상 후보입니다.
-6. Candidate 1-only smoke를 실행해 31개 semantics, user lock, provenance, plan fidelity를 확인합니다.
-7. 확인 후 remaining Candidates를 실행합니다.
-8. Legal Candidate 1-only smoke를 실행해 evidence, route, controls, redesign requirements를 확인합니다.
-9. 확인 후 remaining Legal을 실행합니다.
-10. 필요 시 Redesign/Replan을 실행하고 Final Portfolio를 확인합니다.
-11. Concept를 수동 선택하고 7개 hypothesis를 확인합니다.
-12. Market/Marketing handoff의 `CONTRACT_PASS`를 확인합니다.
-13. One-click LIVE Run All은 위 단계가 모두 성공한 뒤 마지막에만 사용합니다.
+6. Candidate 1-only smoke를 실행해 31개 semantics, user lock, provenance와 actual descriptor를 확인합니다. Fidelity 최종 판정은 전체 Candidate Recovery에서 수행합니다.
+7. 확인 후 remaining Candidates를 생성합니다.
+8. Candidate Recovery에서 초기 accepted 수, semantic fidelity, targeted regeneration, reserve 활성화, replenishment 및 최종 Candidate 수를 확인합니다.
+9. C1 Legal Fact Pattern의 역할·거래·결제·개인정보·물리 활동·파트너·자격·광고 필드를 확인합니다.
+10. `RUN_FULL_LEGAL_C1=True`로 C1 route, production status, controls, qualifications, disclosures, evidence와 diagnostics를 확인합니다.
+11. `RUN_REMAINING_LEGAL=True`로 나머지 Legal을 실행합니다.
+12. 필요 시 Redesign/Replan을 실행하고 Final Portfolio를 확인합니다.
+13. Concept를 수동 선택하고 7개 hypothesis를 확인합니다.
+14. 필요한 경우 Delta Legal을 실행합니다.
+15. Market/Marketing handoff의 `CONTRACT_PASS`를 확인합니다.
+16. One-click LIVE Run All은 위 단계가 모두 성공한 뒤 마지막에만 사용합니다.
 
 `auto_confirm_hypotheses=True`는 **Lab shortcut**입니다. MOCK 자동 회귀를 위한 편의 기능일 뿐 사용자 확인이나 production 결정을 뜻하지 않습니다. Core 기본값과 Notebook의 `CONFIRM_ALL_PROPOSED`는 모두 `False`입니다. 사용자가 이를 `True`로 바꾸거나 `HYPOTHESIS_EDITS`를 입력해야 확정됩니다. 법률 민감 hypothesis를 편집하면 `RUN_DELTA_LEGAL=True`로 실제 `review_delta_legal`을 완료하기 전까지 downstream 계약은 실패합니다.
 
@@ -122,6 +125,8 @@ LIVE 성공 응답은 설정된 recordings 디렉터리에 operation, operationV
 - `VARIANT`: 같은 Family/Architecture를 공유하지만 target/use/value/offer가 의미 있게 다른 정상 후보
 - `DISTINCT`: solution 또는 주요 Architecture 선택이 다른 정상 후보
 - `OUT_OF_SCOPE`: OpportunityKernel을 실제로 벗어나 제외된 Plan/Candidate
+- `RECOVERABLE_FIDELITY_FAILURE`: 동일 Plan targeted regeneration 1회 대상
+- Candidate fidelity `AMBIGUOUS`: 바로 탈락하지 않고 semantic fidelity로 판정
 - `LEGAL_REDESIGN_REQUIRED`: 같은 lineage 안에서 최소 mechanics 보완
 - `LEGAL_REPLAN_REQUIRED`: 실패 plan을 다른 plan으로 교체
 - Trace에는 chain-of-thought, 키, 토큰, Authorization header가 포함되지 않습니다.
@@ -146,8 +151,11 @@ LIVE 성공 응답은 설정된 recordings 디렉터리에 operation, operationV
 
 - Provider Plan draft는 canonical code나 Family를 생성하지 않습니다.
 - System-owned `GenericConceptNormalizer`가 Plan과 actual Candidate를 같은 `ConceptThesis + BusinessArchitecture` 계약으로 정규화합니다.
+- 규칙 근거가 없는 Architecture 축은 직접운영 같은 기본값으로 추정하지 않고 `OTHER/LOW`로 유지하며 필요한 항목만 batch semantic classifier를 사용합니다.
 - 같은 Family 최대 2개는 선택 preference이며 hard reject가 아닙니다.
+- Plan은 base quality와 현재 Portfolio에 대한 marginal coverage를 결합한 greedy score로 선택되며 생성 순서는 품질 기준이 아닙니다.
 - 초기 validation 후 최대치가 부족하면 제한된 round에서 새 Thesis 또는 Architecture Plan을 보충합니다.
+- Candidate 실패는 fidelity regeneration → reserve Plan → adaptive Plan replenishment 순으로 복구합니다.
 - 의미 있는 후보가 더 없으면 5개를 억지로 만들지 않고 `READY_LIMITED`로 종료합니다.
 - 관계 기반 Plan reject는 `DUPLICATE`, `OUT_OF_SCOPE`, `LOCK_CONFLICT`입니다.
 

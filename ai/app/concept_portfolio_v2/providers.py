@@ -20,6 +20,7 @@ from .language_policy import candidate_language_failures, plan_language_failures
 from .models import (
     CanonicalSeed, DesignSpaceAnalysis, ExplorationBreadth, LegalReview, LegalRoute,
     PlanDraftPool, PortfolioPlan, PortfolioPlanDraft, ProviderMode, ProviderUsage,
+    SemanticArchitectureBatch, SemanticArchitectureClassification,
     SemanticDistinctnessResult, SemanticFidelityResult,
 )
 from .schema_preflight import assert_strict_compatible
@@ -29,6 +30,8 @@ PLAN_PROMPT_VERSION = "concept-portfolio-generic-plan-v3"
 CANDIDATE_PROMPT_VERSION = "concept-portfolio-generic-candidate-v3"
 DISTINCTNESS_PROMPT_VERSION = "concept-portfolio-relation-v3"
 FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v3"
+FIDELITY_REGEN_PROMPT_VERSION = "concept-portfolio-fidelity-regeneration-v1"
+ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v1"
 LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
 
 
@@ -47,6 +50,12 @@ class PortfolioProvider(ABC):
                      candidate_index: int) -> ConceptCandidateDraft: ...
 
     @abstractmethod
+    async def regenerate_candidate(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
+                                   plan: PortfolioPlan, previous: ConceptCandidateResult,
+                                   failure_summary: str, missing_identity: list[str],
+                                   candidate_index: int) -> ConceptCandidateDraft: ...
+
+    @abstractmethod
     async def review_legal(self, candidate_id: str, candidate: ConceptCandidateResult,
                            seed: CanonicalSeed) -> LegalReview: ...
 
@@ -61,6 +70,9 @@ class PortfolioProvider(ABC):
     @abstractmethod
     async def judge_fidelity(self, plan: PortfolioPlan,
                              candidate: ConceptCandidateResult) -> SemanticFidelityResult: ...
+
+    @abstractmethod
+    async def classify_architectures(self, items: list[dict[str, Any]]) -> list[SemanticArchitectureClassification]: ...
 
     @abstractmethod
     async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
@@ -138,6 +150,18 @@ GENERIC_TEMPLATES = [
 def _locks(seed: CanonicalSeed) -> dict[str, str]:
     return {item.fieldKey: item.value for item in seed.fields
             if item.decisionState == "LOCKED" and item.value.strip()}
+
+
+def _fidelity_context(plan: PortfolioPlan, candidate: ConceptCandidateResult) -> dict[str, Any]:
+    plan_fields = ("targetSegment", "problemFocus", "useContext", "valueProposition",
+                   "offerThesis", "solutionThesis", "differentiatingMechanics")
+    candidate_fields = ("targetUsers", "problemScenario", "coreValue", "conceptDefinition",
+                        "solutionMechanism", "featureSet", "operatingModel")
+    return {
+        "plan": {key: getattr(plan, key) for key in plan_fields},
+        "candidate": {key: getattr(candidate, key) for key in candidate_fields},
+        "planDescriptorSummary": plan.descriptor.model_dump(mode="json"),
+    }
 
 
 def _plan(seed: CanonicalSeed, index: int, template_index: int | None = None) -> PortfolioPlanDraft:
@@ -235,6 +259,10 @@ class MockPortfolioProvider(PortfolioProvider):
             draft = draft.model_copy(update={"price": "Provider 임의 가격", "channels": "Provider 임의 채널"})
         return draft
 
+    async def regenerate_candidate(self, seed, design, plan, previous, failure_summary,
+                                   missing_identity, candidate_index):
+        return _candidate(seed, plan, candidate_index)
+
     async def review_legal(self, candidate_id, candidate, seed):
         name = seed.fixtureName
         if ((name == "legal_redesign" and candidate_id == "C1")
@@ -288,6 +316,28 @@ class MockPortfolioProvider(PortfolioProvider):
         return SemanticFidelityResult(decision="ADAPTED", matchedMechanics=["conceptThesis"],
                                       missingMechanics=[], safeSummary="Plan identity를 유지한 구체화입니다.")
 
+    async def classify_architectures(self, items):
+        results = []
+        for item in items:
+            architecture = dict(item["currentArchitecture"])
+            text = item.get("businessText", "").casefold()
+            if any(value in text for value in ("marketplace", "마켓플레이스", "양면시장")):
+                architecture["businessRole"] = "MARKETPLACE"
+            elif any(value in text for value in ("saas", "소프트웨어", "업무 도구")):
+                architecture["businessRole"] = "SAAS_TOOL"
+            elif any(value in text for value in ("중개", "매칭", "연결")):
+                architecture["businessRole"] = "INTERMEDIARY"
+            elif any(value in text for value in ("직접 운영", "직접 제공", "운영사")):
+                architecture["businessRole"] = "PRINCIPAL_OPERATOR"
+            results.append(SemanticArchitectureClassification.model_validate({
+                "architecture": architecture,
+                "confidence": {key: ("LOW" if value == "OTHER" else "HIGH")
+                               for key, value in architecture.items()
+                               if key not in {"dataDependency", "physicalDependency"}},
+                "safeSummary": "규칙 근거가 없는 축은 OTHER로 보존했습니다.",
+            }))
+        return results
+
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
 
@@ -331,6 +381,8 @@ canonical code, familyId, mechanics enum을 생성하지 않는다. 같은 Archi
         prompt = """통과된 generic PortfolioPlan을 ConceptCandidateDraft로 확장한다.
 Plan의 target/use/value/offer/solution thesis와 핵심 differentiator, 사용자 LOCK을 보존한다.
 세부 Architecture 구체화는 가능하지만 다른 Concept으로 교체하지 않는다. governance state를 사업값으로 쓰지 않는다.
+qualificationRequirements, personalDataUsage, physicalActivities는 구체적인 설계 사실이 있을 때만 작성한다.
+'필요 시 확인', '필요한 자격', '관련 자격' 같은 generic placeholder를 넣지 않는다.
 JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성하고 strict schema만 반환한다."""
         schema = ConceptCandidateDraft.model_json_schema(); assert_strict_compatible(schema, "concept_portfolio_candidate_v3")
         raw = await execute_structured_prompt(prompt, json.dumps({
@@ -345,6 +397,41 @@ JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성하�
                 "사업 의미와 LOCK을 바꾸지 말고 사용자-facing 문구만 한국어로 1회 교정한다.",
                 json.dumps({"previousResult": result.model_dump(mode="json"), "languageFailures": failures}, ensure_ascii=False),
                 response_schema=schema, schema_name="concept_portfolio_candidate_v3",
+                task_type="CONCEPT_PORTFOLIO_V2_CANDIDATE_LANGUAGE_CORRECTION")
+            result = ConceptCandidateDraft.model_validate(correction)
+        return result
+
+    async def regenerate_candidate(self, seed, design, plan, previous, failure_summary,
+                                   missing_identity, candidate_index):
+        prompt = """이전 Candidate에서 Plan fidelity를 잃은 부분만 수정해 동일 Plan을 다시 구현한다.
+새 Concept을 만들지 않는다. target/use context, value proposition, offer thesis, solution thesis,
+differentiating mechanics와 사용자 LOCK을 반드시 보존한다. 사용자-facing 내용은 한국어로 작성한다.
+qualificationRequirements 등 Legal fact 필드는 구체적 설계상 실제 근거가 있을 때만 작성하며
+'필요 시 확인', '필요한 자격' 같은 placeholder를 넣지 않는다. strict schema만 반환한다."""
+        schema = ConceptCandidateDraft.model_json_schema()
+        assert_strict_compatible(schema, "concept_portfolio_candidate_fidelity_regeneration_v1")
+        candidate_fields = ("targetUsers", "problemScenario", "coreValue", "conceptDefinition",
+                            "solutionMechanism", "featureSet", "operatingModel")
+        raw = await execute_structured_prompt(prompt, json.dumps({
+            "seed": seed.model_dump(mode="json"),
+            "opportunityKernel": design.opportunityKernel.model_dump(mode="json"),
+            "plan": plan.model_dump(mode="json", exclude={"descriptor"}),
+            "previousCandidate": {key: getattr(previous, key) for key in candidate_fields},
+            "fidelityFailureSummary": failure_summary,
+            "missingIdentityComponents": missing_identity,
+            "candidateIndex": candidate_index,
+        }, ensure_ascii=False, sort_keys=True), response_schema=schema,
+            schema_name="concept_portfolio_candidate_fidelity_regeneration_v1",
+            task_type="CONCEPT_PORTFOLIO_V2_CANDIDATE_FIDELITY_REGENERATION")
+        result = ConceptCandidateDraft.model_validate(raw)
+        failures = candidate_language_failures(result)
+        if failures:
+            correction = await execute_structured_prompt(
+                "사업 의미와 LOCK을 바꾸지 말고 사용자-facing 문구만 한국어로 1회 교정한다.",
+                json.dumps({"previousResult": result.model_dump(mode="json"),
+                            "languageFailures": failures}, ensure_ascii=False),
+                response_schema=schema,
+                schema_name="concept_portfolio_candidate_fidelity_regeneration_v1",
                 task_type="CONCEPT_PORTFOLIO_V2_CANDIDATE_LANGUAGE_CORRECTION")
             result = ConceptCandidateDraft.model_validate(correction)
         return result
@@ -372,10 +459,20 @@ JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성하�
         schema = SemanticFidelityResult.model_json_schema(); assert_strict_compatible(schema, "concept_fidelity_v3")
         raw = await execute_structured_prompt(
             "Candidate가 Plan의 Opportunity, core value, solution thesis, 핵심 differentiator를 보존했는지 PASS/ADAPTED/FAIL로 판정한다. 세부 운영 구체화는 ADAPTED로 허용한다.",
-            json.dumps({"plan": plan.model_dump(mode="json"), "candidate": candidate.model_dump(mode="json")},
+            json.dumps(_fidelity_context(plan, candidate),
                        ensure_ascii=False, sort_keys=True), response_schema=schema,
             schema_name="concept_fidelity_v3", task_type="CONCEPT_PORTFOLIO_V2_PLAN_FIDELITY")
         return SemanticFidelityResult.model_validate(raw)
+
+    async def classify_architectures(self, items):
+        schema = SemanticArchitectureBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_architecture_classifier_v1")
+        raw = await execute_structured_prompt(
+            "사업 설명을 system enum으로만 분류한다. 근거가 부족하면 OTHER를 사용한다. 임의 code를 만들지 않는다. 각 축 confidence를 HIGH/MEDIUM/LOW로 반환한다.",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_architecture_classifier_v1",
+            task_type="CONCEPT_PORTFOLIO_V2_ARCHITECTURE_CLASSIFICATION")
+        return SemanticArchitectureBatch.model_validate(raw).results
 
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
@@ -509,6 +606,19 @@ class ProviderGateway:
         return await self.call("EXPANDING", "EXPAND", payload, lambda: self.provider.expand(seed, plan, index),
                                ConceptCandidateDraft, operation_version="v3", prompt_version=CANDIDATE_PROMPT_VERSION)
 
+    async def regenerate_candidate(self, seed, design, plan, previous, failure_summary,
+                                   missing_identity, index):
+        payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"),
+                   "plan": plan.model_dump(mode="json"),
+                   "previousCandidate": previous.model_dump(mode="json"),
+                   "fidelityFailureSummary": failure_summary,
+                   "missingIdentityComponents": missing_identity, "index": index}
+        return await self.call("CANDIDATE_VALIDATING", "REGENERATE_CANDIDATE_FOR_FIDELITY", payload,
+            lambda: self.provider.regenerate_candidate(
+                seed, design, plan, previous, failure_summary, missing_identity, index),
+            ConceptCandidateDraft, operation_version="v1",
+            prompt_version=FIDELITY_REGEN_PROMPT_VERSION)
+
     async def review_legal(self, candidate_id, candidate, seed):
         payload = {"candidateId": candidate_id, "candidate": candidate.model_dump(mode="json"),
                    "seed": seed.model_dump(mode="json")}
@@ -530,10 +640,21 @@ class ProviderGateway:
             operation_version="v3", prompt_version=DISTINCTNESS_PROMPT_VERSION)
 
     async def judge_fidelity(self, plan, candidate):
-        payload = {"plan": plan.model_dump(mode="json"), "candidate": candidate.model_dump(mode="json")}
+        payload = _fidelity_context(plan, candidate)
         return await self.call("CANDIDATE_VALIDATING", "PLAN_FIDELITY", payload,
             lambda: self.provider.judge_fidelity(plan, candidate), SemanticFidelityResult,
             operation_version="v3", prompt_version=FIDELITY_PROMPT_VERSION)
+
+    async def classify_architectures(self, items):
+        raw = await self.call("NORMALIZING", "NORMALIZE_ARCHITECTURES", {"items": items},
+            lambda: self.provider.classify_architectures(items),
+            operation_version="v1", prompt_version=ARCHITECTURE_PROMPT_VERSION)
+        results = [item if isinstance(item, SemanticArchitectureClassification)
+                   else SemanticArchitectureClassification.model_validate(item) for item in raw]
+        if len(results) != len(items):
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "ARCHITECTURE_BATCH_COUNT_MISMATCH",
+                                  502, False, schema_name="concept_architecture_classifier_v1")
+        return results
 
     async def replacement_plans(self, seed, design, existing_plans, count=2):
         payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"),

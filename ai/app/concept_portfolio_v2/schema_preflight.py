@@ -8,7 +8,7 @@ from app.tasks.concept_candidate.models import ConceptCandidateDraft
 
 from .models import (
     PlanDraftPool, SchemaCompatibilityItem, SchemaPreflightReport,
-    SemanticDistinctnessResult, SemanticFidelityResult,
+    SemanticArchitectureBatch, SemanticDistinctnessResult, SemanticFidelityResult,
 )
 
 
@@ -105,6 +105,7 @@ def v2_schema_preflight_report() -> SchemaPreflightReport:
         ("ConceptCandidateDraft", ConceptCandidateDraft.model_json_schema()),
         ("SemanticDistinctnessResult", SemanticDistinctnessResult.model_json_schema()),
         ("SemanticFidelityResult", SemanticFidelityResult.model_json_schema()),
+        ("SemanticArchitectureBatch", SemanticArchitectureBatch.model_json_schema()),
     ]
     results = [inspect_strict_schema(schema, name) for name, schema in schemas]
     return SchemaPreflightReport(status="PASS" if all(item.status == "PASS" for item in results) else "FAIL",

@@ -65,6 +65,9 @@ class FailureCode(StrEnum):
     CONTENT_LANGUAGE_MISMATCH = "CONTENT_LANGUAGE_MISMATCH"
     PLAN_POOL_RESERVE_SHORTFALL = "PLAN_POOL_RESERVE_SHORTFALL"
     OUT_OF_SCOPE = "OUT_OF_SCOPE"
+    CANDIDATE_FIDELITY_RECOVERABLE = "CANDIDATE_FIDELITY_RECOVERABLE"
+    CANDIDATE_REGENERATION_EXHAUSTED = "CANDIDATE_REGENERATION_EXHAUSTED"
+    CANONICALIZATION_LOW_CONFIDENCE = "CANONICALIZATION_LOW_CONFIDENCE"
 
 
 class PortfolioStatus(StrEnum):
@@ -188,8 +191,14 @@ class BusinessArchitecture(StrictModel):
     transactionModel: TransactionModelCode
     monetizationModel: MonetizationModelCode
     customerInteractionModel: CustomerInteractionCode
-    dataDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"] = "LOW"
-    physicalDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"] = "LOW"
+    dataDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"]
+    physicalDependency: Literal["NONE", "LOW", "MATERIAL", "CORE"]
+
+
+class ArchitectureDimensionDiagnostic(StrictModel):
+    code: str
+    confidence: Literal["HIGH", "MEDIUM", "LOW"]
+    source: Literal["RULE", "SEMANTIC", "UNKNOWN"]
 
 
 class CanonicalConceptDescriptor(StrictModel):
@@ -198,6 +207,7 @@ class CanonicalConceptDescriptor(StrictModel):
     mechanismFamily: str = Field(min_length=1, max_length=300)
     familyId: str = Field(pattern=r"^[A-Z0-9_:-]{2,160}$")
     familyLabelKo: str = Field(min_length=1, max_length=300)
+    architectureDiagnostics: dict[str, ArchitectureDimensionDiagnostic] = Field(default_factory=dict)
 
 
 class PortfolioPlanDraft(StrictModel):
@@ -233,6 +243,10 @@ class PortfolioPlan(PortfolioPlanDraft):
     descriptor: CanonicalConceptDescriptor
     preservedAnchors: dict[str, str]
     preservedLocks: dict[str, str]
+    selectionStatus: Literal["UNSELECTED", "SELECTED", "RESERVE"] = "UNSELECTED"
+    selectionScore: float = Field(default=0.0, ge=0.0, le=2.0)
+    selectionReason: str = "선택 평가 전"
+    relationToPortfolio: str = "NOT_EVALUATED"
 
 
 class DiversityAssessment(StrictModel):
@@ -246,6 +260,7 @@ class DiversityAssessment(StrictModel):
     semanticJudgeUsed: bool = False
     familyA: str | None = None
     familyB: str | None = None
+    relationConfidence: Literal["HIGH", "MEDIUM", "LOW"] = "HIGH"
 
 
 class RejectedPlan(StrictModel):
@@ -279,6 +294,9 @@ class CandidateEnvelope(StrictModel):
     lineageId: str
     parentCandidateId: str | None = None
     redesignRound: int = Field(default=0, ge=0, le=2)
+    candidateAttempt: int = Field(default=1, ge=1, le=2)
+    slotIndex: int | None = Field(default=None, ge=1, le=5)
+    recoverySource: Literal["INITIAL", "FIDELITY_REGENERATION", "RESERVE_PLAN", "REPLENISHED_PLAN", "LEGAL_REDESIGN", "LEGAL_REPLAN"] = "INITIAL"
     descriptor: CanonicalConceptDescriptor
     candidate: ConceptCandidateResult
 
@@ -293,8 +311,24 @@ class CandidateValidation(StrictModel):
     fidelityDecision: str = "PASS"
     contentLanguageValid: bool = True
     accepted: bool
+    outcome: Literal["ACCEPTED", "RECOVERABLE_FIDELITY_FAILURE", "TERMINAL_INVALID"] = "TERMINAL_INVALID"
+    semanticFidelityUsed: bool = False
+    matchedIdentityComponents: list[str] = Field(default_factory=list, max_length=12)
+    missingIdentityComponents: list[str] = Field(default_factory=list, max_length=12)
     reasonCodes: list[FailureCode] = Field(default_factory=list)
     safeSummary: str
+
+
+class CandidatePortfolioPreparation(StrictModel):
+    candidates: list[CandidateEnvelope]
+    reports: list[CandidateValidation]
+    usedPlans: list[PortfolioPlan]
+    candidateGenerated: int = 0
+    candidateAcceptedInitially: int = 0
+    candidateRegenerated: int = 0
+    candidateRecovered: int = 0
+    reservePlansActivated: int = 0
+    candidateRecoveryReplans: int = 0
 
 
 class LegalPrecheck(StrictModel):
@@ -420,17 +454,37 @@ class SchemaPreflightReport(StrictModel):
 
 
 class SemanticDistinctnessResult(StrictModel):
-    decision: str
+    decision: Literal["DUPLICATE", "VARIANT", "DISTINCT", "OUT_OF_SCOPE", "IN_SCOPE", "SPECIALIZATION"]
     overlappingMechanics: list[str] = Field(max_length=12)
     materiallyDifferentMechanics: list[str] = Field(max_length=12)
     safeSummary: str
 
 
 class SemanticFidelityResult(StrictModel):
-    decision: str
+    decision: Literal["PASS", "ADAPTED", "FAIL"]
     matchedMechanics: list[str] = Field(max_length=12)
     missingMechanics: list[str] = Field(max_length=12)
     safeSummary: str
+
+
+class ArchitectureConfidenceProfile(StrictModel):
+    businessRole: Literal["HIGH", "MEDIUM", "LOW"]
+    operatingModel: Literal["HIGH", "MEDIUM", "LOW"]
+    partnerModel: Literal["HIGH", "MEDIUM", "LOW"]
+    deliveryModel: Literal["HIGH", "MEDIUM", "LOW"]
+    transactionModel: Literal["HIGH", "MEDIUM", "LOW"]
+    monetizationModel: Literal["HIGH", "MEDIUM", "LOW"]
+    customerInteractionModel: Literal["HIGH", "MEDIUM", "LOW"]
+
+
+class SemanticArchitectureClassification(StrictModel):
+    architecture: BusinessArchitecture
+    confidence: ArchitectureConfidenceProfile
+    safeSummary: str
+
+
+class SemanticArchitectureBatch(StrictModel):
+    results: list[SemanticArchitectureClassification] = Field(min_length=1, max_length=8)
 
 
 class RunSummary(StrictModel):
@@ -439,6 +493,12 @@ class RunSummary(StrictModel):
     planned: int
     planDuplicatesRemoved: int
     candidatesExpanded: int
+    candidateGenerated: int = 0
+    candidateAcceptedInitially: int = 0
+    candidateRegenerated: int = 0
+    candidateRecovered: int = 0
+    reservePlansActivated: int = 0
+    candidateRecoveryReplans: int = 0
     legalAccepted: int
     legalRedesigned: int
     replanned: int

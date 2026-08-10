@@ -8,7 +8,8 @@ from typing import Any, Iterable
 from app.tasks.concept_candidate.models import ConceptCandidateResult
 
 from .models import (
-    BusinessArchitecture, CanonicalConceptDescriptor, ConceptThesis, PortfolioPlanDraft,
+    ArchitectureDimensionDiagnostic, BusinessArchitecture, CanonicalConceptDescriptor,
+    ConceptThesis, PortfolioPlanDraft, SemanticArchitectureClassification,
 )
 
 
@@ -49,41 +50,61 @@ def _text(*values: Any) -> str:
     return " ".join(flattened).casefold()
 
 
-def _pick(text: str, choices: list[tuple[tuple[str, ...], str]], default: str = "OTHER") -> str:
+def _pick(text: str, choices: list[tuple[tuple[str, ...], str]]) -> tuple[str, str, str]:
+    """명시적 근거가 있는 code만 확정하고, 무근거/충돌은 OTHER로 남긴다."""
+    matched = []
     for markers, code in choices:
         if any(marker.casefold() in text for marker in markers):
-            return code
-    return default
+            matched.append(code)
+    unique = list(dict.fromkeys(matched))
+    if len(unique) == 1:
+        return unique[0], "HIGH", "RULE"
+    if len(unique) > 1:
+        return "OTHER", "LOW", "UNKNOWN"
+    return "OTHER", "LOW", "UNKNOWN"
+
+
+def _pick_business_role(text: str) -> tuple[str, str, str]:
+    groups = {
+        "MARKETPLACE": ("marketplace", "마켓플레이스", "양면시장"),
+        "SAAS_TOOL": ("saas", "software", "소프트웨어", "업무 도구"),
+        "ADVISORY": ("자문", "상담", "코칭", "전문가 지원"),
+        "AGGREGATOR": ("집계", "aggregat"),
+        "PLATFORM_INFRASTRUCTURE": ("api", "인프라", "infrastructure"),
+        "PRINCIPAL_OPERATOR": ("직접 운영", "운영사", "직접 제공", "principal"),
+        "INTERMEDIARY": ("중개", "매칭", "연결"),
+    }
+    matched = {code for code, markers in groups.items()
+               if any(marker.casefold() in text for marker in markers)}
+    # Marketplace의 매칭/연결 표현은 같은 역할의 설명이므로 충돌로 보지 않는다.
+    if "MARKETPLACE" in matched and matched <= {"MARKETPLACE", "INTERMEDIARY"}:
+        return "MARKETPLACE", "HIGH", "RULE"
+    if len(matched) == 1:
+        return next(iter(matched)), "HIGH", "RULE"
+    return ("OTHER", "LOW", "UNKNOWN")
 
 
 def _architecture(*, role: str, operation: str, partner: str, delivery: str,
                   transaction: str, monetization: str, interaction: str,
-                  data: str = "", physical: str = "") -> BusinessArchitecture:
-    business_role = _pick(role, [
-        (("marketplace", "마켓플레이스", "양면시장"), "MARKETPLACE"),
-        (("중개", "매칭", "연결"), "INTERMEDIARY"),
-        (("saas", "software", "소프트웨어", "업무 도구"), "SAAS_TOOL"),
-        (("자문", "상담", "코칭", "전문가 지원"), "ADVISORY"),
-        (("집계", "aggregat"), "AGGREGATOR"),
-        (("api", "인프라", "infrastructure"), "PLATFORM_INFRASTRUCTURE"),
-        (("직접 운영", "운영사", "직접 제공", "principal"), "PRINCIPAL_OPERATOR"),
-    ], "PRINCIPAL_OPERATOR")
-    operating = _pick(operation + " " + partner, [
+                  data: str = "", physical: str = "") -> tuple[BusinessArchitecture, dict[str, ArchitectureDimensionDiagnostic]]:
+    classified: dict[str, tuple[str, str, str]] = {}
+    classified["businessRole"] = _pick_business_role(role)
+    classified["operatingModel"] = _pick(operation + " " + partner, [
         (("peer-to-peer", "p2p", "개인 간"), "PEER_TO_PEER"),
         (("전문가 네트워크", "전문가 풀", "자격 보유"), "EXPERT_NETWORK"),
         (("파트너", "제휴", "협력사", "network"), "PARTNER_NETWORK"),
         (("자동화", "ai", "알고리즘", "digital"), "AUTOMATED_DIGITAL"),
         (("하이브리드", "hybrid"), "HYBRID"),
         (("직접 운영", "자체 운영", "own-operated"), "OWN_OPERATED"),
-    ], "OWN_OPERATED")
-    partner_model = _pick(partner, [
+    ])
+    classified["partnerModel"] = _pick(partner, [
         (("peer-to-peer", "p2p", "개인 간"), "PEER_TO_PEER"),
         (("전문가", "자격"), "EXPERT_NETWORK"),
         (("파트너", "제휴", "협력", "network"), "PARTNER_NETWORK"),
         (("자동화", "ai", "알고리즘"), "AUTOMATED_DIGITAL"),
         (("하이브리드", "hybrid"), "HYBRID"),
-    ], "OWN_OPERATED")
-    delivery_model = _pick(delivery, [
+    ])
+    classified["deliveryModel"] = _pick(delivery, [
         (("partner fulfilled", "파트너 이행", "파트너 제공", "제휴사가"), "PARTNER_FULFILLED"),
         (("픽업", "수령", "pickup"), "PICKUP"),
         (("방문", "현장", "on-site"), "ON_SITE"),
@@ -91,8 +112,8 @@ def _architecture(*, role: str, operation: str, partner: str, delivery: str,
         (("셀프", "self-service", "사용자 직접"), "SELF_SERVICE"),
         (("하이브리드", "hybrid"), "HYBRID"),
         (("디지털", "온라인", "download"), "DIGITAL"),
-    ], "DIGITAL")
-    transaction_model = _pick(transaction, [
+    ])
+    classified["transactionModel"] = _pick(transaction, [
         (("구독", "정기", "recurring"), "RECURRING"),
         (("예약", "booking"), "BOOKING"),
         (("매칭", "matching"), "MATCHING"),
@@ -100,8 +121,8 @@ def _architecture(*, role: str, operation: str, partner: str, delivery: str,
         (("경매", "auction"), "AUCTION"),
         (("사용량", "usage-based", "종량"), "USAGE_BASED"),
         (("일회", "건별", "one-off"), "ONE_OFF"),
-    ], "ONE_OFF")
-    monetization_model = _pick(monetization, [
+    ])
+    classified["monetizationModel"] = _pick(monetization, [
         (("구독", "월 이용료", "정기요금", "subscription"), "SUBSCRIPTION"),
         (("수수료", "commission"), "COMMISSION"),
         (("사용량", "종량", "usage fee"), "USAGE_FEE"),
@@ -111,8 +132,8 @@ def _architecture(*, role: str, operation: str, partner: str, delivery: str,
         (("프리미엄", "freemium", "무료+유료"), "FREEMIUM"),
         (("서비스 요금", "상담료", "service fee"), "SERVICE_FEE"),
         (("판매", "구매", "direct sale"), "DIRECT_SALE"),
-    ], "OTHER")
-    interaction_model = _pick(interaction, [
+    ])
+    classified["customerInteractionModel"] = _pick(interaction, [
         (("omnichannel", "옴니채널", "온·오프라인", "온오프라인"), "OMNICHANNEL"),
         (("community", "커뮤니티"), "COMMUNITY"),
         (("api",), "API"),
@@ -121,15 +142,15 @@ def _architecture(*, role: str, operation: str, partner: str, delivery: str,
         (("상담", "도움", "assisted", "전문가"), "ASSISTED"),
         (("셀프", "self-service", "사용자 직접"), "SELF_SERVICE"),
         (("오프라인", "방문", "현장"), "OFFLINE"),
-    ], "OTHER")
+    ])
     dependency = lambda text: "CORE" if any(x in text for x in ("필수", "핵심", "core")) else (
         "MATERIAL" if text.strip() else "NONE")
-    return BusinessArchitecture(
-        businessRole=business_role, operatingModel=operating, partnerModel=partner_model,
-        deliveryModel=delivery_model, transactionModel=transaction_model,
-        monetizationModel=monetization_model, customerInteractionModel=interaction_model,
-        dataDependency=dependency(data), physicalDependency=dependency(physical),
-    )
+    architecture = BusinessArchitecture(
+        **{key: value[0] for key, value in classified.items()},
+        dataDependency=dependency(data), physicalDependency=dependency(physical))
+    diagnostics = {key: ArchitectureDimensionDiagnostic(
+        code=value[0], confidence=value[1], source=value[2]) for key, value in classified.items()}
+    return architecture, diagnostics
 
 
 def _mechanism_family(solution: str) -> str:
@@ -138,7 +159,8 @@ def _mechanism_family(solution: str) -> str:
     return normalized[:300]
 
 
-def _descriptor(thesis: ConceptThesis, architecture: BusinessArchitecture) -> CanonicalConceptDescriptor:
+def _descriptor(thesis: ConceptThesis, architecture: BusinessArchitecture,
+                diagnostics: dict[str, ArchitectureDimensionDiagnostic]) -> CanonicalConceptDescriptor:
     family_id = f"{architecture.businessRole}:{architecture.operatingModel}"
     family_label = (f"{ROLE_LABEL_KO[architecture.businessRole]} · "
                     f"{OPERATING_LABEL_KO[architecture.operatingModel]}")
@@ -146,6 +168,7 @@ def _descriptor(thesis: ConceptThesis, architecture: BusinessArchitecture) -> Ca
         thesis=thesis, architecture=architecture,
         mechanismFamily=_mechanism_family(thesis.solutionThesis),
         familyId=family_id, familyLabelKo=family_label,
+        architectureDiagnostics=diagnostics,
     )
 
 
@@ -158,13 +181,12 @@ class GenericConceptNormalizer:
             targetSegmentThesis=plan.targetSegment, useCaseThesis=plan.useContext,
             valuePropositionThesis=plan.valueProposition, offerThesis=plan.offerThesis,
             solutionThesis=plan.solutionThesis)
-        architecture = _architecture(
-            role=_text(plan.solutionThesis, plan.operatingApproach, plan.partnerApproach,
-                       plan.transactionApproach),
+        architecture, diagnostics = _architecture(
+            role=_text(plan.solutionThesis, plan.operatingApproach),
             operation=plan.operatingApproach, partner=plan.partnerApproach,
             delivery=plan.fulfillmentApproach, transaction=plan.transactionApproach,
             monetization=plan.commercialApproach, interaction=plan.customerInteraction)
-        return _descriptor(thesis, architecture)
+        return _descriptor(thesis, architecture, diagnostics)
 
     @staticmethod
     def from_candidate(candidate: ConceptCandidateResult) -> CanonicalConceptDescriptor:
@@ -172,9 +194,9 @@ class GenericConceptNormalizer:
             targetSegmentThesis=candidate.targetUsers, useCaseThesis=candidate.problemScenario,
             valuePropositionThesis=candidate.coreValue,
             offerThesis=_text(candidate.featureSet), solutionThesis=candidate.solutionMechanism)
-        architecture = _architecture(
+        architecture, diagnostics = _architecture(
             role=_text(candidate.solutionMechanism, candidate.platformRole, candidate.providerRole,
-                       candidate.sellerRole, candidate.intermediaryRole, candidate.transactionFlow),
+                       candidate.sellerRole, candidate.intermediaryRole),
             operation=candidate.operatingModel, partner=_text(candidate.partnerModel,
                                                                candidate.partnerRequirements),
             delivery=_text(candidate.physicalActivities, candidate.channels),
@@ -182,7 +204,28 @@ class GenericConceptNormalizer:
                                                                               candidate.paymentFlow),
             interaction=_text(candidate.channels, candidate.platformRole),
             data=_text(candidate.personalDataUsage), physical=_text(candidate.physicalActivities))
-        return _descriptor(thesis, architecture)
+        return _descriptor(thesis, architecture, diagnostics)
+
+    @staticmethod
+    def needs_semantic_fallback(descriptor: CanonicalConceptDescriptor) -> bool:
+        primary = ("businessRole", "operatingModel", "transactionModel", "monetizationModel")
+        return any(
+            getattr(descriptor.architecture, key) == "OTHER"
+            or descriptor.architectureDiagnostics[key].confidence == "LOW"
+            for key in primary
+        )
+
+    @staticmethod
+    def apply_semantic_fallback(
+        descriptor: CanonicalConceptDescriptor,
+        classification: SemanticArchitectureClassification,
+    ) -> CanonicalConceptDescriptor:
+        diagnostics = dict(descriptor.architectureDiagnostics)
+        for key, confidence in classification.confidence:
+            diagnostics[key] = ArchitectureDimensionDiagnostic(
+                code=getattr(classification.architecture, key),
+                confidence=confidence, source="SEMANTIC")
+        return _descriptor(descriptor.thesis, classification.architecture, diagnostics)
 
 
 def derive_plan_descriptor(plan: PortfolioPlanDraft) -> CanonicalConceptDescriptor:

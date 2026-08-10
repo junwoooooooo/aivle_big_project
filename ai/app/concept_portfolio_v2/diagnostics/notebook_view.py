@@ -37,7 +37,12 @@ def show_idea_interpretation(context):
 
 
 def show_idea_readiness(context):
-    return {"readiness": context.readiness, "userFacingSummary": context.userFacingSummary,
+    inconsistent = (context.readiness.get("status") == "READY_FOR_REVIEW"
+                    and not context.readiness.get("missingFieldKeys")
+                    and context.readiness.get("score") == 0)
+    return {"readiness": context.readiness,
+            "readinessDiagnostic": "READINESS_INCONSISTENT" if inconsistent else "CONSISTENT",
+            "userFacingSummary": context.userFacingSummary,
             "commitmentCandidates": context.commitmentCandidates,
             "contradictions": context.contradictions, "questions": context.questions}
 
@@ -54,6 +59,9 @@ def show_design_space(analysis):
 
 def show_portfolio_plans(plans):
     return _table([{"planId": p.planId, "제목": p.title,
+                    "선택 상태": p.selectionStatus, "selectionScore": p.selectionScore,
+                    "selectionReason": p.selectionReason,
+                    "relationToPortfolio": p.relationToPortfolio,
                     "Concept Family": p.descriptor.familyLabelKo,
                     "Target Thesis": p.targetSegment, "Use Context": p.useContext,
                     "Value Thesis": p.valueProposition, "Offer Thesis": p.offerThesis,
@@ -71,8 +79,11 @@ def show_mechanics(items):
     for item in items:
         descriptor = item.descriptor
         for field, value in descriptor.architecture:
+            diagnostic = descriptor.architectureDiagnostics.get(field)
             rows.append({"entityId": getattr(item, "candidateId", getattr(item, "planId", "")),
-                         "family": descriptor.familyId, "dimension": field, "code": value})
+                         "family": descriptor.familyId, "dimension": field, "code": value,
+                         "confidence": diagnostic.confidence if diagnostic else None,
+                         "source": diagnostic.source if diagnostic else None})
     return _table(rows)
 
 
@@ -109,14 +120,53 @@ def show_candidate_validation(reports):
     return _table([_dump(item) for item in reports])
 
 
+def show_candidate_recovery(preparation):
+    summary = {key: getattr(preparation, key) for key in (
+        "candidateGenerated", "candidateAcceptedInitially", "candidateRegenerated",
+        "candidateRecovered", "reservePlansActivated", "candidateRecoveryReplans")}
+    summary["finalCandidatePortfolio"] = len(preparation.candidates)
+    return {"summary": _table([summary]), "attempts": show_candidate_validation(preparation.reports),
+            "finalCandidates": show_candidates(preparation.candidates)}
+
+
 def show_legal_precheck(results):
     return _table([_dump(item) for item in results])
 
 
+def show_legal_fact_pattern(candidate, seed=None):
+    from ..adapters import CurrentLegalAdapter
+    pattern = CurrentLegalAdapter().task_input(candidate, seed)["legalFactPattern"]
+    roles = pattern["commercialRoles"]
+    partners = pattern["partnerRoles"]
+    rows = [
+        ("platformRole", pattern["platformRole"]),
+        ("providerRole", roles["providerRole"]),
+        ("sellerRole", roles["sellerRole"]),
+        ("intermediaryRole", roles["intermediaryRole"]),
+        ("transactionFlow", pattern["transactionFlow"]),
+        ("paymentFlow", pattern["paymentFlow"]),
+        ("personalDataUsage", pattern["personalDataUsage"]),
+        ("physicalActivities", pattern["physicalActivities"]),
+        ("partnerRequirements", partners["partnerRequirements"]),
+        ("qualificationRequirements", pattern["qualificationRequirements"]),
+        ("advertisingClaims", pattern["advertisingClaims"]),
+    ]
+    return _table([{"field": key, "legalFact": value["value"],
+                    "source": value["source"], "authority": value["authority"],
+                    "decision": value["decision"]} for key, value in rows])
+
+
 def show_legal_result(results):
     return _table([{"candidateId": item.candidateId, "route": item.route.value,
-                    "source": item.sourceStatus, "요약": item.safeSummary,
-                    "통제": ", ".join(item.requiredControls)} for item in results])
+                    "productionStatus": item.productionStatus, "source": item.sourceStatus,
+                    "safeSummary": item.safeSummary,
+                    "requiredControls": item.requiredControls,
+                    "requiredPartnersAndQualifications": item.requiredPartnersAndQualifications,
+                    "requiredDisclosures": item.requiredDisclosures,
+                    "prohibitedVariants": item.prohibitedVariants,
+                    "evidenceCount": len(item.officialEvidenceReferences),
+                    "evidenceRefs": item.officialEvidenceReferences,
+                    "evidenceDiagnostics": item.evidenceDiagnostics} for item in results])
 
 
 def show_legal_failure(candidate_id, gateway, official_evidence_count=0):

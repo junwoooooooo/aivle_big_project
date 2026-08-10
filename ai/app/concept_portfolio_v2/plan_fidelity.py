@@ -35,6 +35,7 @@ def deterministic_plan_fidelity(
         "offerThesis": _overlap(planned.thesis.offerThesis, actual.thesis.offerThesis),
         "solutionThesis": _overlap(planned.thesis.solutionThesis, actual.thesis.solutionThesis),
     }
+    definition_score = _overlap(plan.oneLineConcept, candidate.conceptDefinition)
     matched = [key for key, score in scores.items() if score >= 0.35]
     missing = [key for key in scores if key not in matched]
     identity_preserved = (scores["valuePropositionThesis"] >= 0.35
@@ -43,8 +44,21 @@ def deterministic_plan_fidelity(
     if identity_preserved:
         architecture_same = planned.architecture == actual.architecture
         return ("PASS" if architecture_same else "ADAPTED"), matched, missing
-    if (scores["valuePropositionThesis"] >= 0.20
-            and scores["solutionThesis"] >= 0.20
+    if (scores["valuePropositionThesis"] >= 0.25
+            and scores["solutionThesis"] >= 0.25
             and scores["offerThesis"] >= 0.20):
         return "ADAPTED", matched, missing
-    return "FAIL", matched, missing
+    primary_architecture_changes = sum(
+        getattr(planned.architecture, key) != getattr(actual.architecture, key)
+        for key in ("businessRole", "operatingModel", "transactionModel", "monetizationModel")
+    )
+    clear_replacement = (
+        scores["solutionThesis"] < 0.08
+        and scores["offerThesis"] < 0.08
+        and definition_score < 0.08
+        and (scores["valuePropositionThesis"] < 0.08
+             or primary_architecture_changes >= 2)
+    )
+    if clear_replacement:
+        return "FAIL", matched, missing
+    return "AMBIGUOUS", matched, missing

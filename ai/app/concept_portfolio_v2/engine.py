@@ -24,9 +24,9 @@ from .candidate_governance import (
 )
 from .distinctness import deterministic_distinctness, descriptor_values
 from .language_policy import candidate_language_failures, plan_language_failures
-from .mechanics import derive_candidate_descriptor
+from .mechanics import GenericConceptNormalizer, derive_candidate_descriptor
 from .models import (
-    CandidateEnvelope, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
+    CandidateEnvelope, CandidatePortfolioPreparation, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
     DeltaLegalResult, DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff,
     ExplorationBreadth, FailureCode, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
     LegalReview, LegalRoute, PlanPoolStatus, PlanValidationResult, PortfolioPlan,
@@ -56,6 +56,34 @@ OPTIONAL_DIMENSION_MAP = {
 
 def _norm(value: Any) -> str:
     return re.sub(r"[^0-9a-z가-힣]+", "", str(value).casefold())
+
+
+def _terms(value: Any) -> set[str]:
+    return {item for item in re.findall(r"[0-9a-z가-힣]+", str(value).casefold()) if len(item) >= 2}
+
+
+def _text_overlap(left: Any, right: Any) -> float:
+    a, b = _terms(left), _terms(right)
+    return len(a & b) / max(1, min(len(a), len(b)))
+
+
+_NON_FACT_VALUES = {
+    "없음", "해당없음", "해당사항없음", "필요시확인", "추후확인", "검토필요",
+    "필요한자격", "관련자격", "해당활동에필요한자격", "필요시필요한자격",
+    "필요한경우개인정보처리", "서비스이행을위한최소정보", "필요한경우물리활동",
+}
+
+
+def _substantive_facts(values: list[str]) -> list[str]:
+    result = []
+    for value in values:
+        normalized = _norm(value)
+        if not normalized or normalized in _NON_FACT_VALUES:
+            continue
+        if normalized.startswith("필요시") and len(normalized) < 20:
+            continue
+        result.append(value)
+    return result
 
 
 @dataclass
@@ -134,6 +162,12 @@ class ConceptPortfolioEngine:
         self._event(RunStage.SAFETY_CHECKING, "IDEA_BRIEF_DERIVED", "PASS",
                     f"Idea interpretation/readiness를 보존했습니다: {context.readiness.get('status')}",
                     provider_call=True)
+        if (context.readiness.get("status") == "READY_FOR_REVIEW"
+                and not context.readiness.get("missingFieldKeys")
+                and context.readiness.get("score") == 0):
+            self._event(RunStage.SAFETY_CHECKING, "READINESS_INCONSISTENT", "WARNING",
+                        "READY_FOR_REVIEW이지만 score=0입니다. V2 gating은 막지 않고 진단으로 표시합니다.",
+                        decision="READINESS_INCONSISTENT")
         return context
 
     async def check_safety(self, seed: CanonicalSeed):
@@ -217,13 +251,113 @@ class ConceptPortfolioEngine:
                     f"System metadata를 부여한 Plan={len(plans)}")
         return plans
 
+    async def _semantic_normalize_plans(self, plans: list[PortfolioPlan]) -> list[PortfolioPlan]:
+        pending = [plan for plan in plans
+                   if GenericConceptNormalizer.needs_semantic_fallback(plan.descriptor)]
+        if not pending:
+            return plans
+        items = [{
+            "entityId": plan.planId,
+            "businessText": " ".join((plan.operatingApproach, plan.partnerApproach,
+                                       plan.transactionApproach, plan.commercialApproach,
+                                       plan.fulfillmentApproach, plan.customerInteraction)),
+            "currentArchitecture": plan.descriptor.architecture.model_dump(mode="json"),
+        } for plan in pending]
+        classified = await self.gateway.classify_architectures(items)
+        replacements = {plan.planId: plan.model_copy(update={
+            "descriptor": GenericConceptNormalizer.apply_semantic_fallback(plan.descriptor, result)
+        }) for plan, result in zip(pending, classified, strict=True)}
+        normalized = [replacements.get(plan.planId, plan) for plan in plans]
+        self._event(RunStage.PLANNING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
+                    f"low-confidence Plan architecture {len(pending)}개를 batch 분류했습니다.",
+                    provider_call=True)
+        return normalized
+
     async def plan_portfolio(self, seed: CanonicalSeed, analysis: DesignSpaceAnalysis,
                              max_concepts: int = 5) -> list[PortfolioPlan]:
         drafts = await self.generate_plan_drafts(seed, analysis, max_concepts)
-        return self.normalize_plan_drafts(drafts, analysis)
+        plans = self.normalize_plan_drafts(drafts, analysis)
+        plans = await self._semantic_normalize_plans(plans)
+        self._last_plan_pool = plans
+        return plans
 
     def compare_plans(self, left: PortfolioPlan, right: PortfolioPlan) -> DiversityAssessment:
         return deterministic_distinctness(left.planId, right.planId, left.descriptor, right.descriptor)
+
+    @staticmethod
+    def _plan_base_score(plan: PortfolioPlan, analysis: DesignSpaceAnalysis) -> float:
+        kernel = analysis.opportunityKernel
+        opportunity_fit = (
+            _text_overlap(plan.problemFocus, kernel.problemCore)
+            + _text_overlap(plan.targetSegment, kernel.targetCore)
+            + max((_text_overlap(plan.useContext, item) for item in kernel.useContexts), default=0.0)
+            + max((_text_overlap(plan.solutionThesis, item) for item in kernel.intentComponents), default=0.0)
+        ) / 4
+        clarity = sum(bool(getattr(plan, key).strip()) for key in (
+            "targetSegment", "problemFocus", "useContext", "valueProposition",
+            "offerThesis", "solutionThesis")) / 6
+        constraint_fit = 1.0 if all(
+            plan.preservedLocks.get(key) == value
+            for key, value in analysis.explicitBusinessLocks.items()) else 0.0
+        feasibility = 1.0 if len(plan.legalRiskHints) <= 2 else 0.7
+        directness = 0.5 * (_norm(plan.targetSegment) == _norm(kernel.targetCore)) \
+            + 0.5 * (_norm(plan.problemFocus) == _norm(kernel.problemCore))
+        return min(1.0, 0.35 * opportunity_fit + 0.20 * clarity
+                   + 0.20 * constraint_fit + 0.10 * feasibility + 0.15 * directness)
+
+    def _select_plan_portfolio(self, usable: list[PortfolioPlan], analysis: DesignSpaceAnalysis,
+                               max_concepts: int) -> tuple[list[PortfolioPlan], list[PortfolioPlan]]:
+        remaining = list(usable)
+        selected: list[PortfolioPlan] = []
+        while remaining and len(selected) < max_concepts:
+            ranked = []
+            for plan in remaining:
+                base = self._plan_base_score(plan, analysis)
+                relations = [self.compare_plans(existing, plan) for existing in selected]
+                relation_values = {"DUPLICATE": 0.0, "AMBIGUOUS": 0.35,
+                                   "VARIANT": 0.65, "DISTINCT": 1.0}
+                marginal = min((relation_values.get(item.decision, 0.5) for item in relations), default=1.0)
+                same_family = sum(item.descriptor.familyId == plan.descriptor.familyId for item in selected)
+                architecture_bonus = 0.05 if selected and same_family == 0 else 0.0
+                family_penalty = 0.08 * max(0, same_family - 1)
+                score = max(0.0, min(2.0, 0.65 * base + 0.30 * marginal
+                                     + architecture_bonus - family_penalty))
+                ranked.append((score, base, plan.title.casefold(), plan, relations))
+            score, _, _, chosen, relations = sorted(
+                ranked, key=lambda item: (-item[0], -item[1], item[2]))[0]
+            relation_labels = [item.decision for item in relations]
+            if not selected:
+                reason = "Opportunity fit과 Concept clarity가 가장 높은 대표안"
+                relation_summary = "PORTFOLIO_SEED"
+            elif "DISTINCT" in relation_labels:
+                reason = "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가"
+                relation_summary = "DISTINCT"
+            elif "VARIANT" in relation_labels:
+                reason = "같은 Family를 허용하면서 의미 있는 target/use/value Variant를 추가"
+                relation_summary = "VARIANT"
+            else:
+                reason = "현재 Portfolio에서 남은 비교 가치를 보완"
+                relation_summary = relation_labels[0] if relation_labels else "NOT_EVALUATED"
+            chosen = chosen.model_copy(update={"selectionStatus": "SELECTED",
+                "selectionScore": round(score, 4), "selectionReason": reason,
+                "relationToPortfolio": relation_summary})
+            selected.append(chosen)
+            remaining.remove(next(item for item in remaining if item.planId == chosen.planId))
+        reserve = []
+        for plan in remaining:
+            base = self._plan_base_score(plan, analysis)
+            relations = [self.compare_plans(existing, plan) for existing in selected]
+            labels = [item.decision for item in relations]
+            marginal = min(({"DUPLICATE": 0.0, "AMBIGUOUS": 0.35,
+                             "VARIANT": 0.65, "DISTINCT": 1.0}.get(value, 0.5)
+                            for value in labels), default=1.0)
+            score = min(2.0, 0.65 * base + 0.30 * marginal)
+            reserve.append(plan.model_copy(update={"selectionStatus": "RESERVE",
+                "selectionScore": round(score, 4),
+                "selectionReason": "Selected Portfolio 대비 marginal value가 낮아 reserve로 보존",
+                "relationToPortfolio": ",".join(sorted(set(labels))) or "NOT_EVALUATED"}))
+        reserve.sort(key=lambda item: (-item.selectionScore, item.title.casefold()))
+        return selected, reserve
 
     async def validate_plans(self, plans: list[PortfolioPlan], analysis: DesignSpaceAnalysis,
                              max_concepts: int = 5) -> PlanValidationResult:
@@ -285,22 +419,7 @@ class ConceptPortfolioEngine:
                             entity_id=plan.planId, parent_id=duplicate.planId, reason=FailureCode.PLAN_DUPLICATE)
             else:
                 usable.append(plan)
-        accepted: list[PortfolioPlan] = []
-        family_counts: dict[str, int] = {}
-        for plan in usable:
-            if len(accepted) >= max_concepts:
-                break
-            family = plan.descriptor.familyId
-            if family_counts.get(family, 0) < 2:
-                accepted.append(plan)
-                family_counts[family] = family_counts.get(family, 0) + 1
-        # 같은 Family 2개는 preference일 뿐 hard cap이 아니다.
-        for plan in usable:
-            if len(accepted) >= max_concepts:
-                break
-            if plan not in accepted:
-                accepted.append(plan)
-        reserve = [plan for plan in usable if plan not in accepted]
+        accepted, reserve = self._select_plan_portfolio(usable, analysis, max_concepts)
         self._event(RunStage.PLAN_VALIDATING, "SELECTED", "PASS", f"Plans={len(accepted)} Rejected={len(rejected)}")
         if (self._last_plan_pool_status is not None
                 and len(plans) == self._last_plan_pool_status.returnedPoolSize):
@@ -331,6 +450,7 @@ class ConceptPortfolioEngine:
             if not drafts:
                 break
             new_plans = normalize_plan_drafts(drafts, analysis, start_index=len(all_plans) + 1)
+            new_plans = await self._semantic_normalize_plans(new_plans)
             before = len(validation.acceptedPlans)
             all_plans.extend(new_plans)
             self._last_plan_drafts.extend(drafts)
@@ -354,14 +474,16 @@ class ConceptPortfolioEngine:
         return result
 
     async def expand_plan(self, seed: CanonicalSeed, plan: PortfolioPlan, candidate_index: int,
-                          *, candidate_id: str | None = None, lineage_id: str | None = None) -> CandidateEnvelope:
+                          *, candidate_id: str | None = None, lineage_id: str | None = None,
+                          recovery_source: str = "INITIAL") -> CandidateEnvelope:
         draft = await self.gateway.expand(seed, plan, candidate_index)
         strategy = self._last_design.explorationBreadth if self._last_design else ExplorationBreadth.EXPLORE
         candidate = normalize_candidate_draft(draft, seed, strategy, candidate_index)
         actual_descriptor = derive_candidate_descriptor(candidate)
         envelope = CandidateEnvelope(
             candidateId=candidate_id or f"C{candidate_index}", planId=plan.planId,
-            lineageId=lineage_id or f"L{candidate_index}", descriptor=actual_descriptor, candidate=candidate)
+            lineageId=lineage_id or f"L{candidate_index}", slotIndex=candidate_index,
+            recoverySource=recovery_source, descriptor=actual_descriptor, candidate=candidate)
         self._event(RunStage.EXPANDING, "EXPANDED", "PASS", f"{plan.planId} → {envelope.candidateId}",
                     entity_id=envelope.candidateId, parent_id=plan.planId, provider_call=True)
         return envelope
@@ -390,10 +512,32 @@ class ConceptPortfolioEngine:
                  if item.fieldKey in DIRECT_CANDIDATE_LOCKS
                  and item.decisionState == "LOCKED" and item.value.strip()}
         anchor = self._last_design.opportunityKernel if self._last_design else build_opportunity_kernel(seed)
+        pending = [item for item in candidates
+                   if GenericConceptNormalizer.needs_semantic_fallback(item.descriptor)]
+        if pending:
+            items = [{"entityId": item.candidateId,
+                      "businessText": " ".join((item.candidate.platformRole,
+                                                item.candidate.operatingModel,
+                                                item.candidate.partnerModel,
+                                                " ".join(item.candidate.transactionFlow),
+                                                item.candidate.revenueModel,
+                                                item.candidate.channels)),
+                      "currentArchitecture": item.descriptor.architecture.model_dump(mode="json")}
+                     for item in pending]
+            classified = await self.gateway.classify_architectures(items)
+            replacements = {item.candidateId: item.model_copy(update={
+                "descriptor": GenericConceptNormalizer.apply_semantic_fallback(item.descriptor, result)
+            }) for item, result in zip(pending, classified, strict=True)}
+            candidates = [replacements.get(item.candidateId, item) for item in candidates]
+            self._event(RunStage.CANDIDATE_VALIDATING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
+                        f"low-confidence Candidate architecture {len(pending)}개를 batch 분류했습니다.",
+                        provider_call=True)
         for envelope in candidates:
             candidate, plan = envelope.candidate, plan_by_id[envelope.planId]
-            actual_descriptor = derive_candidate_descriptor(candidate)
-            if actual_descriptor != envelope.descriptor:
+            derived_descriptor = derive_candidate_descriptor(candidate)
+            actual_descriptor = envelope.descriptor
+            if derived_descriptor.thesis != envelope.descriptor.thesis:
+                actual_descriptor = derived_descriptor
                 envelope = envelope.model_copy(update={"descriptor": actual_descriptor})
             language_failures = candidate_language_failures(candidate)
             lock_ok = all(not hasattr(candidate, key) or str(getattr(candidate, key)) == value
@@ -410,9 +554,21 @@ class ConceptPortfolioEngine:
                 anchor_decision = "OUT_OF_SCOPE" if semantic_anchor.decision == "OUT_OF_SCOPE" else "PASS"
             anchor_ok = anchor_decision != "OUT_OF_SCOPE"
             fidelity_decision, matched, missing = deterministic_plan_fidelity(plan, candidate, actual_descriptor)
+            semantic_fidelity_used = False
             if fidelity_decision == "AMBIGUOUS":
+                self._event(RunStage.CANDIDATE_VALIDATING, "FIDELITY_AMBIGUOUS", "RUNNING",
+                            "lexical 판정이 불확실해 semantic fidelity를 요청합니다.",
+                            entity_id=envelope.candidateId,
+                            reason=FailureCode.CANDIDATE_FIDELITY_RECOVERABLE)
                 semantic_fidelity = await self.gateway.judge_fidelity(plan, candidate)
                 fidelity_decision = semantic_fidelity.decision
+                matched = semantic_fidelity.matchedMechanics
+                missing = semantic_fidelity.missingMechanics
+                semantic_fidelity_used = True
+                self._event(RunStage.CANDIDATE_VALIDATING, "SEMANTIC_FIDELITY_CHECKED",
+                            "PASS" if fidelity_decision in {"PASS", "ADAPTED"} else "REJECTED",
+                            semantic_fidelity.safeSummary, entity_id=envelope.candidateId,
+                            decision=fidelity_decision, provider_call=True)
             fidelity = fidelity_decision in {"PASS", "ADAPTED"}
             duplicate = None
             for previous in accepted:
@@ -439,6 +595,9 @@ class ConceptPortfolioEngine:
             if duplicate: reasons.append(FailureCode.CANDIDATE_DUPLICATE)
             if language_failures: reasons.append(FailureCode.CONTENT_LANGUAGE_MISMATCH)
             passed = not reasons
+            recoverable = (reasons == [FailureCode.PLAN_FIDELITY_FAILED])
+            outcome = ("ACCEPTED" if passed else
+                       "RECOVERABLE_FIDELITY_FAILURE" if recoverable else "TERMINAL_INVALID")
             if passed:
                 accepted.append(envelope)
                 newly_accepted.append(envelope)
@@ -447,23 +606,199 @@ class ConceptPortfolioEngine:
                                                planFidelity=fidelity, anchorDecision=anchor_decision,
                                                fidelityDecision=fidelity_decision,
                                                contentLanguageValid=not language_failures,
-                                               accepted=passed, reasonCodes=reasons,
+                                               accepted=passed, outcome=outcome,
+                                               semanticFidelityUsed=semantic_fidelity_used,
+                                               matchedIdentityComponents=matched,
+                                               missingIdentityComponents=missing,
+                                               reasonCodes=reasons,
                                                safeSummary="검사 통과" if passed else ", ".join(item.value for item in reasons)))
             self._event(RunStage.CANDIDATE_VALIDATING, "VALIDATED", "PASS" if passed else "REJECTED",
                         reports[-1].safeSummary, entity_id=envelope.candidateId,
                         reason=reasons[0] if reasons else None)
         return newly_accepted, reports
 
+    async def _regenerate_failed_candidate(
+        self, seed: CanonicalSeed, plan: PortfolioPlan, failed: CandidateEnvelope,
+        report: CandidateValidation, comparison_context: list[CandidateEnvelope],
+    ) -> tuple[CandidateEnvelope | None, list[CandidateValidation]]:
+        slot = failed.slotIndex or failed.candidate.candidateIndex
+        child_id = f"{failed.candidateId}-G1"
+        self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_REGENERATION_STARTED", "RUNNING",
+                    "같은 Plan identity를 보존하는 targeted regeneration을 시작합니다.",
+                    entity_id=child_id, parent_id=failed.candidateId,
+                    reason=FailureCode.CANDIDATE_FIDELITY_RECOVERABLE)
+        draft = await self.gateway.regenerate_candidate(
+            seed, self._last_design, plan, failed.candidate, report.safeSummary,
+            report.missingIdentityComponents, slot)
+        strategy = self._last_design.explorationBreadth if self._last_design else ExplorationBreadth.EXPLORE
+        candidate = normalize_candidate_draft(draft, seed, strategy, slot)
+        child = CandidateEnvelope(
+            candidateId=child_id, planId=plan.planId, lineageId=failed.lineageId,
+            parentCandidateId=failed.candidateId, candidateAttempt=2, slotIndex=slot,
+            recoverySource="FIDELITY_REGENERATION",
+            descriptor=derive_candidate_descriptor(candidate), candidate=candidate)
+        accepted, reports = await self.validate_candidates(
+            seed, [plan], [child], comparison_context=comparison_context)
+        if accepted:
+            self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_REGENERATED", "PASS",
+                        "targeted regeneration Candidate가 전체 validation을 통과했습니다.",
+                        entity_id=child_id, parent_id=failed.candidateId, decision="PASS",
+                        provider_call=True)
+            return accepted[0], reports
+        self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_RECOVERY_FAILED", "REJECTED",
+                    "Plan별 regeneration budget 1회를 사용했지만 통과하지 못했습니다.",
+                    entity_id=child_id, parent_id=failed.candidateId,
+                    reason=FailureCode.CANDIDATE_REGENERATION_EXHAUSTED, provider_call=True)
+        return None, reports
+
+    def _reserve_plan_value(self, plan: PortfolioPlan,
+                            accepted: list[CandidateEnvelope]) -> float:
+        relation_value = {"DUPLICATE": 0.0, "AMBIGUOUS": 0.35,
+                          "VARIANT": 0.65, "DISTINCT": 1.0}
+        relations = [deterministic_distinctness(
+            item.candidateId, plan.planId, item.descriptor, plan.descriptor) for item in accepted]
+        marginal = min((relation_value.get(item.decision, 0.5) for item in relations), default=1.0)
+        clarity = min(1.0, len(_terms(plan.oneLineConcept + " " + plan.solutionThesis)) / 18)
+        return 0.55 * plan.selectionScore + 0.35 * marginal + 0.10 * clarity
+
+    async def prepare_candidate_portfolio(
+        self, seed: CanonicalSeed, plan_validation: PlanValidationResult,
+        max_concepts: int = 5, *, initial_candidates: list[CandidateEnvelope] | None = None,
+    ) -> CandidatePortfolioPreparation:
+        """초기 확장 → fidelity regeneration → reserve → replenishment 순으로 후보를 복구한다."""
+        selected_plans = list(plan_validation.acceptedPlans)
+        used_plans = list(selected_plans)
+        plan_by_id = {item.planId: item for item in selected_plans + plan_validation.reservePlans}
+        initial = initial_candidates if initial_candidates is not None else await self.expand_plans(seed, selected_plans)
+        if {item.planId for item in initial} != {item.planId for item in selected_plans}:
+            raise ValueError("initial_candidates는 selected Plan을 정확히 한 번씩 포함해야 합니다")
+        accepted, initial_reports = await self.validate_candidates(seed, selected_plans, initial)
+        reports = list(initial_reports)
+        generated = len(initial)
+        accepted_initially = len(accepted)
+        regenerated = recovered = reserve_activated = recovery_replans = 0
+
+        by_report = {item.candidateId: item for item in initial_reports}
+        for failed in initial:
+            report = by_report[failed.candidateId]
+            if report.outcome != "RECOVERABLE_FIDELITY_FAILURE":
+                continue
+            child, child_reports = await self._regenerate_failed_candidate(
+                seed, plan_by_id[failed.planId], failed, report, accepted)
+            regenerated += 1
+            reports.extend(child_reports)
+            if child:
+                accepted.append(child)
+                recovered += 1
+
+        def missing_slots() -> list[int]:
+            occupied = {item.slotIndex or item.candidate.candidateIndex for item in accepted}
+            return [index for index in range(1, max_concepts + 1) if index not in occupied]
+
+        reserve = list(plan_validation.reservePlans)
+        while reserve and missing_slots():
+            plan = max(reserve, key=lambda item: (self._reserve_plan_value(item, accepted), item.title))
+            reserve.remove(plan)
+            slot = missing_slots()[0]
+            reserve_activated += 1
+            used_plans.append(plan)
+            self._event(RunStage.CANDIDATE_VALIDATING, "RESERVE_PLAN_ACTIVATED", "RUNNING",
+                        f"현재 Portfolio marginal value가 가장 높은 reserve {plan.planId}를 활성화했습니다.",
+                        entity_id=plan.planId, decision="RESERVE")
+            envelope = await self.expand_plan(
+                seed, plan, slot, candidate_id=f"C{slot}-RSV{reserve_activated}",
+                lineage_id=f"L{slot}-{plan.planId}", recovery_source="RESERVE_PLAN")
+            generated += 1
+            newly, reserve_reports = await self.validate_candidates(
+                seed, [plan], [envelope], comparison_context=accepted)
+            reports.extend(reserve_reports)
+            if newly:
+                accepted.extend(newly)
+                recovered += 1
+                continue
+            if reserve_reports[0].outcome == "RECOVERABLE_FIDELITY_FAILURE":
+                child, child_reports = await self._regenerate_failed_candidate(
+                    seed, plan, envelope, reserve_reports[0], accepted)
+                regenerated += 1
+                reports.extend(child_reports)
+                if child:
+                    accepted.append(child)
+                    recovered += 1
+
+        all_plans = list(self._last_plan_pool)
+        for round_number in range(1, self.max_planning_rounds + 1):
+            if not missing_slots():
+                break
+            self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_REPLENISHMENT_STARTED", "RUNNING",
+                        f"reserve 이후 부족한 Candidate slot={len(missing_slots())}을 보충합니다.")
+            count = min(5, max(3, len(missing_slots()) + 1))
+            drafts = await self.gateway.replenish_plans(
+                seed, self._last_design, all_plans,
+                [item.model_dump(mode="json") for item in reports if not item.accepted],
+                count, round_number)
+            recovery_replans += 1
+            if not drafts:
+                break
+            new_plans = normalize_plan_drafts(
+                drafts, self._last_design, start_index=1, prefix=f"CR{round_number}-P")
+            new_plans = await self._semantic_normalize_plans(new_plans)
+            combined = all_plans + new_plans
+            self._last_plan_drafts.extend(drafts)
+            self._last_plan_pool = combined
+            validation = await self.validate_plans(combined, self._last_design, max_concepts=len(combined))
+            new_ids = {item.planId for item in new_plans}
+            available = [item for item in validation.acceptedPlans if item.planId in new_ids]
+            all_plans = combined
+            gained = 0
+            while available and missing_slots():
+                plan = max(available, key=lambda item: (self._reserve_plan_value(item, accepted), item.title))
+                available.remove(plan)
+                used_plans.append(plan)
+                slot = missing_slots()[0]
+                envelope = await self.expand_plan(
+                    seed, plan, slot, candidate_id=f"C{slot}-CR{round_number}",
+                    lineage_id=f"L{slot}-{plan.planId}", recovery_source="REPLENISHED_PLAN")
+                generated += 1
+                newly, new_reports = await self.validate_candidates(
+                    seed, [plan], [envelope], comparison_context=accepted)
+                reports.extend(new_reports)
+                if newly:
+                    accepted.extend(newly); recovered += 1; gained += 1
+                elif new_reports[0].outcome == "RECOVERABLE_FIDELITY_FAILURE":
+                    child, child_reports = await self._regenerate_failed_candidate(
+                        seed, plan, envelope, new_reports[0], accepted)
+                    regenerated += 1
+                    reports.extend(child_reports)
+                    if child:
+                        accepted.append(child); recovered += 1; gained += 1
+            if gained == 0 and round_number >= self.max_planning_rounds:
+                break
+
+        accepted.sort(key=lambda item: (item.slotIndex or item.candidate.candidateIndex, item.candidateId))
+        accepted = accepted[:max_concepts]
+        self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_PORTFOLIO_READY", "PASS",
+                    f"Candidate Portfolio={len(accepted)}/{max_concepts}, recovered={recovered}",
+                    decision="READY_FULL" if len(accepted) == max_concepts else "READY_LIMITED")
+        return CandidatePortfolioPreparation(
+            candidates=accepted, reports=reports, usedPlans=used_plans,
+            candidateGenerated=generated, candidateAcceptedInitially=accepted_initially,
+            candidateRegenerated=regenerated, candidateRecovered=recovered,
+            reservePlansActivated=reserve_activated,
+            candidateRecoveryReplans=recovery_replans)
+
     def legal_precheck(self, envelope: CandidateEnvelope) -> LegalPrecheck:
         candidate = envelope.candidate
+        physical = _substantive_facts(candidate.physicalActivities)
+        personal_data = _substantive_facts(candidate.personalDataUsage)
+        qualifications = _substantive_facts(candidate.qualificationRequirements)
         return LegalPrecheck(candidateId=envelope.candidateId,
             directSeller="판매" in candidate.sellerRole, intermediary="중개" in candidate.intermediaryRole,
-            regulatedPhysicalActivity=bool(candidate.physicalActivities),
-            personalDataDependency=bool(candidate.personalDataUsage),
-            qualificationDependency=bool(candidate.qualificationRequirements),
-            riskHints=[item for item, active in (("물리 활동", bool(candidate.physicalActivities)),
-                                                ("개인정보", bool(candidate.personalDataUsage)),
-                                                ("자격 의존", bool(candidate.qualificationRequirements))) if active])
+            regulatedPhysicalActivity=bool(physical),
+            personalDataDependency=bool(personal_data),
+            qualificationDependency=bool(qualifications),
+            riskHints=[item for item, active in (("물리 활동", bool(physical)),
+                                                ("개인정보", bool(personal_data)),
+                                                ("자격 의존", bool(qualifications))) if active])
 
     async def review_legal(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]) -> list[LegalReview]:
         self._event(RunStage.LEGAL_REVIEWING, "STARTED", "RUNNING", "공식 Legal contract route를 실행합니다.")
@@ -515,6 +850,9 @@ class ConceptPortfolioEngine:
                 child = CandidateEnvelope(candidateId=child_id, planId=envelope.planId, lineageId=envelope.lineageId,
                                           parentCandidateId=envelope.candidateId,
                                           redesignRound=envelope.redesignRound + 1,
+                                          candidateAttempt=envelope.candidateAttempt,
+                                          slotIndex=envelope.slotIndex,
+                                          recoverySource="LEGAL_REDESIGN",
                                           descriptor=derive_candidate_descriptor(child_value), candidate=child_value)
                 validated_children, child_reports = await self.validate_candidates(
                     seed, [plan_by_id[envelope.planId]], [child], comparison_context=final)
@@ -586,7 +924,7 @@ class ConceptPortfolioEngine:
                         continue
                     child = await self.expand_plan(
                         seed, replacement, index, candidate_id=f"{envelope.candidateId}-REPLAN",
-                        lineage_id=f"L-REPLAN-{replanned + 1}")
+                        lineage_id=f"L-REPLAN-{replanned + 1}", recovery_source="LEGAL_REPLAN")
                     validated_children, _ = await self.validate_candidates(
                         seed, [replacement], [child], comparison_context=final)
                     if not validated_children:
@@ -708,6 +1046,7 @@ class ConceptPortfolioEngine:
         selected = None
         handoff = None
         redesigned = replanned = planned = duplicates = 0
+        candidate_preparation: CandidatePortfolioPreparation | None = None
         safety_text = "FAIL"
         if not 1 <= max_concepts <= 5:
             self._event(RunStage.NEEDS_INPUT, "INPUT_REJECTED", "NEEDS_INPUT",
@@ -733,14 +1072,14 @@ class ConceptPortfolioEngine:
                 return self._terminal(PortfolioStatus.NEEDS_INPUT, RunStage.NEEDS_INPUT, max_concepts, [], [], [],
                                       [{"reason": "열린 business design 차원이 없습니다."}], "NOT_READY", started)
             validated = await self.prepare_portfolio_plans(seed, analysis, max_concepts)
-            planned = len(self._last_plan_pool)
             rejected = validated.rejectedPlans
             duplicates = sum(item.reasonCode == FailureCode.PLAN_DUPLICATE for item in rejected)
-            expanded = await self.expand_plans(seed, validated.acceptedPlans)
-            candidates, _ = await self.validate_candidates(seed, validated.acceptedPlans, expanded)
+            candidate_preparation = await self.prepare_candidate_portfolio(seed, validated, max_concepts)
+            candidates = candidate_preparation.candidates
+            planned = len(self._last_plan_pool)
             legal_reviews = await self.review_legal(seed, candidates)
             concepts, legal_reviews, required_inputs, redesigned, replanned = await self.resolve_legal(
-                seed, validated.acceptedPlans, candidates, legal_reviews)
+                seed, candidate_preparation.usedPlans, candidates, legal_reviews)
             concepts = concepts[:max_concepts]
             global_inputs = [item for item in required_inputs if item.get("scope") == "GLOBAL"]
             unresolved_candidates = [item for item in required_inputs if item.get("scope") == "CANDIDATE"]
@@ -761,7 +1100,14 @@ class ConceptPortfolioEngine:
             self._event(terminal, "COMPLETED", status.value, f"최종 Portfolio={len(concepts)}", decision=status.value)
             duration = int((time.perf_counter() - started) * 1000)
             summary = RunSummary(safety=safety_text, requestedMaximum=max_concepts, planned=planned,
-                planDuplicatesRemoved=duplicates, candidatesExpanded=len(candidates),
+                planDuplicatesRemoved=duplicates,
+                candidatesExpanded=candidate_preparation.candidateGenerated,
+                candidateGenerated=candidate_preparation.candidateGenerated,
+                candidateAcceptedInitially=candidate_preparation.candidateAcceptedInitially,
+                candidateRegenerated=candidate_preparation.candidateRegenerated,
+                candidateRecovered=candidate_preparation.candidateRecovered,
+                reservePlansActivated=candidate_preparation.reservePlansActivated,
+                candidateRecoveryReplans=candidate_preparation.candidateRecoveryReplans,
                 legalAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal_reviews),
                 legalRedesigned=redesigned, replanned=replanned, finalPortfolio=len(concepts),
                 portfolioStatus=status, selectedConcept=selected.candidate.conceptName if selected else None,

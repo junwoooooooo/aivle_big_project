@@ -111,8 +111,12 @@ def test_plan_and_candidate_use_same_normalizer_and_fidelity_passes_or_adapts(pa
     assert all(report.fidelityDecision in {"PASS", "ADAPTED"} for report in reports if report.accepted)
     by_plan = {item.planId: item for item in validation.acceptedPlans}
     for candidate in accepted:
-        assert candidate.descriptor == GenericConceptNormalizer.from_candidate(candidate.candidate)
-        assert by_plan[candidate.planId].descriptor == GenericConceptNormalizer.from_plan(by_plan[candidate.planId])
+        deterministic_candidate = GenericConceptNormalizer.from_candidate(candidate.candidate)
+        deterministic_plan = GenericConceptNormalizer.from_plan(by_plan[candidate.planId])
+        assert candidate.descriptor.thesis == deterministic_candidate.thesis
+        assert by_plan[candidate.planId].descriptor.thesis == deterministic_plan.thesis
+        assert all(item.source in {"RULE", "SEMANTIC", "UNKNOWN"}
+                   for item in candidate.descriptor.architectureDiagnostics.values())
 
 
 def test_adaptive_planning_replenishes_after_duplicate_heavy_initial_pool():
