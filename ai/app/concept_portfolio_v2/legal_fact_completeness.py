@@ -8,7 +8,7 @@ from typing import Any, Literal
 from app.tasks.concept_candidate.models import ConceptCandidateResult
 
 from .language_policy import is_governance_placeholder
-from .models import LegalFactCompletenessResult, RedesignRequirementCompliance
+from .models import BusinessRoleSemanticItem, LegalFactCompletenessResult, RedesignRequirementCompliance
 
 
 _EMPTY_MARKERS = {
@@ -89,21 +89,14 @@ def assess_role_semantics(field: str, value: Any) -> RoleSemanticStatus:
     return "AMBIGUOUS"
 
 
-def _role_is_complete(candidate: ConceptCandidateResult, field: str) -> bool:
-    presence = classify_fact_presence(getattr(candidate, field), field)
-    semantic = assess_role_semantics(field, getattr(candidate, field))
-    if presence in {"PRESENT", "EXPLICIT_ABSENCE"} and semantic in {"MATCH", "EXPLICIT_ABSENCE"}:
-        return True
-    if presence == "UNKNOWN":
-        return False
-    if semantic == "MISMATCH":
-        return False
+def _role_contextually_complete(candidate: ConceptCandidateResult, field: str) -> bool:
     transaction = _norm(candidate.transactionFlow)
     roles = _norm(candidate.actorRoles)
     if field == "intermediaryRole":
         return ("직접" in transaction or "운영사" in transaction) and "중개" not in transaction
     if field == "providerRole":
-        return any(marker in transaction + roles for marker in ("운영사제공", "파트너제공", "전문가제공", "판매자이행"))
+        return any(marker in transaction + roles for marker in
+                   ("운영사제공", "파트너제공", "전문가제공", "판매자이행"))
     return False
 
 
@@ -115,21 +108,52 @@ def _contains(candidate: ConceptCandidateResult, markers: tuple[str, ...]) -> bo
     return any(_norm(marker) in text for marker in markers)
 
 
-def assess_legal_fact_completeness(candidate: ConceptCandidateResult) -> LegalFactCompletenessResult:
+def assess_legal_fact_completeness(
+    candidate: ConceptCandidateResult,
+    semantic_decisions: dict[str, BusinessRoleSemanticItem | dict[str, Any]] | None = None,
+) -> LegalFactCompletenessResult:
     """도메인 법률지식 없이 역할·거래·이행·데이터·파트너 구조만 검사한다."""
     missing: list[str] = []
     contradictions: list[str] = []
     affected: list[str] = []
-    role_semantics: list[dict[str, str]] = []
+    role_semantics: list[dict[str, Any]] = []
 
     for field in _ROLE_FIELDS:
-        semantic_status = assess_role_semantics(field, getattr(candidate, field))
-        role_semantics.append({"field": field, "status": semantic_status,
-                               "safeReason": ("역할 의미가 필드와 일치합니다." if semantic_status == "MATCH" else
-                                              "역할이 명시적으로 존재하지 않습니다." if semantic_status == "EXPLICIT_ABSENCE" else
-                                              "다른 역할의 설명이 들어 있어 해당 역할을 다시 명시해야 합니다." if semantic_status == "MISMATCH" else
-                                              "해당 역할의 주체와 책임이 불명확합니다.")})
-        if not _role_is_complete(candidate, field):
+        value = getattr(candidate, field)
+        presence = classify_fact_presence(value, field)
+        deterministic = assess_role_semantics(field, value)
+        semantic_item = (semantic_decisions or {}).get(field)
+        if isinstance(semantic_item, BusinessRoleSemanticItem):
+            semantic_status = semantic_item.decision
+            semantic_reason = semantic_item.safeReason
+        elif isinstance(semantic_item, dict):
+            semantic_status = str(semantic_item.get("decision", "UNKNOWN"))
+            semantic_reason = str(semantic_item.get("safeReason", "의미 판정 근거가 없습니다."))
+        else:
+            semantic_status = "NOT_RUN"
+            semantic_reason = "deterministic 판정이 불명확하여 semantic 판정이 필요합니다."
+        final_status = deterministic if deterministic != "AMBIGUOUS" else semantic_status
+        if final_status == "NOT_RUN":
+            final_status = "AMBIGUOUS"
+        reason = ("역할 의미가 필드와 일치합니다." if final_status == "MATCH" else
+                  "역할이 명시적으로 존재하지 않습니다." if final_status == "EXPLICIT_ABSENCE" else
+                  "다른 역할의 설명이 들어 있어 해당 역할을 다시 명시해야 합니다." if final_status == "MISMATCH" else
+                  semantic_reason)
+        role_semantics.append({
+            "field": field,
+            "status": final_status,
+            "presence": presence,
+            "deterministicStatus": deterministic,
+            "semanticUsed": deterministic == "AMBIGUOUS" and semantic_item is not None,
+            "semanticStatus": semantic_status,
+            "finalStatus": final_status,
+            "safeReason": reason,
+        })
+        if final_status == "AMBIGUOUS":
+            if presence == "UNKNOWN" or not _role_contextually_complete(candidate, field):
+                missing.append(f"{field}의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다.")
+                affected.append(field)
+        elif final_status not in {"MATCH", "EXPLICIT_ABSENCE"}:
             missing.append(f"{field}의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다.")
             affected.append(field)
     if not _substantive(candidate.transactionFlow):
@@ -177,6 +201,7 @@ def assess_legal_fact_completeness(candidate: ConceptCandidateResult) -> LegalFa
         status = "COMPLETABLE" if missing else "COMPLETE"
     requirements = [*missing, *[f"모순 해소: {item}" for item in contradictions]]
     summary = ({"COMPLETE": "법률 사전검토에 필요한 사업 사실패턴이 구조적으로 완결되었습니다.",
+                "SEMANTIC_REQUIRED": "deterministic 역할 판정이 불명확하여 batch semantic 판정이 필요합니다.",
                 "COMPLETABLE": "동일 Concept 안에서 누락된 사업 사실을 한 번 보완할 수 있습니다.",
                 "INVALID": "사업 역할과 거래 구조의 중대한 모순을 먼저 재생성해야 합니다."}[status])
     return LegalFactCompletenessResult(status=status, missingDesignFacts=missing,

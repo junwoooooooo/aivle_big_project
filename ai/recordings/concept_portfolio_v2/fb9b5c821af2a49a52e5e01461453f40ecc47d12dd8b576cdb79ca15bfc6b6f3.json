@@ -1,0 +1,96 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f6ebf7d7f4c4a5d5eb03f382bbb8b181d88636afbde9f37acb666a3db8958754",
+  "canonicalRequestHash": "fb9b5c821af2a49a52e5e01461453f40ecc47d12dd8b576cdb79ca15bfc6b6f3",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "AI 분석 플랫폼 제공 AI 분석 서비스 제공자 서비스 판매자 교육 기관 및 취업 지원 센터 AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 사용자가 모의면접 답변 입력 AI가 답변 분석 및 피드백 제공 사용자가 피드백을 바탕으로 연습 사용자가 구독료 결제 결제 시스템이 수수료 정산 서비스 제공자가 수익 분배 구독 모델을 통한 지속적인 서비스 제공 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. AI 분석 서비스 제공자 서비스 판매자 교육 기관 및 취업 지원 센터 AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 사용자가 모의면접 답변을 입력 AI가 답변을 분석 사용자에게 피드백 제공 사용자가 구독 결제 결제 정보 처리 서비스 이용 시작 구독 모델을 통한 지속적인 수익 창출 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "MEDIUM",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 분석 플랫폼으로, 교육 기관 및 취업 지원 센터와 협력하여 서비스를 제공하며, 구독 모델을 통해 수익을 창출하는 구조입니다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "MEDIUM",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 분석 플랫폼으로, 교육 기관 및 취업 지원 센터와 협력하여 서비스를 제공하며, 구독 모델을 통해 지속적인 수익을 창출하는 구조입니다."
+    }
+  ],
+  "durationMs": 3126,
+  "timestamp": "2026-08-10T03:52:50.120266+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

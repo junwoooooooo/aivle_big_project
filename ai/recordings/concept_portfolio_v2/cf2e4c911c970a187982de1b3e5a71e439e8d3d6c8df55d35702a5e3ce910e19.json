@@ -1,0 +1,113 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:08e98d8770f49bf61e642272c1f60477fd7031b79b27690ea17b4b5b52ccc8eb",
+  "canonicalRequestHash": "cf2e4c911c970a187982de1b3e5a71e439e8d3d6c8df55d35702a5e3ce910e19",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "요리 시간이 부족하여 식재료가 남고 음식물 쓰레기가 발생한다.",
+      "useContext": "빠르고 간편한 요리를 원하는 소비자에게 맞춤형 서비스를 제공한다.",
+      "valueProposition": "요리 시간을 단축시키고 낭비를 줄이는 솔루션을 제공한다.",
+      "offerThesis": "간편한 요리를 위한 소량 식재료와 레시피를 제공하여 시간을 절약한다.",
+      "solutionThesis": "빠르고 간편한 요리를 위한 맞춤형 솔루션을 제공하여 고객의 만족도를 높인다.",
+      "differentiatingMechanics": [
+        "간편 레시피 추천 시스템",
+        "고객 맞춤형 요리 팁 제공",
+        "커뮤니티 피드백 시스템"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "요리 시간이 부족하여 식재료가 남고 음식물 쓰레기가 발생한다.",
+      "coreValue": "빠르고 간편한 요리를 위한 맞춤형 솔루션을 제공하여 고객의 만족도를 높인다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료와 레시피를 제공하는 서비스.",
+      "solutionMechanism": "고객이 원하는 요리 스타일을 입력하면 맞춤형 식재료와 레시피를 제공한다.",
+      "featureSet": [
+        "간편 레시피 추천 시스템",
+        "고객 맞춤형 요리 팁 제공",
+        "레시피 공유 기능"
+      ],
+      "operatingModel": "고객의 요리 데이터를 분석하여 서비스 품질을 지속적으로 개선한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "빠르고 간편한 요리를 원하는 소비자에게 맞춤형 서비스를 제공한다.",
+        "valuePropositionThesis": "요리 시간을 단축시키고 낭비를 줄이는 솔루션을 제공한다.",
+        "offerThesis": "간편한 요리를 위한 소량 식재료와 레시피를 제공하여 시간을 절약한다.",
+        "solutionThesis": "빠르고 간편한 요리를 위한 맞춤형 솔루션을 제공하여 고객의 만족도를 높인다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "빠르고 간편한 요리를 위한 맞춤형 솔루션을 제공하여 고객의 만족도를 높인다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "ADAPTED",
+    "matchedMechanics": [
+      "간편 레시피 추천 시스템",
+      "고객 맞춤형 요리 팁 제공"
+    ],
+    "missingMechanics": [
+      "커뮤니티 피드백 시스템"
+    ],
+    "safeSummary": "개인 맞춤형 소량 식재료와 레시피를 제공하는 서비스로, 요리 시간을 단축시키고 낭비를 줄이는 솔루션을 제공한다."
+  },
+  "durationMs": 2389,
+  "timestamp": "2026-08-10T03:32:17.277693+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

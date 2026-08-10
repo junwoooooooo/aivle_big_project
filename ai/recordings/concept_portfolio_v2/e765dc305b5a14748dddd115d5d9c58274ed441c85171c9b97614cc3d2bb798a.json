@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:53ebaddfc06c48c222c418ef8b55326c4a19a1a4b8e45badb03fe154dc73f4f4",
+  "canonicalRequestHash": "e765dc305b5a14748dddd115d5d9c58274ed441c85171c9b97614cc3d2bb798a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1-F1",
+        "businessText": "온라인 플랫폼을 통해 고객과 소통하고 주문을 처리한다. 식재료 공급업체로서 고객에게 맞춤형 식재료를 제공한다. 온라인 플랫폼에서 고객에게 식재료를 판매한다. 배송업체가 고객에게 식재료를 전달한다. 고객의 피드백을 반영하여 지속적으로 서비스 품질을 개선한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 식재료를 공급받는다. 고객이 온라인 플랫폼에서 주문을 한다. 주문 정보가 식재료 공급업체에 전달된다. 식재료 공급업체가 주문에 맞춰 식재료를 준비한다. 배송업체가 고객에게 식재료를 배송한다. 고객이 온라인 플랫폼에서 결제를 진행한다. 결제 정보가 판매자에게 전달된다. 판매자가 배송업체에 비용을 지급한다. 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 플랫폼 및 모바일 앱을 통해 고객과 소통하고 주문을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PARTNER_FULFILLED",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An online platform that connects customers with suppliers for customized ingredient delivery, utilizing a partner network for operations and recurring subscription monetization."
+    }
+  ],
+  "durationMs": 3021,
+  "timestamp": "2026-08-10T03:31:53.643136+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

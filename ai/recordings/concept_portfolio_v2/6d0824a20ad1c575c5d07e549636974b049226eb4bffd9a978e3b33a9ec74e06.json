@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:96885f0441eed578da65c2d9690dd49c912082af19a072a5a6180fb8edc351a3",
+  "canonicalRequestHash": "6d0824a20ad1c575c5d07e549636974b049226eb4bffd9a978e3b33a9ec74e06",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 신선한 재료 및 레시피 제공 고객에게 서비스 판매 물류 및 배송 관리 고객의 선호도에 따라 신선한 재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객 주문 주문 확인 및 재료 준비 배송 고객 수령 고객 결제 정기 결제 처리 수익 정산 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An online platform that operates by providing fresh ingredients and recipes to customers, utilizing a subscription model for regular deliveries."
+    }
+  ],
+  "durationMs": 2800,
+  "timestamp": "2026-08-10T03:30:02.649036+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:796016231ea8117b87f8ccae7a26731def0cb8bf4fb7682615d55dd93f6e7f11",
+  "canonicalRequestHash": "075aa77bf976225434edecdec878de66f1b7a809f232206a1bcd8933549e1d2a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. AI 분석 서비스 제공자 서비스 판매자 교육 기관 및 취업 지원 센터 AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 사용자가 모의면접 답변을 입력 AI가 답변을 분석 사용자에게 피드백 제공 사용자가 구독 결제 결제 정보 처리 서비스 이용 시작 구독 모델을 통한 지속적인 수익 창출 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 분석 시스템을 통해 사용자에게 피드백을 제공하고, 교육 기관 및 취업 지원 센터와 협력하여 운영되는 구독 기반의 디지털 플랫폼."
+    }
+  ],
+  "durationMs": 3343,
+  "timestamp": "2026-08-10T03:54:19.192922+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:359dc438a6015b232b27de1d8a05614c36ef7f21f6d43eda350ed7cfefa7a421",
+  "canonicalRequestHash": "c779e333a4310594546b3a4fc2aee1134df021182edad4541b422384d6226334",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P10",
+        "businessText": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다. 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 커뮤니티 참여를 통한 수익 창출 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원 사용자는 플랫폼에 접속하여 자신의 답변을 입력하고 커뮤니티와 AI로부터 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "COMMUNITY",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P11",
+        "businessText": "AI 기반의 챌린지 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 챌린지 프로그램을 운영한다. 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 챌린지 서비스 및 추가 연습 프로그램 판매 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 챌린지 진행 사용자는 플랫폼에 접속하여 챌린지에 참여하고 AI로부터 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P12",
+        "businessText": "AI 기반의 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램 제공 온라인 플랫폼을 통해 즉각적인 피드백 제공 사용자는 플랫폼에 접속하여 면접 답변을 입력하고 AI 코치로부터 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "COMMUNITY",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "COMMUNITY",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반의 챌린지 시스템 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "COMMUNITY",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반의 자동화된 피드백 시스템 운영."
+    }
+  ],
+  "durationMs": 3992,
+  "timestamp": "2026-08-10T03:55:53.627173+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

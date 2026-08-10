@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:a91daf75d9fc491407da3419f1a988682ce87728895205ec1e73b06d7f7d6956",
+  "canonicalRequestHash": "992f9a1d07b51730cc1d32a082438ea56a9d35e5534d11255d90ad26aca00ba7",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-F1",
+        "businessText": "AI 기반 영업 지원 플랫폼 제공자 AI 솔루션 제공자 영업팀 파트너사 클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다. CRM 시스템과의 통합을 통해 원활한 데이터 흐름을 유지합니다. 고객이 플랫폼에 가입 AI가 회의 및 이메일 데이터를 수집 CRM에 자동으로 입력 영업팀이 후속 조치를 수행 고객이 구독료를 결제 결제 정보가 시스템에 기록 서비스 제공 후 정산 구독 모델을 통한 지속적인 서비스 제공 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OWN_OPERATED",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 기반 영업 지원 플랫폼으로, 클라우드 기반의 SaaS 모델을 통해 고객에게 구독 서비스를 제공하며, CRM 시스템과 통합하여 영업팀의 효율성을 높입니다."
+    }
+  ],
+  "durationMs": 3919,
+  "timestamp": "2026-08-10T03:38:55.270931+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8cd58a7c4e361df25ce73808308a25e6ab7b79c66c7d01f0aee3e598eee6bf9e",
+  "canonicalRequestHash": "2b4a4ae0b431d9ade7f8ffb1efc65caf62638ff3d2ae9e33b36745eeef3c174e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "AI 기반 관리 도구 제공 서비스 제공자 영업팀 파트너사 클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다. CRM 시스템과의 통합을 통해 원활한 데이터 흐름을 유지합니다. 고객이 서비스 신청 서비스 제공자가 계약 체결 서비스 제공자가 솔루션 제공 고객이 구독료 결제 서비스 제공자가 결제 확인 서비스 제공자가 정산 구독 모델을 통한 지속적인 서비스 제공 온라인 마케팅, 파트너십을 통한 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OWN_OPERATED",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 기반 관리 도구를 제공하는 SaaS 모델의 서비스로, 클라우드 기반으로 고객과의 통합된 데이터 흐름을 유지하며 구독 모델로 수익을 창출."
+    }
+  ],
+  "durationMs": 2056,
+  "timestamp": "2026-08-10T03:39:19.843880+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

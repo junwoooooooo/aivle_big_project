@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:1e361c8de1ad16def06bbcf7b49b8b0e433aecbdca9f4149852a443765cdd504",
+  "canonicalRequestHash": "c48650593dd57954736e01d45ce6df6bc3917268b62806d2007e29bd6945cb43",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "AI 분석 및 피드백 제공 플랫폼 AI 분석 서비스 제공자 서비스 구독 판매자 교육 기관 및 취업 지원 센터 AI 기술을 활용하여 자동화된 분석 및 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 사용자가 웹 플랫폼에 접속하여 면접 답변 입력 AI 시스템이 답변 분석 및 피드백 생성 사용자가 피드백을 확인하고 연습 계획 수립 사용자가 구독료 결제 결제 시스템이 수수료를 처리 서비스 제공자가 수익을 정산 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 웹 플랫폼 및 모바일 애플리케이션",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "AI 면접 준비 챌린지 플랫폼 운영 AI 면접 준비 챌린지 서비스 제공자 서비스 구독 판매자 교육 기관과의 협력 파트너 AI 기반의 챌린지 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 챌린지 프로그램 운영 사용자가 플랫폼에 가입한다. 사용자가 챌린지에 참여한다. AI가 면접 답변을 분석한다. 사용자에게 피드백이 제공된다. 사용자가 구독료를 결제한다. 결제 정보가 시스템에 기록된다. 서비스 제공자가 수익을 정산한다. 구독 모델을 통한 지속적인 서비스 이용 유도 온라인 플랫폼 및 제휴 교육 기관",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "AI 코치 플랫폼 운영 AI 코치 서비스 제공자 서비스 판매 및 마케팅 담당 교육 기관 및 취업 지원 센터와의 협력 담당 AI 기반의 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 사용자가 플랫폼에 접속하여 면접 답변 입력 AI 시스템이 답변 분석 및 피드백 생성 사용자가 피드백 수신 후 개선 사항 반영 사용자가 구독료 결제 결제 시스템이 수수료 정산 서비스 제공자가 수익 분배 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 온라인 플랫폼 및 모바일 애플리케이션",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영 AI 서비스 제공자 구독 서비스 판매자 커뮤니티 운영자 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원 교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다. 사용자가 플랫폼에 가입한다. 사용자가 모의면접 답변을 입력한다. AI가 답변을 분석한다. 커뮤니티가 피드백을 제공한다. 사용자가 피드백을 수령한다. 사용자가 구독료를 결제한다. 결제 시스템이 결제를 처리한다. 서비스 제공자가 수익을 수령한다. 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "AI 코치가 면접 준비생의 경쟁력을 높이는 데 기여한다. AI 코치 제공자 서비스 판매자 교육 기관 및 취업 지원 센터 AI 기반의 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 사용자가 플랫폼에 접속하여 면접 답변 입력 AI 코치가 피드백 제공 사용자가 피드백을 바탕으로 반복 연습 사용자가 구독 결제 결제 정보 처리 시스템이 결제 수취 서비스 제공 후 정산 구독 모델 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "ADVISORY",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 및 피드백 제공 플랫폼으로, 교육 기관과 협력하여 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 면접 준비 챌린지 플랫폼으로, 교육 기관과 협력하여 구독 모델로 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 코치 플랫폼으로, 교육 기관과 협력하여 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI와 커뮤니티의 협업을 통한 피드백 시스템으로, 구독 모델로 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "ADVISORY",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 코치가 면접 준비생을 지원하는 플랫폼으로, 구독 모델로 운영."
+    }
+  ],
+  "durationMs": 8351,
+  "timestamp": "2026-08-10T03:56:46.564307+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:aaade4645c0fb5eecd70a9161de13eaaf63cb629f3f6d8227c1730c8fcd5e086",
+  "canonicalRequestHash": "41723c53bc572b737391ddce96e20253a313e3acdfa03cae7ba3e5661f27ae41",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-F1",
+        "businessText": "AI 코치 플랫폼 운영 AI 코치 서비스 제공자 서비스 판매 및 마케팅 담당 교육 기관 및 취업 지원 센터와의 협력 담당 AI 기반의 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 사용자가 플랫폼에 접속하여 면접 답변 입력 AI 시스템이 답변 분석 및 피드백 생성 사용자가 피드백 수신 후 개선 사항 반영 사용자가 구독료 결제 결제 시스템이 수수료 정산 서비스 제공자가 수익 분배 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 온라인 플랫폼 및 모바일 애플리케이션",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 코치 플랫폼으로, AI 기반의 자동화된 피드백 시스템을 통해 교육 기관과 협력하여 서비스를 제공하며, 구독 모델로 수익을 창출하는 디지털 플랫폼."
+    }
+  ],
+  "durationMs": 2264,
+  "timestamp": "2026-08-10T03:57:49.965807+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

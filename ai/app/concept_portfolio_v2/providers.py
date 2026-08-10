@@ -18,6 +18,7 @@ from app.tasks.concept_candidate.models import ConceptCandidateDraft, ConceptCan
 from .adapters import CurrentLegalAdapter
 from .language_policy import candidate_language_failures, plan_language_failures
 from .models import (
+    BusinessRoleSemanticBatch, BusinessRoleSemanticItem,
     CanonicalSeed, DesignSpaceAnalysis, ExplorationBreadth, LegalReview, LegalRoute,
     PlanDraftPool, PortfolioPlan, PortfolioPlanDraft, ProviderMode, ProviderUsage,
     SemanticArchitectureBatch, SemanticArchitectureClassification,
@@ -34,6 +35,7 @@ FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v3"
 FIDELITY_REGEN_PROMPT_VERSION = "concept-portfolio-fidelity-regeneration-v1"
 ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v1"
 HYPOTHESIS_SEMANTIC_PROMPT_VERSION = "concept-portfolio-hypothesis-semantic-v1"
+BUSINESS_ROLE_SEMANTIC_PROMPT_VERSION = "concept-business-role-semantic-v1"
 LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
 LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-v1"
 LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair-v1"
@@ -90,6 +92,9 @@ class PortfolioProvider(ABC):
 
     @abstractmethod
     async def classify_hypotheses(self, items: list[dict[str, Any]]) -> list[SemanticHypothesisResult]: ...
+
+    @abstractmethod
+    async def classify_business_roles(self, items: list[dict[str, Any]]) -> list[BusinessRoleSemanticItem]: ...
 
     @abstractmethod
     async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
@@ -332,19 +337,39 @@ class MockPortfolioProvider(PortfolioProvider):
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
         from .candidate_governance import candidate_result_to_draft
         draft = candidate_result_to_draft(candidate)
+        def needs(field, *markers):
+            return any(field in item or any(marker in item for marker in markers) for item in requirements)
+
+        needs_physical = needs("physicalActivities", "물리적 이행")
+        physical = list(draft.physicalActivities)
+        if needs_physical and not physical and plan.fulfillmentApproach.strip():
+            physical = [plan.fulfillmentApproach]
         return draft.model_copy(update={
-            "platformRole": draft.platformRole if "운영" in draft.platformRole else "운영사가 고객 접점과 거래 기준을 운영",
-            "providerRole": draft.providerRole if "제공" in draft.providerRole else "운영사 또는 명시된 제휴사가 서비스를 제공",
-            "sellerRole": draft.sellerRole if "판매" in draft.sellerRole else "운영사가 고객과 계약하고 판매 책임을 부담",
-            "intermediaryRole": draft.intermediaryRole if "중개" in draft.intermediaryRole else "제3자 거래 중개를 하지 않음",
-            "transactionFlow": draft.transactionFlow or ["고객이 운영사에 주문하고 운영사가 서비스를 제공"],
-            "paymentFlow": draft.paymentFlow or ["고객이 운영사에 결제하고 운영사가 수취"],
-            "personalDataUsage": draft.personalDataUsage or ["서비스 이행을 위해 고객 연락처를 처리"],
-            "physicalActivities": draft.physicalActivities or ["운영사가 설계된 물리적 이행을 관리"],
-            "partnerRequirements": draft.partnerRequirements or ["제휴사는 명시된 서비스 이행 역할을 수행"],
-            "targetRegion": "대한민국" if "필요" in draft.targetRegion else draft.targetRegion,
-            "price": "초기 법률검토 가정용 가격 결정 방식: 서비스 범위에 따른 정액 또는 건별 요금" if "필요" in draft.price else draft.price,
-            "channels": "운영사가 관리하는 웹·앱 고객 접점" if "필요" in draft.channels else draft.channels,
+            "platformRole": (draft.platformRole if not needs("platformRole") or "운영" in draft.platformRole
+                             else "운영사가 고객 접점과 거래 기준을 운영"),
+            "providerRole": (draft.providerRole if not needs("providerRole") or "제공" in draft.providerRole
+                             else "운영사 또는 명시된 제휴사가 서비스를 제공"),
+            "sellerRole": (draft.sellerRole if not needs("sellerRole") or "판매" in draft.sellerRole
+                           else "운영사가 고객과 계약하고 판매 책임을 부담"),
+            "intermediaryRole": (draft.intermediaryRole
+                                 if not needs("intermediaryRole") or "중개" in draft.intermediaryRole
+                                 else "제3자 거래 중개를 하지 않음"),
+            "transactionFlow": (draft.transactionFlow if not needs("transactionFlow", "주문·계약")
+                                or draft.transactionFlow else ["고객이 운영사에 주문하고 운영사가 서비스를 제공"]),
+            "paymentFlow": (draft.paymentFlow if not needs("paymentFlow", "결제 수취") or draft.paymentFlow
+                            else ["고객이 운영사에 결제하고 운영사가 수취"]),
+            "personalDataUsage": (draft.personalDataUsage
+                                  if not needs("personalDataUsage", "개인정보") or draft.personalDataUsage
+                                  else ["서비스 이행을 위해 고객 연락처를 처리"]),
+            "physicalActivities": physical,
+            "partnerRequirements": (draft.partnerRequirements
+                                    if not needs("partnerRequirements", "외부 파트너") or draft.partnerRequirements
+                                    else ["제휴사는 명시된 서비스 이행 역할을 수행"]),
+            "targetRegion": ("대한민국" if needs("targetRegion", "대상 국가·지역")
+                             and "필요" in draft.targetRegion else draft.targetRegion),
+            "price": draft.price,
+            "channels": ("운영사가 관리하는 웹·앱 고객 접점"
+                         if needs("channels", "고객 접점") and "필요" in draft.channels else draft.channels),
         })
 
     async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, candidate_index):
@@ -401,6 +426,24 @@ class MockPortfolioProvider(PortfolioProvider):
                             "placeholder가 아닌 구체적 후보값으로 판단했습니다.")))
         return results
 
+    async def classify_business_roles(self, items):
+        markers = {
+            "platformRole": ("운영", "관리", "접점", "기준", "플랫폼"),
+            "providerRole": ("제공", "수행", "이행", "공급", "전달", "전문가", "파트너"),
+            "sellerRole": ("판매", "계약", "청구", "수취", "과금", "요금"),
+            "intermediaryRole": ("중개", "연결", "매칭", "알선", "거래 성사"),
+        }
+        results = []
+        for item in items:
+            field = item["field"]
+            text = str(item.get("value") or "").casefold()
+            decision = "MATCH" if any(marker in text for marker in markers[field]) else "UNKNOWN"
+            results.append(BusinessRoleSemanticItem(
+                candidateId=item["candidateId"], field=field, decision=decision,
+                safeReason=("요청된 역할의 주체 또는 책임을 의미상 확인했습니다."
+                            if decision == "MATCH" else "제공된 맥락만으로 해당 역할을 확정할 수 없습니다.")))
+        return results
+
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
 
@@ -449,6 +492,8 @@ Plan의 target/use/value/offer/solution thesis와 핵심 differentiator, 사용�
 platformRole, providerRole, sellerRole, intermediaryRole에는 실제 주체와 책임을 명시하고,
 transactionFlow와 paymentFlow에는 주문·계약·제공·결제 수취·정산 주체를 구체적으로 작성한다.
 personalDataUsage, physicalActivities, partnerRequirements는 실제 사업 흐름상 해당할 때 처리 목적·수행 주체·파트너 기능을 작성한다.
+physicalActivities는 배송·포장·현장 방문·설치처럼 물리 세계에서 수행되는 활동만 포함한다.
+AI 분석, 디지털 피드백, 화면 처리, 온라인 상호작용은 physicalActivities가 아니며 순수 디지털이면 빈 배열로 둔다.
 qualificationRequirements는 Concept가 애초에 특정 자격 보유 주체를 사용하도록 설계한 경우에만 작성한다.
 targetRegion, revenueModel, price, channels, differentiators에는 '미제공', '검증 필요', '추후 결정'이 아니라
 사용자가 검토할 수 있는 실제 geography·수익 방식·가격/범위 가설·채널·차별화 proposal을 작성한다.
@@ -520,8 +565,10 @@ qualificationRequirements 등 Legal fact 필드는 구체적 설계상 실제 �
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
         prompt = """현재 Candidate의 핵심 target/value/offer/solution과 Plan identity를 바꾸지 말고,
 법률 사실패턴에 필요한 누락·모순만 보완한다. 누가 판매·제공·중개·결제 수취·정산·이행하는지
-구체적으로 명시한다. 개인정보는 실제 처리 항목과 목적, 물리 활동은 수행 주체, 파트너는 사업상
-역할을 작성한다. 존재하지 않는 면허·허가·계약을 보유했다고 만들지 않고 법령명·법률판단을 쓰지 않는다.
+구체적으로 명시한다. 개인정보는 Candidate 흐름에서 실제 처리하는 항목과 목적만 쓴다. 물리 활동은
+Candidate·Plan에 실제 배송·현장·픽업 같은 물리 이행이 있을 때만 수행 주체와 함께 쓰고, 순수 디지털
+서비스에는 일반적인 물리 활동 placeholder를 만들지 않는다. 파트너도 실제 사업상 역할만 작성한다.
+존재하지 않는 면허·허가·계약을 보유했다고 만들지 않고 법령명·법률판단을 쓰지 않는다.
 해당 역할이 실제로 없으면 역할을 만들어내지 말고 '중개하지 않음', '플랫폼은 직접 판매자가 아님',
 '외부 파트너를 사용하지 않음'처럼 부재와 책임을 명확히 작성한다.
 JSON key 외 사용자-facing 내용은 한국어이며 ConceptCandidateDraft strict schema만 반환한다."""
@@ -587,6 +634,20 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
             response_schema=schema, schema_name="concept_hypothesis_semantic_v1",
             task_type="CONCEPT_PORTFOLIO_V2_HYPOTHESIS_SEMANTIC")
         return SemanticHypothesisBatch.model_validate(raw).results
+
+    async def classify_business_roles(self, items):
+        schema = BusinessRoleSemanticBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_business_role_semantic_v1")
+        raw = await execute_structured_prompt(
+            """각 item의 field가 묻는 사업 역할에 value가 실제로 답하는지만 판정한다.
+다른 role fields, actorRoles, 거래·결제 흐름, 운영·파트너 모델, solution과 system descriptor는
+해석 맥락일 뿐 새 사실을 만들 근거가 아니다. 역할이 의미상 있으면 MATCH, 명시적으로 없으면
+EXPLICIT_ABSENCE, 다른 역할 설명이면 MISMATCH, 근거 부족이면 UNKNOWN을 반환한다.
+법률 판단, 사업 설계, 문구 보완은 하지 않는다. 입력 순서와 candidateId/field를 보존한다.""",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_business_role_semantic_v1",
+            task_type="CONCEPT_PORTFOLIO_V2_BUSINESS_ROLE_SEMANTIC_CLASSIFICATION")
+        return BusinessRoleSemanticBatch.model_validate(raw).results
 
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
@@ -795,6 +856,19 @@ class ProviderGateway:
         if len(results) != len(items):
             raise ProviderFailure("RESULT_SCHEMA_INVALID", "HYPOTHESIS_BATCH_COUNT_MISMATCH",
                                   502, False, schema_name="concept_hypothesis_semantic_v1")
+        return results
+
+    async def classify_business_roles(self, items):
+        raw = await self.call("LEGAL_RECOVERING", "CLASSIFY_BUSINESS_ROLE_SEMANTICS", {"items": items},
+            lambda: self.provider.classify_business_roles(items),
+            operation_version="v1", prompt_version=BUSINESS_ROLE_SEMANTIC_PROMPT_VERSION)
+        results = [item if isinstance(item, BusinessRoleSemanticItem)
+                   else BusinessRoleSemanticItem.model_validate(item) for item in raw]
+        expected = [(item["candidateId"], item["field"]) for item in items]
+        actual = [(item.candidateId, item.field) for item in results]
+        if actual != expected:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "BUSINESS_ROLE_BATCH_IDENTITY_MISMATCH",
+                                  502, False, schema_name="concept_business_role_semantic_v1")
         return results
 
     async def replacement_plans(self, seed, design, existing_plans, count=2):

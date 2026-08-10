@@ -69,6 +69,7 @@ class FailureCode(StrEnum):
     CANDIDATE_REGENERATION_EXHAUSTED = "CANDIDATE_REGENERATION_EXHAUSTED"
     CANONICALIZATION_LOW_CONFIDENCE = "CANONICALIZATION_LOW_CONFIDENCE"
     LEGAL_FACT_COMPLETION_EXHAUSTED = "LEGAL_FACT_COMPLETION_EXHAUSTED"
+    NO_LEGAL_READY_CANDIDATES = "NO_LEGAL_READY_CANDIDATES"
     LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED = "LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED"
     LEGAL_REDESIGN_LOOP_DETECTED = "LEGAL_REDESIGN_LOOP_DETECTED"
 
@@ -347,12 +348,13 @@ class LegalPrecheck(StrictModel):
 
 class LegalFactCompletenessResult(StrictModel):
     candidateId: str | None = None
-    status: Literal["COMPLETE", "COMPLETABLE", "INVALID"]
+    status: Literal["COMPLETE", "SEMANTIC_REQUIRED", "COMPLETABLE", "INVALID"]
     missingDesignFacts: list[str] = Field(default_factory=list)
     contradictions: list[str] = Field(default_factory=list)
     completionRequirements: list[str] = Field(default_factory=list)
     affectedFields: list[str] = Field(default_factory=list)
-    roleSemantics: list[dict[str, str]] = Field(default_factory=list)
+    roleSemantics: list[dict[str, Any]] = Field(default_factory=list)
+    architectureRoleConsistency: dict[str, str] | None = None
     safeSummary: str
 
 
@@ -364,6 +366,18 @@ class LegalCandidatePreparation(StrictModel):
     completionValidated: int = 0
     completionAccepted: int = 0
     completionExhausted: int = 0
+    roleSemanticBatchCalls: int = 0
+
+
+class BusinessRoleSemanticItem(StrictModel):
+    candidateId: str
+    field: Literal["platformRole", "providerRole", "sellerRole", "intermediaryRole"]
+    decision: Literal["MATCH", "EXPLICIT_ABSENCE", "MISMATCH", "UNKNOWN"]
+    safeReason: str
+
+
+class BusinessRoleSemanticBatch(StrictModel):
+    results: list[BusinessRoleSemanticItem] = Field(min_length=1, max_length=20)
 
 
 class RedesignRequirementCompliance(StrictModel):
@@ -572,6 +586,7 @@ class RunSummary(StrictModel):
     legalFactCompletionValidated: int = 0
     legalFactCompletionAccepted: int = 0
     legalFactCompletionExhausted: int = 0
+    legalReady: int = 0
     legalRedesignAttempted: int = 0
     legalRedesignValidated: int = 0
     legalRedesignAccepted: int = 0
@@ -615,6 +630,7 @@ class ConceptPortfolioResult(StrictModel):
     rejectedPlans: list[RejectedPlan]
     legalSummaries: list[LegalReview]
     requiredInputs: list[dict[str, Any]]
+    preLegalExclusions: list[dict[str, Any]] = Field(default_factory=list)
     unresolvedCandidates: list[dict[str, Any]] = Field(default_factory=list)
     trace: list[TraceEvent]
     providerUsage: ProviderUsage

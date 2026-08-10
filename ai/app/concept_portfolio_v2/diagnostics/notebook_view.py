@@ -234,9 +234,20 @@ def show_hypotheses(hypotheses):
 
 
 def show_hypothesis_readiness(hypotheses):
+    if not hypotheses:
+        return {"All Values Semantically Valid": False,
+                "All Decisions Confirmed": False,
+                "Ready For Handoff": False,
+                "status": "NOT_READY",
+                "reason": "NO_SELECTED_CONCEPT_OR_HYPOTHESES",
+                "unresolvedHypotheses": []}
     unresolved = [item.hypothesisType for item in hypotheses
                   if item.semanticStatus != "VALID" or not item.accepted]
-    return {"All Hypotheses Semantically Ready": not unresolved,
+    all_valid = all(item.semanticStatus == "VALID" for item in hypotheses)
+    all_confirmed = all(item.accepted for item in hypotheses)
+    return {"All Values Semantically Valid": all_valid,
+            "All Decisions Confirmed": all_confirmed,
+            "Ready For Handoff": all_valid and all_confirmed,
             "status": "READY" if not unresolved else "NOT_READY",
             "reason": None if not unresolved else "UNRESOLVED_HYPOTHESES",
             "unresolvedHypotheses": unresolved}
@@ -301,6 +312,14 @@ def show_required_inputs(result_or_items):
     return _table([{key: item.get(key) for key in keys} for item in items])
 
 
+def show_pre_legal_exclusions(result_or_items):
+    items = (result_or_items.preLegalExclusions if hasattr(result_or_items, "preLegalExclusions")
+             else list(result_or_items or []))
+    keys = ("candidateId", "scope", "reasonCode", "affectedFields", "recoveryAttempted",
+            "recoveryResolution", "safeSummary")
+    return _table([{key: item.get(key) for key in keys} for item in items])
+
+
 def show_live_validation_summary(scenario_id, result):
     legal = result.legalSummaries if result else []
     summary = result.runSummary if result else None
@@ -308,8 +327,15 @@ def show_live_validation_summary(scenario_id, result):
         "Scenario": scenario_id,
         "Plan returned": summary.planned if summary else 0,
         "Plan selected": summary.planSelected if summary else 0,
-        "Candidate valid": summary.candidateAccepted if summary else 0,
-        "Legal ready": summary.legalReviewed if summary else 0,
+        "Candidate generated": summary.candidateGenerated if summary else 0,
+        "Candidate valid initially": summary.candidateAcceptedInitially if summary else 0,
+        "Candidate regenerated": summary.candidateRegenerated if summary else 0,
+        "Candidate recovered": summary.candidateRecovered if summary else 0,
+        "Fact completion attempted": summary.legalFactCompletionAttempted if summary else 0,
+        "Fact completion validated": summary.legalFactCompletionValidated if summary else 0,
+        "Fact completion accepted": summary.legalFactCompletionAccepted if summary else 0,
+        "Legal ready": summary.legalReady if summary else 0,
+        "Legal reviewed": summary.legalReviewed if summary else 0,
         "Legal ACCEPT": summary.legalAccepted if summary else 0,
         "NEEDS_INPUT": sum(item.route.value == "NEEDS_INPUT" for item in legal),
         "Final portfolio": result.producedConceptCount if result else 0,
