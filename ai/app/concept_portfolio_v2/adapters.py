@@ -184,6 +184,16 @@ class CurrentLegalAdapter:
             redesignRequirements=raw["redesignRequirements"], prohibitedVariants=raw["prohibitedVariants"],
             requiredDisclosures=raw["requiredDisclosures"],
             officialEvidenceReferences=raw["officialEvidence"],
+            reviewPhase=raw.get("reviewPhase"), factCompletenessStatus=raw.get("factCompletenessStatus"),
+            legalSourceStatus=raw.get("legalSourceStatus"),
+            finalEvidenceJudgmentExecuted=raw.get("finalEvidenceJudgmentExecuted"),
+            recoveryResolution=raw.get("recoveryResolution"),
+            sourceQuestionCount=raw.get("sourceQuestionCount", 0),
+            resolvedByFactPatternCount=raw.get("resolvedByFactPatternCount", 0),
+            designGapCount=raw.get("designGapCount", 0),
+            externalFactCount=raw.get("externalFactCount", 0),
+            controlConvertibleCount=raw.get("controlConvertibleCount", 0),
+            legalClarificationCount=raw.get("legalClarificationCount", 0),
         )
 
 

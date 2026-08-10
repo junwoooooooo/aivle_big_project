@@ -227,7 +227,7 @@ def test_61_no_reserve_legal_replan_invokes_targeted_replacement_generation():
     payload = fixture(); payload["fixtureName"] = "no_reserve_legal_replan"
     result = run(ConceptPortfolioEngine(gateway=gateway).run_full(payload))
     assert provider.replacements == 1
-    assert any(item.candidateId == "C1-REPLAN" for item in result.concepts)
+    assert any("REPLAN" in item.candidateId for item in result.concepts)
 
 
 def test_62_runtime_legal_schema_only_permits_actual_refs():

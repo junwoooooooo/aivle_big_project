@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f70801bcba30a014f6d5c32c22a9d5e63dc0d66300eedcd02d034c847b88167a",
+  "canonicalRequestHash": "74971afbd222a2e2ae8fd739e8acdf57b97a3bbe26b475efd20cb03055bf9b2b",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-R1",
+        "businessText": "식사 계획 및 식재료 제공 플랫폼 고객 맞춤형 식사 계획 운영 식품 공급업체 및 영양 전문가와의 협력 주문 생성 결제 처리 배송 진행 구독 및 일회성 구매 옵션 제공 유통 채널 정보가 필요합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "LOW",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "A meal planning and ingredient delivery platform that collaborates with food suppliers and nutrition experts, offering customized meal plans with subscription and one-time purchase options."
+    }
+  ],
+  "durationMs": 2828,
+  "timestamp": "2026-08-10T00:16:51.918768+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

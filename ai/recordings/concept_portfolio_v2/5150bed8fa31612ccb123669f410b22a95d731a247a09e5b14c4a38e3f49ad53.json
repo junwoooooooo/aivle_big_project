@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8089f2c9eb940b88572a58141e3ad08562bea0ad6ac23d3394ab83866bf69d6c",
+  "canonicalRequestHash": "5150bed8fa31612ccb123669f410b22a95d731a247a09e5b14c4a38e3f49ad53",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1-R1",
+        "businessText": "소비자와 공급자를 연결하는 플랫폼 역할 요리 초보 맞춤형 서비스 운영 요리 전문가 및 식품 공급업체와의 협력 소비자가 앱을 통해 주문 주문 후 1~2일 이내 배송 구독 및 일회성 구매 옵션 제공 유통 채널 정보가 필요합니다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "LOW",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "A platform connecting consumers and suppliers, offering tailored cooking services with collaboration from culinary experts and food suppliers, utilizing an app for orders with delivery options."
+    }
+  ],
+  "durationMs": 3112,
+  "timestamp": "2026-08-10T00:15:28.960466+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

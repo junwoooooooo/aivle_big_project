@@ -1,0 +1,275 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:77d89dbc174138b8c5ac4510a3fb78879908085a6d3d39fe84a3e97a2ab5ad61",
+  "canonicalRequestHash": "2cefb5e202d4c20d4c7d7c8fae69e3a36509850c74fd33c879ccd9e9b7af62db",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 발생하는 음식물 쓰레기 문제를 해결하기 위한 서비스.",
+        "interpretedTargetUsers": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "industryCategory": "식품 및 요리 서비스",
+        "researchScope": "소량 식재료 제공 및 레시피 안내 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "특정 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "소량 맞춤형 식재료 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 개인 맞춤형 소량 식재료 제공 서비스",
+      "targetSegment": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "큰 포장 단위로 인해 남는 식재료와 음식물 쓰레기 문제",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+      "valueProposition": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리를 쉽게 할 수 있도록 돕는다.",
+      "offerThesis": "소량의 식재료와 레시피를 제공하여 1~2인 가구의 요리 경험을 개선한다.",
+      "solutionThesis": "개인 맞춤형 식재료와 레시피를 통해 요리의 번거로움을 줄이고, 음식물 쓰레기를 최소화한다.",
+      "coreMechanism": "고객의 요리 스타일과 필요에 맞춘 소량 식재료 패키지 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 주문 및 피드백 수집",
+      "valueDelivery": "정기 배송 서비스로 고객의 필요에 맞춘 식재료 제공",
+      "operatingApproach": "고객 맞춤형 주문 시스템 운영",
+      "partnerApproach": "지역 농가 및 식품 제조업체와의 협력",
+      "transactionApproach": "구독 모델 및 일회성 구매 옵션 제공",
+      "commercialApproach": "합리적인 가격으로 소량 식재료 제공",
+      "fulfillmentApproach": "주문 후 1~2일 이내 배송",
+      "differentiatingMechanics": [
+        "소량 포장 단위 제공",
+        "개인 맞춤형 레시피 추천"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 핵심 서비스.",
+      "planId": "P1",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "useCaseThesis": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+          "valuePropositionThesis": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리를 쉽게 할 수 있도록 돕는다.",
+          "offerThesis": "소량의 식재료와 레시피를 제공하여 1~2인 가구의 요리 경험을 개선한다.",
+          "solutionThesis": "개인 맞춤형 식재료와 레시피를 통해 요리의 번거로움을 줄이고, 음식물 쓰레기를 최소화한다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "개인 맞춤형 식재료와 레시피를 통해 요리의 번거로움을 줄이고 음식물 쓰레기를 최소화한다",
+        "familyId": "OTHER:OTHER",
+        "familyLabelKo": "기타 역할 · 기타 운영",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "PHYSICAL_DELIVERY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.8302,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 2
+  },
+  "providerResponse": {
+    "conceptName": "소량 맞춤형 식재료 서비스",
+    "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+    "introduction": "1~2인 가구를 위한 개인 맞춤형 소량 식재료 제공 서비스로, 고객의 요리 스타일과 필요에 맞춘 소량 식재료 패키지를 제공합니다.",
+    "coreValue": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리를 쉽게 할 수 있도록 돕는다.",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "식품 및 요리 서비스",
+    "researchScope": "소량 식재료 제공 및 레시피 안내 서비스에 대한 시장 조사.",
+    "targetRegion": "특정 지역에 대한 정보가 필요합니다.",
+    "revenueModel": "구독 모델 및 일회성 구매 옵션 제공",
+    "price": "가격 정보가 필요합니다.",
+    "channels": "온라인 플랫폼을 통해 주문 및 피드백 수집",
+    "differentiators": "소량 포장 단위 제공, 개인 맞춤형 레시피 추천",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 0.1,
+      "horizonYears": 3,
+      "rationale": "1~2인 가구의 증가와 함께 소량 식재료의 수요가 증가할 것으로 예상됨.",
+      "assumptions": [
+        "소량 식재료 시장의 성장",
+        "1~2인 가구의 요리 선호도 변화"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 100000.0,
+      "currency": "KRW",
+      "period": "1년",
+      "calculationBasis": "시장 조사 기반",
+      "assumptions": [
+        "소량 식재료에 대한 수요 증가",
+        "경쟁업체의 시장 점유율 변화"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+    "solutionMechanism": "개인 맞춤형 식재료와 레시피를 통해 요리의 번거로움을 줄이고, 음식물 쓰레기를 최소화한다.",
+    "featureSet": [
+      "고객 맞춤형 주문 시스템 운영",
+      "정기 배송 서비스"
+    ],
+    "actorRoles": [
+      "소비자",
+      "농가",
+      "식품 제조업체"
+    ],
+    "platformRole": "온라인 플랫폼 운영",
+    "operatingModel": "고객 맞춤형 주문 시스템 운영",
+    "partnerModel": "지역 농가 및 식품 제조업체와의 협력",
+    "providerRole": "식재료 제공자",
+    "sellerRole": "온라인 판매자",
+    "intermediaryRole": "없음",
+    "transactionFlow": [
+      "주문 -> 결제 -> 배송"
+    ],
+    "paymentFlow": [
+      "신용카드",
+      "계좌이체"
+    ],
+    "personalDataUsage": [],
+    "physicalActivities": [],
+    "partnerRequirements": [],
+    "qualificationRequirements": [],
+    "advertisingClaims": [],
+    "constraintCompliance": []
+  },
+  "durationMs": 8231,
+  "timestamp": "2026-08-10T00:13:33.018574+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

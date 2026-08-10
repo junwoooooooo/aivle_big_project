@@ -1,0 +1,278 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:ea3ac83eac9e69cc5174e6ea31bd577fd1b85a80afa47e9e733e80ddde5eeba4",
+  "canonicalRequestHash": "556e5f98f2df8637dba833e5db9fd4ec8c15636afcd16429a87ce342d84f0cac",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 발생하는 음식물 쓰레기 문제를 해결하기 위한 서비스.",
+        "interpretedTargetUsers": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "industryCategory": "식품 및 요리 서비스",
+        "researchScope": "소량 식재료 제공 및 레시피 안내 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "특정 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "맞춤형 식사 계획 서비스",
+      "oneLineConcept": "개인 맞춤형 식사 계획과 식재료 제공 서비스",
+      "targetSegment": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료 낭비 문제 해결을 위한 맞춤형 식사 계획",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+      "valueProposition": "개인 맞춤형 식사 계획을 통해 요리의 효율성을 높인다.",
+      "offerThesis": "맞춤형 식사 계획과 소량 식재료 제공으로 요리의 편리함을 더한다.",
+      "solutionThesis": "고객의 식사 스타일에 맞춘 식사 계획과 식재료 제공으로 음식물 쓰레기를 줄인다.",
+      "coreMechanism": "개인 맞춤형 식사 계획 및 식재료 제공",
+      "customerInteraction": "앱을 통한 식사 계획 및 피드백",
+      "valueDelivery": "정기 배송 및 필요 시 추가 주문 가능",
+      "operatingApproach": "고객 맞춤형 식사 계획 운영",
+      "partnerApproach": "식품 공급업체 및 영양 전문가와의 협력",
+      "transactionApproach": "구독 및 일회성 구매 옵션 제공",
+      "commercialApproach": "합리적인 가격으로 맞춤형 식사 계획 제공",
+      "fulfillmentApproach": "주문 후 1~2일 이내 배송",
+      "differentiatingMechanics": [
+        "개인 맞춤형 식사 계획 제공",
+        "고객 맞춤형 레시피 추천"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "1~2인 가구의 식사 문제를 해결하기 위한 핵심 서비스.",
+      "planId": "P4",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "useCaseThesis": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+          "valuePropositionThesis": "개인 맞춤형 식사 계획을 통해 요리의 효율성을 높인다.",
+          "offerThesis": "맞춤형 식사 계획과 소량 식재료 제공으로 요리의 편리함을 더한다.",
+          "solutionThesis": "고객의 식사 스타일에 맞춘 식사 계획과 식재료 제공으로 음식물 쓰레기를 줄인다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "고객의 식사 스타일에 맞춘 식사 계획과 식재료 제공으로 음식물 쓰레기를 줄인다",
+        "familyId": "OTHER:OTHER",
+        "familyLabelKo": "기타 역할 · 기타 운영",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "PHYSICAL_DELIVERY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "APP",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.6346,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "맞춤형 식사 계획 서비스",
+    "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+    "introduction": "1~2인 가구의 식사 문제를 해결하기 위한 맞춤형 식사 계획 서비스입니다.",
+    "coreValue": "개인 맞춤형 식사 계획을 통해 요리의 효율성을 높이고 음식물 쓰레기를 줄입니다.",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "식품 및 요리 서비스",
+    "researchScope": "소량 식재료 제공 및 레시피 안내 서비스에 대한 시장 조사.",
+    "targetRegion": "특정 지역에 대한 정보가 필요합니다.",
+    "revenueModel": "구독 및 일회성 구매 옵션 제공",
+    "price": "가격 정보가 필요합니다.",
+    "channels": "유통 채널 정보가 필요합니다.",
+    "differentiators": "개인 맞춤형 식사 계획 제공, 고객 맞춤형 레시피 추천",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 0.01,
+      "horizonYears": 3,
+      "rationale": "1~2인 가구의 증가로 인해 소량 식재료 서비스의 수요가 증가할 것으로 예상됨.",
+      "assumptions": [
+        "1~2인 가구의 수가 증가할 것",
+        "소량 식재료에 대한 수요가 증가할 것"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 100000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "시장 조사 기반",
+      "assumptions": [
+        "소량 식재료 서비스에 대한 인식이 높아질 것",
+        "경쟁업체와의 차별화가 이루어질 것"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+    "solutionMechanism": "고객의 식사 스타일에 맞춘 식사 계획과 식재료 제공으로 음식물 쓰레기를 줄인다.",
+    "featureSet": [
+      "개인 맞춤형 식사 계획 제공",
+      "고객 맞춤형 레시피 추천",
+      "정기 배송 서비스"
+    ],
+    "actorRoles": [
+      "소비자",
+      "식품 공급업체",
+      "영양 전문가"
+    ],
+    "platformRole": "식사 계획 및 식재료 제공 플랫폼",
+    "operatingModel": "고객 맞춤형 식사 계획 운영",
+    "partnerModel": "식품 공급업체 및 영양 전문가와의 협력",
+    "providerRole": "식사 계획 및 식재료 제공자",
+    "sellerRole": "식재료 판매자",
+    "intermediaryRole": "없음",
+    "transactionFlow": [
+      "주문 생성",
+      "결제 처리",
+      "배송 진행"
+    ],
+    "paymentFlow": [
+      "구독 결제",
+      "일회성 구매 결제"
+    ],
+    "personalDataUsage": [],
+    "physicalActivities": [],
+    "partnerRequirements": [],
+    "qualificationRequirements": [],
+    "advertisingClaims": [],
+    "constraintCompliance": []
+  },
+  "durationMs": 8271,
+  "timestamp": "2026-08-10T00:13:49.598691+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

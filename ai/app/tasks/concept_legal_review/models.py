@@ -148,6 +148,16 @@ class ConceptLegalReviewProviderResult(StrictModel):
         return self
 
 
+class LegalQuestionClassification(StrictModel):
+    question: str = Field(min_length=1, max_length=1000)
+    kind: Literal["DESIGN_GAP", "UNAVOIDABLE_EXTERNAL_FACT", "CONTROL_CONVERTIBLE", "LEGAL_CLARIFICATION"]
+    safeReason: str = Field(min_length=1, max_length=500)
+
+
+class LegalQuestionClassificationBatch(StrictModel):
+    results: list[LegalQuestionClassification] = Field(min_length=1, max_length=30)
+
+
 class ConceptLegalReviewDomainResult(StrictModel):
     status: Literal["IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS", "NEEDS_FACTS", "REDESIGNABLE", "REJECTED"]
     reviewedActivities: list[str]
@@ -167,3 +177,14 @@ class ConceptLegalReviewDomainResult(StrictModel):
     reviewedFactPatternHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     reviewLabel: Literal["공식 근거 기반 법률 구현 가능성 사전검토"]
     reviewLimitations: str = Field(min_length=1, max_length=1000)
+    reviewPhase: str = "LEGAL_SOURCE"
+    factCompletenessStatus: str | None = None
+    legalSourceStatus: str | None = None
+    finalEvidenceJudgmentExecuted: bool = False
+    recoveryResolution: str | None = None
+    sourceQuestionCount: int = 0
+    resolvedByFactPatternCount: int = 0
+    designGapCount: int = 0
+    externalFactCount: int = 0
+    controlConvertibleCount: int = 0
+    legalClarificationCount: int = 0

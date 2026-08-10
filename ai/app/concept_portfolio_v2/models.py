@@ -68,6 +68,9 @@ class FailureCode(StrEnum):
     CANDIDATE_FIDELITY_RECOVERABLE = "CANDIDATE_FIDELITY_RECOVERABLE"
     CANDIDATE_REGENERATION_EXHAUSTED = "CANDIDATE_REGENERATION_EXHAUSTED"
     CANONICALIZATION_LOW_CONFIDENCE = "CANONICALIZATION_LOW_CONFIDENCE"
+    LEGAL_FACT_COMPLETION_EXHAUSTED = "LEGAL_FACT_COMPLETION_EXHAUSTED"
+    LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED = "LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED"
+    LEGAL_REDESIGN_LOOP_DETECTED = "LEGAL_REDESIGN_LOOP_DETECTED"
 
 
 class PortfolioStatus(StrEnum):
@@ -296,7 +299,7 @@ class CandidateEnvelope(StrictModel):
     redesignRound: int = Field(default=0, ge=0, le=2)
     candidateAttempt: int = Field(default=1, ge=1, le=2)
     slotIndex: int | None = Field(default=None, ge=1, le=5)
-    recoverySource: Literal["INITIAL", "FIDELITY_REGENERATION", "RESERVE_PLAN", "REPLENISHED_PLAN", "LEGAL_REDESIGN", "LEGAL_REPLAN"] = "INITIAL"
+    recoverySource: Literal["INITIAL", "FIDELITY_REGENERATION", "RESERVE_PLAN", "REPLENISHED_PLAN", "LEGAL_FACT_COMPLETION", "LEGAL_REDESIGN", "LEGAL_REDESIGN_COMPLIANCE_REPAIR", "LEGAL_REPLAN"] = "INITIAL"
     descriptor: CanonicalConceptDescriptor
     candidate: ConceptCandidateResult
 
@@ -342,6 +345,33 @@ class LegalPrecheck(StrictModel):
     riskHints: list[str]
 
 
+class LegalFactCompletenessResult(StrictModel):
+    candidateId: str | None = None
+    status: Literal["COMPLETE", "COMPLETABLE", "INVALID"]
+    missingDesignFacts: list[str] = Field(default_factory=list)
+    contradictions: list[str] = Field(default_factory=list)
+    completionRequirements: list[str] = Field(default_factory=list)
+    affectedFields: list[str] = Field(default_factory=list)
+    safeSummary: str
+
+
+class LegalCandidatePreparation(StrictModel):
+    candidates: list[CandidateEnvelope]
+    reports: list[LegalFactCompletenessResult]
+    excludedCandidates: list[dict[str, Any]] = Field(default_factory=list)
+    completionAttempted: int = 0
+    completionValidated: int = 0
+    completionAccepted: int = 0
+    completionExhausted: int = 0
+
+
+class RedesignRequirementCompliance(StrictModel):
+    status: Literal["PASS", "AMBIGUOUS", "FAIL"]
+    satisfiedRequirements: list[str] = Field(default_factory=list)
+    unsatisfiedRequirements: list[str] = Field(default_factory=list)
+    safeSummary: str
+
+
 class LegalReview(StrictModel):
     candidateId: str
     route: LegalRoute
@@ -362,6 +392,17 @@ class LegalReview(StrictModel):
     possibleUserAction: str | None = None
     inputScope: str = "CANDIDATE"
     evidenceDiagnostics: dict[str, Any] = Field(default_factory=dict)
+    reviewPhase: str | None = None
+    factCompletenessStatus: str | None = None
+    legalSourceStatus: str | None = None
+    finalEvidenceJudgmentExecuted: bool | None = None
+    recoveryResolution: str | None = None
+    sourceQuestionCount: int = 0
+    resolvedByFactPatternCount: int = 0
+    designGapCount: int = 0
+    externalFactCount: int = 0
+    controlConvertibleCount: int = 0
+    legalClarificationCount: int = 0
 
 
 class HypothesisDecision(StrictModel):
@@ -499,6 +540,18 @@ class RunSummary(StrictModel):
     candidateRecovered: int = 0
     reservePlansActivated: int = 0
     candidateRecoveryReplans: int = 0
+    legalFactCompletionAttempted: int = 0
+    legalFactCompletionValidated: int = 0
+    legalFactCompletionAccepted: int = 0
+    legalFactCompletionExhausted: int = 0
+    legalRedesignAttempted: int = 0
+    legalRedesignValidated: int = 0
+    legalRedesignAccepted: int = 0
+    legalRedesignExhausted: int = 0
+    legalReplanAttempted: int = 0
+    legalReplanValidated: int = 0
+    legalReplanAccepted: int = 0
+    legalReplanExhausted: int = 0
     legalAccepted: int
     legalRedesigned: int
     replanned: int

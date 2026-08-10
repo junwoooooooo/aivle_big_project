@@ -24,12 +24,15 @@ from .candidate_governance import (
 )
 from .distinctness import deterministic_distinctness, descriptor_values
 from .language_policy import candidate_language_failures, plan_language_failures
+from .legal_fact_completeness import (
+    assess_legal_fact_completeness, normalized_requirements, validate_redesign_requirements,
+)
 from .mechanics import GenericConceptNormalizer, derive_candidate_descriptor
 from .models import (
     CandidateEnvelope, CandidatePortfolioPreparation, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
     DeltaLegalResult, DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff,
     ExplorationBreadth, FailureCode, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
-    LegalReview, LegalRoute, PlanPoolStatus, PlanValidationResult, PortfolioPlan,
+    LegalCandidatePreparation, LegalReview, LegalRoute, PlanPoolStatus, PlanValidationResult, PortfolioPlan,
     PortfolioPlanDraft, PortfolioStatus, ProviderMode, RejectedPlan, RunStage, RunSummary,
     SchemaPreflightReport, TraceEvent,
 )
@@ -115,6 +118,7 @@ class ConceptPortfolioEngine:
         self._last_idea_context: IdeaBriefLabContext | None = None
         self._last_plan_pool_status: PlanPoolStatus | None = None
         self._delta_legal_results: list[DeltaLegalResult] = []
+        self._legal_metrics: dict[str, int] = {}
 
     @property
     def trace(self) -> list[TraceEvent]:
@@ -128,6 +132,11 @@ class ConceptPortfolioEngine:
         self._last_idea_context = None
         self._last_plan_pool_status = None
         self._delta_legal_results = []
+        self._legal_metrics = {key: 0 for key in (
+            "factAttempted", "factValidated", "factAccepted", "factExhausted",
+            "redesignAttempted", "redesignValidated", "redesignAccepted", "redesignExhausted",
+            "replanAttempted", "replanValidated", "replanAccepted", "replanExhausted",
+        )}
         self.gateway.usage = self.gateway.usage.model_copy(update={
             "logicalOperations": 0, "topLevelExternalOperations": 0, "topLevelOperationsByStage": {},
             "externalProviderCalls": 0, "totalProviderCalls": 0,
@@ -800,6 +809,81 @@ class ConceptPortfolioEngine:
                                                 ("개인정보", bool(personal_data)),
                                                 ("자격 의존", bool(qualifications))) if active])
 
+    async def prepare_legal_candidates(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]
+                                       ) -> LegalCandidatePreparation:
+        """MOLEG 전에 동일 lineage 내 사업 사실 누락을 한 번만 보완한다."""
+        self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_COMPLETENESS_STARTED", "RUNNING",
+                    f"Candidate {len(candidates)}개의 법률 사실패턴 완결성을 검사합니다.")
+        plan_by_id = {item.planId: item for item in self._last_plan_pool}
+        ready: list[CandidateEnvelope] = []
+        reports = []
+        excluded = []
+        attempted = validated = accepted = exhausted = 0
+        for envelope in candidates:
+            report = assess_legal_fact_completeness(envelope.candidate).model_copy(
+                update={"candidateId": envelope.candidateId})
+            reports.append(report)
+            self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_COMPLETENESS_CHECKED", report.status,
+                        report.safeSummary, entity_id=envelope.candidateId, decision=report.status)
+            if report.status == "COMPLETE":
+                ready.append(envelope)
+                continue
+            if report.status == "INVALID":
+                exhausted += 1
+                excluded.append({"candidateId": envelope.candidateId, "scope": "CANDIDATE",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                    "safeSummary": report.safeSummary})
+                continue
+            attempted += 1
+            draft = await self.gateway.complete_legal_facts(
+                seed, plan_by_id[envelope.planId], envelope.candidate,
+                report.completionRequirements, envelope.candidate.candidateIndex)
+            strategy = ExplorationBreadth(envelope.candidate.generationStrategy)
+            candidate = normalize_candidate_draft(
+                draft, seed, strategy, envelope.candidate.candidateIndex)
+            child = CandidateEnvelope(
+                candidateId=f"{envelope.candidateId}-F1", planId=envelope.planId,
+                lineageId=envelope.lineageId, parentCandidateId=envelope.candidateId,
+                redesignRound=envelope.redesignRound, candidateAttempt=envelope.candidateAttempt,
+                slotIndex=envelope.slotIndex, recoverySource="LEGAL_FACT_COMPLETION",
+                descriptor=derive_candidate_descriptor(candidate), candidate=candidate)
+            superseded = {item.parentCandidateId for item in ready if item.parentCandidateId}
+            others = [*ready, *[item for item in candidates
+                if item.candidateId != envelope.candidateId
+                and item.candidateId not in superseded
+                and item.candidateId not in {ready_item.candidateId for ready_item in ready}]]
+            validated_children, _ = await self.validate_candidates(
+                seed, [plan_by_id[envelope.planId]], [child], comparison_context=others)
+            if not validated_children:
+                exhausted += 1
+                excluded.append({"candidateId": child.candidateId, "scope": "CANDIDATE",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                    "safeSummary": "Legal fact completion Candidate가 전체 validation을 통과하지 못했습니다."})
+                continue
+            validated += 1
+            child = validated_children[0]
+            recheck = assess_legal_fact_completeness(child.candidate).model_copy(
+                update={"candidateId": child.candidateId})
+            reports.append(recheck)
+            if recheck.status == "COMPLETE":
+                ready.append(child); accepted += 1
+                self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_COMPLETION_ACCEPTED", "PASS",
+                            recheck.safeSummary, entity_id=child.candidateId,
+                            parent_id=envelope.candidateId, provider_call=True)
+            else:
+                exhausted += 1
+                excluded.append({"candidateId": child.candidateId, "scope": "CANDIDATE",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                    "safeSummary": recheck.safeSummary})
+        ready.sort(key=lambda item: (item.slotIndex or item.candidate.candidateIndex, item.candidateId))
+        self._legal_metrics["factAttempted"] += attempted
+        self._legal_metrics["factValidated"] += validated
+        self._legal_metrics["factAccepted"] += accepted
+        self._legal_metrics["factExhausted"] += exhausted
+        return LegalCandidatePreparation(candidates=ready, reports=reports, excludedCandidates=excluded,
+            completionAttempted=attempted, completionValidated=validated,
+            completionAccepted=accepted, completionExhausted=exhausted)
+
     async def review_legal(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]) -> list[LegalReview]:
         self._event(RunStage.LEGAL_REVIEWING, "STARTED", "RUNNING", "공식 Legal contract route를 실행합니다.")
         results = []
@@ -839,7 +923,10 @@ class ConceptPortfolioEngine:
                     "safeSummary": review.safeSummary})
                 continue
             lineage_redesigns = redesigns_by_lineage.get(envelope.lineageId, 0)
-            if review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE and lineage_redesigns < self.max_redesigns:
+            if (review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE
+                    and lineage_redesigns < self.max_redesigns
+                    and envelope.redesignRound < self.max_redesigns):
+                self._legal_metrics["redesignAttempted"] += 1
                 child_id = f"{envelope.candidateId}-R{envelope.redesignRound + 1}"
                 raw_child = await self.gateway.redesign(seed, plan_by_id[envelope.planId], envelope.candidate,
                                                         review.redesignRequirements, envelope.candidate.candidateIndex)
@@ -857,6 +944,7 @@ class ConceptPortfolioEngine:
                 validated_children, child_reports = await self.validate_candidates(
                     seed, [plan_by_id[envelope.planId]], [child], comparison_context=final)
                 if not validated_children:
+                    self._legal_metrics["redesignExhausted"] += 1
                     duplicate = bool(child_reports and FailureCode.CANDIDATE_DUPLICATE in child_reports[0].reasonCodes)
                     all_reviews.append(LegalReview(candidateId=child_id,
                         route=LegalRoute.REPLAN_REQUIRED if duplicate else LegalRoute.SYSTEM_FAILURE,
@@ -864,24 +952,89 @@ class ConceptPortfolioEngine:
                         safeSummary=("Redesign이 다른 portfolio concept과 중복됩니다." if duplicate else
                             "Redesign이 opportunity/Plan/LOCK 검사를 통과하지 못했습니다.")))
                 else:
+                    self._legal_metrics["redesignValidated"] += 1
                     child = validated_children[0]
+                    compliance = validate_redesign_requirements(
+                        envelope.candidate, child.candidate, review.redesignRequirements)
+                    if compliance.status != "PASS":
+                        repair_draft = await self.gateway.repair_redesign_compliance(
+                            seed, plan_by_id[envelope.planId], envelope.candidate, child.candidate,
+                            compliance.unsatisfiedRequirements, envelope.candidate.candidateIndex)
+                        repaired_value = normalize_candidate_draft(
+                            repair_draft, seed, ExplorationBreadth(envelope.candidate.generationStrategy),
+                            envelope.candidate.candidateIndex)
+                        repaired = child.model_copy(update={
+                            "candidateId": f"{child_id}-CR1", "parentCandidateId": child_id,
+                            "recoverySource": "LEGAL_REDESIGN_COMPLIANCE_REPAIR",
+                            "descriptor": derive_candidate_descriptor(repaired_value), "candidate": repaired_value})
+                        repaired_children, _ = await self.validate_candidates(
+                            seed, [plan_by_id[envelope.planId]], [repaired], comparison_context=final)
+                        if repaired_children:
+                            repaired = repaired_children[0]
+                            compliance = validate_redesign_requirements(
+                                envelope.candidate, repaired.candidate, review.redesignRequirements)
+                            child = repaired
+                    if compliance.status != "PASS":
+                        self._legal_metrics["redesignExhausted"] += 1
+                        all_reviews.append(LegalReview(candidateId=child.candidateId,
+                            route=LegalRoute.SYSTEM_FAILURE, sourceStatus="REDESIGN_COMPLIANCE",
+                            recoveryResolution="LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED",
+                            safeSummary="Legal redesign 요구를 targeted repair 1회 후에도 충족하지 못했습니다."))
+                        continue
+                    prepared_child = await self.prepare_legal_candidates(seed, [child])
+                    if not prepared_child.candidates:
+                        self._legal_metrics["redesignExhausted"] += 1
+                        all_reviews.append(LegalReview(candidateId=child.candidateId,
+                            route=LegalRoute.SYSTEM_FAILURE, sourceStatus="LEGAL_FACT_COMPLETENESS",
+                            recoveryResolution="LEGAL_FACT_COMPLETION_EXHAUSTED",
+                            safeSummary="Redesign Candidate의 법률 사실패턴 완결성 복구가 소진되었습니다."))
+                        continue
+                    child = prepared_child.candidates[0]
+                    child_id = child.candidateId
                     child_review = await self.gateway.review_legal(child_id, child.candidate, seed)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child)
                         redesigned += 1
+                        self._legal_metrics["redesignAccepted"] += 1
                         redesigns_by_lineage[envelope.lineageId] = lineage_redesigns + 1
                         self._event(RunStage.LEGAL_RECOVERING, "REDESIGNED", "PASS", "같은 lineage에서 법률 구조를 보완했습니다.",
                                     entity_id=child_id, parent_id=envelope.candidateId,
                                     reason=FailureCode.LEGAL_REDESIGN_REQUIRED, provider_call=True)
                     elif child_review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE:
+                        self._legal_metrics["redesignExhausted"] += 1
+                        repeated = normalized_requirements(child_review.redesignRequirements) == normalized_requirements(
+                            review.redesignRequirements)
                         all_reviews.append(LegalReview(
                             candidateId=child_id, route=LegalRoute.SYSTEM_FAILURE,
-                            sourceStatus="REDESIGN_BUDGET",
-                            safeSummary=(f"lineage {envelope.lineageId}의 redesign 예산 "
-                                         f"{self.max_redesigns}회를 모두 사용했습니다.")))
+                            sourceStatus="REDESIGN_LOOP" if repeated else "REDESIGN_BUDGET",
+                            recoveryResolution=("LEGAL_REDESIGN_LOOP_DETECTED" if repeated else
+                                                "LEGAL_REDESIGN_BUDGET_EXHAUSTED"),
+                            safeSummary=("동일한 Legal redesign 요구가 반복되어 loop를 종료했습니다." if repeated else
+                                f"lineage {envelope.lineageId}의 redesign 예산 {self.max_redesigns}회를 모두 사용했습니다.")))
+                    elif child_review.route == LegalRoute.NEEDS_INPUT:
+                        scope = "GLOBAL" if child_review.conflictingLock else child_review.inputScope
+                        required_inputs.append({"candidateId": child_id, "scope": scope,
+                            **{key: getattr(child_review, key) for key in
+                            ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
+                            "safeSummary": child_review.safeSummary})
+                    elif child_review.route == LegalRoute.REPLAN_REQUIRED:
+                        recovered, nested_reviews, nested_inputs, nested_redesigned, nested_replanned = await self.resolve_legal(
+                            seed, plans, [child], [child_review])
+                        final.extend(recovered); all_reviews.extend(nested_reviews[1:]); required_inputs.extend(nested_inputs)
+                        redesigned += nested_redesigned; replanned += nested_replanned
+                    elif child_review.route == LegalRoute.SYSTEM_FAILURE:
+                        self._legal_metrics["redesignExhausted"] += 1
+                continue
+            if review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE:
+                self._legal_metrics["redesignExhausted"] += 1
+                all_reviews.append(LegalReview(candidateId=envelope.candidateId,
+                    route=LegalRoute.SYSTEM_FAILURE, sourceStatus="REDESIGN_BUDGET",
+                    recoveryResolution="LEGAL_REDESIGN_BUDGET_EXHAUSTED",
+                    safeSummary=f"lineage {envelope.lineageId}의 Legal redesign 예산이 소진되었습니다."))
                 continue
             if review.route == LegalRoute.REPLAN_REQUIRED and replanned < self.max_replans:
+                self._legal_metrics["replanAttempted"] += 1
                 replacement = None
                 for candidate_plan in self._last_plan_pool:
                     if candidate_plan.planId in used_plan_ids:
@@ -928,18 +1081,52 @@ class ConceptPortfolioEngine:
                     validated_children, _ = await self.validate_candidates(
                         seed, [replacement], [child], comparison_context=final)
                     if not validated_children:
+                        self._legal_metrics["replanExhausted"] += 1
                         continue
+                    self._legal_metrics["replanValidated"] += 1
                     child = validated_children[0]
+                    prepared_child = await self.prepare_legal_candidates(seed, [child])
+                    if not prepared_child.candidates:
+                        self._legal_metrics["replanExhausted"] += 1
+                        all_reviews.append(LegalReview(candidateId=child.candidateId,
+                            route=LegalRoute.SYSTEM_FAILURE, sourceStatus="LEGAL_FACT_COMPLETENESS",
+                            recoveryResolution="LEGAL_FACT_COMPLETION_EXHAUSTED",
+                            safeSummary="Legal replan Candidate의 사실패턴 복구가 소진되었습니다."))
+                        continue
+                    child = prepared_child.candidates[0]
                     child_review = await self.gateway.review_legal(
                         child.candidateId, child.candidate, seed)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child); replanned += 1
+                        self._legal_metrics["replanAccepted"] += 1
                         used_plan_ids.add(replacement.planId)
                         self._event(RunStage.LEGAL_RECOVERING, "REPLANNED", "PASS",
                                     "실패 Plan을 의미 있게 다른 Thesis 또는 Architecture Plan으로 교체했습니다.",
                                     entity_id=child.candidateId, parent_id=envelope.candidateId,
                                     reason=FailureCode.LEGAL_REPLAN_REQUIRED, provider_call=True)
+                    elif child_review.route == LegalRoute.NEEDS_INPUT:
+                        scope = "GLOBAL" if child_review.conflictingLock else child_review.inputScope
+                        required_inputs.append({"candidateId": child.candidateId, "scope": scope,
+                            **{key: getattr(child_review, key) for key in
+                            ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
+                            "safeSummary": child_review.safeSummary})
+                    elif child_review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE:
+                        recovered, nested_reviews, nested_inputs, nested_redesigned, _ = await self.resolve_legal(
+                            seed, [*plans, replacement], [child], [child_review])
+                        final.extend(recovered); all_reviews.extend(nested_reviews[1:]); required_inputs.extend(nested_inputs)
+                        redesigned += nested_redesigned
+                    else:
+                        self._legal_metrics["replanExhausted"] += 1
+                else:
+                    self._legal_metrics["replanExhausted"] += 1
+                continue
+            if review.route == LegalRoute.REPLAN_REQUIRED:
+                self._legal_metrics["replanExhausted"] += 1
+                all_reviews.append(LegalReview(candidateId=envelope.candidateId,
+                    route=LegalRoute.SYSTEM_FAILURE, sourceStatus="REPLAN_BUDGET",
+                    recoveryResolution="LEGAL_REPLAN_BUDGET_EXHAUSTED",
+                    safeSummary="Legal replan 예산이 소진되었습니다."))
         return final, all_reviews, required_inputs, redesigned, replanned
 
     def build_or_load_current_hypothesis_contract(self, envelope: CandidateEnvelope) -> list[HypothesisDecision]:
@@ -1047,6 +1234,7 @@ class ConceptPortfolioEngine:
         handoff = None
         redesigned = replanned = planned = duplicates = 0
         candidate_preparation: CandidatePortfolioPreparation | None = None
+        legal_preparation: LegalCandidatePreparation | None = None
         safety_text = "FAIL"
         if not 1 <= max_concepts <= 5:
             self._event(RunStage.NEEDS_INPUT, "INPUT_REJECTED", "NEEDS_INPUT",
@@ -1075,11 +1263,14 @@ class ConceptPortfolioEngine:
             rejected = validated.rejectedPlans
             duplicates = sum(item.reasonCode == FailureCode.PLAN_DUPLICATE for item in rejected)
             candidate_preparation = await self.prepare_candidate_portfolio(seed, validated, max_concepts)
-            candidates = candidate_preparation.candidates
+            legal_preparation = await self.prepare_legal_candidates(seed, candidate_preparation.candidates)
+            candidates = legal_preparation.candidates
+            pre_legal_excluded = list(legal_preparation.excludedCandidates)
             planned = len(self._last_plan_pool)
             legal_reviews = await self.review_legal(seed, candidates)
             concepts, legal_reviews, required_inputs, redesigned, replanned = await self.resolve_legal(
                 seed, candidate_preparation.usedPlans, candidates, legal_reviews)
+            required_inputs = [*pre_legal_excluded, *required_inputs]
             concepts = concepts[:max_concepts]
             global_inputs = [item for item in required_inputs if item.get("scope") == "GLOBAL"]
             unresolved_candidates = [item for item in required_inputs if item.get("scope") == "CANDIDATE"]
@@ -1108,6 +1299,18 @@ class ConceptPortfolioEngine:
                 candidateRecovered=candidate_preparation.candidateRecovered,
                 reservePlansActivated=candidate_preparation.reservePlansActivated,
                 candidateRecoveryReplans=candidate_preparation.candidateRecoveryReplans,
+                legalFactCompletionAttempted=self._legal_metrics["factAttempted"],
+                legalFactCompletionValidated=self._legal_metrics["factValidated"],
+                legalFactCompletionAccepted=self._legal_metrics["factAccepted"],
+                legalFactCompletionExhausted=self._legal_metrics["factExhausted"],
+                legalRedesignAttempted=self._legal_metrics["redesignAttempted"],
+                legalRedesignValidated=self._legal_metrics["redesignValidated"],
+                legalRedesignAccepted=self._legal_metrics["redesignAccepted"],
+                legalRedesignExhausted=self._legal_metrics["redesignExhausted"],
+                legalReplanAttempted=self._legal_metrics["replanAttempted"],
+                legalReplanValidated=self._legal_metrics["replanValidated"],
+                legalReplanAccepted=self._legal_metrics["replanAccepted"],
+                legalReplanExhausted=self._legal_metrics["replanExhausted"],
                 legalAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal_reviews),
                 legalRedesigned=redesigned, replanned=replanned, finalPortfolio=len(concepts),
                 portfolioStatus=status, selectedConcept=selected.candidate.conceptName if selected else None,

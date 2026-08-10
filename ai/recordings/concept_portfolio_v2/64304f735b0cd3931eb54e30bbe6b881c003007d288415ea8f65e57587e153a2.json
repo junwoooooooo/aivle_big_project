@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:ebcfc5decc8d200c5bedd63644bd03323e6a97d227b10802d7e3e763045213ff",
+  "canonicalRequestHash": "64304f735b0cd3931eb54e30bbe6b881c003007d288415ea8f65e57587e153a2",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-R1",
+        "businessText": "소량 식재료 제공 플랫폼 건강한 식재료 패키지 운영 지역 농가 및 건강식품 공급업체와의 협력 주문 배송 피드백 구독 및 일회성 구매 옵션 제공 유통 채널 정보가 필요합니다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A platform that provides small quantities of healthy food ingredients, operating in partnership with local farms and health food suppliers, offering subscription and one-time purchase options."
+    }
+  ],
+  "durationMs": 2453,
+  "timestamp": "2026-08-10T00:17:12.443620+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

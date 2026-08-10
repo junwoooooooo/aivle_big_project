@@ -20,6 +20,9 @@ ROUTING_SYSTEM = """당신은 사업 설명에서 조사할 규제 경로를 고
 법령명이나 조문을 만들지 말고 제공된 routeId만 사용한다. APPLIES/POSSIBLE 판단의 evidenceQuotes는
 입력 원문에서 글자 그대로 복사한다. 정보가 부족하면 UNKNOWN과 missingInformation을 반환한다.
 입력의 [확정 정보]에 이미 답이 있는 질문을 missingInformation으로 반복하지 말고 route 판단에 반영한다.
+CONCEPT_GENERATED/AI_HYPOTHESIS/PROPOSED 사업 설계값은 이번 검토에서 그 설계대로 구현한다고 가정한다.
+그 provenance만으로 missingInformation을 만들지 않는다. Concept가 설계로 정할 사항과 현재 보유 인허가,
+기존 계약, 실제 고정 관할 같은 외부 현실 사실을 분리하고 실제로 비어 있는 정보만 질문한다.
 JSON 외의 설명을 반환하지 않는다."""
 
 SCREENING_SYSTEM = """당신은 법제처에서 조회된 실제 조문 후보를 분류한다.

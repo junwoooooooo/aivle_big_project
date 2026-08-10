@@ -5,6 +5,7 @@ import pytest
 
 from app.providers import ProviderFailure
 from app.tasks.concept_legal_review import service
+from app.tasks.concept_legal_review.models import ConceptLegalReviewInput
 from concept_candidate_v2_fixture import valid_legal_fact_pattern
 
 
@@ -110,12 +111,12 @@ def test_duplicate_official_evidence_is_removed(monkeypatch):
     assert len(result["officialEvidence"]) == 1
 
 
-def test_design_gap_is_redesignable_without_user_question(monkeypatch):
+def test_source_design_gap_already_answered_by_fact_pattern_reaches_full_judgment(monkeypatch):
     result, captured = execute(monkeypatch, source(questions=["플랫폼의 결제 주체와 정산 흐름을 정해야 합니다."]))
-    assert result["status"] == "REDESIGNABLE"
-    assert result["redesignRequirements"]
-    assert result["unknownFacts"] == []
-    assert "providerInput" not in captured
+    assert result["status"] == "IMPLEMENTABLE_WITH_CONTROLS"
+    assert result["resolvedByFactPatternCount"] == 1
+    assert result["finalEvidenceJudgmentExecuted"] is True
+    assert "providerInput" in captured
 
 
 def test_only_external_reality_fact_can_be_needs_facts(monkeypatch):
@@ -141,10 +142,10 @@ def test_empty_evidence_without_questions_is_retryable_source_failure(monkeypatc
 
 
 def test_provider_design_gap_cannot_escalate_to_user(monkeypatch):
-    result, _ = execute(monkeypatch, provider_result=provider(
-        status="NEEDS_FACTS", unknown=["판매자 역할과 결제 주체를 정해야 합니다."]))
-    assert result["status"] == "REDESIGNABLE"
-    assert result["unknownFacts"] == []
+    with pytest.raises(ProviderFailure) as raised:
+        execute(monkeypatch, provider_result=provider(
+            status="NEEDS_FACTS", unknown=["판매자 역할과 결제 주체를 정해야 합니다."]))
+    assert raised.value.reason == "LEGAL_PROVIDER_REPEATED_RESOLVED_FACT_REQUEST"
 
 
 def test_invalid_evidence_index_is_rejected(monkeypatch):
@@ -230,3 +231,51 @@ def test_targeted_citation_repair_cannot_mutate_legal_judgment(monkeypatch):
     with pytest.raises(ProviderFailure) as raised:
         asyncio.run(service.execute_concept_legal_review(task_input()))
     assert raised.value.reason == "LEGAL_EVIDENCE_BINDING_REPAIR_MUTATED_RESULT"
+
+
+def test_question_kind_has_ambiguous_default_and_convertible_semantics():
+    assert service._question_kind("추가로 확인할 사항이 있습니까?") == "AMBIGUOUS"
+    assert service._question_kind("자격 보유 파트너로 제한하는 통제 조건을 사용할 수 있습니까?") == \
+           "CONTROL_CONVERTIBLE"
+    assert service._question_kind("현재 자격 보유 파트너와 계약되어 있습니까?") == \
+           "UNAVOIDABLE_EXTERNAL_FACT"
+
+
+def test_unresolved_placeholder_design_gap_stops_before_full_judgment(monkeypatch):
+    value = task_input()
+    value["legalFactPattern"]["paymentFlow"]["value"] = ["결제 주체 정보가 필요합니다."]
+
+    async def fake_source(*_):
+        return source(questions=["플랫폼의 결제 주체와 정산 흐름을 정해야 합니다."])
+
+    async def should_not_run(*_, **__):
+        raise AssertionError("full judgment must not run")
+
+    monkeypatch.setattr(service, "execute_legal_source_pipeline", fake_source)
+    monkeypatch.setattr(service, "execute_structured_prompt", should_not_run)
+    result = asyncio.run(service.execute_concept_legal_review(value))
+    assert result["status"] == "REDESIGNABLE" and result["designGapCount"] == 1
+    assert result["finalEvidenceJudgmentExecuted"] is False
+
+
+def test_ambiguous_question_uses_batch_classifier_then_full_judgment(monkeypatch):
+    async def fake_source(*_):
+        return source(questions=["이 경로에 추가 설명이 필요합니까?"])
+
+    async def fake_provider(_system, user, **kwargs):
+        if kwargs["task_type"] == "LEGAL_QUESTION_CLASSIFICATION":
+            question = json.loads(user)["questions"][0]
+            return {"results": [{"question": question, "kind": "LEGAL_CLARIFICATION",
+                                  "safeReason": "법률 판단 단계에서 근거와 함께 검토할 질문입니다."}]}
+        return provider()
+
+    monkeypatch.setattr(service, "execute_legal_source_pipeline", fake_source)
+    monkeypatch.setattr(service, "execute_structured_prompt", fake_provider)
+    result = asyncio.run(service.execute_concept_legal_review(task_input()))
+    assert result["status"] == "IMPLEMENTABLE_WITH_CONTROLS"
+    assert result["legalClarificationCount"] == 1 and result["finalEvidenceJudgmentExecuted"] is True
+
+
+def test_proposed_design_value_is_reconciled_as_review_assumption():
+    value = ConceptLegalReviewInput.model_validate(task_input())
+    assert service._question_resolved_by_fact_pattern("누가 결제를 수취합니까?", value)

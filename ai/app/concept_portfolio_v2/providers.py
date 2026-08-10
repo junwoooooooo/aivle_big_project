@@ -33,6 +33,8 @@ FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v3"
 FIDELITY_REGEN_PROMPT_VERSION = "concept-portfolio-fidelity-regeneration-v1"
 ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v1"
 LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
+LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-v1"
+LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair-v1"
 
 
 class PortfolioProvider(ABC):
@@ -62,6 +64,16 @@ class PortfolioProvider(ABC):
     @abstractmethod
     async def redesign(self, seed: CanonicalSeed, plan: PortfolioPlan, candidate: ConceptCandidateResult,
                        requirements: list[str], candidate_index: int) -> ConceptCandidateResult: ...
+
+    @abstractmethod
+    async def complete_legal_facts(self, seed: CanonicalSeed, plan: PortfolioPlan,
+                                   candidate: ConceptCandidateResult, requirements: list[str],
+                                   candidate_index: int) -> ConceptCandidateDraft: ...
+
+    @abstractmethod
+    async def repair_redesign_compliance(self, seed: CanonicalSeed, plan: PortfolioPlan,
+                                         parent: ConceptCandidateResult, child: ConceptCandidateResult,
+                                         requirements: list[str], candidate_index: int) -> ConceptCandidateDraft: ...
 
     @abstractmethod
     async def judge_distinctness(self, kind: str, left: dict[str, Any],
@@ -265,24 +277,26 @@ class MockPortfolioProvider(PortfolioProvider):
 
     async def review_legal(self, candidate_id, candidate, seed):
         name = seed.fixtureName
-        if ((name == "legal_redesign" and candidate_id == "C1")
-                or (name == "two_legal_redesigns" and candidate_id in {"C1", "C3"})
-                or (name == "second_redesign" and candidate_id in {"C1", "C1-R1"})):
+        root_id = candidate_id.split("-")[0]
+        is_redesign_child = "-R" in candidate_id
+        if ((name == "legal_redesign" and root_id == "C1" and not is_redesign_child)
+                or (name == "two_legal_redesigns" and root_id in {"C1", "C3"} and not is_redesign_child)
+                or (name == "second_redesign" and root_id == "C1")):
             return LegalReview(candidateId=candidate_id, route=LegalRoute.REDESIGN_WITHIN_LINEAGE,
                 productionStatus="REDESIGNABLE", sourceStatus="MOCK_OFFICIAL_EVIDENCE",
                 safeSummary="동일 lineage 내 통제 보완이 필요합니다.", redesignRequirements=["자격 보유 주체로 제한"])
-        if name in {"legal_replan", "replan_anchor_drift", "no_reserve_legal_replan"} and candidate_id == "C1":
+        if name in {"legal_replan", "replan_anchor_drift", "no_reserve_legal_replan"} and root_id == "C1" and "REPLAN" not in candidate_id:
             return LegalReview(candidateId=candidate_id, route=LegalRoute.REPLAN_REQUIRED,
                 productionStatus="REJECTED", sourceStatus="MOCK_OFFICIAL_EVIDENCE",
                 safeSummary="핵심 거래 구조를 유지할 수 없습니다.", prohibitedVariants=[candidate.solutionMechanism])
-        if name == "lock_legal_conflict" and candidate_id == "C1":
+        if name == "lock_legal_conflict" and root_id == "C1":
             return LegalReview(candidateId=candidate_id, route=LegalRoute.NEEDS_INPUT,
                 productionStatus="NEEDS_FACTS", sourceStatus="MOCK_OFFICIAL_EVIDENCE",
                 safeSummary="법률 통제와 사용자 LOCK이 충돌합니다.", conflictingLock="channels",
                 currentValue=candidate.channels, requiredLegalChange="자격 보유 파트너 채널로 변경",
                 reason="LOCKED 채널은 엔진이 변경할 수 없습니다.",
                 possibleUserAction="채널 LOCK을 해제하거나 적법한 채널을 확정하세요.")
-        if name == "candidate_needs_input" and candidate_id == "C1":
+        if name == "candidate_needs_input" and root_id == "C1":
             return LegalReview(candidateId=candidate_id, route=LegalRoute.NEEDS_INPUT,
                 productionStatus="NEEDS_FACTS", inputScope="CANDIDATE", sourceStatus="MOCK_OFFICIAL_EVIDENCE",
                 safeSummary="이 후보에만 필요한 외부 사실 확인이 남아 있습니다.",
@@ -296,9 +310,39 @@ class MockPortfolioProvider(PortfolioProvider):
                 "contentHash": "sha256:" + "0" * 64}])
 
     async def redesign(self, seed, plan, candidate, requirements, candidate_index):
-        from .candidate_governance import normalize_candidate_draft
-        return normalize_candidate_draft(_candidate(seed, plan, candidate_index, redesigned=True), seed,
+        from .candidate_governance import candidate_result_to_draft, normalize_candidate_draft
+        draft = candidate_result_to_draft(candidate).model_copy(update={
+            "partnerModel": candidate.partnerModel + " · Legal 요구를 반영한 제한 조건",
+            "partnerRequirements": list(dict.fromkeys([
+                *candidate.partnerRequirements, "Legal redesign 요구에 맞는 파트너만 사용",
+            ])),
+            "qualificationRequirements": list(dict.fromkeys([
+                *candidate.qualificationRequirements, "설계에서 정한 자격 보유 주체만 참여",
+            ])),
+        })
+        return normalize_candidate_draft(draft, seed,
                                          ExplorationBreadth(candidate.generationStrategy), candidate_index)
+
+    async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
+        from .candidate_governance import candidate_result_to_draft
+        draft = candidate_result_to_draft(candidate)
+        return draft.model_copy(update={
+            "platformRole": draft.platformRole if "운영" in draft.platformRole else "운영사가 고객 접점과 거래 기준을 운영",
+            "providerRole": draft.providerRole if "제공" in draft.providerRole else "운영사 또는 명시된 제휴사가 서비스를 제공",
+            "sellerRole": draft.sellerRole if "판매" in draft.sellerRole else "운영사가 고객과 계약하고 판매 책임을 부담",
+            "intermediaryRole": draft.intermediaryRole if "중개" in draft.intermediaryRole else "제3자 거래 중개를 하지 않음",
+            "transactionFlow": draft.transactionFlow or ["고객이 운영사에 주문하고 운영사가 서비스를 제공"],
+            "paymentFlow": draft.paymentFlow or ["고객이 운영사에 결제하고 운영사가 수취"],
+            "personalDataUsage": draft.personalDataUsage or ["서비스 이행을 위해 고객 연락처를 처리"],
+            "physicalActivities": draft.physicalActivities or ["운영사가 설계된 물리적 이행을 관리"],
+            "partnerRequirements": draft.partnerRequirements or ["제휴사는 명시된 서비스 이행 역할을 수행"],
+            "targetRegion": "대한민국" if "필요" in draft.targetRegion else draft.targetRegion,
+            "price": "초기 법률검토 가정용 가격 결정 방식: 서비스 범위에 따른 정액 또는 건별 요금" if "필요" in draft.price else draft.price,
+            "channels": "운영사가 관리하는 웹·앱 고객 접점" if "필요" in draft.channels else draft.channels,
+        })
+
+    async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, candidate_index):
+        return await self.complete_legal_facts(seed, plan, child, requirements, candidate_index)
 
     async def judge_distinctness(self, kind, left, right):
         if kind == "OPPORTUNITY_SCOPE" and "무관" in canonical_json(right):
@@ -381,7 +425,10 @@ canonical code, familyId, mechanics enum을 생성하지 않는다. 같은 Archi
         prompt = """통과된 generic PortfolioPlan을 ConceptCandidateDraft로 확장한다.
 Plan의 target/use/value/offer/solution thesis와 핵심 differentiator, 사용자 LOCK을 보존한다.
 세부 Architecture 구체화는 가능하지만 다른 Concept으로 교체하지 않는다. governance state를 사업값으로 쓰지 않는다.
-qualificationRequirements, personalDataUsage, physicalActivities는 구체적인 설계 사실이 있을 때만 작성한다.
+platformRole, providerRole, sellerRole, intermediaryRole에는 실제 주체와 책임을 명시하고,
+transactionFlow와 paymentFlow에는 주문·계약·제공·결제 수취·정산 주체를 구체적으로 작성한다.
+personalDataUsage, physicalActivities, partnerRequirements는 실제 사업 흐름상 해당할 때 처리 목적·수행 주체·파트너 기능을 작성한다.
+qualificationRequirements는 Concept가 애초에 특정 자격 보유 주체를 사용하도록 설계한 경우에만 작성한다.
 '필요 시 확인', '필요한 자격', '관련 자격' 같은 generic placeholder를 넣지 않는다.
 JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성하고 strict schema만 반환한다."""
         schema = ConceptCandidateDraft.model_json_schema(); assert_strict_compatible(schema, "concept_portfolio_candidate_v3")
@@ -446,6 +493,38 @@ qualificationRequirements 등 Legal fact 필드는 구체적 설계상 실제 �
             "safeConstraints": requirements, "prohibitedVariants": [], "designGaps": requirements,
             "legalFactPattern": legal_input["legalFactPattern"]})
         return ConceptCandidateResult.model_validate(raw)
+
+    async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
+        prompt = """현재 Candidate의 핵심 target/value/offer/solution과 Plan identity를 바꾸지 말고,
+법률 사실패턴에 필요한 누락·모순만 보완한다. 누가 판매·제공·중개·결제 수취·정산·이행하는지
+구체적으로 명시한다. 개인정보는 실제 처리 항목과 목적, 물리 활동은 수행 주체, 파트너는 사업상
+역할을 작성한다. 존재하지 않는 면허·허가·계약을 보유했다고 만들지 않고 법령명·법률판단을 쓰지 않는다.
+JSON key 외 사용자-facing 내용은 한국어이며 ConceptCandidateDraft strict schema만 반환한다."""
+        schema = ConceptCandidateDraft.model_json_schema()
+        assert_strict_compatible(schema, "concept_legal_fact_completion_v1")
+        raw = await execute_structured_prompt(prompt, json.dumps({
+            "seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
+            "candidate": candidate.model_dump(mode="json"), "completionRequirements": requirements,
+            "candidateIndex": candidate_index,
+        }, ensure_ascii=False, sort_keys=True), response_schema=schema,
+            schema_name="concept_legal_fact_completion_v1", task_type="COMPLETE_CANDIDATE_LEGAL_FACTS")
+        return ConceptCandidateDraft.model_validate(raw)
+
+    async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, candidate_index):
+        prompt = """이미 수행된 Legal redesign에서 미충족 요구만 보완한다. 새 Concept을 만들거나
+target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법률결론·보유하지 않은 자격이나
+계약을 만들지 않는다. 실제 사업 역할과 거래 흐름만 한국어로 구체화하고 strict schema만 반환한다."""
+        schema = ConceptCandidateDraft.model_json_schema()
+        assert_strict_compatible(schema, "concept_legal_redesign_compliance_repair_v1")
+        raw = await execute_structured_prompt(prompt, json.dumps({
+            "seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
+            "parentCandidate": parent.model_dump(mode="json"),
+            "redesignedCandidate": child.model_dump(mode="json"),
+            "unsatisfiedRequirements": requirements, "candidateIndex": candidate_index,
+        }, ensure_ascii=False, sort_keys=True), response_schema=schema,
+            schema_name="concept_legal_redesign_compliance_repair_v1",
+            task_type="LEGAL_REDESIGN_COMPLIANCE_REPAIR")
+        return ConceptCandidateDraft.model_validate(raw)
 
     async def judge_distinctness(self, kind, left, right):
         schema = SemanticDistinctnessResult.model_json_schema(); assert_strict_compatible(schema, "concept_relation_v3")
@@ -632,6 +711,22 @@ class ProviderGateway:
         return await self.call("LEGAL_RECOVERING", "REDESIGN", payload,
             lambda: self.provider.redesign(seed, plan, candidate, requirements, index), ConceptCandidateResult,
             operation_version="v3", prompt_version="concept-redesign-v3")
+
+    async def complete_legal_facts(self, seed, plan, candidate, requirements, index):
+        payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
+                   "candidate": candidate.model_dump(mode="json"), "requirements": requirements, "index": index}
+        return await self.call("LEGAL_RECOVERING", "LEGAL_FACT_COMPLETION", payload,
+            lambda: self.provider.complete_legal_facts(seed, plan, candidate, requirements, index),
+            ConceptCandidateDraft, operation_version="v1", prompt_version=LEGAL_FACT_COMPLETION_PROMPT_VERSION)
+
+    async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, index):
+        payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
+                   "parentCandidate": parent.model_dump(mode="json"),
+                   "redesignedCandidate": child.model_dump(mode="json"),
+                   "requirements": requirements, "index": index}
+        return await self.call("LEGAL_RECOVERING", "LEGAL_REDESIGN_COMPLIANCE_REPAIR", payload,
+            lambda: self.provider.repair_redesign_compliance(seed, plan, parent, child, requirements, index),
+            ConceptCandidateDraft, operation_version="v1", prompt_version=LEGAL_REDESIGN_REPAIR_PROMPT_VERSION)
 
     async def judge_distinctness(self, kind, left, right):
         payload = {"kind": kind, "left": left, "right": right}

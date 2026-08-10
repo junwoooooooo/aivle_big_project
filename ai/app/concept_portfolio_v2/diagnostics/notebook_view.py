@@ -133,6 +133,15 @@ def show_legal_precheck(results):
     return _table([_dump(item) for item in results])
 
 
+def show_legal_fact_completeness(preparation):
+    summary = {key: getattr(preparation, key) for key in (
+        "completionAttempted", "completionValidated", "completionAccepted", "completionExhausted")}
+    summary["preparedForLegal"] = len(preparation.candidates)
+    return {"summary": _table([summary]),
+            "reports": _table([_dump(item) for item in preparation.reports]),
+            "excludedCandidates": _table(preparation.excludedCandidates)}
+
+
 def show_legal_fact_pattern(candidate, seed=None):
     from ..adapters import CurrentLegalAdapter
     pattern = CurrentLegalAdapter().task_input(candidate, seed)["legalFactPattern"]
@@ -159,6 +168,17 @@ def show_legal_fact_pattern(candidate, seed=None):
 def show_legal_result(results):
     return _table([{"candidateId": item.candidateId, "route": item.route.value,
                     "productionStatus": item.productionStatus, "source": item.sourceStatus,
+                    "reviewPhase": item.reviewPhase,
+                    "factCompletenessStatus": item.factCompletenessStatus,
+                    "legalSourceStatus": item.legalSourceStatus,
+                    "finalEvidenceJudgmentExecuted": item.finalEvidenceJudgmentExecuted,
+                    "recoveryResolution": item.recoveryResolution,
+                    "sourceQuestionCount": item.sourceQuestionCount,
+                    "resolvedByFactPatternCount": item.resolvedByFactPatternCount,
+                    "designGapCount": item.designGapCount,
+                    "externalFactCount": item.externalFactCount,
+                    "controlConvertibleCount": item.controlConvertibleCount,
+                    "legalClarificationCount": item.legalClarificationCount,
                     "safeSummary": item.safeSummary,
                     "requiredControls": item.requiredControls,
                     "requiredPartnersAndQualifications": item.requiredPartnersAndQualifications,
