@@ -1,0 +1,365 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (p23-household-ledger). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 3,
+    "일자": "2026-08-09",
+    "게이트": "runs/harness/p23-household-ledger/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "개인용 가계부·구독 관리 앱",
+  "as_of": "2026-08-09",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "개인 금융 서비스",
+      "metric": "사업체 수",
+      "period": "2024",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        10000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "사업체 수",
+        "사유": "개인 금융 서비스를 제공하는 사업체 수로 대신한다."
+      },
+      "_경계_proxy": "⚠ **대리 관측(proxy)** — 이 값은 «사업체» 을 센 것이고 이 계열의 고객 단위(«개인»)가 아니다. 사유: 개인 금융 서비스를 제공하는 사업체 수로 대신한다."
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "개인 금융 서비스",
+      "metric": "종사자 1인 사업체 비율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        5,
+        40
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "개인 비중",
+        "사유": "작고 유연한 사업체가 개인 대상 서비스를 제공하는 비중을 나타낸다."
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "구독 서비스 관리",
+      "metric": "도입률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        10,
+        50
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "도입률",
+        "사유": "구독 서비스가 개인의 금융 관리에 얼마나 침투했는지 파악한다."
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_TAM",
+      "claim_type": "PRICE",
+      "subject": "구독 서비스 관리",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "구독료"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        1000,
+        20000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V6",
+      "formula_id": "F_SAM",
+      "claim_type": "PRICE",
+      "subject": "개인 금융 서비스 관리",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        500,
+        15000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V7",
+      "formula_id": "F_GROWTH",
+      "claim_type": "TAM",
+      "subject": "개인 금융 서비스",
+      "metric": "사업체 수",
+      "period": "2023",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        14000,
+        440000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "사업체 수",
+        "사유": "전년 대비 변화를 파악하기 위해 사용한다."
+      },
+      "_경계_proxy": "⚠ **대리 관측(proxy)** — 이 값은 «사업체» 을 센 것이고 이 계열의 고객 단위(«개인»)가 아니다. 사유: 전년 대비 변화를 파악하기 위해 사용한다."
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "개인 금융 서비스",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        100,
+        5000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "시장 평균",
+        "사유": "경쟁사의 서비스 제공 지점 수로 시장 규모를 가늠한다."
+      }
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V9",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "개인 금융 서비스",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        5000,
+        200000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "누적 회원 수",
+        "사유": "유사 서비스와의 성장을 비교하기 위해 사용한다."
+      }
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V10",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "개인 금융 서비스",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        10000,
+        100000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "고객 획득 비용",
+        "사유": "서비스의 시장 진입 비용을 평가하는 데 사용된다."
+      }
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V11",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "개인 금융 서비스",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "자동결제"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        10,
+        40
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "자동결제",
+        "구독 해지"
+      ],
+      "_proxy_선언": {
+        "대상": "문제 경험률",
+        "사유": "사용자들이 겪는 문제와 불편함을 수치로 파악하기 위함이다."
+      }
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V12",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "개인 금융 서비스",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+        1000,
+        20000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    }
+  ]
+}

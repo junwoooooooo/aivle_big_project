@@ -1,0 +1,19 @@
+{
+  "_설명": "직접 주입 URL. **검색이 못 물어온 문서를 손으로 넣되 심사는 기계가 한다** — quote_verified·off_slot 5겹·값 일치·화자 가드 전부 동일하게 적용된다(백로그 4 원칙).",
+  "_지표": "주입 문서는 `channel=\"direct_url\"` 이고 **회수율·검색 지표에서 제외**한다. 검색이 못 한 일을 검색 성적으로 계상하면 지표가 거짓말한다. 등급은 그대로 발행자로 매긴다 — 원칙은 '누가 발행했는가'이지 '어떻게 도달했는가'가 아니다.",
+  "by_slot": {
+    "S7": [
+      "https://www.sentv.co.kr/article/view/sentv202510290133",
+      "https://platum.kr/archives/273579",
+      "https://biz.koke.kr/posts/443"
+    ],
+    "S8": [
+      "https://www.coupangpos.com/allinone",
+      "https://www.coupangpos.com/copy-of-coupangpos"
+    ],
+    "S6": [
+      "https://cafepost.kr/main/price.html",
+      "https://loyverse.com/ko/pricing"
+    ]
+  }
+}

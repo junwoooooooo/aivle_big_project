@@ -1,0 +1,196 @@
+/* 시장조사 · BM 분석 — 목업 `docs/mockups/market-bm.html` 이 정본이다.
+   토큰·셸·공용 컴포넌트는 여기서 정의하지 않는다:
+     shared/styles/tokens.css          색·여백·반경
+     app/layouts/layouts.css           .app-shell / .app-topbar / .app-main
+     app/project-shell/project-shell.css  .pipeline-shell · .pipeline-page-heading
+     shared/ui/ui.css                  .ui-card · .ui-badge · .ui-alert · .ui-button · .ui-accordion
+
+   ⚠ 접두사는 `mr-`(market research) 다. 목업이 쓴 `mk-` 는 **마케팅 콘텐츠가 이미 쓰고 있다**
+     (`features/marketing-content/styles/marketing-content.css`). 실제로 `.mk-actions` 가
+     겹쳐 이 화면의 「다음」 버튼이 화면 하단에 sticky 로 붙어 버렸다. CSS 는 전역이다. */
+
+.market-page { display: grid; align-content: start; gap: 1.75rem; min-width: 0; }
+.market-page > .pipeline-page-heading { margin-bottom: -1.25rem; }  /* 머리글은 바로 아래와 한 덩이 */
+.market-page__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.market-note { color: var(--color-text-secondary); font-size: .85rem; margin: 0 0 .75rem; }
+.mr-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+
+/* 견본 컨셉 고르기 — 임시 다리. 컨셉이 DB 에서 오면 이 규칙도 같이 사라진다. */
+.market-concept-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.market-summary { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; font-size: .88rem; }
+.market-summary__cell { margin-right: .4rem; padding: .05rem .4rem; border-radius: 3px; background: var(--color-bg-subtle); font-size: .75rem; }
+.market-summary code { margin-left: .3rem; font-size: .72rem; }
+
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── KPI 4장 ─────────────────────────────────────────────── */
+.mr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 840px) { .mr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mr-kpi {
+  display: grid; gap: .4rem; align-content: start; padding: 1.35rem 1.25rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
+}
+.mr-kpi:hover { border-color: var(--color-action-primary); background: var(--color-mint-50); }
+.mr-kpi > span:first-child { color: var(--color-text-secondary); font-size: .75rem; font-weight: 700; }
+.mr-kpi b { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.25; }
+.mr-kpi small { color: var(--color-text-secondary); font-size: .75rem; }
+.mr-kpi .ui-badge { margin-top: .5rem; }
+
+/* ── 이 숫자를 읽는 조건 — 규칙상 지울 수 없는 문장들 ────── */
+.mr-limits {
+  display: grid; gap: .65rem; padding: 1.25rem 1.35rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-bg-subtle);
+}
+.mr-limits > span { color: var(--color-text-secondary); font-size: .72rem; font-weight: 800; letter-spacing: .02em; }
+.mr-limits ul { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.mr-limits li { position: relative; padding-left: 1rem; color: var(--color-text-primary); font-size: .84rem; line-height: 1.75; }
+.mr-limits li::before {
+  content: ""; position: absolute; left: 0; top: .68rem; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--color-status-warning);
+}
+
+/* ── 과목 섹션 — 성적표 7과목이 곧 목차다 ────────────────── */
+.mr-sec {
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); scroll-margin-top: 5.5rem;
+}
+.mr-sec.is-on { border-color: var(--color-action-primary); box-shadow: 0 0 0 3px var(--color-mint-50); }
+.mr-sec__h { display: flex; align-items: center; gap: .7rem; padding: 1.25rem 1.5rem; }
+.mr-sec__n {
+  display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: .35rem;
+  background: var(--color-neutral-100); color: var(--color-text-secondary); font-size: .68rem; font-weight: 800;
+}
+.mr-sec__h h3 { margin: 0; font-size: 1rem; }
+.mr-sec__h > span:last-child {
+  margin-left: auto; color: var(--color-text-secondary);
+  font-size: .78rem; line-height: 1.6; text-align: right;
+}
+.mr-sec__b { padding: 1.5rem; border-top: 1px solid var(--color-neutral-100); }
+
+.mr-figs { display: flex; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 1.35rem; }
+.mr-figs > div > span { display: block; margin-bottom: .2rem; color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
+.mr-figs b { font-size: 1.35rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.3; }
+.mr-figs small { display: block; margin-top: .15rem; color: var(--color-text-secondary); font-size: .76rem; }
+
+/* ⚠ 태그 선택자로 쓰지 않는다 — 전역 CSS 라 다른 화면의 표까지 덮는다. */
+.mr-table { width: 100%; border-collapse: collapse; }
+.mr-table th, .mr-table td { padding: .95rem 0; font-size: .87rem; line-height: 1.65; text-align: left; vertical-align: top; }
+.mr-table thead th {
+  padding-bottom: .6rem; border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary); font-size: .7rem; font-weight: 800; letter-spacing: .02em;
+}
+.mr-table tbody tr { border-top: 1px solid var(--color-neutral-100); }
+.mr-table tbody tr:first-child { border-top: 0; }
+.mr-table td.v { padding-right: 1.35rem; font-weight: 700; white-space: nowrap; }
+.mr-table td.p { padding-right: 1.1rem; color: var(--color-text-secondary); font-size: .79rem; white-space: nowrap; }
+.mr-table td.s { text-align: right; white-space: nowrap; }
+.mr-table td.s a::after { content: " ↗"; font-size: .65rem; color: var(--color-text-secondary); }
+.mr-src-kind { text-align: right; }
+
+/* 경계 — 값과 함께 옮겨야 하는 문장. **절대 접지 않는다.** */
+.mr-caveat { margin-top: .5rem; color: var(--color-status-warning); font-size: .8rem; font-style: italic; line-height: 1.7; }
+.mr-quote { margin-top: .4rem; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.7; }
+.mr-note {
+  margin-top: 1.25rem; padding: .95rem 1.1rem; border-radius: var(--radius-control);
+  background: var(--color-bg-subtle); color: var(--color-text-primary); font-size: .82rem; line-height: 1.75;
+}
+.mr-note strong { font-weight: 800; }
+
+/* ── 경쟁사 — 못 찾은 슬롯도 같은 카드에 선다 ────────────── */
+.mr-comps { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .9rem; }
+.mr-comp { padding: 1.15rem 1.2rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); }
+.mr-comp h4 { margin: 0 0 .85rem; font-size: .9rem; }
+.mr-comp div { display: flex; align-items: baseline; gap: .6rem; font-size: .82rem; line-height: 1.7; margin-bottom: .5rem; }
+.mr-comp div > span:first-child { flex: 1; color: var(--color-text-secondary); }
+.mr-comp b { font-weight: 700; }
+.mr-comp .none { color: var(--color-text-secondary); font-weight: 400; }
+.mr-comp__src { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid var(--color-neutral-100); font-size: .78rem; }
+
+/* ═══ BM 캔버스 ═══════════════════════════════════════════ */
+.bm-verdict { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: 1.1rem 1.25rem; }
+.bm-verdict h3 { margin: 0; font-size: .95rem; }
+.bm-verdict p { flex: 1 1 16rem; margin: 0; color: var(--color-text-secondary); font-size: .85rem; }
+
+.bm-tally { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; color: var(--color-text-secondary); font-size: .78rem; }
+.bm-tally span { display: inline-flex; align-items: center; gap: .4rem; }
+.bm-tally b { color: var(--color-text-primary); font-weight: 800; }
+.bm-kind { padding: .15rem .45rem; border-radius: 999px; font-size: .65rem; font-weight: 800; }
+.bm-kind--obs { background: #e5f4f8; color: #176275; }
+.bm-kind--plan { background: #edf1f1; color: #51676a; }
+
+/* 9칸을 «의미»로 세 묶음. 5열 포스터 배치는 웹 폭에서 칸당 195px 밖에 안 나와
+   한글이 10~12자마다 끊긴다. 4·3·2 로 나누면 칸당 280px 이상 나오고, 행 병합이
+   사라져 짧은 칸 옆의 빈 구멍도 없어진다. 묶음 순서 = 누구에게 · 어떻게 만들고 · 돈은. */
+.bm-band { display: grid; gap: .75rem; margin-bottom: 1.75rem; }
+.bm-band:last-of-type { margin-bottom: 0; }
+.bm-band__t {
+  display: flex; align-items: center; gap: .6rem;
+  color: var(--color-text-secondary); font-size: .72rem; font-weight: 800; letter-spacing: .06em;
+}
+.bm-band__t::after { content: ""; flex: 1; height: 1px; background: var(--color-neutral-100); }
+.bm-band__row { display: grid; gap: 1rem; align-items: start; }
+.bm-band--4 .bm-band__row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bm-band--3 .bm-band__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bm-band--2 .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@media (max-width: 620px) { .bm-band__row { grid-template-columns: 1fr !important; } }
+
+.bm-cell {
+  display: flex; flex-direction: column; gap: .85rem; padding: 1.25rem 1.35rem 1.15rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
+}
+.bm-cell:hover { border-color: var(--color-action-primary); background: var(--color-mint-50); }
+.bm-cell--plan { background: var(--color-bg-subtle); }
+.bm-cell__h { display: flex; align-items: center; gap: .45rem; }
+.bm-cell__h h4 { margin: 0; color: var(--color-text-primary); font-size: .84rem; font-weight: 700; }
+.bm-dot { flex: none; width: .45rem; height: .45rem; border-radius: 50%; }
+/* 요약 칸에서만 점을 오른쪽 끝으로 민다. 칸별 세부에서는 점이 라벨 앞에 오는 첫 요소라
+   여기에 margin-left:auto 가 걸리면 머리글 전체가 가운데로 밀린다. */
+.bm-cell__h .bm-dot { margin-left: auto; }
+.bm-dot--ok { background: var(--color-status-success); }
+.bm-dot--mid { background: var(--color-status-warning); }
+.bm-dot--off { background: var(--color-border-strong); }
+.bm-dot--none { background: var(--color-neutral-300); }
+/* 줄 수를 자르지 않는다 — 3줄 클램프가 «주 채…» 처럼 말을 끊어 오히려 답답했다. */
+.bm-cell__lead { color: var(--color-text-primary); font-size: .86rem; line-height: 1.75; }
+.bm-cell__none { margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.75; }
+/* 구분선을 없앤다. 바닥에 고정된 줄이 짧은 카드 안에 빈 공간을 만들고 있었다. */
+.bm-cell__foot { display: flex; align-items: center; gap: .45rem; color: var(--color-text-secondary); font-size: .73rem; }
+
+.bm-swr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+@media (max-width: 800px) { .bm-swr { grid-template-columns: 1fr; } }
+.bm-swr > div {
+  padding: 1.35rem 1.35rem 1.5rem; border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card); background: var(--color-surface);
+}
+.bm-swr h4 { margin: 0 0 .85rem; font-size: .72rem; font-weight: 800; letter-spacing: .02em; }
+.bm-swr ul { margin: 0; padding: 0; list-style: none; }
+.bm-swr li { position: relative; margin-bottom: .6rem; padding-left: .9rem; color: var(--color-text-primary); font-size: .84rem; line-height: 1.75; }
+.bm-swr li::before { content: ""; position: absolute; left: .15rem; top: .6rem; width: 4px; height: 4px; border-radius: 50%; background: var(--color-border-strong); }
+.bm-swr__none { color: var(--color-text-secondary); }
+
+.bm-dets__title { margin: .75rem 0 -.75rem; font-size: 1rem; }
+.bm-dets { display: grid; gap: .9rem; }
+.bm-det {
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); scroll-margin-top: 5.5rem;
+}
+.bm-det.is-on { border-color: var(--color-action-primary); box-shadow: 0 0 0 3px var(--color-mint-50); }
+.bm-det__h { display: flex; align-items: center; gap: .6rem; padding: 1.15rem 1.5rem; }
+.bm-det__h h4 { margin: 0; font-size: .95rem; }
+.bm-det__h > .ui-badge:last-child { margin-left: auto; }
+.bm-det__o { color: var(--color-text-secondary); font-size: .73rem; }
+.bm-det__b { padding: 1.35rem 1.5rem 1.5rem; border-top: 1px solid var(--color-neutral-100); }
+.bm-det__c { display: grid; gap: .5rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+.bm-det__c li { position: relative; padding-left: .95rem; font-size: .88rem; line-height: 1.8; }
+.bm-det__c li::before { content: ""; position: absolute; left: .15rem; top: .75rem; width: 4px; height: 4px; border-radius: 50%; background: var(--color-border-strong); }
+.bm-det__r { margin: 0; color: var(--color-text-secondary); font-size: .81rem; line-height: 1.75; }
+.bm-det__t { margin-top: .6rem; }
+.bm-det__m { margin-top: 1rem; color: var(--color-text-primary); font-size: .81rem; line-height: 1.7; }
+.bm-det__m b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }

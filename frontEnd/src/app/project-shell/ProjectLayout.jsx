@@ -5,7 +5,6 @@ import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { ProjectProvider, useProjectContext } from '../../features/projects/ProjectContext.jsx';
 import { getModuleStatusView, getProjectModuleByPath, getProjectModules } from '../module-status/projectModuleModel.js';
 import { useProjectModuleStatuses } from '../module-status/useProjectModuleStatuses.js';
-import JobCenter from '../../features/job-center/JobCenter.jsx';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import './project-shell.css';
 
@@ -34,7 +33,6 @@ function ProjectLayoutContent() {
       <div className="pipeline-shell__project"><p>{project.industryCategory || '사업 분야 미입력'}</p><h1>{project.name}</h1></div>
       <div className="pipeline-shell__module"><div><span>현재 모듈</span><h2>{current.label}</h2></div><span className="pipeline-status" data-tone={currentStatus.tone}>{currentStatus.label}</span></div>
       <div className="pipeline-shell__actions">
-        <a href="#project-task-center">작업 센터</a>
         <Link to={projectRoutes.settings(projectId)} state={{ backgroundLocation: location, returnTo: location.pathname }}>프로젝트 설정</Link>
       </div>
     </header>
@@ -57,7 +55,6 @@ function ProjectLayoutContent() {
       <main className="pipeline-shell__main">
         {moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>모듈 상태를 불러오지 못했습니다</strong><span>{getUserErrorMessage(moduleState.error)} 프로젝트 이동과 설정은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}
         <Outlet context={{ modules, moduleState }} />
-        <JobCenter projectId={projectId} onTerminal={moduleState.retry} />
       </main>
     </div>
   </div>;

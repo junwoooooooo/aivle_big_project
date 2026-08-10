@@ -1,0 +1,78 @@
+/* 패널 트윈 조사.
+   토큰·셸·공용 컴포넌트는 여기서 정의하지 않는다:
+     shared/styles/tokens.css             색·여백·반경
+     app/project-shell/project-shell.css  .pipeline-shell · .pipeline-page-heading
+     shared/ui/ui.css                     .ui-card · .ui-badge · .ui-alert · .ui-button
+
+   ⚠ 접두사는 `twin-` 이다. 부품(StimulusEditor·SampleSizePicker)이 이미 그 접두사를 쓴다.
+     `tone-*` 는 전역 클래스가 아니라서 여기서 정의하는데, **반드시 twin- 요소에 붙여** 쓴다.
+     CSS 는 전역이라 벗겨 두면 다른 화면의 같은 이름을 덮는다. */
+
+.twin-page { display: grid; align-content: start; gap: 1.5rem; min-width: 0; }
+.twin-page > .pipeline-page-heading { margin-bottom: -1rem; }
+.twin-page__actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; }
+.twin-page__elapsed { color: var(--color-text-secondary); font-size: .85rem; }
+
+/* ── 자극 편집 ─────────────────────────────────────────────────────── */
+.twin-editor { display: grid; gap: 1rem; }
+.twin-editor__situation { display: grid; gap: .35rem; font-size: .9rem; }
+.twin-editor__situation input { padding: .5rem .625rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.twin-editor__pair { display: grid; gap: .625rem; }
+.twin-editor__pair h3 { margin: 0; font-size: .95rem; }
+.twin-editor__pair table { width: 100%; border-collapse: collapse; }
+.twin-editor__pair th, .twin-editor__pair td { padding: .375rem .5rem; text-align: left; font-weight: 400; }
+.twin-editor__pair thead th { font-size: .85rem; color: var(--color-text-secondary); }
+.twin-editor__pair input { width: 100%; padding: .375rem .5rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+/* 다른 값만 표시한다 — 무엇이 조작된 축인지가 판정의 전부다. */
+.twin-editor__pair tr.is-differing th[scope="row"] { font-weight: 600; }
+.twin-editor__pair tr.is-differing input { border-color: var(--color-accent, #4c6ef5); }
+.twin-editor__verdict { margin: 0; font-size: .875rem; }
+.twin-editor__blocked { margin: 0; font-size: .875rem; font-weight: 600; }
+.twin-editor__empty { margin: 0; color: var(--color-text-secondary); font-size: .875rem; }
+
+.twin-editor__verdict.tone-success { color: var(--color-success-text, #1a7f37); }
+.twin-editor__verdict.tone-warning { color: var(--color-warning-text, #9a6700); }
+.twin-editor__verdict.tone-danger,
+.twin-editor__blocked { color: var(--color-danger-text, #b42318); }
+
+/* ── 표본 고르기 ───────────────────────────────────────────────────── */
+.twin-sample { display: grid; gap: .625rem; border: 0; padding: 0; margin: 0; }
+.twin-sample legend { font-size: .9rem; font-weight: 600; padding: 0; }
+.twin-sample__intro { margin: 0; color: var(--color-text-secondary); font-size: .85rem; }
+.twin-sample__option {
+  display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: .5rem .75rem;
+  padding: .625rem .75rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+}
+.twin-sample__option.is-selected { border-color: var(--color-accent, #4c6ef5); }
+.twin-sample__size { font-weight: 600; }
+.twin-sample__cost { color: var(--color-text-secondary); font-size: .85rem; }
+.twin-sample__mde { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; font-size: .85rem; }
+.twin-sample__mde-item { color: var(--color-text-secondary); }
+.twin-sample__note, .twin-sample__warning { grid-column: 1 / -1; margin: 0; font-size: .85rem; }
+.twin-sample__warning { color: var(--color-warning-text, #9a6700); }
+
+/* ── 결과 ──────────────────────────────────────────────────────────── */
+.twin-result { display: grid; gap: 1rem; }
+.twin-result__sampling { margin: 0; color: var(--color-text-secondary); font-size: .85rem; }
+.twin-pair__head { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.twin-pair__standing { color: var(--color-text-secondary); font-size: .8rem; }
+.twin-pair__verdict { margin: 0 0 .25rem; font-size: 1.05rem; }
+.twin-pair__reason { margin: 0 0 .75rem; font-size: .875rem; }
+.twin-pair__figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .625rem; margin: 0 0 .75rem; }
+.twin-pair__figures dt { color: var(--color-text-secondary); font-size: .78rem; }
+.twin-pair__figures dd { margin: .125rem 0 0; font-variant-numeric: tabular-nums; }
+.twin-pair__classes { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0 0 .75rem; padding: 0; list-style: none; font-size: .85rem; color: var(--color-text-secondary); }
+
+/* 경계는 값과 같은 카드 안에 있고, 눈에 띄어야 한다. 빠진 경우는 더 크게 띄운다. */
+.twin-pair__caveats {
+  margin: 0; padding: .625rem .75rem .625rem 1.75rem; font-size: .85rem;
+  border-left: 3px solid var(--color-warning-text, #9a6700);
+  background: var(--color-surface-muted, rgba(0, 0, 0, .03));
+}
+.twin-pair__caveats.is-missing {
+  border-left-color: var(--color-danger-text, #b42318);
+  color: var(--color-danger-text, #b42318); font-weight: 600;
+}
+.twin-pair__excerpts { margin-top: .75rem; font-size: .85rem; }
+.twin-pair__excerpts summary { cursor: pointer; color: var(--color-text-secondary); }
+.twin-result__notes { margin: 0; padding-left: 1.25rem; color: var(--color-text-secondary); font-size: .8rem; }

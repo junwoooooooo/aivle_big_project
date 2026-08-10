@@ -1,0 +1,61 @@
+{
+  "_설명": "숫자 파싱 50 케이스. 실제로 웹에서 나온 표기들이다. want=null 은 '파싱 실패가 정답'인 케이스 — 값을 만들어내지 않는 것도 능력이다.",
+  "cases": [
+    { "raw": "10만 729",        "unit": "개",   "want": 100729,        "want_unit": "개" },
+    { "raw": "8만 3,445",       "unit": "개",   "want": 83445,         "want_unit": "개" },
+    { "raw": "407만 3천",       "unit": "개",   "want": 4073000,       "want_unit": "개" },
+    { "raw": "623만 8,580",     "unit": "개",   "want": 6238580,       "want_unit": "개" },
+    { "raw": "2,532만 1,526",   "unit": "명",   "want": 25321526,      "want_unit": "명" },
+    { "raw": "30만",            "unit": "명",   "want": 300000,        "want_unit": "명" },
+    { "raw": "110만",           "unit": "명",   "want": 1100000,       "want_unit": "명" },
+    { "raw": "210만",           "unit": "명",   "want": 2100000,       "want_unit": "명" },
+    { "raw": "85만 9천",        "unit": "개",   "want": 859000,        "want_unit": "개" },
+    { "raw": "22,135",          "unit": "개",   "want": 22135,         "want_unit": "개" },
+
+    { "raw": "15조 5000억",     "unit": "원",   "want": 15500000000000, "want_unit": "원" },
+    { "raw": "1조 3668억",      "unit": "원",   "want": 1366800000000,  "want_unit": "원" },
+    { "raw": "9,621억",         "unit": "원",   "want": 962100000000,   "want_unit": "원" },
+    { "raw": "1조1673억",       "unit": "원",   "want": 1167300000000,  "want_unit": "원" },
+    { "raw": "3.5억",           "unit": "원",   "want": 350000000,      "want_unit": "원" },
+    { "raw": "1.2조",           "unit": "원",   "want": 1200000000000,  "want_unit": "원" },
+    { "raw": "120",             "unit": "억원", "want": 12000000000,    "want_unit": "원" },
+    { "raw": "55,000",          "unit": "원",   "want": 55000,          "want_unit": "원" },
+    { "raw": "99,000",          "unit": "원",   "want": 99000,          "want_unit": "원" },
+    { "raw": "30,000",          "unit": "원",   "want": 30000,          "want_unit": "원" },
+    { "raw": "3",               "unit": "만원", "want": 30000,          "want_unit": "원" },
+    { "raw": "1,500",           "unit": "천원", "want": 1500000,        "want_unit": "원" },
+
+    { "raw": "46.6",            "unit": "%",    "want": 46.6,           "want_unit": "%" },
+    { "raw": "39.6",            "unit": "퍼센트","want": 39.6,          "want_unit": "%" },
+    { "raw": "2.65",            "unit": "%",    "want": 2.65,           "want_unit": "%" },
+    { "raw": "0.5",             "unit": "%p",   "want": 0.5,            "want_unit": "%p" },
+    { "raw": "100",             "unit": "%",    "want": 100,            "want_unit": "%" },
+
+    { "raw": "$25",             "unit": "USD",  "want": 25,             "want_unit": "USD" },
+    { "raw": "25",              "unit": "달러", "want": 25,             "want_unit": "USD" },
+    { "raw": "149",             "unit": "$",    "want": 149,            "want_unit": "USD" },
+    { "raw": "0.15",            "unit": "USD",  "want": 0.15,           "want_unit": "USD" },
+
+    { "raw": "약 30만",         "unit": "명",   "want": 300000,         "want_unit": "명", "approx": true },
+    { "raw": "30만여",          "unit": "명",   "want": 300000,         "want_unit": "명", "approx": true },
+    { "raw": "대략 1,000",      "unit": "곳",   "want": 1000,           "want_unit": "곳", "approx": true },
+    { "raw": "5만 가량",        "unit": "건",   "want": 50000,          "want_unit": "건", "approx": true },
+    { "raw": "100만 이상",      "unit": "명",   "want": 1000000,        "want_unit": "명", "approx": true },
+
+    { "raw": "1,000",           "unit": "개소", "want": 1000,           "want_unit": "개" },
+    { "raw": "500",             "unit": "곳",   "want": 500,            "want_unit": "곳" },
+    { "raw": "12",              "unit": "업체", "want": 12,             "want_unit": "곳" },
+    { "raw": "3,000",           "unit": "여명", "want": 3000,           "want_unit": "명" },
+    { "raw": "7",               "unit": "건",   "want": 7,              "want_unit": "건" },
+    { "raw": "0",               "unit": "원",   "want": 0,              "want_unit": "원" },
+    { "raw": "100729",          "unit": "",     "want": 100729,         "want_unit": null },
+
+    { "raw": "",                "unit": "개",   "want": null },
+    { "raw": "미상",            "unit": "개",   "want": null },
+    { "raw": "해당없음",         "unit": "명",   "want": null },
+    { "raw": "N/A",             "unit": "%",    "want": null },
+    { "raw": "-",               "unit": "원",   "want": null },
+    { "raw": "몇만",            "unit": "명",   "want": null },
+    { "raw": "수천",            "unit": "개",   "want": null }
+  ]
+}

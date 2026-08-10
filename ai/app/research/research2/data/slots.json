@@ -1,0 +1,275 @@
+{
+  "_설명": "슬롯 = 찾을 것의 정의. must_contain·must_not_contain·value_range 는 **사람이 적는다**(F6). 단계 7에서 A1 이 자동 생성하면 이 파일은 그 출력의 검증 기준이 된다.",
+  "concept": "카페 원두 재고·발주 자동화 SaaS (월 30,000원, 서울 개인 카페 1~3개 매장)",
+  "as_of": "2026-08-05",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_SAM_TD",
+      "claim_type": "TAM",
+      "subject": "커피전문점",
+      "subject_code": "KSIC-56221",
+      "metric": "사업체 수",
+      "period": "2023",
+      "unit": "개",
+      "region": "대한민국",
+      "stat_code": null,
+      "must_contain": [
+        "커피",
+        "비알콜음료점업"
+      ],
+      "must_not_contain": [
+        "송금",
+        "환전",
+        "해외"
+      ],
+      "value_range": [
+        10000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2,
+        "min_confirmed": 1
+      },
+      "_주석_formula_id": "F_SAM_TD 로 옮겼다. `b_estimate.substitute` 가 `slot.formula_id == formula.formula_id` 로 변수를 잇기 때문에, **전국 사업체 수는 Top-down 식의 입력**이어야 연결된다. formula_id 는 검색에 쓰이지 않는 **B 조인 키**라 수집 조건이 아니다(subject·period·unit·stat_code 와 다르다)."
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_SAM_BU",
+      "claim_type": "SAM",
+      "_subject_주의": "지역을 subject 에 붙이지 않는다. region 칸이 따로 있고 kosis 어댑터가 지역 축을 별도로 확인한다 — 붙이면 항목 매칭이 지역 축에 걸려 끝난다(실측: '서울 커피전문점' → 항목 '서울' strength=1 로 오매칭, 표 전멸).",
+      "subject": "커피전문점",
+      "subject_code": "KSIC-56221-SEOUL",
+      "metric": "사업체 수",
+      "period": "2023",
+      "unit": "개",
+      "region": "서울",
+      "must_contain": [
+        "커피",
+        "비알콜음료점업"
+      ],
+      "must_not_contain": [
+        "송금"
+      ],
+      "value_range": [
+        1000,
+        100000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_SAM_BU",
+      "claim_type": "COMP",
+      "subject": "카페 재고·발주 SaaS",
+      "subject_code": "COMP-CAFE-INV",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "must_contain": [
+        "발주"
+      ],
+      "must_not_contain": [
+        "송금",
+        "환전"
+      ],
+      "value_range": [
+        1,
+        1000000
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 1,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_SAM_TD",
+      "claim_type": "COMPARABLE",
+      "subject": "소상공인 매장관리 앱",
+      "subject_code": "COMPARABLE-SMB-APP",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "must_contain": [
+        "소상공인"
+      ],
+      "must_not_contain": [
+        "송금",
+        "환전",
+        "해외송금",
+        "인터넷"
+      ],
+      "value_range": [
+        1000,
+        50000000
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 2,
+        "min_facts": 2,
+        "min_confirmed": 1
+      },
+      "_주석_must_not_contain": "'인터넷' 추가 — report1-01 에서 LG유플러스 SOHO **인터넷 회선** 가입자 350,000명이 「소상공인 매장관리 앱 누적 가입자 수」로 유입돼 교차확인까지 받았다(lgv1.co.kr · news.lguplus.com). ⚠ hay 가 문서 전체라 오발 위험이 있다 — 재채점으로 살아 있는 사실의 손실을 확인한 뒤 확정한다. S4 는 애초에 '존재하지 않을 수 있는 값'으로 판정된 슬롯이므로 **오염만 막고 공백이면 공백으로 §7 에 내보내는 것이 맞다**."
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V5",
+      "formula_id": "F_SAM_TD",
+      "claim_type": "PAIN",
+      "subject": "소상공인",
+      "subject_code": "PAIN-SMB-INV",
+      "metric": "재고관리 애로 비율",
+      "period": "2024",
+      "unit": "%",
+      "region": "대한민국",
+      "must_contain": [
+        "소상공인"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 1,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V6",
+      "formula_id": "F_SAM_BU",
+      "claim_type": "PRICE",
+      "subject": "카페 POS·재고관리 서비스",
+      "subject_code": "PRICE-CAFE-POS",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "must_contain": [
+        "원",
+        "₩"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        1000,
+        1000000
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 2,
+        "min_facts": 2,
+        "min_confirmed": 2
+      }
+    },
+    {
+      "_주석_실명": "실명은 조사 결과가 아니라 **조사 대상의 정의**다. A1 이 뽑은 것이 아니라 사람이 정했고, 근거는 수집된 실제 문서에서 관측된 실명이다 — 코케비즈(newswire.co.kr · sentv.co.kr) · 쿠팡포스(coupangpos.com) · 토스플레이스(tossplace.com). 실명 슬롯의 must_contain 은 그 실명이다.",
+      "_주석_must_not_contain": "must_not_contain 을 **의도적으로 비웠다.** hay = quote + doc.text 라 문서 어디든 금지어가 스치면 격리된다. 실명 3사는 서로 비교되는 기사에 함께 등장하므로(서울경제TV·뉴스와이어 실측) 경쟁사 이름을 금지어로 넣으면 **가장 유용한 비교 기사가 통째로 죽는다.** 실명이 must_contain 에 있어 오염 경로는 이미 좁다.",
+      "_period_주의": "period=2026 은 의도다. 기본 규칙은 as_of-1(2025)이지만 **회사 지표는 통계와 달리 발표 지연이 없다.** 실측 기사(서울경제TV 「2만 매장」)가 2026 이라 2025 로 두면 기간 겹에 걸려 격리된다. slotcheck.period.lagged_metrics 는 통계 계량용이라 여기엔 안 걸리고, 사람이 적은 period 가 이긴다.",
+      "_주석_value_range": "상한 200,000곳 — 전국 커피전문점 사업체 수가 106,452개(2023, KOSIS 실측·S1 의 확인됨)다. 카페 대상 서비스의 가입 매장이 **모집단의 2배**를 넘으면 헛소리다. 하한 100 — 그 밑은 보도자료가 나지 않는다.",
+      "slot_id": "S7",
+      "var_id": "V7",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "코케비즈",
+      "subject_code": "COMP-KOKEBIZ",
+      "metric": "누적 가입 매장 수",
+      "period": "2026",
+      "unit": "곳",
+      "region": "대한민국",
+      "must_contain": [
+        "코케비즈"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        100,
+        200000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    },
+    {
+      "_주석_실명": "실명은 조사 결과가 아니라 **조사 대상의 정의**다. A1 이 뽑은 것이 아니라 사람이 정했고, 근거는 수집된 실제 문서에서 관측된 실명이다 — 코케비즈(newswire.co.kr · sentv.co.kr) · 쿠팡포스(coupangpos.com) · 토스플레이스(tossplace.com). 실명 슬롯의 must_contain 은 그 실명이다.",
+      "_주석_must_not_contain": "must_not_contain 을 **의도적으로 비웠다.** hay = quote + doc.text 라 문서 어디든 금지어가 스치면 격리된다. 실명 3사는 서로 비교되는 기사에 함께 등장하므로(서울경제TV·뉴스와이어 실측) 경쟁사 이름을 금지어로 넣으면 **가장 유용한 비교 기사가 통째로 죽는다.** 실명이 must_contain 에 있어 오염 경로는 이미 좁다.",
+      "_period_주의": "period=2026 은 의도다. 기본 규칙은 as_of-1(2025)이지만 **회사 지표는 통계와 달리 발표 지연이 없다.** 실측 기사(서울경제TV 「2만 매장」)가 2026 이라 2025 로 두면 기간 겹에 걸려 격리된다. slotcheck.period.lagged_metrics 는 통계 계량용이라 여기엔 안 걸리고, 사람이 적은 period 가 이긴다.",
+      "_주석_value_range": "하한 0 — **무료 요금제는 실재하는 가격이자 핵심 경쟁 정보**다(쿠팡포스 0원 플랜 실측). 전역 `guards._currency` 는 [1,…] 로 **유지**한다: 쓰레기 0 방어는 전역이 하고, 무료 수용은 이 슬롯이 한다. 상한 300,000원 — 카페용 POS 월 구독료가 30만원을 넘으면 그건 단말기 값·설치비이지 구독료가 아니다(개념 경계).",
+      "slot_id": "S8",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "쿠팡포스",
+      "subject_code": "COMP-COUPANGPOS",
+      "metric": "월 구독료",
+      "period": "2026",
+      "unit": "원",
+      "region": "대한민국",
+      "must_contain": [
+        "쿠팡포스"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        300000
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 1,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    },
+    {
+      "_주석_실명": "실명은 조사 결과가 아니라 **조사 대상의 정의**다. A1 이 뽑은 것이 아니라 사람이 정했고, 근거는 수집된 실제 문서에서 관측된 실명이다 — 코케비즈(newswire.co.kr · sentv.co.kr) · 쿠팡포스(coupangpos.com) · 토스플레이스(tossplace.com). 실명 슬롯의 must_contain 은 그 실명이다.",
+      "_주석_must_not_contain": "must_not_contain 을 **의도적으로 비웠다.** hay = quote + doc.text 라 문서 어디든 금지어가 스치면 격리된다. 실명 3사는 서로 비교되는 기사에 함께 등장하므로(서울경제TV·뉴스와이어 실측) 경쟁사 이름을 금지어로 넣으면 **가장 유용한 비교 기사가 통째로 죽는다.** 실명이 must_contain 에 있어 오염 경로는 이미 좁다.",
+      "_period_주의": "period=2026 은 의도다. 기본 규칙은 as_of-1(2025)이지만 **회사 지표는 통계와 달리 발표 지연이 없다.** 실측 기사(서울경제TV 「2만 매장」)가 2026 이라 2025 로 두면 기간 겹에 걸려 격리된다. slotcheck.period.lagged_metrics 는 통계 계량용이라 여기엔 안 걸리고, 사람이 적은 period 가 이긴다.",
+      "_주석_value_range": "하한 0 — **무료 요금제는 실재하는 가격이자 핵심 경쟁 정보**다(쿠팡포스 0원 플랜 실측). 전역 `guards._currency` 는 [1,…] 로 **유지**한다: 쓰레기 0 방어는 전역이 하고, 무료 수용은 이 슬롯이 한다. 상한 300,000원 — 카페용 POS 월 구독료가 30만원을 넘으면 그건 단말기 값·설치비이지 구독료가 아니다(개념 경계).",
+      "slot_id": "S9",
+      "var_id": "V9",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "토스플레이스",
+      "subject_code": "COMP-TOSSPLACE",
+      "metric": "월 구독료",
+      "period": "2026",
+      "unit": "원",
+      "region": "대한민국",
+      "must_contain": [
+        "토스플레이스"
+      ],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        300000
+      ],
+      "accept": {
+        "min_score": 4,
+        "min_sources": 1,
+        "min_facts": 2,
+        "min_confirmed": 1
+      }
+    }
+  ],
+  "_보고서1": "S7~S9 는 보고서-1 에서 추가한 **실명 경쟁사 슬롯**이다. C2 R9(경쟁사 ≥1곳 실명, blocker)를 실제로 통과시키는 최소 단위 — 그 전까지 유일한 COMP 였던 S3 은 subject 가 범주명이라 4라운드 내내 not_found 였다."
+}

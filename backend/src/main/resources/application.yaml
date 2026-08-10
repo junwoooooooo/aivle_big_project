@@ -47,6 +47,10 @@ app:
     base-url: ${AI_SERVER_BASE_URL:http://127.0.0.1:8000}
     connect-timeout: ${AI_SERVER_CONNECT_TIMEOUT:3s}
     read-timeout: ${AI_SERVER_READ_TIMEOUT:30s}
+    # 시장조사 전 구간(90~266초) 전용. 기본 read-timeout 으로는 시작하자마자 초과다.
+    long-read-timeout: ${AI_SERVER_LONG_READ_TIMEOUT:420s}
+    # 패널 트윈 조사(예산 12분) 전용. long 으로도 모자라 또 나눈다.
+    survey-read-timeout: ${AI_SERVER_SURVEY_READ_TIMEOUT:900s}
     internal-api-key: ${AI_SERVER_INTERNAL_API_KEY:}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:3001,http://127.0.0.1:3001}

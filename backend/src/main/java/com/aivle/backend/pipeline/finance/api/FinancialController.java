@@ -69,6 +69,11 @@ public class FinancialController {
             service.finalizeSnapshot(user.currentUserId(), projectId), request.getHeader("X-Request-Id")));
     }
 
+    @PostMapping("/input-snapshots/current/reopen")
+    public ApiResponse<PreparationView> reopenSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(service.reopenPreparation(user.currentUserId(), projectId), request.getHeader("X-Request-Id"));
+    }
+
     @GetMapping("/input-snapshots/current")
     public ApiResponse<SnapshotView> currentSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(service.currentSnapshot(user.currentUserId(), projectId), request.getHeader("X-Request-Id"));

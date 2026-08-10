@@ -3,9 +3,15 @@ import { Link } from 'react-router-dom';
 import { Button, Spinner } from './controls.jsx';
 import './ui.css';
 
-export function Card({ as: Element = 'section', className = '', children, ...props }) {
+/**
+ * `title` 은 **화면에 보이는 제목**이지 HTML 툴팁이 아니다.
+ * props 로 흘리면 제목과 툴팁이 둘 다 뜨므로 반드시 구조분해로 빼낸다.
+ * 툴팁이 필요하면 `aria-label` 을 쓴다.
+ */
+export function Card({ as: Element = 'section', className = '', title, children, ...props }) {
   return (
     <Element className={`ui-card ${className}`} {...props}>
+      {title ? <h3 className="ui-card__title">{title}</h3> : null}
       {children}
     </Element>
   );
@@ -32,6 +38,11 @@ const STATUS_VIEW = {
   NEEDS_REVIEW: ['추가 확인 필요', 'warning'],
   INVALID: ['확인 필요', 'danger'],
   UNKNOWN: ['확인 필요', 'neutral'],
+  // BM 캔버스 칸 상태 (판 ㉝). PARTIAL 은 위에 이미 있다.
+  VERIFIED: ['확인됨', 'success'],
+  UNVERIFIED: ['미확인', 'danger'],
+  PLAN: ['계획(근거 없음)', 'neutral'],
+  BLOCKED: ['진행 불가', 'danger'],
   PASS: ['통과', 'success'],
   DRAFT: ['작성 중', 'neutral'],
   ACTIVE: ['진행 중', 'info'],

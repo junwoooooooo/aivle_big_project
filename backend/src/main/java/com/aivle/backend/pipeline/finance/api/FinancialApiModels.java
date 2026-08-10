@@ -12,7 +12,8 @@ public final class FinancialApiModels {
     public record FinancialFieldsPatch(@NotNull JsonNode values) {}
     public record EstimateDecisionRequest(@NotBlank String action, JsonNode value) {}
     public record PreparationView(String contract, String schemaVersion, String preparationId, Long projectId,
-        String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId, String sourceSnapshotHash,
+        String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId, Long sourceMarketResearchRunId,
+        String sourceSnapshotHash,
         int revision, JsonNode financialFields, JsonNode upstreamReferences, JsonNode assistance,
         JsonNode calculatedCac, List<String> missingRequiredInputs, boolean readyToFinalize,
         String inputSnapshotId, LocalDateTime updatedAt) {}
@@ -20,5 +21,6 @@ public final class FinancialApiModels {
         String status, String actionType, String fieldKey, int proposalVersion) {}
     public record SnapshotView(String contract, String snapshotId, String schemaVersion, Long projectId,
         String preparationId, String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId,
+        Long sourceMarketResearchRunId,
         String snapshotHash, Instant createdAt, JsonNode snapshot) {}
 }

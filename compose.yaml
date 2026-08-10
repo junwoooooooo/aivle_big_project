@@ -81,6 +81,48 @@ services:
       AI_E2E_FAULTS_ENABLED: ${AI_E2E_FAULTS_ENABLED:-false}
       AI_E2E_FAULT_MODE: ${AI_E2E_FAULT_MODE:-}
       AI_E2E_FAULT_DELAY_SECONDS: ${AI_E2E_FAULT_DELAY_SECONDS:-5}
+      # 시장조사 엔진은 **이미지 안에** 있다 (판 ㉝ 이식: ai/app/research/research2).
+      # 예전에는 ./시장조사/research2 를 볼륨으로 붙였는데 그건 **로컬에서만** 되는 방법이었다 —
+      # ai-server 빌드 컨텍스트가 ./ai 라 이미지가 자립하지 못했다.
+      RESEARCH2_HOME: /app/app/research/research2
+      # 원장(runs/)만 컨테이너 밖에 남긴다. 이미지 안에 두면 재기동마다 증발하고,
+      # 측정 원장은 232MB 라 이미지에 넣을 것도 아니다.
+      # ⚠ **엔진이 보는 자리와 같아야 한다.** `RESEARCH2_RUNS_DIR` 을 읽는 코드는
+      #   `runlog.py` **하나뿐**이고 `run.py`·`service/bm_layer`·`bm_scorer`·`canvas`·
+      #   하네스 3종은 `<RESEARCH2_HOME>/runs` 를 직접 만든다. 다른 자리에 붙이면
+      #   **쓰는 곳과 읽는 곳이 갈린다** (판 ㉝ 스모크 실측: `/research2-runs` 는 비어 있고
+      #   `<HOME>/runs` 는 아예 없었다 — 씨앗을 넣어도 엔진이 못 본다).
+      RESEARCH2_RUNS_DIR: /app/app/research/research2/runs
+      # 수집이 외부를 친다 — 키가 없으면 어댑터가 조용히 not_configured 로 떨어진다.
+      # ⚠ AI_API_KEY 를 흘려 넣지 않는다. 판 ⑫ 가 「엔진 지갑 ≠ 제품 지갑」을 값으로 갈랐고,
+      #   합치면 시장조사 지출이 제품 예산에 섞여 되짚을 수 없게 된다(그때 실제로 그랬다).
+      #   한 지갑으로 쓰려면 .env 에 같은 값을 **적어서** 합친다 — 조용히 합치지 않는다.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required (market research engine wallet)}
+      # ⚠ chat-only 게이트웨이를 여기 물리면 하네스·발췌·요약이 전멸한다
+      #   (research2 는 /v1/responses 를 직접 쓴다). 지원 여부를 확인하고 넣을 것.
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-${AI_BASE_URL:-}}
+      KOSIS_API_KEY: ${KOSIS_API_KEY:-}
+      DART_API_KEY: ${DART_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      BM_MODEL: ${BM_MODEL:-${AI_MODEL}}
+      # 트윈 카드 뱅크도 이미지 밖이다 — 이유는 크기가 아니라 **재배포 금지**다
+      # (KISDI 한국미디어패널조사 파생 마이크로데이터). 가림(pid 해시)만으로 부족하다:
+      # 카드 본문에 만나이·성별·지역·가구형태·소득대가 문장으로 들어 있다.
+      # 없으면 조용히 빈 표본으로 도는 대신 TWIN_BANK_UNAVAILABLE 로 시끄럽게 죽는다.
+      TWIN_BANK_DIR: /app/app/twin/bank
+    volumes:
+      # 씨앗 원장을 **읽기 전용**으로 붙인다. named volume 은 빈 채로 덮어써서
+      # 컨테이너 안 원장이 0개였다 — `.dockerignore` 가 runs/ 를 빼기 때문이다
+      # (232MB 를 빌드 컨텍스트에 넣지 않는다는 결정은 그대로 옳다).
+      #
+      # `:ro` 가 안전한 근거 — FULL·BM 경로는 runs/ 에 **쓰지 않는다**.
+      #   `service/summary.py` 의 `summarize()` 는 CLI `--out` 일 때만 디스크에 쓰고,
+      #   `pipeline._summary` 는 반환값만 받는다. 쓰기가 필요해지면 조용히가 아니라
+      #   시끄럽게 터진다 — 그게 낫다.
+      # 덤으로 §1 동시 세션 규칙을 지킨다: 컨테이너가 측정 원장을 덮어쓸 수 없다.
+      - ./ai/app/research/research2/runs:/app/app/research/research2/runs:ro
+      # named volume 을 쓰면 빈 채로 덮어쓴다 — 원장 때와 같은 함정이다. 바인드여야 한다.
+      - ./ai/app/twin/bank:/app/app/twin/bank:ro
     depends_on:
       minio:
         condition: service_healthy

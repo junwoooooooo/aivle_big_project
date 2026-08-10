@@ -8,6 +8,7 @@ export const createFinanceApi = (client) => Object.freeze({
   generateEstimate: async (projectId, fieldKey, options) => (await client.post(`${finance(projectId)}/preparation/assistance/${encodeURIComponent(fieldKey)}/generate`, {}, options)).data,
   decideEstimate: async (projectId, fieldKey, payload, options) => (await client.post(`${finance(projectId)}/preparation/assistance/${encodeURIComponent(fieldKey)}/decision`, payload, options)).data,
   finalize: async (projectId, options) => (await client.post(`${finance(projectId)}/input-snapshots/finalize`, {}, options)).data,
+  reopen: async (projectId, options) => (await client.post(`${finance(projectId)}/input-snapshots/current/reopen`, {}, options)).data,
   currentSnapshot: async (projectId, options) => (await client.get(`${finance(projectId)}/input-snapshots/current`, options)).data,
   analyze: async (projectId, options) => (await client.post(`${finance(projectId)}/analysis`, {}, options)).data,
   demo: async (projectId, options) => (await client.post(`${finance(projectId)}/demo`, {}, options)).data,

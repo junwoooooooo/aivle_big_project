@@ -18,6 +18,7 @@ export const projectRoutes = Object.freeze({
   businessModel: (projectId) => `${projectBase(projectId)}/business-model`,
   techOps: (projectId) => `${projectBase(projectId)}/tech-ops`,
   finance: (projectId) => `${projectBase(projectId)}/finance`,
+  panelSurvey: (projectId) => `${projectBase(projectId)}/panel-survey`,
   marketing: (projectId) => `${projectBase(projectId)}/marketing`,
   settings: (projectId) => `${projectBase(projectId)}/settings`,
 });

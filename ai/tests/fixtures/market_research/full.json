@@ -1,0 +1,426 @@
+{
+  "_설명": "MARKET_RESEARCH mode=FULL 의 result 골든 픽스처. **파이썬과 자바가 이 파일 하나로 검증한다.**",
+  "_왜_손으로_썼나": [
+    "실행 산출물을 그대로 픽스처로 쓰면 스키마가 아니라 '그날의 결과'를 고정하게 된다.",
+    "값은 beauty-13b 실측에서 가져왔지만 개수는 최소로 줄였다 — 스키마가 보이게.",
+    "AI 가 맞다는데 백엔드가 거부하는 루프를 끊는 유일한 장치다."
+  ],
+  "_경계_실측": "evidence 2건에 caveats 가 있다. 이것이 최종까지 도달하는지가 이 프로젝트의 대표 검사다.",
+  "_notFound_왜_이_모양인가": "market.notFound[].detail 은 줄바꿈으로 이은 항목 목록이다 — 화면이 \\n 으로 갈라 그린다. 다섯 갈래(NOT_YET·ASSUMED·CONFIRMED_ABSENT·SCREENED_OUT·DIVERGED)가 최소 하나씩 나오도록 골랐다. 그래야 화면 분류가 실제로 검사된다.",
+  "runId": "beauty-13b",
+  "conceptId": "beauty-noshow",
+  "asOf": "2026-08-09",
+  "generatedAt": "2026-08-10T06:30:00Z",
+  "mode": "FULL",
+  "stages": [
+    {
+      "name": "harness",
+      "status": "OK",
+      "seconds": 12,
+      "llmCalls": 3
+    },
+    {
+      "name": "dryrun",
+      "status": "OK",
+      "seconds": 2,
+      "llmCalls": 0
+    },
+    {
+      "name": "collect",
+      "status": "OK",
+      "seconds": 144,
+      "llmCalls": 56
+    },
+    {
+      "name": "verdict",
+      "status": "OK",
+      "seconds": 1,
+      "llmCalls": 0
+    },
+    {
+      "name": "canvas",
+      "status": "OK",
+      "seconds": 1,
+      "llmCalls": 0
+    },
+    {
+      "name": "cards",
+      "status": "OK",
+      "seconds": 1,
+      "llmCalls": 0
+    },
+    {
+      "name": "summary",
+      "status": "SKIPPED",
+      "seconds": 0,
+      "llmCalls": 0
+    },
+    {
+      "name": "bm_adapter",
+      "status": "OK",
+      "seconds": 1,
+      "llmCalls": 0
+    }
+  ],
+  "degradations": [
+    {
+      "stage": "summary",
+      "code": "BUDGET_EXHAUSTED",
+      "detail": "남은 예산이 최소 소요보다 적어 건너뛰었다"
+    }
+  ],
+  "scorecard": [
+    {
+      "subject": "MARKET_SIZE",
+      "state": "FILLED",
+      "detail": "전국 사업체 수 115,310개 · 확정"
+    },
+    {
+      "subject": "GROWTH",
+      "state": "FILLED",
+      "detail": "+2.2823% (2023→2024) · 단순 증감률이며 CAGR 아님"
+    },
+    {
+      "subject": "COMPETITOR",
+      "state": "PARTIAL",
+      "detail": "실명 1곳 · URL 1곳 (문턱은 2곳)"
+    },
+    {
+      "subject": "PRICE",
+      "state": "FILLED",
+      "detail": "밴드 15,000~30,000원 · 표시가격 3건"
+    },
+    {
+      "subject": "DEMAND",
+      "state": "FILLED",
+      "detail": "정량 1건 · 최고 등급 확정"
+    },
+    {
+      "subject": "CALCULATION",
+      "state": "FILLED",
+      "detail": "TAM 1,025,336,520원 · 가정 6개 명시"
+    },
+    {
+      "subject": "NOT_FOUND",
+      "state": "REPORTED",
+      "detail": "아직 못 채운 것 26건 · 가정으로 메운 변수 14건 · 걸러낸 것 2건 · 값이 갈린 것 5건 · 찾아도 없는 것 5건"
+    }
+  ],
+  "market": {
+    "tam": {
+      "value": 1025336520.0,
+      "unit": "KRW",
+      "grade": "추정",
+      "formula": "TAM(연) = 전국 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산",
+      "assumptions": [
+        "세그먼트비중 0.19 는 가정이다 — 국가통계에 「1인」 구간이 없다",
+        "침투율은 관측되지 않았다"
+      ],
+      "caveats": [],
+      "evidenceIds": [
+        "C-F006"
+      ]
+    },
+    "sam": {
+      "value": 169179192.0,
+      "unit": "KRW",
+      "grade": "추정",
+      "formula": "SAM(연) = 서울 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산",
+      "assumptions": [
+        "세그먼트비중 0.19 는 가정이다"
+      ],
+      "caveats": [],
+      "evidenceIds": [
+        "C-F007"
+      ]
+    },
+    "som": null,
+    "growth": {
+      "value": 2.2823,
+      "unit": "PERCENT_PER_YEAR",
+      "grade": "확정",
+      "formula": "증감률 = (나중 해 값 − 이전 해 값) ÷ 이전 해 값",
+      "assumptions": [
+        "두 해의 관측을 직선으로 이었다 — 사이 해의 등락은 보지 않았다",
+        "이 값은 과거 관측이고 미래 성장을 뜻하지 않는다"
+      ],
+      "caveats": [],
+      "evidenceIds": [
+        "C-F008",
+        "C-F009"
+      ]
+    },
+    "price": {
+      "min": 15000.0,
+      "base": 19800.0,
+      "max": 30000.0,
+      "currency": "KRW",
+      "baseKind": "MEDIAN_PROVISIONAL",
+      "baseNote": "잠정 대표값(관측 표시가격의 중앙값)이다. 확정 단가가 아니다. 관측 3건의 중앙값이라 분모를 보고 읽어야 한다.",
+      "grade": "실무 신뢰",
+      "caveats": [],
+      "evidenceIds": [
+        "C-F001",
+        "C-F002",
+        "C-F003"
+      ]
+    },
+    "notFound": [
+      {
+        "item": "empty_slots",
+        "detail": "S2 — 두발 미용업 · 종사자 1인 사업체 비율 (2025, %)\nS3 — 두발 미용업 · 도입률 (2025, %)\nS4 — 미용실 예약 관리 SaaS · 월 구독료 (2025, 원)"
+      },
+      {
+        "item": "thin_slots",
+        "detail": "S13 — 네이버 예약 · 매출액 (2025, 원) · 확인 1건 / 기준 2건\nS16 — 외식업 소상공인 · 노쇼 피해 경험률 (2025, %) · 확인 1건 / 기준 2건"
+      },
+      {
+        "item": "retry_hints",
+        "detail": "S2: 수집 0건 — 검색·fetch 로그를 볼 것\nS13: 확인된 사실 1건 < 기준 2건 — 소스를 늘려 재조사 권고"
+      },
+      {
+        "item": "unfilled_vars",
+        "detail": "V2 — 두발 미용업 · 종사자 1인 사업체 비율 (2025, %)\nV5 — 대응 슬롯 없음 (식의 계수)"
+      },
+      {
+        "item": "independent_topdown_blocked",
+        "detail": "상위권이 비상장이다 — 6사 모두 DART 상장 0건(corpCode 전수 조회).\n보도에서 관측되는 것은 거래액(GMV)이지 매출이 아니다. GMV 는 플랫폼을 통과한 거래 총액이고 그 회사의 수익이 아니다. 창업자가 가장 흔하게 속는 숫자이므로 매출로 바꿔 쓰지 않는다."
+      },
+      {
+        "item": "off_slot",
+        "detail": "단위 불일치 2건\n인용 미검증 1건"
+      },
+      {
+        "item": "contradictions",
+        "detail": "S8 (F001) — 값 갈림 — 같은 대상·단위(원)에 값 3종: 15,000 · 19,800 · 30,000"
+      },
+      {
+        "item": "unit_mismatch",
+        "detail": "F_TAM — V2: unit_mismatch: 슬롯 '%' vs 값 '비율' / **가정이다 — 관측이 아니다.** 관측된 부분은 상한뿐이다."
+      }
+    ],
+    "coverageCaveat": "수집 조건이 다른 원장과 한 표에 두지 않는다."
+  },
+  "evidence": [
+    {
+      "id": "C-F006",
+      "kind": "관측",
+      "metric": "사업체 수",
+      "subject": "두발 미용업",
+      "period": "2024",
+      "value": 115310.0,
+      "unit": "개",
+      "grade": "확정",
+      "gradeReason": "등급표:gov_stat",
+      "sourceUrl": "https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52F01",
+      "sourceKind": "gov_stat",
+      "retrievedAt": "2026-08-09T22:14:19",
+      "quote": "115,310",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F007",
+      "kind": "관측",
+      "metric": "사업체 수",
+      "subject": "두발 미용업",
+      "period": "2024",
+      "value": 19026.0,
+      "unit": "개",
+      "grade": "확정",
+      "gradeReason": "등급표:gov_stat",
+      "sourceUrl": "https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=11",
+      "sourceKind": "gov_stat",
+      "retrievedAt": "2026-08-09T22:14:19",
+      "quote": "19,026",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F008",
+      "kind": "관측",
+      "metric": "사업체 수",
+      "subject": "두발 미용업",
+      "period": "2023",
+      "value": 112737.0,
+      "unit": "개",
+      "grade": "확정",
+      "gradeReason": "등급표:gov_stat",
+      "sourceUrl": "https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=00&prdDe=2023",
+      "sourceKind": "gov_stat",
+      "retrievedAt": "2026-08-09T22:14:19",
+      "quote": "112,737",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F009",
+      "kind": "관측",
+      "metric": "사업체 수",
+      "subject": "두발 미용업",
+      "period": "2024",
+      "value": 115310.0,
+      "unit": "개",
+      "grade": "확정",
+      "gradeReason": "등급표:gov_stat",
+      "sourceUrl": "https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=00&prdDe=2024",
+      "sourceKind": "gov_stat",
+      "retrievedAt": "2026-08-09T22:14:19",
+      "quote": "115,310",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F010",
+      "kind": "관측",
+      "metric": "매출액",
+      "subject": "네이버 예약",
+      "period": "2025",
+      "value": 12035007218975.0,
+      "unit": "원",
+      "grade": "확정",
+      "gradeReason": "등급표:public_filing",
+      "sourceUrl": "https://dart.fss.or.kr/dsab007/main.do?corpCode=00266961",
+      "sourceKind": "public_filing",
+      "retrievedAt": "2026-08-09T22:14:15",
+      "quote": "12,035,007,218,975",
+      "caveats": [
+        "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+      ],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F011",
+      "kind": "관측",
+      "metric": "노쇼 피해 경험률",
+      "subject": "외식업 소상공인",
+      "period": "2025",
+      "value": 65.0,
+      "unit": "%",
+      "grade": "확정",
+      "gradeReason": "등급표:gov_stat",
+      "sourceUrl": "https://mss.go.kr/common/board/Download.do?bcIdx=1064466",
+      "sourceKind": "gov_stat",
+      "retrievedAt": "2026-08-09T22:51:26",
+      "quote": "응답자의 65%가 최근 3년 이내 노쇼 피해를 경험했다",
+      "caveats": [
+        "외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."
+      ],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F001",
+      "kind": "관측",
+      "metric": "월 구독료",
+      "subject": "미용실 예약 관리 SaaS",
+      "period": "2025",
+      "value": 19800.0,
+      "unit": "원",
+      "grade": "실무 신뢰",
+      "gradeReason": "등급표:official_page",
+      "sourceUrl": "https://gongbiz.kr/landing-page/payment-plan",
+      "sourceKind": "official_page",
+      "retrievedAt": "2026-08-09T12:10:45",
+      "quote": "19,800원/월",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F003",
+      "kind": "관측",
+      "metric": "월 구독료",
+      "subject": "미용실 예약 관리 SaaS",
+      "period": "2025",
+      "value": 15000.0,
+      "unit": "원",
+      "grade": "실무 신뢰",
+      "gradeReason": "등급표:official_page",
+      "sourceUrl": "https://gongbiz.kr/landing-page/payment-plan",
+      "sourceKind": "official_page",
+      "retrievedAt": "2026-08-09T12:10:45",
+      "quote": "15,000원/월",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-F002",
+      "kind": "관측",
+      "metric": "월 구독료",
+      "subject": "미용실 예약 관리 SaaS",
+      "period": "2025",
+      "value": 30000.0,
+      "unit": "원",
+      "grade": "실무 신뢰",
+      "gradeReason": "등급표:official_page",
+      "sourceUrl": "https://gongbiz.kr/landing-page/payment-plan",
+      "sourceKind": "official_page",
+      "retrievedAt": "2026-08-09T12:10:45",
+      "quote": "30,000원/월",
+      "caveats": [],
+      "formula": null,
+      "inputs": null,
+      "materialIds": [],
+      "assumptions": []
+    },
+    {
+      "id": "C-CALC-TAM",
+      "kind": "계산",
+      "metric": "TAM",
+      "subject": "미용실 예약 관리 SaaS",
+      "period": "2024",
+      "value": 1025336520.0,
+      "unit": "원",
+      "grade": "추정",
+      "gradeReason": "약한 고리: ['추정', '확정'] → 추정 · 뒷받침 없는 입력 3개",
+      "sourceUrl": null,
+      "sourceKind": null,
+      "retrievedAt": null,
+      "quote": null,
+      "caveats": [],
+      "formula": "TAM(연) = 전국 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산",
+      "inputs": {
+        "전국 사업체 수": 115310.0,
+        "세그먼트비중": 0.19
+      },
+      "materialIds": [
+        "C-F006"
+      ],
+      "assumptions": [
+        "세그먼트비중 0.19 는 가정이다 — 국가통계에 「1인」 구간이 없다"
+      ]
+    }
+  ],
+  "canvas": null,
+  "bm": null,
+  "summary": null,
+  "notes": [
+    "등급은 evidence[].grade 에 있다. 값만 떼어 쓰면 추정이 확정처럼 읽힌다.",
+    "caveats 를 떨어뜨리지 마라 — 값과 함께 옮겨야 하는 문장이다.",
+    "법률 결과는 반영되지 않았다.",
+    "SOM 은 이 파이프라인이 산출하지 않는다 — som:null 은 0 이 아니라 «안 쟀다»다."
+  ]
+}

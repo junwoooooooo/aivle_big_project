@@ -9,10 +9,11 @@ describe('project route cutover', () => {
     ['idea', 'IdeaIntakePage'],
     ['concepts', 'ConceptFactoryPage'],
     ['concepts/compare', 'ConceptComparisonPage'],
-    ['market', 'MarketIntegrationPage'],
-    ['business-model', 'BusinessModelPage'],
+    ['market', 'MarketResearchPage'],
+    ['business-model', 'BmCanvasPage'],
     ['tech-ops', 'TechOpsPage'],
     ['finance', 'FinancePage'],
+    ['panel-survey', 'TwinSurveyPage'],
     ['marketing', 'MarketingContentPage'],
   ])('renders the active %s module screen', (path, component) => {
     expect(routerSource).toContain(`path="${path}" element={<${component} />}`);

@@ -1,0 +1,92 @@
+[
+  {
+    "url": "https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1B040B3",
+    "http": 200,
+    "text_len": 15,
+    "digits": 0,
+    "html_len": 20698,
+    "digit_ratio": 0.0,
+    "label": "통계포털(JS 의심)"
+  },
+  {
+    "url": "https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52C01",
+    "http": 200,
+    "text_len": 15,
+    "digits": 0,
+    "html_len": 20746,
+    "digit_ratio": 0.0,
+    "label": "통계포털(JS 의심)"
+  },
+  {
+    "url": "https://kosis.kr/index/index.do",
+    "http": 200,
+    "text_len": 3324,
+    "digits": 176,
+    "html_len": 116354,
+    "digit_ratio": 0.0529,
+    "label": "통계포털(목록)"
+  },
+  {
+    "url": "https://www.mss.go.kr/site/smba/main.do",
+    "http": 200,
+    "text_len": 355,
+    "digits": 1,
+    "html_len": 169845,
+    "digit_ratio": 0.0028,
+    "label": "정부 보도자료"
+  },
+  {
+    "url": "https://imnews.imbc.com/news/2024/econo/article/6612670_36452.html",
+    "http": 200,
+    "text_len": 388,
+    "digits": 38,
+    "html_len": 30921,
+    "digit_ratio": 0.0979,
+    "label": "언론 기사"
+  },
+  {
+    "url": "https://www.etnews.com/20240526000012",
+    "http": 200,
+    "text_len": 579,
+    "digits": 3,
+    "html_len": 46157,
+    "digit_ratio": 0.0052,
+    "label": "언론 기사"
+  },
+  {
+    "url": "https://loyverse.com/ko/pricing",
+    "http": 200,
+    "text_len": 3307,
+    "digits": 45,
+    "html_len": 37083,
+    "digit_ratio": 0.0136,
+    "label": "공식 가격"
+  },
+  {
+    "url": "https://www.cafepost.kr/main/price.html",
+    "http": 200,
+    "text_len": 464,
+    "digits": 63,
+    "html_len": 18436,
+    "digit_ratio": 0.1358,
+    "label": "공식 가격"
+  },
+  {
+    "url": "https://www.orderlist.co.kr/",
+    "http": 200,
+    "text_len": 2218,
+    "digits": 30,
+    "html_len": 86631,
+    "digit_ratio": 0.0135,
+    "label": "공식 소개"
+  },
+  {
+    "url": "https://apps.apple.com/kr/app/id1459090715",
+    "http": 200,
+    "text_len": 5234,
+    "digits": 232,
+    "html_len": 602513,
+    "digit_ratio": 0.0443,
+    "label": "앱스토어"
+  }
+]

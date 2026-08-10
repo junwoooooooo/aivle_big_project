@@ -1,0 +1,53 @@
+{
+  "_설명": "tavily-01 — Tavily 가 물어온 URL. 병합용이며 심사는 엔진이 한다.",
+  "channel": "tavily",
+  "by_slot": {
+    "S1": [
+      "https://mods.go.kr/boardDownload.es?bid=233&list_no=438719&seq=7",
+      "https://biz.chosun.com/policy/policy_sub/2023/09/25/JBJ7YEDS3JEXRKI3NFQUVA4BWU"
+    ],
+    "S2": [
+      "https://m.blog.naver.com/ohgisekkk/220199098424",
+      "https://biz.chosun.com/policy/policy_sub/2023/09/25/JBJ7YEDS3JEXRKI3NFQUVA4BWU"
+    ],
+    "S4": [
+      "https://platum.kr/archives/244553"
+    ],
+    "S5": [
+      "https://mods.go.kr/boardDownload.es?bid=233&list_no=438719&seq=7",
+      "https://biz.chosun.com/policy/policy_sub/2023/09/25/JBJ7YEDS3JEXRKI3NFQUVA4BWU"
+    ],
+    "S6": [
+      "https://blog.naver.com/urban4050life/224260372206",
+      "http://www.law.go.kr/LSW/lsRvsRsnListP.do;jsessionid=h7nlXDM3P5wOa+mD21gW3-6N.LSW4?lsId=003956&chrClsCd=010102&lsRvsGubun=all"
+    ],
+    "S7": [
+      "https://m.blog.naver.com/seouledu2012/221366510126",
+      "https://blog.naver.com/your_tax/223601622533"
+    ],
+    "S8": [
+      "https://platum.kr/archives/244553"
+    ],
+    "S10": [
+      "https://apps.apple.com/kr/app/%EA%B3%B5%EB%B9%84%EC%84%9C-%EB%84%A4%EC%9D%BC%EC%83%B5-%EB%AF%B8%EC%9A%A9%EC%8B%A4-%EB%93%B1-%EB%B7%B0%ED%8B%B0%EC%83%B5-%EC%98%88%EC%95%BD-%EC%95%B1/id6630372820",
+      "https://blog.naver.com/bongbong323/222663716355?viewType=pc",
+      "https://play.google.com/store/apps/details?id=com.gongnailshop.herren_dell1.gongnailshop&hl=ko"
+    ],
+    "S11": [
+      "https://m.blog.naver.com/ormak123/223987737634",
+      "https://magazine.hankyung.com/business/article/202403220057b"
+    ],
+    "S12": [
+      "https://m.blog.naver.com/xang88/224025262231",
+      "https://www.sentv.co.kr/article/view/sentv202605140021"
+    ],
+    "S15": [
+      "https://www.sbiz.or.kr/smst/notice/view.do?key=2111306004395&notcSn=45"
+    ],
+    "S16": [
+      "https://www.sedaily.com/article/14165129",
+      "https://www.mss.go.kr/site/smba/ex/bbs/View.do?cbIdx=86&bcIdx=1064466&parentSeq=1064466",
+      "https://blog.naver.com/bizinfo1357/224131935688"
+    ]
+  }
+}

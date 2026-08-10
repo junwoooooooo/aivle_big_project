@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface FinancialInputPreparationRepository extends JpaRepository<FinancialInputPreparation, String> {
     Optional<FinancialInputPreparation> findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(Long projectId, String sourceId);
+    Optional<FinancialInputPreparation> findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(Long projectId, Long sourceId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select value from FinancialInputPreparation value where value.id=:id and value.projectId=:projectId and value.deletedAt is null")

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -27,6 +28,8 @@ TASK_TYPES = {
     "TECH_OPS_PROPOSAL",
     "FINANCE_ESTIMATE",
     "MARKETING_CONTENT_GENERATION",
+    "MARKET_RESEARCH",
+    "TWIN_SURVEY",
 }
 
 
@@ -66,6 +69,35 @@ def safe_validation_fields(failure: ValidationError, prefix: str = "input") -> l
             "category": category,
         })
     return fields
+
+
+def validate_text_contents(task_input: dict[str, Any]) -> str | None:
+    contents = task_input.get("textContents")
+    if not isinstance(contents, list) or not 1 <= len(contents) <= 64:
+        return "FIELD_CONSTRAINT_VIOLATION"
+    total_chunks = 0
+    for content in contents:
+        if not isinstance(content, dict) or set(content) != {"contentKey", "contentType", "language", "totalCharacters", "contentHash", "chunks"}:
+            return "UNKNOWN_FIELD"
+        if content["contentType"] != "TEXT" or content["language"] != "ko-KR":
+            return "FIELD_CONSTRAINT_VIOLATION"
+        chunks = content["chunks"]
+        if not isinstance(chunks, list) or not 1 <= len(chunks) <= 64:
+            return "CHUNK_COUNT_EXCEEDED"
+        total_chunks += len(chunks)
+        joined = ""
+        for expected, chunk in enumerate(chunks):
+            if chunk.get("index") != expected:
+                return "CHUNK_SEQUENCE_INVALID"
+            text = chunk.get("text")
+            if not isinstance(text, str) or not text or len(text) > 16384 or chunk.get("characterCount") != len(text):
+                return "FIELD_CONSTRAINT_VIOLATION"
+            if chunk.get("chunkHash") != "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest():
+                return "HASH_MISMATCH"
+            joined += text
+        if content.get("totalCharacters") != len(joined) or content.get("contentHash") != "sha256:" + hashlib.sha256(joined.encode("utf-8")).hexdigest():
+            return "HASH_MISMATCH"
+    return "CHUNK_COUNT_EXCEEDED" if total_chunks > 64 else None
 
 
 def canonical_hash(body: InternalExecutionRequestV1) -> str:
@@ -110,13 +142,29 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                               body.taskRunId, body.taskAttemptId)
     try:
         calculated_hash = canonical_hash(body)
-    except ValueError:
+    except (TypeError, ValueError) as failure:
+        # The input can contain user planning text, so do not write it to logs.
+        logger.warning("Canonical input rejected taskType=%s taskRunId=%s error=%s",
+                       body.taskType, body.taskRunId, str(failure)[:160])
         return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
-                              body.taskRunId, body.taskAttemptId)
+                              body.taskRunId, body.taskAttemptId, [{
+                                  "path": "input",
+                                  "expectedType": "canonical JSON with finite numbers and unique normalized keys",
+                                  "category": "CANONICAL_INPUT_INVALID",
+                              }])
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
+    if body.taskType == "MARKET_RESEARCH":
+        # 시장조사만 textContents 봉투를 쓴다 (MarketResearchInputFactory 가 그렇게 싼다).
+        # 나머지 pipeline task 들은 raw JSON 이라 아래 분기로 간다.
+        reason = validate_text_contents(body.input)
+        if reason:
+            return internal_error(correlation, "INVALID_REQUEST", reason, 400, False,
+                                  body.taskRunId, body.taskAttemptId)
+        text = "\n".join(chunk["text"] for content in body.input["textContents"] for chunk in content["chunks"])
+        source_keys = [content["contentKey"] for content in body.input["textContents"]]
+    elif body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
@@ -142,7 +190,22 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                   "externalSourceReferences": [], "generatedAt": generated_at, "verificationNeeded": True}
     execution_warnings: list[dict[str, Any]] = []
     try:
-        if body.taskType == "CONCEPT_CANDIDATE":
+        if body.taskType == "MARKET_RESEARCH":
+            # 시장조사는 프롬프트 1회가 아니라 다단계 파이프라인이라 단일 프롬프트 실행 경로를
+            # 타지 않는다. 남은 deadline 을 그대로 예산으로 넘긴다.
+            # ⚠ 한 TaskType 에 **두 모드**(FULL·BM)가 있고 가르는 것은 `input.mode` 다.
+            #    봉투는 두 모드가 같고 해당 없는 칸은 null 이다 — 그래야 백엔드가
+            #    `MarketResearchContract.exact()` 한 번으로 못박을 수 있다.
+            from app.research.pipeline import run_market_research
+            budget = (deadline - datetime.now(timezone.utc)).total_seconds()
+            result = await run_market_research(body.input, body.taskAttemptId, budget)
+        elif body.taskType == "TWIN_SURVEY":
+            # 트윈 조사도 프롬프트 1회가 아니라 수백~수천 셀이다. 남은 deadline 을 예산으로
+            # 넘기고, 예산이 마르면 러너가 거기까지 모은 셀로 집계한다(부분 결과가 정상이다).
+            from app.twin import execute_twin_survey
+            budget = (deadline - datetime.now(timezone.utc)).total_seconds()
+            result = await execute_twin_survey(body.input, budget)
+        elif body.taskType == "CONCEPT_CANDIDATE":
             from app.tasks.concept_candidate import execute_concept_candidate
             result = await execute_concept_candidate(body.input)
         elif body.taskType == "CONCEPT_DISTINCTNESS_JUDGE":

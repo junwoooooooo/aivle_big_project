@@ -18,8 +18,9 @@ public class FinancialInputSnapshot extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Column(name = "preparation_id", nullable = false, length = 64) private String preparationId;
-    @Column(name = "source_tech_ops_snapshot_id", nullable = false, length = 64) private String sourceTechOpsSnapshotId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_tech_ops_snapshot_id", length = 64) private String sourceTechOpsSnapshotId;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_market_research_run_id") private Long sourceMarketResearchRunId;
     @Column(name = "schema_version", nullable = false, length = 20) private String schemaVersion;
     @Column(name = "snapshot_hash", nullable = false, length = 71) private String snapshotHash;
     @Column(name = "snapshot_json", nullable = false, columnDefinition = "TEXT") private String snapshotJson;
@@ -44,6 +45,18 @@ public class FinancialInputSnapshot extends BaseEntity {
         value.snapshotJson = json;
         value.createdByUserId = userId;
         value.finalizedAt = finalizedAt;
+        return value;
+    }
+
+    public static FinancialInputSnapshot createFromBusinessModel(String id, Long projectId, String preparationId,
+            Long businessModelRunId, String schemaVersion, String hash, String json, Long userId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || blank(preparationId) || businessModelRunId == null
+                || blank(schemaVersion) || !hash(hash) || blank(json) || userId == null || finalizedAt == null)
+            throw new IllegalArgumentException("Financial snapshot requires a completed business-model source.");
+        FinancialInputSnapshot value = new FinancialInputSnapshot();
+        value.id=id; value.projectId=projectId; value.preparationId=preparationId;
+        value.sourceMarketResearchRunId=businessModelRunId; value.schemaVersion=schemaVersion;
+        value.snapshotHash=hash; value.snapshotJson=json; value.createdByUserId=userId; value.finalizedAt=finalizedAt;
         return value;
     }
 

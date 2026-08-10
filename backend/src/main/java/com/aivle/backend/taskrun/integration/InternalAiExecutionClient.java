@@ -46,7 +46,10 @@ public class InternalAiExecutionClient {
             "LEGAL_RERUN_CATEGORIES_INVALID", "LEGAL_CONFIRMED_FACTS_INVALID",
             "LEGAL_REGISTRY_VERSION_MISMATCH", "CONCEPT_LEGAL_VALIDATION_MODE_INVALID",
             "BOUNDARY_INPUT_CONTRACT_INCOMPLETE", "CONCEPT_EXPLORATION_INPUT_INVALID",
-            "CONCEPT_FAILURE_INJECTION_DISABLED")),
+            "CONCEPT_FAILURE_INJECTION_DISABLED",
+            // 트윈 조사의 판매 경계. 여기 없으면 이유가 AI_RESULT_INVALID 로 뭉개져
+            // 「성적이 없는 유형이라 거절했다」가 화면까지 오지 못한다(실스택 스모크 실측).
+            "TWIN_TASK_TYPE_NOT_SERVICEABLE")),
         Map.entry("UNAUTHORIZED_INTERNAL_CALL", Set.of("SERVICE_TOKEN_MISSING", "SERVICE_TOKEN_INVALID",
             "INTERNAL_PRINCIPAL_FORBIDDEN")),
         Map.entry("UNSUPPORTED_CONTRACT_VERSION", Set.of("CONTRACT_VERSION_UNSUPPORTED")),
@@ -59,7 +62,9 @@ public class InternalAiExecutionClient {
         Map.entry("DEPENDENCY_UNAVAILABLE", Set.of("MODEL_DEPENDENCY_UNAVAILABLE", "MCP_DEPENDENCY_UNAVAILABLE",
             "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", "LEGAL_CONFIGURATION_INVALID",
             "MOLEG_AUTHENTICATION_FAILED", "MOLEG_REQUEST_REJECTED", "MOLEG_RESPONSE_INVALID",
-            "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED")),
+            "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED",
+            // 카드 뱅크가 안 붙었다. 「AI 가 불안정하다」와 운영이 할 일이 다르다.
+            "TWIN_BANK_UNAVAILABLE")),
         Map.entry("RATE_LIMITED", Set.of("DEPENDENCY_RATE_LIMITED")),
         Map.entry("EXECUTION_FAILED", Set.of("TRANSIENT_EXECUTION_FAILURE", "PERMANENT_EXECUTION_FAILURE",
             "SAFETY_POLICY_BLOCKED")),
@@ -89,14 +94,46 @@ public class InternalAiExecutionClient {
     );
 
     private final RestClient client;
+    /** 오래 걸리는 작업 전용. read timeout 만 다르다. */
+    private final RestClient longClient;
+    /** 패널 트윈 조사 전용. 12분 예산이라 longClient(420s)로도 모자란다. */
+    private final RestClient surveyClient;
     private final AiServerProperties properties;
     private final ObjectMapper mapper;
 
+    /** 짧은 클라이언트 하나만 주는 형태 — 테스트용. 긴 호출도 같은 것을 쓴다. */
+    public InternalAiExecutionClient(RestClient client, AiServerProperties properties,
+                                     ObjectMapper mapper) {
+        this(client, client, client, properties, mapper);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
     public InternalAiExecutionClient(@Qualifier("aiServerRestClient") RestClient client,
+                                     @Qualifier("aiServerLongRestClient") RestClient longClient,
+                                     @Qualifier("aiServerSurveyRestClient") RestClient surveyClient,
                                      AiServerProperties properties, ObjectMapper mapper) {
         this.client = client;
+        this.longClient = longClient;
+        this.surveyClient = surveyClient;
         this.properties = properties;
         this.mapper = mapper;
+    }
+
+    /**
+     * 어느 클라이언트로 부를지는 <b>작업 종류가 정한다</b>.
+     *
+     * <p>시장조사는 90~266초 걸린다. 기본 30s 로 부르면 read timeout 이 나고, 그 실패는
+     * {@code REQUEST_DEADLINE_EXCEEDED}(retryable) 로 사상돼 <b>자동 재시도가 260초짜리를
+     * 다시 태운다</b> — 실패하면서 비용만 배가 된다.
+     */
+    private RestClient clientFor(ExecutionRequest run) {
+        return switch (run.taskType()) {
+            case MARKET_RESEARCH -> longClient;
+            // 트윈 조사는 n=300·4쌍이면 셀이 7,200개다. 여기를 빠뜨리면 조용히 30초 클라이언트를
+            // 쓰고, 그 실패가 retryable 로 사상돼 재시도가 같은 값을 또 태운다.
+            case TWIN_SURVEY -> surveyClient;
+            default -> client;
+        };
     }
 
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
@@ -115,7 +152,7 @@ public class InternalAiExecutionClient {
         byte[] requestBytes = mapper.writeValueAsBytes(requestEnvelope(run, attemptId, deadline));
         enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED");
         try {
-            byte[] responseBytes = client.post().uri("/internal/v1/ai/executions")
+            byte[] responseBytes = clientFor(run).post().uri("/internal/v1/ai/executions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.internalApiKey())
                 .header("X-Correlation-Id", run.correlationId())

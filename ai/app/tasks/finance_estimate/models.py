@@ -11,6 +11,7 @@ EstimateField = Literal[
     "initialDevelopmentAndRnDCost","initialEquipmentAndInfrastructureCost","initialPatentAndLicensingCost",
     "threeYearTargets","totalMarketingCost","totalSalesCost","unitVariableCost","paymentFee",
     "partnerPayout","shippingCost","customerIncrementalInfraCost",
+    "unitPrice","monthlySubscriptionPrice","monthlyChurnRate","newCustomerCount",
 ]
 
 
@@ -37,9 +38,16 @@ class Targets(StrictModel):
     years: list[YearValue] = Field(min_length=3,max_length=3)
 
 
+class Rate(StrictModel):
+    percent: float = Field(strict=True, ge=0, le=100)
+
+class Count(StrictModel):
+    count: int = Field(strict=True, ge=1)
+
+
 class FinanceEstimateResult(StrictModel):
     fieldKey: EstimateField
-    proposedValue: Money | Targets
+    proposedValue: Money | Targets | Rate | Count
     assumptions: list[str] = Field(min_length=1,max_length=20)
     explanation: str = Field(min_length=1,max_length=2000)
     confidence: Literal["LOW","MEDIUM","HIGH"]
@@ -49,6 +57,10 @@ class FinanceEstimateResult(StrictModel):
     def value_matches_field(self):
         if self.fieldKey == "threeYearTargets" and not isinstance(self.proposedValue,Targets):
             raise ValueError("threeYearTargets requires Targets")
-        if self.fieldKey != "threeYearTargets" and not isinstance(self.proposedValue,Money):
+        if self.fieldKey == "monthlyChurnRate" and not isinstance(self.proposedValue, Rate):
+            raise ValueError("monthlyChurnRate requires Rate")
+        if self.fieldKey == "newCustomerCount" and not isinstance(self.proposedValue, Count):
+            raise ValueError("newCustomerCount requires Count")
+        if self.fieldKey not in {"threeYearTargets", "monthlyChurnRate", "newCustomerCount"} and not isinstance(self.proposedValue,Money):
             raise ValueError("cost estimate requires Money")
         return self

@@ -7,6 +7,7 @@ import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
+import java.math.BigDecimal;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class FinancialEstimateCompletionService {
         }
         String fieldKey = input.path("fieldKey").asText();
         JsonNode result = response.result();
-        validateResult(fieldKey, result);
+        validateResult(fieldKey, result, input);
         if (input.path("proposalVersion").asInt() > 1
                 && same(result.path("proposedValue"), rejected(input), fieldKey)) {
             throw new IllegalStateException("Finance alternative must differ from rejected proposal");
@@ -85,7 +86,8 @@ public class FinancialEstimateCompletionService {
     private boolean fresh(FinancialInputPreparation preparation, TaskRunWorkerContext context, JsonNode input) {
         if (!matches(preparation, context, input)
                 || preparation.getRevision() != input.path("expectedPreparationRevision").asInt()
-                || !preparation.getSourceTechOpsSnapshotId().equals(input.path("sourceTechOpsSnapshotId").asText())
+                || preparation.getSourceMarketResearchRunId() == null
+                || preparation.getSourceMarketResearchRunId().longValue() != input.path("sourceMarketResearchRunId").asLong(-1)
                 || !preparation.getSourceSnapshotHash().equals(input.path("sourceSnapshotHash").asText())
                 || snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(
                     preparation.getId(), context.projectId()).isPresent()) return false;
@@ -95,7 +97,7 @@ public class FinancialEstimateCompletionService {
 
     private boolean matches(FinancialInputPreparation preparation, TaskRunWorkerContext context, JsonNode input) {
         String fieldKey = input.path("fieldKey").asText();
-        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "newCustomerCount".equals(fieldKey)
+        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey)
                 || !preparation.getId().equals(input.path("preparationId").asText())) return false;
         JsonNode proposal = mapper.readTree(preparation.getAssistanceJson()).path(fieldKey);
         return context.taskRunId().equals(proposal.path("activeTaskRunId").asText())
@@ -123,7 +125,7 @@ public class FinancialEstimateCompletionService {
             ? input.path("ownerId").asLong() : preparation.getUpdatedByUserId());
     }
 
-    private void validateResult(String fieldKey, JsonNode result) {
+    private void validateResult(String fieldKey, JsonNode result, JsonNode input) {
         if (!fieldKey.equals(result.path("fieldKey").asText())
                 || !"AI_ESTIMATE".equals(result.path("source").asText())
                 || !result.path("assumptions").isArray() || result.path("assumptions").isEmpty()
@@ -139,6 +141,28 @@ public class FinancialEstimateCompletionService {
             }
         }
         validateValue(fieldKey, result.path("proposedValue"));
+        validatePriceAnchor(fieldKey, result.path("proposedValue"), input);
+    }
+
+    private void validatePriceAnchor(String fieldKey, JsonNode value, JsonNode input) {
+        if (!java.util.Set.of("unitVariableCost", "paymentFee", "partnerPayout", "shippingCost",
+                "customerIncrementalInfraCost").contains(fieldKey)) return;
+        JsonNode context = mapper.readTree(input.path("contextJson").asText("{}"));
+        BigDecimal price = context.path("marketAndBmReferences").path("marketAnalysis").path("price").path("base").decimalValue();
+        if (price == null || price.signum() <= 0) {
+            price = context.path("financialFields").path("monthlySubscriptionPrice").path("value").path("amount").decimalValue();
+        }
+        if (price == null || price.signum() <= 0 || !value.path("amount").isNumber()) return;
+        BigDecimal multiplier = switch (fieldKey) {
+            case "unitVariableCost" -> BigDecimal.valueOf(0.45);
+            case "paymentFee" -> BigDecimal.valueOf(0.05);
+            case "partnerPayout" -> BigDecimal.valueOf(0.30);
+            case "customerIncrementalInfraCost" -> BigDecimal.valueOf(0.20);
+            default -> BigDecimal.ONE;
+        };
+        if (value.path("amount").decimalValue().compareTo(price.multiply(multiplier)) > 0) {
+            throw new IllegalStateException("Finance estimate exceeds the price-anchored per-unit cost guardrail");
+        }
     }
 
     private void validateValue(String fieldKey, JsonNode value) {
@@ -152,6 +176,19 @@ public class FinancialEstimateCompletionService {
                 if (year < 1 || year > 3 || years[year] || !item.path("value").isNumber()
                         || item.path("value").asDouble() < 0) throw new IllegalStateException("Finance target estimate is invalid");
                 years[year] = true;
+            }
+            return;
+        }
+        if ("monthlyChurnRate".equals(fieldKey)) {
+            if (!value.isObject() || !value.path("percent").isNumber() || value.path("percent").asDouble() < 0
+                    || value.path("percent").asDouble() > 100) {
+                throw new IllegalStateException("Finance churn-rate estimate is invalid");
+            }
+            return;
+        }
+        if ("newCustomerCount".equals(fieldKey)) {
+            if (!value.isObject() || !value.path("count").canConvertToInt() || value.path("count").asInt() < 1) {
+                throw new IllegalStateException("Finance customer-count estimate is invalid");
             }
             return;
         }
@@ -169,6 +206,12 @@ public class FinancialEstimateCompletionService {
     private boolean same(JsonNode proposed, JsonNode previous, String fieldKey) {
         if (previous == null || previous.isNull() || previous.isMissingNode()) return false;
         if (new SnapshotHasher(mapper).hash(proposed).equals(new SnapshotHasher(mapper).hash(previous))) return true;
+        if ("monthlyChurnRate".equals(fieldKey)) {
+            return proposed.path("percent").decimalValue().compareTo(previous.path("percent").decimalValue()) == 0;
+        }
+        if ("newCustomerCount".equals(fieldKey)) {
+            return proposed.path("count").asLong(-1) == previous.path("count").asLong(-2);
+        }
         if (!"threeYearTargets".equals(fieldKey)) {
             return proposed.path("amount").decimalValue().compareTo(previous.path("amount").decimalValue()) == 0
                 && normalized(proposed.path("currency")).equals(normalized(previous.path("currency")));

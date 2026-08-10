@@ -41,7 +41,8 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'businessModel', label: '5. BM 분석', shortLabel: 'BM 분석', routeKey: 'businessModel', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'techOps', label: '6. 기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'finance', label: '7. 재무 분석', shortLabel: '재무 분석', routeKey: 'finance', defaultStatus: MODULE_STATUS.NOT_READY },
-  { id: 'marketing', label: '8. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'panelSurvey', label: '8. 패널 트윈 조사', shortLabel: '트윈 조사', routeKey: 'panelSurvey', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'marketing', label: '9. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'settings', label: '프로젝트 설정', shortLabel: '설정', routeKey: 'settings', defaultStatus: MODULE_STATUS.READY },
 ]);
 
@@ -53,6 +54,7 @@ const API_MODULE_IDS = Object.freeze({
   BUSINESS_MODEL: 'businessModel',
   TECH_OPS: 'techOps',
   FINANCE: 'finance',
+  PANEL_SURVEY: 'panelSurvey',
   MARKETING: 'marketing',
 });
 

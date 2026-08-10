@@ -1,0 +1,285 @@
+{
+  "_설명": "식은 **사람이 쓴다.** A1 은 켜지 않는다 — 슬롯 분산 문제가 그대로다(§0.1 백로그 2). 템플릿은 지도의 T1~T5 에서 고르고, 변수는 반드시 기존 슬롯의 var_id 에 잇는다.",
+  "_조인_주의": "`b_estimate.substitute` 는 `slot.formula_id == formula.formula_id` 인 슬롯에서만 var_id 를 찾는다. 그래서 V1(전국)은 S1 의 formula_id 를 F_SAM_TD 로 옮겨 이었다. 슬롯이 없는 변수(V10~V13)는 **의도적으로 가정**이며 §7 unfilled_vars 에 뜬다.",
+  "_단위_주의": "침투율·세그먼트비중의 unit 은 '비율'(분수)이다. '%' 로 적으면 assumptions 의 0.1 과 100배 어긋난다 — `unit_norm` 에 '비율'→'%' 매핑을 넣지 말라고 되돌린 것과 같은 자리다.",
+  "formulas": [
+    {
+      "formula_id": "F_SAM_BU",
+      "target": "SAM",
+      "path": "bottomup",
+      "template": "T2",
+      "_note": "T2 (사업체수 × 침투율 × 단가) + 연환산. 서울 모집단에서 직접 쌓는다.",
+      "vars": [
+        {
+          "var_id": "V2",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V12",
+          "var_role": "단가",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "월 구독료",
+          "period": "2026",
+          "unit": "원"
+        },
+        {
+          "var_id": "V13",
+          "var_role": "연환산",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "연 결제 개월",
+          "period": "2026",
+          "unit": "개월"
+        }
+      ]
+    },
+    {
+      "formula_id": "F_SAM_TD",
+      "target": "SAM",
+      "path": "topdown",
+      "template": "T1",
+      "_note": "T1 (상위시장규모 × 세그먼트비중) + 침투율·단가·연환산. 전국에서 서울로 좁힌다.",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V11",
+          "var_role": "세그먼트비중",
+          "subject": "서울 커피전문점",
+          "metric": "전국 대비 비중",
+          "period": "2023",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V12",
+          "var_role": "단가",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "월 구독료",
+          "period": "2026",
+          "unit": "원"
+        },
+        {
+          "var_id": "V13",
+          "var_role": "연환산",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "연 결제 개월",
+          "period": "2026",
+          "unit": "개월"
+        }
+      ]
+    },
+    {
+      "formula_id": "F_TAM",
+      "target": "TAM",
+      "path": "topdown",
+      "template": "T2",
+      "_note": "전국 모집단에서 쌓는다. V1 은 S1 에 **var_id 조인**으로 붙는다 (S1 의 formula_id 는 F_SAM_TD 라 계층 ②가 작동해야 한다).",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V12",
+          "var_role": "단가",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "월 구독료",
+          "period": "2026",
+          "unit": "원"
+        },
+        {
+          "var_id": "V13",
+          "var_role": "연환산",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "연 결제 개월",
+          "period": "2026",
+          "unit": "개월"
+        }
+      ]
+    },
+    {
+      "formula_id": "F_SOM",
+      "target": "SOM",
+      "path": "bottomup",
+      "template": "T1",
+      "_note": "SAM 에 도달가능비중을 곱한다. V14 는 **근거 없는 가정**이다.",
+      "vars": [
+        {
+          "var_id": "V2",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V14",
+          "var_role": "도달가능비중",
+          "subject": "서울 개인 카페",
+          "metric": "직접 영업 도달 비중",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V12",
+          "var_role": "단가",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "월 구독료",
+          "period": "2026",
+          "unit": "원"
+        },
+        {
+          "var_id": "V13",
+          "var_role": "연환산",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "연 결제 개월",
+          "period": "2026",
+          "unit": "개월"
+        }
+      ]
+    },
+    {
+      "formula_id": "F_CUST",
+      "target": "target_customers",
+      "path": "bottomup",
+      "template": "T1",
+      "_note": "1년차 목표 고객 수. **R3 는 지금 내부 정합 확인이다** — 이 값과 revenue_y1 이 같은 가정 위에 있어 삼각측량이 아니다. 사용자가 목표 매출·고객수를 입력하면 그때 R3 가 '사용자 목표 vs 시장 계산' 의 진짜 검사로 바뀐다.",
+      "vars": [
+        {
+          "var_id": "V2",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V14",
+          "var_role": "도달가능비중",
+          "subject": "서울 개인 카페",
+          "metric": "직접 영업 도달 비중",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V15",
+          "var_role": "1년차획득률",
+          "subject": "서울 개인 카페",
+          "metric": "1년차 유료 전환율",
+          "period": "2026",
+          "unit": "비율"
+        }
+      ]
+    },
+    {
+      "formula_id": "F_REV1",
+      "target": "revenue_y1",
+      "path": "bottomup",
+      "template": "T1",
+      "_note": "목표 고객 수 × 단가 × 12. 가정이 5개라 밴드가 max_factor 8.0 을 넘어 **range_capped → '추정 불가 — 가정 과다'** 가 되는 것이 기대값이다. 1년차 매출을 지금 숫자로 말할 수 있다고 주장하면 그게 고장이다.",
+      "vars": [
+        {
+          "var_id": "V2",
+          "var_role": "사업체수",
+          "subject": "커피전문점",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개"
+        },
+        {
+          "var_id": "V10",
+          "var_role": "침투율",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "도입률",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V14",
+          "var_role": "도달가능비중",
+          "subject": "서울 개인 카페",
+          "metric": "직접 영업 도달 비중",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V15",
+          "var_role": "1년차획득률",
+          "subject": "서울 개인 카페",
+          "metric": "1년차 유료 전환율",
+          "period": "2026",
+          "unit": "비율"
+        },
+        {
+          "var_id": "V12",
+          "var_role": "단가",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "월 구독료",
+          "period": "2026",
+          "unit": "원"
+        },
+        {
+          "var_id": "V13",
+          "var_role": "연환산",
+          "subject": "카페 재고관리 SaaS",
+          "metric": "연 결제 개월",
+          "period": "2026",
+          "unit": "개월"
+        }
+      ]
+    }
+  ]
+}

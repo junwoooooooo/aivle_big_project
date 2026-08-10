@@ -70,9 +70,50 @@ public class FinancialPreparationFactory {
         assistance(assistance, "conditionalCosts", "외부 분석 계약에 필요한 경우에만 조건부 단위원가를 입력하세요.",
             "배송이 없는 서비스라면 shippingCost는 비워 둡니다.");
         for (String key : ALL_KEYS) {
-            if (!"newCustomerCount".equals(key)) estimateAssistance(assistance, key);
+            estimateAssistance(assistance, key);
         }
         return new InitialPreparation(fields, references, assistance);
+    }
+
+    /** Carries market/BM evidence forward; market assumptions stay editable until the user confirms them. */
+    public InitialPreparation createFromBusinessModel(JsonNode marketResult, JsonNode businessModelResult, Long businessModelRunId) {
+        ObjectNode fields = mapper.createObjectNode();
+        for (String key : ALL_KEYS) open(fields, key);
+        JsonNode price = marketResult.path("market").path("price");
+        if (price.path("base").isNumber() && price.path("base").asDouble() > 0) {
+            assumedMoney(fields, "monthlySubscriptionPrice", price.path("base"), price,
+                "market.price.base", "시장 가격 가설 — 확인 후 재무 가정으로 확정 필요");
+            assumedText(fields, "revenueModel", "SUBSCRIPTION", "market.price", "시장 가격 구조를 바탕으로 한 구독 모델 가설");
+        }
+        ObjectNode references = mapper.createObjectNode();
+        ObjectNode market = references.putObject("marketAnalysis");
+        market.set("tam", marketResult.path("market").path("tam").deepCopy());
+        market.set("sam", marketResult.path("market").path("sam").deepCopy());
+        market.set("growth", marketResult.path("market").path("growth").deepCopy());
+        market.set("price", price.deepCopy());
+        market.put("label", "시장 규모·성장률·가격·계산 근거");
+        market.put("provenance", "marketResearchVersion.result.market");
+        ObjectNode bm = references.putObject("businessModel");
+        bm.put("sourceRunId", businessModelRunId);
+        bm.set("value", businessModelResult.deepCopy());
+        bm.put("label", "시장→BM 분석 결과");
+        bm.put("provenance", "marketResearchVersion.result");
+        ObjectNode assistance = mapper.createObjectNode();
+        for (String key : ALL_KEYS) estimateAssistance(assistance, key);
+        return new InitialPreparation(fields, references, assistance);
+    }
+
+    private void assumedMoney(ObjectNode fields, String key, JsonNode amount, JsonNode source, String path, String note) {
+        ObjectNode item = fields.putObject(key); ObjectNode value = item.putObject("value");
+        value.put("amount", amount.decimalValue()); value.put("currency", source.path("currency").asText("KRW"));
+        item.put("source", "MARKET_ANALYSIS_ASSUMPTION"); item.put("decision", "ASSUMPTION"); item.put("readOnly", false);
+        item.put("provenance", path); item.put("sourceNote", note);
+    }
+
+    private void assumedText(ObjectNode fields, String key, String value, String path, String note) {
+        ObjectNode item = fields.putObject(key); item.put("value", value);
+        item.put("source", "MARKET_ANALYSIS_ASSUMPTION"); item.put("decision", "ASSUMPTION"); item.put("readOnly", false);
+        item.put("provenance", path); item.put("sourceNote", note);
     }
 
     private void inheritMoneyOrOpen(ObjectNode fields, String key, JsonNode aggregate, JsonNode provenance,

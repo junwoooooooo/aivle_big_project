@@ -2,3 +2,10 @@ fastapi==0.116.1
 httpx==0.28.1
 uvicorn[standard]==0.35.0
 python-multipart==0.0.30
+
+# 시장조사(research2) 파이프라인이 서브프로세스로 필요로 하는 것들.
+# ai-server 자체는 안 쓴다 — MARKET_RESEARCH 실험이 끝나면 같이 빠진다.
+# 로컬에서 검증한 버전으로 고정했다.
+openai==2.38.0
+requests==2.32.4
+trafilatura==2.2.0

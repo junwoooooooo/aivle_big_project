@@ -16,8 +16,9 @@ import lombok.NoArgsConstructor;
 public class FinancialInputPreparation extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
-    @Column(name = "source_tech_ops_snapshot_id", nullable = false, length = 64) private String sourceTechOpsSnapshotId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_tech_ops_snapshot_id", length = 64) private String sourceTechOpsSnapshotId;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_market_research_run_id") private Long sourceMarketResearchRunId;
     @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
     @Column(name = "financial_fields_json", nullable = false, columnDefinition = "TEXT") private String financialFieldsJson;
     @Column(name = "upstream_references_json", nullable = false, columnDefinition = "TEXT") private String upstreamReferencesJson;
@@ -42,6 +43,19 @@ public class FinancialInputPreparation extends BaseEntity {
         value.assistanceJson = assistanceJson;
         value.revision = 1;
         value.updatedByUserId = userId;
+        return value;
+    }
+
+    public static FinancialInputPreparation createFromBusinessModel(String id, Long projectId, Long businessModelRunId,
+            String sourceHash, String fieldsJson, String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || businessModelRunId == null || !hash(sourceHash)
+                || blank(fieldsJson) || blank(referencesJson) || blank(assistanceJson) || userId == null)
+            throw new IllegalArgumentException("Financial preparation requires a completed business-model source.");
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id; value.projectId = projectId; value.sourceMarketResearchRunId = businessModelRunId;
+        value.sourceSnapshotHash = sourceHash; value.financialFieldsJson = fieldsJson;
+        value.upstreamReferencesJson = referencesJson; value.assistanceJson = assistanceJson;
+        value.revision = 1; value.updatedByUserId = userId;
         return value;
     }
 

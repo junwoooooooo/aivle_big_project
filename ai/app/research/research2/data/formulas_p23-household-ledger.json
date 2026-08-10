@@ -1,0 +1,283 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (p23-household-ledger). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 3,
+    "일자": "2026-08-09",
+    "게이트": "runs/harness/p23-household-ledger/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "개인용 가계부·구독 관리 앱",
+  "as_of": "2026-08-09",
+  "formulas": [
+    {
+      "formula_id": "F_TAM",
+      "target": "TAM",
+      "path": "topdown",
+      "template": "T2",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "사업체수",
+          "subject": "개인 금융 서비스",
+          "metric": "사업체 수",
+          "period": "2024",
+          "unit": "개",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V2",
+          "var_role": "세그먼트비중",
+          "subject": "개인 금융 서비스",
+          "metric": "종사자 1인 사업체 비율",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V3",
+          "var_role": "침투율",
+          "subject": "구독 서비스 관리",
+          "metric": "도입률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V4",
+          "var_role": "단가",
+          "subject": "구독 서비스 관리",
+          "metric": "월 구독료",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V5",
+          "var_role": "연환산",
+          "subject": "구독 서비스 관리",
+          "metric": "연 결제 개월",
+          "period": "",
+          "unit": "개월",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": false
+        }
+      ]
+    },
+    {
+      "formula_id": "F_SAM",
+      "target": "SAM",
+      "path": "bottomup",
+      "template": "T2",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "사업체수",
+          "subject": "개인 금융 서비스",
+          "metric": "사업체 수",
+          "period": "2024",
+          "unit": "개",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V2",
+          "var_role": "세그먼트비중",
+          "subject": "개인 금융 서비스",
+          "metric": "종사자 1인 사업체 비율",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V3",
+          "var_role": "침투율",
+          "subject": "구독 서비스 관리",
+          "metric": "도입률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V6",
+          "var_role": "단가",
+          "subject": "개인 금융 서비스 관리",
+          "metric": "이용 요금",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V5",
+          "var_role": "연환산",
+          "subject": "구독 서비스 관리",
+          "metric": "연 결제 개월",
+          "period": "",
+          "unit": "개월",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": false
+        }
+      ]
+    },
+    {
+      "formula_id": "F_GROWTH",
+      "target": "TAM_GROWTH",
+      "path": "topdown",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "사업체수",
+          "subject": "개인 금융 서비스",
+          "metric": "사업체 수",
+          "period": "2024",
+          "unit": "개",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V7",
+          "var_role": "사업체수",
+          "subject": "개인 금융 서비스",
+          "metric": "사업체 수",
+          "period": "2023",
+          "unit": "개",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_COMP",
+      "target": "COMP",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V8",
+          "var_role": "경쟁사규모",
+          "subject": "개인 금융 서비스",
+          "metric": "가입 매장 수",
+          "period": "2025",
+          "unit": "곳",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_DIFF",
+      "target": "COMPARABLE",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V9",
+          "var_role": "비교축",
+          "subject": "개인 금융 서비스",
+          "metric": "누적 가입자 수",
+          "period": "2025",
+          "unit": "명",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_CHANNEL",
+      "target": "CHANNEL",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V10",
+          "var_role": "채널벤치마크",
+          "subject": "개인 금융 서비스",
+          "metric": "고객 획득 비용",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_PAIN",
+      "target": "PAIN",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V11",
+          "var_role": "문제근거",
+          "subject": "개인 금융 서비스",
+          "metric": "문제 경험률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_PRICE",
+      "target": "PRICE",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V12",
+          "var_role": "대체재가격",
+          "subject": "개인 금융 서비스",
+          "metric": "이용 요금",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    }
+  ]
+}

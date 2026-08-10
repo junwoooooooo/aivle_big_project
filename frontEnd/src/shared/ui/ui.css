@@ -157,6 +157,13 @@ html { scrollbar-gutter: stable; }
   background: var(--color-surface);
 }
 
+.ui-card__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-h4);
+  line-height: var(--line-height-heading);
+  color: var(--color-text-primary);
+}
+
 .ui-badge {
   display: inline-flex;
   align-items: center;

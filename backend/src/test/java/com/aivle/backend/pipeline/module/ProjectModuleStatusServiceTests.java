@@ -17,6 +17,8 @@ import com.aivle.backend.pipeline.concept.repository.ConceptSlotRepository;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
+import com.aivle.backend.journey.MarketResearchRunRepository;
+import com.aivle.backend.journey.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputPreparationRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
@@ -51,9 +53,12 @@ class ProjectModuleStatusServiceTests {
     private final TechOpsInputSnapshotRepository techOpsSnapshots = mock(TechOpsInputSnapshotRepository.class);
     private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
     private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
+    private final MarketResearchRunRepository marketResearchRuns = mock(MarketResearchRunRepository.class);
+    private final TwinSurveyRunRepository twinSurveyRuns = mock(TwinSurveyRunRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
         projects, briefs, conceptRuns, slots, selections, snapshots, runs, marketing, marketingSources,
-        techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots);
+        techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots,
+        marketResearchRuns, twinSurveyRuns);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
@@ -78,7 +83,7 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_FACTORY, PipelineModuleType.CONCEPT_SELECTION,
             PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
-            PipelineModuleType.FINANCE, PipelineModuleType.MARKETING);
+            PipelineModuleType.FINANCE, PipelineModuleType.PANEL_SURVEY, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.RUNNING);
@@ -99,6 +104,8 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        // 8번은 마케팅이다 — 트윈이 7번으로 끼어들면서 인덱스가 밀렸다. 밀린 자리도 계속 센다.
+        assertThat(modules.get(8).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
     }
 
     @Test
