@@ -1,0 +1,254 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:7b85e1fac703fc943ee969dbe5bb04f22a4dfdf7e1607cf26155f03e336e1fb9",
+  "canonicalRequestHash": "cf1b4df0cdc6755e721060468f29d8a8b489f4e633a49b31f6fe110648f7540f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "고객의 요구에 맞춘 맞춤형 서비스 제공을 위해 고객 관리팀을 운영한다. 장비 공급업체와의 협력을 통해 최신 장비를 확보하고, 유지보수 서비스를 제공한다. 온라인 결제를 통해 간편하게 대여 계약을 체결할 수 있도록 한다. 구독 모델을 통해 고객의 장기적인 관계를 유지하고, 추가 서비스 제공을 통해 수익을 증대시킨다. 정기적인 장비 점검 및 유지보수를 통해 고객에게 안정적인 서비스를 제공한다. 고객은 온라인 플랫폼을 통해 장비를 대여하고, 필요 시 고객센터를 통해 지원을 받을 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축한다. 장비 제조사와 협력하여 최신 기술과 정보를 공유한다. 고객과의 계약을 통해 정기적인 관리 서비스를 제공한다. 서비스 패키지를 통해 고객에게 다양한 옵션을 제공하고, 추가 서비스로 수익을 증대시킨다. 정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리한다. 고객은 전담 관리자를 통해 장비 상태를 확인하고, 필요한 서비스를 요청할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "전문 강사를 통해 고객에게 장비 사용법을 교육하고, 지속적인 지원을 제공한다. 교육 전문 업체와 협력하여 효과적인 교육 프로그램을 개발한다. 대여 계약 시 교육 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다. 패키지 상품을 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다. 정기적인 교육 세션을 통해 고객의 장비 사용 능력을 향상시킨다. 고객은 대여 시 교육을 신청하고, 필요 시 추가 교육을 요청할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "전문 기술 지원 팀을 운영하여 고객의 문제를 신속하게 해결한다. 장비 제조사와 협력하여 최신 기술 정보를 공유하고, 기술 지원을 강화한다. 대여 계약 시 기술 지원 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다. 기술 지원 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다. 정기적인 기술 지원을 통해 고객의 장비를 안정적으로 운영한다. 고객은 기술 지원 요청을 통해 신속한 문제 해결을 받을 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "고객 맞춤형 솔루션을 제공하기 위해 전문 상담팀을 운영한다. 장비 공급업체와 협력하여 고객의 요구에 맞는 솔루션을 개발한다. 대여 계약 시 맞춤형 솔루션을 함께 제공하여 고객의 선택 폭을 넓힌다. 맞춤형 솔루션 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다. 고객의 요구에 맞춘 솔루션을 제공하여 화상회의 환경을 최적화한다. 고객은 상담을 통해 자신의 요구를 전달하고, 맞춤형 솔루션을 제안받을 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "ADVISORY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "ASSISTED",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "전문 데이터 분석 팀을 운영하여 고객의 회의 데이터를 분석하고, 인사이트를 제공한다. 데이터 분석 전문 업체와 협력하여 효과적인 분석 서비스를 제공한다. 대여 계약 시 데이터 분석 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다. 데이터 분석 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다. 정기적인 데이터 분석을 통해 고객의 회의 운영을 지원한다. 고객은 데이터 분석 결과를 통해 회의의 효율성을 높일 수 있는 인사이트를 얻는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P1",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 관리팀 운영 및 장비 공급업체와 협력하여 맞춤형 서비스 제공, 구독 모델을 통한 장기 고객 관계 유지."
+    },
+    {
+      "entityId": "P2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "전문 기술 인력을 통한 장비 관리 및 정기적인 관리 서비스 제공, 추가 서비스로 수익 증대."
+    },
+    {
+      "entityId": "P3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "전문 강사를 통한 장비 사용법 교육 및 지속적인 지원 제공, 패키지 상품으로 고객 가치 창출."
+    },
+    {
+      "entityId": "P4",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "전문 기술 지원 팀 운영 및 장비 제조사와 협력하여 기술 지원 서비스 제공."
+    },
+    {
+      "entityId": "P5",
+      "architecture": {
+        "businessRole": "ADVISORY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "ASSISTED",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "고객 맞춤형 솔루션 제공을 위한 상담팀 운영 및 장비 공급업체와 협력."
+    },
+    {
+      "entityId": "P6",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "전문 데이터 분석 팀 운영 및 데이터 분석 서비스 제공."
+    }
+  ],
+  "durationMs": 11019,
+  "timestamp": "2026-08-10T08:45:24.049864+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

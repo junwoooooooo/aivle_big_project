@@ -8,4 +8,4 @@
 .vscode
 .pytest_cache
 .idea
-#AGENTS.md
+!AGENTS.md

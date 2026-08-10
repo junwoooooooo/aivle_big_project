@@ -1,0 +1,215 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:30c9199888a7ad0730f47482515bb0922e30449c942b22fc3bca7380f362ea76",
+  "canonicalRequestHash": "a071a98ddf14462bc79e83d9551938e1d7d5cb1e54239338d4e81fedf48bd8be",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼 운영 및 관리 장비 공급 및 유지보수 서비스 제공 장비 대여 계약 체결 및 고객 관리 고객과 장비 공급업체 간의 중개 역할 고객의 요구에 맞춘 맞춤형 서비스 제공을 위해 고객 관리팀을 운영한다. 장비 공급업체와의 협력을 통해 최신 장비를 확보하고, 유지보수 서비스를 제공한다. 고객이 온라인 플랫폼에서 장비 대여 신청 대여 계약 체결 장비 배송 및 설치 정기 점검 및 유지보수 서비스 제공 고객이 온라인 결제를 통해 대여 계약 체결 정기 결제 수취 및 정산 구독 모델을 통한 정기 수익 창출 온라인 플랫폼 및 고객센터",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 서비스 제공자 판매자 없음 고객 맞춤형 솔루션을 제공하기 위해 전문 상담팀을 운영한다. 장비 공급업체와 협력하여 고객의 요구에 맞는 솔루션을 개발한다. 고객 상담 장비 대여 계약 체결 장비 배송 및 설치 정기 점검 및 유지보수 고객 결제 정기 대여료 수취 장비 회수 후 정산 구독 기반 대여 서비스 온라인 플랫폼 및 직접 상담을 통한 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "ASSISTED",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼을 통해 고객과의 계약 및 서비스 관리 서비스 제공자로서 고객의 장비 관리 및 유지보수 책임을 집니다. 고객과의 계약을 통해 서비스를 판매합니다. 필요 시 장비 제조사와의 협력을 통해 서비스를 제공합니다. 전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축합니다. 장비 제조사와 협력하여 최신 기술과 정보를 공유합니다. 고객과의 계약 체결 정기 점검 일정 조율 장비 점검 및 유지보수 수행 고객이 월정액 요금 지불 서비스 제공 후 정산 구독 기반 모델로, 월정액 요금제를 통해 수익을 창출합니다. 온라인 플랫폼 및 직접 영업을 통해 고객에게 접근합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼을 통해 고객과의 상호작용 및 서비스 제공 장비 공급 및 교육 서비스 제공 고객에게 서비스 판매 및 계약 체결 고객과 공급자 간의 중개 역할 수행 전문 강사를 통해 고객에게 장비 사용법을 교육하고, 지속적인 지원을 제공한다. 교육 전문 업체와 협력하여 효과적인 교육 프로그램을 개발한다. 고객이 장비 대여 계약 체결 교육 서비스 신청 장비 배송 및 교육 실시 고객의 장비 사용 시작 고객이 대여료 및 교육비 결제 정기적인 결제 수취 및 정산 구독 기반 모델로, 월별 또는 연별 요금제 제공 온라인 플랫폼 및 직접 영업을 통한 고객 유치",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼을 통해 고객과의 상호작용 및 서비스 제공 서비스 제공자로서 고객에게 장비 대여 및 기술 지원을 제공 장비 대여 계약을 체결하고 고객에게 서비스를 제공하는 역할 고객과 기술 지원 팀 간의 소통을 원활하게 하는 역할 전문 기술 지원 팀을 운영하여 고객의 문제를 신속하게 해결한다. 장비 제조사와 협력하여 최신 기술 정보를 공유하고, 기술 지원을 강화한다. 고객이 장비 대여 요청 계약 체결 및 대여 시작 기술 지원 요청 시 지원 제공 장비 반납 및 상태 점검 고객이 월 구독료 결제 기술 지원 서비스에 대한 추가 비용 청구 구독 기반 수익 모델 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 장비 대여 및 유지보수 서비스 제공, 고객과 장비 공급업체 간의 중개 역할."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "ASSISTED",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 고객 맞춤형 솔루션 제공 및 장비 대여 서비스."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객과의 계약을 통한 장비 관리 및 유지보수 서비스 제공."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "장비 공급 및 교육 서비스 제공, 고객과 공급자 간의 중개 역할."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객에게 장비 대여 및 기술 지원 제공, 고객과 기술 지원 팀 간의 소통."
+    }
+  ],
+  "durationMs": 11661,
+  "timestamp": "2026-08-10T08:46:38.331061+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

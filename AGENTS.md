@@ -12,16 +12,19 @@ Legacy documents under docs/redesign are not active product contracts.
 
 ## Document priority
 
-1. docs/rebuild/NEW_PIPELINE_MASTER_PLAN_v1.0.md
-2. docs/rebuild/NEW_PIPELINE_PRODUCT_SPEC_v1.0.md
-3. docs/rebuild/NEW_PIPELINE_UI_UX_SPEC_v1.0.md
-4. docs/rebuild/NEW_PIPELINE_DATA_MODEL_AND_API_CONTRACT_v1.0.md
-5. docs/rebuild/EXTERNAL_MODULE_HANDOFF_CONTRACT_v1.0.md
-6. docs/rebuild/ASYNC_EXECUTION_AND_JOB_EVENT_STANDARD_v1.0.md
-7. docs/rebuild/NEW_PIPELINE_IMPLEMENTATION_PLAN_v1.0.md
-8. docs/rebuild/REBUILD_EXECUTION_RULES_v1.0.md
-9. docs/rebuild/LOCAL_FAST_EXECUTION_PROFILE.md
-10. Current R-stage instruction
+1. docs/rebuild/CONCEPT_PORTFOLIO_V2_PRODUCTION_CUTOVER_AMENDMENT_v1.0.md (Concept Portfolio V2 Production Cutover scope only)
+2. docs/rebuild/NEW_PIPELINE_MASTER_PLAN_v1.0.md
+3. docs/rebuild/NEW_PIPELINE_PRODUCT_SPEC_v1.0.md
+4. docs/rebuild/NEW_PIPELINE_UI_UX_SPEC_v1.0.md
+5. docs/rebuild/NEW_PIPELINE_DATA_MODEL_AND_API_CONTRACT_v1.0.md
+6. docs/rebuild/EXTERNAL_MODULE_HANDOFF_CONTRACT_v1.0.md
+7. docs/rebuild/ASYNC_EXECUTION_AND_JOB_EVENT_STANDARD_v1.0.md
+8. docs/rebuild/NEW_PIPELINE_IMPLEMENTATION_PLAN_v1.0.md
+9. docs/rebuild/REBUILD_EXECUTION_RULES_v1.0.md
+10. docs/rebuild/LOCAL_FAST_EXECUTION_PROFILE.md
+11. Current R-stage instruction
+
+Concept Portfolio V2 cutover 범위에서 이 Amendment와 기존 rebuild 문서가 충돌하면 Amendment가 우선한다. 그 외 영역에서는 기존 우선순위를 그대로 적용한다.
 
 If documents conflict, stop and report the conflict.
 

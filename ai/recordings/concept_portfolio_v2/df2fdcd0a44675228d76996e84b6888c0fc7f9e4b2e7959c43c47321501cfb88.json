@@ -1,0 +1,137 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:767982e611e51928d1776a2635aa3c1c3e19ac5b81d708161b5061cd0d5783fa",
+  "canonicalRequestHash": "df2fdcd0a44675228d76996e84b6888c0fc7f9e4b2e7959c43c47321501cfb88",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P7",
+        "businessText": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 사용자가 직접 거래를 진행하며, 필요한 경우 배송 서비스와 연계한다. 앱 내에서 사용자 간의 채팅 기능을 통해 소통.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P8",
+        "businessText": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 사용자가 직접 거래를 진행하며, 필요한 경우 배송 서비스와 연계한다. 앱을 통해 사용자 간의 직접 메시징과 거래 진행.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P9",
+        "businessText": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 사용자가 직접 거래를 진행하며, 필요한 경우 배송 서비스와 연계한다. 앱 내에서 사용자 간의 채팅 기능을 통해 소통.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P7",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼은 학생 커뮤니티와 협력하여 운영되며, 대학가 주변 상점과 제휴하여 가치를 제공하고, 사용자 간 직접 거래를 통해 수수료를 최소화하며, 프리미엄 서비스와 광고로 수익을 창출."
+    },
+    {
+      "entityId": "P8",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼은 학생 커뮤니티와 협력하여 운영되며, 대학가 주변 상점과 제휴하여 가치를 제공하고, 사용자 간 직접 거래를 통해 수수료를 최소화하며, 프리미엄 서비스와 광고로 수익을 창출."
+    },
+    {
+      "entityId": "P9",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼은 학생 커뮤니티와 협력하여 운영되며, 대학가 주변 상점과 제휴하여 가치를 제공하고, 사용자 간 직접 거래를 통해 수수료를 최소화하며, 프리미엄 서비스와 광고로 수익을 창출."
+    }
+  ],
+  "durationMs": 8359,
+  "timestamp": "2026-08-10T08:45:26.520006+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,493 @@
+{
+  "taskType": "LEGAL_FACT_COMPLETION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-fact-completion-dynamic-patch-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5c84fb1537b26acf9bfd648ff46c924a6a28c6552954e9c52e65d8d904642fd2",
+  "canonicalRequestHash": "14a897aa11188594226aa3fd5c9bf04d3a7ede9cc5e42d0b199a383692e75121",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "interpretedTargetUsers": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "usageContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "industryCategory": "여행 및 관광",
+        "researchScope": "주말 여행 계획 및 예약 서비스",
+        "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "주말 여행 맞춤형 추천 서비스",
+      "oneLineConcept": "사용자의 취향과 이동 가능 시간을 기반으로 최적의 여행지를 추천하는 서비스.",
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 선호하는 여행 스타일과 이동 가능 시간을 입력하면, 맞춤형 여행지를 추천하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "offerThesis": "사용자의 취향에 맞는 여행지를 추천하여 여행 계획의 번거로움을 줄인다.",
+      "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 취향에 맞는 여행지를 제안한다.",
+      "coreMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행지를 추천하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 취향을 입력하고 추천 결과를 확인한다.",
+      "valueDelivery": "추천된 여행지와 관련된 정보 및 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "추천된 여행지에 대한 정보를 제공하고, 사용자가 직접 예약할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 여행지 추천",
+        "사용자의 취향에 맞춘 맞춤형 서비스"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "여행 계획의 번거로움을 줄이고, 더 많은 여행을 즐길 수 있도록 하기 위해.",
+      "planId": "P8",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+          "useCaseThesis": "사용자가 선호하는 여행 스타일과 이동 가능 시간을 입력하면, 맞춤형 여행지를 추천하는 서비스.",
+          "valuePropositionThesis": "사용자는 간편하게 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+          "offerThesis": "사용자의 취향에 맞는 여행지를 추천하여 여행 계획의 번거로움을 줄인다.",
+          "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 취향에 맞는 여행지를 제안한다."
+        },
+        "architecture": {
+          "businessRole": "MARKETPLACE",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "ai 기반의 추천 알고리즘을 통해 사용자의 취향에 맞는 여행지를 제안한다",
+        "familyId": "MARKETPLACE:PARTNER_NETWORK",
+        "familyLabelKo": "마켓플레이스 · 파트너 네트워크",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "MARKETPLACE",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "DIGITAL",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "BOOKING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "FREEMIUM",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "WEB",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "UNSELECTED",
+      "selectionScore": 0.0,
+      "selectionReason": "선택 평가 전",
+      "relationToPortfolio": "NOT_EVALUATED"
+    },
+    "candidate": {
+      "conceptName": "주말 여행 맞춤형 추천 서비스",
+      "conceptDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "introduction": "AI 기반의 추천 알고리즘을 통해 사용자의 취향에 맞는 여행지를 제안하여 여행 계획의 번거로움을 줄인다.",
+      "coreValue": "사용자는 간편하게 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "industryCategory": "여행 및 관광",
+      "researchScope": "주말 여행 계획 및 예약 서비스",
+      "targetRegion": "대한민국 전역",
+      "revenueModel": "사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다.",
+      "price": "예약 수수료의 10%",
+      "channels": "웹사이트 및 모바일 앱",
+      "differentiators": "AI 기반의 개인화된 여행지 추천, 사용자의 취향에 맞춘 맞춤형 서비스",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 5.0,
+        "horizonYears": 3,
+        "rationale": "주말 여행 시장의 성장과 사용자 편의성 증가에 따른 수요 증가",
+        "assumptions": [
+          "주말 여행을 자주 계획하는 직장인 수 증가",
+          "AI 기술의 발전으로 개인화 서비스 수요 증가"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "1년",
+        "calculationBasis": "주말 여행 관련 예약 수수료 기반",
+        "assumptions": [
+          "주말 여행 예약 시장의 성장",
+          "사용자 편의성에 대한 수요 증가"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행지를 추천하는 알고리즘을 활용한다.",
+      "featureSet": [
+        "사용자 맞춤형 여행지 추천",
+        "예약 링크 제공",
+        "여행 스타일 분석"
+      ],
+      "actorRoles": [
+        "사용자",
+        "여행 관련 업체",
+        "AI 알고리즘 제공자"
+      ],
+      "platformRole": "여행 계획 및 예약 플랫폼 운영",
+      "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다.",
+      "partnerModel": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+      "providerRole": "여행 계획 서비스 제공자",
+      "sellerRole": "여행 관련 업체",
+      "intermediaryRole": "예약 플랫폼 운영자",
+      "transactionFlow": [
+        "사용자가 여행지 추천 요청",
+        "AI 알고리즘이 추천 결과 제공",
+        "사용자가 예약 진행",
+        "여행 관련 업체에 예약 요청"
+      ],
+      "paymentFlow": [
+        "사용자가 예약 시 결제 진행",
+        "예약 업체가 수수료 지급",
+        "서비스 제공자가 수익 수취"
+      ],
+      "personalDataUsage": [
+        "사용자의 취향 및 이동 가능 시간 데이터 수집 및 분석"
+      ],
+      "physicalActivities": [
+        "배송",
+        "현장 방문",
+        "설치"
+      ],
+      "partnerRequirements": [
+        "여행 관련 업체와의 제휴 필요"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "AI 기반의 개인화된 여행지 추천 서비스"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 4,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "requirements": [
+      {
+        "field": "intermediaryRole",
+        "reasonType": "ROLE_MISMATCH",
+        "dependencyType": null,
+        "instruction": "intermediaryRole의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다."
+      }
+    ],
+    "index": 4
+  },
+  "providerResponse": {
+    "intermediaryRole": "예약 플랫폼 운영자"
+  },
+  "durationMs": 4336,
+  "timestamp": "2026-08-10T09:39:00.019524+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:30f99588a093730e67ee28759d18993abd84d04d1427824055d241d52037caf0",
+  "canonicalRequestHash": "0135bc265e96c3e2e356ac228596b3246de6b5db5ff69215b602d229c3fe36b2",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 선호하는 여행 테마를 입력하면, 관련된 여행지를 추천하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 테마에 맞는 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "offerThesis": "사용자의 관심사에 맞는 여행 테마를 추천하여 여행 계획의 번거로움을 줄인다.",
+      "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 관심사에 맞는 여행 테마를 제안한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 테마 추천",
+        "사용자 맞춤형 서비스"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "problemScenario": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "coreValue": "사용자는 간편하게 여행 테마에 맞는 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "conceptDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행 테마를 추천하는 알고리즘.",
+      "featureSet": [
+        "AI 기반 추천 알고리즘",
+        "사용자 맞춤형 여행 일정 생성",
+        "예약 링크 제공"
+      ],
+      "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 테마를 추천한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+        "useCaseThesis": "사용자가 선호하는 여행 테마를 입력하면, 관련된 여행지를 추천하는 서비스.",
+        "valuePropositionThesis": "사용자는 간편하게 여행 테마에 맞는 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+        "offerThesis": "사용자의 관심사에 맞는 여행 테마를 추천하여 여행 계획의 번거로움을 줄인다.",
+        "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 관심사에 맞는 여행 테마를 제안한다."
+      },
+      "architecture": {
+        "businessRole": "MARKETPLACE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai 기반의 추천 알고리즘을 통해 사용자의 관심사에 맞는 여행 테마를 제안한다",
+      "familyId": "MARKETPLACE:PARTNER_NETWORK",
+      "familyLabelKo": "마켓플레이스 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "MARKETPLACE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "DIGITAL",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "BOOKING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "WEB",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "AI 기반 추천 알고리즘",
+      "사용자 맞춤형 서비스"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스로, 사용자는 간편하게 여행 테마에 맞는 여행지를 추천받아 더 많은 여행을 즐길 수 있다."
+  },
+  "durationMs": 4426,
+  "timestamp": "2026-08-10T09:38:55.678804+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
