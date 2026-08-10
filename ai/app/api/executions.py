@@ -19,6 +19,7 @@ router = APIRouter(prefix="/internal/v1/ai", tags=["Internal AI Executions"])
 logger = logging.getLogger(__name__)
 TASK_TYPES = {
     "IDEA_BRIEF_DERIVATION",
+    "CONCEPT_PORTFOLIO_V2_RUN",
     "CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE",
     "CONCEPT_LEGAL_REVIEW",
     "CONCEPT_REDESIGN",
@@ -116,7 +117,18 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
+    if body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
+        from app.tasks.concept_portfolio_v2.models import ConceptPortfolioProductionInput
+        try:
+            portfolio_input = ConceptPortfolioProductionInput.model_validate(body.input)
+        except ValidationError as failure:
+            return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION",
+                                  400, False, body.taskRunId, body.taskAttemptId,
+                                  safe_validation_fields(failure))
+        text = json.dumps(portfolio_input.model_dump(mode="json"), ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+        source_keys = ["concept-portfolio-v2-input"]
+    elif body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
@@ -142,7 +154,10 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                   "externalSourceReferences": [], "generatedAt": generated_at, "verificationNeeded": True}
     execution_warnings: list[dict[str, Any]] = []
     try:
-        if body.taskType == "CONCEPT_CANDIDATE":
+        if body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
+            from app.tasks.concept_portfolio_v2 import execute_concept_portfolio_v2
+            result = await execute_concept_portfolio_v2(body.input)
+        elif body.taskType == "CONCEPT_CANDIDATE":
             from app.tasks.concept_candidate import execute_concept_candidate
             result = await execute_concept_candidate(body.input)
         elif body.taskType == "CONCEPT_DISTINCTNESS_JUDGE":

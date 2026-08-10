@@ -9,9 +9,9 @@
 
 | path | current role | decision | target role | replacement/dependency | delete gate | notes |
 |---|---|---|---|---|---|---|
-| `ai/app/concept_portfolio_v2/**` | 검증된 V2 Core 알고리즘 | KEEP | Production facade가 호출하는 frozen authority | 없음 | 해당 없음 | 알고리즘, prompt, selection/legal 정책 수정 금지 |
-| `ai/app/tasks/concept_portfolio_v2/service.py` | Notebook과 같은 `run_full()` 호출 함수 | REWORK | thin facade, Product result/continuation export 진입점 | 신규 `models.py`, `observer.py` | 해당 없음 | 현재 task registry에 연결되지 않음 |
-| `ai/app/api/executions.py` | 내부 AI task registry와 dispatcher | REWORK | `CONCEPT_PORTFOLIO_V2_RUN` 등록·호출 | facade result contract | 해당 없음 | 현재 V2 전체 run task type 부재 |
+| `ai/app/concept_portfolio_v2/**` | 검증된 V2 Core 알고리즘 | KEEP | Production facade가 호출하는 frozen authority | 없음 | 해당 없음 | P1 Core diff 없음; 알고리즘, prompt, selection/legal 정책 수정 금지 |
+| `ai/app/tasks/concept_portfolio_v2/service.py` | Notebook과 같은 `run_full()` 호출 함수 | REWORK | thin facade, Product result/continuation export 진입점 | 신규 `models.py`, `observer.py` | 해당 없음 | P1 facade·bounded DTO·continuation export 완료 |
+| `ai/app/api/executions.py` | 내부 AI task registry와 dispatcher | REWORK | `CONCEPT_PORTFOLIO_V2_RUN` 등록·호출 | facade result contract | 해당 없음 | P1 AI 등록 완료; Backend TaskType/worker 연결은 P3 |
 | `backend/.../pipeline/idea/**` | 13개 Idea field, confirmation, snapshot hash | KEEP | Confirmed Idea Brief canonical source | V2 seed adapter | 해당 없음 | 사용자 LOCK/provenance 재사용 |
 | `backend/.../taskrun/domain/**`, `repository/**`, `service/TaskRunService.java` | durable task, claim, heartbeat, recovery, terminal history | KEEP | V2 Run/Continuation 공통 execution 기반 | 새 TaskType·worker | 해당 없음 | terminal immutability와 idempotency 유지 |
 | `backend/.../taskrun/integration/InternalAiExecutionClient.java` | AI Server 동기 HTTP client | REWORK | V2 장기 실행에 안전한 전용 호출 정책 | configurable runtime/heartbeat 설계 | 해당 없음 | 공통 read timeout 30초는 `run_full()`에 부적합 |
@@ -53,4 +53,3 @@
 ## P0 결론
 
 Cutover의 핵심은 frozen Python Core를 새 Product Integration 경계에 연결하고, legacy Slot persistence와 UI authority를 단계적으로 제거하는 것이다. 공통 async, ownership, immutable history, 명시적 selection, hypothesis/Delta Legal, Official Evidence와 Market Snapshot 기반은 보존한다.
-

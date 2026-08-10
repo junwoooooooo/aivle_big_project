@@ -3,7 +3,7 @@
 ## 1. P0 상태
 
 - 기준 브랜치: `rebuild/new-pipeline-v1`
-- 기준 HEAD: `9c423aa 구축 Concept Portfolio Engine V2`
+- P0 audit base HEAD: `9c423aa 구축 Concept Portfolio Engine V2`
 - 적용 정본: `docs/rebuild/CONCEPT_PORTFOLIO_V2_PRODUCTION_CUTOVER_AMENDMENT_v1.0.md`
 - 현재 단계: P0 감사 완료
 - Product 구현: 시작하지 않음
@@ -157,3 +157,11 @@ P1 AI facade/continuation/trace → P2 additive persistence → P3 durable orche
 
 Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않는다.
 
+## 7. P1 implementation status
+
+- 상태: PASS. Frozen Core 변경 없이 AI Production facade, strict input, bounded result DTO, unresolved Candidate continuation artifact, read-only trace observer, `CONCEPT_PORTFOLIO_V2_RUN` dispatcher 등록을 완료했다.
+- Product 선택 authority: Core의 `selectedConceptId`는 `engineDefaultConceptId`로만 반환하고, `userSelectedConceptId`는 항상 `null`이다.
+- 응답 경계: 전체 raw trace와 diagnostics/provider usage는 반환하지 않고 terminal trace summary와 필요한 최신 법률·continuation 정보만 반환한다.
+- 확인: P1 표적 테스트 15개, 대상 package compile, 2MB 응답 제한 safety margin 검증, Core diff 확인, `git diff --check`를 수행한다.
+- 의도적 제외: Provider/MOLEG LIVE, 전체 AI test/build, Backend·DB·Frontend 변경은 수행하지 않았다.
+- 다음 시작점: P2 additive persistence와 P3 Backend TaskType/worker, 장시간 timeout·lease·heartbeat 및 Product event projection이다.

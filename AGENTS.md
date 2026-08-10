@@ -60,6 +60,8 @@ For R0 through R6:
 
 ## Stage output
 
+Concept Portfolio V2 Production Cutover P0 through P11 follows the Amendment and `docs/rebuild/production-integration` artifact rules; unless separately requested, do not create duplicate progress/verification documents.
+
 Every stage or substage must update:
 
 docs/rebuild/progress/<stage>_RESULT.md
