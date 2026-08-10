@@ -8,6 +8,14 @@ const optional = (promise) => promise.then((payload) => payload?.data ?? null)
   .catch((error) => ([404, 409, 422].includes(error?.status) ? null : Promise.reject(error)));
 const key = (prefix) => `${prefix}-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`;
 
+export async function startNewConceptPortfolioRun(api, projectId) {
+  const brief = (await api.ideaBrief(projectId))?.data;
+  const ideaBriefSnapshotId = brief?.confirmedSnapshotId ?? brief?.snapshotId ?? brief?.id;
+  return api.createRun(projectId, {
+    ideaBriefSnapshotId, maxConcepts: 5, idempotencyKey: key('portfolio'),
+  });
+}
+
 export function useConceptPortfolio(projectId, liveRevision = 0) {
   const client = useApiClient();
   const api = useMemo(() => createConceptPortfolioApi(client), [client]);
@@ -43,11 +51,7 @@ export function useConceptPortfolio(projectId, liveRevision = 0) {
   return {
     ...state,
     refresh,
-    start: () => act(async () => {
-      const brief = (await api.ideaBrief(projectId))?.data;
-      const ideaBriefSnapshotId = brief?.confirmedSnapshotId ?? brief?.snapshotId ?? brief?.id;
-      await api.createRun(projectId, { ideaBriefSnapshotId, maxConcepts: 5, idempotencyKey: key('portfolio') });
-    }),
+    start: () => act(() => startNewConceptPortfolioRun(api, projectId)),
     select: (conceptId) => act(() => api.select(projectId, { runId: state.run.runId, conceptId, selectionReason: '사용자가 선택한 사업안', idempotencyKey: key('selection') })),
     respond: (requestId, confirmedFacts, note) => act(() => api.respond(projectId, state.run.runId, requestId, { confirmedFacts, note, idempotencyKey: key('input') })),
     retryContinuation: (requestId) => act(() => api.retryContinuation(projectId, state.run.runId, requestId, { idempotencyKey: key('continuation-retry') })),

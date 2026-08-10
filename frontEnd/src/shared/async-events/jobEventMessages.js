@@ -53,7 +53,22 @@ const messages = Object.freeze({
 export const ACTIVE_JOB_EVENT_KEYS = Object.freeze(Object.keys(messages));
 const activeKeys = new Set(ACTIVE_JOB_EVENT_KEYS);
 export function isUserVisibleJobEvent(event) { return activeKeys.has(event?.messageKey); }
+export function jobFailureMessage(event) {
+  const code = event?.messageParams?.failureCode ?? event?.technicalCode;
+  const reason = event?.messageParams?.failureReason;
+  if (code === 'DEADLINE_EXCEEDED' || code === 'TASK_TIMEOUT') return '처리 시간이 제한을 초과했습니다.';
+  if (code === 'RATE_LIMITED') return '외부 AI 서비스 요청이 일시적으로 제한되었습니다.';
+  if (code === 'RESULT_SCHEMA_INVALID' || reason === 'AI_RESULT_INVALID') return 'AI 결과를 서비스 형식으로 확인하는 과정에서 문제가 발생했습니다.';
+  if (String(code ?? '').includes('LEGAL') || String(reason ?? '').includes('LEGAL')
+      || String(reason ?? '').includes('MOLEG')) return '법률·규제 근거를 확인하는 외부 서비스에 연결하지 못했습니다.';
+  if (code === 'DEPENDENCY_UNAVAILABLE' || reason === 'AI_SERVICE_UNAVAILABLE'
+      || reason === 'TRANSIENT_EXECUTION_FAILURE') return 'AI 또는 외부 검토 서비스에 일시적으로 연결하지 못했습니다.';
+  return '처리 과정에서 예상하지 못한 오류가 발생했습니다.';
+}
 export function jobEventMessage(event) {
+  if (event?.status === 'FAILED' && event?.messageKey === 'job.concept-portfolio.failed') {
+    return jobFailureMessage(event);
+  }
   const template = messages[event?.messageKey] ?? '작업 상태가 업데이트되었습니다.';
   return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, key) => {
     const value = event?.messageParams?.[key];

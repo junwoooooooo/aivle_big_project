@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiClientProvider } from '../../../shared/api/ApiClientProvider.jsx';
-import { useConceptPortfolio } from './useConceptPortfolio.js';
+import { startNewConceptPortfolioRun, useConceptPortfolio } from './useConceptPortfolio.js';
 
 describe('useConceptPortfolio live invalidation', () => {
   it('re-reads canonical REST state after project event revision changes', async () => {
@@ -17,5 +17,16 @@ describe('useConceptPortfolio live invalidation', () => {
     const firstReads = client.get.mock.calls.filter(([path]) => path.includes('concept-portfolio-runs/current')).length;
     rerender({ revision: 1 });
     await waitFor(() => expect(client.get.mock.calls.filter(([path]) => path.includes('concept-portfolio-runs/current')).length).toBeGreaterThan(firstReads));
+  });
+
+  it('uses a fresh idempotency key for each terminal Portfolio retry', async () => {
+    const api = { ideaBrief: vi.fn().mockResolvedValue({ data: { confirmedSnapshotId: 'brief-1' } }),
+      createRun: vi.fn().mockResolvedValue({ data: { runId: 'run' } }) };
+    await startNewConceptPortfolioRun(api, '41');
+    await startNewConceptPortfolioRun(api, '41');
+    const first = api.createRun.mock.calls[0][1];
+    const second = api.createRun.mock.calls[1][1];
+    expect(first).toMatchObject({ ideaBriefSnapshotId: 'brief-1', maxConcepts: 5 });
+    expect(second.idempotencyKey).not.toBe(first.idempotencyKey);
   });
 });

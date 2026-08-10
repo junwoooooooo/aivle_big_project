@@ -16,4 +16,15 @@ describe('V2 job event message registry', () => {
     expect(jobEventMessage({ messageKey: 'job.concept.run.completed' })).not.toContain('5개');
     expect(isUserVisibleJobEvent({ messageKey: 'job.claimed' })).toBe(false);
   });
+  it('distinguishes safe Portfolio failure reasons', () => {
+    expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',
+      messageParams: { failureCode: 'DEADLINE_EXCEEDED', retryable: true } }))
+      .toBe('처리 시간이 제한을 초과했습니다.');
+    expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',
+      messageParams: { failureCode: 'RATE_LIMITED', retryable: true } }))
+      .toBe('외부 AI 서비스 요청이 일시적으로 제한되었습니다.');
+    expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',
+      messageParams: { failureCode: 'RESULT_SCHEMA_INVALID', retryable: false } }))
+      .toContain('서비스 형식');
+  });
 });

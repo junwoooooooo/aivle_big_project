@@ -20,6 +20,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
@@ -81,9 +82,19 @@ public class ConceptPortfolioService {
         if (runs.findFirstByProjectIdAndProductStatusInAndDeletedAtIsNull(projectId, ACTIVE).isPresent()) {
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
         }
-        runs.findCurrentForUpdate(projectId).ifPresent(ConceptPortfolioRun::markStale);
-        ConceptPortfolioRun run = runs.save(ConceptPortfolioRun.queued(
-            project, source, request.requestedMaximum(), requestHash, request.idempotencyKey(), ownerId));
+        var currentRun = runs.findCurrentForUpdate(projectId);
+        if (currentRun.isPresent()) {
+            currentRun.get().markStale();
+            // uk_cp_run_current를 유지하면서 기존 current 해제를 새 current INSERT보다 먼저 반영한다.
+            runs.saveAndFlush(currentRun.get());
+        }
+        ConceptPortfolioRun run;
+        try {
+            run = runs.saveAndFlush(ConceptPortfolioRun.queued(
+                project, source, request.requestedMaximum(), requestHash, request.idempotencyKey(), ownerId));
+        } catch (DataIntegrityViolationException concurrentCurrentConflict) {
+            throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
+        }
         String correlationId = UUID.randomUUID().toString();
         var task = taskRuns.create(ownerId, projectId, TaskType.CONCEPT_PORTFOLIO_V2_RUN,
             "CONCEPT_PORTFOLIO_RUN", run.getId(), input.json(), requestHash,

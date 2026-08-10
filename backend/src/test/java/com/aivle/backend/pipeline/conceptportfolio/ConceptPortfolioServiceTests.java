@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.InOrder;
+import org.springframework.dao.DataIntegrityViolationException;
 import tools.jackson.databind.ObjectMapper;
 
 class ConceptPortfolioServiceTests {
@@ -57,7 +61,7 @@ class ConceptPortfolioServiceTests {
             mapper.readTree("{\"seed\":{},\"maxConcepts\":5}"), "{\"seed\":{},\"maxConcepts\":5}"));
         when(hasher.hash(any(), eq("1.0"), eq("ko-KR"), anyString()))
             .thenReturn("sha256:" + "a".repeat(64));
-        when(runs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(runs.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(task.getId()).thenReturn("task");
         when(taskRuns.create(anyLong(), anyLong(), any(), anyString(), anyString(), anyString(),
             anyString(), anyString(), anyString(), anyInt())).thenReturn(task);
@@ -114,6 +118,33 @@ class ConceptPortfolioServiceTests {
         when(brief.isConfirmed()).thenReturn(false);
         assertCode(() -> service.create(7L, 42L, new CreateRunRequest("brief", 5, "idem")),
             ErrorCode.IDEA_NOT_CONFIRMED);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ConceptPortfolioRunStatus.class, names = {
+        "FAILED", "NEEDS_INPUT", "RESULTS_AVAILABLE", "RESULTS_WITH_OPEN_INPUT", "STALE"
+    })
+    void terminalCurrentIsFlushedBeforeFreshQueuedRunIsInserted(ConceptPortfolioRunStatus status) {
+        ConceptPortfolioRun previous = mock(ConceptPortfolioRun.class);
+        when(previous.getProductStatus()).thenReturn(status);
+        when(runs.findCurrentForUpdate(42L)).thenReturn(Optional.of(previous));
+
+        var created = service.create(7L, 42L, new CreateRunRequest("brief", 5, "fresh-key"));
+
+        InOrder order = inOrder(runs);
+        order.verify(runs).findCurrentForUpdate(42L);
+        order.verify(runs).saveAndFlush(previous);
+        order.verify(runs).saveAndFlush(argThat((ConceptPortfolioRun value) -> value != previous
+            && value.isCurrent() && value.getProductStatus() == ConceptPortfolioRunStatus.QUEUED));
+        verify(previous).markStale();
+        assertThat(created.productStatus()).isEqualTo(ConceptPortfolioRunStatus.QUEUED);
+    }
+
+    @Test
+    void currentConstraintRaceIsNormalizedAsAnalysisAlreadyRunning() {
+        when(runs.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("uk_cp_run_current"));
+        assertCode(() -> service.create(7L, 42L,
+            new CreateRunRequest("brief", 5, "concurrent-key")), ErrorCode.ANALYSIS_ALREADY_RUNNING);
     }
 
     private void assertCode(Runnable action, ErrorCode code) {

@@ -81,8 +81,7 @@ public class ConceptPortfolioWorker {
                 publish(context, "NEEDS_INPUT", "job.concept-portfolio.needs-input",
                     JobEvent.Status.NEEDS_INPUT, null);
             } else if (status == ConceptPortfolioRunStatus.FAILED) {
-                publish(context, "FAILED", "job.concept-portfolio.failed",
-                    JobEvent.Status.FAILED, "AI_RESULT_INVALID");
+                publishFailure(context, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
             } else {
                 publish(context, "COMPLETED", "job.concept-portfolio.completed",
                     JobEvent.Status.COMPLETED, null);
@@ -92,8 +91,7 @@ public class ConceptPortfolioWorker {
         } catch (ContractViolation failure) {
             try {
                 materialization.failContract(claim, context, null);
-                publish(context, "FAILED", "job.concept-portfolio.failed",
-                    JobEvent.Status.FAILED, "AI_RESULT_INVALID");
+                publishFailure(context, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
             } catch (TaskRunFailure stale) {
                 logAuthorityLoss(context, stale);
             }
@@ -144,8 +142,7 @@ public class ConceptPortfolioWorker {
             String code, String reason, boolean retryable) {
         try {
             materialization.failExecution(claim, context, code, reason, retryable);
-            publish(context, "FAILED", "job.concept-portfolio.failed", JobEvent.Status.FAILED,
-                safeCode(code));
+            publishFailure(context, code, reason, retryable);
         } catch (TaskRunFailure stale) {
             logAuthorityLoss(context, stale);
         }
@@ -161,10 +158,21 @@ public class ConceptPortfolioWorker {
             context.taskRunId(), failure.getReason());
     }
 
-    private String safeCode(String code) {
-        if ("DEADLINE_EXCEEDED".equals(code)) return "TASK_TIMEOUT";
-        if ("RESULT_SCHEMA_INVALID".equals(code)) return "AI_RESULT_INVALID";
-        return "AI_SERVICE_UNAVAILABLE";
+    private void publishFailure(TaskRunWorkerContext context, String code, String reason,
+            boolean retryable) {
+        String safeCode = safeIdentifier(code, "EXECUTION_FAILED");
+        String safeReason = safeIdentifier(reason, "UNEXPECTED_EXECUTION_FAILURE");
+        Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("failureCode", safeCode);
+        params.put("failureReason", safeReason);
+        params.put("retryable", retryable);
+        events.publish(new JobEventPublisher.Command(context.projectId(), context.taskRunId(),
+            context.taskRunId(), "FAILED", "job.concept-portfolio.failed",
+            JobEvent.Status.FAILED, "job.concept-portfolio.failed", params, safeCode));
+    }
+
+    private String safeIdentifier(String value, String fallback) {
+        return value != null && value.matches("[A-Z][A-Z0-9_.-]{0,79}") ? value : fallback;
     }
 
     private void publish(TaskRunWorkerContext context, String stage, String key,

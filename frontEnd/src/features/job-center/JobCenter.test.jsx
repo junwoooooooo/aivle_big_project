@@ -14,16 +14,35 @@ describe('compact Work Center', () => {
       events: { transport: 'SSE', error: null, terminal: false, reconnect: vi.fn(), events: [{ eventId: '81', occurredAt: '2026-08-11T00:00:00Z', status: 'RUNNING', messageKey: 'job.concept-portfolio.running' }] } });
     const onOpenList = vi.fn();
     const onCloseSheet = vi.fn();
-    render(<MemoryRouter><JobCenter projectId="41" compact sheet={{ mounted: true, phase: 'open', focusJobId: 'job-1' }} onOpenList={onOpenList} onCloseSheet={onCloseSheet} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
-    expect(screen.getByText('현재 진행')).toBeInTheDocument();
+    render(<MemoryRouter><JobCenter projectId="41" compact sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'job-1', direction: 'forward' }} onOpenList={onOpenList} onCloseSheet={onCloseSheet} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    expect(screen.getAllByText('현재 진행')).toHaveLength(2);
     expect(screen.getByText('사업안 검토')).toBeInTheDocument();
     expect(screen.queryByText('CONCEPT_PORTFOLIO_V2_RUN')).not.toBeInTheDocument();
     expect(screen.getAllByText('작업 상세')).toHaveLength(2);
     expect(screen.getByText('사업 방향을 탐색하고 있습니다.')).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toHaveAttribute('data-phase', 'open');
+    expect(screen.getByLabelText('작업 요약')).toHaveTextContent('현재 진행 1');
     fireEvent.click(screen.getByRole('button', { name: '작업 센터 닫기' }));
     expect(onCloseSheet).toHaveBeenCalled();
     fireEvent.click(screen.getByText('전체 작업 보기'));
     expect(onOpenList).toHaveBeenCalled();
+  });
+
+  it('starts a fresh Portfolio run once from the failed detail retry', async () => {
+    useProjectJobs.mockReturnValue({ loading: false, error: null, notice: null,
+      active: [], recent: [{ jobId: 'failed-job', taskType: 'CONCEPT_PORTFOLIO_V2_RUN', status: 'FAILED', retryable: true, targetRoute: '/concepts', updatedAt: '2026-08-11T00:00:00Z' }],
+      selectedJobId: 'failed-job', selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'SSE', error: null, terminal: true, reconnect: vi.fn(), events: [] } });
+    let release;
+    const onRetryJob = vi.fn(() => new Promise((resolve) => { release = resolve; }));
+    render(<MemoryRouter><JobCenter projectId="41" compact onRetryJob={onRetryJob}
+      sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'failed-job', direction: 'forward' }}
+      onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    const retry = screen.getByRole('button', { name: '다시 시도' });
+    fireEvent.click(retry);
+    fireEvent.click(retry);
+    expect(onRetryJob).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: '다시 시도 중' })).toBeDisabled();
+    release();
   });
 });

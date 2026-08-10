@@ -252,5 +252,6 @@ export default function useIdeaIntake(projectId) {
     organizeIdea, submitAnswers, submitMissingFields, confirmBrief,
     refresh, reanalyze,
     restart: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
+    editConfirmed: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
   };
 }

@@ -9,6 +9,7 @@ import com.aivle.backend.taskrun.domain.*;
 import com.aivle.backend.taskrun.repository.*;
 import java.time.Instant;
 import java.util.Optional;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.Test;
 
 class AiTaskProgressServiceTests {
@@ -49,8 +50,32 @@ class AiTaskProgressServiceTests {
             .isEqualTo("job.concept-portfolio.trace.excluded-duplicate");
     }
 
+    @Test
+    void threeTraceEventsArePublishedInSequenceOrder() {
+        TaskRun run = run(TaskRunState.RUNNING, "attempt");
+        TaskAttempt attempt = mock(TaskAttempt.class);
+        when(attempt.getState()).thenReturn(TaskAttemptState.RUNNING);
+        when(runs.findById("run")).thenReturn(Optional.of(run));
+        when(attempts.findByIdAndTaskRunId("attempt", "run")).thenReturn(Optional.of(attempt));
+
+        for (int sequence = 1; sequence <= 3; sequence++) {
+            assertThat(service.accept(request("attempt", sequence)))
+                .isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
+        }
+
+        ArgumentCaptor<JobEventPublisher.Command> commands = ArgumentCaptor.forClass(JobEventPublisher.Command.class);
+        verify(events, times(3)).publish(commands.capture());
+        assertThat(commands.getAllValues().stream()
+            .map(command -> (Integer) command.messageParams().get("traceSequence")).toList())
+            .containsExactly(1, 2, 3);
+    }
+
     private AiTaskProgressController.ProgressRequest request(String attemptId) {
-        return new AiTaskProgressController.ProgressRequest("run", attemptId, "correlation", 1,
+        return request(attemptId, 1);
+    }
+
+    private AiTaskProgressController.ProgressRequest request(String attemptId, int sequence) {
+        return new AiTaskProgressController.ProgressRequest("run", attemptId, "correlation", sequence,
             "PLANNING", "DRAFTS_GENERATED", "PASS", "safe", null, null, null, null, Instant.now());
     }
 

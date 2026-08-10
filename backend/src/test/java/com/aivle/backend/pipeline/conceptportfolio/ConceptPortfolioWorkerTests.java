@@ -12,6 +12,7 @@ import com.aivle.backend.pipeline.conceptportfolio.worker.*;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
+import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.time.Duration;
@@ -115,6 +116,25 @@ class ConceptPortfolioWorkerTests {
                 ArgumentCaptor.forClass(JobEventPublisher.Command.class);
             verify(harness.publisher, atLeastOnce()).publish(events.capture());
             assertThat(events.getAllValues()).anyMatch(value -> value.status() == expected);
+        } finally { harness.executor.shutdownNow(); }
+    }
+
+    @Test
+    void preservesSafeFailureReasonAndRetryabilityInTerminalEvent() {
+        Harness harness = new Harness();
+        when(harness.ai.executeWorker(any(), eq("attempt"), any()))
+            .thenThrow(new ExecutionFailure("RATE_LIMITED", "AI_SERVICE_UNAVAILABLE", true));
+        try {
+            assertThat(harness.worker.processOne()).isTrue();
+            ArgumentCaptor<JobEventPublisher.Command> events =
+                ArgumentCaptor.forClass(JobEventPublisher.Command.class);
+            verify(harness.publisher, atLeastOnce()).publish(events.capture());
+            JobEventPublisher.Command failed = events.getAllValues().stream()
+                .filter(value -> value.status() == JobEvent.Status.FAILED).findFirst().orElseThrow();
+            assertThat(failed.technicalCode()).isEqualTo("RATE_LIMITED");
+            assertThat(failed.messageParams().get("failureCode")).isEqualTo("RATE_LIMITED");
+            assertThat(failed.messageParams().get("failureReason")).isEqualTo("AI_SERVICE_UNAVAILABLE");
+            assertThat(failed.messageParams().get("retryable")).isEqualTo(true);
         } finally { harness.executor.shutdownNow(); }
     }
 

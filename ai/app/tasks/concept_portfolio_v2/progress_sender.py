@@ -21,7 +21,7 @@ class ProductionProgressSender:
     def __init__(self, *, task_run_id: str, task_attempt_id: str, correlation_id: str,
                  base_url: str | None = None, token: str | None = None,
                  post: ProgressPost | None = None, queue_size: int = 256,
-                 flush_seconds: float = 2.0):
+                 flush_seconds: float = 2.0, client: httpx.AsyncClient | None = None):
         self.task_run_id = task_run_id
         self.task_attempt_id = task_attempt_id
         self.correlation_id = correlation_id
@@ -31,7 +31,8 @@ class ProductionProgressSender:
         self.flush_seconds = flush_seconds
         self.queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue(maxsize=queue_size)
         self.task: asyncio.Task[None] | None = None
-        self.client: httpx.AsyncClient | None = None
+        self.client = client
+        self._owns_client = False
 
     @property
     def enabled(self) -> bool:
@@ -39,8 +40,9 @@ class ProductionProgressSender:
 
     async def __aenter__(self) -> "ProductionProgressSender":
         if self.enabled:
-            if self.post is None:
+            if self.post is None and self.client is None:
                 self.client = httpx.AsyncClient(timeout=httpx.Timeout(2.0))
+                self._owns_client = True
             self.task = asyncio.create_task(self._run())
         return self
 
@@ -54,7 +56,7 @@ class ProductionProgressSender:
                 await asyncio.wait_for(self.task, timeout=self.flush_seconds)
             except (TimeoutError, asyncio.CancelledError):
                 self.task.cancel()
-        if self.client is not None:
+        if self.client is not None and self._owns_client:
             await self.client.aclose()
 
     def emit(self, event: ProductionTraceEvent) -> None:
@@ -83,13 +85,20 @@ class ProductionProgressSender:
                     response = await self.client.post(
                         f"{self.base_url}/internal/v1/ai/task-progress",
                         json=payload,
-                        headers={"Authorization": f"Bearer {self.token}"},
+                        headers={"X-AI-Internal-Token": self.token},
                     )
                     response.raise_for_status()
+            except httpx.HTTPStatusError as failure:
+                logger.warning(
+                    "CPV2 progress callback rejected taskRunId=%s taskAttemptId=%s sequence=%s status=%s",
+                    self.task_run_id, self.task_attempt_id, payload.get("sequence"),
+                    failure.response.status_code,
+                )
             except Exception as failure:
                 logger.warning(
-                    "CPV2 progress callback failed taskRunId=%s sequence=%s exceptionType=%s",
-                    self.task_run_id, payload.get("sequence"), failure.__class__.__name__,
+                    "CPV2 progress callback failed taskRunId=%s taskAttemptId=%s sequence=%s exceptionType=%s",
+                    self.task_run_id, self.task_attempt_id, payload.get("sequence"),
+                    failure.__class__.__name__,
                 )
 
 
