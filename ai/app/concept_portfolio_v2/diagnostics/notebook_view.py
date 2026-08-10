@@ -182,6 +182,7 @@ def show_legal_result(results):
                     "controlConvertibleCount": item.controlConvertibleCount,
                     "legalClarificationCount": item.legalClarificationCount,
                     "safeSummary": item.safeSummary,
+                    "unknownFacts": item.unknownFacts,
                     "requiredControls": item.requiredControls,
                     "requiredPartnersAndQualifications": item.requiredPartnersAndQualifications,
                     "requiredDisclosures": item.requiredDisclosures,
@@ -284,10 +285,47 @@ def show_provider_failure(gateway):
     return gateway.last_failure or {"상태": "기록된 Provider 실패 없음"}
 
 
+def show_run_failure(result):
+    if not result or not result.failureDiagnostics:
+        return {"상태": "기록된 run failure 없음"}
+    value = _dump(result.failureDiagnostics)
+    value["lastTraceEvents"] = len(value.get("lastTraceEvents", []))
+    return _table([value])
+
+
+def show_required_inputs(result_or_items):
+    items = (result_or_items.requiredInputs if hasattr(result_or_items, "requiredInputs")
+             else list(result_or_items or []))
+    keys = ("candidateId", "scope", "unknownFacts", "reason", "possibleUserAction",
+            "currentValue", "requiredLegalChange", "safeSummary")
+    return _table([{key: item.get(key) for key in keys} for item in items])
+
+
+def show_live_validation_summary(scenario_id, result):
+    legal = result.legalSummaries if result else []
+    summary = result.runSummary if result else None
+    return _table([{
+        "Scenario": scenario_id,
+        "Plan returned": summary.planned if summary else 0,
+        "Plan selected": summary.planSelected if summary else 0,
+        "Candidate valid": summary.candidateAccepted if summary else 0,
+        "Legal ready": summary.legalReviewed if summary else 0,
+        "Legal ACCEPT": summary.legalAccepted if summary else 0,
+        "NEEDS_INPUT": sum(item.route.value == "NEEDS_INPUT" for item in legal),
+        "Final portfolio": result.producedConceptCount if result else 0,
+        "Hypothesis valid": result.downstreamReadiness if result else "NOT_RUN",
+        "Handoff": result.handoff.contractStatus if result and result.handoff else "PENDING",
+        "Provider ops": result.providerUsage.topLevelExternalOperations if result else 0,
+        "Duration(ms)": summary.totalDurationMs if summary else 0,
+    }])
+
+
 def show_run_summary(result):
-    return _table([_dump(result.runSummary) if result.runSummary else {
-        "portfolioStatus": result.runStatus.value, "finalPortfolio": result.producedConceptCount,
-        "downstreamHandoff": result.downstreamReadiness}])
+    identity = {"runId": result.runId, "runStatus": result.runStatus.value,
+                "runtimeStage": result.runtimeStage.value,
+                "producedConceptCount": result.producedConceptCount,
+                "downstreamReadiness": result.downstreamReadiness}
+    return _table([{**identity, **(_dump(result.runSummary) if result.runSummary else {})}])
 
 
 def show_raw_json(value):

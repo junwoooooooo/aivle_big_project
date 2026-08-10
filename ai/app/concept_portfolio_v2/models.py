@@ -352,6 +352,7 @@ class LegalFactCompletenessResult(StrictModel):
     contradictions: list[str] = Field(default_factory=list)
     completionRequirements: list[str] = Field(default_factory=list)
     affectedFields: list[str] = Field(default_factory=list)
+    roleSemantics: list[dict[str, str]] = Field(default_factory=list)
     safeSummary: str
 
 
@@ -390,6 +391,7 @@ class LegalReview(StrictModel):
     requiredLegalChange: str | None = None
     reason: str | None = None
     possibleUserAction: str | None = None
+    unknownFacts: list[str] = Field(default_factory=list)
     inputScope: str = "CANDIDATE"
     evidenceDiagnostics: dict[str, Any] = Field(default_factory=dict)
     reviewPhase: str | None = None
@@ -416,7 +418,7 @@ class HypothesisDecision(StrictModel):
     legalImpact: str = "NONE"
     legalReviewStatus: str = "NOT_REQUIRED"
     deltaLegalRequired: bool = False
-    semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "UNASSESSED"] = "UNASSESSED"
+    semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "AMBIGUOUS", "UNASSESSED"] = "UNASSESSED"
     semanticReason: str | None = None
 
     @property
@@ -430,9 +432,19 @@ class HypothesisDecision(StrictModel):
 
 class HypothesisValueAssessment(StrictModel):
     hypothesisType: str
-    status: Literal["VALID", "UNRESOLVED", "INVALID"]
+    status: Literal["VALID", "UNRESOLVED", "INVALID", "AMBIGUOUS"]
     reason: str
     normalizedValue: Any | None = None
+
+
+class SemanticHypothesisResult(StrictModel):
+    hypothesisType: str
+    decision: Literal["VALID", "INVALID"]
+    safeReason: str
+
+
+class SemanticHypothesisBatch(StrictModel):
+    results: list[SemanticHypothesisResult] = Field(min_length=1, max_length=5)
 
 
 class DeltaLegalResult(StrictModel):
@@ -545,12 +557,15 @@ class RunSummary(StrictModel):
     safety: str
     requestedMaximum: int
     planned: int
+    planSelected: int = 0
+    planSelected: int = 0
     planDuplicatesRemoved: int
     candidatesExpanded: int
     candidateGenerated: int = 0
     candidateAcceptedInitially: int = 0
     candidateRegenerated: int = 0
     candidateRecovered: int = 0
+    candidateAccepted: int = 0
     reservePlansActivated: int = 0
     candidateRecoveryReplans: int = 0
     legalFactCompletionAttempted: int = 0
@@ -566,6 +581,7 @@ class RunSummary(StrictModel):
     legalReplanAccepted: int = 0
     legalReplanExhausted: int = 0
     legalAccepted: int
+    legalReviewed: int = 0
     legalRedesigned: int
     replanned: int
     finalPortfolio: int
@@ -574,6 +590,19 @@ class RunSummary(StrictModel):
     downstreamHandoff: str
     providerCalls: int
     totalDurationMs: int
+    failureStage: str | None = None
+    failureCode: str | None = None
+
+
+class FailureDiagnostics(StrictModel):
+    failedStage: str
+    failureCode: str
+    safeSummary: str
+    failedEntityId: str | None = None
+    providerFailure: dict[str, Any] = Field(default_factory=dict)
+    lastSuccessfulStage: str | None = None
+    firstFailedStage: str | None = None
+    lastTraceEvents: list[TraceEvent] = Field(default_factory=list, max_length=20)
 
 
 class ConceptPortfolioResult(StrictModel):
@@ -593,6 +622,7 @@ class ConceptPortfolioResult(StrictModel):
     selectedConceptId: str | None = None
     handoff: DownstreamHandoff | None = None
     runSummary: RunSummary | None = None
+    failureDiagnostics: FailureDiagnostics | None = None
 
     @model_validator(mode="after")
     def terminal_and_count_consistent(self):

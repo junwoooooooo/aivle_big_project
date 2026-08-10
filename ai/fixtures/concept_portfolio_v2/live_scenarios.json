@@ -1,0 +1,58 @@
+[
+  {
+    "scenarioId": "FOOD_PHYSICAL_COMMERCE",
+    "domain": "Food physical commerce",
+    "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+    "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "expectedStructuralFeatures": ["물리적 이행", "직접 운영과 파트너 역할 구분"]
+  },
+  {
+    "scenarioId": "B2B_AI_SALES_ASSISTANT",
+    "domain": "B2B AI SaaS",
+    "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+    "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+    "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+    "expectedStructuralFeatures": ["디지털 SaaS", "물리 활동 비필수", "비마켓플레이스"]
+  },
+  {
+    "scenarioId": "LOCAL_PETCARE_MARKETPLACE",
+    "domain": "Local service marketplace",
+    "ideaOverview": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+    "problem": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+    "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+    "expectedStructuralFeatures": ["중개", "파트너 제공자", "예약과 결제", "개인정보"]
+  },
+  {
+    "scenarioId": "AI_INTERVIEW_COACH",
+    "domain": "Digital education",
+    "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+    "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+    "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+    "expectedStructuralFeatures": ["순수 디지털", "불필요한 자격·파트너 미생성"]
+  },
+  {
+    "scenarioId": "CAMPUS_SECONDHAND",
+    "domain": "Secondhand marketplace",
+    "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+    "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+    "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+    "expectedStructuralFeatures": ["중개", "지역 거래", "픽업", "물리 의존"]
+  },
+  {
+    "scenarioId": "OFFICE_EQUIPMENT_SUBSCRIPTION",
+    "domain": "B2B physical subscription",
+    "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+    "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+    "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+    "expectedStructuralFeatures": ["직접 운영", "구독", "물리 이행", "비중개"]
+  },
+  {
+    "scenarioId": "WEEKEND_TRIP_PLANNER",
+    "domain": "Travel planning",
+    "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+    "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+    "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+    "expectedStructuralFeatures": ["디지털 계획", "예약 연결 역할과 직접 판매 구분"]
+  }
+]

@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:0c91ae701d6c8a12757a226b33aed538a845cf914612c81a1fc3137312e46d0b",
+  "canonicalRequestHash": "1a3cdde823c90fe1b550574efc9230ee0a0310b2ab835ab52ff30acb903b528f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 합리적인 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "레시피에 따라 필요한 식재료를 조합하여 제공한다. 레시피 개발자 및 식품 공급업체와 협력하여 다양한 옵션을 제공한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 경쟁력 있는 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 고객이 원하는 레시피를 선택하고 그에 맞는 식재료를 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 합리적인 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 합리적인 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 합리적인 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 구독 모델 또는 일회성 구매 모델을 통해 고객과 거래한다. 합리적인 가격으로 소량 식재료를 제공하여 고객의 가치를 높인다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Customized ingredient delivery service collaborating with local farms and food manufacturers."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Recipe-based ingredient delivery service collaborating with recipe developers and food suppliers."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Customized ingredient delivery service collaborating with local farms and food manufacturers."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Customized ingredient delivery service collaborating with local farms and food manufacturers."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Customized ingredient delivery service collaborating with local farms and food manufacturers."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "Customized ingredient delivery service collaborating with local farms and food manufacturers."
+    }
+  ],
+  "durationMs": 6033,
+  "timestamp": "2026-08-10T02:15:19.570788+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

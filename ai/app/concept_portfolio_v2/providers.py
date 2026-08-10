@@ -21,7 +21,8 @@ from .models import (
     CanonicalSeed, DesignSpaceAnalysis, ExplorationBreadth, LegalReview, LegalRoute,
     PlanDraftPool, PortfolioPlan, PortfolioPlanDraft, ProviderMode, ProviderUsage,
     SemanticArchitectureBatch, SemanticArchitectureClassification,
-    SemanticDistinctnessResult, SemanticFidelityResult,
+    SemanticDistinctnessResult, SemanticFidelityResult, SemanticHypothesisBatch,
+    SemanticHypothesisResult,
 )
 from .schema_preflight import assert_strict_compatible
 
@@ -32,6 +33,7 @@ DISTINCTNESS_PROMPT_VERSION = "concept-portfolio-relation-v3"
 FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v3"
 FIDELITY_REGEN_PROMPT_VERSION = "concept-portfolio-fidelity-regeneration-v1"
 ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v1"
+HYPOTHESIS_SEMANTIC_PROMPT_VERSION = "concept-portfolio-hypothesis-semantic-v1"
 LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
 LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-v1"
 LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair-v1"
@@ -85,6 +87,9 @@ class PortfolioProvider(ABC):
 
     @abstractmethod
     async def classify_architectures(self, items: list[dict[str, Any]]) -> list[SemanticArchitectureClassification]: ...
+
+    @abstractmethod
+    async def classify_hypotheses(self, items: list[dict[str, Any]]) -> list[SemanticHypothesisResult]: ...
 
     @abstractmethod
     async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
@@ -383,6 +388,19 @@ class MockPortfolioProvider(PortfolioProvider):
             }))
         return results
 
+    async def classify_hypotheses(self, items):
+        results = []
+        for item in items:
+            text = str(item.get("value") or "").casefold()
+            cross_field = (item["hypothesisType"] == "TARGET_REGION"
+                           and any(marker in text for marker in
+                                   ("가격", "견적", "구독", "수수료", "채널", "앱", "웹")))
+            results.append(SemanticHypothesisResult(
+                hypothesisType=item["hypothesisType"], decision="INVALID" if cross_field else "VALID",
+                safeReason=("다른 가설 필드의 값으로 판단했습니다." if cross_field else
+                            "placeholder가 아닌 구체적 후보값으로 판단했습니다.")))
+        return results
+
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
 
@@ -559,6 +577,16 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
             response_schema=schema, schema_name="concept_architecture_classifier_v1",
             task_type="CONCEPT_PORTFOLIO_V2_ARCHITECTURE_CLASSIFICATION")
         return SemanticArchitectureBatch.model_validate(raw).results
+
+    async def classify_hypotheses(self, items):
+        schema = SemanticHypothesisBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_hypothesis_semantic_v1")
+        raw = await execute_structured_prompt(
+            "각 값이 해당 사업 가설 필드에 실제로 답하는 값인지 VALID/INVALID로만 판정한다. 새 가설을 생성하거나 값을 수정하지 않는다.",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_hypothesis_semantic_v1",
+            task_type="CONCEPT_PORTFOLIO_V2_HYPOTHESIS_SEMANTIC")
+        return SemanticHypothesisBatch.model_validate(raw).results
 
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
@@ -756,6 +784,17 @@ class ProviderGateway:
         if len(results) != len(items):
             raise ProviderFailure("RESULT_SCHEMA_INVALID", "ARCHITECTURE_BATCH_COUNT_MISMATCH",
                                   502, False, schema_name="concept_architecture_classifier_v1")
+        return results
+
+    async def classify_hypotheses(self, items):
+        raw = await self.call("PORTFOLIO_VALIDATING", "VALIDATE_HYPOTHESES", {"items": items},
+            lambda: self.provider.classify_hypotheses(items),
+            operation_version="v1", prompt_version=HYPOTHESIS_SEMANTIC_PROMPT_VERSION)
+        results = [item if isinstance(item, SemanticHypothesisResult)
+                   else SemanticHypothesisResult.model_validate(item) for item in raw]
+        if len(results) != len(items):
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "HYPOTHESIS_BATCH_COUNT_MISMATCH",
+                                  502, False, schema_name="concept_hypothesis_semantic_v1")
         return results
 
     async def replacement_plans(self, seed, design, existing_plans, count=2):

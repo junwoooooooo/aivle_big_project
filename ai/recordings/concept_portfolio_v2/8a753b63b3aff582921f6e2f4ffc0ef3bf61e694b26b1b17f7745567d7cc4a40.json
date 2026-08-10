@@ -1,0 +1,532 @@
+{
+  "taskType": "LEGAL_REVIEW",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-review-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:05cf633f2a1b5157acc8717f64666b3ad5e75a80222e253349aeb17500922c45",
+  "canonicalRequestHash": "8a753b63b3aff582921f6e2f4ffc0ef3bf61e694b26b1b17f7745567d7cc4a40",
+  "redactedRequest": {
+    "candidateId": "C3",
+    "candidate": {
+      "conceptName": "식재료 관리 서비스",
+      "conceptDefinition": "개인 맞춤형 소량 식재료와 남은 재료 활용 레시피를 제공하는 서비스.",
+      "introduction": "고객의 식재료를 기록하고 관리하여 최적의 레시피를 추천하는 서비스입니다.",
+      "coreValue": "식재료를 효율적으로 관리하여 낭비를 줄이고 요리를 간편하게 만든다.",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "industryCategory": "식품 서비스",
+      "researchScope": "소량 식재료 및 레시피 제공 서비스 시장.",
+      "targetRegion": "대한민국",
+      "revenueModel": "프리미엄 구독 모델로 수익 창출",
+      "price": "월 9,900원",
+      "channels": "모바일 앱, 웹사이트",
+      "differentiators": "식재료 관리 기능 제공, 효율적인 요리법 추천",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 5.0,
+        "horizonYears": 3,
+        "rationale": "1~2인 가구의 증가와 음식물 쓰레기 문제 해결을 위한 수요 증가",
+        "assumptions": [
+          "1~2인 가구의 요리 시간 부족 문제",
+          "음식물 쓰레기 감소에 대한 사회적 관심 증가"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "1~2인 가구의 시장 규모와 서비스 이용률을 기반으로 한 추정",
+        "assumptions": [
+          "프리미엄 기능 이용률 10%",
+          "1~2인 가구의 평균 식재료 소비량"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "solutionMechanism": "고객의 식재료를 관리하고 활용할 수 있는 레시피를 제공한다.",
+      "featureSet": [
+        "식재료 기록 기능",
+        "레시피 추천 기능",
+        "식재료 관리 알림 기능"
+      ],
+      "actorRoles": [
+        "고객",
+        "요리 전문가",
+        "개발팀"
+      ],
+      "platformRole": "서비스 제공 플랫폼 운영",
+      "operatingModel": "고객의 식재료를 기반으로 관리 시스템 운영",
+      "partnerModel": "요리 전문가와 협력하여 다양한 레시피를 개발",
+      "providerRole": "식재료 관리 서비스 제공자",
+      "sellerRole": "프리미엄 기능 판매자",
+      "intermediaryRole": "없음",
+      "transactionFlow": [
+        "고객이 앱에 식재료 입력",
+        "시스템이 식재료 관리 및 레시피 추천",
+        "고객이 프리미엄 기능 구매"
+      ],
+      "paymentFlow": [
+        "고객이 프리미엄 기능 결제",
+        "결제 시스템이 수수료 정산"
+      ],
+      "personalDataUsage": [
+        "고객의 식재료 기록을 통한 맞춤형 서비스 제공"
+      ],
+      "physicalActivities": [
+        "식재료 관리 및 레시피 제공"
+      ],
+      "partnerRequirements": [
+        "요리 전문가와의 협력 필요"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "음식물 쓰레기 감소에 기여하는 서비스"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 3,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 개인 맞춤형 식재료와 레시피 제공을 통해 음식물 쓰레기를 줄이는 서비스.",
+        "industryCategory": "식품 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스 시장.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 남은 재료 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "",
+        "relevantKnownCompetitorContext": ""
+      },
+      "fixtureName": "custom"
+    }
+  },
+  "providerResponse": {
+    "candidateId": "C3",
+    "route": "ACCEPT",
+    "productionStatus": "IMPLEMENTABLE_WITH_CONTROLS",
+    "sourceStatus": "OFFICIAL_EVIDENCE",
+    "safeSummary": "고객의 식재료를 기반으로 한 관리 시스템 운영은 법적으로 가능하며, 개인정보 보호 및 광고 관련 규정을 준수해야 함.",
+    "requiredControls": [
+      "고객의 식재료 기록을 안전하게 처리하기 위한 개인정보 보호 방침 수립",
+      "부당한 표시 및 광고 행위를 방지하기 위한 내부 검토 절차 마련"
+    ],
+    "requiredPartnersAndQualifications": [
+      "요리 전문가와의 협력 필요"
+    ],
+    "redesignRequirements": [],
+    "prohibitedVariants": [],
+    "requiredDisclosures": [
+      "서비스 이용약관 및 개인정보 처리방침 고지"
+    ],
+    "officialEvidenceReferences": [
+      {
+        "referenceIndex": 0,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "001805",
+        "officialIdentifier": "277149",
+        "lawName": "식품위생법",
+        "articleReference": "제6조",
+        "title": "기준ㆍ규격이 정하여지지 아니한 화학적 합성품 등의 판매 등 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%8B%9D%ED%92%88%EC%9C%84%EC%83%9D%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20251001",
+        "effectiveDate": "20251001",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:1253eb1604afa3574783b0789f62cc1842b5ba0826a8ad798d27de56d9d07579",
+        "boundedProvisionSummary": "기준ㆍ규격이 정하여지지 아니한 화학적 합성품 등의 판매 금지에 대한 규정으로, 식품의 안전성을 확보하기 위한 의무를 규정하고 있다.",
+        "queryKey": "sha256:137b651425ea46750088d433cf3c2a09e7d872244c8aaae1a070c618421311ee",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 1,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "001805",
+        "officialIdentifier": "277149",
+        "lawName": "식품위생법",
+        "articleReference": "제7조",
+        "title": "식품 또는 식품첨가물에 관한 기준 및 규격",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%8B%9D%ED%92%88%EC%9C%84%EC%83%9D%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20251001",
+        "effectiveDate": "20251001",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:2d558b508a0bf2d5f9c1e1af2642c0580d313a0dce3f5c300b4a4b346b573dc6",
+        "boundedProvisionSummary": "식품 또는 식품첨가물에 관한 기준 및 규격을 정하는 규정으로, 사업자가 준수해야 할 기준을 명시하고 있다.",
+        "queryKey": "sha256:137b651425ea46750088d433cf3c2a09e7d872244c8aaae1a070c618421311ee",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 2,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제3조",
+        "title": "부당한 표시ㆍ광고 행위의 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:8a232304b3941209cf6afb47ff8485dec72a80b22d8ea0bd5f72b07f583b5826",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위를 금지하는 규정으로, 소비자를 보호하기 위한 사업자의 의무를 규정하고 있다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 3,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제5조",
+        "title": "표시ㆍ광고 내용의 실증 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:175e1d20e79b88964eddbcfa658507a8968209ddba38fe094bc7005015b0ba30",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위로 인해 피해를 입은 자에 대한 손해배상 책임을 규정하고 있다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 4,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제15조",
+        "title": "개인정보의 수집ㆍ이용",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:d057e48fdd8c23f93bcfcb814c84c02a71c51f476b2b2f824635725d488e4d9c",
+        "boundedProvisionSummary": "개인정보의 수집 및 이용에 대한 규정으로, 사업자가 개인정보를 수집할 때의 의무를 명시하고 있다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 5,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제16조",
+        "title": "개인정보의 수집 제한",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T02:21:32.407444Z",
+        "contentHash": "sha256:92011a2e3a02220ab77a308a194cdf773752b2c24e3059a67a0e03a80399f032",
+        "boundedProvisionSummary": "개인정보의 수집 제한에 대한 규정으로, 사업자가 최소한의 개인정보만 수집해야 한다는 의무를 규정하고 있다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      }
+    ],
+    "deltaLegalReviews": [],
+    "conflictingLock": null,
+    "currentValue": null,
+    "requiredLegalChange": null,
+    "reason": null,
+    "possibleUserAction": null,
+    "inputScope": "CANDIDATE",
+    "evidenceDiagnostics": {
+      "coverageStatus": "SOURCE_PARTIAL",
+      "coverageMessage": "공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+    },
+    "reviewPhase": "LEGAL_SOURCE",
+    "factCompletenessStatus": null,
+    "legalSourceStatus": "SOURCE_PARTIAL",
+    "finalEvidenceJudgmentExecuted": true,
+    "recoveryResolution": null,
+    "sourceQuestionCount": 0,
+    "resolvedByFactPatternCount": 0,
+    "designGapCount": 0,
+    "externalFactCount": 0,
+    "controlConvertibleCount": 0,
+    "legalClarificationCount": 0
+  },
+  "durationMs": 14873,
+  "timestamp": "2026-08-10T02:21:37.530964+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

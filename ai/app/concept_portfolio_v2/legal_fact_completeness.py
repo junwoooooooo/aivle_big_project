@@ -17,6 +17,7 @@ _EMPTY_MARKERS = {
 }
 _ROLE_FIELDS = ("platformRole", "providerRole", "sellerRole", "intermediaryRole")
 FactPresence = Literal["PRESENT", "EXPLICIT_ABSENCE", "UNKNOWN", "EMPTY"]
+RoleSemanticStatus = Literal["MATCH", "EXPLICIT_ABSENCE", "MISMATCH", "AMBIGUOUS"]
 _EXPLICIT_ABSENCE_MARKERS = (
     "하지않", "아님", "아니며", "아닌", "없음", "해당없음", "사용하지않", "수행하지않", "담당하지않",
 )
@@ -51,11 +52,51 @@ def classify_fact_presence(value: Any, field: str | None = None) -> FactPresence
     return "PRESENT"
 
 
+_ROLE_ACTIONS = {
+    "platformRole": ("플랫폼", "운영사", "운영", "거래 기준", "고객 접점"),
+    "providerRole": ("제공", "이행", "공급", "수행", "전문가", "제휴사", "파트너"),
+    "sellerRole": ("판매", "계약", "수취", "판매자", "계약 책임"),
+    "intermediaryRole": ("중개", "매칭", "거래 연결", "판매자와 구매자", "수요자와 제공자"),
+}
+_CLEARLY_OTHER_ROLE = {
+    "providerRole": ("결제 정산", "대금 정산", "광고 집행"),
+    "sellerRole": ("앱 화면", "ui 관리", "화면 운영"),
+    "intermediaryRole": ("배송 담당", "배송 업무", "배달 수행", "물류 이행"),
+}
+
+
+def assess_role_semantics(field: str, value: Any) -> RoleSemanticStatus:
+    """역할 값의 존재와 별도로, 해당 필드가 실제 역할 질문에 답하는지 검사한다."""
+    text = str(value or "").strip()
+    normalized = _norm(text)
+    presence = classify_fact_presence(value, field)
+    if presence in {"EMPTY", "UNKNOWN"}:
+        return "AMBIGUOUS"
+
+    actions = _ROLE_ACTIONS[field]
+    action_present = any(_norm(marker) in normalized for marker in actions)
+    # "직접 제공하지 않고 제휴 전문가가 제공"은 provider 부재가 아니라 제공 주체의 위임이다.
+    delegated_provider = (field == "providerRole" and any(marker in normalized for marker in
+        ("제휴", "파트너", "전문가", "판매자")) and any(marker in normalized for marker in ("제공", "이행", "수행")))
+    if delegated_provider:
+        return "MATCH"
+    if presence == "EXPLICIT_ABSENCE":
+        return "EXPLICIT_ABSENCE"
+    if action_present:
+        return "MATCH"
+    if any(_norm(marker) in normalized for marker in _CLEARLY_OTHER_ROLE.get(field, ())):
+        return "MISMATCH"
+    return "AMBIGUOUS"
+
+
 def _role_is_complete(candidate: ConceptCandidateResult, field: str) -> bool:
     presence = classify_fact_presence(getattr(candidate, field), field)
-    if presence in {"PRESENT", "EXPLICIT_ABSENCE"}:
+    semantic = assess_role_semantics(field, getattr(candidate, field))
+    if presence in {"PRESENT", "EXPLICIT_ABSENCE"} and semantic in {"MATCH", "EXPLICIT_ABSENCE"}:
         return True
     if presence == "UNKNOWN":
+        return False
+    if semantic == "MISMATCH":
         return False
     transaction = _norm(candidate.transactionFlow)
     roles = _norm(candidate.actorRoles)
@@ -79,10 +120,17 @@ def assess_legal_fact_completeness(candidate: ConceptCandidateResult) -> LegalFa
     missing: list[str] = []
     contradictions: list[str] = []
     affected: list[str] = []
+    role_semantics: list[dict[str, str]] = []
 
     for field in _ROLE_FIELDS:
+        semantic_status = assess_role_semantics(field, getattr(candidate, field))
+        role_semantics.append({"field": field, "status": semantic_status,
+                               "safeReason": ("역할 의미가 필드와 일치합니다." if semantic_status == "MATCH" else
+                                              "역할이 명시적으로 존재하지 않습니다." if semantic_status == "EXPLICIT_ABSENCE" else
+                                              "다른 역할의 설명이 들어 있어 해당 역할을 다시 명시해야 합니다." if semantic_status == "MISMATCH" else
+                                              "해당 역할의 주체와 책임이 불명확합니다.")})
         if not _role_is_complete(candidate, field):
-            missing.append(f"{field}의 역할 존재·부재 또는 책임이 명시되지 않았습니다.")
+            missing.append(f"{field}의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다.")
             affected.append(field)
     if not _substantive(candidate.transactionFlow):
         missing.append("주문·계약·제공 주체를 포함한 transactionFlow가 필요합니다.")
@@ -133,7 +181,7 @@ def assess_legal_fact_completeness(candidate: ConceptCandidateResult) -> LegalFa
                 "INVALID": "사업 역할과 거래 구조의 중대한 모순을 먼저 재생성해야 합니다."}[status])
     return LegalFactCompletenessResult(status=status, missingDesignFacts=missing,
         contradictions=contradictions, completionRequirements=requirements,
-        affectedFields=affected, safeSummary=summary)
+        affectedFields=affected, roleSemantics=role_semantics, safeSummary=summary)
 
 
 _REQUIREMENT_FIELDS = {
