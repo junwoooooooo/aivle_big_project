@@ -14,16 +14,26 @@ public class AiServerClientConfiguration {
     @Bean
     @Qualifier("aiServerRestClient")
     RestClient aiServerRestClient(AiServerProperties properties) {
-        return createRestClient(properties);
+        return createRestClient(properties, properties.readTimeout());
+    }
+
+    @Bean
+    @Qualifier("conceptPortfolioAiServerRestClient")
+    RestClient conceptPortfolioAiServerRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.conceptPortfolioReadTimeout());
     }
 
     RestClient createRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.readTimeout());
+    }
+
+    RestClient createRestClient(AiServerProperties properties, java.time.Duration readTimeout) {
         SimpleClientHttpRequestFactory requestFactory =
             new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(
             properties.connectTimeout()
         );
-        requestFactory.setReadTimeout(properties.readTimeout());
+        requestFactory.setReadTimeout(readTimeout);
 
         return RestClient.builder()
             .baseUrl(properties.baseUrl())

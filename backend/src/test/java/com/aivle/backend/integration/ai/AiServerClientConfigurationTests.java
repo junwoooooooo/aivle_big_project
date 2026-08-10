@@ -21,6 +21,7 @@ class AiServerClientConfigurationTests {
                 "app.ai-server.base-url", "http://localhost:9999/",
                 "app.ai-server.connect-timeout", "250ms",
                 "app.ai-server.read-timeout", "2s",
+                "app.ai-server.concept-portfolio-read-timeout", "15m",
                 "app.ai-server.internal-api-key", "secret"
             )
         );
@@ -41,6 +42,7 @@ class AiServerClientConfigurationTests {
             properties.connectTimeout()
         );
         assertEquals(Duration.ofSeconds(2), properties.readTimeout());
+        assertEquals(Duration.ofMinutes(15), properties.conceptPortfolioReadTimeout());
         assertTrue(properties.hasInternalApiKey());
     }
 

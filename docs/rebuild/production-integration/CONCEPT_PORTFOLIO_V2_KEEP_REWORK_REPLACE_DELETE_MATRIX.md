@@ -11,13 +11,13 @@
 |---|---|---|---|---|---|---|
 | `ai/app/concept_portfolio_v2/**` | 검증된 V2 Core 알고리즘 | KEEP | Production facade가 호출하는 frozen authority | 없음 | 해당 없음 | P1 Core diff 없음; 알고리즘, prompt, selection/legal 정책 수정 금지 |
 | `ai/app/tasks/concept_portfolio_v2/service.py` | Notebook과 같은 `run_full()` 호출 함수 | REWORK | thin facade, Product result/continuation export 진입점 | 신규 `models.py`, `observer.py` | 해당 없음 | P1 facade·bounded DTO·continuation export 완료 |
-| `ai/app/api/executions.py` | 내부 AI task registry와 dispatcher | REWORK | `CONCEPT_PORTFOLIO_V2_RUN` 등록·호출 | facade result contract | 해당 없음 | P1 AI 등록 완료; Backend TaskType/worker 연결은 P3 |
+| `ai/app/api/executions.py` | 내부 AI task registry와 dispatcher | REWORK | `CONCEPT_PORTFOLIO_V2_RUN` 등록·호출 | facade result contract | 해당 없음 | P1 AI 등록 완료; P3 Backend TaskType/worker 연결 완료 |
 | `backend/.../pipeline/idea/**` | 13개 Idea field, confirmation, snapshot hash | KEEP | Confirmed Idea Brief canonical source | V2 seed adapter | 해당 없음 | 사용자 LOCK/provenance 재사용 |
-| `backend/.../taskrun/domain/**`, `repository/**`, `service/TaskRunService.java` | durable task, claim, heartbeat, recovery, terminal history | KEEP | V2 Run/Continuation 공통 execution 기반 | 새 TaskType·worker | 해당 없음 | terminal immutability와 idempotency 유지 |
-| `backend/.../taskrun/integration/InternalAiExecutionClient.java` | AI Server 동기 HTTP client | REWORK | V2 장기 실행에 안전한 전용 호출 정책 | configurable runtime/heartbeat 설계 | 해당 없음 | 공통 read timeout 30초는 `run_full()`에 부적합 |
-| `backend/.../taskrun/domain/TaskType.java` | task type registry | REWORK | Portfolio initial/continuation task type 포함 | P3 worker | 해당 없음 | 기존 `CONCEPT_FACTORY_RUN`과 동시 authority 금지 |
+| `backend/.../taskrun/domain/**`, `repository/**`, `service/TaskRunService.java` | durable task, claim, heartbeat, recovery, terminal history | KEEP | V2 Run/Continuation 공통 execution 기반 | 새 TaskType·worker | 해당 없음 | P3 active-claim 확인, 주기 heartbeat, lease 만료 재큐잉 재사용 완료 |
+| `backend/.../taskrun/integration/InternalAiExecutionClient.java` | AI Server 동기 HTTP client | REWORK | V2 장기 실행에 안전한 전용 호출 정책 | configurable runtime/heartbeat 설계 | 해당 없음 | P3 일반 30초 유지, V2에만 기본 15분 qualified client 적용 |
+| `backend/.../taskrun/domain/TaskType.java` | task type registry | REWORK | Portfolio initial/continuation task type 포함 | P3 worker | 해당 없음 | P3 initial `CONCEPT_PORTFOLIO_V2_RUN` 등록; continuation type은 P4 |
 | `backend/.../jobevent/**` | JobEvent 저장, sequence, job SSE/replay/poll | KEEP | V2 job event 기반 | Product event projection | 해당 없음 | project-level stream은 별도 추가 |
-| `backend/.../pipeline/concept/api/ConceptFactoryController.java` | Slot Factory 공식 API | REPLACE | `/concept-portfolio-runs` resource API | 새 `pipeline/conceptportfolio/api` | 새 Frontend caller 0 | legacy history 조회만 adapter 가능 |
+| `backend/.../pipeline/concept/api/ConceptFactoryController.java` | Slot Factory 공식 API | REPLACE | `/concept-portfolio-runs` resource API | 새 `pipeline/conceptportfolio/api` | 새 Frontend caller 0 | P3 독립 공식 Run 생성·조회 API 완료; legacy history 조회만 adapter 가능 |
 | `backend/.../pipeline/concept/application/ConceptFactoryService.java` | 5 Slot run 생성·retry·공개 | REPLACE | Portfolio Run service와 Product status mapper | 새 Portfolio persistence | controller/worker caller 0 | `COMPLETED` 전 concepts 빈 목록 규칙 폐기 |
 | `backend/.../pipeline/concept/application/ConceptFactoryExecutionService.java` | Slot 상태와 attempt orchestration | REPLACE | V2 result materialization/continuation merge | V2 facade result | worker caller 0 | Spring에서 V2 알고리즘 재구현 금지 |
 | `backend/.../pipeline/concept/worker/ConceptFactoryWorker.java` | Slot별 Candidate/Legal worker | REPLACE | 단일 V2 durable run worker | long-run heartbeat/lease | V2 worker cutover | 기존 engine과 병렬 실행 금지 |
@@ -25,7 +25,7 @@
 | `backend/.../pipeline/concept/domain/ConceptFactoryLimits.java` | `SLOT_COUNT=5`와 bounded limits | DELETE | requested max는 Portfolio Run field | Amendment | caller 0 | max=5는 성공 gate가 아님 |
 | `backend/.../pipeline/concept/domain/ConceptFactoryCompletionPolicy.java` | 정확히 5 Slot/Concept publish gate | DELETE | 1~5 결과 Product mapper | Portfolio materializer | caller 0 + 대체 tests | CPV2와 직접 충돌 |
 | `backend/.../pipeline/concept/domain/ConceptSlot.java` 및 Slot repository | Slot 중심 persistence | DELETE | Candidate/lineage 중심 Portfolio Concept | 신규 tables + read-only legacy adapter | legacy data 조회 경로 확정 | 신규 Run 저장 금지 |
-| `backend/.../pipeline/concept/domain/Concept.java` 및 repository | published legacy Concept | REPLACE | `ConceptPortfolioConcept` immutable result | P2 migration | selection/market FK 전환 | 기존 데이터는 삭제하지 않음 |
+| `backend/.../pipeline/concept/domain/Concept.java` 및 repository | published legacy Concept | REPLACE | `ConceptPortfolioConcept` immutable result | P2 migration | selection/market FK 전환 | P2 V10 additive Portfolio resource 완료; 기존 데이터는 삭제하지 않음 |
 | `backend/.../pipeline/legal/**` | assessment, official evidence, legal context | REWORK | Portfolio Concept Legal snapshot과 최종 Report 근거 | Portfolio concept adapter, report resource | 해당 없음 | Evidence 추출 기반은 재사용 |
 | `backend/.../pipeline/selection/**` | 명시적 selection, 7 hypotheses, alternative/Delta | REWORK | 새 Portfolio Concept를 참조하는 유일한 선택 authority | FK/repository adapter | legacy Concept FK caller 0 | Engine `selectedConceptId` 무시 |
 | `backend/.../pipeline/marketseed/**` | immutable Market Seed materialization | REWORK | 최종 Legal Report current gate 포함 canonical handoff | 새 Portfolio Concept/Report FK | legacy Concept FK caller 0 | payload 조립 로직은 대부분 재사용 |

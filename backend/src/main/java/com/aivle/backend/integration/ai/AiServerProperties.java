@@ -8,6 +8,7 @@ public record AiServerProperties(
     String baseUrl,
     Duration connectTimeout,
     Duration readTimeout,
+    Duration conceptPortfolioReadTimeout,
     String internalApiKey
 ) {
     public AiServerProperties {
@@ -20,6 +21,9 @@ public record AiServerProperties(
         readTimeout = readTimeout == null
             ? Duration.ofSeconds(30)
             : readTimeout;
+        conceptPortfolioReadTimeout = conceptPortfolioReadTimeout == null
+            ? Duration.ofMinutes(15)
+            : conceptPortfolioReadTimeout;
         internalApiKey = internalApiKey == null
             ? ""
             : internalApiKey.trim();
@@ -29,6 +33,8 @@ public record AiServerProperties(
             || connectTimeout.isNegative()
             || readTimeout.isZero()
             || readTimeout.isNegative()
+            || conceptPortfolioReadTimeout.isZero()
+            || conceptPortfolioReadTimeout.isNegative()
         ) {
             throw new IllegalArgumentException(
                 "AI server timeouts must be positive"

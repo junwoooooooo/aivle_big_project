@@ -166,3 +166,14 @@ Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않�
 - Trace 경계: Observer seam은 준비되었으나 Python process 내부 callback이다. Cross-process AI progress transport는 P2/P3 이후 Backend integration 과제이며, 연결 전에는 임의의 시간 기반 상세 진행 이벤트를 만들지 않는다.
 - 확인: P1 표적 테스트 23개, 대상 package compile, Core diff 확인, `git diff --check`를 수행한다. Provider/MOLEG LIVE, 전체 AI test/build, Backend·DB·Frontend 변경은 수행하지 않았다.
 - 다음 시작점: P2 additive persistence와 P3 Backend TaskType/worker, 장시간 timeout·lease·heartbeat 및 실제 trace event transport다.
+
+## 8. P2+P3 implementation status — PASS
+
+- Additive persistence: 기존 migration을 수정하지 않고 V10에 Portfolio Run, Concept, shared Continuation Context, InputRequest, InputResponse 다섯 resource를 추가했다. 1~5개 결과와 Candidate lineage를 보존하며 Slot/정확히 5개 gate는 새 schema에 넣지 않았다.
+- 공식 실행 경로: Confirmed Idea Brief의 정본 field·provenance·interpretation을 해시 가능한 seed로 구성하고, `POST /api/v3/projects/{projectId}/concept-portfolio-runs` 및 current/run/concepts 조회 API를 독립 `pipeline/conceptportfolio` package에 추가했다. 미확정·stale source, ownership, active run, idempotency 충돌을 시작 전에 차단한다.
+- Durable execution: Backend `TaskType.CONCEPT_PORTFOLIO_V2_RUN`이 P1 Internal AI dispatcher를 호출한다. 일반 AI 호출의 30초 timeout은 유지하고 V2에만 기본 15분 read timeout을 적용한다. bounded executor 위 blocking future를 20초 기본 주기로 heartbeat하며, 90초 lease·20분 task deadline과 만료 attempt 재큐잉을 사용한다.
+- 원자 materialization: active claim authority와 input hash를 다시 확인한 동일 transaction에서 TaskRun terminal 결과와 Portfolio Run/Concept/Continuation/InputRequest를 저장한다. late/stale worker는 Product row와 terminal event를 만들 수 없다.
+- Product 상태: 1~5 ACCEPT는 정상 결과이며 Candidate-local open input은 다른 ACCEPT 결과를 막지 않는다. 0 ACCEPT와 actionable input은 `NEEDS_INPUT`, 실제 system/provider/contract failure는 `FAILED`로 분리한다. Engine default candidate는 비권위 정보일 뿐이며 selection row는 생성하지 않는다.
+- Event 경계: 실제 Backend lifecycle에 근거한 queued/running/heartbeat/terminal JobEvent만 사용한다. P1 observer의 상세 trace는 아직 Python process 내부 seam이므로 cross-process progress transport는 후속 integration 과제이며 시간 기반 가짜 단계 event는 만들지 않는다.
+- 확인: CPV2 migration/seed/API/materialization/status/worker와 AI client routing 표적 테스트, 기존 Internal AI client 직접 영향 테스트 및 Java compile을 통과했다. Provider/MOLEG LIVE, Docker/Testcontainers, Backend 전체 테스트, Frontend 작업은 수행하지 않았다.
+- 다음 시작점: P4 Candidate 추가정보 응답·새 continuation TaskRun·동일 lineage merge다. P2+P3에서는 InputResponse schema만 준비했으며 continuation API/worker는 시작하지 않았다.

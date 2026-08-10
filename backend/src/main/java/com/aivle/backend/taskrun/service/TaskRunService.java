@@ -141,6 +141,22 @@ public class TaskRunService {
         attempt.start(claimToken, LocalDateTime.now(clock));
     }
 
+    @Transactional
+    public void assertActiveClaim(String runId, String attemptId, String claimToken) {
+        TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);
+        TaskAttempt attempt = attempts.findByIdAndTaskRunId(attemptId, runId).orElseThrow(this::notFound);
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (run.getState() != TaskRunState.RUNNING || run.getFinalResultId() != null
+                || !attemptId.equals(run.getCurrentAttemptId())) {
+            throw new TaskRunFailure("AI_RESULT_INVALID", "LATE_OR_DUPLICATE_RESULT",
+                HttpStatus.CONFLICT, false);
+        }
+        try { attempt.assertCompletable(claimToken, now); }
+        catch (IllegalStateException | IllegalArgumentException invalid) {
+            throw new TaskRunFailure("AI_RESULT_INVALID", "STALE_CLAIM", HttpStatus.CONFLICT, false);
+        }
+    }
+
     @Transactional(noRollbackFor = TaskRunFailure.class)
     public TaskResult adopt(String runId, String attemptId, String claimToken, String payload, String hash, String schemaVersion) {
         TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound);

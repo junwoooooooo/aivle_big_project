@@ -2,6 +2,7 @@ package com.aivle.backend.taskrun.domain;
 public enum TaskType {
     IDEA_ATTACHMENT_PARSE,
     IDEA_BRIEF_DERIVATION,
+    CONCEPT_PORTFOLIO_V2_RUN,
     CONCEPT_FACTORY_RUN,
     CONCEPT_CANDIDATE,
     CONCEPT_DISTINCTNESS_JUDGE,

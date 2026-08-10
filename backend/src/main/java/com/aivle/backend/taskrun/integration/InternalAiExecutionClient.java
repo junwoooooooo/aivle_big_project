@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -89,14 +90,22 @@ public class InternalAiExecutionClient {
     );
 
     private final RestClient client;
+    private final RestClient conceptPortfolioClient;
     private final AiServerProperties properties;
     private final ObjectMapper mapper;
 
+    @Autowired
     public InternalAiExecutionClient(@Qualifier("aiServerRestClient") RestClient client,
-                                     AiServerProperties properties, ObjectMapper mapper) {
+            @Qualifier("conceptPortfolioAiServerRestClient") RestClient conceptPortfolioClient,
+            AiServerProperties properties, ObjectMapper mapper) {
         this.client = client;
+        this.conceptPortfolioClient = conceptPortfolioClient;
         this.properties = properties;
         this.mapper = mapper;
+    }
+
+    public InternalAiExecutionClient(RestClient client, AiServerProperties properties, ObjectMapper mapper) {
+        this(client, client, properties, mapper);
     }
 
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
@@ -115,7 +124,8 @@ public class InternalAiExecutionClient {
         byte[] requestBytes = mapper.writeValueAsBytes(requestEnvelope(run, attemptId, deadline));
         enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED");
         try {
-            byte[] responseBytes = client.post().uri("/internal/v1/ai/executions")
+            RestClient selectedClient = clientFor(run.taskType());
+            byte[] responseBytes = selectedClient.post().uri("/internal/v1/ai/executions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.internalApiKey())
                 .header("X-Correlation-Id", run.correlationId())
@@ -131,6 +141,10 @@ public class InternalAiExecutionClient {
                 "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
             );
         }
+    }
+
+    RestClient clientFor(TaskType taskType) {
+        return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN ? conceptPortfolioClient : client;
     }
 
     JsonNode requestPayload(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {

@@ -47,7 +47,16 @@ app:
     base-url: ${AI_SERVER_BASE_URL:http://127.0.0.1:8000}
     connect-timeout: ${AI_SERVER_CONNECT_TIMEOUT:3s}
     read-timeout: ${AI_SERVER_READ_TIMEOUT:30s}
+    concept-portfolio-read-timeout: ${AI_SERVER_CONCEPT_PORTFOLIO_READ_TIMEOUT:15m}
     internal-api-key: ${AI_SERVER_INTERNAL_API_KEY:}
+  task-run:
+    concept-portfolio:
+      lease: ${CONCEPT_PORTFOLIO_TASK_LEASE:90s}
+      heartbeat-interval: ${CONCEPT_PORTFOLIO_HEARTBEAT_INTERVAL:20s}
+      task-timeout: ${CONCEPT_PORTFOLIO_TASK_TIMEOUT:20m}
+      ai-deadline: ${CONCEPT_PORTFOLIO_AI_DEADLINE:15m}
+      executor-threads: ${CONCEPT_PORTFOLIO_EXECUTOR_THREADS:2}
+      queue-capacity: ${CONCEPT_PORTFOLIO_EXECUTOR_QUEUE_CAPACITY:4}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:false}

@@ -116,6 +116,7 @@ public class ProjectJobQueryService {
     private JobModule module(TaskType type) {
         return switch (type) {
             case IDEA_ATTACHMENT_PARSE, IDEA_BRIEF_DERIVATION -> JobModule.IDEA;
+            case CONCEPT_PORTFOLIO_V2_RUN -> JobModule.CONCEPT_PORTFOLIO;
             case CONCEPT_FACTORY_RUN, CONCEPT_CANDIDATE, CONCEPT_DISTINCTNESS_JUDGE,
                 CONCEPT_LEGAL_REVIEW, CONCEPT_REDESIGN -> JobModule.CONCEPT_FACTORY;
             case CONCEPT_HYPOTHESIS_ALTERNATIVE, CONCEPT_DELTA_LEGAL_REVIEW -> JobModule.CONCEPT_SELECTION;
@@ -126,7 +127,7 @@ public class ProjectJobQueryService {
     }
 
     private enum JobModule {
-        IDEA("/idea"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
+        IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
         TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }
