@@ -102,12 +102,12 @@ def test_completion_compliance_rejects_unchanged_required_field():
 class ScopeViolationProvider(MockPortfolioProvider):
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
         patch = await super().complete_legal_facts(seed, plan, candidate, requirements, candidate_index)
-        return patch.model_copy(update={"channels": "요청되지 않은 채널 변경"})
+        return {**patch, "channels": "요청되지 않은 채널 변경"}
 
 
 class NoncompliantProvider(MockPortfolioProvider):
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
-        return LegalFactCompletionPatch(**{field: None for field in LegalFactCompletionPatch.model_fields})
+        return {item.field: getattr(candidate, item.field) for item in requirements}
 
 
 def test_targeted_patch_scope_violation_is_candidate_scoped_prelegal_exclusion():

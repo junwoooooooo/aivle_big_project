@@ -74,6 +74,8 @@ class FailureCode(StrEnum):
     LEGAL_FACT_DEPENDENCY_UNRESOLVED = "LEGAL_FACT_DEPENDENCY_UNRESOLVED"
     LEGAL_FACT_COMPLETION_CANDIDATE_INVALID = "LEGAL_FACT_COMPLETION_CANDIDATE_INVALID"
     LEGAL_FACT_COMPLETION_SCOPE_VIOLATION = "LEGAL_FACT_COMPLETION_SCOPE_VIOLATION"
+    CONCEPT_FACT_CONSISTENCY_INVALID = "CONCEPT_FACT_CONSISTENCY_INVALID"
+    CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED = "CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED"
     NO_LEGAL_READY_CANDIDATES = "NO_LEGAL_READY_CANDIDATES"
     LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED = "LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED"
     LEGAL_REDESIGN_LOOP_DETECTED = "LEGAL_REDESIGN_LOOP_DETECTED"
@@ -376,6 +378,10 @@ class LegalCandidatePreparation(StrictModel):
     roleSemanticBatchCalls: int = 0
     dependencySemanticBatchCalls: int = 0
     completionCompliance: list["LegalFactCompletionCompliance"] = Field(default_factory=list)
+    consistencyReports: list["ConceptFactConsistencyResult"] = Field(default_factory=list)
+    consistencyRepairAttempted: int = 0
+    consistencyRepairAccepted: int = 0
+    consistencyRepairExhausted: int = 0
 
 
 class BusinessRoleSemanticItem(StrictModel):
@@ -423,6 +429,7 @@ class LegalFactCompletionRequirement(StrictModel):
     reasonType: Literal[
         "MISSING_REQUIRED_FACT", "DEPENDENCY_UNKNOWN", "ROLE_MISMATCH",
         "TRANSACTION_INCOMPLETE", "PAYMENT_INCOMPLETE", "GENERAL_FACT_INCOMPLETE",
+        "FACT_CONSISTENCY_REPAIR",
     ]
     dependencyType: LegalFactDependencyType | None
     instruction: str
@@ -449,6 +456,27 @@ class LegalFactCompletionCompliance(StrictModel):
     unsatisfiedRequirements: list[str] = Field(default_factory=list)
     changedFields: list[str] = Field(default_factory=list)
     unchangedRequiredFields: list[str] = Field(default_factory=list)
+    safeSummary: str
+
+
+class ConceptFactConsistencyIssue(StrictModel):
+    field: Literal[
+        "intermediaryRole", "sellerRole", "personalDataUsage",
+        "physicalActivities", "partnerRequirements",
+    ]
+    relation: Literal[
+        "SERVICE_PHYSICAL", "TRANSACTION_INTERMEDIARY", "TRANSACTION_SELLER",
+        "PARTNER_OPERATION", "DATA_PERSONAL",
+    ]
+    status: Literal["POTENTIAL_CONFLICT", "INVALID_FACT"]
+    safeReason: str
+    repairInstruction: str
+
+
+class ConceptFactConsistencyResult(StrictModel):
+    candidateId: str | None = None
+    status: Literal["CONSISTENT", "POTENTIAL_CONFLICT", "INVALID_FACT"]
+    issues: list[ConceptFactConsistencyIssue] = Field(default_factory=list)
     safeSummary: str
 
 
@@ -641,6 +669,7 @@ class ArchitectureConfidenceProfile(StrictModel):
 
 
 class SemanticArchitectureClassification(StrictModel):
+    entityId: str
     architecture: BusinessArchitecture
     confidence: ArchitectureConfidenceProfile
     safeSummary: str
@@ -674,6 +703,10 @@ class RunSummary(StrictModel):
     legalFactCompletionCompliancePassed: int = 0
     legalFactCompletionProviderNoncompliant: int = 0
     legalFactCompletionRecheckFailed: int = 0
+    factConsistencyInvalid: int = 0
+    factConsistencyRepairAttempted: int = 0
+    factConsistencyRepairAccepted: int = 0
+    factConsistencyRepairExhausted: int = 0
     legalRedesignAttempted: int = 0
     legalRedesignValidated: int = 0
     legalRedesignAccepted: int = 0

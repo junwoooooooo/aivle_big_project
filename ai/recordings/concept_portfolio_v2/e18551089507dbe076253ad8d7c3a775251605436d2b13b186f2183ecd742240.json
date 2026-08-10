@@ -1,0 +1,134 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f787a5ccae3d616f3c947f016907a54093f78899d467c3d3d134b89e0e729af4",
+  "canonicalRequestHash": "e18551089507dbe076253ad8d7c3a775251605436d2b13b186f2183ecd742240",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P7",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 및 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P8",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P9",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구를 통한 CRM 통합 및 구독 모델 기반의 지속적인 수익 창출."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구를 통한 CRM 통합 및 구독 모델 기반의 지속적인 수익 창출."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구를 통한 CRM 통합 및 구독 모델 기반의 지속적인 수익 창출."
+    }
+  ],
+  "durationMs": 8183,
+  "timestamp": "2026-08-10T06:40:44.796977+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

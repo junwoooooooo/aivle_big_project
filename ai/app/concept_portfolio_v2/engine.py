@@ -23,6 +23,7 @@ from .candidate_governance import (
     DIRECT_CANDIDATE_LOCKS, candidate_result_to_draft, normalize_candidate_draft,
 )
 from .distinctness import deterministic_distinctness, descriptor_values
+from .fact_consistency import assess_concept_fact_consistency
 from .language_policy import candidate_language_failures, plan_language_failures
 from .hypothesis_validation import assess_hypotheses, assess_hypothesis_value
 from .legal_fact_completeness import (
@@ -32,7 +33,8 @@ from .legal_fact_completeness import (
 )
 from .mechanics import GenericConceptNormalizer, derive_candidate_descriptor
 from .models import (
-    BusinessRoleSemanticItem, LegalFactCompletionCompliance, LegalFactDependencySemanticItem,
+    BusinessRoleSemanticItem, ConceptFactConsistencyResult, LegalFactCompletionCompliance,
+    LegalFactCompletionRequirement, LegalFactDependencySemanticItem,
     CandidateEnvelope, CandidatePortfolioPreparation, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
     DeltaLegalResult, DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff,
     ExplorationBreadth, FailureCode, FailureDiagnostics, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
@@ -182,6 +184,8 @@ class ConceptPortfolioEngine:
             "factAttempted", "factValidated", "factAccepted", "factExhausted",
             "dependencySemanticCalls", "completionCompliancePassed",
             "providerNoncompliant", "recheckFailed",
+            "consistencyInvalid", "consistencyRepairAttempted",
+            "consistencyRepairAccepted", "consistencyRepairExhausted",
             "redesignAttempted", "redesignValidated", "redesignAccepted", "redesignExhausted",
             "replanAttempted", "replanValidated", "replanAccepted", "replanExhausted",
         )}
@@ -322,9 +326,11 @@ class ConceptPortfolioEngine:
             "currentArchitecture": plan.descriptor.architecture.model_dump(mode="json"),
         } for plan in pending]
         classified = await self.gateway.classify_architectures(items)
+        classified_by_id = {item.entityId: item for item in classified}
         replacements = {plan.planId: plan.model_copy(update={
-            "descriptor": GenericConceptNormalizer.apply_semantic_fallback(plan.descriptor, result)
-        }) for plan, result in zip(pending, classified, strict=True)}
+            "descriptor": GenericConceptNormalizer.apply_semantic_fallback(
+                plan.descriptor, classified_by_id[plan.planId])
+        }) for plan in pending}
         normalized = [replacements.get(plan.planId, plan) for plan in plans]
         self._event(RunStage.PLANNING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
                     f"low-confidence Plan architecture {len(pending)}개를 batch 분류했습니다.",
@@ -587,9 +593,11 @@ class ConceptPortfolioEngine:
                       "currentArchitecture": item.descriptor.architecture.model_dump(mode="json")}
                      for item in pending]
             classified = await self.gateway.classify_architectures(items)
+            classified_by_id = {result.entityId: result for result in classified}
             replacements = {item.candidateId: item.model_copy(update={
-                "descriptor": GenericConceptNormalizer.apply_semantic_fallback(item.descriptor, result)
-            }) for item, result in zip(pending, classified, strict=True)}
+                "descriptor": GenericConceptNormalizer.apply_semantic_fallback(
+                    item.descriptor, classified_by_id[item.candidateId])
+            }) for item in pending}
             candidates = [replacements.get(item.candidateId, item) for item in candidates]
             self._event(RunStage.CANDIDATE_VALIDATING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
                         f"low-confidence Candidate architecture {len(pending)}개를 batch 분류했습니다.",
@@ -922,6 +930,100 @@ class ConceptPortfolioEngine:
         return {"status": status, "businessRole": role_code, "confidence": confidence,
                 "safeReason": reason}
 
+    async def _repair_fact_consistency(
+        self, seed: CanonicalSeed, candidates: list[CandidateEnvelope],
+    ) -> tuple[list[CandidateEnvelope], list[ConceptFactConsistencyResult], list[dict[str, Any]], int, int, int]:
+        """명백한 자기모순만 Candidate별 1회 targeted patch로 정정한다."""
+        plan_by_id = {item.planId: item for item in self._last_plan_pool}
+        accepted: list[CandidateEnvelope] = []
+        reports: list[ConceptFactConsistencyResult] = []
+        excluded: list[dict[str, Any]] = []
+        attempted = repaired = exhausted = 0
+        for envelope in candidates:
+            report = assess_concept_fact_consistency(
+                envelope.candidate, envelope.descriptor, envelope.candidateId)
+            reports.append(report)
+            self._event(RunStage.LEGAL_RECOVERING, "CONCEPT_FACT_CONSISTENCY_CHECKED", report.status,
+                        report.safeSummary, entity_id=envelope.candidateId, decision=report.status)
+            invalid_issues = [item for item in report.issues if item.status == "INVALID_FACT"]
+            if not invalid_issues:
+                accepted.append(envelope)
+                continue
+            attempted += 1
+            requirements = [LegalFactCompletionRequirement(
+                field=item.field, reasonType="FACT_CONSISTENCY_REPAIR", dependencyType=None,
+                instruction=item.repairInstruction) for item in invalid_issues]
+            requirements = list({item.field: item for item in requirements}.values())
+            try:
+                patch = await self.gateway.complete_legal_facts(
+                    seed, plan_by_id[envelope.planId], envelope.candidate,
+                    requirements, envelope.candidate.candidateIndex)
+            except ProviderFailure as failure:
+                if self._is_global_legal_failure(failure):
+                    raise
+                exhausted += 1
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED.value,
+                    "affectedFields": [item.field for item in requirements],
+                    "consistencyReport": report.model_dump(mode="json"),
+                    "recoveryAttempted": True, "recoveryResolution": failure.reason,
+                    "safeSummary": "사업정보 정합성 targeted patch 응답을 적용할 수 없습니다.",
+                })
+                continue
+            patch_values = patch.model_dump(mode="json")
+            changed_fields = [field for field, value in patch_values.items() if value is not None]
+            allowed_fields = {item.field for item in requirements}
+            if set(changed_fields) - allowed_fields:
+                exhausted += 1
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_SCOPE_VIOLATION.value,
+                    "affectedFields": sorted(set(changed_fields) - allowed_fields),
+                    "consistencyReport": report.model_dump(mode="json"),
+                    "patchChangedFields": changed_fields,
+                    "recoveryAttempted": True, "recoveryResolution": "PATCH_SCOPE_VIOLATION",
+                    "safeSummary": "사업정보 정합성 patch가 허용되지 않은 필드를 변경했습니다.",
+                })
+                continue
+            draft = candidate_result_to_draft(envelope.candidate).model_copy(update={
+                field: value for field, value in patch_values.items() if value is not None})
+            candidate = normalize_candidate_draft(
+                draft, seed, ExplorationBreadth(envelope.candidate.generationStrategy),
+                envelope.candidate.candidateIndex)
+            child = envelope.model_copy(update={
+                "candidateId": f"{envelope.candidateId}-FC1",
+                "parentCandidateId": envelope.candidateId,
+                "recoverySource": "FACT_CONSISTENCY_REPAIR",
+                "descriptor": derive_candidate_descriptor(candidate), "candidate": candidate,
+            })
+            others = [*accepted, *[item for item in candidates if item.candidateId != envelope.candidateId]]
+            validated, _ = await self.validate_candidates(
+                seed, [plan_by_id[envelope.planId]], [child], comparison_context=others)
+            child_report = (assess_concept_fact_consistency(
+                validated[0].candidate, validated[0].descriptor, validated[0].candidateId)
+                if validated else None)
+            if not validated or not child_report or child_report.status == "INVALID_FACT":
+                exhausted += 1
+                excluded.append({
+                    "candidateId": child.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED.value,
+                    "affectedFields": [item.field for item in requirements],
+                    "consistencyReport": (child_report or report).model_dump(mode="json"),
+                    "patchChangedFields": changed_fields,
+                    "recoveryAttempted": True, "recoveryResolution": (
+                        "CANDIDATE_VALIDATION_FAILED" if not validated else "CONSISTENCY_RECHECK_FAILED"),
+                    "safeSummary": "1회 정정 후에도 Candidate 검증 또는 사업정보 정합성을 통과하지 못했습니다.",
+                })
+                continue
+            reports.append(child_report)
+            accepted.append(validated[0])
+            repaired += 1
+            self._event(RunStage.LEGAL_RECOVERING, "CONCEPT_FACT_CONSISTENCY_REPAIRED", "PASS",
+                        child_report.safeSummary, entity_id=validated[0].candidateId,
+                        parent_id=envelope.candidateId, provider_call=True)
+        return accepted, reports, excluded, attempted, repaired, exhausted
+
     async def _assess_legal_fact_batch(self, candidates: list[CandidateEnvelope]):
         deterministic = [assess_legal_fact_completeness(
             item.candidate, descriptor=item.descriptor).model_copy(
@@ -985,6 +1087,11 @@ class ConceptPortfolioEngine:
         attempted = validated = accepted = exhausted = role_calls = dependency_calls = 0
         provider_noncompliant = recheck_failed = 0
         compliance_results: list[LegalFactCompletionCompliance] = []
+        (candidates, consistency_reports, consistency_excluded,
+         consistency_attempted, consistency_accepted,
+         consistency_exhausted) = await self._repair_fact_consistency(seed, candidates)
+        excluded.extend(consistency_excluded)
+        exhausted += consistency_exhausted
         initial_reports, initial_role_calls, initial_dependency_calls = await self._assess_legal_fact_batch(candidates)
         role_calls += initial_role_calls
         dependency_calls += initial_dependency_calls
@@ -1008,9 +1115,28 @@ class ConceptPortfolioEngine:
                 continue
             attempted += 1
             requirements = report.structuredCompletionRequirements
-            patch = await self.gateway.complete_legal_facts(
-                seed, plan_by_id[envelope.planId], envelope.candidate,
-                requirements, envelope.candidate.candidateIndex)
+            try:
+                patch = await self.gateway.complete_legal_facts(
+                    seed, plan_by_id[envelope.planId], envelope.candidate,
+                    requirements, envelope.candidate.candidateIndex)
+            except ProviderFailure as failure:
+                if self._is_global_legal_failure(failure):
+                    raise
+                exhausted += 1
+                reason_code = (FailureCode.LEGAL_FACT_COMPLETION_SCOPE_VIOLATION
+                               if "UNSUPPORTED_FIELDS" in failure.reason
+                               else FailureCode.LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT)
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": reason_code.value,
+                    "affectedFields": report.affectedFields,
+                    "dependencyDecisions": [item.model_dump(mode="json")
+                                            for item in report.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in requirements],
+                    "recoveryAttempted": True, "recoveryResolution": failure.reason,
+                    "safeSummary": "Completion Provider 응답이 targeted patch 계약을 위반했습니다.",
+                })
+                continue
             patch_values = patch.model_dump(mode="json")
             changed_fields = [field for field, value in patch_values.items() if value is not None]
             allowed_fields = {item.field for item in requirements}
@@ -1111,11 +1237,18 @@ class ConceptPortfolioEngine:
             item.status == "PASS" for item in compliance_results)
         self._legal_metrics["providerNoncompliant"] += provider_noncompliant
         self._legal_metrics["recheckFailed"] += recheck_failed
+        self._legal_metrics["consistencyInvalid"] += consistency_attempted
+        self._legal_metrics["consistencyRepairAttempted"] += consistency_attempted
+        self._legal_metrics["consistencyRepairAccepted"] += consistency_accepted
+        self._legal_metrics["consistencyRepairExhausted"] += consistency_exhausted
         preparation = LegalCandidatePreparation(candidates=ready, reports=reports, excludedCandidates=excluded,
             completionAttempted=attempted, completionValidated=validated,
             completionAccepted=accepted, completionExhausted=exhausted,
             roleSemanticBatchCalls=role_calls, dependencySemanticBatchCalls=dependency_calls,
-            completionCompliance=compliance_results)
+            completionCompliance=compliance_results, consistencyReports=consistency_reports,
+            consistencyRepairAttempted=consistency_attempted,
+            consistencyRepairAccepted=consistency_accepted,
+            consistencyRepairExhausted=consistency_exhausted)
         self._last_legal_preparation = preparation
         self._last_pre_legal_exclusions.extend(excluded)
         return preparation
@@ -1707,6 +1840,10 @@ class ConceptPortfolioEngine:
                 legalFactCompletionCompliancePassed=self._legal_metrics["completionCompliancePassed"],
                 legalFactCompletionProviderNoncompliant=self._legal_metrics["providerNoncompliant"],
                 legalFactCompletionRecheckFailed=self._legal_metrics["recheckFailed"],
+                factConsistencyInvalid=self._legal_metrics["consistencyInvalid"],
+                factConsistencyRepairAttempted=self._legal_metrics["consistencyRepairAttempted"],
+                factConsistencyRepairAccepted=self._legal_metrics["consistencyRepairAccepted"],
+                factConsistencyRepairExhausted=self._legal_metrics["consistencyRepairExhausted"],
                 legalRedesignAttempted=self._legal_metrics["redesignAttempted"],
                 legalRedesignValidated=self._legal_metrics["redesignValidated"],
                 legalRedesignAccepted=self._legal_metrics["redesignAccepted"],
@@ -1793,6 +1930,10 @@ class ConceptPortfolioEngine:
             legalFactCompletionCompliancePassed=self._legal_metrics.get("completionCompliancePassed", 0),
             legalFactCompletionProviderNoncompliant=self._legal_metrics.get("providerNoncompliant", 0),
             legalFactCompletionRecheckFailed=self._legal_metrics.get("recheckFailed", 0),
+            factConsistencyInvalid=self._legal_metrics.get("consistencyInvalid", 0),
+            factConsistencyRepairAttempted=self._legal_metrics.get("consistencyRepairAttempted", 0),
+            factConsistencyRepairAccepted=self._legal_metrics.get("consistencyRepairAccepted", 0),
+            factConsistencyRepairExhausted=self._legal_metrics.get("consistencyRepairExhausted", 0),
             legalRedesignAttempted=self._legal_metrics.get("redesignAttempted", 0),
             legalRedesignValidated=self._legal_metrics.get("redesignValidated", 0),
             legalRedesignAccepted=self._legal_metrics.get("redesignAccepted", 0),

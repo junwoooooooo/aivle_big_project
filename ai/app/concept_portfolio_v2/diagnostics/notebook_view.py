@@ -136,10 +136,12 @@ def show_legal_precheck(results):
 def show_legal_fact_completeness(preparation):
     summary = {key: getattr(preparation, key) for key in (
         "completionAttempted", "completionValidated", "completionAccepted", "completionExhausted",
-        "roleSemanticBatchCalls", "dependencySemanticBatchCalls")}
+        "roleSemanticBatchCalls", "dependencySemanticBatchCalls", "consistencyRepairAttempted",
+        "consistencyRepairAccepted", "consistencyRepairExhausted")}
     summary["preparedForLegal"] = len(preparation.candidates)
     return {"summary": _table([summary]),
             "reports": _table([_dump(item) for item in preparation.reports]),
+            "consistencyReports": _table([_dump(item) for item in preparation.consistencyReports]),
             "completionCompliance": _table([_dump(item) for item in preparation.completionCompliance]),
             "excludedCandidates": _table(preparation.excludedCandidates)}
 
@@ -317,7 +319,7 @@ def show_required_inputs(result_or_items):
 def show_pre_legal_exclusions(result_or_items):
     items = (result_or_items.preLegalExclusions if hasattr(result_or_items, "preLegalExclusions")
              else list(result_or_items or []))
-    keys = ("candidateId", "scope", "reasonCode", "affectedFields", "dependencyDecisions",
+    keys = ("candidateId", "scope", "reasonCode", "affectedFields", "consistencyReport", "dependencyDecisions",
             "completionRequirements", "patchChangedFields", "completionCompliance", "recheckStatus",
             "recoveryAttempted", "recoveryResolution", "safeSummary")
     return _table([{key: item.get(key) for key in keys} for item in items])
@@ -347,6 +349,10 @@ def show_live_validation_summary(scenario_id, result):
         "Completion compliance PASS": summary.legalFactCompletionCompliancePassed if summary else 0,
         "Provider noncompliant": summary.legalFactCompletionProviderNoncompliant if summary else 0,
         "Completion recheck failed": summary.legalFactCompletionRecheckFailed if summary else 0,
+        "Fact consistency invalid": summary.factConsistencyInvalid if summary else 0,
+        "Consistency repair attempted": summary.factConsistencyRepairAttempted if summary else 0,
+        "Consistency repair accepted": summary.factConsistencyRepairAccepted if summary else 0,
+        "Consistency repair exhausted": summary.factConsistencyRepairExhausted if summary else 0,
         "Legal ready": summary.legalReady if summary else 0,
         "Legal initial reviewed": summary.legalInitialReviewed if summary else 0,
         "Legal recovery reviewed": summary.legalRecoveryReviewed if summary else 0,

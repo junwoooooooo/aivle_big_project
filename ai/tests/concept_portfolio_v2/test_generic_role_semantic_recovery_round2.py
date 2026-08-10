@@ -55,8 +55,8 @@ class CompletionRecheckProvider(TrackingRoleProvider):
         patch = await MockPortfolioProvider.complete_legal_facts(
             self, seed, plan, candidate, requirements, candidate_index)
         role_fields = {item.field for item in requirements if item.reasonType == "ROLE_MISMATCH"}
-        return patch.model_copy(update={field: "해당 역할의 책임과 경계를 운영 정책에 따라 조율합니다"
-                                        for field in role_fields})
+        return {**patch, **{field: "해당 역할의 책임과 경계를 운영 정책에 따라 조율합니다"
+                            for field in role_fields}}
 
 
 class ExhaustedRoleProvider(CompletionRecheckProvider):
@@ -190,7 +190,7 @@ def test_mock_completion_does_not_invent_physical_activity_for_digital_candidate
         seed, plan, candidate, [LegalFactCompletionRequirement(
             field="providerRole", reasonType="ROLE_MISMATCH", dependencyType=None,
             instruction="providerRole을 명시")], candidate.candidateIndex))
-    assert completed.physicalActivities is None
+    assert "physicalActivities" not in completed
 
 
 def test_digital_feedback_text_is_not_reported_as_regulated_physical_activity():

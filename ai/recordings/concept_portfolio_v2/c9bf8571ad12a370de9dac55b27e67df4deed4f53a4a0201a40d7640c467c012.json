@@ -1,0 +1,617 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:65d2485ca2c1aa90e524965eaf4a1196cfd420d7c434ce414aeace525b087ee9",
+  "canonicalRequestHash": "c9bf8571ad12a370de9dac55b27e67df4deed4f53a4a0201a40d7640c467c012",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "platformRole",
+        "value": "AI 도구 제공자",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "구독 모델을 통한 판매",
+          "intermediaryRole": "CRM 시스템과의 연동 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 회의 내용을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C1",
+        "field": "providerRole",
+        "value": "AI 도구 개발 및 유지보수",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "구독 모델을 통한 판매",
+          "intermediaryRole": "CRM 시스템과의 연동 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 회의 내용을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C1",
+        "field": "intermediaryRole",
+        "value": "CRM 시스템과의 연동 지원",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "구독 모델을 통한 판매",
+          "intermediaryRole": "CRM 시스템과의 연동 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 회의 내용을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "platformRole",
+        "value": "AI 도구 제공자",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 연동을 통한 데이터 관리"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "providerRole",
+        "value": "AI 도구 개발 및 유지보수",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 연동을 통한 데이터 관리"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "intermediaryRole",
+        "value": "CRM 시스템과의 연동을 통한 데이터 관리",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 연동을 통한 데이터 관리"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "platformRole",
+        "value": "AI 도구 제공자",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템 제공자와의 협력"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "providerRole",
+        "value": "AI 도구 개발 및 유지보수",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템 제공자와의 협력"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "intermediaryRole",
+        "value": "CRM 시스템 제공자와의 협력",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템 제공자와의 협력"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력한다.",
+          "AI 도구가 내용을 분석한다.",
+          "CRM에 자동으로 업데이트된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "AI 도구 제공자가 서비스를 제공한다."
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "platformRole",
+        "value": "AI 도구 제공자",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 통합 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트",
+          "후속 조치 제안"
+        ],
+        "paymentFlow": [
+          "고객이 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "providerRole",
+        "value": "AI 도구 개발 및 유지보수",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 통합 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트",
+          "후속 조치 제안"
+        ],
+        "paymentFlow": [
+          "고객이 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "intermediaryRole",
+        "value": "CRM 시스템과의 통합 지원",
+        "roleFields": {
+          "platformRole": "AI 도구 제공자",
+          "providerRole": "AI 도구 개발 및 유지보수",
+          "sellerRole": "AI 도구의 판매 및 고객 지원",
+          "intermediaryRole": "CRM 시스템과의 통합 지원"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 도구",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 입력",
+          "AI 도구가 내용을 분석",
+          "CRM에 자동으로 업데이트",
+          "후속 조치 제안"
+        ],
+        "paymentFlow": [
+          "고객이 구독료를 결제",
+          "AI 도구 제공자가 서비스 제공",
+          "고객 지원 및 업데이트 제공"
+        ],
+        "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+        "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+        "solutionMechanism": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "MEDIUM",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 제공자' corresponds to platformRole."
+    },
+    {
+      "candidateId": "C1",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 개발 및 유지보수' corresponds to providerRole."
+    },
+    {
+      "candidateId": "C1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value 'CRM 시스템과의 연동 지원' corresponds to intermediaryRole."
+    },
+    {
+      "candidateId": "C2",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 제공자' corresponds to platformRole."
+    },
+    {
+      "candidateId": "C2",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 개발 및 유지보수' corresponds to providerRole."
+    },
+    {
+      "candidateId": "C2",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value 'CRM 시스템과의 연동을 통한 데이터 관리' corresponds to intermediaryRole."
+    },
+    {
+      "candidateId": "C3",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 제공자' corresponds to platformRole."
+    },
+    {
+      "candidateId": "C3",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 개발 및 유지보수' corresponds to providerRole."
+    },
+    {
+      "candidateId": "C3",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value 'CRM 시스템 제공자와의 협력' corresponds to intermediaryRole."
+    },
+    {
+      "candidateId": "C4",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 제공자' corresponds to platformRole."
+    },
+    {
+      "candidateId": "C4",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "value 'AI 도구 개발 및 유지보수' corresponds to providerRole."
+    },
+    {
+      "candidateId": "C4",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value 'CRM 시스템과의 통합 지원' corresponds to intermediaryRole."
+    }
+  ],
+  "durationMs": 5595,
+  "timestamp": "2026-08-10T06:43:47.242427+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
