@@ -21,6 +21,7 @@ class InternalAiExecutionClientRoutingTests {
 
         assertThat(client.clientFor(TaskType.CONCEPT_PORTFOLIO_V2_RUN)).isSameAs(longRead);
         assertThat(client.clientFor(TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE)).isSameAs(longRead);
+        assertThat(client.clientFor(TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION)).isSameAs(longRead);
         assertThat(client.clientFor(TaskType.IDEA_BRIEF_DERIVATION)).isSameAs(normal);
         assertThat(properties.readTimeout()).isEqualTo(Duration.ofSeconds(30));
         assertThat(properties.conceptPortfolioReadTimeout()).isEqualTo(Duration.ofMinutes(15));

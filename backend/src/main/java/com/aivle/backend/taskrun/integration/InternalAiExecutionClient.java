@@ -146,6 +146,7 @@ public class InternalAiExecutionClient {
     RestClient clientFor(TaskType taskType) {
         return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN
             || taskType == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE
+            || taskType == TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION
             ? conceptPortfolioClient : client;
     }
 

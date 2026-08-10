@@ -13,4 +13,5 @@ public interface ConceptPortfolioConceptRepository extends JpaRepository<Concept
     boolean existsByRunIdAndLineageIdAndDeletedAtIsNull(String runId, String lineageId);
     Optional<ConceptPortfolioConcept> findFirstByRunIdAndDeletedAtIsNullOrderByDisplayOrderDesc(
         String runId);
+    Optional<ConceptPortfolioConcept> findByIdAndProjectIdAndDeletedAtIsNull(String id, Long projectId);
 }

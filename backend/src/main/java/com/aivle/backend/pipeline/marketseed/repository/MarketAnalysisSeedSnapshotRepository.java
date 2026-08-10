@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MarketAnalysisSeedSnapshotRepository extends JpaRepository<MarketAnalysisSeedSnapshot, String> {
     Optional<MarketAnalysisSeedSnapshot> findBySelectionIdAndProjectIdAndDeletedAtIsNull(Long selectionId, Long projectId);
     Optional<MarketAnalysisSeedSnapshot> findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(Long projectId);
+    Optional<MarketAnalysisSeedSnapshot> findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(Long selectionId);
+    java.util.List<MarketAnalysisSeedSnapshot> findAllByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(Long selectionId);
 }

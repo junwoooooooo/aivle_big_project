@@ -16,9 +16,20 @@ from .service import (
     ConceptPortfolioProductionFacade,
     execute_concept_portfolio_v2,
 )
+from .selection_models import (
+    ConceptPortfolioSelectionActionInput,
+    ConceptPortfolioSelectionActionResult,
+)
+from .selection_service import (
+    ConceptPortfolioSelectionActionFacade,
+    execute_concept_portfolio_v2_selection_action,
+)
 
 __all__ = [
     "ConceptPortfolioProductionFacade",
+    "ConceptPortfolioSelectionActionFacade",
+    "ConceptPortfolioSelectionActionInput",
+    "ConceptPortfolioSelectionActionResult",
     "ConceptPortfolioContinuationFacade",
     "ConceptPortfolioContinuationInput",
     "ConceptPortfolioContinuationResult",
@@ -29,4 +40,5 @@ __all__ = [
     "ProductionObservedConceptPortfolioEngine",
     "execute_concept_portfolio_v2",
     "execute_concept_portfolio_v2_continuation",
+    "execute_concept_portfolio_v2_selection_action",
 ]
