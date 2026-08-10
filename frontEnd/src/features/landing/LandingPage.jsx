@@ -158,7 +158,7 @@ function DemoSection({ reducedMotion }) {
         <p className="landing-eyebrow">JOURNEY PREVIEW</p>
         <h2 id="demo-title" tabIndex="-1">서비스 흐름을 먼저 살펴보세요.</h2>
         <p className="landing-section__lede">
-          아래 화면은 전체 Journey의 상호작용을 설명하는 가상 예시입니다. 실제 프로젝트에서는 로그인 후
+          아래 화면은 전체 파이프라인의 상호작용을 설명하는 가상 예시입니다. 실제 프로젝트에서는 로그인 후
           Provider 실행 결과와 사용자 선택이 저장됩니다.
         </p>
         <DemoSimulator reducedMotion={reducedMotion} />

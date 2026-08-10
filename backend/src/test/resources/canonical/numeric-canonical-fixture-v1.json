@@ -1,0 +1,7 @@
+{
+  "taskType": "CONCEPT_REDESIGN",
+  "taskSchemaVersion": "1.0",
+  "locale": "ko-KR",
+  "inputJson": "{\"numbers\":[0,-0,1,1.0,1.00,0.1,3.5,100000000.0,-12.3400,1e3,1E-3],\"candidate\":{\"conceptName\":\"소분 반찬 구독\",\"preMarketSomShareHypothesis\":{\"targetSharePercent\":3.5},\"preMarketSomHypothesis\":{\"amount\":100000000.0},\"nested\":[{\"price\":-12.3400},{\"zero\":-0.0}]}}",
+  "expectedHash": "sha256:e25ed5269a4344590feb521a1a1a52754286ba6186076322b640cdf16e1fb3ba"
+}

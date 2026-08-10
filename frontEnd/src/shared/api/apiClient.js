@@ -142,8 +142,61 @@ export function createApiClient({
     }
   }
 
+  async function stream(path, options = {}, hasRetried = false) {
+    const {
+      headers = {},
+      signal,
+      authenticate = true,
+      refreshOnUnauthorized = true,
+    } = options;
+    const requestHeaders = new Headers(headers);
+    const accessToken = authenticate
+      ? await tokenProvider?.getAccessToken?.()
+      : null;
+    if (accessToken) requestHeaders.set('Authorization', `Bearer ${accessToken}`);
+    if (!requestHeaders.has('Accept')) requestHeaders.set('Accept', 'text/event-stream');
+
+    try {
+      const response = await fetchImpl(buildApiUrl(baseUrl, path), {
+        method: 'GET',
+        headers: requestHeaders,
+        signal,
+        credentials: 'same-origin',
+      });
+      if (response.status === 401 && refreshOnUnauthorized && !hasRetried) {
+        onUnauthorized?.();
+        const refreshed = await refreshOnce();
+        if (refreshed) return stream(path, options, true);
+      }
+      if (!response.ok) {
+        const payload = await readResponseBody(response);
+        throw new ApiError({
+          status: response.status,
+          code: payload?.error?.code ?? `HTTP_${response.status}`,
+          message: payload?.error?.message ?? '이벤트 연결을 열지 못했습니다.',
+          fieldErrors: payload?.error?.fieldErrors ?? [],
+          retryable: payload?.error?.retryable ?? response.status >= 500,
+          requestId: payload?.meta?.requestId ?? response.headers.get('x-request-id'),
+          retryAfterSeconds: retryAfterSeconds(response, payload),
+        });
+      }
+      if (!response.headers.get('content-type')?.includes('text/event-stream')) {
+        throw new ApiError({
+          status: 502,
+          code: 'INVALID_EVENT_STREAM',
+          message: '이벤트 응답 형식이 올바르지 않습니다.',
+          retryable: true,
+        });
+      }
+      return response;
+    } catch (error) {
+      throw normalizeApiError(error);
+    }
+  }
+
   return {
     request,
+    stream,
     get: (path, options) => request(path, options),
     post: (path, body, options) => request(path, { ...options, method: 'POST', body }),
     put: (path, body, options) => request(path, { ...options, method: 'PUT', body }),

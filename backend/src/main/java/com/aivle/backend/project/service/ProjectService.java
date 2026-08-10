@@ -83,12 +83,12 @@ public class ProjectService {
 
     private ProjectSummaryResponse summary(Project p) {
         return new ProjectSummaryResponse(p.getId(), p.getTitle(), p.getIndustryCategory(),
-                p.getStage(), p.getStatus(), p.getCreatedAt(), p.getUpdatedAt());
+                p.getStatus(), p.getCreatedAt(), p.getUpdatedAt());
     }
 
     private ProjectDetailResponse detail(Project p) {
         return new ProjectDetailResponse(p.getId(), p.getOwner().getId(), p.getTitle(), p.getDescription(),
-                p.getIndustryCategory(), p.getStage(), p.getStatus(), p.getStartedAt(), p.getCompletedAt(),
+                p.getIndustryCategory(), p.getStatus(), p.getStartedAt(), p.getCompletedAt(),
                 p.getCreatedAt(), p.getUpdatedAt(), p.getVersion());
     }
 }

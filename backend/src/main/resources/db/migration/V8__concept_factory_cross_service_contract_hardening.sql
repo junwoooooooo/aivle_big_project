@@ -1,0 +1,25 @@
+ALTER TABLE concept_attempts
+    DROP CONSTRAINT ck_concept_attempt_error;
+
+ALTER TABLE concept_attempts
+    ADD CONSTRAINT ck_concept_attempt_error CHECK (error_classification IS NULL OR error_classification IN (
+        'SCHEMA_INVALID','REQUEST_CONTRACT_INVALID','TRANSIENT_PROVIDER_FAILURE','PERMANENT_PROVIDER_FAILURE',
+        'ORIGIN_INVALID','LOCKED_CONSTRAINT_INVALID','DUPLICATE_CONCEPT',
+        'INSUFFICIENT_DISTINCT_CONCEPTS','SCHEMA_REPAIR_EXHAUSTED',
+        'DISTINCTNESS_EXHAUSTED','REPLACEMENT_EXHAUSTED','LEGAL_REDESIGN_EXHAUSTED',
+        'LEGAL_REDESIGN_REQUIRED','LEGAL_REJECTED','LEGAL_EXTERNAL_FACT_UNRESOLVED',
+        'INSUFFICIENT_INFORMATION','INTERNAL_EXECUTION_ERROR','CANDIDATE_DOMAIN_REJECTION',
+        'LEGAL_DOMAIN_REJECTION','RESULT_SCHEMA_INVALID','LEGAL_SOURCE_FAILURE',
+        'NEEDS_FACTS','INTERNAL_STATE_FAILURE'
+    ));
+
+ALTER TABLE concept_rejection_summaries
+    ADD COLUMN attempt_id VARCHAR(64);
+
+ALTER TABLE concept_rejection_summaries
+    ADD CONSTRAINT fk_concept_rejection_summary_attempt
+    FOREIGN KEY (attempt_id) REFERENCES concept_attempts(id);
+
+CREATE UNIQUE INDEX ux_concept_rejection_summary_attempt
+    ON concept_rejection_summaries(attempt_id)
+    WHERE attempt_id IS NOT NULL;

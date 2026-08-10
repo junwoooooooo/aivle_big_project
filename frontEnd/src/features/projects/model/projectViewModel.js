@@ -1,17 +1,5 @@
-import {
-  getProjectArea,
-  getProjectBasePath,
-  getProjectNextAction,
-  getProjectStatusView,
-} from './projectWorkflowModel.js';
-
-const STAGE_LABEL = {
-  DOCUMENT: '아이디어', STRUCTURING: '아이디어', LEGAL_REVIEW: '법률 검토',
-  FEASIBILITY: '콘셉트 생성', FINANCIAL: '콘셉트 분석',
-  PERSONA_CONFIGURATION: '콘셉트 선택', PANEL_SURVEY: '페르소나',
-  PANEL_DISCUSSION: '인터뷰', MARKETING: '마케팅', REPORT: '최종 보고서',
-  COMPLETED: '최종 보고서',
-};
+import { getProjectStatusView } from '../../../app/module-status/projectModuleModel.js';
+import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 
 export function toProjectViewModel(project) {
   const viewModel = {
@@ -20,21 +8,26 @@ export function toProjectViewModel(project) {
     description: project.description ?? '',
     industryCategory: project.industryCategory ?? '',
     status: project.status,
-    stage: project.stage,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt ?? project.createdAt,
     version: project.version,
   };
   const statusView = getProjectStatusView(viewModel.status);
-  const nextAction = getProjectNextAction(viewModel);
+  const nextAction = {
+    type: 'READY',
+    label: '8단계 모듈 확인',
+    description: '프로젝트 개요에서 각 모듈의 독립 상태와 필요한 입력을 확인할 수 있습니다.',
+    route: projectRoutes.overview(viewModel.projectId),
+    priority: 'NORMAL',
+  };
   return {
     ...viewModel,
     statusLabel: statusView.label,
     statusTone: statusView.tone,
-    stageLabel: STAGE_LABEL[viewModel.stage] ?? '단계 확인 필요',
-    area: getProjectArea(viewModel),
+    stageLabel: '8단계 모듈',
+    area: 'PIPELINE',
     nextAction,
-    nextRoute: nextAction.route.replace(`${getProjectBasePath(viewModel.projectId)}/`, ''),
+    nextRoute: 'overview',
   };
 }
 

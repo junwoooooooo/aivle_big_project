@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketingContentRequestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "marketingSourceSnapshotId",
+    "contentType",
+    "channel",
+    "purpose",
+    "tone",
+    "length"
+  ],
+  "properties": {
+    "contract": {
+      "const": "marketing-content-request-v1"
+    },
+    "marketingSourceSnapshotId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "contentType": {
+      "enum": [
+        "SOCIAL_POST",
+        "AD_COPY",
+        "LANDING_PAGE",
+        "BLOG_INTRO",
+        "EMAIL",
+        "BANNER",
+        "POSTER",
+        "IMAGE_BRIEF"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "tone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "length": {
+      "enum": [
+        "SHORT",
+        "MEDIUM",
+        "LONG"
+      ]
+    },
+    "requiredPhrases": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "excludedPhrases": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "additionalInstruction": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  }
+}

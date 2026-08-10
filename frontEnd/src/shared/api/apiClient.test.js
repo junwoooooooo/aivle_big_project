@@ -16,6 +16,28 @@ describe('api client', () => {
     expect(options.headers.get('Authorization')).toBe('Bearer access-token');
   });
 
+  it('opens an authenticated SSE stream without putting the token in the URL', async () => {
+    const fetchImpl = vi.fn(async () => new Response(new ReadableStream(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    }));
+    const client = createApiClient({
+      baseUrl: '/api/v1',
+      fetchImpl,
+      tokenProvider: { getAccessToken: () => 'stream-access-token' },
+    });
+
+    await client.stream('/api/v2/jobs/job-1/events', {
+      headers: { 'Last-Event-ID': '7' },
+    });
+
+    const [url, options] = fetchImpl.mock.calls[0];
+    expect(url).toBe('/api/v2/jobs/job-1/events');
+    expect(url).not.toContain('stream-access-token');
+    expect(options.headers.get('Authorization')).toBe('Bearer stream-access-token');
+    expect(options.headers.get('Last-Event-ID')).toBe('7');
+  });
+
   it('returns the successful API response envelope', async () => {
     const payload = { success: true, data: { id: 1 }, meta: { requestId: 'req-1' } };
     const client = createApiClient({

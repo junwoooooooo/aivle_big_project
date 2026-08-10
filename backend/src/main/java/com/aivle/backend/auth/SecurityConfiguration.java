@@ -45,6 +45,7 @@ public class SecurityConfiguration {
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
+                .requestMatchers("/api/v3/internal/market-results").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth -> oauth
@@ -104,6 +105,7 @@ public class SecurityConfiguration {
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
+                .requestMatchers("/api/v3/internal/market-results").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(headerAuthenticationFilter, AnonymousAuthenticationFilter.class)
@@ -136,6 +138,7 @@ public class SecurityConfiguration {
                     "/actuator/health/**",
                     "/h2-console/**"
                 ).permitAll()
+                .requestMatchers("/api/v3/internal/market-results").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(headerAuthenticationFilter, AnonymousAuthenticationFilter.class)

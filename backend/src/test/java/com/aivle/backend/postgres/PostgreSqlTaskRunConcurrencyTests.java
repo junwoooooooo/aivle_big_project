@@ -38,9 +38,9 @@ class PostgreSqlTaskRunConcurrencyTests extends PostgreSqlIntegrationTestSupport
         User owner = users.saveAndFlush(User.create("claim-" + suffix + "@example.com", "hash", "owner"));
         Project project = projects.saveAndFlush(Project.create(owner, "claim race", null, null));
         String input = "{}";
-        String hash = hasher.hash(TaskType.IDEA_INTERPRETATION, "1.0", "ko-KR", input);
-        TaskRun run = service.create(owner.getId(), project.getId(), TaskType.IDEA_INTERPRETATION,
-            "IDEA_INTERPRETATION_RUN", "claim-race-" + suffix, input, hash, "create-" + suffix, "correlation-" + suffix, 3);
+        String hash = hasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", input);
+        TaskRun run = service.create(owner.getId(), project.getId(), TaskType.IDEA_BRIEF_DERIVATION,
+            "IDEA_BRIEF_DERIVATION_RUN", "claim-race-" + suffix, input, hash, "create-" + suffix, "correlation-" + suffix, 3);
 
         CountDownLatch ready = new CountDownLatch(2);
         CountDownLatch start = new CountDownLatch(1);

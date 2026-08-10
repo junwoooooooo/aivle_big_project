@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.local/rebuild/financial-input-snapshot-v1.schema.json",
+  "title": "FinancialInputSnapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract", "schemaVersion", "snapshotId", "projectId", "preparationId",
+    "sourceTechOpsSnapshotId", "sourceMarketSeedSnapshotId", "sourceSnapshotHash",
+    "createdAt", "values", "valueProvenance", "calculatedCac", "upstreamReferences",
+    "assistance", "hash"
+  ],
+  "properties": {
+    "contract": { "const": "financial-input-snapshot-v1" },
+    "schemaVersion": { "const": "2.0" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "integer", "minimum": 1 },
+    "preparationId": { "type": "string", "minLength": 1 },
+    "sourceTechOpsSnapshotId": { "type": "string", "minLength": 1 },
+    "sourceMarketSeedSnapshotId": { "type": "string", "minLength": 1 },
+    "sourceSnapshotHash": { "$ref": "#/$defs/hash" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "values": {
+      "type": "object",
+      "required": [
+        "annualFixedLaborCost", "annualFixedRentAndManagementCost", "annualFixedInfrastructureCost",
+        "initialDevelopmentAndRnDCost", "initialEquipmentAndInfrastructureCost", "initialPatentAndLicensingCost",
+        "threeYearTargets", "totalMarketingCost", "totalSalesCost", "newCustomerCount",
+        "unitVariableCost", "paymentFee", "partnerPayout", "shippingCost", "customerIncrementalInfraCost"
+      ],
+      "properties": {
+        "annualFixedLaborCost": { "$ref": "#/$defs/money" },
+        "annualFixedRentAndManagementCost": { "$ref": "#/$defs/money" },
+        "annualFixedInfrastructureCost": { "$ref": "#/$defs/money" },
+        "initialDevelopmentAndRnDCost": { "$ref": "#/$defs/money" },
+        "initialEquipmentAndInfrastructureCost": { "$ref": "#/$defs/money" },
+        "initialPatentAndLicensingCost": { "$ref": "#/$defs/money" },
+        "threeYearTargets": { "$ref": "#/$defs/targets" },
+        "totalMarketingCost": { "$ref": "#/$defs/money" },
+        "totalSalesCost": { "$ref": "#/$defs/money" },
+        "newCustomerCount": { "type": "integer", "minimum": 1 },
+        "unitVariableCost": { "$ref": "#/$defs/optionalMoney" },
+        "paymentFee": { "$ref": "#/$defs/optionalMoney" },
+        "partnerPayout": { "$ref": "#/$defs/optionalMoney" },
+        "shippingCost": { "$ref": "#/$defs/optionalMoney" },
+        "customerIncrementalInfraCost": { "$ref": "#/$defs/optionalMoney" }
+      }
+    },
+    "valueProvenance": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/provenance" }
+    },
+    "calculatedCac": {
+      "allOf": [
+        { "$ref": "#/$defs/money" },
+        {
+          "type": "object",
+          "required": ["formula", "source"],
+          "properties": {
+            "formula": { "const": "(totalMarketingCost + totalSalesCost) / newCustomerCount" },
+            "source": { "const": "SYSTEM_CALCULATION" }
+          }
+        }
+      ]
+    },
+    "upstreamReferences": { "type": "object" },
+    "assistance": { "type": "object" },
+    "hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "money": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "optionalMoney": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/money" }] },
+    "targets": {
+      "type": "object",
+      "required": ["metric", "unit", "years"],
+      "properties": {
+        "metric": { "enum": ["salesVolume", "customerCount", "subscriberCount", "transactionCount"] },
+        "unit": { "type": "string", "minLength": 1 },
+        "years": {
+          "type": "array", "minItems": 3, "maxItems": 3,
+          "items": {
+            "type": "object", "required": ["year", "value"],
+            "properties": {
+              "year": { "type": "integer", "minimum": 1, "maximum": 3 },
+              "value": { "type": "number", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["value", "source", "decision", "readOnly"],
+      "properties": {
+        "value": {},
+        "source": { "type": "string" },
+        "decision": { "type": "string" },
+        "readOnly": { "type": "boolean" },
+        "sourceSnapshotId": { "type": ["string", "null"] },
+        "provenance": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

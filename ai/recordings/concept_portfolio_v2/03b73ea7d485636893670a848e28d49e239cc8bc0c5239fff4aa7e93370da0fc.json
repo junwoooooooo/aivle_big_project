@@ -1,0 +1,596 @@
+{
+  "taskType": "PLAN_POOL",
+  "operationVersion": "v2.1",
+  "promptVersion": "concept-portfolio-plan-v2.1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5bb6340cbd9ff637a8af77f43fcffe89f22f63a27e9a73eff121b9aca1e7e739",
+  "canonicalRequestHash": "03b73ea7d485636893670a848e28d49e239cc8bc0c5239fff4aa7e93370da0fc",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 발생하는 음식물 쓰레기를 줄이기 위한 문제.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "industryCategory": "식품 및 요리 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 남은 재료 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "특정 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityAnchor": {
+        "problemCore": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUserCore": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "intentCore": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "allowedSpecializations": [
+          "핵심 대상군의 구체 하위 세그먼트",
+          "사용 상황이나 빈도에 따른 세분화",
+          "직장인 1인 가구",
+          "대학생 1인 가구",
+          "집밥 빈도가 높은 2인 가구"
+        ],
+        "forbiddenDrifts": [
+          "핵심 문제를 다른 문제로 교체",
+          "핵심 대상군을 무관한 고객군으로 교체",
+          "기업 급식만을 고객으로 전환"
+        ]
+      },
+      "semanticAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "sourceLocks": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "poolSize": 7
+  },
+  "providerResponse": [
+    {
+      "title": "소량 맞춤형 식재료 배달 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 소량 맞춤형 식재료와 레시피 제공 서비스",
+      "coreMechanism": "소량 패키지 제공",
+      "customerInteraction": "온라인 주문 및 맞춤형 추천",
+      "valueDelivery": "신선한 재료와 요리 레시피 제공",
+      "operatingApproach": "직접 배송 및 재고 관리",
+      "partnerApproach": "지역 농가와 협력",
+      "transactionApproach": "구독 기반 모델",
+      "commercialApproach": "가격 경쟁력 있는 소량 패키지",
+      "fulfillmentApproach": "주문 후 즉시 배송",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "CUSTOMIZED_DELIVERY",
+          "labelKo": "맞춤형 배달",
+          "detailKo": "고객의 요구에 맞춘 소량 식재료 배달 서비스"
+        },
+        "supplyModel": {
+          "code": "LOCAL_FARM_PARTNERSHIP",
+          "labelKo": "지역 농가 파트너십",
+          "detailKo": "지역 농가와의 협력을 통한 신선한 재료 공급"
+        },
+        "fulfillmentModel": {
+          "code": "ON_DEMAND_DELIVERY",
+          "labelKo": "주문형 배송",
+          "detailKo": "주문 후 즉시 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "E_COMMERCE_PLATFORM",
+          "labelKo": "전자상거래 플랫폼",
+          "detailKo": "온라인 플랫폼을 통한 주문 및 결제"
+        },
+        "partnerStructureType": {
+          "code": "DIRECT_PARTNERSHIP",
+          "labelKo": "직접 파트너십",
+          "detailKo": "농가와의 직접적인 파트너십 구조"
+        },
+        "transactionModel": {
+          "code": "SUBSCRIPTION_BASED",
+          "labelKo": "구독 기반 모델",
+          "detailKo": "정기 구독을 통한 지속적인 수익 모델"
+        },
+        "commercialModel": {
+          "code": "COMPETITIVE_PRICING",
+          "labelKo": "경쟁력 있는 가격",
+          "detailKo": "소량 패키지에 대한 가격 경쟁력 확보"
+        },
+        "customerInteractionModel": {
+          "code": "ONLINE_INTERACTION",
+          "labelKo": "온라인 상호작용",
+          "detailKo": "고객과의 온라인 상호작용을 통한 맞춤형 서비스 제공"
+        }
+      },
+      "differentiatingMechanics": [
+        "소량 패키지 제공",
+        "신선한 지역 재료 사용",
+        "맞춤형 레시피 제공",
+        "구독 모델 도입",
+        "온라인 주문 시스템"
+      ],
+      "mainChanges": [
+        "소량 식재료 패키지 도입",
+        "레시피 제공 서비스 추가"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 추천 시스템 도입"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 음식물 쓰레기 문제 해결을 위한 혁신적인 접근."
+    },
+    {
+      "title": "1인 가구를 위한 요리 키트 서비스",
+      "oneLineConcept": "1인 가구를 위한 간편 요리 키트와 레시피 제공 서비스",
+      "coreMechanism": "간편 요리 키트 제공",
+      "customerInteraction": "앱을 통한 주문 및 피드백",
+      "valueDelivery": "간편한 요리 경험 제공",
+      "operatingApproach": "키트 조립 및 배송",
+      "partnerApproach": "식재료 공급업체와 협력",
+      "transactionApproach": "일회성 구매 모델",
+      "commercialApproach": "합리적인 가격의 요리 키트",
+      "fulfillmentApproach": "정기 배송 서비스",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "COOKING_KIT",
+          "labelKo": "요리 키트",
+          "detailKo": "간편하게 요리할 수 있는 키트 제공"
+        },
+        "supplyModel": {
+          "code": "SUPPLIER_PARTNERSHIP",
+          "labelKo": "공급업체 파트너십",
+          "detailKo": "식재료 공급업체와의 협력"
+        },
+        "fulfillmentModel": {
+          "code": "REGULAR_DELIVERY",
+          "labelKo": "정기 배송",
+          "detailKo": "정기적으로 요리 키트를 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "MOBILE_APP",
+          "labelKo": "모바일 앱",
+          "detailKo": "모바일 앱을 통한 주문 및 관리"
+        },
+        "partnerStructureType": {
+          "code": "SUPPLIER_NETWORK",
+          "labelKo": "공급업체 네트워크",
+          "detailKo": "여러 공급업체와의 네트워크 구축"
+        },
+        "transactionModel": {
+          "code": "ONE_TIME_PURCHASE",
+          "labelKo": "일회성 구매",
+          "detailKo": "한 번의 구매로 요리 키트를 제공"
+        },
+        "commercialModel": {
+          "code": "AFFORDABLE_PRICING",
+          "labelKo": "합리적인 가격",
+          "detailKo": "가격 경쟁력을 갖춘 요리 키트 제공"
+        },
+        "customerInteractionModel": {
+          "code": "APP_INTERACTION",
+          "labelKo": "앱 상호작용",
+          "detailKo": "앱을 통한 고객과의 상호작용"
+        }
+      },
+      "differentiatingMechanics": [
+        "간편 요리 키트 제공",
+        "모바일 앱 기반 서비스",
+        "정기 배송 옵션",
+        "합리적인 가격 설정",
+        "고객 피드백 시스템"
+      ],
+      "mainChanges": [
+        "요리 키트 서비스 도입",
+        "모바일 앱 개발"
+      ],
+      "secondaryChanges": [
+        "정기 배송 서비스 추가"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1인 가구의 요리 편의성을 높이기 위한 서비스."
+    },
+    {
+      "title": "대학생 맞춤형 식사 키트 서비스",
+      "oneLineConcept": "대학생을 위한 맞춤형 식사 키트와 레시피 제공 서비스",
+      "coreMechanism": "대학생 맞춤형 식사 키트 제공",
+      "customerInteraction": "온라인 플랫폼을 통한 주문",
+      "valueDelivery": "간편한 식사 준비 제공",
+      "operatingApproach": "키트 조립 및 배송",
+      "partnerApproach": "대학 근처 식재료 공급업체와 협력",
+      "transactionApproach": "구독 모델",
+      "commercialApproach": "학생 할인 제공",
+      "fulfillmentApproach": "주문 후 배송",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "STUDENT_MEAL_KIT",
+          "labelKo": "대학생 식사 키트",
+          "detailKo": "대학생을 위한 맞춤형 식사 키트 제공"
+        },
+        "supplyModel": {
+          "code": "LOCAL_SUPPLIER_PARTNERSHIP",
+          "labelKo": "지역 공급업체 파트너십",
+          "detailKo": "대학 근처 공급업체와의 협력"
+        },
+        "fulfillmentModel": {
+          "code": "ON_DEMAND_DELIVERY",
+          "labelKo": "주문형 배송",
+          "detailKo": "주문 후 즉시 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "ONLINE_PLATFORM",
+          "labelKo": "온라인 플랫폼",
+          "detailKo": "온라인 플랫폼을 통한 주문 및 결제"
+        },
+        "partnerStructureType": {
+          "code": "DIRECT_SUPPLIER_PARTNERSHIP",
+          "labelKo": "직접 공급업체 파트너십",
+          "detailKo": "직접 공급업체와의 파트너십 구조"
+        },
+        "transactionModel": {
+          "code": "SUBSCRIPTION_MODEL",
+          "labelKo": "구독 모델",
+          "detailKo": "정기 구독을 통한 지속적인 수익 모델"
+        },
+        "commercialModel": {
+          "code": "STUDENT_DISCOUNT",
+          "labelKo": "학생 할인",
+          "detailKo": "대학생을 위한 할인 제공"
+        },
+        "customerInteractionModel": {
+          "code": "ONLINE_ORDERING",
+          "labelKo": "온라인 주문",
+          "detailKo": "온라인 플랫폼을 통한 주문"
+        }
+      },
+      "differentiatingMechanics": [
+        "대학생 맞춤형 키트 제공",
+        "학생 할인 제공",
+        "온라인 주문 시스템",
+        "정기 구독 모델",
+        "지역 공급업체와의 협력"
+      ],
+      "mainChanges": [
+        "대학생 맞춤형 서비스 도입",
+        "정기 구독 모델 추가"
+      ],
+      "secondaryChanges": [
+        "온라인 플랫폼 개발"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "대학생의 요리 편의성을 높이기 위한 서비스."
+    },
+    {
+      "title": "1~2인 가구를 위한 건강식 키트 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 건강식 키트와 레시피 제공 서비스",
+      "coreMechanism": "건강식 키트 제공",
+      "customerInteraction": "온라인 주문 및 건강 상담",
+      "valueDelivery": "건강한 식사 제공",
+      "operatingApproach": "키트 조립 및 배송",
+      "partnerApproach": "헬스푸드 공급업체와 협력",
+      "transactionApproach": "구독 모델",
+      "commercialApproach": "건강식 할인 제공",
+      "fulfillmentApproach": "주문 후 배송",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "HEALTHY_MEAL_KIT",
+          "labelKo": "건강식 키트",
+          "detailKo": "건강한 식사를 위한 키트 제공"
+        },
+        "supplyModel": {
+          "code": "HEALTHY_FOOD_PARTNERSHIP",
+          "labelKo": "헬스푸드 파트너십",
+          "detailKo": "헬스푸드 공급업체와의 협력"
+        },
+        "fulfillmentModel": {
+          "code": "ON_DEMAND_DELIVERY",
+          "labelKo": "주문형 배송",
+          "detailKo": "주문 후 즉시 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "E_COMMERCE_PLATFORM",
+          "labelKo": "전자상거래 플랫폼",
+          "detailKo": "온라인 플랫폼을 통한 주문 및 결제"
+        },
+        "partnerStructureType": {
+          "code": "DIRECT_PARTNERSHIP",
+          "labelKo": "직접 파트너십",
+          "detailKo": "헬스푸드 공급업체와의 직접적인 파트너십 구조"
+        },
+        "transactionModel": {
+          "code": "SUBSCRIPTION_BASED",
+          "labelKo": "구독 기반 모델",
+          "detailKo": "정기 구독을 통한 지속적인 수익 모델"
+        },
+        "commercialModel": {
+          "code": "HEALTHY_DISCOUNT",
+          "labelKo": "건강식 할인",
+          "detailKo": "건강식에 대한 할인 제공"
+        },
+        "customerInteractionModel": {
+          "code": "ONLINE_INTERACTION",
+          "labelKo": "온라인 상호작용",
+          "detailKo": "고객과의 온라인 상호작용을 통한 맞춤형 서비스 제공"
+        }
+      },
+      "differentiatingMechanics": [
+        "건강식 키트 제공",
+        "헬스푸드 공급업체와의 협력",
+        "정기 구독 모델",
+        "온라인 주문 시스템",
+        "건강 상담 서비스"
+      ],
+      "mainChanges": [
+        "건강식 키트 서비스 도입",
+        "정기 구독 모델 추가"
+      ],
+      "secondaryChanges": [
+        "온라인 플랫폼 개발"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 건강한 식사 문제 해결을 위한 서비스."
+    },
+    {
+      "title": "요리 초보자를 위한 간편 요리 서비스",
+      "oneLineConcept": "요리 초보자를 위한 간편 요리 키트와 레시피 제공 서비스",
+      "coreMechanism": "간편 요리 키트 제공",
+      "customerInteraction": "온라인 플랫폼을 통한 주문",
+      "valueDelivery": "요리 초보자를 위한 간편한 요리 경험 제공",
+      "operatingApproach": "키트 조립 및 배송",
+      "partnerApproach": "식재료 공급업체와 협력",
+      "transactionApproach": "일회성 구매 모델",
+      "commercialApproach": "합리적인 가격의 요리 키트",
+      "fulfillmentApproach": "정기 배송 서비스",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "BEGINNER_COOKING_KIT",
+          "labelKo": "요리 초보자 키트",
+          "detailKo": "요리 초보자를 위한 간편 요리 키트 제공"
+        },
+        "supplyModel": {
+          "code": "SUPPLIER_PARTNERSHIP",
+          "labelKo": "공급업체 파트너십",
+          "detailKo": "식재료 공급업체와의 협력"
+        },
+        "fulfillmentModel": {
+          "code": "REGULAR_DELIVERY",
+          "labelKo": "정기 배송",
+          "detailKo": "정기적으로 요리 키트를 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "MOBILE_APP",
+          "labelKo": "모바일 앱",
+          "detailKo": "모바일 앱을 통한 주문 및 관리"
+        },
+        "partnerStructureType": {
+          "code": "SUPPLIER_NETWORK",
+          "labelKo": "공급업체 네트워크",
+          "detailKo": "여러 공급업체와의 네트워크 구축"
+        },
+        "transactionModel": {
+          "code": "ONE_TIME_PURCHASE",
+          "labelKo": "일회성 구매",
+          "detailKo": "한 번의 구매로 요리 키트를 제공"
+        },
+        "commercialModel": {
+          "code": "AFFORDABLE_PRICING",
+          "labelKo": "합리적인 가격",
+          "detailKo": "가격 경쟁력을 갖춘 요리 키트 제공"
+        },
+        "customerInteractionModel": {
+          "code": "APP_INTERACTION",
+          "labelKo": "앱 상호작용",
+          "detailKo": "앱을 통한 고객과의 상호작용"
+        }
+      },
+      "differentiatingMechanics": [
+        "간편 요리 키트 제공",
+        "모바일 앱 기반 서비스",
+        "정기 배송 옵션",
+        "합리적인 가격 설정",
+        "고객 피드백 시스템"
+      ],
+      "mainChanges": [
+        "요리 초보자 키트 서비스 도입",
+        "모바일 앱 개발"
+      ],
+      "secondaryChanges": [
+        "정기 배송 서비스 추가"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "요리 초보자의 요리 편의성을 높이기 위한 서비스."
+    },
+    {
+      "title": "1~2인 가구를 위한 맞춤형 다이어트 키트 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 맞춤형 다이어트 키트와 레시피 제공 서비스",
+      "coreMechanism": "다이어트 키트 제공",
+      "customerInteraction": "온라인 주문 및 맞춤형 상담",
+      "valueDelivery": "다이어트에 적합한 식사 제공",
+      "operatingApproach": "키트 조립 및 배송",
+      "partnerApproach": "다이어트 전문 공급업체와 협력",
+      "transactionApproach": "구독 모델",
+      "commercialApproach": "다이어트 키트 할인 제공",
+      "fulfillmentApproach": "주문 후 배송",
+      "mechanics": {
+        "solutionMechanismType": {
+          "code": "DIET_MEAL_KIT",
+          "labelKo": "다이어트 식사 키트",
+          "detailKo": "다이어트에 적합한 식사를 위한 키트 제공"
+        },
+        "supplyModel": {
+          "code": "DIET_FOOD_PARTNERSHIP",
+          "labelKo": "다이어트 식품 파트너십",
+          "detailKo": "다이어트 전문 공급업체와의 협력"
+        },
+        "fulfillmentModel": {
+          "code": "ON_DEMAND_DELIVERY",
+          "labelKo": "주문형 배송",
+          "detailKo": "주문 후 즉시 배송하는 모델"
+        },
+        "platformRoleType": {
+          "code": "E_COMMERCE_PLATFORM",
+          "labelKo": "전자상거래 플랫폼",
+          "detailKo": "온라인 플랫폼을 통한 주문 및 결제"
+        },
+        "partnerStructureType": {
+          "code": "DIRECT_PARTNERSHIP",
+          "labelKo": "직접 파트너십",
+          "detailKo": "다이어트 전문 공급업체와의 직접적인 파트너십 구조"
+        },
+        "transactionModel": {
+          "code": "SUBSCRIPTION_BASED",
+          "labelKo": "구독 기반 모델",
+          "detailKo": "정기 구독을 통한 지속적인 수익 모델"
+        },
+        "commercialModel": {
+          "code": "DIET_DISCOUNT",
+          "labelKo": "다이어트 할인",
+          "detailKo": "다이어트 키트에 대한 할인 제공"
+        },
+        "customerInteractionModel": {
+          "code": "ONLINE_INTERACTION",
+          "labelKo": "온라인 상호작용",
+          "detailKo": "고객과의 온라인 상호작용을 통한 맞춤형 서비스 제공"
+        }
+      },
+      "differentiatingMechanics": [
+        "다이어트 키트 제공",
+        "다이어트 전문 공급업체와의 협력",
+        "정기 구독 모델",
+        "온라인 주문 시스템",
+        "맞춤형 상담 서비스"
+      ],
+      "mainChanges": [
+        "다이어트 키트 서비스 도입",
+        "정기 구독 모델 추가"
+      ],
+      "secondaryChanges": [
+        "온라인 플랫폼 개발"
+      ],
+      "legalRiskHints": [
+        "식품 안전 규정 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 다이어트 문제 해결을 위한 서비스."
+    }
+  ],
+  "durationMs": 124529,
+  "timestamp": "2026-08-09T22:07:18.877351+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 2
+  }
+}

@@ -7,7 +7,7 @@ import usePasswordChecks from '../auth/hooks/usePasswordChecks.js';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { Alert, AppIcon, Button, PageHeader, TextInput } from '../../shared/ui/index.js';
-import { appRoutes } from '../projects/routing/projectRoutes.js';
+import { appRoutes } from '../../app/routing/projectRoutes.js';
 import { ProfileAvatar } from '../../app/layouts/AppShell.jsx';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
 import { getWriteRestriction, isServicePolicyError } from '../service-policy/servicePolicyRestrictions.js';

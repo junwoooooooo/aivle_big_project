@@ -22,13 +22,6 @@ public class TaskRunV2Controller {
         return response(HttpStatus.OK, view(service.getOwned(users.currentUserId(), projectId, taskRunId)), request);
     }
 
-    @PostMapping("/{taskRunId}/retry")
-    public ResponseEntity<Envelope<TaskRunView>> retry(@PathVariable Long projectId, @PathVariable String taskRunId,
-                                                        @RequestHeader("Idempotency-Key") String idempotencyKey, HttpServletRequest request) {
-        if (idempotencyKey == null || idempotencyKey.isBlank()) throw new IllegalArgumentException("Idempotency-Key is required");
-        return response(HttpStatus.ACCEPTED, view(service.retry(users.currentUserId(), projectId, taskRunId, idempotencyKey)), request);
-    }
-
     @PostMapping("/{taskRunId}/cancel")
     public ResponseEntity<Envelope<TaskRunView>> cancel(@PathVariable Long projectId, @PathVariable String taskRunId, HttpServletRequest request) {
         return response(HttpStatus.OK, view(service.cancel(users.currentUserId(), projectId, taskRunId)), request);

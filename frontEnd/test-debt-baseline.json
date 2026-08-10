@@ -4,14 +4,6 @@
   "policy": "New failures and stale allowlist entries fail CI. The allowlist may only shrink.",
   "allowedFailures": [
     {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing supports direct project route entry"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing renders project context navigation"
-    },
-    {
       "file": "src/features/auth/AuthPages.test.jsx",
       "name": "auth pages submits login with accessible fields and returns to an internal route"
     },
@@ -34,46 +26,6 @@
     {
       "file": "src/features/auth/AuthPages.test.jsx",
       "name": "auth pages maps a duplicate signup username to its field"
-    },
-    {
-      "file": "src/features/feasibility/FeasibilityPage.test.jsx",
-      "name": "FeasibilityPage shows immutable plan and legal sources before start"
-    },
-    {
-      "file": "src/features/feasibility/FeasibilityPage.test.jsx",
-      "name": "FeasibilityPage renders server progress and refresh recovery guidance"
-    },
-    {
-      "file": "src/features/feasibility/FeasibilityPage.test.jsx",
-      "name": "FeasibilityPage shows evidence types, validation tasks, finance boundary and disclaimer"
-    },
-    {
-      "file": "src/features/projects/ProjectPages.test.jsx",
-      "name": "project pages renders project data and user-facing state labels"
-    },
-    {
-      "file": "src/features/structured-plan/StructuredPlanCompletion.test.jsx",
-      "name": "structured plan completion submits FILLED with the field lock version and trusts the refetched plan"
-    },
-    {
-      "file": "src/features/structured-plan/StructuredPlanCompletion.test.jsx",
-      "name": "structured plan completion requires a waiver reason and submits WAIVED with the field lock version"
-    },
-    {
-      "file": "src/features/structured-plan/StructuredPlanCompletion.test.jsx",
-      "name": "structured plan completion preserves the user draft across a 409 and retries with the latest field lock version"
-    },
-    {
-      "file": "src/features/structured-plan/StructuredPlanCompletion.test.jsx",
-      "name": "structured plan completion confirms once, refreshes project stage, and renders a read-only legal-review CTA"
-    },
-    {
-      "file": "src/features/personas/hooks/usePersonas.test.jsx",
-      "name": "usePersonas accepts a NEEDS_VALIDATION feasibility result as a valid persona input"
-    },
-    {
-      "file": "src/features/personas/hooks/usePersonas.test.jsx",
-      "name": "usePersonas retries one initial request failure before exposing an error"
     }
   ]
 }

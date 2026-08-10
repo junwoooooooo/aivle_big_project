@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:ebd88f9337a615894f86962e16c2eb1baccf260b911962cafae1182ca6e249ba",
+  "canonicalRequestHash": "271e30a07641673cdc6501e99d9183c3269201a67a1ef59e2b70b681789d6a40",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "주문 및 결제 시스템 제공 식재료 및 레시피 제공 고객에게 식재료 패키지 판매 배송 서비스 제공 고객의 주문에 따라 식재료를 소량으로 조합하여 패키징 지역 농장 및 식품 공급업체와 협력하여 신선한 재료를 확보 고객이 앱에서 주문 주문 정보가 시스템에 저장 주문에 따라 식재료 조합 및 패키징 배송 서비스가 고객에게 배송 고객이 앱에서 결제 결제 정보가 시스템에 저장 결제 완료 후 주문 처리 시작 구독 모델을 통해 지속적인 수익 창출 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "모바일 앱을 통한 주문 및 관리 식재료 공급 및 배송 관리 고객과의 거래 및 서비스 제공 배송업체와의 협력 고객의 주문에 따라 식재료를 소량으로 조합하여 패키징 후 배송 지역 농장 및 식품 공급업체와 협력하여 신선한 재료를 확보 고객이 앱에서 주문 주문 정보가 시스템에 저장 주문에 따라 식재료 조합 및 패키징 배송업체가 고객에게 배송 고객이 앱 내 결제 결제 정보가 시스템에 저장 배송 완료 후 정산 구독 모델을 통한 지속적인 수익 창출 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "서비스 제공 플랫폼 운영 식재료 관리 서비스 제공자 프리미엄 기능 판매자 없음 고객의 식재료를 기반으로 관리 시스템 운영 요리 전문가와 협력하여 다양한 레시피를 개발 고객이 앱에 식재료 입력 시스템이 식재료 관리 및 레시피 추천 고객이 프리미엄 기능 구매 고객이 프리미엄 기능 결제 결제 시스템이 수수료 정산 프리미엄 구독 모델로 수익 창출 모바일 앱, 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "교육 콘텐츠 제공 플랫폼 운영 교육 콘텐츠 제공자 구독 서비스 판매자 없음 고객의 요리 수준에 따라 교육 콘텐츠를 조정 요리 전문가와 협력하여 교육 콘텐츠 개발 고객이 앱에서 요리 기술 수준 입력 맞춤형 교육 콘텐츠 제공 고객이 교육 콘텐츠 이용 고객이 구독료 결제 구독 서비스 제공 구독 모델로 수익 창출 모바일 앱, 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "모바일 앱을 통한 주문 및 결제 시스템 제공 식재료 공급 및 배송 관리 고객과의 거래 및 서비스 제공 물류 및 배송 서비스 제공 고객의 주문에 따라 식재료를 소량으로 조합하여 패키징 지역 농장 및 식품 공급업체와 협력하여 신선한 재료를 확보 고객이 앱에서 주문 주문 정보가 공급업체에 전달 식재료 조합 및 패키징 배송 업체가 고객에게 배송 고객이 앱에서 결제 결제 정보가 처리됨 공급업체에 비용 지급 구독 모델 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "주문 및 결제 시스템을 제공하며, 식재료 및 레시피를 고객에게 제공하고, 지역 농장 및 공급업체와 협력하여 신선한 재료를 확보하는 플랫폼."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "모바일 앱을 통한 주문 및 관리 시스템으로, 식재료 공급 및 배송을 관리하며, 고객의 주문에 따라 패키징 후 배송하는 플랫폼."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "식재료 관리 서비스 제공 플랫폼으로, 고객의 식재료를 기반으로 관리 시스템을 운영하고, 요리 전문가와 협력하여 다양한 레시피를 개발."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "교육 콘텐츠 제공 플랫폼으로, 고객의 요리 수준에 따라 맞춤형 교육 콘텐츠를 제공하고, 구독 모델로 수익을 창출."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "모바일 앱을 통한 주문 및 결제 시스템으로, 식재료 공급 및 배송을 관리하며, 고객의 주문에 따라 패키징 후 배송하는 플랫폼."
+    }
+  ],
+  "durationMs": 7775,
+  "timestamp": "2026-08-10T02:20:31.461552+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

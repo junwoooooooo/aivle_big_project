@@ -1,0 +1,24 @@
+package com.aivle.backend.pipeline.finance.api;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
+import tools.jackson.databind.JsonNode;
+
+public final class FinancialApiModels {
+    private FinancialApiModels() {}
+    public record FinancialFieldsPatch(@NotNull JsonNode values) {}
+    public record EstimateDecisionRequest(@NotBlank String action, JsonNode value) {}
+    public record PreparationView(String contract, String schemaVersion, String preparationId, Long projectId,
+        String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId, String sourceSnapshotHash,
+        int revision, JsonNode financialFields, JsonNode upstreamReferences, JsonNode assistance,
+        JsonNode calculatedCac, List<String> missingRequiredInputs, boolean readyToFinalize,
+        String inputSnapshotId, LocalDateTime updatedAt) {}
+    public record EstimateActionResponse(PreparationView preparation, String taskRunId, String jobId,
+        String status, String actionType, String fieldKey, int proposalVersion) {}
+    public record SnapshotView(String contract, String snapshotId, String schemaVersion, Long projectId,
+        String preparationId, String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId,
+        String snapshotHash, Instant createdAt, JsonNode snapshot) {}
+}

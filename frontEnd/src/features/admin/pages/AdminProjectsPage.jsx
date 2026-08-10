@@ -11,19 +11,14 @@ import useAdminProjects from '../hooks/useAdminProjects.js';
 import '../admin.css';
 
 const DEFAULTS = {
-  keyword: '', owner: '', area: '', status: '', stage: '', industryCategory: '',
+  keyword: '', owner: '', status: '', industryCategory: '',
   createdFrom: '', createdTo: '', page: 0, size: 20, sort: 'updatedAt,desc',
 };
-const AREAS = new Set(['PLAN', 'REVIEW', 'VALIDATE', 'REPORT']);
 const STATUSES = new Set(['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED']);
-const STAGES = new Set([
-  'DOCUMENT', 'STRUCTURING', 'LEGAL_REVIEW', 'FEASIBILITY', 'FINANCIAL',
-  'PERSONA_CONFIGURATION', 'PANEL_SURVEY', 'PANEL_DISCUSSION', 'REPORT', 'MARKETING', 'COMPLETED',
-]);
 const SIZES = new Set([10, 20, 50, 100]);
 const SORTS = new Set([
   'updatedAt,desc', 'createdAt,desc', 'createdAt,asc',
-  'title,asc', 'status,asc', 'stage,asc',
+  'title,asc', 'status,asc',
 ]);
 
 function integer(value, fallback) {
@@ -32,17 +27,13 @@ function integer(value, fallback) {
 }
 
 function parseFilters(params) {
-  const area = params.get('area') || '';
   const status = params.get('status') || '';
-  const stage = params.get('stage') || '';
   const size = integer(params.get('size'), DEFAULTS.size);
   const sort = params.get('sort') || DEFAULTS.sort;
   return {
     keyword: params.get('keyword')?.trim() || '',
     owner: params.get('owner')?.trim() || '',
-    area: AREAS.has(area) ? area : '',
     status: STATUSES.has(status) ? status : '',
-    stage: STAGES.has(stage) ? stage : '',
     industryCategory: params.get('industryCategory')?.trim() || '',
     createdFrom: params.get('createdFrom') || '',
     createdTo: params.get('createdTo') || '',
@@ -127,7 +118,7 @@ export default function AdminProjectsPage() {
   }
 
   const hasFilters = [
-    filters.keyword, filters.owner, filters.area, filters.status, filters.stage,
+    filters.keyword, filters.owner, filters.status,
     filters.industryCategory, filters.createdFrom, filters.createdTo,
   ].some(Boolean);
   const total = data?.totalElements ?? 0;

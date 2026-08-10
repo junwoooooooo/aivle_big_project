@@ -1,0 +1,28 @@
+{
+  "marketAnalysisSeedSnapshot": {
+    "contract": "market-analysis-seed-snapshot-v1",
+    "schemaVersion": "2.0",
+    "requiredTopLevel": [
+      "contract", "schemaVersion", "snapshotId", "projectId", "selectionId", "conceptId",
+      "createdAt", "sourceSnapshotHash", "originalSeed", "aiInterpretation", "selectedConcept",
+      "finalHypotheses", "legalResult"
+    ],
+    "requiredLegalResult": [
+      "legalStatus", "safeSummary", "requiredControls", "requiredPartnersAndQualifications",
+      "prohibitedVariants", "requiredDisclosures", "officialEvidenceReferences", "deltaLegalReviews"
+    ]
+  },
+  "marketingSourceSnapshot": {
+    "contract": "marketing-source-snapshot-v1",
+    "schemaVersion": "2.0",
+    "requiredTopLevel": [
+      "contract", "schemaVersion", "snapshotId", "projectId", "selectionId", "conceptId",
+      "marketAnalysisSeedSnapshotId", "marketAnalysisSeedSnapshotHash", "createdAt", "conceptName",
+      "targetSegment", "problem", "valueProposition", "positioning", "keyFeatures", "targetRegion",
+      "revenueModel", "price", "pricing", "channels", "competitorDifferentiators",
+      "preMarketSomShare", "preMarketSom", "legalStatus", "allowedClaims", "prohibitedClaims",
+      "requiredDisclosures", "requiredControls", "communicationRequiredControls",
+      "officialEvidenceReferences", "hash", "sourceSnapshotHash"
+    ]
+  }
+}

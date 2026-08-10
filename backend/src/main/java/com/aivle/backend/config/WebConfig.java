@@ -13,11 +13,12 @@ public class WebConfig implements WebMvcConfigurer {
             "GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"
     };
     private static final String[] PRODUCTION_HEADERS = {
-            "Content-Type", "Authorization", "X-Request-Id", "Idempotency-Key"
+            "Content-Type", "Authorization", "X-Request-Id", "Idempotency-Key",
+            "Last-Event-ID"
     };
     private static final String[] DEVELOPMENT_HEADERS = {
             "Content-Type", "Authorization", "X-User-Id", "X-User-Role",
-            "X-Request-Id", "Idempotency-Key"
+            "X-Request-Id", "Idempotency-Key", "Last-Event-ID"
     };
 
     private final CorsProperties corsProperties;

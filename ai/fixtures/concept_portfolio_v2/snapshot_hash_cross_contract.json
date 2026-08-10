@@ -1,0 +1,4 @@
+{
+  "payload": {"a": 1.0, "b": "é"},
+  "expectedHash": "sha256:09ad9fd2fb648cb2f62141215828ea00a62c299db05d20aa9ade2f527a301cc6"
+}

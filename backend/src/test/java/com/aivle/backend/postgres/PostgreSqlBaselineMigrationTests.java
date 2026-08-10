@@ -11,11 +11,12 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Tag("postgres")
 class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport {
     @Test
-    void appliesAndValidatesSingleBaselineOnEmptyPostgreSqlSchema() throws Exception {
+    void appliesAndValidatesAllNewPipelineMigrationsOnAnEmptySchema() throws Exception {
         String schema = "baseline_" + UUID.randomUUID().toString().replace("-", "");
         Flyway flyway = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
@@ -24,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(9);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -32,117 +33,130 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .map(info -> info.getVersion().getVersion())
             .toList();
 
-        assertThat(appliedVersions).containsExactly("1");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(appliedVersions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
 
         try (Connection connection = DriverManager.getConnection(
-                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-             var statement = connection.createStatement()) {
-            statement.execute("set search_path to " + schema);
-
+                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             assertTables(connection, schema,
-                "users", "projects", "stored_files", "document_versions",
-                "analysis_jobs", "financial_analyses", "service_settings",
-                "task_runs", "task_attempts", "task_results",
-                "idea_sources", "idea_versions", "idea_origin_versions",
-                "legal_precheck_runs", "legal_precheck_versions", "legal_guardrail_sets",
-                "concept_eligibility_batches", "concept_drafts", "concept_versions",
-                "persona_studies", "marketing_workspaces", "final_reports");
+                "users", "refresh_tokens", "projects", "stored_files", "audit_events",
+                "service_settings", "admin_action_tokens", "task_runs", "task_attempts",
+                "task_results", "job_events", "idea_briefs", "idea_brief_fields",
+                "idea_questions", "idea_answers", "idea_brief_attachments",
+                "legal_context_packs", "legal_evidence", "concept_factory_runs", "concept_slots",
+                "concept_attempts", "concepts", "concept_legal_assessments",
+                "concept_legal_evidence_links", "concept_rejection_summaries", "concept_selections",
+                "market_analysis_seed_snapshots", "module_handoffs", "module_runs", "module_results",
+                "tech_ops_input_preparations", "tech_ops_evidence_references",
+                "tech_ops_input_snapshots", "marketing_source_snapshots", "pipeline_marketing_contents",
+                "pipeline_marketing_content_revisions", "pipeline_marketing_assets");
 
-            // Final effects formerly supplied by Java V5 and V10.
-            assertThat(columnNullable(connection, schema, "users", "email")).isTrue();
-            assertThat(columnNullable(connection, schema, "users", "username")).isFalse();
-            assertThat(indexExists(connection, schema, "uk_users_username")).isTrue();
-            assertThat(indexExists(connection, schema, "uk_active_business_plan_per_project")).isTrue();
-            assertThat(checkConstraintExists(connection, schema, "ck_structured_section_code")).isTrue();
-            assertThat(checkConstraintExists(connection, schema, "ck_structured_item_status")).isTrue();
+            assertTablesAbsent(connection, schema,
+                "project_documents", "document_versions", "structured_plans",
+                "structured_plan_sections", "analysis_jobs", "financial_analyses",
+                "persona_studies", "marketing_workspaces", "final_reports",
+                "selected_concept_snapshots", "planning_change_proposals", "planning_change_decisions",
+                "planning_snapshots", "finalized_planning_snapshots");
+        }
+    }
 
-            assertThat(columnNullable(connection, schema, "financial_analyses", "version_number")).isFalse();
-            assertThat(columnNullable(connection, schema, "financial_analyses", "title")).isFalse();
-            assertThat(columnNullable(connection, schema, "financial_analyses", "analysis_period_months")).isFalse();
-            assertThat(columnNullable(connection, schema, "financial_analyses", "assumptions_json")).isFalse();
-            assertThat(columnNullable(connection, schema, "concept_eligibility_batches", "retryable")).isFalse();
-            assertThat(indexExists(connection, schema, "idx_financial_journey_concept")).isTrue();
-            assertThat(foreignKeyExists(connection, schema, "task_results", "task_attempt_id")).isTrue();
-            assertThat(foreignKeyExists(connection, schema, "concept_versions", "eligibility_batch_id")).isTrue();
+    @Test
+    void upgradesAnExistingV1ThroughV7SchemaWithContractHardeningMigration() throws Exception {
+        String schema = "upgrade_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV7 = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
+            .target("7").load();
+        assertThat(throughV7.migrate().migrationsExecuted).isEqualTo(7);
+
+        Flyway latest = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(2);
+        latest.validate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            assertThat(columnCount(connection, schema, "concept_slots", "replacement_rounds")).isOne();
+            assertThat(columnCount(connection, schema, "concept_rejection_summaries", "attempt_id")).isOne();
+        }
+    }
+
+    @Test
+    void upgradesAnExistingV8SchemaWithRuntimeBudgetConstraints() throws Exception {
+        String schema = "upgrade_v8_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV8 = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
+            .target("8").load();
+        assertThat(throughV8.migrate().migrationsExecuted).isEqualTo(8);
+
+        Flyway latest = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isOne();
+        latest.validate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            statement.execute("SET session_replication_role = replica");
+            statement.execute("""
+                INSERT INTO concept_factory_runs (
+                    id, project_id, source_idea_brief_snapshot_id, source_snapshot_hash, status,
+                    replacement_rounds, inspected_candidate_count, provider_transient_retry_count,
+                    created_by_user_id, created_at, updated_at, version
+                ) VALUES ('budget-run', 1, 'brief-1',
+                    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                    'VALIDATING', 0, 16, 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("UPDATE concept_factory_runs SET inspected_candidate_count = 20, provider_transient_retry_count = 3 WHERE id = 'budget-run'");
+            assertThatThrownBy(() -> statement.execute(
+                "UPDATE concept_factory_runs SET inspected_candidate_count = -1 WHERE id = 'budget-run'"))
+                .hasMessageContaining("ck_concept_run_inspected");
+            assertThatThrownBy(() -> statement.execute(
+                "UPDATE concept_factory_runs SET provider_transient_retry_count = -1 WHERE id = 'budget-run'"))
+                .hasMessageContaining("ck_concept_run_provider_retry");
+            statement.execute("SET session_replication_role = origin");
         }
     }
 
     private void assertTables(Connection connection, String schema, String... tables) throws Exception {
         for (String table : tables) {
-            try (var statement = connection.prepareStatement("""
-                select count(*) from information_schema.tables
-                where table_schema = ? and table_name = ?
-                """)) {
-                statement.setString(1, schema);
-                statement.setString(2, table);
-                try (ResultSet result = statement.executeQuery()) {
-                    result.next();
-                    assertThat(result.getInt(1)).as("table %s", table).isEqualTo(1);
-                }
+            assertThat(tableCount(connection, schema, table)).as("table %s", table).isEqualTo(1);
+        }
+    }
+
+    private void assertTablesAbsent(Connection connection, String schema, String... tables) throws Exception {
+        for (String table : tables) {
+            assertThat(tableCount(connection, schema, table)).as("legacy table %s", table).isZero();
+        }
+    }
+
+    private int tableCount(Connection connection, String schema, String table) throws Exception {
+        try (var statement = connection.prepareStatement("""
+            select count(*) from information_schema.tables
+            where table_schema = ? and table_name = ?
+            """)) {
+            statement.setString(1, schema);
+            statement.setString(2, table);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1);
             }
         }
     }
 
-    private boolean columnNullable(Connection connection, String schema, String table, String column)
-        throws Exception {
+    private int columnCount(Connection connection, String schema, String table, String column) throws Exception {
         try (var statement = connection.prepareStatement("""
-            select is_nullable from information_schema.columns
+            select count(*) from information_schema.columns
             where table_schema = ? and table_name = ? and column_name = ?
             """)) {
             statement.setString(1, schema);
             statement.setString(2, table);
             statement.setString(3, column);
             try (ResultSet result = statement.executeQuery()) {
-                assertThat(result.next()).as("column %s.%s", table, column).isTrue();
-                return "YES".equals(result.getString(1));
-            }
-        }
-    }
-
-    private boolean indexExists(Connection connection, String schema, String index) throws Exception {
-        try (var statement = connection.prepareStatement("""
-            select count(*) from pg_indexes where schemaname = ? and indexname = ?
-            """)) {
-            statement.setString(1, schema);
-            statement.setString(2, index);
-            try (ResultSet result = statement.executeQuery()) {
                 result.next();
-                return result.getInt(1) == 1;
-            }
-        }
-    }
-
-    private boolean checkConstraintExists(Connection connection, String schema, String constraint) throws Exception {
-        try (var statement = connection.prepareStatement("""
-            select count(*) from information_schema.table_constraints
-            where constraint_schema = ? and constraint_name = ? and constraint_type = 'CHECK'
-            """)) {
-            statement.setString(1, schema);
-            statement.setString(2, constraint);
-            try (ResultSet result = statement.executeQuery()) {
-                result.next();
-                return result.getInt(1) == 1;
-            }
-        }
-    }
-
-    private boolean foreignKeyExists(Connection connection, String schema, String table, String column)
-        throws Exception {
-        try (var statement = connection.prepareStatement("""
-            select count(*)
-            from information_schema.key_column_usage k
-            join information_schema.table_constraints c
-              on c.constraint_schema = k.constraint_schema and c.constraint_name = k.constraint_name
-            where k.table_schema = ? and k.table_name = ? and k.column_name = ?
-              and c.constraint_type = 'FOREIGN KEY'
-            """)) {
-            statement.setString(1, schema);
-            statement.setString(2, table);
-            statement.setString(3, column);
-            try (ResultSet result = statement.executeQuery()) {
-                result.next();
-                return result.getInt(1) == 1;
+                return result.getInt(1);
             }
         }
     }

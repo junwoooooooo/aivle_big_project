@@ -1,0 +1,111 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:d65ab8a59fe964e342ded030b73e46fadef18022e4af6edb3e8334589001bf49",
+  "canonicalRequestHash": "a9ee8b1df94e56e7372f464808003743530b98b5013e907b2208f1d23462eaaa",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "음식물 쓰레기 문제 해결을 위한 간편 요리 솔루션",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+      "valueProposition": "간편하게 요리할 수 있는 키트를 제공하여 요리의 번거로움을 줄인다.",
+      "offerThesis": "간편 요리 키트를 통해 요리의 즐거움을 제공한다.",
+      "solutionThesis": "소량의 식재료와 간편한 레시피를 통해 요리의 접근성을 높인다.",
+      "differentiatingMechanics": [
+        "간편 요리 키트 제공",
+        "고객 맞춤형 레시피 추천"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "coreValue": "소량의 식재료와 간편한 레시피를 통해 요리의 접근성을 높인다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스.",
+      "solutionMechanism": "주문 후 1~2일 이내 배송되는 간편 요리 키트를 통해 요리의 즐거움을 제공한다.",
+      "featureSet": [
+        "주문형 맞춤형 식재료 제공",
+        "간편 요리 레시피 제공",
+        "정기 배송 서비스"
+      ],
+      "operatingModel": "고객 맞춤형 요리 키트 운영"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 식재료 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황",
+        "valuePropositionThesis": "간편하게 요리할 수 있는 키트를 제공하여 요리의 번거로움을 줄인다.",
+        "offerThesis": "간편 요리 키트를 통해 요리의 즐거움을 제공한다.",
+        "solutionThesis": "소량의 식재료와 간편한 레시피를 통해 요리의 접근성을 높인다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "소량의 식재료와 간편한 레시피를 통해 요리의 접근성을 높인다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "PHYSICAL_DELIVERY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "주문형 맞춤형 식재료 제공",
+      "간편 요리 레시피 제공",
+      "정기 배송 서비스"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스로, 1~2인 가구의 음식물 쓰레기 문제를 해결하고 요리의 접근성을 높인다."
+  },
+  "durationMs": 2144,
+  "timestamp": "2026-08-10T00:16:18.743013+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

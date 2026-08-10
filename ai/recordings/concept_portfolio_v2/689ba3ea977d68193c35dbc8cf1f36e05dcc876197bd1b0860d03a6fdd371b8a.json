@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:90cd05e90bbf9d3a50b5c52fb87ce4ea5a84bd5b146342ffe7378c1efd6d6d04",
+  "canonicalRequestHash": "689ba3ea977d68193c35dbc8cf1f36e05dcc876197bd1b0860d03a6fdd371b8a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼 운영 및 관리 식재료 공급 및 레시피 제공 고객과의 거래 및 서비스 제공 배송 서비스 제공 고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 고객이 온라인 플랫폼에서 식재료와 레시피를 선택한다. 주문이 접수되면 시스템이 주문을 처리한다. 배송 서비스가 고객의 주소로 식재료를 배송한다. 고객이 온라인 플랫폼에서 결제한다. 결제 확인 후 주문이 처리된다. 배송 완료 후 정산이 이루어진다. 구독 모델 및 일회성 구매 모델 온라인 플랫폼 (웹사이트 및 모바일 앱)",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 배송 관리 고객과의 거래 및 주문 관리 물류 및 배송 서비스 제공 고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 공급업체에 전달 식재료 준비 및 포장 배송업체가 고객에게 배송 고객이 주문 시 결제 결제 정보가 시스템에 기록 배송 완료 후 정산 구독 모델 및 일회성 구매 모델 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 배송 관리 고객과의 거래 및 주문 관리 물류 및 배송 서비스 제공 고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 공급업체에 전달 식재료 준비 및 포장 배송업체가 고객에게 배송 고객이 온라인 결제 결제 정보가 시스템에 기록 판매자가 수익을 정산 구독 모델 및 일회성 구매 모델 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼 운영 및 관리 식재료 공급 및 배송 고객과의 거래 및 판매 없음 레시피에 따라 필요한 식재료를 조합하여 제공한다. 레시피 개발자 및 식품 공급업체와 협력하여 다양한 옵션을 제공한다. 고객이 레시피 선택 주문 생성 식재료 패키지 조합 배송 준비 고객에게 배송 고객이 결제 결제 확인 주문 처리 배송 후 정산 구독 모델 및 일회성 구매 모델 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 배송 관리 고객과의 거래 및 주문 관리 물류 및 배송 서비스 제공 고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 공급업체에 전달 공급업체가 식재료를 준비 물류 업체가 식재료를 고객에게 배송 고객이 온라인 결제 결제 정보가 공급업체에 전달 공급업체가 배송 후 정산 구독 모델 및 일회성 구매 모델 온라인 플랫폼 및 모바일 앱을 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 식재료를 공급하고 배송하는 서비스로, 지역 농가와 협력하여 신선한 재료를 제공하며, 고객의 선호에 따라 맞춤형 조합을 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 고객 관리 및 식재료 공급과 배송을 관리하며, 고객의 주문을 처리하는 시스템."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 고객의 주문을 관리하고 식재료를 공급하는 서비스로, 지역 농가와 협력하여 신선한 재료를 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 레시피에 따라 식재료를 조합하여 제공하는 서비스로, 고객의 주문을 처리하고 배송하는 시스템."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 고객의 주문을 관리하고 식재료를 공급하는 서비스로, 지역 농가와 협력하여 신선한 재료를 제공."
+    }
+  ],
+  "durationMs": 8838,
+  "timestamp": "2026-08-10T02:16:14.865519+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

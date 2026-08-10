@@ -25,7 +25,7 @@ class CorsConfigurationTests {
         mockMvc.perform(options("/api/v1/projects")
                         .header(HttpHeaders.ORIGIN, "http://localhost:5173")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-User-Id"))
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-User-Id, Last-Event-ID"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -35,7 +35,10 @@ class CorsConfigurationTests {
                         containsString("GET")))
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
-                        containsString("X-User-Id")));
+                        containsString("X-User-Id")))
+                .andExpect(header().string(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        containsString("Last-Event-ID")));
     }
 
     @Test

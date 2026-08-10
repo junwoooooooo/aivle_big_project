@@ -14,12 +14,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler({ClientAbortException.class, AsyncRequestNotUsableException.class})
+    public void handleDisconnectedClient(Exception exception, HttpServletRequest request) {
+        log.debug("Async client disconnected, requestId={}", requestId(request));
+    }
+
     @ExceptionHandler(LoginRateLimitExceededException.class)
     public ResponseEntity<ApiResponse<Void>> handleLoginRateLimit(
         LoginRateLimitExceededException exception,

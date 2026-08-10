@@ -6,6 +6,8 @@ RUN npm ci
 COPY frontEnd/ ./
 COPY docs/guide/ /workspace/docs/guide/
 COPY docs/example/ /workspace/docs/example/
+ARG VITE_ENABLE_PIPELINE_DEBUG=false
+ENV VITE_ENABLE_PIPELINE_DEBUG=${VITE_ENABLE_PIPELINE_DEBUG}
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine

@@ -1,0 +1,163 @@
+{
+  "taskType": "PLAN_POOL",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "c98df36191fe679624cf311dd5e671864c0bdedd03a338fefef2bb049bff7b62",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "design": {
+      "opportunityAnchor": {
+        "problemCore": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUserCore": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+        "intentCore": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "allowedSpecializations": [
+          "핵심 대상군의 구체 하위 세그먼트",
+          "사용 상황이나 빈도에 따른 세분화",
+          "직장인 1인 가구",
+          "대학생 1인 가구",
+          "집밥 빈도가 높은 2인 가구"
+        ],
+        "forbiddenDrifts": [
+          "핵심 문제를 다른 문제로 교체",
+          "핵심 대상군을 무관한 고객군으로 교체",
+          "기업 급식만을 고객으로 전환"
+        ]
+      },
+      "semanticAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "sourceLocks": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      },
+      "explicitBusinessLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      },
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "platformRole",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [
+        "commercialFlow",
+        "fulfillment"
+      ],
+      "explorationBreadth": "REFINE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 2개로 9개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "poolSize": 7
+  },
+  "providerResponse": [
+    "title='Smart Meal Kit Subscription' oneLineConcept='A subscription service providing personalized meal kits with recipes for leftover ingredients.' coreMechanism='Subscription-based meal kit delivery' customerInteraction='Mobile app for ordering and recipe suggestions' valueDelivery='Convenient meal preparation with reduced food waste' operatingApproach='Centralized fulfillment with local delivery' partnerApproach='Collaboration with local farms for fresh ingredients' transactionApproach='Monthly subscription with flexible delivery options' commercialApproach='Tiered pricing based on meal frequency' fulfillmentApproach='Direct-to-consumer delivery model' mechanics=MechanicsDescriptor(solutionMechanismType='Subscription', supplyModel='Local sourcing', fulfillmentModel='Direct delivery', platformRoleType='Marketplace', partnerStructureType='Local farms', transactionModel='Recurring payments', commercialModel='Subscription tiers', customerInteractionModel='Mobile app engagement') differentiatingMechanics=['Personalized meal planning', 'Focus on reducing food waste', 'Local ingredient sourcing', 'Flexible subscription options', 'Recipe guidance for leftovers'] mainChanges=['Increased focus on local sourcing', 'Enhanced app features for user engagement'] secondaryChanges=['Potential partnerships with nutritionists', 'Expansion of meal options based on user feedback'] legalRiskHints=['Compliance with food safety regulations', 'Subscription cancellation policies'] reasonForPortfolioRole='To address food waste issues in small households.'",
+    "title='Leftover Recipe Generator' oneLineConcept='An app that generates recipes based on leftover ingredients from meal kits.' coreMechanism='Recipe generation based on user input' customerInteraction='Interactive mobile app' valueDelivery='Maximizing ingredient usage and minimizing waste' operatingApproach='User-driven recipe suggestions' partnerApproach='Partnerships with food bloggers for recipe content' transactionApproach='Free app with premium recipe features' commercialApproach='Ad-supported model with optional premium subscriptions' fulfillmentApproach='Digital content delivery' mechanics=MechanicsDescriptor(solutionMechanismType='Recipe generator', supplyModel='User-generated content', fulfillmentModel='Digital', platformRoleType='Content provider', partnerStructureType='Food bloggers', transactionModel='Freemium', commercialModel='Ad-supported', customerInteractionModel='Mobile app engagement') differentiatingMechanics=['User-generated recipe suggestions', 'Focus on minimizing food waste', 'Integration with meal kit services', 'Community-driven content', 'Premium features for advanced recipes'] mainChanges=['Enhanced user engagement through community features', 'Increased recipe variety based on user input'] secondaryChanges=['Potential for partnerships with grocery stores', 'Expansion into meal planning services'] legalRiskHints=['Copyright issues with user-generated content', 'Privacy concerns with user data'] reasonForPortfolioRole='To provide users with creative ways to use leftover ingredients.'",
+    "title='Eco-Friendly Meal Prep Service' oneLineConcept='A meal prep service focusing on sustainability and waste reduction.' coreMechanism='Eco-conscious meal preparation' customerInteraction='Mobile app for meal selection and tracking' valueDelivery='Sustainable meal options with minimal waste' operatingApproach='Sustainable sourcing and packaging' partnerApproach='Collaboration with eco-friendly suppliers' transactionApproach='Subscription model with eco-friendly incentives' commercialApproach='Discounts for sustainable choices' fulfillmentApproach='Eco-friendly delivery methods' mechanics=MechanicsDescriptor(solutionMechanismType='Meal prep service', supplyModel='Sustainable sourcing', fulfillmentModel='Eco-friendly delivery', platformRoleType='Sustainability advocate', partnerStructureType='Eco-friendly suppliers', transactionModel='Subscription with incentives', commercialModel='Discounts for eco-friendly choices', customerInteractionModel='Mobile app engagement') differentiatingMechanics=['Focus on sustainability', 'Use of eco-friendly packaging', 'Partnerships with local organic farms', 'Incentives for eco-conscious choices', 'Educational content on waste reduction'] mainChanges=['Increased emphasis on sustainability', 'Enhanced user education on food waste'] secondaryChanges=['Potential for community engagement initiatives', 'Expansion into eco-friendly product offerings'] legalRiskHints=['Compliance with environmental regulations', 'Sustainability claims verification'] reasonForPortfolioRole='To cater to environmentally conscious consumers.'",
+    "title='Personalized Grocery Box' oneLineConcept='A grocery delivery service offering personalized boxes based on user preferences.' coreMechanism='Customized grocery delivery' customerInteraction='Mobile app for customization' valueDelivery='Convenient grocery shopping with reduced waste' operatingApproach='Direct delivery from suppliers' partnerApproach='Partnerships with local grocery stores' transactionApproach='Pay-per-delivery model' commercialApproach='Dynamic pricing based on demand' fulfillmentApproach='Direct-to-consumer delivery' mechanics=MechanicsDescriptor(solutionMechanismType='Grocery delivery', supplyModel='Local sourcing', fulfillmentModel='Direct delivery', platformRoleType='Grocery marketplace', partnerStructureType='Local grocery stores', transactionModel='Pay-per-delivery', commercialModel='Dynamic pricing', customerInteractionModel='Mobile app engagement') differentiatingMechanics=['Personalized grocery selections', 'Focus on reducing food waste', 'Local sourcing of ingredients', 'Flexible delivery options', 'User-friendly app interface'] mainChanges=['Enhanced personalization features', 'Increased partnerships with local stores'] secondaryChanges=['Potential for loyalty programs', 'Expansion into meal planning services'] legalRiskHints=['Compliance with food delivery regulations', 'Consumer protection laws'] reasonForPortfolioRole='To provide a convenient grocery shopping experience.'",
+    "title='Meal Planning Assistant' oneLineConcept='An app that assists users in planning meals based on their dietary preferences and leftovers.' coreMechanism='Meal planning assistance' customerInteraction='Interactive mobile app' valueDelivery='Streamlined meal planning with reduced waste' operatingApproach='User-driven meal planning' partnerApproach='Collaboration with nutritionists' transactionApproach='Freemium model with premium features' commercialApproach='Ad-supported with optional subscriptions' fulfillmentApproach='Digital content delivery' mechanics=MechanicsDescriptor(solutionMechanismType='Meal planning', supplyModel='User-generated content', fulfillmentModel='Digital', platformRoleType='Meal planning assistant', partnerStructureType='Nutritionists', transactionModel='Freemium', commercialModel='Ad-supported', customerInteractionModel='Mobile app engagement') differentiatingMechanics=['Focus on personalized meal planning', 'Integration with leftover recipes', 'Community-driven content', 'Premium features for advanced planning', 'User-friendly interface'] mainChanges=['Enhanced user engagement through community features', 'Increased recipe variety based on user input'] secondaryChanges=['Potential for partnerships with health organizations', 'Expansion into dietary-specific meal planning'] legalRiskHints=['Privacy concerns with user data', 'Compliance with health regulations'] reasonForPortfolioRole='To assist users in effective meal planning.'"
+  ],
+  "durationMs": 14302,
+  "timestamp": "2026-08-09T15:55:40.653020+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

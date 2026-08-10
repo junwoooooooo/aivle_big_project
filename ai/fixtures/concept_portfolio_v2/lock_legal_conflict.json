@@ -1,0 +1,7 @@
+{
+  "fixtureName": "lock_legal_conflict",
+  "ideaOverview": "전문 식단과 식재료를 직접 제공하는 앱",
+  "problem": "사용자가 신뢰할 수 있는 식단과 재료를 함께 구하기 어렵다",
+  "targetUsers": "전문 식단이 필요한 사용자",
+  "channels": {"value": "무자격 개인 판매자 직거래", "decisionState": "LOCKED", "source": "USER_CONFIRMED"}
+}

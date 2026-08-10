@@ -4,6 +4,7 @@ import com.aivle.backend.taskrun.domain.TaskType;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.HexFormat;
 import java.util.Map;
@@ -60,8 +61,22 @@ public class CanonicalInputHasher {
             return value.append(']').toString();
         }
         if (node.isTextual()) return quote(node.asText());
-        if (node.isIntegralNumber() || node.isBoolean() || node.isNull()) return node.toString();
-        throw new IllegalArgumentException("floating-point JSON numbers are not canonical task input");
+        if (node.isNumber()) return canonicalNumber(node);
+        if (node.isBoolean() || node.isNull()) return node.toString();
+        throw new IllegalArgumentException("unsupported JSON value is not canonical task input");
+    }
+
+    /**
+     * Canonical number policy shared with the AI server: finite JSON numbers are interpreted as
+     * decimal values, trailing zeroes and exponent notation are removed, and negative zero is 0.
+     */
+    private String canonicalNumber(JsonNode node) {
+        if (node.isFloatingPointNumber() && !Double.isFinite(node.doubleValue())) {
+            throw new IllegalArgumentException("non-finite JSON number is not canonical task input");
+        }
+        BigDecimal decimal = node.decimalValue();
+        if (decimal.signum() == 0) return "0";
+        return decimal.stripTrailingZeros().toPlainString();
     }
 
     private String quote(String value) {

@@ -1,0 +1,245 @@
+{
+  "taskType": "EXPAND",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "d2aa5afd9111547a50e0ec850d3f40f68f2b64ebdcdf57d36be2386489e2aa52",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "plan": {
+      "title": "Eco-Friendly Meal Prep Service",
+      "oneLineConcept": "A meal prep service focusing on sustainability and waste reduction.",
+      "coreMechanism": "Eco-conscious meal preparation",
+      "customerInteraction": "Mobile app for meal selection and tracking",
+      "valueDelivery": "Sustainable meal options with minimal waste",
+      "operatingApproach": "Sustainable sourcing and packaging",
+      "partnerApproach": "Collaboration with eco-friendly suppliers",
+      "transactionApproach": "Subscription model with eco-friendly incentives",
+      "commercialApproach": "Discounts for sustainable choices",
+      "fulfillmentApproach": "Eco-friendly delivery methods",
+      "mechanics": {
+        "solutionMechanismType": "Meal prep service",
+        "supplyModel": "Sustainable sourcing",
+        "fulfillmentModel": "Eco-friendly delivery",
+        "platformRoleType": "Sustainability advocate",
+        "partnerStructureType": "Eco-friendly suppliers",
+        "transactionModel": "Subscription with incentives",
+        "commercialModel": "Discounts for eco-friendly choices",
+        "customerInteractionModel": "Mobile app engagement"
+      },
+      "differentiatingMechanics": [
+        "Focus on sustainability",
+        "Use of eco-friendly packaging",
+        "Partnerships with local organic farms",
+        "Incentives for eco-conscious choices",
+        "Educational content on waste reduction"
+      ],
+      "mainChanges": [
+        "Increased emphasis on sustainability",
+        "Enhanced user education on food waste"
+      ],
+      "secondaryChanges": [
+        "Potential for community engagement initiatives",
+        "Expansion into eco-friendly product offerings"
+      ],
+      "legalRiskHints": [
+        "Compliance with environmental regulations",
+        "Sustainability claims verification"
+      ],
+      "reasonForPortfolioRole": "To cater to environmentally conscious consumers.",
+      "planId": "P3",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      }
+    },
+    "index": 3
+  },
+  "providerResponse": {
+    "conceptName": "Eco-Friendly Meal Prep Service",
+    "conceptDefinition": "A meal prep service focusing on sustainability and waste reduction.",
+    "introduction": "This service provides personalized meal ingredients in small quantities and guides users on how to utilize leftover ingredients effectively.",
+    "coreValue": "Sustainable meal options with minimal waste.",
+    "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "Food & Sustainability",
+    "researchScope": "Exploring sustainable meal preparation and waste reduction strategies.",
+    "targetRegion": "OPEN",
+    "revenueModel": "Subscription model with eco-friendly incentives",
+    "price": "월 19,900원",
+    "channels": "모바일 앱",
+    "differentiators": "Focus on sustainability, use of eco-friendly packaging, partnerships with local organic farms, incentives for eco-conscious choices, educational content on waste reduction.",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "Growing demand for sustainable food options among consumers.",
+      "assumptions": [
+        "Increased awareness of food waste issues",
+        "Rising interest in eco-friendly products"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "Year",
+      "calculationBasis": "Estimated market size for eco-friendly meal prep services in South Korea",
+      "assumptions": [
+        "Market growth in eco-conscious consumer behavior",
+        "Increased competition in meal prep services"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+    "solutionMechanism": "Meal prep service that provides tailored ingredients and recipes to minimize waste.",
+    "featureSet": [
+      "Personalized ingredient delivery",
+      "Recipe guidance for leftovers",
+      "Sustainability tracking in the app",
+      "Discounts for eco-friendly choices",
+      "Community engagement initiatives"
+    ],
+    "actorRoles": [
+      "Consumer",
+      "Provider",
+      "Local Farmers",
+      "Delivery Personnel"
+    ],
+    "platformRole": "Sustainability advocate",
+    "operatingModel": "Sustainable sourcing and packaging",
+    "partnerModel": "Collaboration with eco-friendly suppliers",
+    "providerRole": "Meal prep service provider",
+    "sellerRole": "Subscription service seller",
+    "intermediaryRole": "N/A",
+    "transactionFlow": [
+      "User subscribes to service",
+      "User selects meal preferences",
+      "Ingredients are delivered",
+      "User prepares meals",
+      "User tracks sustainability metrics"
+    ],
+    "paymentFlow": [
+      "Monthly subscription fee",
+      "Discounts applied for eco-friendly choices"
+    ],
+    "personalDataUsage": [
+      "User preferences for meal selection",
+      "Tracking of sustainability metrics"
+    ],
+    "physicalActivities": [
+      "Ingredient sourcing from local farms",
+      "Delivery of meal kits"
+    ],
+    "partnerRequirements": [
+      "Eco-friendly packaging suppliers",
+      "Local organic farms"
+    ],
+    "qualificationRequirements": [
+      "Sustainability certifications for suppliers",
+      "Food safety certifications"
+    ],
+    "advertisingClaims": [
+      "Promotes waste reduction",
+      "Supports local farmers",
+      "Eco-friendly packaging"
+    ],
+    "constraintCompliance": [
+      "Compliance with environmental regulations",
+      "Sustainability claims verification"
+    ]
+  },
+  "durationMs": 7079,
+  "timestamp": "2026-08-09T15:57:21.293137+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

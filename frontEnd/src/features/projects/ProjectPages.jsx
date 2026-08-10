@@ -19,8 +19,8 @@ import { useProjectContext } from './ProjectContext.jsx';
 import { useProjects } from './hooks/useProjects.js';
 import ProjectRow from './components/ProjectRow.jsx';
 import ProjectDeleteDialog from './components/ProjectDeleteDialog.jsx';
-import { PROJECT_AREA_DEFINITIONS, PROJECT_STATUS_VIEW } from './model/projectWorkflowModel.js';
-import { appRoutes, projectRoutes } from './routing/projectRoutes.js';
+import { PROJECT_MODULES, PROJECT_STATUS_VIEW } from '../../app/module-status/projectModuleModel.js';
+import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { getProjectNameError } from './projectNameError.js';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
 import { getWriteRestriction, isServicePolicyError } from '../service-policy/servicePolicyRestrictions.js';
@@ -71,7 +71,7 @@ export function ProjectStatusHelpRail() {
   }, [open]);
   return <aside ref={railRef} className={`project-status-help ${open ? 'is-open' : ''}`} aria-label="프로젝트 상태 안내">
     <button type="button" className="project-status-help__trigger" aria-expanded={open} aria-controls="project-status-help-content" onClick={() => setOpen((value) => !value)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}><span aria-hidden="true">?</span><span>상태 안내</span></button>
-    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>Area</h2><p>프로젝트가 위치한 사업 검증 영역입니다.</p><dl>{PROJECT_AREA_DEFINITIONS.map((area) => <div key={area.id}><dt>{area.label}</dt><dd>{({ OVERVIEW: '전체 현황', PLAN: '사업계획서 업로드와 구조화', REVIEW: '법률·규제와 사업성 분석', VALIDATE: 'AI 패널과 시장 반응 검증', REPORT: '통합 결과' })[area.id]}</dd></div>)}</dl></div><div><h2>Status</h2><p>프로젝트 전체 처리 상태입니다.</p><dl>{Object.entries(PROJECT_STATUS_VIEW).map(([status, view]) => <div key={status}><dt>{view.label}</dt><dd>{({ DRAFT: '준비 중인 프로젝트', ACTIVE: '작업을 진행 중인 프로젝트', PAUSED: '일시 중지된 프로젝트', COMPLETED: '검증이 완료된 프로젝트', ARCHIVED: '보관된 프로젝트' })[status]}</dd></div>)}</dl></div></div>}
+    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>모듈</h2><p>새 프로젝트 파이프라인의 독립 작업 영역입니다.</p><dl>{PROJECT_MODULES.map((module) => <div key={module.id}><dt>{module.label}</dt><dd>프로젝트 안에서 상태와 필요한 입력을 확인합니다.</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>프로젝트 전체의 보관 및 운영 상태입니다.</p><dl>{Object.entries(PROJECT_STATUS_VIEW).map(([status, view]) => <div key={status}><dt>{view.label}</dt><dd>{({ DRAFT: '작성 중인 프로젝트', ACTIVE: '사용 중인 프로젝트', PAUSED: '확인이 필요한 프로젝트', COMPLETED: '완료된 프로젝트', ARCHIVED: '보관된 프로젝트' })[status]}</dd></div>)}</dl></div></div>}
   </aside>;
 }
 
@@ -104,7 +104,7 @@ export function ProjectListPage() {
       <PageHeader
         eyebrow="내 워크스페이스"
         title="프로젝트"
-        description="아이디어부터 최종 보고서까지 현재 단계와 다음 작업을 확인하세요."
+        description="새 8단계 파이프라인의 모듈 상태와 필요한 입력을 확인하세요."
         actions={<PolicyLink restriction={restriction} className="primary-link" to={appRoutes.newProject} state={{ backgroundLocation: location, returnTo: `${location.pathname}${location.search}` }}>새 프로젝트</PolicyLink>}
       />
       <div className="project-hub__body"><div className="project-hub__content">{!projects.length ? (
@@ -189,7 +189,7 @@ export function ProjectCreatePage() {
         description: values.description.trim() || null,
         industryCategory: values.industryCategory.trim() || null,
       });
-      requestClose(projectRoutes.base(nextProject.id));
+      requestClose(projectRoutes.overview(nextProject.id));
     } catch (error) {
       if (isServicePolicyError(error)) {
         void servicePolicy.refresh().catch(() => undefined);

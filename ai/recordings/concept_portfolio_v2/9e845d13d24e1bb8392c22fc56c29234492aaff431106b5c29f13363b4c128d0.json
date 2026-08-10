@@ -1,0 +1,286 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:10f93d8744817b0693771e68ee2b8b245688b45594d2b8efc3a748fcca2f5b55",
+  "canonicalRequestHash": "9e845d13d24e1bb8392c22fc56c29234492aaff431106b5c29f13363b4c128d0",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구.",
+        "usageContext": "소량의 개인 맞춤형 식재료와 레시피 제공을 통해 음식물 쓰레기를 줄이는 서비스.",
+        "industryCategory": "식품 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스 시장.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 남은 재료 활용 레시피를 제공하는 서비스.",
+        "targetRegionInterpretation": "",
+        "relevantKnownCompetitorContext": ""
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "요리 교육 서비스",
+      "oneLineConcept": "요리 기술을 향상시키는 교육 서비스",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "요리 기술 부족으로 음식물 쓰레기가 발생하는 문제",
+      "useContext": "요리 기술 향상을 위한 교육 서비스",
+      "valueProposition": "요리 기술을 향상시켜 음식물 쓰레기를 줄이고 요리를 즐길 수 있도록 돕는다.",
+      "offerThesis": "요리 기술 향상을 위한 맞춤형 교육 제공",
+      "solutionThesis": "고객의 요리 기술을 향상시키기 위한 맞춤형 교육 프로그램 제공",
+      "coreMechanism": "고객의 요리 수준에 맞춘 교육 콘텐츠 제공",
+      "customerInteraction": "앱에서 요리 기술 수준을 입력하면 맞춤형 교육 제공",
+      "valueDelivery": "정기적으로 요리 교육 콘텐츠 제공",
+      "operatingApproach": "고객의 요리 수준에 따라 교육 콘텐츠를 조정",
+      "partnerApproach": "요리 전문가와 협력하여 교육 콘텐츠 개발",
+      "transactionApproach": "프리미엄 교육 콘텐츠 제공",
+      "commercialApproach": "구독 모델로 수익 창출",
+      "fulfillmentApproach": "앱 내에서 즉시 교육 콘텐츠 제공",
+      "differentiatingMechanics": [
+        "맞춤형 요리 교육 제공",
+        "요리 기술 향상을 위한 피드백 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "고객의 요리 기술을 향상시키고 음식물 쓰레기를 줄이는 데 기여한다.",
+      "planId": "P6",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "useCaseThesis": "요리 기술 향상을 위한 교육 서비스",
+          "valuePropositionThesis": "요리 기술을 향상시켜 음식물 쓰레기를 줄이고 요리를 즐길 수 있도록 돕는다.",
+          "offerThesis": "요리 기술 향상을 위한 맞춤형 교육 제공",
+          "solutionThesis": "고객의 요리 기술을 향상시키기 위한 맞춤형 교육 프로그램 제공"
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "고객의 요리 기술을 향상시키기 위한 맞춤형 교육 프로그램 제공",
+        "familyId": "OTHER:OTHER",
+        "familyLabelKo": "기타 역할 · 기타 운영",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "SUBSCRIPTION",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "APP",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.6027,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "요리 교육 서비스",
+    "conceptDefinition": "고객의 요리 기술을 향상시키기 위한 맞춤형 교육 프로그램 제공",
+    "introduction": "요리 기술을 향상시키는 교육 서비스로, 고객의 요리 수준에 맞춘 교육 콘텐츠를 제공합니다.",
+    "coreValue": "요리 기술을 향상시켜 음식물 쓰레기를 줄이고 요리를 즐길 수 있도록 돕는다.",
+    "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "식품 서비스",
+    "researchScope": "소량 식재료 및 레시피 제공 서비스 시장.",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델로 수익 창출",
+    "price": "월 9,900원",
+    "channels": "모바일 앱, 웹사이트",
+    "differentiators": "맞춤형 요리 교육 제공, 요리 기술 향상을 위한 피드백 제공",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 5.0,
+      "horizonYears": 3,
+      "rationale": "1~2인 가구의 요리 교육 수요 증가",
+      "assumptions": [
+        "1~2인 가구의 요리 교육 수요가 증가할 것",
+        "구독 모델이 시장에서 수용될 것"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 5000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "1~2인 가구의 요리 교육 수요 기반",
+      "assumptions": [
+        "1~2인 가구의 수가 증가할 것",
+        "구독 모델이 시장에서 수용될 것"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+    "solutionMechanism": "고객의 요리 수준에 맞춘 교육 콘텐츠 제공",
+    "featureSet": [
+      "맞춤형 요리 교육",
+      "요리 기술 향상을 위한 피드백",
+      "정기적인 교육 콘텐츠 제공"
+    ],
+    "actorRoles": [
+      "고객",
+      "요리 전문가",
+      "개발팀"
+    ],
+    "platformRole": "교육 콘텐츠 제공 플랫폼 운영",
+    "operatingModel": "고객의 요리 수준에 따라 교육 콘텐츠를 조정",
+    "partnerModel": "요리 전문가와 협력하여 교육 콘텐츠 개발",
+    "providerRole": "교육 콘텐츠 제공자",
+    "sellerRole": "구독 서비스 판매자",
+    "intermediaryRole": "없음",
+    "transactionFlow": [
+      "고객이 앱에서 요리 기술 수준 입력",
+      "맞춤형 교육 콘텐츠 제공",
+      "고객이 교육 콘텐츠 이용"
+    ],
+    "paymentFlow": [
+      "고객이 구독료 결제",
+      "구독 서비스 제공"
+    ],
+    "personalDataUsage": [
+      "고객의 요리 수준 데이터 수집 및 분석"
+    ],
+    "physicalActivities": [
+      "요리 교육 콘텐츠 제공"
+    ],
+    "partnerRequirements": [
+      "요리 전문가와의 협력 필요"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "요리 기술 향상 보장"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 7871,
+  "timestamp": "2026-08-10T02:20:14.770005+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

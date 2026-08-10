@@ -1,52 +1,51 @@
-# Venture Verify
+# New Pipeline Platform
 
-- Status: CURRENT_AS_BUILT
-- Baseline date: 2026-08-04
-- Scope: 저장소 진입점과 현재 구현 기준선
+이 저장소는 프로젝트별 기획을 정리하고 외부 분석 모듈과 연결하는 신규 제품 파이프라인을 구현합니다.
 
-Venture Verify는 아이디어를 구조화하고 한국 법률 사전검토와 두 단계 무결성 검증을 거쳐 적격 Concept을 만드는 프로젝트 단위 서비스다.
+1. Idea Brief 작성·확정
+2. 적격 컨셉 5개 생성과 공식 근거 기반 법률 구현 가능성 사전검토
+3. 컨셉 비교·선택
+4. Market Handoff와 외부 시장분석 결과 반영
+5. Finalized Planning 생성, BM·재무 및 Persona 외부 모듈 Handoff
+6. Marketing Content 생성·수정·확정
 
-현재 공식 Journey는 다음 단계에서 종료한다.
-
-`Idea 입력 → AI 해석 → Idea Origin 보완·확정 → Legal Precheck → Legal Guardrail → Concept 생성 → Origin Integrity → Concept Legal Validation → 적격 Concept 3개 표시`
-
-Concept 분석·선택·Persona·Interview·Marketing·Report 코드는 삭제하지 않고 보존한다. 이들은 현재 Router에서 일부 접근 가능한 기존 MVP 실험 기능이며, 위 공식 Journey와 자동 연결된 단계로 간주하지 않는다.
+컨셉 생성은 정확히 5개 Slot을 사용하며 후보별 최대 1회 Redesign, 최대 2회
+Replacement, 전체 최대 15개 후보 검사 한도를 적용합니다. 사실이나 근거가 부족하면 성공을
+가장하지 않고 입력 필요 또는 실패 상태로 종료합니다.
 
 ## Runtime
 
-- React/Vite Frontend
-- Spring Boot Backend
-- FastAPI AI Server
-- PostgreSQL
-- MinIO/S3-compatible Object Storage
-- `TaskRun` / `TaskAttempt` / `TaskResult`
+- `frontEnd`: React/Vite Project Shell, 모듈 상태, 작업 센터와 사용자 화면
+- `backend`: Spring Boot, PostgreSQL/Flyway, TaskRun/JobEvent, 신규 `pipeline/**`
+- `ai`: FastAPI 내부 execution API와 신규 `app/tasks/**`
+- `compose.yaml`: PostgreSQL, MinIO, Backend, AI, Frontend 로컬 구성
 
-Browser는 Spring의 현재 Controller를 호출하고 Spring은 업무 상태·DB·Object Storage·TaskRun과 결과 채택을 소유한다. FastAPI의 내부 실행 경계는 `/internal/v1/ai/executions`이며 canonical request는 `contentType=TEXT`, `locale=ko-KR`, `language=ko-KR`, `taskSchemaVersion=1.0`을 사용한다.
+브라우저는 Spring Backend만 호출합니다. Backend는 상태와 snapshot을 소유하고,
+`InternalAiExecutionClient`를 통해 FastAPI의 `POST /internal/v1/ai/executions`를 호출합니다.
+AI 서버가 직접 DB 상태를 변경하지 않습니다.
 
-AI 실행 방식은 현재 하나로 통일되어 있지 않다.
+## Database
 
-- Legal: Persistent Worker TaskRun
-- Concept: In-memory Executor 안에서 TaskRun 실행
-- 일부 Journey: Service 내부 동기 claim/execute
+보존 데이터가 없는 rebuild 환경을 전제로 Flyway migration은
+`backend/src/main/resources/db/migration/V1__new_pipeline_baseline.sql` 하나로 시작합니다.
+기존 DB/volume에 대한 in-place upgrade는 지원하지 않으므로 적용 전에 DB를 초기화해야 합니다.
 
-## Database and CI
+## Runtime contracts
 
-Flyway Runtime Migration은 PostgreSQL 최종 스키마를 직접 생성하는 `V1__baseline_schema.sql` 하나다. 과거 V1~V36과 Java Migration V5/V10의 최종 효과는 이 SQL에 흡수되었으며 기존 DB upgrade는 지원하지 않는다. 적용 전 기존 PostgreSQL과 Docker volume을 반드시 초기화해야 한다. 과거 이력은 Git history에 남는다.
-
-Repository-local GitHub Actions `CI` workflow가 Frontend lint/baseline/build, AI fixture/pytest, Backend test/postgresTest를 실행한다. 실제 Provider·법제처 호출과 전체 Docker E2E는 기본 CI 범위 밖이다. Frontend의 허용 테스트 부채는 `test-debt-baseline.json` 정책을 따른다.
+- 사용자가 직접 호출하는 제품 API는 `/api/v3/projects/{projectId}/...` 아래에 있습니다.
+- 작업 Event 조회는 `/api/v2/jobs/{jobId}/events`의 SSE와 `?after=<sequence>` JSON polling을 사용합니다.
+- Backend Query API가 상태 정본이며 Job Event는 갱신 신호입니다.
+- Provider 작업은 Idea Brief, Concept Candidate, Concept Legal Review, Concept Redesign,
+  Marketing Content Generation의 다섯 계약으로 제한합니다.
+- 실제 Provider 검증은 `python -m app.tools.idea_brief_provider_smoke`,
+  `python -m app.tools.concept_factory_provider_smoke`,
+  `python -m app.tools.marketing_content_provider_smoke`로 수행합니다.
 
 ## Documentation
 
-- 문서 권위와 탐색: [docs/README.md](docs/README.md)
-- 실제 구현 기준선: [docs/CURRENT_BASELINE.md](docs/CURRENT_BASELINE.md)
-- 현재 Journey 설계: [AI_JOURNEY_REDESIGN_SPEC_v0.4](docs/redesign/AI_JOURNEY_REDESIGN_SPEC_v0.4.md)
-- Internal AI 계약: [INTERNAL_AI_API_V1_CONTRACT](docs/contracts/INTERNAL_AI_API_V1_CONTRACT.md)
-- Public API v2 As-Is: [PUBLIC_API_V2_CONTRACT](docs/contracts/PUBLIC_API_V2_CONTRACT.md)
-- 저장소 감사: [REPOSITORY_BASELINE_AUDIT](docs/maintenance/REPOSITORY_BASELINE_AUDIT_2026-08-04.md)
-- Migration Baseline cutover: [MIGRATION_BASELINE_CUTOVER](docs/maintenance/MIGRATION_BASELINE_CUTOVER_2026-08-04.md)
-- 저장소 구조 안내: [REPOSITORY_STRUCTURE_GUIDE](docs/REPOSITORY_STRUCTURE_GUIDE.md)
-- 보존 Legacy Registry: [RETAINED_LEGACY_REGISTRY](docs/maintenance/RETAINED_LEGACY_REGISTRY.md)
-
-현재 Public API의 실행 권위는 실제 Spring Controller와 Frontend Client이며 `PUBLIC_API_V2_CONTRACT.md`가 현재 endpoint/status/envelope를 기록한다. `docs/api/openapi.yaml`은 기존 `/api/v1` 중심 machine-consumed 계약이며 현재 Journey `/api/v2` 전체 권위가 아니다. Public `/api/v2`와 Internal `/internal/v1/ai/executions`는 별도 경계다.
-
-환경변수는 저장소의 example 파일을 바탕으로 별도 주입하고 실제 비밀값을 문서나 커밋에 기록하지 않는다.
+- 구현 계약: `docs/rebuild/`
+- API 요약: `docs/api/openapi.yaml`
+- 최종 구조: `docs/rebuild/FINAL_REPOSITORY_STRUCTURE.md`
+- Entity/Table 목록: `docs/rebuild/FINAL_ENTITY_TABLE_INVENTORY.md`
+- DB baseline: `docs/rebuild/FINAL_DATABASE_BASELINE.md`
+- 현재 실행 단위 검증: `docs/rebuild/verification/PRODUCT-CUTOVER-CLEANUP_USER_VERIFICATION.md`

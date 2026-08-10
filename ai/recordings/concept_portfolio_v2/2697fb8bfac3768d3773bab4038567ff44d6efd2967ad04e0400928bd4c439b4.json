@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:2db2bba9e75e01be1c6a5086d5f6bebc0d262e33dedbe8f7c0c38f7544e4a546",
+  "canonicalRequestHash": "2697fb8bfac3768d3773bab4038567ff44d6efd2967ad04e0400928bd4c439b4",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-R1",
+        "businessText": "온라인 플랫폼 운영 고객 맞춤형 주문 시스템 운영 지역 농가 및 식품 제조업체와의 협력 주문 -> 결제 -> 배송 구독 모델 및 일회성 구매 옵션 제공 온라인 플랫폼을 통해 주문 및 피드백 수집",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "An online platform that operates a customer-tailored ordering system in collaboration with local farms and food manufacturers, offering subscription and one-time purchase options."
+    }
+  ],
+  "durationMs": 2989,
+  "timestamp": "2026-08-10T00:15:51.762107+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

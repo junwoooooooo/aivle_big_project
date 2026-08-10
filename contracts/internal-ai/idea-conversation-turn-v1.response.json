@@ -1,0 +1,57 @@
+{
+  "contractVersion": "1.0",
+  "taskType": "IDEA_CONVERSATION_TURN",
+  "taskSchemaVersion": "1.0",
+  "taskRunId": "run-conversation-1",
+  "taskAttemptId": "attempt-conversation-1",
+  "correlationId": "correlation-conversation-1",
+  "canonicalInputHash": "sha256:ff92fcd012d7d5dbf29ad89b487028dc70bd1c217b568a095d5829a34edb8e6c",
+  "resultSchemaVersion": "1.0",
+  "result": {
+    "extractedFields": [],
+    "fieldSuggestions": [
+      {
+        "fieldKey": "problem",
+        "valueJson": "재활용품 배출의 불편",
+        "decisionStatus": "PREFERRED",
+        "sourceType": "AI_PROPOSED",
+        "confidence": 0.8
+      }
+    ],
+    "assumptions": [],
+    "openFields": ["targetCustomer", "desiredOutcome", "targetRegion"],
+    "contradictions": [],
+    "clarificationQuestions": [
+      {
+        "id": "target-customer-1",
+        "fieldKey": "targetCustomer",
+        "prompt": "주요 사용자는 누구인가요?",
+        "type": "FREE_TEXT",
+        "options": [],
+        "allowUndecided": true
+      },
+      {
+        "id": "target-region-1",
+        "fieldKey": "targetRegion",
+        "prompt": "우선 적용할 지역은 어디인가요?",
+        "type": "FREE_TEXT",
+        "options": [],
+        "allowUndecided": true
+      }
+    ],
+    "readiness": "NEEDS_INPUT",
+    "userFacingSummary": "사업 기회를 구체화하기 위해 두 가지를 확인하겠습니다."
+  },
+  "warnings": [],
+  "provenance": [
+    {
+      "category": "AI_PROPOSAL",
+      "statementKey": "interpretation-1",
+      "sourceKeys": ["message:403"],
+      "externalSourceReferences": [],
+      "generatedAt": "2035-01-01T00:00:01Z",
+      "verificationNeeded": true
+    }
+  ],
+  "usage": null
+}

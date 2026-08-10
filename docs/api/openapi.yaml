@@ -1,693 +1,148 @@
 openapi: 3.1.0
 info:
-  title: AI Business Validation Platform Document API
-  version: 0.12.0-phase3-taskrun
-  license:
-    name: Proprietary
-    identifier: LicenseRef-Proprietary
-  description: >
-    Canonical authentication, document upload, asynchronous processing,
-    structured-plan mutation, and explicit confirmation contract.
+  title: New Pipeline API
+  version: 1.0.0-cutover
+  description: Active public routes for the six-stage project pipeline. Domain Query APIs are authoritative; Job Events are refresh signals.
 servers:
-  - url: /api/v1
+  - url: /
 tags:
-  - name: Authentication
-    description: Stateless signup, login, refresh rotation, and logout
-  - name: Users
-    description: Current authenticated user
-  - name: Projects
-    description: Current-user-owned business validation projects
-  - name: Documents
-    description: Project-owned source documents and immutable versions
-  - name: Structured Plans
-    description: Extracted business-plan structure, missing fields, and confirmation
+  - name: Foundation
+  - name: Pipeline
   - name: Jobs
-    description: Asynchronous processing job state
-  - name: Legal Reviews
-    description: AI-assisted legal and regulatory pre-review, never legal advice
-  - name: Feasibility Assessments
-    description: Evidence-aware business feasibility pre-assessment and validation tasks
-  - name: Personas
-    description: Aggregate baseline persona catalog, recommendations, and customer-validation plans
-security:
-  - platformAuth: []
 paths:
-  /auth/signup:
-    post:
-      tags: [Authentication]
-      summary: Register an active user and issue an access/refresh pair
-      operationId: signup
-      x-implementation-phase: Phase 3
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/SignupRequest'}
-      responses:
-        '201':
-          description: User registered
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AuthApiResponse'}
-        '400': {$ref: '#/components/responses/StandardError'}
-        '409': {$ref: '#/components/responses/StandardError'}
-  /auth/login:
-    post:
-      tags: [Authentication]
-      summary: Authenticate with normalized email and password
-      operationId: login
-      x-implementation-phase: Phase 3
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/LoginRequest'}
-      responses:
-        '200':
-          description: Authentication succeeded
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AuthApiResponse'}
-        '400': {$ref: '#/components/responses/StandardError'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /auth/refresh:
-    post:
-      tags: [Authentication]
-      summary: Rotate a valid refresh token and issue a new pair
-      operationId: refreshAccessToken
-      x-implementation-phase: Phase 3
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/RefreshRequest'}
-      responses:
-        '200':
-          description: Token pair rotated
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TokenPairApiResponse'}
-        '400': {$ref: '#/components/responses/StandardError'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /auth/logout:
-    post:
-      tags: [Authentication]
-      summary: Revoke the supplied current refresh token
-      operationId: logout
-      x-implementation-phase: Phase 3
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/RefreshRequest'}
-      responses:
-        '200':
-          description: Refresh token revoked
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/EmptyApiResponse'}
-        '400': {$ref: '#/components/responses/StandardError'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /users/me:
-    get:
-      tags: [Users]
-      summary: Get the current authenticated user
-      operationId: getCurrentUser
-      x-implementation-phase: Phase 3
-      responses:
-        '200':
-          description: Current user
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/UserApiResponse'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /projects:
-    get:
-      tags: [Projects]
-      summary: List the current user's active projects
-      operationId: listProjects
-      x-implementation-phase: Phase 5
-      responses:
-        '200':
-          description: Projects ordered by most recently updated
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProjectListApiResponse'}
-        '401': {$ref: '#/components/responses/StandardError'}
-    post:
-      tags: [Projects]
-      summary: Create a business validation project
-      operationId: createProject
-      x-implementation-phase: Phase 5
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/CreateProjectRequest'}
-      responses:
-        '201':
-          description: Project created
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProjectDetailApiResponse'}
-        '400': {$ref: '#/components/responses/StandardError'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /projects/{projectId}:
+  /api/v1/auth/signup:
+    post: {tags: [Foundation], summary: Register user, responses: {'201': {description: Created}}}
+  /api/v1/auth/login:
+    post: {tags: [Foundation], summary: Login, responses: {'200': {description: Authenticated}}}
+  /api/v1/projects:
+    get: {tags: [Foundation], summary: List owned projects, responses: {'200': {description: Projects}}}
+    post: {tags: [Foundation], summary: Create project, responses: {'201': {description: Created}}}
+  /api/v1/projects/{projectId}:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Foundation], summary: Get project, responses: {'200': {description: Project}}}
+    patch: {tags: [Foundation], summary: Update project metadata, responses: {'200': {description: Updated}}}
+    delete: {tags: [Foundation], summary: Delete project, responses: {'204': {description: Deleted}}}
+  /api/v2/jobs/{jobId}/events:
     parameters:
-      - $ref: '#/components/parameters/ProjectId'
-    get:
-      tags: [Projects]
-      summary: Get a project owned by the current user
-      operationId: getProject
-      x-implementation-phase: Phase 5
-      responses:
-        '200':
-          description: Owned project detail
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProjectDetailApiResponse'}
-        '401': {$ref: '#/components/responses/StandardError'}
-        '404':
-          description: Project does not exist or is not visible to the current user
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-  /projects/{projectId}/documents:
-    parameters:
-      - $ref: '#/components/parameters/ProjectId'
-    post:
-      tags: [Documents]
-      summary: Upload a business plan and queue document processing
-      operationId: uploadProjectDocument
-      x-implementation-phase: Phase 1C
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required: [file]
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: DOCX only, maximum 20 MiB
-                documentType:
-                  type: string
-                  enum: [BUSINESS_PLAN]
-                  default: BUSINESS_PLAN
-      responses:
-        '202':
-          description: Upload stored and processing queued
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentUploadApiResponse'
-        '400':
-          $ref: '#/components/responses/StandardError'
-        '404':
-          $ref: '#/components/responses/StandardError'
-        '409':
-          $ref: '#/components/responses/StandardError'
-        '413':
-          $ref: '#/components/responses/StandardError'
-        '415':
-          $ref: '#/components/responses/StandardError'
-        '422':
-          $ref: '#/components/responses/StandardError'
-        '503':
-          $ref: '#/components/responses/StandardError'
-    get:
-      tags: [Documents]
-      summary: List project documents
-      operationId: listProjectDocuments
-      x-implementation-phase: Phase 1B
-      responses:
-        '200':
-          description: Document list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentListApiResponse'
-        '404':
-          $ref: '#/components/responses/StandardError'
-  /documents/{documentId}/versions/{versionId}:
-    get:
-      tags: [Documents]
-      summary: Get one document version
-      operationId: getDocumentVersion
-      x-implementation-phase: Phase 1B
-      parameters:
-        - $ref: '#/components/parameters/DocumentId'
-        - $ref: '#/components/parameters/VersionId'
-      responses:
-        '200':
-          description: Document version
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DocumentVersionApiResponse'
-        '404':
-          $ref: '#/components/responses/StandardError'
-  /jobs/{jobId}:
+      - $ref: '#/components/parameters/JobId'
+      - name: after
+        in: query
+        required: false
+        schema: {type: integer, format: int64, minimum: 0}
     get:
       tags: [Jobs]
-      summary: Get asynchronous job state
-      operationId: getJob
-      x-implementation-phase: Phase 1B
-      parameters:
-        - $ref: '#/components/parameters/JobId'
+      summary: Stream owned Job Events, or poll JSON events when after is supplied
       responses:
-        '200':
-          description: Job state. PARTIAL means processing completed but required business-plan sections need user input.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobApiResponse'
-        '404':
-          $ref: '#/components/responses/StandardError'
-  /projects/{projectId}/jobs/latest:
-    get:
-      tags: [Jobs]
-      summary: Get the latest project job of one type
-      description: >
-        Returns the most recently created visible job, whether active or
-        terminal. The caller distinguishes recovery behavior by status.
-      operationId: getLatestProjectJob
-      x-implementation-phase: Phase 6
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - name: jobType
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [DOCUMENT_PARSE, LEGAL_REVIEW, FEASIBILITY_ANALYSIS]
-            default: DOCUMENT_PARSE
-      responses:
-        '200':
-          description: Latest owner-visible job
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobApiResponse'
-        '404':
-          description: Project/job does not exist or is not visible to the current user
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorApiResponse'
-  /projects/{projectId}/structured-plans/latest:
-    get:
-      tags: [Structured Plans]
-      summary: Get latest structured business plan
-      operationId: getLatestStructuredPlan
-      x-implementation-phase: Phase 1C
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200':
-          description: Latest structured plan
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StructuredPlanApiResponse'
-        '404':
-          $ref: '#/components/responses/StandardError'
-  /projects/{projectId}/structured-plans/{planId}/missing-fields/{fieldId}:
-    patch:
-      tags: [Structured Plans]
-      summary: Supply or waive a missing field
-      description: >
-        Stores user-provided completion data separately from the AI section
-        status. A successful response contains the updated field lock version;
-        clients refetch the latest structured plan to obtain server-recalculated
-        completion, status, missing fields, and the latest plan lock version.
-      operationId: updateMissingField
-      x-implementation-phase: Phase 3
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/PlanId'
-        - $ref: '#/components/parameters/FieldId'
-      requestBody:
+        '200': {description: text/event-stream without after; JSON event list with after}
+  /api/v3/projects/{projectId}/modules:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get authoritative module states, responses: {'200': {description: Six module states}}}
+  /api/v3/projects/{projectId}/active-jobs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Jobs], summary: List owned non-terminal jobs, responses: {'200': {description: Active jobs}}}
+  /api/v3/projects/{projectId}/recent-jobs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Jobs], summary: List owned recent terminal jobs, responses: {'200': {description: Recent jobs}}}
+  /api/v3/projects/{projectId}/idea-brief:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get canonical Idea Brief, responses: {'200': {description: Idea Brief}}}
+  /api/v3/projects/{projectId}/idea-brief/derive:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Start Idea Brief derivation, responses: {'200': {description: Task accepted}}}
+  /api/v3/projects/{projectId}/idea-brief/fields:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    patch: {tags: [Pipeline], summary: Edit canonical Idea Brief fields, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/idea-brief/answers:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Apply answers to canonical fields, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/idea-brief/confirm:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Confirm immutable Idea Brief snapshot, responses: {'200': {description: Confirmed}}}
+  /api/v3/projects/{projectId}/concept-factory-runs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Start five-slot concept generation and legal precheck, responses: {'200': {description: Run started}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current concept run, responses: {'200': {description: Current run}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get concept run, responses: {'200': {description: Concept run}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}/slots:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get five concept slots, responses: {'200': {description: Concept slots}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}/retry:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    post: {tags: [Pipeline], summary: Retry a retryable terminal concept run, responses: {'200': {description: Retried}}}
+  /api/v3/projects/{projectId}/concepts:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List eligible concepts, responses: {'200': {description: Eligible concepts}}}
+  /api/v3/projects/{projectId}/concept-selections:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Select concept and create immutable snapshot, responses: {'200': {description: Selection created}}}
+  /api/v3/projects/{projectId}/concept-selections/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current selected concept snapshot, responses: {'200': {description: Current selection}}}
+  /api/v3/projects/{projectId}/module-handoffs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Create immutable external-module handoff, responses: {'200': {description: Handoff created}}}
+  /api/v3/projects/{projectId}/module-runs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List external module runs, responses: {'200': {description: Module runs}}}
+  /api/v3/projects/{projectId}/module-runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get external module run, responses: {'200': {description: Module run}}}
+  /api/v3/projects/{projectId}/market-result:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get external market result, responses: {'200': {description: Market result}}}
+  /api/v3/projects/{projectId}/planning/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current planning state, responses: {'200': {description: Planning}}}
+  /api/v3/projects/{projectId}/planning/change-proposals:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List planning change proposals, responses: {'200': {description: Change proposals}}}
+  /api/v3/projects/{projectId}/planning/change-proposals/{proposalId}/decisions:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: proposalId
+        in: path
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMissingFieldRequest'
-      responses:
-        '200':
-          description: Updated missing field
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MissingFieldApiResponse'
-        '400':
-          $ref: '#/components/responses/StandardError'
-        '404':
-          $ref: '#/components/responses/StandardError'
-        '409':
-          description: >
-            RESOURCE_VERSION_CONFLICT when the supplied field lock version is
-            stale, or PLAN_NOT_EDITABLE when the plan is already confirmed.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-        '422':
-          $ref: '#/components/responses/StandardError'
-  /projects/{projectId}/structured-plans/{planId}/confirm:
-    post:
-      tags: [Structured Plans]
-      summary: Confirm structured plan for downstream analysis
-      description: >
-        Confirms only a DRAFT plan with server completion 100 and no OPEN
-        required missing field. Success returns that confirmed plan and advances
-        the project stage from STRUCTURING to LEGAL_REVIEW; it does not start a
-        legal-analysis job.
-      operationId: confirmStructuredPlan
-      x-implementation-phase: Phase 3
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-        - $ref: '#/components/parameters/PlanId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConfirmStructuredPlanRequest'
-      responses:
-        '200':
-          description: Confirmed structured plan
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StructuredPlanApiResponse'
-        '409':
-          description: >
-            RESOURCE_VERSION_CONFLICT for a stale plan lock version. A stale
-            duplicate confirmation must refetch the latest plan before the
-            client decides whether confirmation already succeeded.
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-        '404':
-          $ref: '#/components/responses/StandardError'
-        '422':
-          $ref: '#/components/responses/StandardError'
-  /projects/{projectId}/legal-reviews:
-    post:
-      tags: [Legal Reviews]
-      summary: Start a legal and regulatory pre-review
-      description: >
-        Creates one asynchronous LEGAL_REVIEW job for the latest complete,
-        CONFIRMED structured plan. The immutable plan snapshot is the only
-        analysis input. This operation does not provide legal advice.
-      operationId: startLegalReview
-      x-implementation-phase: Phase 8
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '202':
-          description: Job accepted, or the completed idempotent result returned
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/LegalReviewStartApiResponse'}
-        '404':
-          $ref: '#/components/responses/StandardError'
-        '409':
-          description: A legal review job is already QUEUED or RUNNING
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-        '422':
-          description: Project stage or confirmed-plan input is invalid
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-  /projects/{projectId}/legal-reviews/latest:
-    get:
-      tags: [Legal Reviews]
-      summary: Get the latest legal and regulatory pre-review
-      operationId: getLatestLegalReview
-      x-implementation-phase: Phase 8
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200':
-          description: Latest owner-visible structured pre-review
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/LegalReviewApiResponse'}
-        '404':
-          $ref: '#/components/responses/StandardError'
-  /projects/{projectId}/feasibility-assessments:
-    post:
-      tags: [Feasibility Assessments]
-      summary: Start an evidence-aware business feasibility pre-assessment
-      description: >
-        Creates one asynchronous FEASIBILITY_ANALYSIS job for the latest complete,
-        CONFIRMED structured plan and its latest persisted legal review. The result
-        is not a success probability, investment recommendation, market study, or
-        financial forecast. Missing information remains unknown rather than zero.
-      operationId: startFeasibilityAssessment
-      x-implementation-phase: Phase 9
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '202':
-          description: Job accepted, or the completed idempotent result returned
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/FeasibilityStartApiResponse'}
-        '404': {$ref: '#/components/responses/StandardError'}
-        '409':
-          description: An assessment job is already QUEUED or RUNNING
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-        '422':
-          description: Project stage, confirmed plan, or legal-review input is invalid
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ErrorApiResponse'}
-  /projects/{projectId}/feasibility-assessments/latest:
-    get:
-      tags: [Feasibility Assessments]
-      summary: Get the latest persisted feasibility assessment
-      operationId: getLatestFeasibilityAssessment
-      x-implementation-phase: Phase 9
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200':
-          description: Latest owner-visible assessment, dimensions, and validation tasks
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/FeasibilityAssessmentApiResponse'}
-        '404': {$ref: '#/components/responses/StandardError'}
-  /personas/catalog:
-    get:
-      tags: [Personas]
-      summary: List the aggregate baseline persona catalog
-      operationId: listBaselinePersonas
-      x-implementation-phase: Phase 10
-      responses:
-        '200':
-          description: The 56-row aggregate catalog; no individual survey rows
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/BaselinePersonaListApiResponse'}
-        '401': {$ref: '#/components/responses/StandardError'}
-  /projects/{projectId}/persona-recommendations:
-    post:
-      tags: [Personas]
-      summary: Start a persona recommendation and customer-validation planning job
-      description: >
-        Compares the latest complete confirmed plan and its persisted feasibility
-        assessment with the aggregate catalog. The result is a hypothesis, not
-        observed customer evidence, purchase probability, or completed validation.
-      operationId: startPersonaRecommendation
-      x-implementation-phase: Phase 10
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '202':
-          description: Job accepted, or the completed idempotent result returned
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/PersonaStartApiResponse'}
-        '404': {$ref: '#/components/responses/StandardError'}
-        '409': {$ref: '#/components/responses/StandardError'}
-        '422': {$ref: '#/components/responses/StandardError'}
-  /projects/{projectId}/persona-recommendations/latest:
-    get:
-      tags: [Personas]
-      summary: Get the latest persona recommendation and validation plan
-      operationId: getLatestPersonaRecommendation
-      x-implementation-phase: Phase 10
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200':
-          description: Latest owner-visible recommendation
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/PersonaRecommendationApiResponse'}
-        '404': {$ref: '#/components/responses/StandardError'}
-  /projects/{projectId}/financial-analysis/source:
-    get:
-      tags: [Financial Analyses]
-      summary: Confirmed feasibility and structured-plan source for a financial analysis
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200': {description: Financial source snapshot metadata}
-  /projects/{projectId}/financial-analyses:
-    get:
-      tags: [Financial Analyses]
-      summary: List non-deleted project financial analyses
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '200': {description: Financial analysis summaries}
-    post:
-      tags: [Financial Analyses]
-      summary: Create a financial-analysis draft from confirmed assumptions
-      parameters:
-        - $ref: '#/components/parameters/ProjectId'
-      responses:
-        '201': {description: Financial analysis draft}
-  /projects/{projectId}/financial-analyses/{analysisId}:
+        schema: {type: string}
+    post: {tags: [Pipeline], summary: Decide a planning change proposal, responses: {'200': {description: Planning updated}}}
+  /api/v3/projects/{projectId}/planning/finalize:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Finalize planning snapshot, responses: {'200': {description: Finalized}}}
+  /api/v3/projects/{projectId}/marketing-contents:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List marketing contents, responses: {'200': {description: Contents}}}
+    post: {tags: [Pipeline], summary: Queue marketing content generation, responses: {'200': {description: Content task created}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
-      - $ref: '#/components/parameters/AnalysisId'
-    get:
-      tags: [Financial Analyses]
-      summary: Get a financial analysis and its immutable source snapshot
-      responses:
-        '200': {description: Financial analysis detail}
-    patch:
-      tags: [Financial Analyses]
-      summary: Update a draft financial analysis
-      responses:
-        '200': {description: Updated financial analysis}
-    delete:
-      tags: [Financial Analyses]
-      summary: Soft-delete a financial analysis
-      responses:
-        '204': {description: Deleted}
-  /projects/{projectId}/financial-analyses/{analysisId}/run:
+      - $ref: '#/components/parameters/ContentId'
+    get: {tags: [Pipeline], summary: Get marketing content, responses: {'200': {description: Content}}}
+    patch: {tags: [Pipeline], summary: Create a user-edited content revision, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}/regenerate:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
-      - $ref: '#/components/parameters/AnalysisId'
-    post:
-      tags: [Financial Analyses]
-      summary: Deterministically calculate and complete a financial analysis
-      responses:
-        '200': {description: Completed financial analysis}
-  /projects/{projectId}/financial-analyses/{analysisId}/duplicate:
+      - $ref: '#/components/parameters/ContentId'
+    post: {tags: [Pipeline], summary: Queue marketing content regeneration, responses: {'200': {description: Regeneration queued}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}/finalize:
     parameters:
       - $ref: '#/components/parameters/ProjectId'
-      - $ref: '#/components/parameters/AnalysisId'
-    post:
-      tags: [Financial Analyses]
-      summary: Duplicate assumptions into a new financial-analysis draft
-      responses:
-        '201': {description: New financial analysis draft}
-  /api/v2/projects/{projectId}/task-runs/{taskRunId}:
-    get:
-      tags: [Jobs]
-      servers:
-        - url: /
-      summary: Read an owner-scoped Target TaskRun
-      operationId: getTaskRunV2
-      parameters:
-        - {$ref: '#/components/parameters/ProjectId'}
-        - {$ref: '#/components/parameters/TaskRunId'}
-      responses:
-        '200':
-          description: Current state, including terminal failure states
-          headers:
-            X-Correlation-Id:
-              description: Request correlation identifier
-              schema: {type: string, maxLength: 128}
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TaskRunV2Response'}
-        '404': {$ref: '#/components/responses/TaskRunV2Error'}
-  /api/v2/projects/{projectId}/task-runs/{taskRunId}/retry:
-    post:
-      tags: [Jobs]
-      servers:
-        - url: /
-      summary: Queue a new attempt on the same retryable TaskRun
-      operationId: retryTaskRunV2
-      parameters:
-        - {$ref: '#/components/parameters/ProjectId'}
-        - {$ref: '#/components/parameters/TaskRunId'}
-        - {$ref: '#/components/parameters/TaskCommandIdempotencyKey'}
-      responses:
-        '202':
-          description: Retry accepted
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TaskRunV2Response'}
-        '404': {$ref: '#/components/responses/TaskRunV2Error'}
-        '409': {$ref: '#/components/responses/TaskRunV2Error'}
-  /api/v2/projects/{projectId}/task-runs/{taskRunId}/cancel:
-    post:
-      tags: [Jobs]
-      servers:
-        - url: /
-      summary: Idempotently request TaskRun cancellation
-      operationId: cancelTaskRunV2
-      parameters:
-        - {$ref: '#/components/parameters/ProjectId'}
-        - {$ref: '#/components/parameters/TaskRunId'}
-      responses:
-        '200':
-          description: Current TaskRun state
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TaskRunV2Response'}
-        '404': {$ref: '#/components/responses/TaskRunV2Error'}
+      - $ref: '#/components/parameters/ContentId'
+    post: {tags: [Pipeline], summary: Finalize marketing content revision, responses: {'200': {description: Finalized}}}
 components:
-  securitySchemes:
-    platformAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: >
-        Phase 3 access JWT. The development X-User-Id adapter is profile-bound
-        and is deliberately excluded from the public contract.
   parameters:
     ProjectId:
       name: projectId
-      in: path
-      required: true
-      schema: {type: integer, format: int64}
-    TaskRunId:
-      name: taskRunId
-      in: path
-      required: true
-      schema: {type: string, minLength: 1, maxLength: 64}
-    AnalysisId:
-      name: analysisId
-      in: path
-      required: true
-      schema: {type: integer, format: int64}
-    DocumentId:
-      name: documentId
-      in: path
-      required: true
-      schema: {type: integer, format: int64}
-    VersionId:
-      name: versionId
       in: path
       required: true
       schema: {type: integer, format: int64}
@@ -695,852 +150,29 @@ components:
       name: jobId
       in: path
       required: true
-      schema: {type: integer, format: int64}
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      description: >
-        Client-generated retry key. After trimming, 1-100 ASCII characters
-        from A-Z, a-z, 0-9, period, underscore, colon, and hyphen are allowed.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 100
-        pattern: '^[A-Za-z0-9._:-]+$'
-    TaskCommandIdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      description: Required command replay key scoped to owner, project, method and normalized path.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 128
-        pattern: '^[A-Za-z0-9._:-]+$'
-    PlanId:
-      name: planId
+      schema: {type: string, format: uuid}
+    RunId:
+      name: runId
       in: path
       required: true
-      schema: {type: integer, format: int64}
-    FieldId:
-      name: fieldId
+      schema: {type: string, format: uuid}
+    ContentId:
+      name: contentId
       in: path
       required: true
-      schema: {type: integer, format: int64}
-  responses:
-    TaskRunV2Error:
-      description: Public v2 safe error envelope
-      content:
-        application/json:
-          schema: {$ref: '#/components/schemas/TaskRunV2ErrorResponse'}
-    StandardError:
-      description: Standard API error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorApiResponse'
-  schemas:
-    TaskRunV2ErrorResponse:
-      type: object
-      required: [error]
-      properties:
-        error:
-          type: object
-          required: [code, message, correlationId, taskRunId, details]
-          properties:
-            code: {type: string}
-            message: {type: string}
-            correlationId: {type: string, maxLength: 128}
-            taskRunId: {type: [string, 'null'], maxLength: 64}
-            details:
-              type: array
-              items:
-                type: object
-                required: [field, reason, resourceType, resourceId]
-                properties:
-                  field: {type: [string, 'null']}
-                  reason: {type: string}
-                  resourceType: {type: [string, 'null']}
-                  resourceId: {type: [string, 'null']}
-    TaskRunV2Response:
-      type: object
-      required: [data, meta]
-      properties:
-        data: {$ref: '#/components/schemas/TaskRunPublicViewV2'}
-        meta:
-          type: object
-          required: [correlationId]
-          properties:
-            correlationId: {type: string, maxLength: 128}
-    TaskRunPublicViewV2:
-      type: object
-      required: [id, taskType, subject, state, retryable, cancelable, correlationId, createdAt]
-      properties:
-        id: {type: string, maxLength: 64}
-        taskType: {type: string}
-        subject:
-          type: object
-          required: [type, id]
-          properties:
-            type: {type: string, maxLength: 80}
-            id: {type: string, maxLength: 64}
-        state:
-          type: string
-          enum: [QUEUED, READY, RUNNING, SUCCEEDED, FAILED, CANCELLED, TIMED_OUT]
-        retryable: {type: boolean}
-        cancelable: {type: boolean}
-        correlationId: {type: string, maxLength: 128}
-        createdAt: {type: string, format: date-time}
-        startedAt: {type: [string, 'null'], format: date-time}
-        finishedAt: {type: [string, 'null'], format: date-time}
-        errorSummary:
-          type: [object, 'null']
-          properties:
-            code: {type: string}
-        resultResource:
-          type: [object, 'null']
-          properties:
-            type: {type: string}
-            id: {type: string}
-    Meta:
-      type: object
-      required: [requestId, timestamp]
-      properties:
-        requestId: {type: string}
-        timestamp: {type: string, format: date-time}
-    ApiError:
-      type: object
-      required: [code, message, fieldErrors, retryable]
-      properties:
-        code: {type: string}
-        message: {type: string}
-        fieldErrors:
-          type: array
-          items:
-            type: object
-            required: [field, message]
-            properties:
-              field: {type: string}
-              message: {type: string}
-        retryable: {type: boolean}
-    ErrorApiResponse:
-      type: object
-      required: [success, error, meta]
-      properties:
-        success: {type: boolean, const: false}
-        error: {$ref: '#/components/schemas/ApiError'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    SignupRequest:
-      type: object
-      required: [email, password, displayName]
-      properties:
-        email: {type: string, format: email, maxLength: 254}
-        password:
-          type: string
-          format: password
-          minLength: 8
-          description: Maximum 72 UTF-8 bytes; never persisted or logged raw.
-        displayName: {type: string, minLength: 1, maxLength: 50}
-    LoginRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email: {type: string, format: email, maxLength: 254}
-        password: {type: string, format: password}
-    RefreshRequest:
-      type: object
-      required: [refreshToken]
-      properties:
-        refreshToken:
-          type: string
-          minLength: 1
-          description: Raw token is accepted only at this boundary and stored as SHA-256.
-    User:
-      type: object
-      required: [id, email, displayName, role, status]
-      properties:
-        id: {type: integer, format: int64}
-        email: {type: string, format: email}
-        displayName: {type: string}
-        role: {type: string, enum: [USER, ADMIN]}
-        status:
-          type: string
-          enum: [PENDING, ACTIVE, LOCKED, SUSPENDED, WITHDRAWN]
-    TokenPair:
-      type: object
-      required:
-        [tokenType, accessToken, accessTokenExpiresIn, refreshToken,
-         refreshTokenExpiresIn]
-      properties:
-        tokenType: {type: string, const: Bearer}
-        accessToken: {type: string}
-        accessTokenExpiresIn: {type: integer, format: int64, minimum: 1}
-        refreshToken: {type: string}
-        refreshTokenExpiresIn: {type: integer, format: int64, minimum: 1}
-    Auth:
-      type: object
-      required: [user, tokens]
-      properties:
-        user: {$ref: '#/components/schemas/User'}
-        tokens: {$ref: '#/components/schemas/TokenPair'}
-    CreateProjectRequest:
-      type: object
-      required: [title]
-      properties:
-        title: {type: string, minLength: 1, maxLength: 150}
-        description:
-          type: [string, 'null']
-          maxLength: 10000
-        industryCategory:
-          type: [string, 'null']
-          maxLength: 100
-    ProjectStatus:
-      type: string
-      enum: [DRAFT, ACTIVE, PAUSED, COMPLETED, ARCHIVED]
-    ProjectStage:
-      type: string
-      enum:
-        - DOCUMENT
-        - STRUCTURING
-        - LEGAL_REVIEW
-        - FEASIBILITY
-        - FINANCIAL
-        - PERSONA_CONFIGURATION
-        - PANEL_SURVEY
-        - PANEL_DISCUSSION
-        - REPORT
-        - MARKETING
-        - COMPLETED
-    ProjectSummary:
-      type: object
-      required: [id, title, stage, status, createdAt, updatedAt]
-      properties:
-        id: {type: integer, format: int64}
-        title: {type: string}
-        industryCategory: {type: [string, 'null']}
-        stage: {$ref: '#/components/schemas/ProjectStage'}
-        status: {$ref: '#/components/schemas/ProjectStatus'}
-        createdAt: {type: string, format: date-time}
-        updatedAt: {type: string, format: date-time}
-    ProjectDetail:
-      allOf:
-        - $ref: '#/components/schemas/ProjectSummary'
-        - type: object
-          required: [ownerId, version]
-          properties:
-            ownerId: {type: integer, format: int64}
-            description: {type: [string, 'null']}
-            startedAt: {type: [string, 'null'], format: date-time}
-            completedAt: {type: [string, 'null'], format: date-time}
-            version: {type: integer, format: int64, minimum: 0}
-    DocumentUpload:
-      type: object
-      required: [projectId, documentId, versionId, jobId, status]
-      properties:
-        projectId: {type: integer, format: int64}
-        documentId: {type: integer, format: int64}
-        versionId: {type: integer, format: int64}
-        jobId: {type: integer, format: int64}
-        status:
-          $ref: '#/components/schemas/JobStatus'
-          description: QUEUED for a newly accepted upload; current job status for an idempotent replay.
-    DocumentSummary:
-      type: object
-      required: [documentId, documentType, currentVersion, status, latestVersionId, updatedAt]
-      properties:
-        documentId: {type: integer, format: int64}
-        documentType: {type: string, enum: [BUSINESS_PLAN]}
-        currentVersion: {type: integer}
-        status: {type: string, enum: [ACTIVE, REPLACED, DELETED]}
-        latestVersionId: {type: integer, format: int64}
-        updatedAt: {type: string, format: date-time}
-    DocumentVersion:
-      type: object
-      required: [documentId, versionId, versionNumber, originalFileName, sizeBytes, parseStatus, uploadedAt]
-      properties:
-        documentId: {type: integer, format: int64}
-        versionId: {type: integer, format: int64}
-        versionNumber: {type: integer}
-        originalFileName: {type: string}
-        sizeBytes: {type: integer, format: int64}
-        parseStatus: {$ref: '#/components/schemas/JobStatus'}
-        uploadedAt: {type: string, format: date-time}
-    JobStatus:
-      type: string
-      enum:
-        - NOT_STARTED
-        - QUEUED
-        - RUNNING
-        - SUCCEEDED
-        - PARTIAL
-        - FAILED
-        - CANCELED
-    Job:
-      type: object
-      required:
-        [jobId, projectId, jobType, status, progress, attempt,
-         sourceDocumentVersionId]
-      properties:
-        jobId: {type: integer, format: int64}
-        projectId: {type: integer, format: int64}
-        jobType: {type: string}
-        status: {$ref: '#/components/schemas/JobStatus'}
-        progress: {type: integer, minimum: 0, maximum: 100}
-        message: {type: string}
-        attempt: {type: integer, minimum: 0}
-        nextAttemptAt: {type: string, format: date-time}
-        retryable: {type: boolean}
-        sourceDocumentVersionId:
-          type: [integer, 'null']
-          format: int64
-          description: Source version for DOCUMENT_PARSE; null for unrelated job types.
-        startedAt: {type: string, format: date-time}
-        completedAt: {type: string, format: date-time}
-    MissingField:
-      type: object
-      required:
-        [fieldId, fieldCode, sectionCode, label, required, status, priority,
-         version]
-      properties:
-        fieldId: {type: integer, format: int64}
-        fieldCode: {type: string}
-        sectionCode: {$ref: '#/components/schemas/BusinessPlanSectionCode'}
-        label: {type: string}
-        required: {type: boolean}
-        status: {type: string, enum: [OPEN, FILLED, WAIVED]}
-        reason: {type: string}
-        priority: {type: string, enum: [HIGH, MEDIUM, LOW]}
-        userValue: {type: string}
-        version:
-          type: integer
-          format: int64
-          minimum: 0
-          description: >
-            Optimistic lock version of this missing field. It is distinct from
-            StructuredPlan.versionNumber and is mapped to lockVersion in the frontend.
-    BusinessPlanSectionCode:
-      type: string
-      description: >
-        Stable canonical code for the default BUSINESS_PLAN catalog. The order
-        shown here is the required display and persistence order.
-      enum:
-        - BUSINESS_OVERVIEW
-        - MARKET_SIZE
-        - TARGET_CUSTOMER
-        - COMPETITIVE_ANALYSIS
-        - PRODUCT_SERVICE
-        - BUSINESS_MODEL
-        - COST_PROFITABILITY
-        - SALES_GOALS_FINANCIAL_PROJECTIONS
-        - TECHNOLOGY_PRODUCTION
-        - LEGAL_PERMITS
-        - SCHEDULE_RISK
-        - EVIDENCE_LIST
-    StructuredItemStatus:
-      type: string
-      description: >
-        Domain extraction status. Only PRESENT contributes to completion.
-        PASS/REJECT are frontend view-model labels, not persisted statuses.
-      enum: [PRESENT, MISSING, PARTIAL, INVALID, UNKNOWN]
-    StructuredPlanSection:
-      type: object
-      required:
-        [sectionCode, displayName, sequence, status, evidence, sourceBlockReferences]
-      properties:
-        sectionCode: {$ref: '#/components/schemas/BusinessPlanSectionCode'}
-        displayName: {type: string}
-        sequence: {type: integer, minimum: 1, maximum: 12}
-        status: {$ref: '#/components/schemas/StructuredItemStatus'}
-        extractedContent: {type: string}
-        reason: {type: string}
-        confidence: {type: number, minimum: 0, maximum: 1}
-        evidence:
-          type: array
-          items: {type: string}
-        sourceBlockReferences:
-          type: array
-          items: {type: integer, minimum: 1}
-    StructuredPlan:
-      type: object
-      required:
-        [planId, projectId, sourceDocumentVersionId, versionNumber, status,
-         completionRate, version, sections, missingFields, createdAt, parserVersion,
-         promptVersion, modelName, provider]
-      properties:
-        planId: {type: integer, format: int64}
-        projectId: {type: integer, format: int64}
-        sourceDocumentVersionId: {type: integer, format: int64}
-        versionNumber: {type: integer}
-        status: {type: string, enum: [DRAFT, NEEDS_INPUT, CONFIRMED]}
-        completionRate: {type: integer, minimum: 0, maximum: 100}
-        version:
-          type: integer
-          format: int64
-          minimum: 0
-          description: >
-            Optimistic lock version of this structured plan. It is distinct from
-            StructuredPlan.versionNumber and is mapped to lockVersion in the frontend.
-        confirmedAt: {type: string, format: date-time}
-        confirmedBy:
-          type: integer
-          format: int64
-          description: Safe user identifier for the confirming user.
-        sections:
-          type: array
-          minItems: 12
-          maxItems: 12
-          items: {$ref: '#/components/schemas/StructuredPlanSection'}
-        missingFields:
-          type: array
-          items: {$ref: '#/components/schemas/MissingField'}
-        createdAt: {type: string, format: date-time}
-        parserVersion: {type: string}
-        promptVersion: {type: string}
-        modelName: {type: string}
-        provider:
-          type: string
-          description: >
-            AI provider identifier. The value mock means the result was
-            generated by the deterministic local/test adapter, not a real AI provider.
-    UpdateMissingFieldRequest:
-      type: object
-      required: [status, version]
-      properties:
-        status: {type: string, enum: [FILLED, WAIVED]}
-        value: {type: string, minLength: 1, maxLength: 4000}
-        reason: {type: string, minLength: 1, maxLength: 500}
-        version:
-          type: integer
-          format: int64
-          minimum: 0
-          description: Current missing-field lockVersion observed by the client.
-      description: >
-        FILLED requires value. WAIVED requires reason. OPEN transitions are not
-        supported in Phase 3.
-    ConfirmStructuredPlanRequest:
-      type: object
-      required: [version]
-      properties:
-        version:
-          type: integer
-          format: int64
-          minimum: 0
-          description: >
-            Current structured-plan lockVersion observed by the client; never
-            send the source document plan versionNumber here.
-    DocumentUploadApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/DocumentUpload'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    DocumentListApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data:
-          type: array
-          items: {$ref: '#/components/schemas/DocumentSummary'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    DocumentVersionApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/DocumentVersion'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    JobApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/Job'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    StructuredPlanApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/StructuredPlan'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    MissingFieldApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/MissingField'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    AuthApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/Auth'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    ProjectListApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data:
-          type: array
-          items: {$ref: '#/components/schemas/ProjectSummary'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    ProjectDetailApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/ProjectDetail'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    TokenPairApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/TokenPair'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    UserApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/User'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    EmptyApiResponse:
-      type: object
-      required: [success, meta]
-      properties:
-        success: {type: boolean, const: true}
-        meta: {$ref: '#/components/schemas/Meta'}
-    LegalReviewStartApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data:
-          type: object
-          required: [projectId, jobId, status, structuredPlanId, sourceDocumentVersionId]
-          properties:
-            projectId: {type: integer, format: int64}
-            legalReviewId: {type: [integer, 'null'], format: int64}
-            jobId: {type: integer, format: int64}
-            status: {type: string, enum: [QUEUED, RUNNING, SUCCEEDED, PARTIAL, FAILED]}
-            structuredPlanId: {type: integer, format: int64}
-            sourceDocumentVersionId: {type: integer, format: int64}
-        meta: {$ref: '#/components/schemas/Meta'}
-    LegalReviewApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/LegalReview'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    LegalReview:
-      type: object
-      required:
-        - legalReviewId
-        - projectId
-        - structuredPlanId
-        - sourceDocumentVersionId
-        - status
-        - overallRiskLevel
-        - summary
-        - disclaimer
-        - promptVersion
-        - findings
-        - questions
-      properties:
-        legalReviewId: {type: integer, format: int64}
-        projectId: {type: integer, format: int64}
-        structuredPlanId: {type: integer, format: int64}
-        sourceDocumentVersionId: {type: integer, format: int64}
-        versionNumber: {type: integer}
-        status: {type: string, enum: [NEEDS_REVIEW, COMPLETED]}
-        overallRiskLevel: {$ref: '#/components/schemas/LegalRiskLevel'}
-        summary: {type: string}
-        disclaimer: {type: string}
-        provider: {type: string}
-        modelName: {type: string}
-        promptVersion: {type: string, const: legal-review-v1}
-        completedAt: {type: string, format: date-time}
-        findings:
-          type: array
-          minItems: 10
-          maxItems: 10
-          items: {$ref: '#/components/schemas/LegalFinding'}
-        questions:
-          type: array
-          items: {$ref: '#/components/schemas/LegalReviewQuestion'}
-    LegalFinding:
-      type: object
-      required:
-        - category
-        - displayOrder
-        - applicability
-        - riskLevel
-        - title
-        - finding
-        - rationale
-        - recommendedAction
-        - requiresProfessionalReview
-      properties:
-        id: {type: integer, format: int64}
-        category:
-          type: string
-          enum: [BUSINESS_REGISTRATION, LICENSE_AND_PERMIT, PRIVACY_AND_DATA, TERMS_AND_CONTRACT, INTELLECTUAL_PROPERTY, CONSUMER_PROTECTION, ADVERTISING_AND_MARKETING, LABOR_AND_EMPLOYMENT, INDUSTRY_SPECIFIC, TAX_AND_FINANCIAL]
-        displayOrder: {type: integer, minimum: 1}
-        applicability:
-          type: string
-          enum: [APPLICABLE, POSSIBLY_APPLICABLE, NOT_APPLICABLE, INSUFFICIENT_INFORMATION]
-        riskLevel: {$ref: '#/components/schemas/LegalRiskLevel'}
-        title: {type: string}
-        finding: {type: string}
-        rationale: {type: string}
-        recommendedAction: {type: string}
-        evidenceJson: {type: string, description: JSON array encoded as TEXT}
-        sourceSectionCodesJson: {type: string, description: JSON array encoded as TEXT}
-        requiresProfessionalReview: {type: boolean}
-        confidence: {type: [number, 'null'], minimum: 0, maximum: 1}
-    LegalReviewQuestion:
-      type: object
-      required: [id, displayOrder, question, status]
-      properties:
-        id: {type: integer, format: int64}
-        displayOrder: {type: integer, minimum: 1}
-        question: {type: string}
-        reason: {type: [string, 'null']}
-        status: {type: string, enum: [OPEN, ANSWERED, WAIVED]}
-    LegalRiskLevel:
-      type: string
-      enum: [LOW, MEDIUM, HIGH, CRITICAL, UNKNOWN]
-    FeasibilityStartApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data:
-          type: object
-          required:
-            [projectId, jobId, status, structuredPlanId, legalReviewId,
-             sourceDocumentVersionId]
-          properties:
-            projectId: {type: integer, format: int64}
-            assessmentId: {type: [integer, 'null'], format: int64}
-            jobId: {type: integer, format: int64}
-            status: {$ref: '#/components/schemas/JobStatus'}
-            structuredPlanId: {type: integer, format: int64}
-            legalReviewId: {type: integer, format: int64}
-            sourceDocumentVersionId: {type: integer, format: int64}
-        meta: {$ref: '#/components/schemas/Meta'}
-    FeasibilityAssessmentApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/FeasibilityAssessment'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    FeasibilityAssessment:
-      type: object
-      required:
-        [assessmentId, projectId, structuredPlanId, legalReviewId,
-         sourceDocumentVersionId, versionNumber, status, verdict, confidence,
-         summary, keyStrengthsJson, keyRisksJson, disclaimer, provider,
-         modelName, promptVersion, catalogVersion, completedAt, dimensions,
-         validationTasks]
-      properties:
-        assessmentId: {type: integer, format: int64}
-        projectId: {type: integer, format: int64}
-        structuredPlanId: {type: integer, format: int64}
-        legalReviewId: {type: integer, format: int64}
-        sourceDocumentVersionId: {type: integer, format: int64}
-        versionNumber: {type: integer, minimum: 1}
-        status:
-          type: string
-          enum: [NEEDS_VALIDATION, COMPLETED]
-        verdict:
-          type: string
-          description: A pre-assessment verdict, never a success probability.
-          enum: [PROMISING, CONDITIONAL, HIGH_RISK, INSUFFICIENT_INFORMATION]
-        overallScore:
-          type: [integer, 'null']
-          minimum: 0
-          maximum: 100
-          description: >
-            Weighted rule result. Null when any required dimension lacks enough
-            information; unknown information is never converted to zero.
-        confidence: {$ref: '#/components/schemas/FeasibilityConfidence'}
-        summary: {type: string}
-        keyStrengthsJson: {type: string, description: JSON string array stored as TEXT}
-        keyRisksJson: {type: string, description: JSON string array stored as TEXT}
-        disclaimer: {type: string}
-        provider:
-          type: string
-          description: mock identifies the deterministic local/test adapter.
-        modelName: {type: string}
-        promptVersion: {type: string, const: feasibility-analysis-v1}
-        catalogVersion: {type: string, const: feasibility-catalog-v1}
-        completedAt: {type: string, format: date-time}
-        dimensions:
-          type: array
-          minItems: 10
-          maxItems: 10
-          items: {$ref: '#/components/schemas/FeasibilityDimensionResult'}
-        validationTasks:
-          type: array
-          items: {$ref: '#/components/schemas/FeasibilityValidationTask'}
-    FeasibilityDimensionCode:
-      type: string
-      enum:
-        - PROBLEM_AND_NEED
-        - TARGET_CUSTOMER
-        - MARKET_ATTRACTIVENESS
-        - COMPETITIVE_POSITION
-        - PRODUCT_SOLUTION_FIT
-        - BUSINESS_MODEL
-        - GO_TO_MARKET
-        - FINANCIAL_VIABILITY
-        - EXECUTION_CAPABILITY
-        - LEGAL_AND_REGULATORY
-    FeasibilityConfidence:
-      type: string
-      enum: [LOW, MEDIUM, HIGH]
-    FeasibilityDimensionResult:
-      type: object
-      required:
-        [id, code, displayOrder, confidence, status, finding, rationale,
-         strengthsJson, risksJson, assumptionsJson, evidenceJson,
-         sourceSectionCodesJson, legalFindingIdsJson, recommendedActionsJson]
-      properties:
-        id: {type: integer, format: int64}
-        code: {$ref: '#/components/schemas/FeasibilityDimensionCode'}
-        displayOrder: {type: integer, minimum: 1, maximum: 10}
-        score:
-          type: [integer, 'null']
-          minimum: 0
-          maximum: 100
-        confidence: {$ref: '#/components/schemas/FeasibilityConfidence'}
-        status:
-          type: string
-          enum: [ASSESSED, NEEDS_VALIDATION, INSUFFICIENT_INFORMATION]
-        finding: {type: string}
-        rationale: {type: string}
-        strengthsJson: {type: string, description: JSON string array stored as TEXT}
-        risksJson: {type: string, description: JSON string array stored as TEXT}
-        assumptionsJson: {type: string, description: JSON string array stored as TEXT}
-        evidenceJson:
-          type: string
-          description: >
-            JSON array of typed evidence. Allowed types are DOCUMENT_FACT,
-            USER_ASSUMPTION, AI_INFERENCE, LEGAL_REVIEW, and
-            EXTERNAL_VERIFICATION_REQUIRED.
-        sourceSectionCodesJson: {type: string, description: JSON string array stored as TEXT}
-        legalFindingIdsJson: {type: string, description: JSON integer array stored as TEXT}
-        recommendedActionsJson: {type: string, description: JSON string array stored as TEXT}
-    FeasibilityValidationTask:
-      type: object
-      required:
-        [id, code, dimensionCode, title, description, reason, priority,
-         validationMethod, expectedEvidence, status, displayOrder]
-      properties:
-        id: {type: integer, format: int64}
-        code: {type: string}
-        dimensionCode: {$ref: '#/components/schemas/FeasibilityDimensionCode'}
-        title: {type: string}
-        description: {type: string}
-        reason: {type: string}
-        priority: {type: string, enum: [HIGH, MEDIUM, LOW]}
-        validationMethod: {type: string}
-        expectedEvidence: {type: string}
-        status: {type: string, enum: [OPEN, COMPLETED, DISMISSED]}
-        displayOrder: {type: integer, minimum: 1}
-    BaselinePersona:
-      type: object
-      required: [id, personaCode, clusterId, displayName, description, ageGroup,
-        gender, dataSource, dataVersion, catalogVersion, keyTraitsJson,
-        demographicSummaryJson, evidenceMetricsJson, limitationsJson]
-      properties:
-        id: {type: integer, format: int64}
-        personaCode: {type: string}
-        clusterId: {type: string}
-        displayName: {type: string}
-        shortName: {type: string}
-        description: {type: string}
-        ageGroup: {type: string}
-        gender: {type: string}
-        sampleSize: {type: [integer, 'null'], minimum: 0}
-        weightedShare: {type: [number, 'null'], minimum: 0, maximum: 1}
-        dataSource: {type: string, const: 2025 한국미디어패널조사}
-        dataVersion: {type: string, const: p25v32}
-        catalogVersion: {type: string, const: persona-catalog-v1}
-        keyTraitsJson: {type: string}
-        demographicSummaryJson: {type: string}
-        evidenceMetricsJson: {type: string}
-        limitationsJson: {type: string}
-    PersonaStart:
-      type: object
-      required: [projectId, jobId, status, structuredPlanId,
-        feasibilityAssessmentId, catalogVersion]
-      properties:
-        projectId: {type: integer, format: int64}
-        recommendationId: {type: [integer, 'null'], format: int64}
-        jobId: {type: integer, format: int64}
-        status: {$ref: '#/components/schemas/JobStatus'}
-        structuredPlanId: {type: integer, format: int64}
-        feasibilityAssessmentId: {type: integer, format: int64}
-        catalogVersion: {type: string, const: persona-catalog-v1}
-    PersonaRecommendation:
-      type: object
-      required: [recommendationId, projectId, analysisJobId, structuredPlanId,
-        feasibilityAssessmentId, status, confidence, summary, disclaimer,
-        provider, modelName, promptVersion, catalogVersion, completedAt,
-        items, hypotheses, validationPlans, linkedFeasibilityTasks]
-      properties:
-        recommendationId: {type: integer, format: int64}
-        projectId: {type: integer, format: int64}
-        analysisJobId: {type: integer, format: int64}
-        structuredPlanId: {type: integer, format: int64}
-        feasibilityAssessmentId: {type: integer, format: int64}
-        status: {type: string, enum: [COMPLETED, NEEDS_VALIDATION]}
-        primaryPersonaCode: {type: [string, 'null']}
-        secondaryPersonaCode: {type: [string, 'null']}
-        confidence: {type: string, enum: [LOW, MEDIUM, HIGH]}
-        summary: {type: string}
-        disclaimer: {type: string}
-        provider: {type: string}
-        modelName: {type: string}
-        promptVersion: {type: string, const: persona-recommendation-v1}
-        catalogVersion: {type: string, const: persona-catalog-v1}
-        completedAt: {type: string, format: date-time}
-        items: {type: array, minItems: 2, items: {type: object}}
-        hypotheses: {type: array, items: {type: object}}
-        validationPlans: {type: array, items: {type: object}}
-        linkedFeasibilityTasks: {type: array, items: {type: object}}
-    BaselinePersonaListApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data:
-          type: array
-          minItems: 56
-          maxItems: 56
-          items: {$ref: '#/components/schemas/BaselinePersona'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    PersonaStartApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/PersonaStart'}
-        meta: {$ref: '#/components/schemas/Meta'}
-    PersonaRecommendationApiResponse:
-      type: object
-      required: [success, data, meta]
-      properties:
-        success: {type: boolean, const: true}
-        data: {$ref: '#/components/schemas/PersonaRecommendation'}
-        meta: {$ref: '#/components/schemas/Meta'}
+      schema: {type: string, format: uuid}
+x-runtime-contract:
+  conceptLimits: {targetEligible: 5, maxInspected: 15, replacementRounds: 2}
+  providerTaskTypes:
+    - IDEA_BRIEF_DERIVATION
+    - CONCEPT_CANDIDATE
+    - CONCEPT_LEGAL_REVIEW
+    - CONCEPT_REDESIGN
+    - MARKETING_CONTENT_GENERATION
+  orchestrationTaskTypes: [IDEA_ATTACHMENT_PARSE, CONCEPT_FACTORY_RUN]
+  jobEventRegistry: frontEnd/src/shared/async-events/jobEventMessages.js
+  databaseBaseline: backend/src/main/resources/db/migration/V1__new_pipeline_baseline.sql
+  providerSmokes:
+    - python -m app.tools.idea_brief_provider_smoke
+    - python -m app.tools.concept_factory_provider_smoke
+    - python -m app.tools.marketing_content_provider_smoke

@@ -1,0 +1,245 @@
+{
+  "taskType": "EXPAND",
+  "schemaVersion": "2.0",
+  "canonicalRequestHash": "5ea7858cc4a88f9b3cf7f584ca6c4ef6ffd65b9825722d00fa82e34c59d9b688",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+      "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "월 19,900원",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "모바일 앱",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {},
+      "fixtureName": "notebook_food_lab"
+    },
+    "plan": {
+      "title": "Smart Meal Kit Subscription",
+      "oneLineConcept": "A subscription service providing personalized meal kits with recipes for leftover ingredients.",
+      "coreMechanism": "Subscription-based meal kit delivery",
+      "customerInteraction": "Mobile app for ordering and recipe suggestions",
+      "valueDelivery": "Convenient meal preparation with reduced food waste",
+      "operatingApproach": "Centralized fulfillment with local delivery",
+      "partnerApproach": "Collaboration with local farms for fresh ingredients",
+      "transactionApproach": "Monthly subscription with flexible delivery options",
+      "commercialApproach": "Tiered pricing based on meal frequency",
+      "fulfillmentApproach": "Direct-to-consumer delivery model",
+      "mechanics": {
+        "solutionMechanismType": "Subscription",
+        "supplyModel": "Local sourcing",
+        "fulfillmentModel": "Direct delivery",
+        "platformRoleType": "Marketplace",
+        "partnerStructureType": "Local farms",
+        "transactionModel": "Recurring payments",
+        "commercialModel": "Subscription tiers",
+        "customerInteractionModel": "Mobile app engagement"
+      },
+      "differentiatingMechanics": [
+        "Personalized meal planning",
+        "Focus on reducing food waste",
+        "Local ingredient sourcing",
+        "Flexible subscription options",
+        "Recipe guidance for leftovers"
+      ],
+      "mainChanges": [
+        "Increased focus on local sourcing",
+        "Enhanced app features for user engagement"
+      ],
+      "secondaryChanges": [
+        "Potential partnerships with nutritionists",
+        "Expansion of meal options based on user feedback"
+      ],
+      "legalRiskHints": [
+        "Compliance with food safety regulations",
+        "Subscription cancellation policies"
+      ],
+      "reasonForPortfolioRole": "To address food waste issues in small households.",
+      "planId": "P1",
+      "preservedAnchors": {
+        "ideaOverview": "개인 맞춤형 식재료를 소량 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+        "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "preservedLocks": {
+        "price": "월 19,900원",
+        "channels": "모바일 앱"
+      }
+    },
+    "index": 1
+  },
+  "providerResponse": {
+    "conceptName": "Smart Meal Kit Subscription",
+    "conceptDefinition": "A subscription service providing personalized meal kits with recipes for leftover ingredients.",
+    "introduction": "Convenient meal preparation with reduced food waste.",
+    "coreValue": "Addressing food waste issues in small households.",
+    "targetUsers": "식재료 낭비를 줄이고 싶은 1~2인 가구",
+    "industryCategory": "Food & Beverage",
+    "researchScope": "Market analysis on meal kit subscriptions and food waste reduction strategies.",
+    "targetRegion": "OPEN",
+    "revenueModel": "Subscription-based revenue model with tiered pricing.",
+    "price": "월 19,900원",
+    "channels": "모바일 앱",
+    "differentiators": "Personalized meal planning, Focus on reducing food waste, Local ingredient sourcing, Flexible subscription options, Recipe guidance for leftovers",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "Growing trend in meal kit subscriptions and increasing awareness of food waste.",
+      "assumptions": [
+        "Market growth in meal kit services",
+        "Increased consumer preference for local sourcing"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "Year",
+      "calculationBasis": "Estimated market size for meal kits in South Korea",
+      "assumptions": [
+        "Consumer willingness to pay for convenience",
+        "Rising trend in healthy eating",
+        "Increased focus on sustainability"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "1~2인 가구가 식재료를 다 쓰지 못해 비용과 음식물 쓰레기가 발생한다",
+    "solutionMechanism": "Subscription-based meal kit delivery with personalized recipes.",
+    "featureSet": [
+      "Personalized meal planning",
+      "Recipe guidance for leftovers",
+      "Flexible subscription options",
+      "Local ingredient sourcing",
+      "Mobile app for ordering"
+    ],
+    "actorRoles": [
+      "Customer",
+      "Local farms",
+      "Delivery personnel",
+      "Nutritionists"
+    ],
+    "platformRole": "Marketplace",
+    "operatingModel": "Centralized fulfillment with local delivery",
+    "partnerModel": "Collaboration with local farms for fresh ingredients",
+    "providerRole": "Meal kit provider",
+    "sellerRole": "Subscription service seller",
+    "intermediaryRole": "N/A",
+    "transactionFlow": [
+      "Customer subscribes to meal kit service",
+      "Meal kits are prepared and delivered",
+      "Customer provides feedback on meals"
+    ],
+    "paymentFlow": [
+      "Monthly subscription fee charged to customer",
+      "Payment processing through mobile app"
+    ],
+    "personalDataUsage": [
+      "Customer preferences for meal types",
+      "Delivery address for meal kits",
+      "Payment information for subscription"
+    ],
+    "physicalActivities": [
+      "Meal kit preparation",
+      "Delivery of meal kits to customers"
+    ],
+    "partnerRequirements": [
+      "Local farms must meet food safety standards",
+      "Partnership agreements for ingredient sourcing"
+    ],
+    "qualificationRequirements": [
+      "Food safety certifications for meal preparation",
+      "Delivery personnel must have valid licenses"
+    ],
+    "advertisingClaims": [
+      "Reduces food waste",
+      "Convenient meal preparation",
+      "Supports local farmers"
+    ],
+    "constraintCompliance": [
+      "Compliance with food safety regulations",
+      "Subscription cancellation policies"
+    ]
+  },
+  "durationMs": 5736,
+  "timestamp": "2026-08-09T15:56:56.379364+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

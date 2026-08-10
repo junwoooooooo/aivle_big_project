@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:643c285b831dbc8ac68f2d48ce55dbf458e32eadbbaf133ebc69789e94ebdeed",
+  "canonicalRequestHash": "5f252fc394106444d333dcb4bdba8f2c44309d0a681795f9a05a4195cd25f8d6",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-R1",
+        "businessText": "주문 및 배송 플랫폼 제공 고객 맞춤형 요리 키트 운영 식품 공급업체 및 요리 전문가와의 협력 주문 접수 식재료 준비 배송 구독 및 일회성 구매 옵션 제공 채널 정보가 필요합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "LOW",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A platform providing customized meal kits through collaboration with food suppliers and culinary experts, offering both subscription and one-time purchase options."
+    }
+  ],
+  "durationMs": 4450,
+  "timestamp": "2026-08-10T00:16:16.596259+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

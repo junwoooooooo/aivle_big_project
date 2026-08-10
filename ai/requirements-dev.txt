@@ -1,2 +1,6 @@
 -r requirements.txt
 pytest==8.4.1
+jupyterlab
+nbconvert
+nbformat
+pandas

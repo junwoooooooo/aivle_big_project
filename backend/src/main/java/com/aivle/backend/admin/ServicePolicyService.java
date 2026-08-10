@@ -24,13 +24,7 @@ public class ServicePolicyService {
     public boolean isRegistrationEnabled() { return enabled(ServiceSettingKey.REGISTRATION_ENABLED); }
 
     @Transactional(readOnly = true)
-    public boolean isDocumentProcessingEnabled() { return enabled(ServiceSettingKey.DOCUMENT_PROCESSING_ENABLED); }
-
-    @Transactional(readOnly = true)
     public boolean isMaintenanceMode() { return enabled(ServiceSettingKey.MAINTENANCE_MODE); }
-    public boolean isClusterPersonaEnabled() {
-        return enabled(ServiceSettingKey.CLUSTER_PERSONA_ENABLED);
-    }
 
     @Transactional(readOnly = true)
     public ServicePolicySnapshot snapshot() {
@@ -40,14 +34,11 @@ public class ServicePolicyService {
             .collect(Collectors.toMap(ServiceSetting::getSettingKey, Function.identity()));
         return new ServicePolicySnapshot(
             enabled(ServiceSettingKey.REGISTRATION_ENABLED, valuesByKey),
-            enabled(ServiceSettingKey.DOCUMENT_PROCESSING_ENABLED, valuesByKey),
-            enabled(ServiceSettingKey.MAINTENANCE_MODE, valuesByKey),
-            enabled(ServiceSettingKey.CLUSTER_PERSONA_ENABLED, valuesByKey)
+            enabled(ServiceSettingKey.MAINTENANCE_MODE, valuesByKey)
         );
     }
 
     public void requireRegistrationEnabled() { if (!isRegistrationEnabled()) throw new BusinessException(ErrorCode.REGISTRATION_DISABLED); }
-    public void requireDocumentProcessingEnabled() { if (!isDocumentProcessingEnabled()) throw new BusinessException(ErrorCode.DOCUMENT_PROCESSING_DISABLED); }
     public void requireServiceAvailableForUser() { if (isMaintenanceMode()) throw new BusinessException(ErrorCode.MAINTENANCE_MODE_ENABLED); }
 
     @Transactional(readOnly = true)
@@ -76,8 +67,6 @@ public class ServicePolicyService {
 
     public record ServicePolicySnapshot(
         boolean registrationEnabled,
-        boolean documentProcessingEnabled,
-        boolean maintenanceMode,
-        boolean clusterPersonaEnabled
+        boolean maintenanceMode
     ) { }
 }

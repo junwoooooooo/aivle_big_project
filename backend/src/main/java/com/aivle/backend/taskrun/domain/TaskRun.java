@@ -35,20 +35,21 @@ public class TaskRun extends BaseEntity {
  @Column(length=80) private String lastErrorCode;
  private LocalDateTime startedAt;
  private LocalDateTime finishedAt;
- public static TaskRun create(Project project,TaskType type,String subjectType,String subjectId,String input,String hash,String key,String correlation,int max){TaskRun r=new TaskRun();r.id=UUID.randomUUID().toString();r.project=project;r.taskType=type;r.subjectType=subjectType;r.subjectId=subjectId;r.inputSnapshot=input;r.inputHash=hash;r.idempotencyKey=key;r.idempotencyScope=type.name()+":"+subjectType+":"+subjectId;r.correlationId=correlation;r.contractVersion="1.0";r.taskSchemaVersion="1.0";r.locale="ko-KR";r.state=TaskRunState.QUEUED;r.maxAttempts=max;return r;}
- public int nextAttemptNumber(){return ++attemptCount;}
- public void registerAttempt(String attemptId){currentAttemptId=attemptId;}
- public void claimed(String attemptId,LocalDateTime now){currentAttemptId=attemptId;state=TaskRunState.RUNNING;retryable=false;if(startedAt==null)startedAt=now;}
+ private LocalDateTime nextAttemptAt;
+ public static TaskRun create(Project project,TaskType type,String subjectType,String subjectId,String input,String hash,String key,String correlation,int max){TaskRun r=new TaskRun();r.id=UUID.randomUUID().toString();r.project=project;r.taskType=type;r.subjectType=subjectType;r.subjectId=subjectId;r.inputSnapshot=input;r.inputHash=hash;r.idempotencyKey=key;r.idempotencyScope=type.name()+":"+subjectType+":"+subjectId;r.correlationId=correlation;r.contractVersion="1.0";r.taskSchemaVersion="1.0";r.locale="ko-KR";r.state=TaskRunState.QUEUED;r.maxAttempts=max;r.nextAttemptAt=LocalDateTime.now();return r;}
+ public int nextAttemptNumber(){requireClaimable();return ++attemptCount;}
+ public void scheduleInitial(LocalDateTime now){if(state!=TaskRunState.QUEUED||attemptCount!=0)throw new IllegalStateException("task already scheduled");nextAttemptAt=now;}
+ public void registerAttempt(String attemptId){requireClaimable();currentAttemptId=attemptId;}
+ public void claimed(String attemptId,LocalDateTime now){requireClaimable();currentAttemptId=attemptId;state=TaskRunState.RUNNING;retryable=false;nextAttemptAt=now;if(startedAt==null)startedAt=now;}
  public void succeed(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.SUCCEEDED;retryable=false;finishedAt=now;lastErrorCode=null;}
+ public void needsInput(LocalDateTime now){needsInput(null,now);}
+ public void needsInput(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.NEEDS_INPUT;retryable=false;finishedAt=now;lastErrorCode="NEEDS_INPUT";}
  public void fail(String code,boolean canRetry,LocalDateTime now){requireRunning();state=TaskRunState.FAILED;retryable=canRetry&&attemptCount<maxAttempts;lastErrorCode=code;finishedAt=now;}
  public void timeOut(LocalDateTime now){requireRunning();state=TaskRunState.TIMED_OUT;retryable=attemptCount<maxAttempts;lastErrorCode="TASK_TIMEOUT";finishedAt=now;}
- public void recoverAfterLeaseExpiry(LocalDateTime now){requireRunning();lastErrorCode="TASK_TIMEOUT";if(attemptCount<maxAttempts){state=TaskRunState.QUEUED;retryable=false;finishedAt=null;}else{state=TaskRunState.TIMED_OUT;retryable=false;finishedAt=now;}}
- public void queueRetry(){if((state!=TaskRunState.FAILED&&state!=TaskRunState.TIMED_OUT)||!retryable)throw new IllegalStateException("task run is not retryable");state=TaskRunState.QUEUED;retryable=false;finishedAt=null;}
+ public void recoverAfterLeaseExpiry(LocalDateTime now){requireRunning();lastErrorCode="TASK_TIMEOUT";if(attemptCount<maxAttempts){state=TaskRunState.QUEUED;retryable=false;finishedAt=null;nextAttemptAt=now;}else{state=TaskRunState.TIMED_OUT;retryable=false;finishedAt=now;}}
  public void exhaustAttempts(LocalDateTime now){if(state!=TaskRunState.QUEUED&&state!=TaskRunState.READY)throw new IllegalStateException("task run is not claimable");state=TaskRunState.FAILED;retryable=false;lastErrorCode="ATTEMPT_LIMIT_EXCEEDED";finishedAt=now;}
- public boolean retryReplay(String key){return key!=null&&key.equals(lastRetryIdempotencyKey)&&state==TaskRunState.QUEUED;}
- public boolean retryKeyConflicts(String key){return state==TaskRunState.QUEUED&&lastRetryIdempotencyKey!=null&&!lastRetryIdempotencyKey.equals(key);}
- public void recordRetryKey(String key){lastRetryIdempotencyKey=key;}
  public void cancel(LocalDateTime now){if(terminal())return;cancelRequested=true;if(state==TaskRunState.QUEUED||state==TaskRunState.READY||state==TaskRunState.RUNNING){state=TaskRunState.CANCELLED;retryable=false;finishedAt=now;}}
- public boolean terminal(){return state==TaskRunState.SUCCEEDED||state==TaskRunState.FAILED||state==TaskRunState.CANCELLED||state==TaskRunState.TIMED_OUT;}
+ public boolean terminal(){return state==TaskRunState.SUCCEEDED||state==TaskRunState.NEEDS_INPUT||state==TaskRunState.FAILED||state==TaskRunState.CANCELLED||state==TaskRunState.TIMED_OUT;}
+ private void requireClaimable(){if(state!=TaskRunState.QUEUED&&state!=TaskRunState.READY)throw new IllegalStateException("task run is not claimable");}
  private void requireRunning(){if(state!=TaskRunState.RUNNING)throw new IllegalStateException("task run is not running");}
 }
