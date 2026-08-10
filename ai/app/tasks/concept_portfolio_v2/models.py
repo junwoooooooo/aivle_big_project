@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.concept_portfolio_v2.models import (
     CandidateEnvelope,
-    CanonicalConceptDescriptor,
     CanonicalSeed,
+    DesignSpaceAnalysis,
     LegalLineageResolution,
     LegalReview,
+    PortfolioPlan,
+    PortfolioStatus,
     RunSummary,
     TraceEvent,
 )
@@ -91,17 +93,104 @@ class ProductionPreLegalExclusion(StrictModel):
         )
 
 
-class ConceptPortfolioContinuationArtifact(StrictModel):
+RequiredInputText = Annotated[str, Field(max_length=4000)]
+RequiredInputKey = Annotated[str, Field(max_length=200)]
+
+
+class ProductionRequiredInput(StrictModel):
+    candidateId: RequiredInputKey | None = None
+    scope: Annotated[str, Field(max_length=40)] | None = None
+    unknownFacts: list[RequiredInputText] = Field(default_factory=list, max_length=20)
+    conflictingLock: RequiredInputText | None = None
+    currentValue: RequiredInputText | None = None
+    requiredLegalChange: RequiredInputText | None = None
+    reason: RequiredInputText | None = None
+    question: RequiredInputText | None = None
+    possibleUserAction: RequiredInputText | None = None
+    safeSummary: RequiredInputText | None = None
+    affectedFields: list[RequiredInputKey] = Field(default_factory=list, max_length=32)
+
+    @classmethod
+    def from_core(
+        cls, value: dict[str, Any], *, affected_fields: list[str] | None = None
+    ) -> "ProductionRequiredInput":
+        return cls(
+            candidateId=value.get("candidateId"),
+            scope=value.get("scope"),
+            unknownFacts=value.get("unknownFacts") or [],
+            conflictingLock=value.get("conflictingLock"),
+            currentValue=value.get("currentValue"),
+            requiredLegalChange=value.get("requiredLegalChange"),
+            reason=value.get("reason"),
+            question=value.get("question"),
+            possibleUserAction=value.get("possibleUserAction"),
+            safeSummary=value.get("safeSummary"),
+            affectedFields=value.get("affectedFields") or affected_fields or [],
+        )
+
+
+class ProductionRunSummary(StrictModel):
+    safety: str
+    requestedMaximum: int = Field(ge=1, le=5)
+    planned: int = Field(ge=0)
+    planSelected: int = Field(ge=0)
+    candidateGenerated: int = Field(ge=0)
+    candidateAccepted: int = Field(ge=0)
+    legalReviewed: int = Field(ge=0)
+    legalAccepted: int = Field(ge=0)
+    legalRedesigned: int = Field(ge=0)
+    replanned: int = Field(ge=0)
+    finalPortfolio: int = Field(ge=0, le=5)
+    portfolioStatus: PortfolioStatus
+    downstreamHandoff: str
+    totalDurationMs: int = Field(ge=0)
+    failureStage: str | None = None
+    failureCode: str | None = None
+
+    @classmethod
+    def from_core(cls, value: RunSummary) -> "ProductionRunSummary":
+        return cls(
+            safety=value.safety,
+            requestedMaximum=value.requestedMaximum,
+            planned=value.planned,
+            planSelected=value.planSelected,
+            candidateGenerated=value.candidateGenerated,
+            candidateAccepted=value.candidateAccepted,
+            legalReviewed=value.legalReviewed,
+            legalAccepted=value.legalAccepted,
+            legalRedesigned=value.legalRedesigned,
+            replanned=value.replanned,
+            finalPortfolio=value.finalPortfolio,
+            portfolioStatus=value.portfolioStatus,
+            downstreamHandoff=value.downstreamHandoff,
+            totalDurationMs=value.totalDurationMs,
+            failureStage=value.failureStage,
+            failureCode=value.failureCode,
+        )
+
+
+class ConceptPortfolioContinuationContext(StrictModel):
     contextVersion: Literal["1.0"] = CONTINUATION_CONTEXT_VERSION
+    canonicalSeedSnapshot: CanonicalSeed
+    canonicalSeedHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    designSnapshot: DesignSpaceAnalysis
+    plans: list[PortfolioPlan] = Field(min_length=1, max_length=5)
+
+    @model_validator(mode="after")
+    def plans_are_unique(self):
+        plan_ids = [item.planId for item in self.plans]
+        if len(plan_ids) != len(set(plan_ids)):
+            raise ValueError("Continuation planId는 중복될 수 없습니다")
+        return self
+
+
+class ConceptPortfolioContinuationArtifact(StrictModel):
     candidateId: str
     lineageId: str
     candidateSnapshot: CandidateEnvelope
     planId: str
-    planDescriptor: CanonicalConceptDescriptor
-    canonicalSeedSnapshot: CanonicalSeed
-    canonicalSeedHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     latestLegalReview: LegalReview
-    requiredInputSnapshot: dict[str, Any]
+    requiredInput: ProductionRequiredInput
     affectedFields: list[str] = Field(default_factory=list, max_length=32)
     parentCandidateId: str | None = None
     recoverySource: str
@@ -121,12 +210,13 @@ class ConceptPortfolioProductionResult(StrictModel):
     concepts: list[CandidateEnvelope] = Field(default_factory=list, max_length=5)
     legalSummaries: list[LegalReview] = Field(default_factory=list, max_length=20)
     legalResolutions: list[LegalLineageResolution] = Field(default_factory=list, max_length=15)
-    requiredInputs: list[dict[str, Any]] = Field(default_factory=list, max_length=20)
+    requiredInputs: list[ProductionRequiredInput] = Field(default_factory=list, max_length=20)
     preLegalExclusions: list[ProductionPreLegalExclusion] = Field(default_factory=list, max_length=30)
-    runSummary: RunSummary | None = None
+    runSummary: ProductionRunSummary | None = None
     downstreamReadiness: str
     engineDefaultConceptId: str | None = None
     userSelectedConceptId: None = None
+    continuationContext: ConceptPortfolioContinuationContext | None = None
     continuationArtifacts: list[ConceptPortfolioContinuationArtifact] = Field(default_factory=list, max_length=5)
     traceSummary: ProductionTraceSummary
 
@@ -136,6 +226,12 @@ class ConceptPortfolioProductionResult(StrictModel):
             raise ValueError("producedConceptCount가 concepts 길이와 다릅니다")
         if self.producedConceptCount > self.requestedMaxConcepts:
             raise ValueError("producedConceptCount는 requestedMaxConcepts 이하여야 합니다")
+        if self.continuationArtifacts and self.continuationContext is None:
+            raise ValueError("Continuation Artifact에는 shared Context가 필요합니다")
+        if self.continuationContext is not None:
+            plan_ids = {item.planId for item in self.continuationContext.plans}
+            if any(item.planId not in plan_ids for item in self.continuationArtifacts):
+                raise ValueError("Continuation Artifact의 planId가 shared Context에 없습니다")
         return self
 
     def serialized_size_bytes(self) -> int:
@@ -156,4 +252,3 @@ def _bounded_text_list(value: Any, maximum: int) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value if item is not None][:maximum]
-

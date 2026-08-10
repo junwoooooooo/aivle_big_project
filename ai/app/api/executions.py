@@ -155,8 +155,24 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     execution_warnings: list[dict[str, Any]] = []
     try:
         if body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
-            from app.tasks.concept_portfolio_v2 import execute_concept_portfolio_v2
-            result = await execute_concept_portfolio_v2(body.input)
+            from app.tasks.concept_portfolio_v2 import (
+                ConceptPortfolioProductionContractError,
+                execute_concept_portfolio_v2,
+            )
+            try:
+                result = await execute_concept_portfolio_v2(body.input)
+            except ConceptPortfolioProductionContractError:
+                logger.warning(
+                    "CPV2 production result contract invalid taskRunId=%s taskAttemptId=%s correlationId=%s",
+                    body.taskRunId,
+                    body.taskAttemptId,
+                    correlation,
+                    exc_info=True,
+                )
+                return internal_error(
+                    correlation, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+                    body.taskRunId, body.taskAttemptId,
+                )
         elif body.taskType == "CONCEPT_CANDIDATE":
             from app.tasks.concept_candidate import execute_concept_candidate
             result = await execute_concept_candidate(body.input)

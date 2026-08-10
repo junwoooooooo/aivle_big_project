@@ -9,15 +9,19 @@ from pydantic import ValidationError
 
 from app.api.executions import TASK_TYPES
 from app.canonical_json import canonical_input_hash
-from app.concept_portfolio_v2 import ConceptPortfolioEngine
-from app.concept_portfolio_v2.models import LegalRoute, PortfolioStatus, RunStage
+from app.concept_portfolio_v2.models import LegalRoute, PortfolioPlan, PortfolioStatus, RunStage
+from app.providers import ProviderFailure
 from app.tasks.concept_portfolio_v2.models import (
     MAX_INTERNAL_EXECUTION_BYTES,
     PRODUCTION_RESULT_SAFETY_BYTES,
     ConceptPortfolioProductionInput,
+    ProductionRequiredInput,
 )
 from app.tasks.concept_portfolio_v2.observer import ProductionObservedConceptPortfolioEngine
-from app.tasks.concept_portfolio_v2.service import ConceptPortfolioProductionFacade
+from app.tasks.concept_portfolio_v2.service import (
+    ConceptPortfolioProductionContractError,
+    ConceptPortfolioProductionFacade,
+)
 from main import app
 
 
@@ -43,21 +47,29 @@ PRODUCTION_INPUT = ConceptPortfolioProductionInput.model_validate({
 
 
 @pytest.fixture(scope="module")
-def core_result():
-    result = asyncio.run(ConceptPortfolioEngine().run_full(
+def core_bundle():
+    engine = ProductionObservedConceptPortfolioEngine()
+    result = asyncio.run(engine.run_full(
         PRODUCTION_INPUT.seed,
         max_concepts=5,
         auto_confirm_hypotheses=False,
     ))
     assert result.concepts
     assert result.legalSummaries
-    return result
+    return engine, result
+
+
+@pytest.fixture(scope="module")
+def core_result(core_bundle):
+    return core_bundle[1]
 
 
 class FakeEngine:
-    def __init__(self, result, candidates=None):
+    def __init__(self, result, candidates=None, plans=None, design=None):
         self.result = result
         self.candidates = candidates or {}
+        self.plans = plans or {}
+        self.design = design
         self.calls = []
 
     async def run_full(self, seed, *, max_concepts, auto_confirm_hypotheses):
@@ -70,6 +82,12 @@ class FakeEngine:
 
     def continuation_candidate(self, candidate_id):
         return self.candidates.get(candidate_id)
+
+    def continuation_plan(self, plan_id):
+        return self.plans.get(plan_id)
+
+    def continuation_design(self):
+        return self.design
 
 
 def production_result_with_count(base, count):
@@ -138,7 +156,8 @@ def test_facade_accepts_one_to_five_concepts(core_result, count):
     assert result.engineStatus == ("READY_FULL" if count == 5 else "READY_LIMITED")
 
 
-def test_continuation_is_exported_only_for_unresolved_candidate(core_result):
+def test_continuation_is_exported_only_for_unresolved_candidate(core_bundle):
+    observed_engine, core_result = core_bundle
     raw = production_result_with_count(core_result, 2)
     unresolved = core_result.concepts[0].model_copy(update={
         "candidateId": "needs-input-1",
@@ -170,19 +189,29 @@ def test_continuation_is_exported_only_for_unresolved_candidate(core_result):
     }, deep=True)
     candidates = {item.candidateId: item for item in raw.concepts}
     candidates[unresolved.candidateId] = unresolved
+    plan = observed_engine.continuation_plan(unresolved.planId)
+    design = observed_engine.continuation_design()
 
     result = asyncio.run(ConceptPortfolioProductionFacade(
-        engine=FakeEngine(raw, candidates)
+        engine=FakeEngine(raw, candidates, {plan.planId: plan}, design)
     ).run(PRODUCTION_INPUT))
 
-    assert result.requiredInputs == [required]
+    assert result.requiredInputs[0].model_dump(
+        mode="json", exclude_none=True, exclude={"affectedFields"}
+    ) == required
     assert len(result.continuationArtifacts) == 1
+    assert result.continuationContext is not None
+    assert result.continuationContext.designSnapshot == design
+    assert result.continuationContext.plans == [plan]
+    assert isinstance(result.continuationContext.plans[0], PortfolioPlan)
     artifact = result.continuationArtifacts[0]
     assert artifact.candidateId == unresolved.candidateId
     assert artifact.lineageId == "lineage-needs-input"
     assert artifact.parentCandidateId == "parent-candidate"
     assert artifact.recoverySource == "LEGAL_REDESIGN"
     assert artifact.affectedFields == ["personalDataUsage"]
+    assert artifact.requiredInput.affectedFields == ["personalDataUsage"]
+    assert artifact.planId == plan.planId
     assert artifact.candidateSnapshot.candidateId == unresolved.candidateId
     assert artifact.acceptedPortfolioConceptIds == ["accepted-1", "accepted-2"]
     assert all(item.candidateId != "accepted-1" for item in result.continuationArtifacts)
@@ -212,6 +241,30 @@ def test_observer_sink_failure_does_not_break_core_trace(caplog):
     assert "CPV2 production trace sink failed" in caplog.text
 
 
+def test_observer_captures_design_and_actual_plan_and_resets_all_context():
+    engine = ProductionObservedConceptPortfolioEngine()
+    result = asyncio.run(engine.run_full(
+        PRODUCTION_INPUT.seed, max_concepts=1, auto_confirm_hypotheses=False
+    ))
+    candidate = result.concepts[0]
+    design = engine.continuation_design()
+    plan = engine.continuation_plan(candidate.planId)
+
+    assert design is not None
+    assert design.explorationBreadth.value in {"EXPLORE", "REFINE", "AS_IS"}
+    assert plan is not None
+    assert isinstance(plan, PortfolioPlan)
+    assert plan.planId == candidate.planId
+    assert plan.oneLineConcept
+    assert plan.solutionThesis
+    assert engine.continuation_candidate(candidate.candidateId) == candidate
+
+    engine._reset()
+    assert engine.continuation_design() is None
+    assert engine.continuation_plan(candidate.planId) is None
+    assert engine.continuation_candidate(candidate.candidateId) is None
+
+
 @pytest.mark.parametrize("invalid", [
     {**PRODUCTION_INPUT.model_dump(mode="json"), "maxConcepts": 0},
     {**PRODUCTION_INPUT.model_dump(mode="json"), "maxConcepts": 6},
@@ -232,6 +285,131 @@ def test_five_concept_result_stays_below_internal_response_limit(core_result):
     assert "trace" not in payload
     assert "failureDiagnostics" not in payload
     assert "providerUsage" not in payload
+
+
+def test_production_summary_has_no_engine_selection_leakage(core_result):
+    raw = production_result_with_count(core_result, 2)
+    result = asyncio.run(ConceptPortfolioProductionFacade(engine=FakeEngine(raw)).run(PRODUCTION_INPUT))
+    payload = result.model_dump(mode="json")
+
+    assert result.userSelectedConceptId is None
+    assert result.engineDefaultConceptId == "accepted-1"
+    assert result.runSummary is not None
+    assert {"selectedConcept", "selectedBusinessPlan", "currentSelection"}.isdisjoint(
+        _nested_keys(payload)
+    )
+
+
+def test_five_needs_input_contract_is_shared_deduplicated_and_bounded(core_bundle):
+    observed_engine, core_result = core_bundle
+    unresolved = []
+    legal = []
+    required = []
+    candidates = {}
+    plans = {}
+    for index, template in enumerate(core_result.concepts[:5], 1):
+        candidate = template.model_copy(update={
+            "candidateId": f"needs-input-{index}",
+            "lineageId": f"lineage-needs-input-{index}",
+        }, deep=True)
+        review = core_result.legalSummaries[0].model_copy(update={
+            "candidateId": candidate.candidateId,
+            "route": LegalRoute.NEEDS_INPUT,
+            "safeSummary": "실제 사업 사실 확인이 필요합니다.",
+            "unknownFacts": [f"사업 사실 {index}"],
+            "evidenceDiagnostics": {"affectedFields": [f"actualField{index}"]},
+        }, deep=True)
+        request = {
+            "candidateId": candidate.candidateId,
+            "scope": "CANDIDATE",
+            "unknownFacts": [f"사업 사실 {index}"],
+            "reason": "법률 검토를 계속하려면 실제 사업 사실이 필요합니다.",
+            "question": f"실제 사업 사실 {index}을 확인해 주세요.",
+            "possibleUserAction": "확인된 사업 사실을 입력하세요.",
+            "safeSummary": "추가 확인이 필요합니다.",
+        }
+        unresolved.append(candidate)
+        legal.append(review)
+        required.append(request)
+        candidates[candidate.candidateId] = candidate
+        plan = observed_engine.continuation_plan(candidate.planId)
+        assert plan is not None
+        plans[plan.planId] = plan
+    summary = core_result.runSummary.model_copy(update={
+        "finalPortfolio": 0,
+        "portfolioStatus": PortfolioStatus.FAILED,
+        "selectedConcept": None,
+    })
+    raw = core_result.model_copy(update={
+        "runStatus": PortfolioStatus.FAILED,
+        "runtimeStage": RunStage.FAILED,
+        "producedConceptCount": 0,
+        "concepts": [],
+        "legalSummaries": legal,
+        "legalResolutions": [],
+        "requiredInputs": required,
+        "unresolvedCandidates": required,
+        "selectedConceptId": None,
+        "runSummary": summary,
+    }, deep=True)
+    result = asyncio.run(ConceptPortfolioProductionFacade(engine=FakeEngine(
+        raw, candidates, plans, observed_engine.continuation_design()
+    )).run(PRODUCTION_INPUT))
+    payload = result.model_dump(mode="json")
+
+    assert len(result.continuationArtifacts) == 5
+    assert result.continuationContext is not None
+    assert len(result.continuationContext.plans) == len({item.planId for item in unresolved})
+    assert all(item.planId in plans for item in result.continuationArtifacts)
+    assert all("canonicalSeedSnapshot" not in item for item in payload["continuationArtifacts"])
+    assert all("designSnapshot" not in item for item in payload["continuationArtifacts"])
+    serialized = result.model_dump_json()
+    assert serialized.count('"canonicalSeedSnapshot"') == 1
+    assert serialized.count('"designSnapshot"') == 1
+    assert result.serialized_size_bytes() < PRODUCTION_RESULT_SAFETY_BYTES
+
+
+@pytest.mark.parametrize("invalid", [
+    {
+        "candidateId": "candidate-1", "scope": "CANDIDATE", "unknownFacts": [],
+        "rawProviderDiagnostic": {"secret": "forbidden"},
+    },
+    {
+        "candidateId": "candidate-1", "scope": "CANDIDATE",
+        "unknownFacts": ["x" * 4001],
+    },
+])
+def test_production_required_input_rejects_unknown_and_bound_violations(invalid):
+    with pytest.raises(ValidationError):
+        ProductionRequiredInput.model_validate(invalid)
+
+
+def test_incomplete_continuation_context_raises_production_contract_error(core_result):
+    raw = production_result_with_count(core_result, 1)
+    candidate = core_result.concepts[0].model_copy(update={
+        "candidateId": "needs-input-incomplete",
+    }, deep=True)
+    review = core_result.legalSummaries[0].model_copy(update={
+        "candidateId": candidate.candidateId,
+        "route": LegalRoute.NEEDS_INPUT,
+        "evidenceDiagnostics": {"affectedFields": ["actualSeller"]},
+    }, deep=True)
+    required = {
+        "candidateId": candidate.candidateId,
+        "scope": "CANDIDATE",
+        "unknownFacts": ["실제 판매 주체"],
+        "reason": "실제 판매 주체 확인이 필요합니다.",
+        "safeSummary": "추가 확인이 필요합니다.",
+    }
+    raw = raw.model_copy(update={
+        "legalSummaries": [*raw.legalSummaries, review],
+        "requiredInputs": [required],
+    }, deep=True)
+
+    with pytest.raises(ConceptPortfolioProductionContractError):
+        asyncio.run(ConceptPortfolioProductionFacade(
+            engine=FakeEngine(raw, {candidate.candidateId: candidate})
+        ).run(PRODUCTION_INPUT))
 
 
 def test_dispatcher_accepts_cpv2_and_preserves_existing_task_types(monkeypatch):
@@ -285,6 +463,56 @@ def test_dispatcher_reuses_safe_validation_error_for_invalid_input(monkeypatch):
     assert any(item["path"] == "input.maxConcepts" for item in error["details"][0]["fields"])
 
 
+def test_dispatcher_normalizes_production_contract_error(monkeypatch):
+    import app.tasks.concept_portfolio_v2 as task_module
+
+    async def invalid_result(_value):
+        raise ConceptPortfolioProductionContractError("CONTINUATION_CONTEXT_INCOMPLETE")
+
+    monkeypatch.setattr(task_module, "execute_concept_portfolio_v2", invalid_result)
+    monkeypatch.setenv("AI_INTERNAL_SERVICE_TOKEN", "p1-token")
+    request = _execution_request(PRODUCTION_INPUT.model_dump(mode="json"))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/internal/v1/ai/executions",
+            json=request,
+            headers={"Authorization": "Bearer p1-token", "X-Correlation-Id": "correlation-p1"},
+        )
+
+    assert response.status_code == 502
+    error = response.json()["error"]
+    assert error["code"] == "RESULT_SCHEMA_INVALID"
+    assert error["details"] == [{"reason": "AI_RESULT_INVALID"}]
+    assert error["retryable"] is False
+
+
+def test_dispatcher_keeps_provider_failure_handling(monkeypatch):
+    import app.tasks.concept_portfolio_v2 as task_module
+
+    async def provider_failure(_value):
+        raise ProviderFailure(
+            "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True
+        )
+
+    monkeypatch.setattr(task_module, "execute_concept_portfolio_v2", provider_failure)
+    monkeypatch.setenv("AI_INTERNAL_SERVICE_TOKEN", "p1-token")
+    request = _execution_request(PRODUCTION_INPUT.model_dump(mode="json"))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/internal/v1/ai/executions",
+            json=request,
+            headers={"Authorization": "Bearer p1-token", "X-Correlation-Id": "correlation-p1"},
+        )
+
+    assert response.status_code == 503
+    error = response.json()["error"]
+    assert error["code"] == "DEPENDENCY_UNAVAILABLE"
+    assert error["details"] == [{"reason": "MODEL_DEPENDENCY_UNAVAILABLE"}]
+    assert error["retryable"] is True
+
+
 def _execution_request(task_input):
     task_type = "CONCEPT_PORTFOLIO_V2_RUN"
     return {
@@ -306,3 +534,10 @@ def _execution_request(task_input):
         "input": task_input,
     }
 
+
+def _nested_keys(value):
+    if isinstance(value, dict):
+        return set(value).union(*( _nested_keys(item) for item in value.values()))
+    if isinstance(value, list):
+        return set().union(*(_nested_keys(item) for item in value)) if value else set()
+    return set()

@@ -157,11 +157,12 @@ P1 AI facade/continuation/trace → P2 additive persistence → P3 durable orche
 
 Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않는다.
 
-## 7. P1 implementation status
+## 7. P1 implementation status — FINAL PASS
 
-- 상태: PASS. Frozen Core 변경 없이 AI Production facade, strict input, bounded result DTO, unresolved Candidate continuation artifact, read-only trace observer, `CONCEPT_PORTFOLIO_V2_RUN` dispatcher 등록을 완료했다.
-- Product 선택 authority: Core의 `selectedConceptId`는 `engineDefaultConceptId`로만 반환하고, `userSelectedConceptId`는 항상 `null`이다.
-- 응답 경계: 전체 raw trace와 diagnostics/provider usage는 반환하지 않고 terminal trace summary와 필요한 최신 법률·continuation 정보만 반환한다.
-- 확인: P1 표적 테스트 15개, 대상 package compile, 2MB 응답 제한 safety margin 검증, Core diff 확인, `git diff --check`를 수행한다.
-- 의도적 제외: Provider/MOLEG LIVE, 전체 AI test/build, Backend·DB·Frontend 변경은 수행하지 않았다.
-- 다음 시작점: P2 additive persistence와 P3 Backend TaskType/worker, 장시간 timeout·lease·heartbeat 및 Product event projection이다.
+- Continuation 계약: Canonical Seed와 `DesignSpaceAnalysis`는 shared `ConceptPortfolioContinuationContext`에 한 번만 저장하고, unresolved Candidate가 참조하는 실제 `PortfolioPlan` snapshot을 `planId`별로 deduplicate한다. Candidate별 Artifact는 CandidateEnvelope, 최신 LegalReview, strict required input, affected fields, lineage/parent/recovery 정보와 accepted Portfolio ID를 보존한다.
+- Context 관측: read-only observer가 `analyze_seed()`, `expand_plan()`, `review_legal_candidate()`의 public method boundary에서 Design, 실제 Plan, Candidate를 deep copy한다. Core private `_last_*`를 export하지 않으며 새 run에서 캡처 상태를 모두 reset한다.
+- Product 선택 authority: Core의 `selectedConceptId`는 `engineDefaultConceptId`로만 반환하고 `userSelectedConceptId`는 항상 `null`이다. Core `RunSummary` 대신 selection 필드가 없는 bounded `ProductionRunSummary`를 사용한다.
+- 응답·오류 경계: 전체 raw trace와 diagnostics/provider usage는 반환하지 않는다. 5 Candidate NEEDS_INPUT와 5 Artifact에 가까운 최악 fixture도 1.5 MiB safety target 이내이며, materialization 계약 오류는 기존 Internal Execution envelope의 `RESULT_SCHEMA_INVALID / AI_RESULT_INVALID`, non-retryable로 정규화한다.
+- Trace 경계: Observer seam은 준비되었으나 Python process 내부 callback이다. Cross-process AI progress transport는 P2/P3 이후 Backend integration 과제이며, 연결 전에는 임의의 시간 기반 상세 진행 이벤트를 만들지 않는다.
+- 확인: P1 표적 테스트 23개, 대상 package compile, Core diff 확인, `git diff --check`를 수행한다. Provider/MOLEG LIVE, 전체 AI test/build, Backend·DB·Frontend 변경은 수행하지 않았다.
+- 다음 시작점: P2 additive persistence와 P3 Backend TaskType/worker, 장시간 timeout·lease·heartbeat 및 실제 trace event transport다.

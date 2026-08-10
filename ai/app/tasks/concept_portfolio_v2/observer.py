@@ -7,7 +7,14 @@ from collections.abc import Callable
 from typing import Any
 
 from app.concept_portfolio_v2 import ConceptPortfolioEngine, ProviderGateway, ProviderMode
-from app.concept_portfolio_v2.models import CandidateEnvelope, CanonicalSeed, LegalReview
+from app.concept_portfolio_v2.models import (
+    CandidateEnvelope,
+    CanonicalSeed,
+    DesignSpaceAnalysis,
+    ExplorationBreadth,
+    LegalReview,
+    PortfolioPlan,
+)
 
 from .models import ProductionTraceEvent
 
@@ -31,6 +38,8 @@ class ProductionObservedConceptPortfolioEngine(ConceptPortfolioEngine):
     ):
         self._production_event_sink = event_sink
         self._production_candidates: dict[str, CandidateEnvelope] = {}
+        self._production_plans: dict[str, PortfolioPlan] = {}
+        self._production_design: DesignSpaceAnalysis | None = None
         super().__init__(
             mode=mode,
             gateway=gateway,
@@ -44,6 +53,8 @@ class ProductionObservedConceptPortfolioEngine(ConceptPortfolioEngine):
 
     def _reset(self):
         self._production_candidates.clear()
+        self._production_plans.clear()
+        self._production_design = None
         super()._reset()
 
     def _event(self, stage, action: str, status: str, summary: str, **kwargs: Any):
@@ -62,6 +73,36 @@ class ProductionObservedConceptPortfolioEngine(ConceptPortfolioEngine):
                 exc_info=True,
             )
 
+    async def analyze_seed(
+        self,
+        payload: dict[str, Any] | CanonicalSeed,
+        exploration_override: ExplorationBreadth | str | None = None,
+    ) -> DesignSpaceAnalysis:
+        design = await super().analyze_seed(payload, exploration_override)
+        self._production_design = design.model_copy(deep=True)
+        return design
+
+    async def expand_plan(
+        self,
+        seed: CanonicalSeed,
+        plan: PortfolioPlan,
+        candidate_index: int,
+        *,
+        candidate_id: str | None = None,
+        lineage_id: str | None = None,
+        recovery_source: str = "INITIAL",
+    ) -> CandidateEnvelope:
+        envelope = await super().expand_plan(
+            seed,
+            plan,
+            candidate_index,
+            candidate_id=candidate_id,
+            lineage_id=lineage_id,
+            recovery_source=recovery_source,
+        )
+        self._production_plans[plan.planId] = plan.model_copy(deep=True)
+        return envelope
+
     async def review_legal_candidate(
         self, seed: CanonicalSeed, envelope: CandidateEnvelope
     ) -> LegalReview:
@@ -72,3 +113,10 @@ class ProductionObservedConceptPortfolioEngine(ConceptPortfolioEngine):
         value = self._production_candidates.get(candidate_id)
         return value.model_copy(deep=True) if value is not None else None
 
+    def continuation_plan(self, plan_id: str) -> PortfolioPlan | None:
+        value = self._production_plans.get(plan_id)
+        return value.model_copy(deep=True) if value is not None else None
+
+    def continuation_design(self) -> DesignSpaceAnalysis | None:
+        value = self._production_design
+        return value.model_copy(deep=True) if value is not None else None
