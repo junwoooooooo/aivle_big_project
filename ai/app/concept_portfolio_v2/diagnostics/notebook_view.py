@@ -167,7 +167,9 @@ def show_legal_fact_pattern(candidate, seed=None):
 
 def show_legal_result(results):
     return _table([{"candidateId": item.candidateId, "route": item.route.value,
-                    "productionStatus": item.productionStatus, "source": item.sourceStatus,
+                    "productionStatus": item.productionStatus,
+                    "sourceStatus": item.legalSourceStatus or item.sourceStatus,
+                    "evidenceCoverage": item.evidenceDiagnostics.get("coverageMessage"),
                     "reviewPhase": item.reviewPhase,
                     "factCompletenessStatus": item.factCompletenessStatus,
                     "legalSourceStatus": item.legalSourceStatus,
@@ -220,7 +222,23 @@ def show_final_portfolio(result):
 
 
 def show_hypotheses(hypotheses):
-    return _table([_dump(item) for item in hypotheses])
+    return _table([{"HypothesisType": item.hypothesisType,
+                    "ProposedValue": item.proposedValue,
+                    "FinalValue": item.finalValue,
+                    "SemanticStatus": item.semanticStatus,
+                    "SemanticReason": item.semanticReason,
+                    "Locked": item.locked,
+                    "DecisionStatus": item.decisionStatus,
+                    "LegalImpact": item.legalImpact} for item in hypotheses])
+
+
+def show_hypothesis_readiness(hypotheses):
+    unresolved = [item.hypothesisType for item in hypotheses
+                  if item.semanticStatus != "VALID" or not item.accepted]
+    return {"All Hypotheses Semantically Ready": not unresolved,
+            "status": "READY" if not unresolved else "NOT_READY",
+            "reason": None if not unresolved else "UNRESOLVED_HYPOTHESES",
+            "unresolvedHypotheses": unresolved}
 
 
 def show_downstream_handoff(handoff):

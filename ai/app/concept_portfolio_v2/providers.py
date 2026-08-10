@@ -212,7 +212,8 @@ def _candidate(seed: CanonicalSeed, plan: PortfolioPlan, index: int, *, redesign
         coreValue=plan.valueProposition, targetUsers=plan.targetSegment,
         industryCategory="해당 아이디어 관련 산업", researchScope="대한민국 내 관련 시장과 운영 구조",
         targetRegion=value("targetRegion", "대한민국"),
-        revenueModel=value("revenueModel", plan.commercialApproach), price=value("price", "가격 검증 필요"),
+        revenueModel=value("revenueModel", plan.commercialApproach),
+        price=value("price", "서비스 범위별 건당 1만~3만원 가설"),
         channels=value("channels", plan.customerInteraction),
         differentiators=value("differentiators", ", ".join(plan.differentiatingMechanics)),
         preMarketSomShareHypothesis={"targetSharePercent": 1.0 + index, "horizonYears": 3,
@@ -389,7 +390,9 @@ class MockPortfolioProvider(PortfolioProvider):
 class LivePortfolioProvider(PortfolioProvider):
     async def plan_pool(self, seed, design, pool_size):
         prompt = """같은 OpportunityKernel 안에서 사용자가 비교할 가치가 있는 Plan Business Draft를 요청 수만큼 만든다.
-각 Plan은 targetSegment, problemFocus, useContext, valueProposition, offerThesis, solutionThesis와 운영·파트너·거래·수익·이행 설명을 명시한다.
+각 Plan은 targetSegment, problemFocus, useContext, valueProposition, offerThesis, solutionThesis를 명시한다.
+운영 주체, 판매·계약 주체, 파트너 역할, 고객 거래 방식, 수익 방식, 이행 방식, 고객 접점을
+각각 실제 business sentence로 구체적으로 작성한다.
 canonical code, familyId, mechanics enum을 생성하지 않는다. 같은 Architecture라도 Thesis가 의미 있게 다른 Variant는 허용한다.
 이름만 다른 중복은 만들지 않는다. JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성한다. strict schema만 반환한다."""
         schema = PlanDraftPool.model_json_schema(); assert_strict_compatible(schema, "concept_portfolio_plan_draft_v3")
@@ -429,6 +432,8 @@ platformRole, providerRole, sellerRole, intermediaryRole에는 실제 주체와 
 transactionFlow와 paymentFlow에는 주문·계약·제공·결제 수취·정산 주체를 구체적으로 작성한다.
 personalDataUsage, physicalActivities, partnerRequirements는 실제 사업 흐름상 해당할 때 처리 목적·수행 주체·파트너 기능을 작성한다.
 qualificationRequirements는 Concept가 애초에 특정 자격 보유 주체를 사용하도록 설계한 경우에만 작성한다.
+targetRegion, revenueModel, price, channels, differentiators에는 '미제공', '검증 필요', '추후 결정'이 아니라
+사용자가 검토할 수 있는 실제 geography·수익 방식·가격/범위 가설·채널·차별화 proposal을 작성한다.
 '필요 시 확인', '필요한 자격', '관련 자격' 같은 generic placeholder를 넣지 않는다.
 JSON key를 제외한 사용자-facing 내용은 한국어(ko-KR)로 작성하고 strict schema만 반환한다."""
         schema = ConceptCandidateDraft.model_json_schema(); assert_strict_compatible(schema, "concept_portfolio_candidate_v3")
@@ -499,6 +504,8 @@ qualificationRequirements 등 Legal fact 필드는 구체적 설계상 실제 �
 법률 사실패턴에 필요한 누락·모순만 보완한다. 누가 판매·제공·중개·결제 수취·정산·이행하는지
 구체적으로 명시한다. 개인정보는 실제 처리 항목과 목적, 물리 활동은 수행 주체, 파트너는 사업상
 역할을 작성한다. 존재하지 않는 면허·허가·계약을 보유했다고 만들지 않고 법령명·법률판단을 쓰지 않는다.
+해당 역할이 실제로 없으면 역할을 만들어내지 말고 '중개하지 않음', '플랫폼은 직접 판매자가 아님',
+'외부 파트너를 사용하지 않음'처럼 부재와 책임을 명확히 작성한다.
 JSON key 외 사용자-facing 내용은 한국어이며 ConceptCandidateDraft strict schema만 반환한다."""
         schema = ConceptCandidateDraft.model_json_schema()
         assert_strict_compatible(schema, "concept_legal_fact_completion_v1")

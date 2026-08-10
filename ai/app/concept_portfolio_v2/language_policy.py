@@ -61,6 +61,9 @@ def is_governance_placeholder(value: Any) -> bool:
     normalized = re.sub(r"\s+", "", value).casefold()
     if value.strip().upper() in PLACEHOLDER_VALUES:
         return True
-    return any(marker in normalized for marker in (
+    unresolved = (
         "정보가필요", "확인이필요", "추후확인", "검토필요", "검증필요", "미정", "결정필요",
-    ))
+        "명시되지않았", "제공되지않았", "미제공", "정보없음", "입력되지않았",
+        "아직정해지지", "추후결정", "unknown", "notprovided",
+    )
+    return len(normalized) <= 80 and any(marker in normalized for marker in unresolved)

@@ -6,7 +6,8 @@ import pytest
 
 from app.concept_portfolio_v2 import ConceptPortfolioEngine
 from app.concept_portfolio_v2.legal_fact_completeness import (
-    assess_legal_fact_completeness, normalized_requirements, validate_redesign_requirements,
+    assess_legal_fact_completeness, classify_fact_presence, normalized_requirements,
+    validate_redesign_requirements,
 )
 from app.concept_portfolio_v2.language_policy import is_governance_placeholder
 
@@ -124,3 +125,68 @@ def test_90_legal_replan_metrics_distinguish_attempt_validate_accept():
     summary = result.runSummary
     assert (summary.legalReplanAttempted, summary.legalReplanValidated,
             summary.legalReplanAccepted, summary.legalReplanExhausted) == (1, 1, 1, 0)
+
+
+def test_91_direct_seller_with_explicit_no_intermediary_is_complete():
+    _, _, envelope = first_candidate()
+    candidate = envelope.candidate.model_copy(update={
+        "platformRole": "운영사가 고객 접점과 거래를 직접 운영",
+        "providerRole": "운영사가 서비스를 직접 제공",
+        "sellerRole": "운영사가 고객에게 직접 판매",
+        "intermediaryRole": "제3자 거래를 중개하지 않음",
+        "transactionFlow": ["사용자가 운영사에 주문하고 운영사가 판매·이행"],
+        "paymentFlow": ["사용자가 운영사에 결제"],
+    })
+    assert assess_legal_fact_completeness(candidate).status == "COMPLETE"
+
+
+def test_92_marketplace_can_explicitly_deny_platform_seller_role():
+    _, _, envelope = first_candidate()
+    candidate = envelope.candidate.model_copy(update={
+        "platformRole": "플랫폼이 고객과 제휴 판매자의 거래 기준을 운영",
+        "providerRole": "제휴 판매자가 서비스를 제공",
+        "sellerRole": "플랫폼은 직접 판매하지 않으며 제휴 판매자가 판매 책임을 부담",
+        "intermediaryRole": "플랫폼이 고객과 제휴 판매자의 거래를 중개",
+        "transactionFlow": ["고객 주문을 플랫폼이 제휴 판매자에게 전달하고 판매자가 이행"],
+        "paymentFlow": ["플랫폼이 결제를 수취한 뒤 판매자에게 정산"],
+        "partnerRequirements": ["제휴 판매자가 판매와 이행을 담당"],
+    })
+    assert assess_legal_fact_completeness(candidate).status == "COMPLETE"
+
+
+def test_93_explicit_absent_provider_is_complete_when_other_provider_is_clear():
+    _, _, envelope = first_candidate()
+    candidate = envelope.candidate.model_copy(update={
+        "providerRole": "플랫폼 운영사에는 해당 없음",
+        "sellerRole": "제휴 판매자가 고객에게 판매",
+        "intermediaryRole": "플랫폼이 거래를 중개",
+        "transactionFlow": ["제휴 판매자가 고객에게 서비스를 제공하고 이행"],
+        "partnerRequirements": ["제휴 판매자가 제공 책임을 부담"],
+    })
+    assert assess_legal_fact_completeness(candidate).status == "COMPLETE"
+
+
+def test_94_empty_intermediary_is_contextually_complete_for_direct_transaction():
+    _, _, envelope = first_candidate()
+    candidate = envelope.candidate.model_copy(update={
+        "sellerRole": "운영사가 고객에게 직접 판매", "intermediaryRole": "",
+        "transactionFlow": ["사용자가 운영사와 직접 계약하고 운영사가 직접 이행"],
+    })
+    assert assess_legal_fact_completeness(candidate).status == "COMPLETE"
+
+
+def test_95_unknown_intermediary_remains_completable():
+    _, _, envelope = first_candidate()
+    candidate = envelope.candidate.model_copy(update={"intermediaryRole": "미정"})
+    report = assess_legal_fact_completeness(candidate)
+    assert report.status == "COMPLETABLE" and "intermediaryRole" in report.affectedFields
+
+
+@pytest.mark.parametrize("value", ["중개하지 않음", "제3자 판매자가 없음", "외부 파트너를 사용하지 않음"])
+def test_96_explicit_negative_facts_are_valid_absence(value):
+    assert classify_fact_presence(value) == "EXPLICIT_ABSENCE"
+
+
+@pytest.mark.parametrize("value", ["확인 필요", "미정", "관련 역할", "추후 결정"])
+def test_97_unknown_role_values_are_not_explicit_absence(value):
+    assert classify_fact_presence(value) == "UNKNOWN"

@@ -22,12 +22,22 @@ Concept가 설계할 수 없는 외부 현실 사실에만 사용한다. 결제 
 파트너 역할 같은 설계 누락은 REDESIGNABLE과 redesignRequirements로 반환한다. 이 결과는 법률
 외부 사실을 확정하지 않아도 '해당 인허가를 보유한 파트너만 사용' 같은 강제 통제조건으로
 구조적으로 구현할 수 있을 때만 IMPLEMENTABLE_WITH_CONTROLS를 사용할 수 있으며 사실 보유를 추정하지 않는다.
+IMPLEMENTABLE/IMPLEMENTABLE_WITH_CONTROLS는 architecture 변경이 필요 없으므로 redesignRequirements를 비운다.
+고지·처리방침·운영 제한은 requiredControls/requiredDisclosures에, 결제 주체나 사업 역할 자체의 변경은
+REDESIGNABLE의 redesignRequirements에만 둔다.
 evidenceReferenceIndexes에는 입력의 allowedEvidenceReferenceIndexes에 있는 정수만 사용한다.
 자문이 아니다. strict schema만 반환한다."""
 
 REPAIR_PROMPT = """법률 판단, 상태, finding 문구, 통제, 요약을 변경하지 않는다.
 이전 결과의 evidenceReferenceIndexes만 supplied officialEvidence에 다시 연결한다.
 allowedEvidenceReferenceIndexes에 없는 번호나 새로운 근거를 만들지 않는다. strict schema만 반환한다."""
+
+CONTRACT_REPAIR_PROMPT = """법률 판단의 status, 요약, 검토 활동, 외부 unknown fact, 금지 variant,
+근거 index를 바꾸지 않는다. IMPLEMENTABLE/IMPLEMENTABLE_WITH_CONTROLS이면 redesignRequirements를 비우고,
+그 내용이 구조 변경이 아닌 통제·고지라면 기존 officialEvidence index를 사용해 적절한 control/disclosure finding에
+반영한다. IMPLEMENTABLE 계열과 REDESIGNABLE은 unknownFacts를 비운다. REDESIGNABLE은 redesignRequirements만
+사용한다. NEEDS_FACTS는 unknownFacts만
+사용하고 redesignRequirements를 비운다. 새로운 법률 사실이나 근거를 만들지 말고 strict schema만 반환한다."""
 
 REVIEW_LABEL = "공식 근거 기반 법률 구현 가능성 사전검토"
 REVIEW_LIMITATIONS = "공식 법령의 제한된 조문과 확인 시점을 기준으로 한 사전검토이며, 구체적 사실관계와 최신 시행 상태에 대한 전문가 확인이 필요할 수 있습니다."
@@ -251,6 +261,27 @@ def _judgment_without_references(provider: ConceptLegalReviewProviderResult) -> 
     return payload
 
 
+def _status_invariant_violation(raw: object) -> bool:
+    if not isinstance(raw, dict):
+        return False
+    status = raw.get("status")
+    redesign = raw.get("redesignRequirements") or []
+    unknown = raw.get("unknownFacts") or []
+    return ((status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS", "NEEDS_FACTS"} and bool(redesign))
+            or (status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and bool(unknown))
+            or (status == "REDESIGNABLE" and bool(unknown)))
+
+
+def _protected_contract_judgment(raw: dict) -> dict:
+    protected = {key: raw.get(key) for key in (
+        "status", "reviewedActivities", "prohibitedVariants", "evidenceReferenceIndexes",
+        "expertReviewRecommended", "reviewBasisDate", "safeUserSummary",
+    )}
+    if raw.get("status") == "NEEDS_FACTS":
+        protected["unknownFacts"] = raw.get("unknownFacts")
+    return protected
+
+
 async def execute_concept_legal_review(task_input: dict) -> dict:
     try:
         value = ConceptLegalReviewInput.model_validate(task_input)
@@ -306,11 +337,31 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
     try:
         provider = ConceptLegalReviewProviderResult.model_validate(raw)
     except ValidationError as failure:
-        raise ProviderFailure(
-            "RESULT_SCHEMA_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", 502, False,
-            schema_name="concept_legal_review_v3",
-            validation_fields=_validation_fields(failure, "result"),
-        ) from failure
+        if not _status_invariant_violation(raw):
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "PYDANTIC_RESULT_VALIDATION_FAILED", 502, False,
+                schema_name="concept_legal_review_v3",
+                validation_fields=_validation_fields(failure, "result"),
+            ) from failure
+        repaired_raw = await execute_structured_prompt(
+            CONTRACT_REPAIR_PROMPT, json.dumps({
+                "previousLegalResult": raw,
+                "officialEvidence": provider_input["officialEvidence"],
+                "allowedEvidenceReferenceIndexes": allowed_indexes,
+                "failureCode": "LEGAL_STATUS_REDESIGN_INVARIANT",
+            }, ensure_ascii=False, sort_keys=True, default=str), response_schema=runtime_schema,
+            schema_name="concept_legal_review_v3_contract_repair",
+            task_type="LEGAL_RESULT_CONTRACT_REPAIR")
+        try:
+            provider = ConceptLegalReviewProviderResult.model_validate(repaired_raw)
+        except ValidationError as repair_failure:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_STATUS_INVARIANT_REPAIR_FAILED",
+                                  502, False, schema_name="concept_legal_review_v3_contract_repair") from repair_failure
+        protected_before = _protected_contract_judgment(raw)
+        protected_after = _protected_contract_judgment(repaired_raw)
+        if protected_before != protected_after:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_STATUS_INVARIANT_REPAIR_MUTATED_JUDGMENT",
+                                  502, False, schema_name="concept_legal_review_v3_contract_repair")
     if provider.status == "NEEDS_FACTS":
         provider_classification = await _classify_questions(provider.unknownFacts)
         design_gaps = [question for question in provider.unknownFacts

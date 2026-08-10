@@ -24,6 +24,7 @@ from .candidate_governance import (
 )
 from .distinctness import deterministic_distinctness, descriptor_values
 from .language_policy import candidate_language_failures, plan_language_failures
+from .hypothesis_validation import assess_hypotheses, assess_hypothesis_value
 from .legal_fact_completeness import (
     assess_legal_fact_completeness, normalized_requirements, validate_redesign_requirements,
 )
@@ -526,9 +527,13 @@ class ConceptPortfolioEngine:
         if pending:
             items = [{"entityId": item.candidateId,
                       "businessText": " ".join((item.candidate.platformRole,
+                                                item.candidate.providerRole,
+                                                item.candidate.sellerRole,
+                                                item.candidate.intermediaryRole,
                                                 item.candidate.operatingModel,
                                                 item.candidate.partnerModel,
                                                 " ".join(item.candidate.transactionFlow),
+                                                " ".join(item.candidate.paymentFlow),
                                                 item.candidate.revenueModel,
                                                 item.candidate.channels)),
                       "currentArchitecture": item.descriptor.architecture.model_dump(mode="json")}
@@ -1136,10 +1141,16 @@ class ConceptPortfolioEngine:
             semantic = semantics[field]
             value = getattr(envelope.candidate, field)
             locked = semantic.source in {"USER_INPUT", "USER_CONFIRMED"} and semantic.authority == "LOCKED"
+            assessment = assess_hypothesis_value(hypothesis_type, value)
             result.append(HypothesisDecision(hypothesisType=hypothesis_type, proposedValue=value,
                                              finalValue=value if locked else None, source=semantic.source,
-                                             decisionStatus="ACCEPTED" if locked else "PROPOSED", locked=locked))
+                                             decisionStatus="ACCEPTED" if locked else "PROPOSED", locked=locked,
+                                             semanticStatus=assessment.status,
+                                             semanticReason=assessment.reason))
         return result
+
+    def validate_hypothesis_values(self, hypotheses: list[HypothesisDecision], *, use_final: bool = False):
+        return assess_hypotheses(hypotheses, use_final=use_final)
 
     def confirm_hypotheses(self, hypotheses: list[HypothesisDecision],
                            edits: dict[str, Any] | None = None, *,
@@ -1155,6 +1166,16 @@ class ConceptPortfolioEngine:
                 result.append(item)
                 continue
             value = edits.get(item.hypothesisType, item.proposedValue)
+            assessment = assess_hypothesis_value(item.hypothesisType, value)
+            if assessment.status != "VALID":
+                result.append(item.model_copy(update={
+                    "finalValue": None, "decisionStatus": "PROPOSED",
+                    "source": "USER_INPUT" if edited else item.source,
+                    "semanticStatus": assessment.status, "semanticReason": assessment.reason,
+                    "legalImpact": "NONE", "legalReviewStatus": "NOT_REQUIRED",
+                    "deltaLegalRequired": False,
+                }))
+                continue
             legal_sensitive = item.hypothesisType in {
                 "TARGET_REGION", "REVENUE_MODEL", "PRICE", "CHANNELS", "DIFFERENTIATORS"}
             delta_required = edited and value != item.proposedValue and legal_sensitive
@@ -1163,7 +1184,8 @@ class ConceptPortfolioEngine:
                 "source": "USER_INPUT" if edited else item.source,
                 "legalImpact": "DELTA_REVIEW_REQUIRED" if delta_required else item.legalImpact,
                 "legalReviewStatus": "PENDING" if delta_required else item.legalReviewStatus,
-                "deltaLegalRequired": delta_required}))
+                "deltaLegalRequired": delta_required,
+                "semanticStatus": assessment.status, "semanticReason": assessment.reason}))
         return result
 
     def mark_delta_legal_reviewed(self, hypotheses: list[HypothesisDecision],
@@ -1287,7 +1309,15 @@ class ConceptPortfolioEngine:
                 hypotheses = self.build_or_load_current_hypothesis_contract(selected)
                 if auto_confirm_hypotheses:
                     hypotheses = self.confirm_hypotheses(hypotheses, confirm_all_proposed=True)
-                    handoff = self.build_downstream_handoff(seed, selected, hypotheses, legal_reviews)
+                    assessments = self.validate_hypothesis_values(hypotheses, use_final=True)
+                    if all(item.accepted for item in hypotheses) and all(
+                            item.status == "VALID" for item in assessments):
+                        handoff = self.build_downstream_handoff(seed, selected, hypotheses, legal_reviews)
+                    else:
+                        self._event(RunStage.PORTFOLIO_VALIDATING, "HYPOTHESIS_SEMANTIC_UNRESOLVED",
+                                    "NOT_READY", "의미상 미확정 Hypothesis가 있어 handoff를 생성하지 않습니다.",
+                                    entity_id=selected.candidateId,
+                                    reason=FailureCode.DOWNSTREAM_HANDOFF_INVALID)
             self._event(terminal, "COMPLETED", status.value, f"최종 Portfolio={len(concepts)}", decision=status.value)
             duration = int((time.perf_counter() - started) * 1000)
             summary = RunSummary(safety=safety_text, requestedMaximum=max_concepts, planned=planned,

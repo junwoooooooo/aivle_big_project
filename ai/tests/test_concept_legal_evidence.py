@@ -2,10 +2,12 @@ import asyncio
 import json
 
 import pytest
+from pydantic import ValidationError
 
 from app.providers import ProviderFailure
 from app.tasks.concept_legal_review import service
 from app.tasks.concept_legal_review.models import ConceptLegalReviewInput
+from app.tasks.concept_legal_review.models import ConceptLegalReviewProviderResult
 from concept_candidate_v2_fixture import valid_legal_fact_pattern
 
 
@@ -279,3 +281,61 @@ def test_ambiguous_question_uses_batch_classifier_then_full_judgment(monkeypatch
 def test_proposed_design_value_is_reconciled_as_review_assumption():
     value = ConceptLegalReviewInput.model_validate(task_input())
     assert service._question_resolved_by_fact_pattern("누가 결제를 수취합니까?", value)
+
+
+def test_legal_status_invariants_accept_consistent_results():
+    implementable = provider(status="IMPLEMENTABLE")
+    implementable["redesignRequirements"] = []
+    controlled = provider(status="IMPLEMENTABLE_WITH_CONTROLS")
+    redesign = provider(status="REDESIGNABLE")
+    redesign["redesignRequirements"] = ["결제 주체를 하나로 명시"]
+    redesign["unknownFacts"] = []
+    needs = provider(status="NEEDS_FACTS", unknown=["현재 보유 인허가 확인"])
+    needs["requiredControls"] = []
+    for value in (implementable, controlled, redesign, needs):
+        ConceptLegalReviewProviderResult.model_validate(value)
+
+
+@pytest.mark.parametrize("status", ["IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"])
+def test_implementable_status_rejects_redesign_requirements(status):
+    value = provider(status=status)
+    value["redesignRequirements"] = ["사업 구조 변경"]
+    with pytest.raises(ValidationError):
+        ConceptLegalReviewProviderResult.model_validate(value)
+
+
+def test_redesignable_still_requires_explicit_requirements():
+    value = provider(status="REDESIGNABLE")
+    value["redesignRequirements"] = []
+    with pytest.raises(ValidationError):
+        ConceptLegalReviewProviderResult.model_validate(value)
+
+
+def test_status_invariant_targeted_repair_preserves_judgment(monkeypatch):
+    calls = []
+    invalid = provider(status="IMPLEMENTABLE_WITH_CONTROLS")
+    invalid["redesignRequirements"] = ["개인정보 처리방침을 고지"]
+    repaired = {**invalid, "redesignRequirements": []}
+
+    async def fake_source(*_):
+        return source()
+
+    async def fake_provider(_system, _user, **kwargs):
+        calls.append(kwargs["task_type"])
+        return invalid if len(calls) == 1 else repaired
+
+    monkeypatch.setattr(service, "execute_legal_source_pipeline", fake_source)
+    monkeypatch.setattr(service, "execute_structured_prompt", fake_provider)
+    result = asyncio.run(service.execute_concept_legal_review(task_input()))
+    assert result["status"] == "IMPLEMENTABLE_WITH_CONTROLS"
+    assert result["redesignRequirements"] == []
+    assert calls == ["CONCEPT_LEGAL_REVIEW", "LEGAL_RESULT_CONTRACT_REPAIR"]
+
+
+def test_source_partial_is_coverage_diagnostic_not_acceptance_failure(monkeypatch):
+    partial = source()
+    partial["sourceStatus"] = "SOURCE_PARTIAL"
+    result, _ = execute(monkeypatch, partial)
+    assert result["status"] == "IMPLEMENTABLE_WITH_CONTROLS"
+    assert result["legalSourceStatus"] == "SOURCE_PARTIAL"
+    assert result["finalEvidenceJudgmentExecuted"] is True

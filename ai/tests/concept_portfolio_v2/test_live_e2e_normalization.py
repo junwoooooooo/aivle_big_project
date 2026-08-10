@@ -8,7 +8,7 @@ import pytest
 from app.concept_portfolio_v2 import ConceptPortfolioEngine, ProviderGateway, ProviderMode
 from app.concept_portfolio_v2.adapters import CurrentLegalAdapter
 from app.concept_portfolio_v2.anchor_policy import assess_anchor, build_opportunity_anchor
-from app.concept_portfolio_v2.candidate_governance import normalize_candidate_draft
+from app.concept_portfolio_v2.candidate_governance import candidate_result_to_draft, normalize_candidate_draft
 from app.concept_portfolio_v2.distinctness import deterministic_distinctness
 from app.concept_portfolio_v2.language_policy import (
     candidate_language_failures, is_governance_placeholder, plan_language_failures,
@@ -96,6 +96,14 @@ def test_45_open_target_region_becomes_korean_ai_hypothesis():
     assert candidate.targetRegion == "대한민국"
     semantic = {item.fieldKey: item for item in candidate.valueSemantics}["targetRegion"]
     assert (semantic.source, semantic.authority, semantic.decision) == ("AI_HYPOTHESIS", "OPEN", "PROPOSED")
+
+
+def test_45b_semantic_missing_target_region_uses_system_default():
+    _, seed, analysis, _, _, candidates = staged()
+    draft = candidate_result_to_draft(candidates[0].candidate).model_copy(
+        update={"targetRegion": "대상 지역은 명시되지 않았습니다."})
+    normalized = normalize_candidate_draft(draft, seed, analysis.explorationBreadth, 1)
+    assert normalized.targetRegion == "대한민국"
 
 
 def test_46_nonlocked_target_region_semantics_are_ai_hypothesis():

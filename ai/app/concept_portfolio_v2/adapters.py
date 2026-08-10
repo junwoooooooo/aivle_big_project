@@ -16,6 +16,7 @@ from .models import (
     CanonicalSeed, DownstreamHandoff, FieldMapping, HypothesisDecision, IdeaBriefLabContext,
     LegalReview, LegalRoute, ProviderMode, SafetyResult, SeedField,
 )
+from .hypothesis_validation import assess_hypothesis_value
 from .snapshot_hash import production_compatible_snapshot_hash
 
 
@@ -177,6 +178,8 @@ class CurrentLegalAdapter:
             "REDESIGNABLE": LegalRoute.REDESIGN_WITHIN_LINEAGE,
             "REJECTED": LegalRoute.REPLAN_REQUIRED, "NEEDS_FACTS": LegalRoute.NEEDS_INPUT,
         }[raw["status"]]
+        coverage_message = ("공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+                            if raw.get("legalSourceStatus") == "SOURCE_PARTIAL" else None)
         return LegalReview(
             candidateId=candidate_id, route=route, productionStatus=raw["status"], sourceStatus="OFFICIAL_EVIDENCE",
             safeSummary=raw["safeUserSummary"], requiredControls=raw["requiredControls"],
@@ -194,6 +197,9 @@ class CurrentLegalAdapter:
             externalFactCount=raw.get("externalFactCount", 0),
             controlConvertibleCount=raw.get("controlConvertibleCount", 0),
             legalClarificationCount=raw.get("legalClarificationCount", 0),
+            evidenceDiagnostics=({"coverageStatus": raw.get("legalSourceStatus"),
+                                  "coverageMessage": coverage_message}
+                                 if raw.get("legalSourceStatus") else {}),
         )
 
 
@@ -207,6 +213,16 @@ class CurrentDownstreamAdapter:
         missing = [key for key in HYPOTHESIS_FIELDS if key not in by_type or not by_type[key].accepted]
         if missing:
             errors.append("확정되지 않은 hypothesis: " + ", ".join(missing))
+        invalid_semantics = []
+        for key in HYPOTHESIS_FIELDS:
+            item = by_type.get(key)
+            if not item:
+                continue
+            assessment = assess_hypothesis_value(key, item.finalValue if item.finalValue is not None else item.proposedValue)
+            if assessment.status != "VALID":
+                invalid_semantics.append(key)
+        if invalid_semantics:
+            errors.append("UNRESOLVED_HYPOTHESES: " + ", ".join(invalid_semantics))
         delta_pending = [item.hypothesisType for item in hypotheses
                          if item.deltaLegalRequired and item.legalReviewStatus not in {
                              "IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS", "PASSED"}]

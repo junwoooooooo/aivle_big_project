@@ -416,10 +416,23 @@ class HypothesisDecision(StrictModel):
     legalImpact: str = "NONE"
     legalReviewStatus: str = "NOT_REQUIRED"
     deltaLegalRequired: bool = False
+    semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "UNASSESSED"] = "UNASSESSED"
+    semanticReason: str | None = None
 
     @property
     def accepted(self) -> bool:
         return self.decisionStatus in {"ACCEPTED", "USER_EDITED_ACCEPTED"} and self.finalValue is not None
+
+    @property
+    def semanticallyReady(self) -> bool:
+        return self.semanticStatus == "VALID"
+
+
+class HypothesisValueAssessment(StrictModel):
+    hypothesisType: str
+    status: Literal["VALID", "UNRESOLVED", "INVALID"]
+    reason: str
+    normalizedValue: Any | None = None
 
 
 class DeltaLegalResult(StrictModel):

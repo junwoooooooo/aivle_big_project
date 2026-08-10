@@ -145,6 +145,14 @@ class ConceptLegalReviewProviderResult(StrictModel):
             raise ValueError("REDESIGNABLE requires explicit redesign requirements")
         if self.status == "NEEDS_FACTS" and not self.unknownFacts:
             raise ValueError("NEEDS_FACTS requires explicit external facts")
+        if self.status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and self.redesignRequirements:
+            raise ValueError("implementable status must not include redesign requirements")
+        if self.status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and self.unknownFacts:
+            raise ValueError("implementable status must not include unknown facts")
+        if self.status == "NEEDS_FACTS" and self.redesignRequirements:
+            raise ValueError("NEEDS_FACTS must not include redesign requirements")
+        if self.status == "REDESIGNABLE" and self.unknownFacts:
+            raise ValueError("REDESIGNABLE must not include external unknown facts")
         return self
 
 

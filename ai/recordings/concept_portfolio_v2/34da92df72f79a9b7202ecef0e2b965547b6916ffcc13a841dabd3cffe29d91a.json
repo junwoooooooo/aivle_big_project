@@ -1,0 +1,112 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fcff99a9fea09d7239a22efce214887adfc3e9e06a9905d90c06241e53cbc5fd",
+  "canonicalRequestHash": "34da92df72f79a9b7202ecef0e2b965547b6916ffcc13a841dabd3cffe29d91a",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료의 남음으로 인한 음식물 쓰레기 문제 해결",
+      "useContext": "정기적으로 소량의 식재료를 제공하는 서비스입니다.",
+      "valueProposition": "정기 배송으로 신선한 식재료를 제공하여 요리의 편리함을 더합니다.",
+      "offerThesis": "정기 배송 소량 식재료 패키지 제공",
+      "solutionThesis": "정기적으로 필요한 식재료를 소량으로 제공하여 요리의 편리함을 높입니다.",
+      "differentiatingMechanics": [
+        "정기 배송 할인 혜택",
+        "고객 맞춤형 식재료 제공",
+        "배송 주기 조정 기능"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "coreValue": "정기 배송으로 신선한 식재료를 제공하여 요리의 편리함을 더합니다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "solutionMechanism": "정기 배송 시스템을 통한 소량 식재료 제공",
+      "featureSet": [
+        "정기 배송 할인 혜택",
+        "고객 맞춤형 식재료 제공",
+        "배송 주기 조정 기능"
+      ],
+      "operatingModel": "고객의 요리 선호도에 맞춘 정기 배송 운영"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "정기적으로 소량의 식재료를 제공하는 서비스입니다.",
+        "valuePropositionThesis": "정기 배송으로 신선한 식재료를 제공하여 요리의 편리함을 더합니다.",
+        "offerThesis": "정기 배송 소량 식재료 패키지 제공",
+        "solutionThesis": "정기적으로 필요한 식재료를 소량으로 제공하여 요리의 편리함을 높입니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "정기적으로 필요한 식재료를 소량으로 제공하여 요리의 편리함을 높입니다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "PHYSICAL_DELIVERY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "정기 배송 할인 혜택",
+      "고객 맞춤형 식재료 제공",
+      "배송 주기 조정 기능"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "서비스는 개인 맞춤형 소량 식재료를 정기 배송으로 제공하며, 요리의 편리함을 더하고 음식물 쓰레기를 줄이는 데 초점을 맞추고 있습니다."
+  },
+  "durationMs": 1954,
+  "timestamp": "2026-08-10T01:11:27.675421+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
