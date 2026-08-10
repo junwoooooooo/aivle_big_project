@@ -167,6 +167,17 @@ P1 AI facade/continuation/trace → P2 additive persistence → P3 durable orche
 - Legacy: 기존 legacy 소스는 삭제하지 않았지만 새 공식 route는 legacy execution/UI를 호출하지 않는다. 물리 삭제는 Final Cutover Gate에서 caller 0을 재확인한 뒤 수행한다.
 - 검증: AI/Backend/Frontend targeted test, Backend `compileJava`, Frontend production build, `git diff --check`, Frozen Core diff를 실행한다. LIVE/전체 regression/browser E2E는 제외한다.
 
+## Final Cutover Hardening implementation status — READY
+
+- Candidate input: P4 정본의 8개 field만 허용한다. 단일 `affectedFields`는 고정하고, 다중 또는 미지정 target은 사용자가 선택한다. role field는 string, flow/requirements/usage/activities field는 빈 항목을 제거한 `list[string]`으로 전송한다.
+- Legal Report: Frontend section은 Backend의 실제 `finalLegalConclusion`, transaction/payment, partner/qualification, privacy, control/disclosure, prohibited/advertising, evidence, Delta history, source hash key만 렌더링한다.
+- Hypothesis provenance: 서버 original 값과 실제 편집값을 비교하여 변경된 unlocked hypothesis만 `changes`에 포함하고 `confirmAll=true`를 유지한다. `ACCEPTED`와 `USER_EDITED_ACCEPTED`는 확인됨으로 표시한다.
+- Recovery: terminal Run은 새 idempotency key의 새 V2 Run으로 다시 시작한다. ANSWERED continuation failure와 Delta Legal failure는 기존 retry resource를 사용하며 terminal TaskRun을 되살리지 않는다.
+- Live UX: Market page도 project event revision에 따라 Selection, V2 Seed, module runs와 result를 REST에서 다시 읽는다. 중복 project event ID는 revision을 증가시키지 않는다.
+- Work Center: V2 TaskType과 실제 Backend message key를 사용자 용어로 변환한다. 상세 진행은 실제 QUEUED/RUNNING/AI_EXECUTING/MATERIALIZING/terminal event만 사용한다. Cross-process Core trace는 post-cutover enhancement backlog다.
+- Helper/notice: floating helper는 현재 canonical module 상태와 next action 안내를 연다. recovered notice는 client selection baseline 이후 실제 concept ID가 추가된 경우에만 표시한다.
+- Legacy audit: 공식 `/concepts`와 `/concepts/compare` route에서 legacy Factory/Comparison hook/API caller는 0이다. legacy 소스와 schema는 사용자 실검증 전까지 보존한다.
+
 Provider, MOLEG, Docker, browser, 전체 test, 전체 build는 실행하지 않는다.
 
 ## 7. P1 implementation status — FINAL PASS

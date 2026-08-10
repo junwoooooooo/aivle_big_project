@@ -14,7 +14,8 @@ export function useProjectEvents(projectId) {
   const [state, setState] = useState({ revision: 0, transport: 'connecting', error: null });
   const invalidate = useCallback((event) => {
     const next = Number(event?.eventId ?? event?.sseId);
-    if (Number.isSafeInteger(next) && next > cursor.current) cursor.current = next;
+    if (!Number.isSafeInteger(next) || next <= cursor.current) return;
+    cursor.current = next;
     setState((value) => ({ ...value, revision: value.revision + 1, error: null }));
   }, []);
 

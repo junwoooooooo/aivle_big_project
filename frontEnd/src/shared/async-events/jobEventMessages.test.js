@@ -1,28 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { ACTIVE_JOB_EVENT_KEYS, isUserVisibleJobEvent, jobEventMessage } from './jobEventMessages.js';
 
-import {
-  ACTIVE_JOB_EVENT_KEYS,
-  isUserVisibleJobEvent,
-  jobEventMessage,
-} from './jobEventMessages.js';
-
-describe('active job event message registry', () => {
-  it('contains only events emitted by the current Idea, Concept, and Marketing workers', () => {
-    expect(ACTIVE_JOB_EVENT_KEYS).toHaveLength(30);
-    expect(new Set(ACTIVE_JOB_EVENT_KEYS).size).toBe(ACTIVE_JOB_EVENT_KEYS.length);
-    expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.idea.queued');
-    expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.concept.run.completed');
-    expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.concept.slot.validating_distinctness');
-    expect(ACTIVE_JOB_EVENT_KEYS).toContain('job.marketing.failed');
-    expect(ACTIVE_JOB_EVENT_KEYS.some((key) => key.startsWith('job.boundary.'))).toBe(false);
-    expect(ACTIVE_JOB_EVENT_KEYS.some((key) => key.includes('attachment'))).toBe(false);
+describe('V2 job event message registry', () => {
+  it('covers actual initial, continuation and selection action keys', () => {
+    for (const key of ['job.concept-portfolio.queued', 'job.concept-portfolio.running',
+      'job.concept-portfolio.ai-executing', 'job.concept-portfolio.materializing',
+      'job.concept-portfolio.needs-input', 'job.concept-portfolio.completed',
+      'job.concept-portfolio.failed', 'job.concept-portfolio.continuation.ai-executing',
+      'job.concept-portfolio.continuation.completed', 'job.concept-portfolio.selection.running',
+      'job.concept-portfolio.selection.completed']) expect(ACTIVE_JOB_EVENT_KEYS).toContain(key);
   });
-
-  it('hides unknown and archived events instead of presenting fake progress', () => {
-    expect(isUserVisibleJobEvent({ messageKey: 'job.idea.extracting' })).toBe(true);
-    expect(isUserVisibleJobEvent({ messageKey: 'job.boundary.queued' })).toBe(false);
+  it('uses Product copy without the legacy exact-five message', () => {
+    expect(jobEventMessage({ messageKey: 'job.concept-portfolio.running' })).toBe('사업 방향을 탐색하고 있습니다.');
+    expect(jobEventMessage({ messageKey: 'job.concept-portfolio.completed' })).toBe('검토 가능한 사업안이 준비되었습니다.');
+    expect(jobEventMessage({ messageKey: 'job.concept.run.completed' })).not.toContain('5개');
     expect(isUserVisibleJobEvent({ messageKey: 'job.claimed' })).toBe(false);
-    expect(jobEventMessage({ messageKey: 'job.concept.run.completed' }))
-      .toBe('검증된 컨셉 5개가 준비되었습니다.');
   });
 });

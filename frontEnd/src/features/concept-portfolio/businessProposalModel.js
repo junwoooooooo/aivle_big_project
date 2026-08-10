@@ -8,6 +8,17 @@ export const HYPOTHESIS_LABELS = Object.freeze({
   DIFFERENTIATORS: '차별점', PRE_MARKET_SOM_SHARE: '시장 점유 가정', PRE_MARKET_SOM: '초기 확보 시장 규모',
 });
 
+export const CANDIDATE_FACT_FIELDS = Object.freeze({
+  sellerRole: { label: '실제 판매 주체', type: 'string' },
+  providerRole: { label: '실제 서비스 제공 주체', type: 'string' },
+  intermediaryRole: { label: '실제 중개 주체', type: 'string' },
+  transactionFlow: { label: '거래 흐름', type: 'list' },
+  paymentFlow: { label: '결제·수취 흐름', type: 'list' },
+  partnerRequirements: { label: '파트너·자격 요건', type: 'list' },
+  personalDataUsage: { label: '개인정보 이용', type: 'list' },
+  physicalActivities: { label: '실제 물리 활동', type: 'list' },
+});
+
 export function normalizePortfolioConcepts(items) {
   if (!Array.isArray(items)) return [];
   return items.filter((item) => item?.conceptId && item.selectable !== false).slice(0, 5);
@@ -19,15 +30,80 @@ export function toggleComparedConcept(current, conceptId) {
   return [...current, conceptId];
 }
 
-export function canOpenComparison(ids) {
-  return ids.length >= 2 && ids.length <= 3;
+export function canOpenComparison(ids) { return ids.length >= 2 && ids.length <= 3; }
+
+export function candidateRequests(requests, candidateId) {
+  return (requests ?? []).filter((request) => request.scope === 'CANDIDATE'
+    && (request.status === 'OPEN' || (request.status === 'ANSWERED' && request.nextAction === 'RETRY_CONTINUATION'))
+    && (!candidateId || request.candidateId === candidateId));
 }
 
 export function openCandidateRequests(requests, candidateId) {
-  return (requests ?? []).filter((request) => request.status === 'OPEN'
-    && request.scope === 'CANDIDATE' && (!candidateId || request.candidateId === candidateId));
+  return candidateRequests(requests, candidateId).filter((request) => request.status === 'OPEN');
 }
 
-export function selectedConceptId(selection) {
-  return selection?.conceptId ?? null;
+export function candidateFieldOptions(request) {
+  const affected = Array.isArray(request?.affectedFields) ? request.affectedFields : [];
+  const allowed = [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
+  return allowed.length > 0 ? allowed : Object.keys(CANDIDATE_FACT_FIELDS);
 }
+
+export function candidateDefaultField(request) {
+  const affected = Array.isArray(request?.affectedFields) ? request.affectedFields : [];
+  const allowed = [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
+  return affected.length === 1 && allowed.length === 1 ? allowed[0] : '';
+}
+
+export function serializeCandidateFact(field, rawValue) {
+  const contract = CANDIDATE_FACT_FIELDS[field];
+  if (!contract || typeof rawValue !== 'string') return null;
+  if (contract.type === 'string') {
+    const value = rawValue.trim();
+    return value ? { [field]: value } : null;
+  }
+  const values = rawValue.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+  return values.length > 0 ? { [field]: values } : null;
+}
+
+export function hypothesisValueText(value) {
+  return typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2);
+}
+
+export function parseHypothesisValue(value) {
+  try { return JSON.parse(value); } catch { return value; }
+}
+
+export function buildHypothesisChanges(hypotheses, edits) {
+  const byType = Object.fromEntries((hypotheses ?? []).map((item) => [item.hypothesisType, item]));
+  return Object.fromEntries(Object.entries(edits ?? {}).flatMap(([type, rawValue]) => {
+    const hypothesis = byType[type];
+    if (!hypothesis || hypothesis.locked || !HYPOTHESIS_TYPES.includes(type)) return [];
+    const original = hypothesis.finalValue ?? hypothesis.proposedValue;
+    const edited = parseHypothesisValue(rawValue);
+    return JSON.stringify(edited) === JSON.stringify(original) ? [] : [[type, edited]];
+  }));
+}
+
+export function hypothesisDecisionLabel(hypothesis) {
+  if (hypothesis?.locked) return '확정된 사업 조건';
+  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus) ? '확인됨' : '제안값';
+}
+
+export function portfolioRunPresentation(run) {
+  const status = run?.productStatus;
+  if (status === 'QUEUED') return { title: '사업안 검토를 준비하고 있습니다.' };
+  if (status === 'RUNNING') return { title: '사업안을 검토하고 있습니다.' };
+  if (status === 'RESULTS_AVAILABLE') return { title: '검토 완료' };
+  if (status === 'RESULTS_WITH_OPEN_INPUT') return {
+    title: '검토 가능한 사업안이 준비되었습니다.', detail: '추가로 확인할 사업정보가 있습니다.',
+  };
+  if (status === 'NEEDS_INPUT') return { title: '사업안을 완성하려면 추가 사업정보가 필요합니다.' };
+  if (status === 'FAILED' && run?.failureCode === 'NO_ACCEPTED_CONCEPTS') return {
+    title: '현재 조건에서 검토 가능한 사업안이 없습니다.', action: '다른 방향으로 다시 탐색', restart: true,
+  };
+  if (status === 'FAILED') return { title: '사업안 검토를 완료하지 못했습니다.', action: '다시 시도', restart: true };
+  if (status === 'STALE') return { title: '아이디어가 변경되어 사업안을 다시 검토해야 합니다.', action: '다시 검토', restart: true };
+  return { title: '사업안 상태를 확인하고 있습니다.' };
+}
+
+export function selectedConceptId(selection) { return selection?.conceptId ?? null; }

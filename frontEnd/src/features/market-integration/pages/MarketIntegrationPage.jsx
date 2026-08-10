@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import useMarketIntegration from '../hooks/useMarketIntegration.js';
 import '../styles/market-integration.css';
@@ -10,7 +10,8 @@ const STATUS_LABELS = Object.freeze({
 
 export default function MarketIntegrationPage() {
   const { projectId } = useParams();
-  const market = useMarketIntegration(projectId);
+  const outlet = useOutletContext() ?? {};
+  const market = useMarketIntegration(projectId, outlet.liveRevision);
   if (market.loading) return <section className="market-integration" aria-busy="true"><p>시장분석 상태를 불러오고 있습니다.</p></section>;
   const snapshot = market.marketSeed;
   const latestRun = market.runs[0] ?? null;

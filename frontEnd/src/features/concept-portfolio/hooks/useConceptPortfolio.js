@@ -50,8 +50,10 @@ export function useConceptPortfolio(projectId, liveRevision = 0) {
     }),
     select: (conceptId) => act(() => api.select(projectId, { runId: state.run.runId, conceptId, selectionReason: '사용자가 선택한 사업안', idempotencyKey: key('selection') })),
     respond: (requestId, confirmedFacts, note) => act(() => api.respond(projectId, state.run.runId, requestId, { confirmedFacts, note, idempotencyKey: key('input') })),
+    retryContinuation: (requestId) => act(() => api.retryContinuation(projectId, state.run.runId, requestId, { idempotencyKey: key('continuation-retry') })),
     confirm: (changes) => act(() => api.confirm(projectId, state.selection.selectionId, { changes, confirmAll: true, idempotencyKey: key('hypotheses') })),
     alternative: (type) => act(() => api.alternative(projectId, state.selection.selectionId, type, { idempotencyKey: key('alternative') })),
+    retryDelta: () => act(() => api.retryDelta(projectId, state.selection.selectionId, { idempotencyKey: key('delta-retry') })),
     finalizeReport: () => act(() => api.finalizeReport(projectId, state.selection.selectionId)),
     finalizeMarketSeed: () => act(() => api.finalizeMarketSeed(projectId, state.selection.selectionId, { idempotencyKey: key('market-seed') })),
   };
