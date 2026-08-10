@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:6249f3f3114b2ee3b8166bb391b1ff20dbc1868d1516220f2ec0bbfcef1f2cb2",
+  "canonicalRequestHash": "72e9bddcc5f6c71bed92cf5245fb3557138e01ad78b94508928ab3136b95481f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1-R1",
+        "businessText": "AI 도구 제공 플랫폼 AI 도구 제공자 영업팀 없음 중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 고객이 구독 신청 AI 도구 제공자가 서비스 제공 고객이 회의 기록을 입력 AI 도구가 자동으로 정리 및 제안 고객이 구독료 결제 AI 도구 제공자가 결제 확인 서비스 제공 시작 구독 기반 모델로 영업팀에 서비스를 제공합니다. 온라인 마케팅 및 파트너십을 통한 유통",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1-R1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 도구 제공 플랫폼으로, 중소기업을 위한 맞춤형 AI 솔루션을 제공하며, 구독 기반 모델로 운영됩니다."
+    }
+  ],
+  "durationMs": 3469,
+  "timestamp": "2026-08-10T08:09:21.499477+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

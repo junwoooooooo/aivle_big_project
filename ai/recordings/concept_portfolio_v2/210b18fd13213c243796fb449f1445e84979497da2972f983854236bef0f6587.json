@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:78b89ca938db134016ba8d82e0c192573cc3a3ac8f4d669b75b1d079eed9a6de",
+  "canonicalRequestHash": "210b18fd13213c243796fb449f1445e84979497da2972f983854236bef0f6587",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 요리 교육 제공 고객에게 요리 교육 및 식재료 패키지 판매 물류 업체를 통한 배송 및 관리 고객의 선호도에 따라 맞춤형 요리 교육과 식재료를 제공합니다. 요리 강사와 협력하여 다양한 요리 교육 프로그램을 제공합니다. 고객이 온라인 플랫폼에서 요리 교육 신청 및 식재료 주문 요리 강사가 교육 진행 물류 업체가 식재료 배송 고객이 온라인 플랫폼에서 결제 정기 구독 모델에 따른 자동 결제 물류 업체에 대한 정산 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 소셜 미디어",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C5-F1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "LOW",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 요리 교육과 식재료를 제공하며, 정기 구독 모델로 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 3879,
+  "timestamp": "2026-08-10T07:52:12.182261+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -821,8 +821,8 @@ class ProviderGateway:
         if isinstance(value, (list, tuple)): return [ProviderGateway.json_value(item) for item in value]
         return value
 
-    @staticmethod
-    def _validate_keyed_batch(expected_keys, results, key_fn, contract_name, schema_name):
+    def _validate_keyed_batch(self, expected_keys, results, key_fn, contract_name, schema_name, *,
+                              safe_extra_values: set[str] | None = None):
         """배열 순서가 아니라 business identity key의 완전한 일대일 대응을 검증한다."""
         expected = list(expected_keys)
         actual = [key_fn(item) for item in results]
@@ -834,14 +834,32 @@ class ProviderGateway:
         duplicate = sorted({key for key in actual if actual.count(key) > 1})
         missing = sorted(expected_set - actual_set)
         extra = sorted(actual_set - expected_set)
-        if duplicate or missing or extra or len(actual) != len(expected):
+        requested_candidates = {key[0] for key in expected if len(key) == 2}
+        safe_extra = []
+        unsafe_extra = list(extra)
+        if safe_extra_values is not None:
+            safe_extra = [key for key in extra
+                          if len(key) == 2 and key[0] in requested_candidates
+                          and key[1] in safe_extra_values]
+            unsafe_extra = [key for key in extra if key not in safe_extra]
+        if duplicate or missing or unsafe_extra:
             reason = (
                 f"{contract_name}_BATCH_IDENTITY_MISMATCH:"
-                f"missing={missing};duplicate={duplicate};extra={extra}")
+                f"missing={missing};duplicate={duplicate};extra={unsafe_extra}")
             raise ProviderFailure(
                 "RESULT_SCHEMA_INVALID", reason, 502, False, schema_name=schema_name,
                 safe_diagnostics={"missingKeys": missing, "duplicateKeys": duplicate,
-                                  "extraKeys": extra})
+                                  "extraKeys": unsafe_extra})
+        if safe_extra:
+            diagnostic = {
+                "action": "BATCH_EXTRA_RESULTS_IGNORED",
+                "contract": contract_name,
+                "ignoredKeys": [list(key) for key in safe_extra],
+                "safeSummary": "요청하지 않은 추가 의미판정 결과를 사용하지 않고 폐기했습니다.",
+            }
+            self.usage = self.usage.model_copy(update={
+                "batchDiagnostics": [*self.usage.batchDiagnostics, diagnostic],
+            })
         by_key = {key_fn(item): item for item in results}
         return [by_key[key] for key in expected]
 
@@ -1035,24 +1053,36 @@ class ProviderGateway:
         raw = await self.call("LEGAL_RECOVERING", "CLASSIFY_BUSINESS_ROLE_SEMANTICS", {"items": items},
             lambda: self.provider.classify_business_roles(items),
             operation_version="v1", prompt_version=BUSINESS_ROLE_SEMANTIC_PROMPT_VERSION)
-        results = [item if isinstance(item, BusinessRoleSemanticItem)
-                   else BusinessRoleSemanticItem.model_validate(item) for item in raw]
+        try:
+            results = [item if isinstance(item, BusinessRoleSemanticItem)
+                       else BusinessRoleSemanticItem.model_validate(item) for item in raw]
+        except ValidationError as failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "BUSINESS_ROLE_BATCH_ITEM_INVALID",
+                502, False, schema_name="concept_business_role_semantic_v2") from failure
         return self._validate_keyed_batch(
             [(item["candidateId"], item["field"]) for item in items], results,
             lambda item: (item.candidateId, item.field), "BUSINESS_ROLE",
-            "concept_business_role_semantic_v2")
+            "concept_business_role_semantic_v2",
+            safe_extra_values={"platformRole", "providerRole", "sellerRole", "intermediaryRole"})
 
     async def classify_legal_fact_dependencies(self, items):
         raw = await self.call(
             "LEGAL_RECOVERING", "CLASSIFY_LEGAL_FACT_DEPENDENCIES", {"items": items},
             lambda: self.provider.classify_legal_fact_dependencies(items),
             operation_version="v1", prompt_version=LEGAL_FACT_DEPENDENCY_PROMPT_VERSION)
-        results = [item if isinstance(item, LegalFactDependencySemanticItem)
-                   else LegalFactDependencySemanticItem.model_validate(item) for item in raw]
+        try:
+            results = [item if isinstance(item, LegalFactDependencySemanticItem)
+                       else LegalFactDependencySemanticItem.model_validate(item) for item in raw]
+        except ValidationError as failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "LEGAL_FACT_DEPENDENCY_BATCH_ITEM_INVALID",
+                502, False, schema_name="concept_legal_fact_dependency_v2") from failure
         return self._validate_keyed_batch(
             [(item["candidateId"], item["dependencyType"]) for item in items], results,
             lambda item: (item.candidateId, item.dependencyType), "LEGAL_FACT_DEPENDENCY",
-            "concept_legal_fact_dependency_v2")
+            "concept_legal_fact_dependency_v2",
+            safe_extra_values={"PERSONAL_DATA", "PHYSICAL_ACTIVITY", "BUSINESS_PARTNER"})
 
     async def replacement_plans(self, seed, design, existing_plans, count=2):
         payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"),

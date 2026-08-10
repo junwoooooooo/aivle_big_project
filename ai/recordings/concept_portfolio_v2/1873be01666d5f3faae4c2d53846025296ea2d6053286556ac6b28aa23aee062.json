@@ -1,0 +1,254 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:b439a4f54aa984f456db8d4961962d3c2375a24b2d68e2821e50d5aa42250187",
+  "canonicalRequestHash": "1873be01666d5f3faae4c2d53846025296ea2d6053286556ac6b28aa23aee062",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자는 예약 시 수수료를 지불하며, 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 웹사이트나 모바일 앱을 통해 자신의 이동 가능 시간과 관심사를 입력한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P1",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    },
+    {
+      "entityId": "P2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    },
+    {
+      "entityId": "P3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    },
+    {
+      "entityId": "P4",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    },
+    {
+      "entityId": "P5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    },
+    {
+      "entityId": "P6",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "사용자 맞춤형 예약 서비스 제공, 파트너와 협력, 수수료 기반 수익 모델."
+    }
+  ],
+  "durationMs": 11001,
+  "timestamp": "2026-08-10T07:52:55.906099+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

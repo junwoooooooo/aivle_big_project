@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c4e9e7ca1961d6a7f1758cfe6368535181b4ef1c7f447a6d873b83a16757145f",
+  "canonicalRequestHash": "ee39c4a7ab95b83f2d6d7577d4adcea9a4b30395588db776ce772c997ba5bc0e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-FC1",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 AI 도구 판매 및 고객 지원 CRM 시스템 제공업체와의 협력 중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 고객이 구독 신청 AI 도구 제공 고객의 영업팀 사용 CRM 업데이트 고객이 구독료 결제 AI 도구 제공자 수익 수취 구독 기반 모델로 영업팀에 서비스를 제공합니다. 온라인 마케팅 및 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C2-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 도구 제공 및 CRM 시스템 통합을 통한 맞춤형 솔루션 제공."
+    }
+  ],
+  "durationMs": 8631,
+  "timestamp": "2026-08-10T08:06:37.884998+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

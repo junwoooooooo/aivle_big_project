@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:231cacac6a7a3ed9f7ce5d280fa8dddc0e2af3a5f55990310fc37aaf1aecea37",
+  "canonicalRequestHash": "d4545360aaf503088e9b7c620bdf366c75d8b1e216e4758fbe61a6c65ec8cf05",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "별도의 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemFocus": "영업 담당자가 회의 및 이메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어드는 문제를 해결합니다.",
+      "useContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+      "valueProposition": "고객별 맞춤형 영업 액션을 통해 영업팀의 성과를 극대화합니다.",
+      "offerThesis": "AI가 고객별 맞춤형 영업 액션을 제안하여 영업팀의 업무 효율성을 높입니다.",
+      "solutionThesis": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다.",
+      "differentiatingMechanics": [
+        "고객별 맞춤형 영업 액션 제안",
+        "자동화된 회의 기록 정리"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "coreValue": "고객별 맞춤형 영업 액션을 통해 영업팀의 성과를 극대화합니다.",
+      "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다.",
+      "solutionMechanism": "AI가 고객별 맞춤형 영업 액션을 제안하여 영업팀의 업무 효율성을 높입니다.",
+      "featureSet": [
+        "회의 기록 자동 정리",
+        "고객별 맞춤형 영업 액션 제안",
+        "CRM 자동 업데이트"
+      ],
+      "operatingModel": "클라우드 기반 AI 솔루션 제공"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "별도의 영업 운영 인력이 부족한 중소기업 영업팀",
+        "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+        "valuePropositionThesis": "고객별 맞춤형 영업 액션을 통해 영업팀의 성과를 극대화합니다.",
+        "offerThesis": "AI가 고객별 맞춤형 영업 액션을 제안하여 영업팀의 업무 효율성을 높입니다.",
+        "solutionThesis": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다",
+      "familyId": "OTHER:PARTNER_NETWORK",
+      "familyLabelKo": "기타 역할 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "고객별 맞춤형 영업 액션 제안",
+      "자동화된 회의 기록 정리"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다."
+  },
+  "durationMs": 2484,
+  "timestamp": "2026-08-10T08:06:47.858049+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

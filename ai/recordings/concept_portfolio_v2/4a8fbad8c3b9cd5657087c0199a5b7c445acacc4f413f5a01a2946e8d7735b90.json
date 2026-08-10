@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5096d2bd23620893c4feb5947df85b21dad77a676f53af41fe154e56dedd8274",
+  "canonicalRequestHash": "4a8fbad8c3b9cd5657087c0199a5b7c445acacc4f413f5a01a2946e8d7735b90",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-FC1",
+        "businessText": "온라인 플랫폼 운영 및 주문 관리 식재료 및 요리 키트 제공 고객에게 요리 키트 판매 물류 파트너를 통한 배송 관리 온라인 플랫폼을 통해 주문을 받고, 물류 시스템으로 신선한 키트를 배송한다. 식재료 공급업체와 협력하여 신선한 재료를 확보한다. 고객이 앱에서 키트 선택 주문 접수 및 결제 처리 물류 파트너가 키트 배송 고객이 결제 결제 확인 후 주문 처리 물류 파트너에게 배송 비용 지급 구독 모델로 지속적인 수익을 창출한다 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C3-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PARTNER_FULFILLED",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 요리 키트를 제공하고, 물류 파트너와 협력하여 배송을 관리하며, 구독 모델로 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 2824,
+  "timestamp": "2026-08-10T07:55:57.967075+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

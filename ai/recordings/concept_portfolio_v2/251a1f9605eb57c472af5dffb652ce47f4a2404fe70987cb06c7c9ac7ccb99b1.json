@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e9cde53bf9d8681a93db5071f4f4d1cca3754daec747d9f3c91c7f6ebc0d8767",
+  "canonicalRequestHash": "251a1f9605eb57c472af5dffb652ce47f4a2404fe70987cb06c7c9ac7ccb99b1",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-FC1",
+        "businessText": "온라인 플랫폼을 통해 고객과의 접점을 제공합니다. 장비 대여 및 유지보수 서비스 제공 고객에게 장비 대여 서비스 판매 장비 제조업체와의 협력 및 조정 역할 고객 맞춤형 장비 대여 솔루션 제공 장비 제조업체와 협력하여 최신 장비와 맞춤형 솔루션을 제공합니다. 고객 요청 접수 장비 대여 계약 체결 장비 배송 및 설치 정기 점검 및 유지보수 장비 회수 고객이 서비스 이용 요금 결제 정기 결제 시스템 운영 구독 기반 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C5-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 고객과의 접점을 제공하며, 장비 대여 및 유지보수 서비스를 제공하는 비즈니스 모델입니다. 고객 맞춤형 솔루션과 정기 결제 시스템을 운영합니다."
+    }
+  ],
+  "durationMs": 4828,
+  "timestamp": "2026-08-10T07:54:44.751390+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

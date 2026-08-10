@@ -1,0 +1,215 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:297d7fc04fe316883ada42374f45febc5c2de49ce30105323ed5652b08f5b292",
+  "canonicalRequestHash": "493438c1e33fdba2f78b3e96e69991f5d9a1016dd9592b821b97d605266dbd7f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼 운영자 식재료 공급업체 온라인 플랫폼 운영자 배송업체 고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공합니다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보합니다. 고객이 온라인 플랫폼에서 주문 주문에 따라 식재료 패키지 준비 배송업체가 고객에게 배송 고객이 온라인 플랫폼에서 결제 결제 확인 후 주문 처리 배송 완료 후 정산 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 소셜 미디어",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "레시피 추천 플랫폼 운영 레시피 제공자 구독 서비스 판매자 물류 및 배송 파트너 고객의 재료를 기반으로 맞춤형 레시피를 제공합니다. 레시피 개발자와 협력하여 다양한 요리법을 제공합니다. 고객이 앱에 재료 입력 시스템이 레시피 추천 고객이 구독 결제 고객이 구독 결제 시스템이 결제 수취 구독 서비스 제공 구독 모델을 통한 수익 창출 소셜 미디어, 블로그, 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼 운영 식재료 공급업체 온라인 플랫폼 운영자 배송업체 고객의 건강 목표에 따라 맞춤형 식재료를 제공합니다. 영양사와 협력하여 건강한 식단을 위한 식재료를 제공합니다. 고객이 온라인 플랫폼에서 주문 주문 정보가 식재료 공급업체로 전달 식재료가 포장되어 배송업체로 전달 배송업체가 고객에게 배송 고객이 온라인 플랫폼에서 결제 결제 정보가 공급업체에 전달 공급업체가 배송업체에 비용 지급 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 소셜 미디어",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼 운영 및 관리 신선한 재료를 공급하는 역할 고객에게 서비스를 판매하는 역할 배송 및 물류 관리 역할 고객의 선호도에 따라 맞춤형 신선 재료를 제공합니다. 지역 농가와 협력하여 신선한 재료를 확보합니다. 고객 주문 주문 확인 재료 준비 배송 고객 수령 고객 결제 결제 확인 정산 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 모바일 앱을 통해 주문 가능",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 요리 교육 제공 고객에게 요리 교육 및 식재료 패키지 판매 물류 업체를 통한 배송 및 관리 고객의 선호도에 따라 맞춤형 요리 교육과 식재료를 제공합니다. 요리 강사와 협력하여 다양한 요리 교육 프로그램을 제공합니다. 고객이 온라인 플랫폼에서 요리 교육 신청 및 식재료 주문 요리 강사가 교육 진행 물류 업체가 식재료 배송 고객이 온라인 플랫폼에서 결제 정기 구독 모델에 따른 자동 결제 물류 업체에 대한 정산 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 소셜 미디어",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼 운영자로서 식재료 공급업체와 배송업체와 협력하여 고객 맞춤형 식재료를 제공하고, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "레시피 추천 플랫폼으로, 고객의 재료를 기반으로 맞춤형 레시피를 제공하며, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼 운영자로서 고객의 건강 목표에 맞춘 식재료를 제공하고, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼 운영 및 관리로 고객 맞춤형 신선 재료를 제공하며, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼 운영 및 고객 관리로 요리 교육과 식재료 패키지를 제공하며, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 11439,
+  "timestamp": "2026-08-10T07:51:37.978927+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

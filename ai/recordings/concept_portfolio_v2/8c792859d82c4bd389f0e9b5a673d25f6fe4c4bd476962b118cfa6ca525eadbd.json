@@ -1,0 +1,295 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:300d5ea7cc91cc501083f475f03bb4607d88b267f230218fa284c0cf313d5781",
+  "canonicalRequestHash": "8c792859d82c4bd389f0e9b5a673d25f6fe4c4bd476962b118cfa6ca525eadbd",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "interpretedTargetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "usageContext": "중소기업의 영업팀에서 회의 및 이메일 내용을 효율적으로 관리하고 CRM 시스템에 통합하기 위한 도구로 사용될 수 있습니다.",
+        "industryCategory": "소프트웨어/AI",
+        "researchScope": "중소기업의 영업 관리 및 CRM 시스템",
+        "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+        "targetRegionInterpretation": "대상 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "AI 기반 영업 성과 분석 도구",
+      "oneLineConcept": "중소기업 영업팀의 성과를 분석하고 개선점을 제안하는 AI 도구",
+      "targetSegment": "중소기업 영업팀",
+      "problemFocus": "영업팀의 성과를 분석하고 개선하기 위한 데이터가 부족하다.",
+      "useContext": "중소기업의 영업팀에서 성과 분석 및 전략 수립에 활용될 수 있습니다.",
+      "valueProposition": "영업팀의 성과를 데이터 기반으로 분석하여 전략적 의사결정을 지원합니다.",
+      "offerThesis": "AI를 통해 영업 성과 데이터를 분석하고 개선점을 제안하여 영업팀의 성과를 극대화합니다.",
+      "solutionThesis": "AI가 영업 데이터를 분석하여 성과를 시각화하고, 개선점을 제안합니다.",
+      "coreMechanism": "AI 기반 데이터 분석 및 시각화 기술을 활용합니다.",
+      "customerInteraction": "고객과의 소통을 원활하게 하기 위해 성과 분석 결과를 자동으로 보고합니다.",
+      "valueDelivery": "AI 도구를 통해 영업팀의 성과를 분석하고 개선점을 제안합니다.",
+      "operatingApproach": "AI 알고리즘을 지속적으로 개선하여 데이터 분석의 정확성을 높입니다.",
+      "partnerApproach": "데이터 분석 및 시각화 도구 제공업체와 협력하여 통합 솔루션을 제공합니다.",
+      "transactionApproach": "구독 모델을 통해 지속적인 수익을 창출합니다.",
+      "commercialApproach": "중소기업을 대상으로 한 맞춤형 성과 분석 전략을 수립합니다.",
+      "fulfillmentApproach": "클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다.",
+      "differentiatingMechanics": [
+        "AI 기반 성과 분석 및 시각화 기능",
+        "사용자 맞춤형 개선점 제안"
+      ],
+      "mainChanges": [
+        "영업팀의 성과 분석 방식 변화",
+        "데이터 기반 의사결정 증가"
+      ],
+      "secondaryChanges": [
+        "업무 효율성 향상",
+        "영업 전략의 정확성 증가"
+      ],
+      "legalRiskHints": [
+        "데이터 보호 및 개인정보 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "중소기업 영업팀의 성과를 데이터 기반으로 분석하여 전략적 의사결정을 지원하기 위해 필요합니다.",
+      "planId": "P7",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "중소기업 영업팀",
+          "useCaseThesis": "중소기업의 영업팀에서 성과 분석 및 전략 수립에 활용될 수 있습니다.",
+          "valuePropositionThesis": "영업팀의 성과를 데이터 기반으로 분석하여 전략적 의사결정을 지원합니다.",
+          "offerThesis": "AI를 통해 영업 성과 데이터를 분석하고 개선점을 제안하여 영업팀의 성과를 극대화합니다.",
+          "solutionThesis": "AI가 영업 데이터를 분석하여 성과를 시각화하고, 개선점을 제안합니다."
+        },
+        "architecture": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "API",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "ai가 영업 데이터를 분석하여 성과를 시각화하고 개선점을 제안합니다",
+        "familyId": "PLATFORM_INFRASTRUCTURE:AUTOMATED_DIGITAL",
+        "familyLabelKo": "플랫폼 인프라 · 디지털 자동화",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "PLATFORM_INFRASTRUCTURE",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "AUTOMATED_DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "SUBSCRIPTION",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "API",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+        "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.7103,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 5
+  },
+  "providerResponse": {
+    "conceptName": "AI 기반 영업 성과 분석 도구",
+    "conceptDefinition": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+    "introduction": "중소기업 영업팀의 성과를 데이터 기반으로 분석하여 전략적 의사결정을 지원하는 AI 도구입니다.",
+    "coreValue": "영업팀의 성과를 데이터 기반으로 분석하여 전략적 의사결정을 지원합니다.",
+    "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+    "industryCategory": "소프트웨어/AI",
+    "researchScope": "중소기업의 영업 관리 및 CRM 시스템",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델을 통해 지속적인 수익을 창출합니다.",
+    "price": "월 50만원",
+    "channels": "온라인 마케팅, 파트너십을 통한 직접 판매",
+    "differentiators": "AI 기반 성과 분석 및 시각화 기능, 사용자 맞춤형 개선점 제안",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "중소기업 시장의 성장과 AI 도구에 대한 수요 증가로 인해 시장 점유율 확대 가능성이 높습니다.",
+      "assumptions": [
+        "중소기업의 디지털 전환 가속화",
+        "AI 도구에 대한 인식 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 5000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "중소기업 영업팀 수에 기반한 시장 규모 추정",
+      "assumptions": [
+        "중소기업의 평균 영업팀 규모",
+        "AI 도구 도입률 증가"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+    "solutionMechanism": "AI가 영업 데이터를 분석하여 성과를 시각화하고, 개선점을 제안합니다.",
+    "featureSet": [
+      "AI 기반 데이터 분석",
+      "성과 시각화 대시보드",
+      "사용자 맞춤형 개선점 제안"
+    ],
+    "actorRoles": [
+      "영업팀",
+      "AI 분석 시스템",
+      "CRM 시스템"
+    ],
+    "platformRole": "AI 분석 및 시각화 플랫폼 제공",
+    "operatingModel": "클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수 진행",
+    "partnerModel": "데이터 분석 및 시각화 도구 제공업체와 협력하여 통합 솔루션 제공",
+    "providerRole": "AI 도구 개발 및 유지보수 담당",
+    "sellerRole": "서비스 판매 및 고객 지원 담당",
+    "intermediaryRole": "파트너사와의 협력 및 고객 관리 담당",
+    "transactionFlow": [
+      "고객이 서비스 신청",
+      "서비스 계약 체결",
+      "AI 도구 제공",
+      "고객 사용 및 피드백 수집"
+    ],
+    "paymentFlow": [
+      "고객이 구독료 결제",
+      "결제 확인 후 서비스 제공",
+      "정기적인 청구 및 결제 처리"
+    ],
+    "personalDataUsage": [],
+    "physicalActivities": [
+      "배송",
+      "설치"
+    ],
+    "partnerRequirements": [
+      "데이터 분석 및 시각화 도구 제공업체와의 협력 필요"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "AI 기반 성과 분석으로 영업팀의 효율성 향상"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 10228,
+  "timestamp": "2026-08-10T07:55:26.427737+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

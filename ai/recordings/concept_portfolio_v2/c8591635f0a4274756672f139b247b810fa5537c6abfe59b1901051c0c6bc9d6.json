@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:33f34d418eb49cf9d3a64c3a946061a4e85588431defbb2591e6454b3fe66d39",
+  "canonicalRequestHash": "c8591635f0a4274756672f139b247b810fa5537c6abfe59b1901051c0c6bc9d6",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 건강한 식재료를 필요로 하는 소비자에게 제공하는 상황입니다.",
+      "valueProposition": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+      "offerThesis": "건강한 식단을 위한 맞춤형 식재료를 제공합니다.",
+      "solutionThesis": "소량의 건강한 식재료를 통해 요리의 번거로움을 줄입니다.",
+      "differentiatingMechanics": [
+        "건강한 식단 관리 제공",
+        "정기 배송 서비스"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+      "coreValue": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+      "solutionMechanism": "고객의 건강 목표에 맞춘 맞춤형 식재료 패키지 제공",
+      "featureSet": [
+        "맞춤형 식재료 패키지",
+        "정기 배송 서비스",
+        "레시피 제공"
+      ],
+      "operatingModel": "고객의 건강 목표에 따라 맞춤형 식재료를 제공합니다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "소량의 건강한 식재료를 필요로 하는 소비자에게 제공하는 상황입니다.",
+        "valuePropositionThesis": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+        "offerThesis": "건강한 식단을 위한 맞춤형 식재료를 제공합니다.",
+        "solutionThesis": "소량의 건강한 식재료를 통해 요리의 번거로움을 줄입니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "소량의 건강한 식재료를 통해 요리의 번거로움을 줄입니다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "PHYSICAL_DELIVERY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "건강한 식단 관리 제공",
+      "정기 배송 서비스"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스로, 건강한 식단을 유지할 수 있도록 소량의 식재료를 제공하며, 1~2인 가구의 음식물 쓰레기 문제를 해결합니다."
+  },
+  "durationMs": 3057,
+  "timestamp": "2026-08-10T07:51:41.039240+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

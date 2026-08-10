@@ -151,14 +151,14 @@
       "decision": "ALLOW",
       "categories": [],
       "restrictions": [],
-      "userFacingReason": "이 아이디어는 안전하며, 소형 사무실을 위한 화상회의 장비 대여 서비스로 적절한 해결책을 제공합니다."
+      "userFacingReason": "이 아이디어는 안전하다고 판단됩니다."
     },
     "interpretation": {
       "interpretedProblem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
       "interpretedTargetUsers": "10~50인 규모의 소형 사무실 운영자",
       "usageContext": "소형 사무실에서 화상회의를 원활하게 진행하기 위한 장비 대여 서비스",
       "industryCategory": "서비스업",
-      "researchScope": "소형 사무실의 화상회의 장비 수요",
+      "researchScope": "소형 사무실 및 화상회의 장비 대여 시장",
       "conciseIdeaDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 서비스",
       "targetRegionInterpretation": "대상 지역은 명시되지 않음",
       "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음"
@@ -173,8 +173,8 @@
     },
     "userFacingSummary": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스입니다."
   },
-  "durationMs": 7929,
-  "timestamp": "2026-08-10T05:07:12.765057+00:00",
+  "durationMs": 5616,
+  "timestamp": "2026-08-10T07:52:25.701380+00:00",
   "providerMetadata": {
     "mode": "LIVE",
     "retries": 0

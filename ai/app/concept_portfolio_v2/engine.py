@@ -25,6 +25,7 @@ from .candidate_governance import (
 from .distinctness import deterministic_distinctness, descriptor_values
 from .fact_consistency import assess_concept_fact_consistency
 from .language_policy import candidate_language_failures, plan_language_failures
+from .legal_requirement_nature import normalize_legal_requirement_route
 from .hypothesis_validation import assess_hypotheses, assess_hypothesis_value
 from .legal_fact_completeness import (
     assess_legal_fact_completeness, assess_legal_fact_dependencies, assess_role_semantics,
@@ -123,6 +124,7 @@ def _required_legal_input(candidate_id: str, review: LegalReview) -> dict[str, A
         "requiredLegalChange": review.requiredLegalChange,
         "reason": review.reason or review.safeSummary,
         "possibleUserAction": action or "이 후보에 필요한 외부 사실을 확인하거나 후보를 제외하고 계속하세요.",
+        "question": review.evidenceDiagnostics.get("factQuestion"),
         "safeSummary": review.safeSummary,
     }
 
@@ -193,7 +195,8 @@ class ConceptPortfolioEngine:
             "logicalOperations": 0, "topLevelExternalOperations": 0, "topLevelOperationsByStage": {},
             "externalProviderCalls": 0, "totalProviderCalls": 0,
             "callsByStage": {}, "externalCallsByStage": {}, "retries": 0, "durationMs": 0,
-            "modeCounts": {self.mode.value: 0}, "tokenUsage": None, "reportedCost": None})
+            "modeCounts": {self.mode.value: 0}, "tokenUsage": None, "reportedCost": None,
+            "batchDiagnostics": []})
         self.gateway.last_failure = None
         self._event(RunStage.CREATED, "CREATED", "RUNNING", "V2 Lab 실행을 생성했습니다.")
 
@@ -1046,13 +1049,16 @@ class ConceptPortfolioEngine:
         dependency_decisions: dict[tuple[str, str], LegalFactDependencySemanticItem] = {}
         role_calls = dependency_calls = 0
         if ambiguous_items:
+            diagnostic_start = len(self.gateway.usage.batchDiagnostics)
             semantic = await self.gateway.classify_business_roles(ambiguous_items)
             decisions = {(item.candidateId, item.field): item for item in semantic}
             role_calls = 1
             self._event(RunStage.LEGAL_RECOVERING, "BUSINESS_ROLE_SEMANTIC_BATCH", "PASS",
                         f"불명확 역할 {len(ambiguous_items)}개를 1회 batch로 판정했습니다.",
                         decision="BATCH_COMPLETE", provider_call=True)
+            self._emit_batch_extra_diagnostics(diagnostic_start)
         if dependency_items:
+            diagnostic_start = len(self.gateway.usage.batchDiagnostics)
             semantic_dependencies = await self.gateway.classify_legal_fact_dependencies(dependency_items)
             dependency_decisions = {
                 (item.candidateId, item.dependencyType): item for item in semantic_dependencies}
@@ -1060,6 +1066,7 @@ class ConceptPortfolioEngine:
             self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_DEPENDENCY_SEMANTIC_BATCH", "PASS",
                         f"불명확 dependency {len(dependency_items)}개를 1회 batch로 판정했습니다.",
                         decision="BATCH_COMPLETE", provider_call=True)
+            self._emit_batch_extra_diagnostics(diagnostic_start)
         final = []
         for envelope in candidates:
             per_candidate = {field: item for (candidate_id, field), item in decisions.items()
@@ -1074,6 +1081,17 @@ class ConceptPortfolioEngine:
                 "architectureRoleConsistency": self._architecture_role_consistency(envelope, report)})
             final.append(report)
         return final, role_calls, dependency_calls
+
+    def _emit_batch_extra_diagnostics(self, start: int) -> None:
+        for diagnostic in self.gateway.usage.batchDiagnostics[start:]:
+            ignored = diagnostic.get("ignoredKeys", [])
+            self._event(
+                RunStage.LEGAL_RECOVERING,
+                "BATCH_EXTRA_RESULTS_IGNORED",
+                "PASS",
+                f"{diagnostic.get('safeSummary', '')} ignoredKeys={ignored}",
+                decision="IGNORED_EXTRA",
+            )
 
     async def prepare_legal_candidates(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]
                                        ) -> LegalCandidatePreparation:
@@ -1319,6 +1337,7 @@ class ConceptPortfolioEngine:
     async def review_legal_candidate(self, seed: CanonicalSeed,
                                      envelope: CandidateEnvelope) -> LegalReview:
         review = await self.gateway.review_legal(envelope.candidateId, envelope.candidate, seed)
+        review = normalize_legal_requirement_route(review, envelope.candidate)
         self._event(RunStage.LEGAL_REVIEWING, "REVIEWED", review.route.value, review.safeSummary,
                     entity_id=envelope.candidateId, decision=review.route.value, provider_call=True)
         return review

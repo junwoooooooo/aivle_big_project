@@ -1,0 +1,843 @@
+{
+  "taskType": "LEGAL_REDESIGN_COMPLIANCE_REPAIR",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-redesign-compliance-repair-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f94c6efb2a94a11ac1f3bdcb0aebea9d0aca6b019317a653c58a62af8b3146b8",
+  "canonicalRequestHash": "87e0044cc3b5c047762a46531cfac4bebec1839782e51c53b63b249a8fa2a4e7",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "영업 담당자가 회의 및 이메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어드는 문제를 해결합니다.",
+        "interpretedTargetUsers": "별도의 영업 운영 인력이 부족한 중소기업 영업팀을 대상으로 합니다.",
+        "usageContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+        "industryCategory": "소프트웨어/AI 도구",
+        "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+        "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않았습니다.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않았습니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "CRM 자동화 솔루션",
+      "oneLineConcept": "중소기업 영업팀의 CRM 관리 업무를 자동화하는 도구입니다.",
+      "targetSegment": "별도의 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemFocus": "영업 담당자가 회의 및 이메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어드는 문제를 해결합니다.",
+      "useContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+      "valueProposition": "CRM 관리의 자동화를 통해 영업팀의 시간을 절약합니다.",
+      "offerThesis": "자동화된 CRM 업데이트로 영업팀의 업무 부담을 경감합니다.",
+      "solutionThesis": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다.",
+      "coreMechanism": "회의 및 이메일 내용을 자동으로 CRM에 입력하고 관리합니다.",
+      "customerInteraction": "고객과의 소통을 원활하게 하고, 필요한 후속 조치를 자동으로 제안합니다.",
+      "valueDelivery": "AI 도구를 통해 영업팀의 업무를 지원하고, 고객 관리의 효율성을 높입니다.",
+      "operatingApproach": "중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다.",
+      "partnerApproach": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+      "transactionApproach": "구독 기반 모델로 영업팀에 서비스를 제공합니다.",
+      "commercialApproach": "중소기업을 대상으로 한 가격 정책을 수립합니다.",
+      "fulfillmentApproach": "AI 도구를 클라우드 기반으로 제공하여 언제 어디서나 접근할 수 있도록 합니다.",
+      "differentiatingMechanics": [
+        "자동화된 CRM 업데이트",
+        "고객별 맞춤형 영업 액션 제안"
+      ],
+      "mainChanges": [
+        "CRM 관리의 자동화",
+        "고객 대응 시간 증가"
+      ],
+      "secondaryChanges": [
+        "회의 내용 분석의 정확성 향상",
+        "영업팀의 업무 효율성 향상"
+      ],
+      "legalRiskHints": [
+        "개인정보 보호 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "중소기업 영업팀의 CRM 관리 업무를 자동화하여 효율성을 높이기 위해 필요합니다.",
+      "planId": "P2",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "별도의 영업 운영 인력이 부족한 중소기업 영업팀",
+          "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+          "valuePropositionThesis": "CRM 관리의 자동화를 통해 영업팀의 시간을 절약합니다.",
+          "offerThesis": "자동화된 CRM 업데이트로 영업팀의 업무 부담을 경감합니다.",
+          "solutionThesis": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다",
+        "familyId": "OTHER:PARTNER_NETWORK",
+        "familyLabelKo": "기타 역할 · 파트너 네트워크",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+        "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "UNSELECTED",
+      "selectionScore": 0.0,
+      "selectionReason": "선택 평가 전",
+      "relationToPortfolio": "NOT_EVALUATED"
+    },
+    "parentCandidate": {
+      "conceptName": "CRM 자동화 솔루션",
+      "conceptDefinition": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "introduction": "중소기업 영업팀의 CRM 관리 업무를 자동화하여 효율성을 높이는 솔루션입니다.",
+      "coreValue": "CRM 관리의 자동화를 통해 영업팀의 시간을 절약합니다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "industryCategory": "소프트웨어/AI 도구",
+      "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+      "targetRegion": "대한민국",
+      "revenueModel": "구독 기반 모델로 영업팀에 서비스를 제공합니다.",
+      "price": "월 구독료 10만원",
+      "channels": "온라인 마케팅 및 파트너십을 통한 판매",
+      "differentiators": "자동화된 CRM 업데이트 및 고객별 맞춤형 영업 액션 제안",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "중소기업 시장의 CRM 자동화 수요 증가로 인해 시장 점유율 확대 가능성.",
+        "assumptions": [
+          "중소기업의 CRM 사용률 증가",
+          "AI 도구에 대한 수요 증가"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "1년",
+        "calculationBasis": "중소기업 영업팀의 수를 기반으로 한 시장 규모 추정",
+        "assumptions": [
+          "중소기업의 평균 영업팀 규모",
+          "CRM 도구에 대한 평균 지출"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "solutionMechanism": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다.",
+      "featureSet": [
+        "회의 내용 자동 정리",
+        "이메일 내용 자동 정리",
+        "CRM 자동 업데이트",
+        "고객별 맞춤형 영업 액션 제안"
+      ],
+      "actorRoles": [
+        "영업팀",
+        "CRM 시스템",
+        "AI 도구 제공자"
+      ],
+      "platformRole": "AI 도구 제공자로서 CRM 자동화 솔루션을 제공합니다.",
+      "operatingModel": "중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다.",
+      "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+      "providerRole": "AI 도구 제공자",
+      "sellerRole": "영업팀",
+      "intermediaryRole": "CRM 시스템 제공업체",
+      "transactionFlow": [
+        "고객이 구독 신청",
+        "AI 도구 제공자가 서비스 제공",
+        "고객이 CRM에 데이터 입력"
+      ],
+      "paymentFlow": [
+        "고객이 구독료 결제",
+        "AI 도구 제공자가 결제 확인",
+        "서비스 제공 시작"
+      ],
+      "personalDataUsage": [
+        "고객 데이터 보호를 위한 법규 준수"
+      ],
+      "physicalActivities": [
+        "배송",
+        "설치"
+      ],
+      "partnerRequirements": [
+        "CRM 시스템과의 통합 필요"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "효율적인 고객 관리",
+        "시간 절약"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 4,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "redesignedCandidate": {
+      "conceptName": "CRM 자동화 솔루션",
+      "conceptDefinition": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "introduction": "중소기업 영업팀의 CRM 관리 업무를 자동화하여 효율성을 높이는 솔루션입니다.",
+      "coreValue": "CRM 관리의 자동화를 통해 영업팀의 시간을 절약합니다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "industryCategory": "소프트웨어/AI 도구",
+      "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+      "targetRegion": "대한민국",
+      "revenueModel": "구독 기반 모델로 영업팀에 서비스를 제공합니다.",
+      "price": "월 구독료 10만원",
+      "channels": "온라인 마케팅 및 파트너십을 통한 판매",
+      "differentiators": "자동화된 CRM 업데이트 및 고객별 맞춤형 영업 액션 제안",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "중소기업 시장의 CRM 자동화 수요 증가로 인해 시장 점유율 확대 가능성.",
+        "assumptions": [
+          "중소기업의 CRM 사용률 증가",
+          "AI 도구에 대한 수요 증가"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "1년",
+        "calculationBasis": "중소기업 영업팀의 수를 기반으로 한 시장 규모 추정",
+        "assumptions": [
+          "중소기업의 평균 영업팀 규모",
+          "CRM 도구에 대한 평균 지출"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "solutionMechanism": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다.",
+      "featureSet": [
+        "회의 내용 자동 정리",
+        "이메일 내용 자동 정리",
+        "CRM 자동 업데이트",
+        "고객별 맞춤형 영업 액션 제안"
+      ],
+      "actorRoles": [
+        "영업팀",
+        "CRM 시스템",
+        "AI 도구 제공자"
+      ],
+      "platformRole": "AI 도구 제공자로서 CRM 자동화 솔루션을 제공합니다.",
+      "operatingModel": "중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다.",
+      "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+      "providerRole": "AI 도구 제공자",
+      "sellerRole": "영업팀",
+      "intermediaryRole": "CRM 시스템 제공업체",
+      "transactionFlow": [
+        "고객이 구독 신청",
+        "AI 도구 제공자가 서비스 제공",
+        "고객이 CRM에 데이터 입력"
+      ],
+      "paymentFlow": [
+        "고객이 구독료 결제",
+        "AI 도구 제공자가 결제 확인",
+        "서비스 제공 시작"
+      ],
+      "personalDataUsage": [
+        "고객 데이터 보호를 위한 법규 준수"
+      ],
+      "physicalActivities": [
+        "배송",
+        "설치"
+      ],
+      "partnerRequirements": [
+        "CRM 시스템과의 통합 필요"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "효율적인 고객 관리",
+        "시간 절약"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 4,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "requirements": [
+      "사업의 구체적인 제품이나 서비스의 종류는 무엇인가요?"
+    ],
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "CRM 자동화 솔루션",
+    "conceptDefinition": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+    "introduction": "중소기업 영업팀의 CRM 관리 업무를 자동화하여 효율성을 높이는 솔루션입니다.",
+    "coreValue": "CRM 관리의 자동화를 통해 영업팀의 시간을 절약합니다.",
+    "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+    "industryCategory": "소프트웨어/AI 도구",
+    "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 기반 모델로 영업팀에 서비스를 제공합니다.",
+    "price": "월 구독료 10만원",
+    "channels": "온라인 마케팅 및 파트너십을 통한 판매",
+    "differentiators": "자동화된 CRM 업데이트 및 고객별 맞춤형 영업 액션 제안",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "중소기업 시장의 CRM 자동화 수요 증가로 인해 시장 점유율 확대 가능성.",
+      "assumptions": [
+        "중소기업의 CRM 사용률 증가",
+        "AI 도구에 대한 수요 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 5000000.0,
+      "currency": "KRW",
+      "period": "1년",
+      "calculationBasis": "중소기업 영업팀의 수를 기반으로 한 시장 규모 추정",
+      "assumptions": [
+        "중소기업의 평균 영업팀 규모",
+        "CRM 도구에 대한 평균 지출"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+    "solutionMechanism": "효율적인 고객 관리와 후속 조치를 통해 영업팀의 성과를 극대화합니다.",
+    "featureSet": [
+      "회의 내용 자동 정리",
+      "이메일 내용 자동 정리",
+      "CRM 자동 업데이트",
+      "고객별 맞춤형 영업 액션 제안"
+    ],
+    "actorRoles": [
+      "영업팀",
+      "CRM 시스템",
+      "AI 도구 제공자"
+    ],
+    "platformRole": "AI 도구 제공자로서 CRM 자동화 솔루션을 제공합니다.",
+    "operatingModel": "중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다.",
+    "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+    "providerRole": "AI 도구 제공자",
+    "sellerRole": "영업팀",
+    "intermediaryRole": "CRM 시스템 제공업체",
+    "transactionFlow": [
+      "고객이 구독 신청",
+      "AI 도구 제공자가 서비스 제공",
+      "고객이 CRM에 데이터 입력"
+    ],
+    "paymentFlow": [
+      "고객이 구독료 결제",
+      "AI 도구 제공자가 결제 확인",
+      "서비스 제공 시작"
+    ],
+    "personalDataUsage": [
+      "고객 데이터 보호를 위한 법규 준수"
+    ],
+    "physicalActivities": [
+      "배송",
+      "설치"
+    ],
+    "partnerRequirements": [
+      "CRM 시스템과의 통합 필요"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "효율적인 고객 관리",
+      "시간 절약"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 7821,
+  "timestamp": "2026-08-10T08:11:15.327475+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

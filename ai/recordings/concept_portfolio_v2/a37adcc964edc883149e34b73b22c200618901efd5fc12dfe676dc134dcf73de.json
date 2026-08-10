@@ -151,14 +151,14 @@
       "decision": "ALLOW",
       "categories": [],
       "restrictions": [],
-      "userFacingReason": "이 아이디어는 안전하다고 판단됩니다."
+      "userFacingReason": "이 아이디어는 안전하며, 대학가 학생들을 위한 유용한 거래 플랫폼을 제안하고 있습니다."
     },
     "interpretation": {
-      "interpretedProblem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "interpretedProblem": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
       "interpretedTargetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
       "usageContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
       "industryCategory": "중고 거래 플랫폼",
-      "researchScope": "대학가 지역 내 중고 거래",
+      "researchScope": "대학가 및 학생 커뮤니티",
       "conciseIdeaDefinition": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
       "targetRegionInterpretation": "대학가 지역",
       "relevantKnownCompetitorContext": "기존의 전국 단위 중고 거래 플랫폼들"
@@ -173,8 +173,8 @@
     },
     "userFacingSummary": "이 서비스는 대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지원합니다."
   },
-  "durationMs": 4136,
-  "timestamp": "2026-08-10T04:58:44.977319+00:00",
+  "durationMs": 5898,
+  "timestamp": "2026-08-10T07:52:56.463036+00:00",
   "providerMetadata": {
     "mode": "LIVE",
     "retries": 0

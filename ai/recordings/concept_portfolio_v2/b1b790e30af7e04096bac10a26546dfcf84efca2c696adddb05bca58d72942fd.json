@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:775be88cc72ae14e494acdc56f8718dc70e00ca6f4112df2e1152d98e2e36f5d",
+  "canonicalRequestHash": "b1b790e30af7e04096bac10a26546dfcf84efca2c696adddb05bca58d72942fd",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "온라인 플랫폼 운영 및 관리 신선한 재료를 공급하는 역할 고객에게 서비스를 판매하는 역할 배송 및 물류 관리 역할 고객의 선호도에 따라 맞춤형 신선 재료를 제공합니다. 지역 농가와 협력하여 신선한 재료를 확보합니다. 고객 주문 주문 확인 재료 준비 배송 고객 수령 고객 결제 결제 확인 정산 구독 모델을 통해 정기적으로 수익을 창출합니다. 온라인 플랫폼 및 모바일 앱을 통해 주문 가능",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C4-F1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 신선한 재료를 공급하고, 고객 맞춤형 서비스를 제공하며, 구독 모델로 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 3480,
+  "timestamp": "2026-08-10T07:52:06.727473+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

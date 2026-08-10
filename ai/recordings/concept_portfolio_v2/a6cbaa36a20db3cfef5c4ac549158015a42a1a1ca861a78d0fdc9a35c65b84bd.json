@@ -154,12 +154,12 @@
       "userFacingReason": "이 아이디어는 안전하며, 중소기업 영업팀의 효율성을 높이는 데 기여할 수 있습니다."
     },
     "interpretation": {
-      "interpretedProblem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
-      "interpretedTargetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
-      "usageContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구로 사용될 수 있습니다.",
-      "industryCategory": "소프트웨어/AI",
-      "researchScope": "중소기업의 영업 효율성 향상",
-      "conciseIdeaDefinition": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "interpretedProblem": "영업 담당자가 회의 및 이메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어드는 문제를 해결합니다.",
+      "interpretedTargetUsers": "별도의 영업 운영 인력이 부족한 중소기업 영업팀을 대상으로 합니다.",
+      "usageContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+      "industryCategory": "소프트웨어/AI 도구",
+      "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+      "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다.",
       "targetRegionInterpretation": "대상 지역은 명시되지 않았습니다.",
       "relevantKnownCompetitorContext": "경쟁자는 명시되지 않았습니다."
     },
@@ -173,8 +173,8 @@
     },
     "userFacingSummary": "이 아이디어는 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구입니다."
   },
-  "durationMs": 4807,
-  "timestamp": "2026-08-10T06:39:23.537002+00:00",
+  "durationMs": 12955,
+  "timestamp": "2026-08-10T08:03:43.920895+00:00",
   "providerMetadata": {
     "mode": "LIVE",
     "retries": 0

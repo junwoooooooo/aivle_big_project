@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:78ddb866892f30cf9ecd4f0ba68b3b3e7252b35473936ce64104b0642d039d1a",
+  "canonicalRequestHash": "d936ed9cf2b088c951bde080d8595a60fc292c5282d129d7b0e3e760886a4517",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 식재료 낭비를 줄이고자 하는 1~2인 가구",
+      "problemFocus": "식재료를 남기고 음식물 쓰레기가 발생하는 문제",
+      "useContext": "소량의 신선한 재료를 정기적으로 배송받는 서비스",
+      "valueProposition": "신선한 재료를 정기적으로 제공하여 요리의 편리함을 더한다",
+      "offerThesis": "정기 배송으로 신선한 재료를 제공하여 요리의 질을 높인다",
+      "solutionThesis": "소량의 신선한 재료를 통해 음식물 쓰레기를 줄인다",
+      "differentiatingMechanics": [
+        "신선한 재료의 정기 배송",
+        "소량 포장으로 음식물 쓰레기 감소"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "coreValue": "신선한 재료를 정기적으로 제공하여 요리의 편리함을 더하고 음식물 쓰레기를 줄입니다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "solutionMechanism": "정기 배송 시스템을 통한 신선한 재료 제공으로 고객의 요리 주기에 맞춰 신선한 재료를 정기적으로 배송한다.",
+      "featureSet": [
+        "정기 배송 시스템",
+        "소량 포장 옵션",
+        "레시피 제공 기능"
+      ],
+      "operatingModel": "고객의 피드백을 반영하여 재료의 품질을 개선하고, 지역 농가와 협력하여 신선한 재료를 공급받는다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 식재료 낭비를 줄이고자 하는 1~2인 가구",
+        "useCaseThesis": "소량의 신선한 재료를 정기적으로 배송받는 서비스",
+        "valuePropositionThesis": "신선한 재료를 정기적으로 제공하여 요리의 편리함을 더한다",
+        "offerThesis": "정기 배송으로 신선한 재료를 제공하여 요리의 질을 높인다",
+        "solutionThesis": "소량의 신선한 재료를 통해 음식물 쓰레기를 줄인다"
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "소량의 신선한 재료를 통해 음식물 쓰레기를 줄인다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "PHYSICAL_DELIVERY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "신선한 재료의 정기 배송",
+      "소량 포장으로 음식물 쓰레기 감소"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스로, 신선한 재료를 정기적으로 제공하여 요리의 편리함을 더하고 음식물 쓰레기를 줄이는 것을 목표로 한다."
+  },
+  "durationMs": 3104,
+  "timestamp": "2026-08-10T07:55:53.154464+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

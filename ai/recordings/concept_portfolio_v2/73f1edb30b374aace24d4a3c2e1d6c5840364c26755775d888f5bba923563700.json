@@ -1,0 +1,176 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:81373599e9d56db2aa693e4401c10507325509d4fce056327f605f2d7552c1df",
+  "canonicalRequestHash": "73f1edb30b374aace24d4a3c2e1d6c5840364c26755775d888f5bba923563700",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "AI 기반 CRM 통합 솔루션 제공 AI 솔루션 개발 및 유지보수 CRM 솔루션 판매 및 고객 지원 파트너십을 통한 고객 유치 및 지원 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 고객이 구독 신청 AI 솔루션 제공 고객의 CRM 데이터 입력 및 관리 고객이 구독료 결제 결제 확인 후 서비스 제공 정기적인 구독료 청구 및 수취 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "AI 기반 영업 지원 도구 제공 AI 서비스 제공업체 영업팀 CRM 시스템 제공업체 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수 진행 CRM 시스템 제공업체와 협력하여 통합 솔루션 제공 고객이 구독 신청 AI 도구 제공 고객이 서비스 사용 고객 피드백 수집 고객이 구독료 결제 결제 확인 후 서비스 제공 정기 결제 및 정산 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "AI 기반 영업 자동화 플랫폼 제공자 AI 플랫폼 제공자 영업팀 파트너사 AI 알고리즘을 지속적으로 개선하여 자동화의 정확성을 높입니다. 업무 자동화 도구 제공업체와 협력하여 통합 솔루션을 제공합니다. 고객이 플랫폼에 가입 고객이 구독료를 결제 AI 시스템이 고객의 데이터를 수집 및 분석 AI가 후속 조치를 자동으로 생성 고객이 구독료를 결제 결제 시스템이 수수료를 처리 정산 후 수익이 플랫폼 운영자에게 전달 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "AI 분석 및 시각화 플랫폼 제공 AI 도구 개발 및 유지보수 담당 서비스 판매 및 고객 지원 담당 파트너사와의 협력 및 고객 관리 담당 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수 진행 데이터 분석 및 시각화 도구 제공업체와 협력하여 통합 솔루션 제공 고객이 서비스 신청 서비스 계약 체결 AI 도구 제공 고객 사용 및 피드백 수집 고객이 구독료 결제 결제 확인 후 서비스 제공 정기적인 청구 및 결제 처리 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 솔루션 제공, 구독 모델을 통한 지속적인 수익 창출."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 영업 지원 도구 제공, 구독 모델을 통한 지속적인 수익 창출."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 영업 자동화 플랫폼 제공, 구독 모델을 통한 지속적인 수익 창출."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 및 시각화 플랫폼 제공, 구독 모델을 통한 지속적인 수익 창출."
+    }
+  ],
+  "durationMs": 6740,
+  "timestamp": "2026-08-10T07:55:33.422156+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

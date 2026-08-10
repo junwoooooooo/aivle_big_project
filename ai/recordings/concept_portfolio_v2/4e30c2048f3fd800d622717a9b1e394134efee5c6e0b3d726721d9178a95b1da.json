@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:94fd5644a90a77107c2e09525bac32cb46dcee379318488aa1fa7bccc61c8140",
+  "canonicalRequestHash": "4e30c2048f3fd800d622717a9b1e394134efee5c6e0b3d726721d9178a95b1da",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-FC1",
+        "businessText": "레시피 추천 플랫폼 운영 레시피 제공자 구독 서비스 판매자 물류 및 배송 파트너 고객의 재료를 기반으로 맞춤형 레시피를 제공합니다. 레시피 개발자와 협력하여 다양한 요리법을 제공합니다. 고객이 앱에 재료 입력 시스템이 레시피 추천 고객이 구독 결제 고객이 구독 결제 시스템이 결제 수취 구독 서비스 제공 구독 모델을 통한 수익 창출 소셜 미디어, 블로그, 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C2-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "레시피 추천 플랫폼으로, 고객 맞춤형 레시피를 제공하며 구독 모델을 통해 수익을 창출합니다."
+    }
+  ],
+  "durationMs": 2991,
+  "timestamp": "2026-08-10T07:51:46.236584+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

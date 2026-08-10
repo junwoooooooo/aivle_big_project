@@ -1,0 +1,368 @@
+{
+  "taskType": "CLASSIFY_LEGAL_FACT_DEPENDENCIES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-dependency-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:cd10bc4cc26528c4b1d31e51e69ca07a446cdb6ffd6bf063cd1d7e400806fa6b",
+  "canonicalRequestHash": "b089c858f171342d41c6feff576e16fdd2b1cb4a7b4daba7a07537cf4846b626",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C4",
+        "dependencyType": "BUSINESS_PARTNER",
+        "candidate": {
+          "conceptName": "중소기업 영업팀을 위한 AI 도구",
+          "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+          "introduction": "중소기업 영업팀의 업무를 지원하는 AI 기반 도구로, 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+          "coreValue": "AI를 통해 영업팀의 업무를 간소화하고 고객 대응 시간을 늘려줍니다.",
+          "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "industryCategory": "소프트웨어/AI",
+          "researchScope": "중소기업의 영업 관리 및 CRM 시스템",
+          "targetRegion": "대한민국",
+          "revenueModel": "구독 모델을 통해 지속적인 수익을 창출합니다.",
+          "price": "월 구독료 10만원",
+          "channels": "온라인 마케팅, 파트너십을 통한 직접 판매",
+          "differentiators": "자동화된 회의 및 이메일 요약 기능, CRM 시스템과의 원활한 통합",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "중소기업 시장의 CRM 수요 증가에 따른 점유율 확대 가능성.",
+            "assumptions": [
+              "중소기업의 CRM 도입 증가",
+              "AI 도구에 대한 수요 증가"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 5000000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "중소기업 영업팀 수에 기반한 시장 규모 추정",
+            "assumptions": [
+              "중소기업의 평균 영업팀 규모",
+              "AI 도구 도입률 증가"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "solutionMechanism": "AI가 회의 및 이메일 내용을 분석하여 CRM에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다.",
+          "featureSet": [
+            "회의 및 이메일 자동 요약",
+            "CRM 통합 기능",
+            "사용자 맞춤형 후속 조치 제안"
+          ],
+          "actorRoles": [
+            "영업팀",
+            "CRM 시스템 제공업체",
+            "AI 도구 제공업체"
+          ],
+          "platformRole": "AI 도구 제공업체가 플랫폼을 운영하고 유지보수합니다.",
+          "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+          "partnerModel": "CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다.",
+          "providerRole": "AI 도구 제공업체가 서비스 제공 및 기술 지원을 담당합니다.",
+          "sellerRole": "영업팀이 고객에게 AI 도구를 판매합니다.",
+          "intermediaryRole": "파트너십을 통해 CRM 시스템 제공업체가 중개 역할을 수행합니다.",
+          "transactionFlow": [
+            "고객이 AI 도구를 구독 신청",
+            "AI 도구 제공업체가 서비스 제공",
+            "고객이 사용 후 피드백 제공"
+          ],
+          "paymentFlow": [
+            "고객이 구독료 결제",
+            "AI 도구 제공업체가 결제 확인 및 서비스 제공"
+          ],
+          "personalDataUsage": [
+            "고객의 이메일 및 회의 내용을 분석하여 서비스 개선에 활용"
+          ],
+          "physicalActivities": [],
+          "partnerRequirements": [
+            "CRM 시스템 제공업체와의 기술적 통합 필요"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "AI를 통한 업무 효율성 향상",
+            "고객 대응 시간 증가"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 4,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+            "useCaseThesis": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+            "valuePropositionThesis": "AI를 통해 영업팀의 업무를 간소화하고 고객 대응 시간을 늘려줍니다.",
+            "offerThesis": "회의 및 이메일 자동 요약 crm 통합 기능 사용자 맞춤형 후속 조치 제안",
+            "solutionThesis": "AI가 회의 및 이메일 내용을 분석하여 CRM에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "AUTOMATED_DIGITAL",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai가 회의 및 이메일 내용을 분석하여 crm에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다",
+          "familyId": "INTERMEDIARY:AUTOMATED_DIGITAL",
+          "familyLabelKo": "거래 중개 · 디지털 자동화",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "operatingModel": {
+              "code": "AUTOMATED_DIGITAL",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "RULE"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "UNKNOWN"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C4",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "REQUIRED",
+      "safeReason": "The business model involves collaboration with a CRM system provider, indicating a necessary partnership for service delivery."
+    },
+    {
+      "candidateId": "C4",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "REQUIRED",
+      "safeReason": "The service utilizes customer emails and meeting content for analysis, which constitutes the use of personal data."
+    },
+    {
+      "candidateId": "C4",
+      "dependencyType": "PHYSICAL_ACTIVITY",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "There are no physical activities involved in the business model as it operates digitally."
+    }
+  ],
+  "durationMs": 3115,
+  "timestamp": "2026-08-10T07:56:00.628144+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

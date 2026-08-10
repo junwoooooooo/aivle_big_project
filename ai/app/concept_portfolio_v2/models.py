@@ -96,6 +96,12 @@ class LegalRoute(StrEnum):
     SYSTEM_FAILURE = "SYSTEM_FAILURE"
 
 
+class LegalRequirementNature(StrEnum):
+    FACT_REQUIRED = "FACT_REQUIRED"
+    STRUCTURAL_CHANGE = "STRUCTURAL_CHANGE"
+    AMBIGUOUS = "AMBIGUOUS"
+
+
 class SeedField(StrictModel):
     fieldKey: str
     value: str
@@ -498,6 +504,15 @@ class RedesignRequirementCompliance(StrictModel):
     safeSummary: str
 
 
+class LegalRequirementNatureAssessment(StrictModel):
+    nature: LegalRequirementNature
+    affectedFields: list[str] = Field(default_factory=list)
+    beforeSummary: str | None = None
+    requiredStructure: str | None = None
+    factQuestion: str | None = None
+    safeReason: str
+
+
 class LegalReview(StrictModel):
     candidateId: str
     route: LegalRoute
@@ -630,6 +645,7 @@ class ProviderUsage(StrictModel):
     modeCounts: dict[str, int] = Field(default_factory=dict)
     tokenUsage: dict[str, int] | None = None
     reportedCost: float | None = None
+    batchDiagnostics: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class SchemaCompatibilityItem(StrictModel):
