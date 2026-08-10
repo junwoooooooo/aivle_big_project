@@ -18,6 +18,7 @@ from app.api.errors import (
 from app.api.marketing import router as marketing_router
 from app.api.tasks import router as task_router
 from app.api.executions import router as execution_router, internal_error
+from app.api.financial import router as financial_router
 from app.models.contracts import EchoResponse, HealthResponse
 from app.request_context import (
     REQUEST_ID_HEADER,
@@ -119,6 +120,7 @@ app.mount(
 app.include_router(marketing_router)
 app.include_router(task_router)
 app.include_router(execution_router)
+app.include_router(financial_router)
 
 
 def health_payload(

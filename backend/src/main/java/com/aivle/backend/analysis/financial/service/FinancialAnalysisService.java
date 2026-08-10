@@ -1,6 +1,6 @@
-package com.aivle.backend.analysis.financial;
+package com.aivle.backend.analysis.financial.service;
 
-import static com.aivle.backend.analysis.financial.FinancialModels.*;
+import static com.aivle.backend.analysis.financial.dto.FinancialModels.*;
 
 import com.aivle.backend.admin.ServicePolicyService;
 import com.aivle.backend.analysis.feasibility.entity.FeasibilityAssessment;

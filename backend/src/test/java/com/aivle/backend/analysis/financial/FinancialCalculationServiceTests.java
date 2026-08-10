@@ -3,6 +3,8 @@ package com.aivle.backend.analysis.financial;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.aivle.backend.analysis.financial.entity.RevenueModel;
+import com.aivle.backend.analysis.financial.dto.FinancialModels;
+import com.aivle.backend.analysis.financial.service.FinancialCalculationService;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,15 @@ class FinancialCalculationServiceTests {
         assertThat(result.months().get(0).salesVolume()).isEqualByComparingTo("105");
         assertThat(result.months().get(0).revenue()).isEqualByComparingTo("1050000");
         assertThat(result.months().get(0).variableCost()).isEqualByComparingTo("157500");
+    }
+
+    @Test
+    void subscriptionGrowthRateScalesMonthlyNewSubscribers() {
+        var input = assumptions(RevenueModel.SUBSCRIPTION, null, null, "10", "1000", "0",
+            "10000", "100", "20", "0");
+        var result = calculator.scenario(input, 12, base());
+        assertThat(result.months().get(0).activeSubscribers()).isEqualByComparingTo("120");
+        assertThat(result.months().get(1).activeSubscribers()).isGreaterThan(result.months().get(0).activeSubscribers());
     }
 
     @Test

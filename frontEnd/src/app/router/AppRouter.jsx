@@ -29,6 +29,8 @@ import { IdeaJourneyPage, LegalJourneyPage } from '../../features/journey/Journe
 import { ConceptAnalysisPage, ConceptGenerationPage, ConceptSelectionPage } from '../../features/journey/ConceptJourneyPages.jsx';
 import { InterviewJourneyPage, PersonaJourneyPage } from '../../features/journey/PersonaInterviewPages.jsx';
 import { FinalReportJourneyPage, MarketingJourneyPage } from '../../features/journey/MarketingReportPages.jsx';
+import FinancialModulePage from '../../features/financial/module/FinancialModulePage.jsx';
+import '../../features/financial/module/financialModule.css';
 
 function LegacyProjectRedirect({ suffix = '' }) {
   const { projectId } = useParams();
@@ -48,6 +50,7 @@ export default function AppRouter() {
     <Routes location={backgroundLocation || location}>
       <Route element={<PublicLayout />}>
         <Route index element={<LandingPage />} />
+        <Route path="module" element={<FinancialModulePage />} />
         <Route element={<PublicOnlyRoute />}>
           <Route path="auth/login" element={<LoginPage />} />
           <Route path="auth/signup" element={<SignupPage />} />

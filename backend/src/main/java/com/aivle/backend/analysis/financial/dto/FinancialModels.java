@@ -1,4 +1,4 @@
-package com.aivle.backend.analysis.financial;
+package com.aivle.backend.analysis.financial.dto;
 
 import com.aivle.backend.analysis.financial.entity.RevenueModel;
 import java.math.BigDecimal;

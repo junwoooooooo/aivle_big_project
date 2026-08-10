@@ -1,6 +1,6 @@
-package com.aivle.backend.analysis.financial;
+package com.aivle.backend.analysis.financial.service;
 
-import static com.aivle.backend.analysis.financial.FinancialModels.*;
+import static com.aivle.backend.analysis.financial.dto.FinancialModels.*;
 
 import com.aivle.backend.analysis.financial.entity.RevenueModel;
 import java.math.BigDecimal;
@@ -73,17 +73,18 @@ public class FinancialCalculationService {
                             BigDecimal volumeMultiplier, BigDecimal priceMultiplier) {
         BigDecimal oneTimeVolume = ZERO, oneTimeRevenue = ZERO, subscriptionRevenue = ZERO;
         BigDecimal subscriptionVariableBase = ZERO, endSubscribers = subscribers;
+        BigDecimal growthMultiplier = ONE.add(
+            value(input.monthlyGrowthRate()).divide(HUNDRED, 8, RoundingMode.HALF_UP)
+        ).pow(month - 1);
         if (input.revenueModel() != RevenueModel.SUBSCRIPTION) {
-            BigDecimal growthMultiplier = ONE.add(
-                value(input.monthlyGrowthRate()).divide(HUNDRED, 8, RoundingMode.HALF_UP)
-            ).pow(month - 1);
             oneTimeVolume = value(input.monthlySalesVolume()).multiply(volumeMultiplier)
                 .multiply(growthMultiplier);
             oneTimeRevenue = oneTimeVolume.multiply(effectiveUnitPrice(input, priceMultiplier));
         }
         if (input.revenueModel() != RevenueModel.ONE_TIME) {
             BigDecimal churn = subscribers.multiply(value(input.monthlyChurnRate())).divide(HUNDRED, 8, RoundingMode.HALF_UP);
-            BigDecimal newSubscribers = value(input.monthlyNewSubscribers()).multiply(volumeMultiplier);
+            BigDecimal newSubscribers = value(input.monthlyNewSubscribers()).multiply(volumeMultiplier)
+                .multiply(growthMultiplier);
             endSubscribers = subscribers.add(newSubscribers).subtract(churn).max(ZERO);
             BigDecimal average = subscribers.add(endSubscribers).divide(BigDecimal.valueOf(2), 8, RoundingMode.HALF_UP);
             subscriptionRevenue = average.multiply(value(input.monthlySubscriptionPrice()).multiply(priceMultiplier));

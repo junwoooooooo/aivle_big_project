@@ -1,4 +1,4 @@
-package com.aivle.backend.analysis.financial;
+package com.aivle.backend.analysis.financial.service;
 
 import com.aivle.backend.analysis.feasibility.entity.FeasibilityAssessment;
 import com.aivle.backend.project.entity.Project;

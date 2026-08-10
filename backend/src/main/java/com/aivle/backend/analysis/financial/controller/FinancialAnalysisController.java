@@ -1,8 +1,9 @@
-package com.aivle.backend.analysis.financial;
+package com.aivle.backend.analysis.financial.controller;
 
-import static com.aivle.backend.analysis.financial.FinancialModels.*;
+import static com.aivle.backend.analysis.financial.dto.FinancialModels.*;
 
-import com.aivle.backend.analysis.financial.FinancialAnalysisService.*;
+import com.aivle.backend.analysis.financial.service.FinancialAnalysisService;
+import com.aivle.backend.analysis.financial.service.FinancialAnalysisService.*;
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import jakarta.servlet.http.HttpServletRequest;

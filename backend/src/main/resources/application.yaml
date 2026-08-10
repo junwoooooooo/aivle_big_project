@@ -59,7 +59,7 @@ app:
       stale-running-timeout: ${DOCUMENT_JOB_STALE_TIMEOUT:5m}
       worker-id: ${DOCUMENT_JOB_WORKER_ID:}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:3001,http://127.0.0.1:3001}
     allow-credentials: ${CORS_ALLOW_CREDENTIALS:false}
   file-storage:
     root: ${FILE_STORAGE_ROOT:./data/files}

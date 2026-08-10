@@ -1,0 +1,24 @@
+.financial-module { max-width: 72rem; margin: 2rem auto; padding: 1.5rem; display: grid; gap: 1.5rem; }
+.financial-module header p { color: #168276; font-weight: 700; text-transform: uppercase; }
+.financial-module form, .financial-module__results { display: grid; gap: 1.25rem; padding: 1.25rem; border: 1px solid #d7dde5; border-radius: .75rem; }
+.financial-module__fields, .financial-module__metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .8rem; }
+.financial-module label { display: grid; gap: .3rem; font-size: .9rem; }
+.financial-module input, .financial-module select, .financial-module button { padding: .55rem; border-radius: .4rem; border: 1px solid #aeb8c5; }
+.financial-module button { width: fit-content; background: #168276; color: white; border: 0; font-weight: 700; cursor: pointer; }
+.financial-module__metrics p { margin: 0; padding: .8rem; background: #f3f6f8; border-radius: .5rem; display: grid; gap: .3rem; }
+.financial-module__results section { display: grid; gap: .65rem; }
+.financial-module__results table { border-collapse: collapse; width: 100%; min-width: 42rem; }
+.financial-module__results table th, .financial-module__results table td { padding: .65rem; border-bottom: 1px solid #d7dde5; text-align: right; }
+.financial-module__results table th:first-child { text-align: left; }
+.financial-module__results section:has(table) { overflow-x: auto; }
+.financial-module__chart { padding: .75rem; border: 1px solid #d7dde5; border-radius: .5rem; background: #fff; }
+.financial-module__chart svg { display: block; width: 100%; height: auto; }
+.financial-module__legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .875rem; }
+.financial-module__legend i { display: inline-block; width: .8rem; height: .8rem; margin-right: .3rem; border-radius: 50%; }
+.financial-module__stress { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .7rem; }
+.financial-module__stress p, .financial-module__report { margin: 0; padding: .8rem; border-radius: .5rem; background: #f8fafc; }
+.financial-module__report { border-left: 4px solid #168276; }
+.financial-module__report dl { display: grid; grid-template-columns: minmax(10rem, 13rem) 1fr; gap: .55rem 1rem; margin: 0; }
+.financial-module__report dt { font-weight: 700; }
+.financial-module__report dd { margin: 0; }
+.financial-module__scaling { color: #526172; font-size: .875rem; }
