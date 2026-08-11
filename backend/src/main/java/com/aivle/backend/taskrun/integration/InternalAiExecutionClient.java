@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 public class InternalAiExecutionClient {
     private static final Logger log = LoggerFactory.getLogger(InternalAiExecutionClient.class);
     public static final int MAX_JSON_BYTES = 2 * 1024 * 1024;
+    public static final int MAX_VISUAL_JSON_BYTES = 16 * 1024 * 1024;
     private static final Set<String> SUCCESS_FIELDS = Set.of(
         "contractVersion", "taskType", "taskSchemaVersion", "taskRunId", "taskAttemptId",
         "correlationId", "canonicalInputHash", "resultSchemaVersion", "result", "warnings",
@@ -65,7 +66,8 @@ public class InternalAiExecutionClient {
             "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED", "TWIN_BANK_UNAVAILABLE")),
         Map.entry("RATE_LIMITED", Set.of("DEPENDENCY_RATE_LIMITED")),
         Map.entry("EXECUTION_FAILED", Set.of("TRANSIENT_EXECUTION_FAILURE", "PERMANENT_EXECUTION_FAILURE",
-            "SAFETY_POLICY_BLOCKED")),
+            "SAFETY_POLICY_BLOCKED", "SOURCE_IMAGE_INVALID", "COPY_GENERATION_FAILED",
+            "IMAGE_GENERATION_FAILED", "IMAGE_COMPOSITION_FAILED")),
         Map.entry("RESULT_SCHEMA_INVALID", Set.of("RESULT_UNKNOWN_FIELD", "RESULT_FIELD_CONSTRAINT_VIOLATION",
             "RESULT_REFERENCE_INVALID", "RESULT_DOMAIN_INVARIANT_VIOLATION", "AI_RESULT_INVALID",
             "PROVIDER_RESPONSE_SCHEMA_REJECTED", "PROVIDER_JSON_INVALID",
@@ -88,7 +90,8 @@ public class InternalAiExecutionClient {
     private static final Set<String> RETRYABLE_REASONS = Set.of(
         "REQUEST_DEADLINE_EXCEEDED", "MODEL_DEPENDENCY_UNAVAILABLE", "MCP_DEPENDENCY_UNAVAILABLE",
         "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED",
-        "DEPENDENCY_RATE_LIMITED", "TRANSIENT_EXECUTION_FAILURE", "UNEXPECTED_INTERNAL_ERROR"
+        "DEPENDENCY_RATE_LIMITED", "TRANSIENT_EXECUTION_FAILURE", "UNEXPECTED_INTERNAL_ERROR",
+        "COPY_GENERATION_FAILED", "IMAGE_GENERATION_FAILED"
     );
 
     private final RestClient client;
@@ -111,20 +114,30 @@ public class InternalAiExecutionClient {
     }
 
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
-        return execute(ExecutionRequest.from(run), attemptId, deadline);
+        return execute(ExecutionRequest.from(run), attemptId, deadline, MAX_JSON_BYTES);
     }
 
     public ExecutionResponse executeWorker(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {
         return execute(new ExecutionRequest(run.taskRunId(), run.taskType(), run.inputSnapshot(),
             run.inputHash(), run.correlationId(), run.contractVersion(), run.taskSchemaVersion(),
-            run.locale()), attemptId, deadline);
+            run.locale()), attemptId, deadline, MAX_JSON_BYTES);
     }
 
-    private ExecutionResponse execute(ExecutionRequest run, String attemptId, LocalDateTime deadline) {
+    public ExecutionResponse executeWorkerResolved(TaskRunWorkerContext run, String attemptId,
+            LocalDateTime deadline, JsonNode resolvedInput) {
+        if (run.taskType() != TaskType.MARKETING_VISUAL_GENERATION || resolvedInput == null || !resolvedInput.isObject()) {
+            throw new IllegalArgumentException("resolved worker input is only allowed for marketing visual generation");
+        }
+        return execute(new ExecutionRequest(run.taskRunId(), run.taskType(), mapper.writeValueAsString(resolvedInput),
+            run.inputHash(), run.correlationId(), run.contractVersion(), run.taskSchemaVersion(), run.locale()),
+            attemptId, deadline, MAX_VISUAL_JSON_BYTES);
+    }
+
+    private ExecutionResponse execute(ExecutionRequest run, String attemptId, LocalDateTime deadline, int maxJsonBytes) {
         if (properties.internalApiKey() == null || properties.internalApiKey().isBlank())
             throw new ExecutionFailure("UNAUTHORIZED_INTERNAL_CALL", "SERVICE_TOKEN_MISSING", false);
         byte[] requestBytes = mapper.writeValueAsBytes(requestEnvelope(run, attemptId, deadline));
-        enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED");
+        enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED", maxJsonBytes);
         try {
             RestClient selectedClient = clientFor(run.taskType());
             byte[] responseBytes = selectedClient.post().uri("/internal/v1/ai/executions")
@@ -132,11 +145,11 @@ public class InternalAiExecutionClient {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.internalApiKey())
                 .header("X-Correlation-Id", run.correlationId())
                 .body(requestBytes).retrieve().body(byte[].class);
-            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED");
+            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             return validateResponse(run, attemptId, parseSuccess(responseBytes));
         } catch (RestClientResponseException responseFailure) {
             byte[] responseBytes = responseFailure.getResponseBodyAsByteArray();
-            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED");
+            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             throw parseFailure(responseBytes, run.taskType());
         } catch (ResourceAccessException timeoutOrConnectionFailure) {
             throw new ExecutionFailure(
@@ -270,8 +283,8 @@ public class InternalAiExecutionClient {
         return value.asText();
     }
 
-    private void enforceSize(byte[] bytes, String reason) {
-        if (bytes == null || bytes.length > MAX_JSON_BYTES)
+    private void enforceSize(byte[] bytes, String reason, int maxJsonBytes) {
+        if (bytes == null || bytes.length > maxJsonBytes)
             throw new ExecutionFailure("PAYLOAD_TOO_LARGE", reason, false);
     }
 

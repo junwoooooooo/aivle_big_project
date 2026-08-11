@@ -261,6 +261,9 @@ public class TaskRunService {
     }
 
     private String mapPublic(String internal, String reason) { if ("AI_CONFIGURATION_INVALID".equals(reason)) return "AI_CONFIGURATION_INVALID";
+        if (java.util.Set.of("INPUT_INVALID", "SOURCE_IMAGE_INVALID", "COPY_GENERATION_FAILED",
+            "IMAGE_GENERATION_FAILED", "IMAGE_COMPOSITION_FAILED", "ARTIFACT_STORAGE_FAILED")
+            .contains(reason)) return reason;
         if (java.util.Set.of("INSUFFICIENT_DISTINCT_CONCEPTS", "LOCKED_CONSTRAINT_INVALID",
             "ORIGIN_INVALID", "LEGAL_REJECTED", "LEGAL_EXTERNAL_FACT_UNRESOLVED",
             "LEGAL_REDESIGN_EXHAUSTED", "REPLACEMENT_EXHAUSTED", "DISTINCTNESS_EXHAUSTED",

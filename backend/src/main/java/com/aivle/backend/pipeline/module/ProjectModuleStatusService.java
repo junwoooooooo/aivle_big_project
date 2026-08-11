@@ -33,6 +33,7 @@ import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotReposit
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
+import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -100,6 +101,9 @@ public class ProjectModuleStatusService {
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
+        TaskRun marketingVisualTask = marketing == null ? null : taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.MARKETING_VISUAL_GENERATION, "MARKETING_VISUAL", marketing.getId()).orElse(null);
         var marketingSource = selectedSnapshot == null ? null
             : marketingSourceRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
@@ -137,7 +141,8 @@ public class ProjectModuleStatusService {
         PipelineModuleStatus twinStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
             : twinRun == null ? PipelineModuleStatus.READY
             : twinStatus(twinRun, !selectedSnapshot.getId().equals(twinRun.getSourceMarketSeedSnapshotId()));
-        PipelineModuleStatus marketingStatus = marketingStatus(marketing, marketingSource == null ? null : marketingSource.getId());
+        PipelineModuleStatus marketingStatus = marketingStatus(marketing,
+            marketingSource == null ? null : marketingSource.getId(), marketingVisualTask);
         PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
             : techOpsPreparation == null ? PipelineModuleStatus.READY
             : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
@@ -203,8 +208,11 @@ public class ProjectModuleStatusService {
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 marketingSource == null ? List.of("marketingSourceSnapshotId") : List.of(),
                 new NextAction("마케팅 콘텐츠", "/marketing"), marketing == null ? null : marketing.getId(),
-                marketing == null ? null : marketing.getTaskRunId(), marketingSource == null ? null : marketingSource.getId(),
-                null, null, marketing == null ? null : marketing.getUpdatedAt())
+                marketingVisualTask != null && !marketingVisualTask.terminal() ? marketingVisualTask.getId()
+                    : marketing == null ? null : marketing.getTaskRunId(),
+                marketingSource == null ? null : marketingSource.getId(), null, null,
+                marketingVisualTask == null ? marketing == null ? null : marketing.getUpdatedAt()
+                    : marketingVisualTask.getUpdatedAt())
         );
     }
 
@@ -291,15 +299,23 @@ public class ProjectModuleStatusService {
         };
     }
 
-    private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId) {
+    private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId,
+            TaskRun visualTask) {
         if (marketingSourceSnapshotId == null) return PipelineModuleStatus.NOT_READY;
         if (content == null) return PipelineModuleStatus.READY;
         if (!marketingSourceSnapshotId.equals(content.getMarketingSourceSnapshotId())) return PipelineModuleStatus.STALE;
-        return switch (content.getStatus()) {
+        PipelineModuleStatus contentStatus = switch (content.getStatus()) {
             case QUEUED -> PipelineModuleStatus.QUEUED;
             case RUNNING -> PipelineModuleStatus.RUNNING;
             case COMPLETED, FINALIZED -> PipelineModuleStatus.COMPLETED;
             case FAILED -> PipelineModuleStatus.FAILED;
+        };
+        if (visualTask == null || contentStatus != PipelineModuleStatus.COMPLETED) return contentStatus;
+        return switch (visualTask.getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+            case SUCCEEDED, NEEDS_INPUT -> contentStatus;
         };
     }
 

@@ -26,7 +26,7 @@ public class EvidenceArtifactUploadPolicy {
         Map.entry("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         Map.entry("xls", "application/vnd.ms-excel"),
         Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
-        Map.entry("txt", "text/plain"), Map.entry("png", "image/png"),
+        Map.entry("txt", "text/plain"), Map.entry("png", "image/png"), Map.entry("webp", "image/webp"),
         Map.entry("jpg", "image/jpeg"), Map.entry("jpeg", "image/jpeg"));
     private final EvidenceArtifactProperties properties;
 
@@ -77,6 +77,8 @@ public class EvidenceArtifactUploadPolicy {
             case "pdf" -> starts(content, 0x25, 0x50, 0x44, 0x46, 0x2d);
             case "png" -> starts(content, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
             case "jpg", "jpeg" -> starts(content, 0xff, 0xd8, 0xff);
+            case "webp" -> content.length >= 12 && starts(content, 0x52, 0x49, 0x46, 0x46)
+                && content[8] == 0x57 && content[9] == 0x45 && content[10] == 0x42 && content[11] == 0x50;
             case "xls" -> starts(content, 0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
             case "docx" -> validOoxml(content, "word/");
             case "xlsx" -> validOoxml(content, "xl/");

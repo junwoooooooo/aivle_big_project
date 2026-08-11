@@ -3,5 +3,7 @@ httpx==0.28.1
 uvicorn[standard]==0.35.0
 python-multipart==0.0.30
 openai==2.38.0
+Pillow==11.3.0
+python-dotenv==1.1.1
 requests==2.32.4
 trafilatura==2.2.0

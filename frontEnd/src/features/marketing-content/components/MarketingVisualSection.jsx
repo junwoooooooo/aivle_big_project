@@ -1,0 +1,92 @@
+import { useEffect, useMemo, useState } from 'react';
+import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
+import useMarketingVisual from '../hooks/useMarketingVisual.js';
+import { VISUAL_FORMATS, VISUAL_MOODS, validateVisualInput, visualDefaults, visualFailure } from '../model/marketingVisualModel.js';
+
+export default function MarketingVisualSection({ projectId, detail, revision, source, draft }) {
+  const contentId = detail?.content?.contentId;
+  const revisionId = revision?.revisionId;
+  const visual = useMarketingVisual(projectId, contentId);
+  const [form, setForm] = useState(() => visualDefaults(source, draft));
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => { setForm(visualDefaults(source, draft)); }, [contentId, revisionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!file) { setFilePreview(null); return undefined; }
+    const url = URL.createObjectURL(file); setFilePreview(url); return () => URL.revokeObjectURL(url);
+  }, [file]);
+  const result = visual.run?.result;
+  const events = useMemo(() => (visual.events.events ?? []).filter(isUserVisibleJobEvent), [visual.events.events]);
+  const latestEvent = events.at(-1);
+  const failureCode = latestEvent?.technicalCode ?? visual.run?.errorCode ?? visual.error?.code;
+  const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
+  async function generate() {
+    const invalid = validateVisualInput(form, file, contentId, revisionId);
+    if (invalid) { setNotice(invalid); return; }
+    setNotice('');
+    try { await visual.create({ form, file, revisionId }); }
+    catch (error) { setNotice(error.message); }
+  }
+
+  return <section className="mk-visual" aria-labelledby="mk-visual-title">
+    <header className="mk-visual__header"><div><p>Marketing Visual</p><h2 id="mk-visual-title">AI 광고 배너 생성</h2>
+      <span>현재 Marketing Content와 법률 통제를 기준으로 배너 문구·이미지·한글 합성을 생성합니다.</span></div>
+      <strong>등록 Source 1개</strong></header>
+    <div className="mk-visual__source" aria-label="선택 상품과 Source 요약"><div><span>선택 상품 / Source</span>
+      <strong>{source?.conceptName ?? detail?.content?.title ?? 'Marketing Source'}</strong>
+      <p>{source?.valueProposition ?? '현재 Marketing Source의 핵심 가치가 연결됩니다.'}</p></div>
+      <dl><div><dt>대상 고객</dt><dd>{source?.targetSegment ?? 'Source 값 없음'}</dd></div>
+        <div><dt>콘텐츠</dt><dd>{detail?.content?.contentType ?? '선택 필요'} · {detail?.content?.channel ?? '채널 미지정'}</dd></div>
+        <div><dt>주요 특징</dt><dd>{source?.keyFeatures?.join(' · ') || 'Source 값 없음'}</dd></div>
+        <div><dt>Revision</dt><dd>{revision ? `#${revision.revisionNumber} · ${revision.revisionType}` : '선택 필요'}</dd></div></dl></div>
+    <div className="mk-visual__grid"><div className="mk-visual__form">
+      <label>프로모션 이름<input value={form.promotionName} maxLength={100} onChange={(event) => set('promotionName', event.target.value)} /></label>
+      <label>메인 배너 문구<input value={form.mainBanner} maxLength={80} onChange={(event) => set('mainBanner', event.target.value)} /></label>
+      <label>보조 문구<textarea value={form.supportingCopy} maxLength={150} onChange={(event) => set('supportingCopy', event.target.value)} /></label>
+      <div className="mk-visual__row"><label>광고 분위기<select value={form.mood} onChange={(event) => set('mood', event.target.value)}>
+        {VISUAL_MOODS.map((mood) => <option key={mood}>{mood}</option>)}</select></label>
+        <label>배너 형식<select value={form.bannerFormat} onChange={(event) => set('bannerFormat', event.target.value)}>
+          {VISUAL_FORMATS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
+      <label>강조 키워드<input value={form.emphasisKeywords} placeholder="쉼표로 최대 10개" onChange={(event) => set('emphasisKeywords', event.target.value)} /></label>
+      <div className="mk-visual__upload"><label htmlFor="mk-visual-image">상품 이미지 업로드</label>
+        <span>PNG/JPG/JPEG/WEBP · 최대 10MB</span><input id="mk-visual-image" type="file" accept="image/png,image/jpeg,image/webp"
+          onChange={(event) => { setFile(event.target.files?.[0] ?? null); setNotice(''); }} />
+        {file && <div className="mk-visual__file">{filePreview && <img src={filePreview} alt="업로드 파일 미리보기" />}
+          <span><strong>{file.name}</strong><small>{Math.ceil(file.size / 1024)}KB</small></span>
+          <button type="button" onClick={() => setFile(null)}>제거</button></div>}</div>
+      <div className="mk-visual__legal"><strong>Marketing Legal authority</strong>
+        <p>허용 주장: {source?.allowedClaims?.join(' · ') || '등록 없음'}</p>
+        <p>금지 주장: {source?.prohibitedClaims?.join(' · ') || '등록 없음'}</p>
+        <p>필수 고지: {source?.requiredDisclosures?.join(' · ') || '등록 없음'}</p>
+        <p>필수 통제: {source?.requiredControls?.join(' · ') || '등록 없음'}</p></div>
+      {notice && <div className="mk-alert" role="alert">{notice}</div>}
+      <button className="mk-primary" type="button" disabled={visual.busy || !contentId} onClick={() => void generate()}>
+        {visual.busy ? '마케팅 이미지 생성 중…' : '광고 배너 만들기'}</button>
+    </div><div className="mk-visual__result">
+      {visual.busy && <div className="mk-visual__processing" aria-live="polite" aria-busy="true"><strong>마케팅 이미지 생성</strong>
+        <p>{latestEvent ? jobEventMessage(latestEvent) : '입력을 확인하고 있습니다.'}</p>
+        <ol>{events.map((event) => <li key={event.sequence} data-active={event === latestEvent}>{jobEventMessage(event)}</li>)}</ol>
+        <button type="button" onClick={() => void visual.cancel()}>생성 취소</button></div>}
+      {visual.run?.state === 'FAILED' && <div className="mk-visual__failure" role="alert"><strong>이미지 생성 실패</strong>
+        <p>{visualFailure(failureCode)}</p>{visual.run.retryable && <button type="button" onClick={() => void visual.retry()}>다시 시도</button>}</div>}
+      {!visual.busy && !result && visual.run?.state !== 'FAILED' && <div className="mk-visual__empty"><strong>배너 결과가 아직 없습니다.</strong>
+        <p>Source 이미지와 Visual 입력을 확인한 뒤 광고 배너 만들기를 실행하세요.</p></div>}
+      {result && <><div className="mk-visual__preview">{visual.previewUrl
+        ? <img src={visual.previewUrl} alt="생성된 광고 배너" /> : <span>Project Artifact 미리보기를 불러오는 중입니다.</span>}</div>
+        <div className="mk-visual__copy"><span>{result.generatedCopy?.badge}</span><h3>{result.generatedCopy?.headline}</h3>
+          <p>{result.generatedCopy?.subheadline}</p>{result.callToAction && <strong className="mk-visual__cta">{result.callToAction}</strong>}</div>
+        <dl className="mk-visual__facts"><div><dt>Source</dt><dd>{source?.conceptName ?? 'Marketing Source'} / revision {result.marketingRevisionId}</dd></div>
+          <div><dt>프로모션</dt><dd>{result.visual?.promotionName}</dd></div>
+          <div><dt>분위기</dt><dd>{result.visual?.mood}</dd></div><div><dt>형식</dt><dd>{result.visual?.bannerFormat}</dd></div>
+          <div><dt>모델</dt><dd>{result.banner?.model} · {result.banner?.size}</dd></div></dl>
+        <div className="mk-visual__disclosures"><strong>필수 고지와 통제</strong>
+          <p>{result.legalReview?.requiredDisclosuresApplied?.join(' · ') || '필수 고지 없음'}</p>
+          <p>{result.legalReview?.requiredControlsApplied?.join(' · ') || '필수 통제 없음'}</p></div>
+        <div className="mk-visual__actions"><button type="button" onClick={() => void generate()}>다시 만들기</button>
+          <button className="mk-primary" type="button" onClick={() => void visual.download()}>광고 배너 저장 / 다운로드</button></div></>}
+    </div></div>
+  </section>;
+}

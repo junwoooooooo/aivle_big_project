@@ -194,6 +194,43 @@ export function createApiClient({
     }
   }
 
+  async function download(path, options = {}, hasRetried = false) {
+    const {
+      headers = {}, signal: externalSignal, authenticate = true,
+      refreshOnUnauthorized = true, timeoutMs: requestTimeoutMs = timeoutMs,
+    } = options;
+    const requestHeaders = new Headers(headers);
+    const accessToken = authenticate ? await tokenProvider?.getAccessToken?.() : null;
+    if (accessToken) requestHeaders.set('Authorization', `Bearer ${accessToken}`);
+    const requestSignal = createRequestSignal(externalSignal, requestTimeoutMs);
+    try {
+      const response = await fetchImpl(buildApiUrl(baseUrl, path), {
+        method: 'GET', headers: requestHeaders, signal: requestSignal.signal, credentials: 'same-origin',
+      });
+      if (response.status === 401 && refreshOnUnauthorized && !hasRetried) {
+        onUnauthorized?.();
+        const refreshed = await refreshOnce();
+        if (refreshed) {
+          requestSignal.cleanup();
+          return download(path, options, true);
+        }
+      }
+      if (!response.ok) {
+        const payload = await readResponseBody(response);
+        throw new ApiError({ status: response.status,
+          code: payload?.error?.code ?? `HTTP_${response.status}`,
+          message: payload?.error?.message ?? '파일을 내려받지 못했습니다.',
+          retryable: payload?.error?.retryable ?? response.status >= 500 });
+      }
+      return { blob: await response.blob(), contentType: response.headers.get('content-type'),
+        disposition: response.headers.get('content-disposition') };
+    } catch (error) {
+      throw normalizeApiError(error);
+    } finally {
+      requestSignal.cleanup();
+    }
+  }
+
   return {
     request,
     stream,
@@ -203,6 +240,7 @@ export function createApiClient({
     patch: (path, body, options) => request(path, { ...options, method: 'PATCH', body }),
     delete: (path, options) => request(path, { ...options, method: 'DELETE' }),
     upload: (path, formData, options) => request(path, { ...options, method: 'POST', body: formData }),
+    download,
   };
 }
 

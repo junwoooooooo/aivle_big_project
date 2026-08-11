@@ -16,6 +16,7 @@ describe('V2 job event message registry', () => {
     expect(jobEventMessage({ messageKey: 'job.concept-portfolio.completed' })).toBe('검토 가능한 사업안이 준비되었습니다.');
     expect(jobEventMessage({ messageKey: 'job.concept.run.completed' })).not.toContain('5개');
     expect(isUserVisibleJobEvent({ messageKey: 'job.claimed' })).toBe(false);
+    expect(jobEventMessage({ messageKey: 'job.marketing.visual.result_storing' })).toContain('프로젝트 저장소');
   });
   it('distinguishes safe Portfolio failure reasons', () => {
     expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',

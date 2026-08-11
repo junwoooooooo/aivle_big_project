@@ -356,3 +356,33 @@ Session 2 범위의 `NOT_PORTED` 행은 없다.
 |---|---|---|
 | `FinancialModulePage.jsx` sandbox 입력·미리보기 API | NOT_PORTED + reason | 개발용 중복 API이며 공식 `/api/v3/projects/{projectId}/finance/...`에 노출하지 않았다. donor 파일은 삭제·변경하지 않았다. |
 | `FinanceDemoFallback` 가짜 데이터 실행 | NOT_OFFICIAL | sample/demo upstream 금지에 따라 공식 Project Finance route에서 노출하지 않았다. donor 구현은 read-only donor에 보존되어 있다. |
+
+### 7.5 AIdev Marketing Visual (Session 4)
+
+기존 5절의 Marketing Content 행은 전부 `KEEP_TARGET`이며 삭제·축약하지 않았다. Visual donor 정보는 현재 Marketing workspace 안에서 다음과 같이 대응했다.
+
+| USER_VISIBLE_ITEM / DONOR SURFACE | STATUS | TARGET 구현 또는 판정 |
+|---|---|---|
+| 기존 Marketing source/setup/editor/revision/legal/finalization/copy/download | KEEP_TARGET | 기존 `marketing-content/**`를 유지하고 Visual section만 추가 |
+| `AI 광고 배너 생성` 제목과 설명 | PORTED | `MarketingVisualSection.jsx` header |
+| 프로모션 이름, 메인/보조 문구 | PORTED | 현재 Marketing title/body에서 초기화되는 수정 가능 입력 |
+| 광고 분위기 7종 | PORTED | donor 7종 선택을 그대로 보존 |
+| 가로/정사각 SNS/세로 모바일 형식 | PORTED | donor 3종 형식 의도와 Provider 크기 매핑 보존 |
+| 강조 키워드 | PORTED | 쉼표 기반 최대 10개 입력과 AI contract 결속 |
+| PNG/JPG/JPEG/WEBP, 10MB, preview/파일명/제거 | PORTED | Backend 소유 Artifact 업로드 후 TaskRun에는 artifact reference만 저장 |
+| 등록 상품 수/상품 카드/카테고리/요약/features/선택 | REPLACED_SEAM | legacy mock 상품 대신 authoritative Marketing Source의 Concept·대상·가치·features·revision 요약으로 보존 |
+| 필수값 validation | PORTED | Browser 선검증 + Backend/AI strict validation |
+| 광고 배너 생성 action | PORTED | `MARKETING_VISUAL_GENERATION` Product TaskRun |
+| 생성 진행/취소 | REPLACED_SEAM | timer/가짜 percentage 대신 실제 JobEvent 단계와 TaskRun cancel |
+| 결과 preview, badge/headline/subheadline/CTA | PORTED | canonical Artifact REST refresh 뒤 인증 download blob preview |
+| tone/promotion/product/source/revision/model/format 결과 요약 | PORTED | Visual 결과 detail과 source lineage |
+| 필수 고지/통제 | PORTED | associated copy에 결속하고 결과 화면에 명시적으로 표시 |
+| 다시 만들기/저장 | PORTED | 새 TaskRun 생성, Project Artifact 영속화, 인증 download |
+| donor banner copy/prompt/image generation/Pillow composition | PORTED | Internal AI Execution 내부 구현 |
+| donor `POST /api/v1/marketing/banners/generate` | DO_NOT_EXPOSE | Browser 공식 API로 노출하지 않음 |
+| `AiServerMarketingClient` direct-call 경로 | DO_NOT_EXPOSE | Target Worker → Internal AI Execution 경계 사용 |
+| `ai/outputs/banner_<id>.jpg` | REPLACED_SEAM | local output authority 제거, MinIO-backed Project Artifact가 정본 |
+| VirtualMarket legacy route | NOT_PORTED — reason | 새 Journey 금지. 현재 Marketing workspace 내부 section으로 결합 |
+| `setTimeout`/canvas fake generation | DEV_ONLY / NOT_PORTED | Product 실행에 포함하지 않음 |
+
+Session 4 범위의 `PRESERVE_REQUIRED=YES` 정보 항목 중 누락된 항목은 없다.

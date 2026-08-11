@@ -7,6 +7,7 @@ import MarketingRevisionList from '../components/MarketingRevisionList.jsx';
 import MarketingSetupPanel from '../components/MarketingSetupPanel.jsx';
 import MarketingSourceSummary from '../components/MarketingSourceSummary.jsx';
 import MarketingStylePanel from '../components/MarketingStylePanel.jsx';
+import MarketingVisualSection from '../components/MarketingVisualSection.jsx';
 import useMarketingContent from '../hooks/useMarketingContent.js';
 import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, legalSignals,
   marketingFailureMessage, sourceSummary, toCreateRequest } from '../model/marketingContentModel.js';
@@ -89,6 +90,8 @@ export default function MarketingContentPage() {
         </section><MarketingCopyEditor value={draft} source={source} onChange={setDraft} onRevisionType={setRevisionType} />
       </>}</aside>
     </div>
+    <MarketingVisualSection projectId={projectId} detail={hook.selected} revision={activeRevision}
+      source={source} draft={draft} />
     {draft && <footer className="mk-actions" aria-label="콘텐츠 작업"><button type="button" onClick={() => void copy()}>복사</button>
       <button type="button" onClick={() => downloadMarketingContent(draft, hook.selected?.content.title)}>다운로드</button>
       <button type="button" disabled={!editable || hook.saving || signals.blocking.length > 0} onClick={() => void save()}>{hook.saving ? '저장 중…' : '편집본 저장'}</button>

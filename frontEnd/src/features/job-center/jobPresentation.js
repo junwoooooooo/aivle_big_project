@@ -10,5 +10,6 @@ export const JOB_TASK_LABELS = Object.freeze({
   FINANCE_ANALYSIS_REPORT: '재무 분석 보고서',
   IDEA_BRIEF_DERIVATION: '아이디어 정리',
   MARKETING_CONTENT_GENERATION: '마케팅 콘텐츠 준비',
+  MARKETING_VISUAL_GENERATION: '마케팅 이미지 생성',
 });
 export function jobTaskLabel(taskType) { return JOB_TASK_LABELS[taskType] ?? '프로젝트 작업'; }

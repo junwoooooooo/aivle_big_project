@@ -68,7 +68,7 @@ app:
     image-extensions: png,jpg,jpeg,webp
   evidence-artifact:
     max-size: ${EVIDENCE_ARTIFACT_MAX_SIZE:20MB}
-    allowed-extensions: pdf,csv,xlsx,xls,docx,txt,png,jpg,jpeg
+    allowed-extensions: pdf,csv,xlsx,xls,docx,txt,png,jpg,jpeg,webp
   object-storage:
     provider: ${OBJECT_STORAGE_PROVIDER:local}
     local-root: ${OBJECT_STORAGE_LOCAL_ROOT:./data/objects}

@@ -31,6 +31,7 @@ TASK_TYPES = {
     "FINANCE_ESTIMATE",
     "FINANCE_ANALYSIS_REPORT",
     "MARKETING_CONTENT_GENERATION",
+    "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
     "TWIN_SURVEY",
     "TWIN_STIMULUS_DRAFT",
@@ -76,12 +77,16 @@ def safe_validation_fields(failure: ValidationError, prefix: str = "input") -> l
 
 
 def canonical_hash(body: InternalExecutionRequestV1) -> str:
+    input_value = body.input
+    if body.taskType == "MARKETING_VISUAL_GENERATION":
+        input_value = dict(body.input)
+        input_value.pop("resolvedSourceImage", None)
     return canonical_input_hash(
         contract_version=body.contractVersion,
         task_type=body.taskType,
         task_schema_version=body.taskSchemaVersion,
         locale=body.locale,
-        input_value=body.input,
+        input_value=input_value,
     )
 
 
@@ -163,6 +168,21 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_hash = body.input.get("source", {}).get("hash", body.input.get("source", {}).get("sourceSnapshotHash", "unknown"))
         source_keys = [f"finalized-planning:{source_hash}"]
+    elif body.taskType == "MARKETING_VISUAL_GENERATION":
+        from app.tasks.marketing_visual.models import MarketingVisualInput
+        try:
+            visual_input = MarketingVisualInput.model_validate(body.input)
+        except ValidationError as failure:
+            return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION",
+                                  400, False, body.taskRunId, body.taskAttemptId,
+                                  safe_validation_fields(failure))
+        text = json.dumps(visual_input.model_dump(mode="json"), ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+        source_keys = [
+            f"marketing-content:{visual_input.marketingContentId}",
+            f"marketing-revision:{visual_input.marketingRevisionId}",
+            f"source-artifact:{visual_input.sourceImage.artifactId}",
+        ]
     elif body.taskType == "IDEA_BRIEF_DERIVATION":
         from app.tasks.idea_brief.models import IdeaBriefDerivationInput
         try:
@@ -292,6 +312,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)
+        elif body.taskType == "MARKETING_VISUAL_GENERATION":
+            from app.tasks.marketing_visual import execute_marketing_visual
+            result = await execute_marketing_visual(body.input)
         elif body.taskType == "MARKET_RESEARCH":
             from app.research.pipeline import run_market_research
             remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
