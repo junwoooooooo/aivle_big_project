@@ -32,7 +32,8 @@ export default function useFinance(projectId) {
       ]);
       const snapshot = snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
       const runs = runsResult.status === 'fulfilled' ? runsResult.value.runs ?? [] : [];
-      setState((value) => ({ ...value, loading: false, busy: null, preparation, snapshot,
+      const analysisResult = snapshot ? await api.currentAnalysis(projectId).catch(() => null) : null;
+      setState((value) => ({ ...value, loading: false, busy: null, preparation, snapshot, analysis: analysisResult,
         run: runs.find((item) => item.module === 'FINANCIAL_ANALYSIS') ?? null, error: null }));
     } catch (error) { setState((value) => ({ ...value, loading: false, busy: null, error })); }
   }, [api, projectId]);

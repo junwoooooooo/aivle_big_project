@@ -8,6 +8,7 @@ import com.aivle.backend.finance.dto.FinancialModuleResponse;
 import com.aivle.backend.finance.dto.FinancialModuleRequest;
 import com.aivle.backend.finance.service.FinancialDemoService;
 import com.aivle.backend.finance.service.FinancialSnapshotAnalysisService;
+import com.aivle.backend.finance.service.FinancialAnalysisReportService;
 import com.aivle.backend.pipeline.finance.application.FinancialService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class FinancialController {
     private final FinancialService service;
     private final FinancialSnapshotAnalysisService analysisService;
+    private final FinancialAnalysisReportService reportService;
     private final FinancialDemoService demoService;
     private final CurrentUserProvider user;
 
@@ -83,7 +85,14 @@ public class FinancialController {
     @PostMapping("/analysis")
     public ApiResponse<FinancialModuleResponse> analyze(@PathVariable Long projectId, HttpServletRequest request) {
         SnapshotView snapshot = service.currentSnapshot(user.currentUserId(), projectId);
-        return ApiResponse.success(analysisService.analyze(snapshot.snapshot()), request.getHeader("X-Request-Id"));
+        FinancialModuleResponse result = analysisService.analyze(snapshot.snapshot());
+        return ApiResponse.success(reportService.save(user.currentUserId(), projectId, snapshot, result), request.getHeader("X-Request-Id"));
+    }
+
+    @GetMapping("/analysis/current")
+    public ApiResponse<FinancialModuleResponse> currentAnalysis(@PathVariable Long projectId, HttpServletRequest request) {
+        SnapshotView snapshot = service.currentSnapshot(user.currentUserId(), projectId);
+        return ApiResponse.success(reportService.current(projectId, snapshot.snapshotId()), request.getHeader("X-Request-Id"));
     }
 
     /** Development-only test route: runs supplied local assumptions without requiring TechOps or writing snapshots. */

@@ -11,6 +11,7 @@ export const createFinanceApi = (client) => Object.freeze({
   reopen: async (projectId, options) => (await client.post(`${finance(projectId)}/input-snapshots/current/reopen`, {}, options)).data,
   currentSnapshot: async (projectId, options) => (await client.get(`${finance(projectId)}/input-snapshots/current`, options)).data,
   analyze: async (projectId, options) => (await client.post(`${finance(projectId)}/analysis`, {}, options)).data,
+  currentAnalysis: async (projectId, options) => (await client.get(`${finance(projectId)}/analysis/current`, options)).data,
   demo: async (projectId, options) => (await client.post(`${finance(projectId)}/demo`, {}, options)).data,
   handoff: async (projectId, snapshotId, options) => (await client.post(`${root(projectId)}/module-handoffs`,
     { module: 'FINANCIAL_ANALYSIS', inputSnapshotId: snapshotId, requestedOperation: 'START_FINANCIAL_ANALYSIS' }, options)).data,

@@ -13,6 +13,7 @@ import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
+import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.entity.Project;
@@ -22,6 +23,7 @@ import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
+import com.aivle.backend.journey.MarketResearchVersionRepository;
 import com.aivle.backend.user.entity.User;
 import java.time.Instant;
 import java.util.List;
@@ -91,6 +93,8 @@ class FinancialServiceAsyncTests {
         final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
         final MarketAnalysisSeedSnapshotRepository marketSeeds = mock(MarketAnalysisSeedSnapshotRepository.class);
         final TechOpsInputSnapshotRepository techOpsSnapshots = mock(TechOpsInputSnapshotRepository.class);
+        final MarketResearchVersionRepository marketResearchVersions = mock(MarketResearchVersionRepository.class);
+        final SnapshotHasher snapshotHasher = mock(SnapshotHasher.class);
         final FinancialInputPreparationRepository preparations = mock(FinancialInputPreparationRepository.class);
         final FinancialInputSnapshotRepository snapshots = mock(FinancialInputSnapshotRepository.class);
         final FinancialPreparationFactory factory = new FinancialPreparationFactory(mapper);
@@ -101,7 +105,8 @@ class FinancialServiceAsyncTests {
         final CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
         final JobEventPublisher events = mock(JobEventPublisher.class);
         final FinancialService service = new FinancialService(projects, selections, marketSeeds, techOpsSnapshots,
-            preparations, snapshots, factory, snapshotFactory, readiness, calculator, mapper, taskRuns, hasher, events);
+            marketResearchVersions, snapshotHasher, preparations, snapshots, factory, snapshotFactory, readiness,
+            calculator, mapper, taskRuns, hasher, events);
         final TechOpsInputSnapshot source;
 
         Harness() {

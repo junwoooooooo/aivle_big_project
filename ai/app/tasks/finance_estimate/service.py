@@ -50,6 +50,17 @@ Price-anchor guardrails:
 - Use Tavily snippets only when they actually support the benchmark. In assumptions state whether the
   basis is market/BM data, a Tavily benchmark, or a conservative assumption; never claim an unverified
   Tavily search result is a market observation.
+- totalMarketingCost and totalSalesCost are annual total KRW budgets, not per-customer or monthly costs.
+  If explanation contains a calculation, proposedValue.amount must exactly equal the final KRW result of
+  that calculation. Never write 2,376,000 KRW in prose while returning 2,376 KRW.
+"""
+
+THREE_YEAR_TARGET_RULES = """
+When fieldKey is threeYearTargets, proposedValue MUST be a Targets object, never Money:
+{"metric":"salesVolume"|"customerCount"|"subscriberCount"|"transactionCount",
+ "unit":"Korean unit", "years":[{"year":1,"value":number},{"year":2,"value":number},{"year":3,"value":number}]}.
+Choose subscriberCount for a subscription BM unless the context clearly supports another metric. All three
+years must be non-negative and the explanation must state that these are planning assumptions, not observations.
 """
 
 async def execute_finance_estimate(task_input:dict)->dict:
@@ -59,8 +70,16 @@ async def execute_finance_estimate(task_input:dict)->dict:
     tavily_evidence = await search_finance_benchmarks(value.fieldKey)
     prompt_input = value.model_dump(mode="json")
     prompt_input["tavilyEvidence"] = tavily_evidence
-    raw=await execute_structured_prompt(MARKET_BM_FINANCE_PROMPT + ECONOMIC_SANITY_RULES,json.dumps(prompt_input,ensure_ascii=False,sort_keys=True),
+    raw=await execute_structured_prompt(MARKET_BM_FINANCE_PROMPT + ECONOMIC_SANITY_RULES + THREE_YEAR_TARGET_RULES,json.dumps(prompt_input,ensure_ascii=False,sort_keys=True),
         response_schema=FinanceEstimateResult.model_json_schema(),schema_name="finance_estimate_v1",task_type="FINANCE_ESTIMATE")
     try: return FinanceEstimateResult.model_validate(raw).model_dump(mode="json")
     except ValidationError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",502,False) from failure
+        if value.fieldKey != "threeYearTargets":
+            raise ProviderFailure("RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",502,False) from failure
+        repair = await execute_structured_prompt(
+            "Return only a valid finance_estimate_v1 result for fieldKey threeYearTargets. proposedValue must contain metric, unit, and exactly years 1, 2, 3; never return Money.",
+            json.dumps(prompt_input, ensure_ascii=False, sort_keys=True),
+            response_schema=FinanceEstimateResult.model_json_schema(), schema_name="finance_estimate_v1_repair", task_type="FINANCE_ESTIMATE")
+        try: return FinanceEstimateResult.model_validate(repair).model_dump(mode="json")
+        except ValidationError as repair_failure:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",502,False) from repair_failure

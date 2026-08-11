@@ -2,6 +2,7 @@ package com.aivle.backend.pipeline.module;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.finance.repository.FinancialAnalysisReportRepository;
 import com.aivle.backend.journey.MarketResearchRun;
 import com.aivle.backend.journey.MarketResearchRunRepository;
 import com.aivle.backend.journey.TwinSurveyRun;
@@ -52,6 +53,7 @@ public class ProjectModuleStatusService {
     private final TechOpsInputSnapshotRepository techOpsSnapshotRepository;
     private final FinancialInputPreparationRepository financialPreparationRepository;
     private final FinancialInputSnapshotRepository financialSnapshotRepository;
+    private final FinancialAnalysisReportRepository financialAnalysisReportRepository;
     private final MarketResearchRunRepository marketResearchRunRepository;
     private final TwinSurveyRunRepository twinSurveyRunRepository;
 
@@ -101,10 +103,12 @@ public class ProjectModuleStatusService {
             : techOpsPreparation == null ? PipelineModuleStatus.READY
             : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : externalStatus(techOpsRun, techOpsSnapshot.getId());
+        boolean financialReportCompleted = financialSnapshot != null && financialAnalysisReportRepository
+            .findFirstByProjectIdAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, financialSnapshot.getId()).isPresent();
         PipelineModuleStatus financialStatus = businessRun == null || businessRun.getState() != MarketResearchRun.State.SUCCEEDED ? PipelineModuleStatus.NOT_READY
             : financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : externalStatus(financialRun, financialSnapshot.getId());
+            : financialReportCompleted ? PipelineModuleStatus.COMPLETED : externalStatus(financialRun, financialSnapshot.getId());
 
         return List.of(
             response(projectId, PipelineModuleType.IDEA, ideaStatus(brief),
