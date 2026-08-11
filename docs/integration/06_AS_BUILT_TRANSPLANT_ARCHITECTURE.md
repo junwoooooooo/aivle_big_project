@@ -88,4 +88,10 @@ CPV2 Core, Market/BM/Twin 알고리즘, Finance 계산식 및 Target TechOps는 
 - Finance demo/sandbox API와 UI: DEV_ONLY/NOT_OFFICIAL.
 - Market fixture/local research tools: test/dev 전용; FULL Product 실행의 current authority가 아님.
 - donor FastAPI banner public endpoint: 공식 Product 경로가 아니며 Browser에 노출하지 않음.
-- `ai/app/twin/bank/**`: Git/Docker image 제외, host read-only mount만 허용.
+- Twin Bank 두 파일은 저장소 밖 `TWIN_BANK_HOST_DIR`에서 `/app/app/twin/bank`로 read-only mount하며 Git/Docker image에서 제외한다. 세부 계약은 `10_TWIN_BANK_ASSET_CONTRACT.md`를 따른다.
+
+## 7. CUTOVER-R1 관측 경계
+
+Market FULL과 Twin Survey는 AI 내부 실제 단계에서 안전 progress event를 bounded queue로 Backend `/internal/v1/ai/task-progress`에 보낸다. 이 경계는 결과 정본이 아니며 callback timeout·거부·queue 포화가 분석 결과를 실패시키지 않는다. Backend allowlist는 `CONCEPT_PORTFOLIO_V2_RUN`, `MARKET_RESEARCH`, `TWIN_SURVEY`뿐이다.
+
+Market은 별도 JSONL side-channel로 A1~A4와 B/C 및 직렬화 경계를 관측하고, Twin은 gate·bank·sampling·wave·aggregate 경계를 관측한다. query, URL, evidence 본문, Twin card, `pid_hash`, prompt/provider body는 progress payload에 넣지 않는다. canonical 결과 authority는 기존 materialization과 REST 조회다.

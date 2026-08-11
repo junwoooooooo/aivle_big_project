@@ -251,11 +251,7 @@ class MarketingVisualRuntimeTests {
         verify(completion).fail(claim, "EXECUTION_FAILED", "IMAGE_GENERATION_FAILED", true);
         verify(visuals).publish(41L, "task-1", "INPUT_VALIDATING", "job.marketing.visual.input_validating",
             com.aivle.backend.jobevent.JobEvent.Status.RUNNING, null);
-        verify(visuals).publish(41L, "task-1", "COPY_PREPARING", "job.marketing.visual.copy_preparing",
-            com.aivle.backend.jobevent.JobEvent.Status.RUNNING, null);
-        verify(visuals).publish(41L, "task-1", "IMAGE_GENERATING", "job.marketing.visual.image_generating",
-            com.aivle.backend.jobevent.JobEvent.Status.RUNNING, null);
-        verify(visuals).publish(41L, "task-1", "TEXT_COMPOSING", "job.marketing.visual.text_composing",
+        verify(visuals).publish(41L, "task-1", "VISUAL_GENERATING", "job.marketing.visual.generating",
             com.aivle.backend.jobevent.JobEvent.Status.RUNNING, null);
         verify(visuals).publish(41L, "task-1", "FAILED", "job.marketing.visual.failed",
             com.aivle.backend.jobevent.JobEvent.Status.FAILED, "IMAGE_GENERATION_FAILED");

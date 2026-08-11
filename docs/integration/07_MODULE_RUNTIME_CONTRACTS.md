@@ -57,3 +57,12 @@ Backend→AI는 모두 `/internal/v1/ai/executions`와 `AI_INTERNAL_SERVICE_TOKE
 - Visual 성공은 image bytes 생성만으로 성립하지 않는다. MinIO object와 canonical Artifact metadata가 저장된 뒤 Task가 성공한다.
 - download/open은 Backend ownership 경계를 거치며 MinIO internal URL을 직접 노출하지 않는다.
 - AI local file은 temporary일 뿐 current authority가 아니다.
+
+## 5. CUTOVER-R1 subordinate task overlay
+
+- Twin의 기본 authority는 current seed와 canonical survey run이다. 활성 `TWIN_SURVEY`가 최우선이고, survey가 활성 상태가 아닐 때만 `TWIN_STIMULUS_DRAFT`의 QUEUED/RUNNING을 Journey에 overlay한다. Draft 실패·취소·timeout은 기존 READY/상태를 FAILED로 덮지 않는다.
+- Finance의 Preparation/Snapshot/Analysis authority는 그대로 유지한다. 활성 `FINANCE_ANALYSIS_REPORT`가 최우선이며, 없을 때 current preparation의 활성 `FINANCE_ESTIMATE`만 QUEUED/RUNNING으로 overlay한다. Estimate 실패는 기존 READY/NEEDS_INPUT을 유지한다.
+- Marketing Visual 실패가 완료된 Marketing Content를 FAILED로 덮지 않는 기존 규칙을 유지한다.
+- `activeTaskRunId`는 실제 우선순위에 따라 선택된 활성 subordinate task만 가리킨다.
+
+Marketing Visual worker progress는 `INPUT_VALIDATING → VISUAL_GENERATING → RESULT_STORING → COMPLETED`의 coarse truthful 경계다. copy/image/composition 세부 callback은 Visual 구현 안정화 뒤 generic safe progress에 연결하는 후속 seam으로 남긴다.

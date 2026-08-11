@@ -96,21 +96,24 @@ public class InternalAiExecutionClient {
 
     private final RestClient client;
     private final RestClient conceptPortfolioClient;
+    private final RestClient twinSurveyClient;
     private final AiServerProperties properties;
     private final ObjectMapper mapper;
 
     @Autowired
     public InternalAiExecutionClient(@Qualifier("aiServerRestClient") RestClient client,
             @Qualifier("conceptPortfolioAiServerRestClient") RestClient conceptPortfolioClient,
+            @Qualifier("twinSurveyAiServerRestClient") RestClient twinSurveyClient,
             AiServerProperties properties, ObjectMapper mapper) {
         this.client = client;
         this.conceptPortfolioClient = conceptPortfolioClient;
+        this.twinSurveyClient = twinSurveyClient;
         this.properties = properties;
         this.mapper = mapper;
     }
 
     public InternalAiExecutionClient(RestClient client, AiServerProperties properties, ObjectMapper mapper) {
-        this(client, client, properties, mapper);
+        this(client, client, client, properties, mapper);
     }
 
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
@@ -159,6 +162,9 @@ public class InternalAiExecutionClient {
     }
 
     RestClient clientFor(TaskType taskType) {
+        if (taskType == TaskType.TWIN_SURVEY) {
+            return twinSurveyClient;
+        }
         return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN
             || taskType == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE
             || taskType == TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION

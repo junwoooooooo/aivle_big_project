@@ -43,7 +43,9 @@ import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
+import com.aivle.backend.taskrun.domain.TaskType;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -205,6 +207,7 @@ class ProjectModuleStatusServiceTests {
         when(financialPreparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
             41L, "tech-1", 101L, 201L))
             .thenReturn(Optional.of(preparation));
+        when(preparation.getId()).thenReturn("finance-prep-1");
 
         var finance = service.findAll(7L, 41L).stream()
             .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
@@ -212,6 +215,85 @@ class ProjectModuleStatusServiceTests {
         assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
         assertThat(finance.requiredInputs()).containsExactly("financialRequiredInputs");
         assertThat(finance.nextAction().route()).isEqualTo("/finance");
+
+        TaskRun estimate = mock(TaskRun.class);
+        when(estimate.getId()).thenReturn("finance-estimate-task");
+        when(estimate.getSubjectType()).thenReturn("FINANCIAL_PREPARATION");
+        when(estimate.getSubjectId()).thenReturn("finance-prep-1");
+        when(estimate.getState()).thenReturn(TaskRunState.RUNNING);
+        when(taskRuns.findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, List.of(TaskType.FINANCE_ESTIMATE))).thenReturn(Optional.of(estimate));
+        finance = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.RUNNING);
+        assertThat(finance.activeTaskRunId()).isEqualTo("finance-estimate-task");
+
+        when(estimate.getState()).thenReturn(TaskRunState.FAILED);
+        finance = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
+        assertThat(finance.activeTaskRunId()).isNull();
+
+        var financialSnapshot = mock(com.aivle.backend.pipeline.finance.domain.FinancialInputSnapshot.class);
+        when(financialSnapshot.getId()).thenReturn("finance-snapshot-1");
+        when(financialSnapshots.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+            41L, "tech-1", 101L, 201L)).thenReturn(Optional.of(financialSnapshot));
+        TaskRun report = mock(TaskRun.class);
+        when(report.getId()).thenReturn("finance-report-task");
+        when(report.getState()).thenReturn(TaskRunState.RUNNING);
+        when(taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, "FINANCIAL_ANALYSIS_REPORT", "finance-snapshot-1")).thenReturn(Optional.of(report));
+        finance = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.RUNNING);
+        assertThat(finance.activeTaskRunId()).isEqualTo("finance-report-task");
+    }
+
+    @Test
+    void overlaysTwinDraftOnlyWhileActiveAndKeepsUnderlyingReadyOnFailure() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L))
+            .thenReturn(Optional.of(mock(Project.class)));
+        ConceptSelection selection = mock(ConceptSelection.class);
+        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        when(selection.getId()).thenReturn(13L);
+        when(seed.getId()).thenReturn("market-seed-1");
+        when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L))
+            .thenReturn(Optional.of(selection));
+        when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L))
+            .thenReturn(Optional.of(seed));
+        TaskRun draft = mock(TaskRun.class);
+        when(draft.getId()).thenReturn("twin-draft-task");
+        when(draft.getSubjectType()).thenReturn("TWIN_STIMULUS_DRAFT");
+        when(draft.getSubjectId()).thenReturn("41");
+        when(draft.getState()).thenReturn(TaskRunState.RUNNING);
+        when(taskRuns.findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, List.of(TaskType.TWIN_STIMULUS_DRAFT))).thenReturn(Optional.of(draft));
+
+        var twin = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
+        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.RUNNING);
+        assertThat(twin.activeTaskRunId()).isEqualTo("twin-draft-task");
+
+        var surveyRun = mock(com.aivle.backend.pipeline.market.TwinSurveyRun.class);
+        TaskRun surveyTask = mock(TaskRun.class);
+        when(surveyRun.getTaskRun()).thenReturn(surveyTask);
+        when(surveyRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
+        when(surveyTask.getId()).thenReturn("twin-survey-task");
+        when(surveyTask.getState()).thenReturn(TaskRunState.RUNNING);
+        when(twinRuns.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(surveyRun));
+        twin = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
+        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.RUNNING);
+        assertThat(twin.activeTaskRunId()).isEqualTo("twin-survey-task");
+
+        when(twinRuns.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.empty());
+        when(draft.getState()).thenReturn(TaskRunState.FAILED);
+        twin = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
+        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.READY);
+        assertThat(twin.activeTaskRunId()).isNull();
     }
 
     @Test

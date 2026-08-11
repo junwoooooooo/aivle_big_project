@@ -317,15 +317,30 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             result = await execute_marketing_visual(body.input)
         elif body.taskType == "MARKET_RESEARCH":
             from app.research.pipeline import run_market_research
+            from app.progress.safe_task_progress import progress_sender_from_environment
             remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
-            result = await run_market_research(body.input, body.taskAttemptId, remaining)
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await run_market_research(
+                    body.input, body.taskAttemptId, remaining,
+                    event_sink=progress.emit if progress.enabled else None,
+                )
         elif body.taskType == "TWIN_STIMULUS_DRAFT":
             from app.twin.stimulus_draft import execute_twin_stimulus_draft
             result = await execute_twin_stimulus_draft(body.input)
         elif body.taskType == "TWIN_SURVEY":
             from app.twin import execute_twin_survey
+            from app.progress.safe_task_progress import progress_sender_from_environment
             remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
-            result = await execute_twin_survey(body.input, remaining)
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await execute_twin_survey(
+                    body.input, remaining, event_sink=progress.emit if progress.enabled else None,
+                )
         elif body.taskType == "IDEA_BRIEF_DERIVATION":
             from app.tasks.idea_brief import execute_idea_brief_derivation
             result = await execute_idea_brief_derivation(body.input)

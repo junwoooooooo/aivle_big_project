@@ -39,6 +39,8 @@ public interface TaskRunRepository extends JpaRepository<TaskRun, String> {
         Long projectId, com.aivle.backend.taskrun.domain.TaskType taskType, String subjectType, String subjectId);
     List<TaskRun> findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
         Long projectId, List<TaskRunState> states, Pageable pageable);
+    Optional<TaskRun> findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, List<com.aivle.backend.taskrun.domain.TaskType> taskTypes);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from TaskRun r join fetch r.project where r.id=:id")

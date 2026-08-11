@@ -35,6 +35,15 @@ describe('V2 job event message registry', () => {
     expect(traceDetailForDisplay({ messageParams: { traceDetail: 'Candidate lineage hash checked' } }))
       .toBe('');
   });
+  it('presents generic Market, BM and Twin trace summaries in user language', () => {
+    for (const key of ['job.market.trace', 'job.business-model.trace', 'job.twin.trace']) {
+      expect(ACTIVE_JOB_EVENT_KEYS).toContain(key);
+      expect(jobEventMessage({ messageKey: key, messageParams: { traceDetail: '실제 단계 완료' } }))
+        .toBe('실제 단계 완료');
+    }
+    expect(jobEventMessage({ messageKey: 'job.marketing.visual.generating' }))
+      .toBe('광고 문구와 이미지를 생성하고 있습니다.');
+  });
   it('groups only consecutive generic duplicates and preserves significant events', () => {
     const generic = (id) => ({ eventId: String(id), occurredAt: `2026-08-11T00:00:0${id}Z`,
       status: 'RUNNING', messageKey: 'job.concept-portfolio.trace.proposals',

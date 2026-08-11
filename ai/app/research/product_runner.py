@@ -14,6 +14,8 @@ import os
 import subprocess
 import sys
 
+from app.research.progress_jsonl import SafeProgressJsonl
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -24,7 +26,10 @@ def main() -> None:
     parser.add_argument("--concept-id", required=True)
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--llm-budget", type=int, default=3)
+    parser.add_argument("--progress-jsonl", default="")
     args = parser.parse_args()
+
+    progress = SafeProgressJsonl(args.progress_jsonl, truncate=True)
 
     os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
     with io.open(args.input, encoding="utf-8") as handle:
@@ -34,9 +39,12 @@ def main() -> None:
         json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
 
     from app.research.runner import RESEARCH_HOME
+    command = [sys.executable, "-u", "run.py", "--id", args.run_id,
+               "--concept", concept_path, "--as-of", args.as_of]
+    if args.progress_jsonl:
+        command.extend(["--progress-jsonl", args.progress_jsonl])
     process = subprocess.run(
-        [sys.executable, "-u", "run.py", "--id", args.run_id,
-         "--concept", concept_path, "--as-of", args.as_of],
+        command,
         cwd=RESEARCH_HOME, check=False, capture_output=True, text=True,
     )
     if process.returncode:
@@ -45,7 +53,9 @@ def main() -> None:
 
     from app.research.pipeline import Budget, _full
     result = _full(args.run_id, concept_path, args.concept_id, args.run_id,
-                   Budget(total=args.llm_budget), False, collection_wired=True)
+                   Budget(total=args.llm_budget), False, collection_wired=True,
+                   event_sink=progress.emit)
+    progress.close()
     with io.open(args.output, "w", encoding="utf-8") as handle:
         json.dump(result, handle, ensure_ascii=False, sort_keys=True)
 

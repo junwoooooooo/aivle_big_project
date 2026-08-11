@@ -52,12 +52,8 @@ public class MarketingVisualWorker {
             visuals.publish(context.projectId(), context.taskRunId(), "INPUT_VALIDATING",
                 "job.marketing.visual.input_validating", JobEvent.Status.RUNNING, null);
             var resolved = visuals.resolveExecutionInput(context);
-            visuals.publish(context.projectId(), context.taskRunId(), "COPY_PREPARING",
-                "job.marketing.visual.copy_preparing", JobEvent.Status.RUNNING, null);
-            visuals.publish(context.projectId(), context.taskRunId(), "IMAGE_GENERATING",
-                "job.marketing.visual.image_generating", JobEvent.Status.RUNNING, null);
-            visuals.publish(context.projectId(), context.taskRunId(), "TEXT_COMPOSING",
-                "job.marketing.visual.text_composing", JobEvent.Status.RUNNING, null);
+            visuals.publish(context.projectId(), context.taskRunId(), "VISUAL_GENERATING",
+                "job.marketing.visual.generating", JobEvent.Status.RUNNING, null);
             var response = ai.executeWorkerResolved(context, claim.taskAttemptId(),
                 LocalDateTime.now().plusMinutes(5), resolved);
             visuals.publish(context.projectId(), context.taskRunId(), "RESULT_STORING",

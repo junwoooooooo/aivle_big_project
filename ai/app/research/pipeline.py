@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-"""시장조사·BM 오케스트레이터 — 8단계를 **선언 목록**으로 돌린다.
+"""시장조사·BM 오케스트레이터.
 
-    FULL     1단계. 저장된 수집을 재채점 → 7과목 성적표 + 근거 원장 (+ 요약)
-    BM       2단계. 같은 원장 위에서 BM 분석 1회 → 캔버스 9칸 + 판정
-    RESCORE  FULL 과 같되 요약을 건너뛴다 (LLM 0회 · 무료 재채점)
+공식 Product FULL은 선택한 임의 CPV2 concept snapshot을 Task 임시 workspace에
+materialize하고 research2의 A1~A4 수집·검증과 B/C 결과 구성을 모두 실행한다.
+저장된 run을 읽는 RESCORE/fixture 경로는 별도 회귀·진단 경로이며, 그 경로에서 실제로
+실행하지 않은 단계만 SKIPPED/degradation으로 기록한다.
 
-⚠ **`collect`(A1~A3 수집)는 아직 이 오케스트레이터가 돌리지 않는다.** 전 구간은 LLM 80회·
-   3.5분이고, 지금 배선은 `--from a4`(저장된 수집 재채점) 위에 서 있다. 단계 목록에는
-   자리를 두되 상태를 `SKIPPED` + `degradation` 으로 **값으로 남긴다** — 안 돈 것을
-   안 돌았다고 적는 것이 「조용한 실패」를 막는 유일한 방법이다.
-
-**층 경계** — 여기는 «나르기»만 한다. 값을 만들지 않고, 판정하지 않고, 등급을 매기지 않는다.
-번역(한글 키 → camelCase)과 allowlist 는 전부 `serialize.py` **한 곳**에 있다.
+이 층은 donor 계산·판정 값을 바꾸지 않고 결과를 계약 형태로 운반한다. 한글 키에서
+camelCase로의 변환과 allowlist는 `serialize.py`가 담당한다.
 """
 from __future__ import annotations
 
@@ -22,11 +18,25 @@ import os
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from . import serialize
 from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail
+
+EventSink = Callable[[dict], None]
+
+
+def _observe(event_sink: EventSink | None, stage: str, action: str, summary: str,
+             status: str = "RUNNING", **optional) -> None:
+    if event_sink is None:
+        return
+    try:
+        event_sink({"stage": stage, "action": action, "status": status,
+                    "safeSummary": summary, **optional})
+    except Exception:
+        pass
 
 #: research2 는 **평평한 import** 로 서로를 부른다(`import fillaxis`·`import cards`).
 #: 패키지가 아니므로(`__init__.py` 0개) `from service import …` 로 부르면 같은 모듈이
@@ -209,7 +219,8 @@ def _user_planned_cells(plan_material: dict, plan_constraints: dict) -> dict:
 # 진입점
 # ══════════════════════════════════════════════════════════════
 async def run_market_research(task_input: dict, run_id: str,
-                              timeout_seconds: float) -> dict:
+                              timeout_seconds: float,
+                              event_sink: EventSink | None = None) -> dict:
     """`mode` 로 갈린다. 어느 갈래든 **봉투는 같고** 해당 없는 칸은 `null` 이다."""
     mode = (task_input.get("mode") or "FULL").strip().upper()
     if mode not in ("FULL", "BM", "RESCORE"):
@@ -231,7 +242,7 @@ async def run_market_research(task_input: dict, run_id: str,
             raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "컨셉 스냅샷 없음")
         return await _product_full(
             concept, concept_id.strip(), run_id, str(task_input.get("asOf") or _now()[:10]),
-            int(task_input.get("llmBudget") or 3), timeout_seconds)
+            int(task_input.get("llmBudget") or 3), timeout_seconds, event_sink)
 
     if mode == "BM" and isinstance(task_input.get("marketResultJson"), str):
         try:
@@ -248,7 +259,7 @@ async def run_market_research(task_input: dict, run_id: str,
             Budget(total=int(task_input.get("llmBudget") or 1)),
             _plan_material(task_input.get("planMaterial")),
             _plan_constraints(task_input.get("executionConstraints")),
-            legal if isinstance(legal, dict) else None)
+            legal if isinstance(legal, dict) else None, event_sink)
 
     # ── fixture/RESCORE 이름표 해석. **공식 Product 경로가 아니다** ───────────
     if mode == "FULL" and not bool(task_input.get("fixtureMode")):
@@ -297,7 +308,8 @@ async def run_market_research(task_input: dict, run_id: str,
 
 
 async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
-                        llm_budget: int, timeout_seconds: float) -> dict:
+                        llm_budget: int, timeout_seconds: float,
+                        event_sink: EventSink | None = None) -> dict:
     """Task 임시 workspace에서 donor 수집 전 구간을 실행하고 봉투만 회수한다."""
     if not _SAFE_RUN_ID.fullmatch(run_id):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "runId 형식 불량")
@@ -305,22 +317,49 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
     with tempfile.TemporaryDirectory(prefix="market-product-") as workspace:
         input_path = os.path.join(workspace, "input.json")
         output_path = os.path.join(workspace, "output.json")
+        progress_path = os.path.join(workspace, "progress.jsonl")
         with io.open(input_path, "w", encoding="utf-8") as handle:
             json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
         env = dict(os.environ)
         env["RESEARCH2_RUNS_DIR"] = os.path.join(workspace, "runs")
+        command = [
+            sys.executable, "-u", "-m", "app.research.product_runner",
+            "--input", input_path, "--output", output_path,
+            "--workspace", workspace, "--run-id", run_id,
+            "--concept-id", concept_id, "--as-of", as_of,
+            "--llm-budget", str(max(0, llm_budget)),
+        ]
+        if event_sink is not None:
+            command.extend(["--progress-jsonl", progress_path])
         try:
             process = await asyncio.create_subprocess_exec(
-                sys.executable, "-u", "-m", "app.research.product_runner",
-                "--input", input_path, "--output", output_path,
-                "--workspace", workspace, "--run-id", run_id,
-                "--concept-id", concept_id, "--as-of", as_of,
-                "--llm-budget", str(max(0, llm_budget)),
+                *command,
                 cwd=ai_root, env=env,
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         except OSError as failure:
             raise _fail("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE",
                         "시장조사 엔진을 시작할 수 없다") from failure
+        async def forward_progress() -> None:
+            offset = 0
+            while True:
+                try:
+                    with io.open(progress_path, encoding="utf-8") as handle:
+                        handle.seek(offset)
+                        for line in handle:
+                            try:
+                                event = json.loads(line)
+                                _observe(event_sink, event.pop("stage"), event.pop("action"),
+                                         event.pop("safeSummary"), **event)
+                            except (TypeError, ValueError):
+                                continue
+                        offset = handle.tell()
+                except OSError:
+                    pass
+                if process.returncode is not None:
+                    return
+                await asyncio.sleep(0.1)
+
+        progress_task = asyncio.create_task(forward_progress()) if event_sink is not None else None
         try:
             _stdout, stderr = await asyncio.wait_for(
                 process.communicate(), timeout=max(1.0, timeout_seconds))
@@ -329,6 +368,9 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             await process.wait()
             raise _fail("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED",
                         "시장조사 실행이 기한을 넘겼다") from failure
+        finally:
+            if progress_task is not None:
+                await progress_task
         if process.returncode != 0:
             detail = stderr.decode("utf-8", "replace").strip().splitlines()
             raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
@@ -377,7 +419,8 @@ def _concept_path_of(source_run: str) -> str | None:
 # ══════════════════════════════════════════════════════════════
 def _full(source_run: str, concept_path: str, concept_id: str,
           run_id: str, budget: Budget, rescore: bool,
-          collection_wired: bool = False) -> dict:
+          collection_wired: bool = False,
+          event_sink: EventSink | None = None) -> dict:
     import cards as CARDS                                          # noqa: PLC0415
     import scorecard as SCORECARD                                  # noqa: PLC0415
     import verdict as VERDICT                                      # noqa: PLC0415
@@ -395,9 +438,12 @@ def _full(source_run: str, concept_path: str, concept_id: str,
                            "저장된 수집(--from a4) 위에서 돈다 — 이 단계는 이번 실행에서 돌지 않았다")
 
     verdict = _timed(ledger, "verdict", lambda: VERDICT.build(source_run, concept_path))
+    _observe(event_sink, "MARKET_VERDICT", "COMPLETED", "시장 판정 계산 완료")
     cards_doc = _timed(ledger, "cards", lambda: CARDS.build(source_run, concept_path))
+    _observe(event_sink, "MARKET_CARDS", "COMPLETED", "시장 결과 카드 구성 완료")
     score = _timed(ledger, "scorecard",
                    lambda: SCORECARD.build(source_run, concept_path, verdict=verdict))
+    _observe(event_sink, "MARKET_SCORECARD", "COMPLETED", "시장 점수표 계산 완료")
 
     cards = cards_doc.get("카드") or []
     evidence = serialize.evidence(cards)
@@ -412,8 +458,14 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         slots=((result.get("input") or {}).get("slots") or []))
 
     summary = _summary(ledger, budget, source_run, concept_path, evidence_ids, rescore)
+    if summary is None:
+        reason = ledger.degradations[-1]["code"] if ledger.degradations else "NOT_AVAILABLE"
+        _observe(event_sink, "MARKET_SUMMARY", "SKIPPED", "시장 요약을 생략했습니다.",
+                 status="DEGRADED", reasonCode=reason)
+    else:
+        _observe(event_sink, "MARKET_SUMMARY", "COMPLETED", "시장 요약 생성 완료")
 
-    return serialize.envelope(
+    result = serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(result.get("reference_date") or _now()[:10]),
         generatedAt=_now(), mode="FULL",
@@ -423,6 +475,9 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         market=market, canvas=None, bm=None,
         evidence=evidence, summary=summary,
         notes=list(serialize.NOTES_FULL))
+    _observe(event_sink, "MARKET_SERIALIZATION", "COMPLETED", "시장조사 결과 정리 완료",
+             status="COMPLETED")
+    return result
 
 
 def _summary(ledger: Run, budget: Budget, source_run: str, concept_path: str,
@@ -529,13 +584,15 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
 
 async def _bm_product(market_result: dict, concept: dict, concept_id: str,
                       run_id: str, budget: Budget, plan_material: dict,
-                      plan_constraints: dict, legal_context: dict | None) -> dict:
+                      plan_constraints: dict, legal_context: dict | None,
+                      event_sink: EventSink | None = None) -> dict:
     from .bm.flow import run_bm_pipeline_flow
     from .bm.normalize import create_bm_analysis_input
     from .product_market_join import build as build_market_join
 
     ledger = Run()
     ledger.stage("restore").status = "OK"
+    _observe(event_sink, "BM_RESTORE", "COMPLETED", "시장조사 결과 복원 완료")
     if plan_material:
         concept = {**concept, "_user_bm_plan": dict(plan_material)}
     if plan_constraints:
@@ -544,6 +601,7 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     market_join = _timed(
         ledger, "bm_adapter",
         lambda: build_market_join(market_result, concept, concept_id))
+    _observe(event_sink, "BM_ADAPTER", "COMPLETED", "Market-BM 연결 자료 준비 완료")
     evidence = list(market_result.get("evidence") or [])
     stage = ledger.stage("bm_model")
     if not budget.can_afford(1):
@@ -562,7 +620,8 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     stage.status = "OK"
     stage.seconds = int(time.monotonic() - began)
     stage.llm_calls = 1
-    return serialize.envelope(
+    _observe(event_sink, "BM_MODEL", "COMPLETED", "Business Model 분석 완료")
+    result = serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(market_result.get("asOf") or _now()[:10]), generatedAt=_now(), mode="BM",
         stages=[s.as_contract() for s in ledger.stages],
@@ -572,6 +631,9 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
             _user_planned_cells(plan_material, plan_constraints))},
         bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff")),
         evidence=evidence, summary=None, notes=list(serialize.NOTES_BM))
+    _observe(event_sink, "BM_SERIALIZATION", "COMPLETED", "Business Model 결과 정리 완료",
+             status="COMPLETED")
+    return result
 
 
 def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: str,

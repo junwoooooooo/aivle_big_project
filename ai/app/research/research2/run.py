@@ -11,12 +11,13 @@
 """
 from __future__ import annotations
 
-import argparse, dataclasses, io, json, os, sys
+import argparse, atexit, dataclasses, io, json, os, sys, threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-for p in (HERE, os.path.join(HERE, "blocks"), os.path.join(HERE, "adapters")):
+AI_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+for p in (AI_ROOT, HERE, os.path.join(HERE, "blocks"), os.path.join(HERE, "adapters")):
     sys.path.insert(0, p)
 
 import a_desk as A4
@@ -24,12 +25,28 @@ import a_design as A1
 import b_estimate as B
 import c_chain as C
 import dart, kosis, web
+from app.research.progress_jsonl import SafeProgressJsonl
 from base import load_env_key
 from runlog import RUNS_DIR, Meter, Run, load_rules
 from schema import (Candidate, Concept, Document, Finding, FindingItem, Formula, FormulaVar,
                     Slot, to_dict, 경계_승격)
 
 MAX_WORKERS = 5
+_PROGRESS_WRITERS: dict[str, SafeProgressJsonl] = {}
+
+
+def _progress(path: str, stage: str, action: str, summary: str,
+              status: str = "RUNNING", **optional) -> None:
+    if not path:
+        return
+    event = {"stage": stage, "action": action, "safeSummary": summary,
+             "status": status, **optional}
+    writer = _PROGRESS_WRITERS.get(path)
+    if writer is None:
+        writer = SafeProgressJsonl(path)
+        _PROGRESS_WRITERS[path] = writer
+        atexit.register(writer.close)
+    writer.emit(event)
 
 def mk_slot(x: dict) -> Slot:
     """슬롯 dict → `Slot`. **경계급 키는 승격 필드로 실어 나른다.**
@@ -188,6 +205,8 @@ def main():
     ap.add_argument("--search-prompt", dest="search_prompt", default="",
                     help="A3 SEARCH 문안. 기본은 rules.adapters.web.search_prompt(=v1). "
                          "v12-2 는 **미채택** 문안이라 명시적으로 골라야 쓰인다")
+    ap.add_argument("--progress-jsonl", default="",
+                    help="analysis-independent safe progress JSONL")
     a = ap.parse_args()
 
         # **엔진과 하네스는 같은 키를 쓴다** (판 ⑫ ⑴, 2026-08-09 사용자 결정).
@@ -373,6 +392,8 @@ def main():
         run.log_many("a1_formula", formulas)
     run.log_many("a1_slot", slots)
     run.log("a1_audit", audit)
+    _progress(a.progress_jsonl, "MARKET_A1", "COMPLETED",
+              f"공식 {len(formulas)}개, 슬롯 {len(slots)}개")
     print(f"A1  식 {len(formulas)}개 (버림 {len(rejected)}) → 슬롯 {len(slots)}개 "
           f"· 가드 없는 슬롯 {len(unguarded)}개")
     if audit.get("stat_code_missing_ratio") is not None:
@@ -386,6 +407,9 @@ def main():
     for r in routes.values():
         by_adapter[r.adapter] = by_adapter.get(r.adapter, 0) + 1
     n_fb = sum(1 for r in routes.values() if r.fallback_to)
+    route_summary = ", ".join(f"{name} {count}개" for name, count in sorted(by_adapter.items()))
+    _progress(a.progress_jsonl, "MARKET_A2", "COMPLETED",
+              f"라우팅 {len(routes)}개 ({route_summary}), 폴백 후보 {n_fb}개")
     print(f"A2  라우팅 {by_adapter}" + (f" · 폴백 대기 {n_fb}개" if n_fb else ""))
 
     # ── A3' — 직접 URL 주입 **단독** 모드 (검색·fetch 0회) ─────
@@ -414,9 +438,27 @@ def main():
     smap = {s.slot_id: s for s in slots}
     adapter_states, unknown_codes = {}, []
 
+    _progress(a.progress_jsonl, "MARKET_A3", "STARTED", f"수집 슬롯 {len(slots)}개")
+    completed_slots = 0
+    completed_boundary = -1
+    completed_lock = threading.Lock()
+
+    def collect_observed(slot):
+        nonlocal completed_slots, completed_boundary
+        result = collect_slot(slot, routes[slot.slot_id], rules, meter)
+        with completed_lock:
+            completed_slots += 1
+            boundary = min(10, completed_slots * 10 // max(1, len(slots)))
+            if boundary > completed_boundary or completed_slots == len(slots):
+                completed_boundary = boundary
+                _progress(a.progress_jsonl, "MARKET_A3", "PROGRESS",
+                          f"완료 슬롯 {completed_slots}/{len(slots)}")
+        return result
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        results = list(ex.map(lambda s: collect_slot(s, routes[s.slot_id], rules, meter),
-                              slots))
+        results = list(ex.map(collect_observed, slots))
+    _progress(a.progress_jsonl, "MARKET_A3", "COMPLETED",
+              f"수집 완료 슬롯 {completed_slots}/{len(slots)}")
 
     def _set_state(adapter: str, state: str):
         prev = adapter_states.get(adapter)
@@ -479,7 +521,13 @@ def main():
               " · ".join(f"{e['slot_id']}({e['web_status']})" for e in fallbacks))
 
     # ── A4 ────────────────────────────────────────────────────
+    _progress(a.progress_jsonl, "MARKET_A4", "STARTED", "정규화와 근거 검증을 시작합니다.")
     ledger, coverage = A4.normalize_and_grade(findings, docs, slots, rules, as_of_year, run)
+    verified = sum(1 for row in ledger.rows if row.label == "확인됨")
+    unresolved = sum(1 for row in ledger.rows if row.label == "미검증")
+    quarantined = sum(1 for row in ledger.rows if row.label == "off_slot")
+    _progress(a.progress_jsonl, "MARKET_A4", "COMPLETED",
+              f"사실 {len(ledger.facts)}개, 확인 {verified}개, 미해결 {unresolved}개, 격리 {quarantined}개")
     print(f"A4  사실 {len(ledger.facts)}개 · 확인됨 "
           f"{sum(1 for r in ledger.rows if r.label == '확인됨')} · "
           f"격리 {sum(1 for r in ledger.rows if r.label in ('off_slot', '미검증'))} · "
@@ -653,6 +701,8 @@ def _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
     # ── B ─────────────────────────────────────────────────────
     estimates, recs = B.run_block_b(formulas, ledger, coverage, slots,
                                     rules["assumptions"]["by_role"], rules, as_of_year, run)
+    _progress(a.progress_jsonl, "MARKET_ESTIMATION", "COMPLETED",
+              f"추정 {len(estimates)}개, 권고 {len(recs)}개")
     print(f"B   추정 {len(estimates)}개 · 대조 {len(recs)}개 "
           f"({', '.join(f'{r.target}:{r.status}' for r in recs)})")
 
@@ -664,6 +714,8 @@ def _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
         {k: v for k, v in user_input.items() if v is not None},
         rules, adapters=run.adapters, coverage_caveat=run.coverage_caveat(),
         run=run, unknown_codes=unknown_codes, url_filtered=url_filtered)
+    _progress(a.progress_jsonl, "MARKET_REPORT", "COMPLETED",
+              f"결과 셀 {len(cells)}개, 판정 {len(violations)}개")
     # 백로그 25 — 주입분 발췌 진단. **§7 이 아니다.** §7 은 "못 찾은 것"이고 이건
     # "주입한 문서가 발췌를 통과했는가"라 성격이 다르다. 섞으면 §7 이 오염된다.
     report.injected_extract = injected_diag or []

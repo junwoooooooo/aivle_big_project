@@ -135,3 +135,12 @@ Session 1은 문서만 변경하므로 provider 호출, Docker 전체 구동, �
 - Twin Bank를 Git, Docker image, migration seed에 포함하지 않는다.
 - Market/BM/Twin/Finance 계산·gate·formula를 integration 편의로 수정하지 않는다.
 - Persona code, API, migration, asset, prompt를 검색·복원 범위에 넣지 않는다.
+
+## 9. CUTOVER-R1 환경 보정
+
+- `AI_SERVER_TWIN_SURVEY_READ_TIMEOUT`: Backend Twin 전용 AI HTTP read timeout. 기본 `14m`이며 general `AI_SERVER_READ_TIMEOUT`과 CPV2 전용 timeout을 변경하지 않는다.
+- `TWIN_BANK_HOST_DIR`: 저장소 밖 Twin Bank host 디렉터리. 기본 예시는 `../aivle_private_assets/twin-bank`이며 container의 `/app/app/twin/bank`로 read-only mount한다.
+- `TWIN_BANK_DIR`: AI container 내부 경로 `/app/app/twin/bank`를 유지한다.
+- `KOSIS_API_KEY`, `DART_API_KEY`: Market FULL 공식 data adapter key다. 누락 시 해당 evidence channel이 실패하거나 partial result가 될 수 있다.
+- `BM_MODEL`: 비어 있으면 `AI_MODEL`을 사용하며 별도 BM 모델이 필요할 때만 설정한다.
+- `AI_CONCEPT_TEST_FAILURE_INJECTION=false`, `AI_CONCEPT_TEST_FAILURE_PLAN=`: 개발·회귀 fault injection 전용 normal-runtime 값이다.

@@ -17,6 +17,7 @@ import logging
 import os
 import re
 import time
+from collections.abc import Callable
 
 import httpx
 
@@ -24,6 +25,16 @@ from app.providers import ProviderFailure          # ← 유일한 외부 결합
 from app.twin.stimuli import DIRECTIONS, K_WAVE1, SYSTEM, build_prompt, needs_wave2, to_xy
 
 logger = logging.getLogger(__name__)
+EventSink = Callable[[dict], None]
+
+
+def _observe(event_sink: EventSink | None, event: dict) -> None:
+    if event_sink is None:
+        return
+    try:
+        event_sink(event)
+    except Exception as failure:
+        logger.warning("twin progress observer failed exceptionType=%s", failure.__class__.__name__)
 
 CHOICE_RE = re.compile(r"^선택: (A|B|없음)$")
 
@@ -223,7 +234,7 @@ def _new_stats() -> dict:
 
 
 async def run_survey(cards: dict[str, str], pairs: list[dict], situation: str,
-                     budget_seconds: float) -> tuple[list[dict], dict]:
+                     budget_seconds: float, event_sink: EventSink | None = None) -> tuple[list[dict], dict]:
     """양방향 전수 × 적응식 k 로 전 셀을 돌리고 원장과 계측을 돌려준다.
 
     1파: 전 셀 rep 1,2 → 2파: rep1 ≠ rep2 인 셀만 rep 3.
@@ -239,11 +250,13 @@ async def run_survey(cards: dict[str, str], pairs: list[dict], situation: str,
     stats["concurrency"] = concurrency
     started = time.time()
     rows: list[dict] = []
+    wave_progress = {"TWIN_WAVE1": 0, "TWIN_WAVE2": 0}
+    wave_boundary = {"TWIN_WAVE1": -1, "TWIN_WAVE2": -1}
 
     def remaining() -> float:
         return budget_seconds - (time.time() - started)
 
-    async def one(client, subject, pair, direction, rep):
+    async def one(client, subject, pair, direction, rep, wave_stage=None, wave_total=0):
         prompt = build_prompt(cards[subject], pair, direction, situation)
         record, attempts = await call_retry(runner, client, prompt, semaphore, stats)
         choice = parse_choice(record.get("raw")) if record.get("ok") else None
@@ -256,6 +269,16 @@ async def run_survey(cards: dict[str, str], pairs: list[dict], situation: str,
         stats["cells"] += 1
         stats["promptTokens"] += usage.get("prompt_tokens") or 0
         stats["completionTokens"] += usage.get("completion_tokens") or 0
+        if wave_stage and wave_total:
+            wave_progress[wave_stage] += 1
+            completed = wave_progress[wave_stage]
+            boundary = min(10, completed * 10 // wave_total)
+            if boundary > wave_boundary[wave_stage] or completed == wave_total:
+                wave_boundary[wave_stage] = boundary
+                _observe(event_sink, {
+                    "stage": wave_stage, "action": "PROGRESS", "status": "RUNNING",
+                    "safeSummary": f"완료 셀 {completed}/{wave_total}",
+                })
         if record.get("ok"):
             if choice is None:
                 stats["formatViolations"] += 1
@@ -273,7 +296,9 @@ async def run_survey(cards: dict[str, str], pairs: list[dict], situation: str,
                  for d in DIRECTIONS for k in range(1, K_WAVE1 + 1)]
         if remaining() <= 0:
             raise ProviderFailure("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", 504, True)
-        await asyncio.gather(*(one(client, *job) for job in wave1))
+        _observe(event_sink, {"stage": "TWIN_WAVE1", "action": "STARTED", "status": "RUNNING",
+                              "safeSummary": f"예정 셀 {len(wave1)}개"})
+        await asyncio.gather(*(one(client, *job, "TWIN_WAVE1", len(wave1)) for job in wave1))
 
         # ── 2파 — 불일치 셀만 ──────────────────────────────────────────
         seen: dict[tuple, dict] = {}
@@ -287,11 +312,20 @@ async def run_survey(cards: dict[str, str], pairs: list[dict], situation: str,
         pair_of = {p["pairId"]: p for p in pairs}
         stats["wave2Cells"] = len(wave2)
         if wave2 and remaining() > 0:
-            await asyncio.gather(*(one(client, s, pair_of[p], d, 3) for s, p, d in wave2))
+            _observe(event_sink, {"stage": "TWIN_WAVE2", "action": "STARTED", "status": "RUNNING",
+                                  "safeSummary": f"예정 셀 {len(wave2)}개"})
+            await asyncio.gather(*(one(client, s, pair_of[p], d, 3,
+                                        "TWIN_WAVE2", len(wave2)) for s, p, d in wave2))
         elif wave2:
             # 예산이 말랐다. 불일치 셀은 미결정으로 남고 분모에서 빠진다 — 조용히 넘기지 않는다.
             stats["wave2Skipped"] = len(wave2)
             logger.warning("twin survey wave2 skipped by budget cells=%d", len(wave2))
+            _observe(event_sink, {"stage": "TWIN_WAVE2", "action": "SKIPPED", "status": "DEGRADED",
+                                  "safeSummary": f"예산으로 생략된 셀 {len(wave2)}개",
+                                  "reasonCode": "BUDGET_EXHAUSTED"})
+        else:
+            _observe(event_sink, {"stage": "TWIN_WAVE2", "action": "COMPLETED", "status": "RUNNING",
+                                  "safeSummary": "추가 측정 셀 0개"})
 
     stats["seconds"] = round(time.time() - started, 1)
     stats["llmCalls"] = stats["cells"]

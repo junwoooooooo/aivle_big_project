@@ -48,3 +48,13 @@
 - `NEEDS_INPUT`이 후속 refresh에서 해결되면 `RESOLVED_INPUT` notice로 교체한다.
 - Visual 실패는 완료된 Content를 지우지 않지만 진행 중 Visual은 Work Center에서 계속 보인다.
 - SSE 단절은 cursor 기반 SSE 재연결로 처리하며 수동 새로고침이나 REST polling을 요구하지 않는다.
+
+## 6. CUTOVER-R1 상태·진행 표시 보정
+
+| 사용자 표시 | canonical source | R1 상태 |
+|---|---|---|
+| Market 실제 조사 단계 | AI safe progress → JobEvent/Work Center | A1/A2/A3/A4/B/C 및 결과 정리 경계를 표시 |
+| Business Model 실제 단계 | AI safe progress → JobEvent/Work Center | restore/adapter/model/serialization 표시 |
+| Twin 실제 조사 단계 | AI safe progress → JobEvent/Work Center | gate/bank/sampling/wave/aggregate 표시, wave는 실제 완료 셀 기준 bounded update |
+| Marketing Visual 생성 중 | Backend worker coarse event | 관측하지 않은 copy/image/composition 개별 완료 표시는 제거 |
+| Twin Draft/Finance Estimate 진행 | Project Module Status overlay | Work Center와 Journey의 active 상태를 일치시킴; 보조 task 실패는 완료 결과를 덮지 않음 |

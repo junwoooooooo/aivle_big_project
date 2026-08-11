@@ -1,5 +1,6 @@
 import json
 import asyncio
+import os
 import subprocess
 import sys
 
@@ -9,7 +10,8 @@ from app.research import pipeline, product_market_join, product_runner
 def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeypatch):
     seen = {}
 
-    async def fake_product_full(concept, concept_id, run_id, as_of, llm_budget, timeout_seconds):
+    async def fake_product_full(concept, concept_id, run_id, as_of, llm_budget, timeout_seconds,
+                                event_sink=None):
         seen.update(
             concept=concept,
             concept_id=concept_id,
@@ -44,15 +46,24 @@ def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeyp
 def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(monkeypatch, tmp_path):
     input_path = tmp_path / "input.json"
     output_path = tmp_path / "output.json"
+    progress_path = tmp_path / "progress.jsonl"
     input_path.write_text(json.dumps({"concept_name": "Any concept"}), encoding="utf-8")
     calls = []
 
     def fake_run(command, **kwargs):
         calls.append((command, kwargs))
+        progress = command[command.index("--progress-jsonl") + 1]
+        with open(progress, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"stage": "MARKET_A1", "action": "COMPLETED",
+                                     "status": "RUNNING", "safeSummary": "공식 3개, 슬롯 9개"}) + "\n")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    monkeypatch.setattr(pipeline, "_full", lambda *args, **kwargs: {"mode": "FULL", "ok": True})
+    def fake_full(*args, **kwargs):
+        kwargs["event_sink"]({"stage": "MARKET_SERIALIZATION", "action": "COMPLETED",
+                              "status": "COMPLETED", "safeSummary": "결과 정리 완료"})
+        return {"mode": "FULL", "ok": True}
+    monkeypatch.setattr(pipeline, "_full", fake_full)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -64,17 +75,30 @@ def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(mon
             "--run-id", "run-1",
             "--concept-id", "concept-1",
             "--as-of", "2026-08-11",
+            "--progress-jsonl", str(progress_path),
         ],
     )
     (tmp_path / "workspace").mkdir()
 
+    previous_runs_dir = os.environ.get("RESEARCH2_RUNS_DIR")
     product_runner.main()
 
     command = calls[0][0]
     assert command[1:3] == ["-u", "run.py"]
     assert "--concept" in command
+    assert command[command.index("--progress-jsonl") + 1] == str(progress_path)
     assert "--from" not in command
     assert json.loads(output_path.read_text(encoding="utf-8"))["ok"] is True
+    events = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()]
+    assert [event["stage"] for event in events] == ["MARKET_A1", "MARKET_SERIALIZATION"]
+    assert all(set(event) <= {"stage", "action", "status", "safeSummary",
+                              "reasonCode", "decision"} for event in events)
+    if previous_runs_dir is None:
+        os.environ.pop("RESEARCH2_RUNS_DIR", None)
+    else:
+        os.environ["RESEARCH2_RUNS_DIR"] = previous_runs_dir
+    import runlog
+    runlog.RUNS_DIR = previous_runs_dir or os.path.join(pipeline.RESEARCH_HOME, "runs")
 
 
 def test_market_join_evidence_preserves_provenance_and_failure_semantics():

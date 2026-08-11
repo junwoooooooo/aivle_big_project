@@ -94,7 +94,10 @@ services:
       TWIN_CONCURRENCY: ${TWIN_CONCURRENCY:-32}
     volumes:
       - ./ai/app/research/research2/runs:/app/app/research/research2/runs:ro
-      - ./ai/app/twin/bank:/app/app/twin/bank:ro
+      - type: bind
+        source: ${TWIN_BANK_HOST_DIR}
+        target: /app/app/twin/bank
+        read_only: true
     depends_on:
       minio:
         condition: service_healthy
@@ -128,6 +131,7 @@ services:
       MARKET_MODULE_INTERNAL_API_KEY: ${MARKET_MODULE_INTERNAL_API_KEY:-}
       AI_SERVER_CONNECT_TIMEOUT: ${AI_SERVER_CONNECT_TIMEOUT:-3s}
       AI_SERVER_READ_TIMEOUT: ${AI_SERVER_READ_TIMEOUT:-300s}
+      AI_SERVER_TWIN_SURVEY_READ_TIMEOUT: ${AI_SERVER_TWIN_SURVEY_READ_TIMEOUT:-14m}
       APP_LEGAL_REGISTRY_VERSION: ${LEGAL_REGISTRY_VERSION:-legal-registry-v1}
       APP_E2E_DEFER_ARTIFACT_WAKE: ${APP_E2E_DEFER_ARTIFACT_WAKE:-false}
       OBJECT_STORAGE_PROVIDER: s3

@@ -23,6 +23,12 @@ public class AiServerClientConfiguration {
         return createRestClient(properties, properties.conceptPortfolioReadTimeout());
     }
 
+    @Bean
+    @Qualifier("twinSurveyAiServerRestClient")
+    RestClient twinSurveyAiServerRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.twinSurveyReadTimeout());
+    }
+
     RestClient createRestClient(AiServerProperties properties) {
         return createRestClient(properties, properties.readTimeout());
     }

@@ -40,7 +40,7 @@ describe('MarketingVisualSection', () => {
   it('shows real processing events, cancel, safe failure and retry', () => {
     visualState = base({ busy: true, run: { state: 'RUNNING', taskRunId: 'task-1' }, events: { events: [
       { sequence: 1, messageKey: 'job.marketing.visual.input_validating', status: 'RUNNING' },
-      { sequence: 2, messageKey: 'job.marketing.visual.image_generating', status: 'RUNNING' },
+      { sequence: 2, messageKey: 'job.marketing.visual.generating', status: 'RUNNING' },
     ] } });
     const rendered = render(<MarketingVisualSection {...props} />);
     expect(screen.getByText('생성 취소')).toBeInTheDocument(); fireEvent.click(screen.getByText('생성 취소')); expect(cancel).toHaveBeenCalled();

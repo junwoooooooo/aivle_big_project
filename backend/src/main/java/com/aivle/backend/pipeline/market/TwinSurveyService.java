@@ -101,7 +101,7 @@ public class TwinSurveyService {
         return runView(domain);
     }
 
-    /** 화면이 폴링하는 자리. <b>여기서 상태가 전이한다.</b> */
+    /** Canonical Twin 현재 상태를 읽기만 한다. 상태 전이는 worker 완료 경계에서 수행한다. */
     @Transactional(readOnly = true)
     public CurrentView current(Long ownerId, Long projectId) {
         owned(ownerId, projectId);

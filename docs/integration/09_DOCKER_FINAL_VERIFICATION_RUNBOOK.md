@@ -14,18 +14,16 @@ Copy-Item .env.example .env
 - `MINIO_ROOT_PASSWORD`, `OBJECT_STORAGE_BUCKET`
 - `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, 필요 시 `AI_BASE_URL`
 - `AI_INTERNAL_SERVICE_TOKEN`
+- Backend AI timeout: `AI_SERVER_READ_TIMEOUT`, `AI_SERVER_TWIN_SURVEY_READ_TIMEOUT` (기본 `14m`)
 - Market/BM: `MARKET_RESEARCH_OPENAI_API_KEY`, `OPENAI_BASE_URL`, `KOSIS_API_KEY`, `DART_API_KEY`, `BM_MODEL`
 - Finance: `TAVILY_API_KEY`
-- Twin: `TWIN_CONCURRENCY`
+- Twin: `TWIN_CONCURRENCY`, `TWIN_BANK_HOST_DIR`
 - Marketing Visual: `MARKETING_COPY_MODEL`, `MARKETING_IMAGE_MODEL`
 - legal: `MOLEG_API_KEY`, `MOLEG_API_BASE_URL`, `LEGAL_REGISTRY_VERSION`
 
 Twin Bank host 디렉터리에 필요한 외부 파일을 배치한다. 저장소에 추가하지 않는다.
 
-```powershell
-Test-Path .\ai\app\twin\bank
-git check-ignore -v ai/app/twin/bank
-```
+`TWIN_BANK_HOST_DIR`은 저장소 밖의 승인된 디렉터리를 가리켜야 한다. 파일명·크기만 확인하는 절차는 [10_TWIN_BANK_ASSET_CONTRACT.md](10_TWIN_BANK_ASSET_CONTRACT.md)를 따른다.
 
 ## 2. 구성 및 기동
 

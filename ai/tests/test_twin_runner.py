@@ -6,6 +6,7 @@
 """
 
 import hashlib
+import asyncio
 import json
 
 from app.twin import runner as R
@@ -93,3 +94,29 @@ def test_configuration_rejects_missing_key(monkeypatch):
         assert failure.reason == "AI_CONFIGURATION_INVALID"
         return
     raise AssertionError("키 없이 통과시켰다")
+
+
+def test_wave_progress_uses_actual_completed_cells_and_is_bounded(monkeypatch):
+    monkeypatch.setenv("AI_PROVIDER", "openai")
+    monkeypatch.setenv("AI_API_KEY", "test-key")
+    monkeypatch.setenv("AI_MODEL", "test-model")
+
+    async def fake_call(self, client, prompt_text):
+        return {"ok": True, "raw": "이유\n선택: A", "usage": {},
+                "model_reported": "test-model"}
+
+    monkeypatch.setattr(R.Runner, "call", fake_call)
+    cards = {"subject-1": "bounded profile card"}
+    pairs = [{"pairId": "P1", "X": {"text": "X"}, "Y": {"text": "Y"}}]
+    events = []
+
+    observed = asyncio.run(R.run_survey(cards, pairs, "선택 상황입니다.", 60, events.append))
+    plain = asyncio.run(R.run_survey(cards, pairs, "선택 상황입니다.", 60))
+
+    assert observed[0] == plain[0]
+    wave1 = [event for event in events if event["stage"] == "TWIN_WAVE1"]
+    assert wave1[0]["action"] == "STARTED"
+    assert wave1[-1]["safeSummary"].endswith(f"/{len(observed[0])}")
+    assert len(wave1) <= 12
+    assert events[-1] == {"stage": "TWIN_WAVE2", "action": "COMPLETED",
+                          "status": "RUNNING", "safeSummary": "추가 측정 셀 0개"}
