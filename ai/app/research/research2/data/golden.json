@@ -1,0 +1,32 @@
+{
+  "_설명": "회수율 정답지 — 도메인 수준. '이 슬롯이면 최소한 이 도메인은 검색에 잡혀야 한다'를 사람이 적는다. 완전한 정답 URL 목록을 만들려 하지 않는다.",
+  "_주의": "여기 도메인을 검색 프롬프트에 넣지 말 것. 정답을 알려주고 회수율을 재면 의미가 없다.",
+  "_근거표기": "basis=observed 는 실제 실행에서 그 도메인이 나온 것을 본 것, basis=required 는 '나와야 한다'는 요구(아직 관측 안 됨). 둘을 구분해야 회수율이 '못 찾은 것'인지 '내 기대가 틀린 것'인지 가려진다.",
+  "as_of": "2026-08-05",
+
+  "slots": {
+    "S1": { "must_hit_domain": ["kosis.kr"], "basis": "required",
+            "why": "커피전문점 사업체 수는 전국사업체조사(KOSIS) 가 원출처다. 언론 인용만 잡히면 회수 실패로 본다.",
+            "must_not_hit": ["wirebarley.com", "cashpop.io"] },
+
+    "S2": { "must_hit_domain": ["kosis.kr", "data.seoul.go.kr"], "basis": "required",
+            "why": "서울 단위 사업체 수는 KOSIS 시군구 집계 또는 서울열린데이터광장.",
+            "must_not_hit": ["wirebarley.com"] },
+
+    "S3": { "must_hit_domain": ["orderlist.co.kr"], "basis": "observed",
+            "why": "이전 실행에서 실제로 잡힌 국내 카페-로스터리 발주 SaaS 공식 도메인.",
+            "must_not_hit": ["wirebarley.com", "cashpop.io"] },
+
+    "S4": { "must_hit_domain": ["kcd.co.kr", "cashnote.kr"], "basis": "required",
+            "why": "소상공인 매장관리 앱의 대표 사례(캐시노트) 공식 도메인. 해외 송금·결제 앱이 잡히면 오염이다.",
+            "must_not_hit": ["wirebarley.com", "cashpop.io"] },
+
+    "S5": { "must_hit_domain": ["mss.go.kr", "sbiz.or.kr"], "basis": "observed",
+            "why": "중소벤처기업부·소상공인시장진흥공단 실태조사가 애로사항 수치의 원출처. 이전 실행에서 mss.go.kr 이 실제로 잡혔다.",
+            "must_not_hit": [] },
+
+    "S6": { "must_hit_domain": ["cafepost.kr", "loyverse.com"], "basis": "observed",
+            "why": "이전 실행에서 실제로 공식 가격 페이지가 잡힌 도메인 둘.",
+            "must_not_hit": ["cashpop.io"] }
+  }
+}

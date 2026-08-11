@@ -10,8 +10,9 @@ import PublicOnlyRoute from '../../features/auth/PublicOnlyRoute.jsx';
 import { ProjectCreatePage, ProjectListPage } from '../../features/projects/ProjectPages.jsx';
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { BusinessProposalWorkspace } from '../../features/concept-portfolio/index.js';
-import { MarketIntegrationPage } from '../../features/market-integration/index.js';
-import { BusinessModelPage } from '../../features/business-model/index.js';
+import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
+import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
+import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
 import { TechOpsPage } from '../../features/tech-ops/index.js';
 import { FinancePage } from '../../features/finance/index.js';
@@ -73,8 +74,9 @@ export default function AppRouter() {
             <Route path="idea" element={<IdeaIntakePage />} />
             <Route path="concepts" element={<BusinessProposalWorkspace />} />
             <Route path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />} />
-            <Route path="market" element={<MarketIntegrationPage />} />
-            <Route path="business-model" element={<BusinessModelPage />} />
+            <Route path="market" element={<MarketResearchPage />} />
+            <Route path="business-model" element={<BmCanvasPage />} />
+            <Route path="twin-survey" element={<TwinSurveyPage />} />
             <Route path="tech-ops" element={<TechOpsPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="marketing" element={<MarketingContentPage />} />

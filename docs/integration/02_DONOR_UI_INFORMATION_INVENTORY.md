@@ -217,3 +217,113 @@
 - caveat/evidence/warning/not measurable/partial result는 값과 같은 화면 문맥에 둔다.
 - 단순 카드 합치기로 제목이나 상태를 없애지 않는다.
 - donor에 없는 새 Journey, Persona surface는 이 행렬에 추가하지 않는다.
+
+## 7. Session 2 Market/BM/Twin 이식 상태
+
+아래 표는 위 원본 행을 삭제하거나 축약하지 않고, 각 `PRESERVE_REQUIRED=YES` 행의 이식 상태를 1:1로 기록한 companion matrix다.
+
+### 7.1 Market
+
+| USER_VISIBLE_ITEM | STATUS | TARGET 구현 |
+|---|---|---|
+| 제목 `시장조사 결과`, 단계 표시 | PORTED | `MarketResearchPage.jsx` header |
+| 실행/다시 조사/조사 중/경과시간 | PORTED | TaskRun 상태 + 로컬 경과시간 |
+| 공식 current selected Concept authority 표시 | PORTED | 조사 기준 카드의 Concept/selection revision/Seed |
+| 개발용 sample Concept picker | PORTED | DEV + `VITE_MARKET_FIXTURE_MODE`에서만 표시 |
+| API 오류 alert | PORTED | top-level danger alert |
+| 실패 code, retryable/입력 확인 | PORTED | failure alert |
+| 미실행 empty state/실행 안내 | PORTED | empty Card |
+| KPI TAM/SAM/성장률/가격 범위 | PORTED | KPI row |
+| KPI grade/근거 상태 | PORTED | Grade badge와 section jump |
+| 가정 원장 제목/항/값/판정/근거 | PORTED | `AssumptionLedger.jsx` |
+| 1. 시장 크기 | PORTED | section 1 |
+| 모집단 관측 없음 | PORTED | inline empty |
+| 2. 성장률 값/식 | PORTED | section 2 |
+| 3. 경쟁사 지표/값/출처 | PORTED | section 3 |
+| 경쟁사 관측 gap | PORTED | competitor gaps |
+| 4. 가격 최소/기준/최대 | PORTED | section 4 |
+| 가격 base kind/note/grade/evidence/caveat | PORTED | price body |
+| 5. 수요 근거/quote | PORTED | section 5 evidence table |
+| evidence 값/항목/기간/grade/source link | PORTED | `EvidenceTable`/`SourceLink` |
+| evidence caveat | PORTED | 값과 같은 table cell |
+| 핵심 요약/cell/card ids | PORTED | summary Card |
+| 6. 시장 규모 계산 | PORTED | section 6 |
+| calculation formula/input/result/assumption/caveat | PORTED | calculation cards |
+| 7. 못 찾은 것 | PORTED | section 7 |
+| not-found 5분류/note/건수/목록 | PORTED | grouped not-found panels |
+| 7개 section score state/detail | PORTED | section header badge/detail |
+| partial/missing 의미 | PORTED | score state와 empty/caveat |
+| Market→BM action | PORTED | bottom action |
+
+### 7.2 Business Model
+
+| USER_VISIBLE_ITEM | STATUS | TARGET 구현 |
+|---|---|---|
+| `실행 계획 확인`과 설명 | PORTED | BM preparation header |
+| 상위 확정 수익모델/채널/차별점/가격 재질문 없음 안내 | PORTED | PlanPhase copy |
+| 고객 관계 질문/예시 | PORTED | `BmPlanForm` |
+| 핵심 활동 질문/여러 줄 예시 | PORTED | `BmPlanForm` |
+| 핵심 자원 질문/여러 줄 예시 | PORTED | `BmPlanForm` |
+| 핵심 파트너 질문/warning | PORTED | `BmPlanForm` |
+| 예산/기간/인원 constraint | PORTED | constraint inputs |
+| 저장 중/저장하고 캔버스 만들기 | PORTED | submit action |
+| 계획 저장 실패 | PORTED | plan failure alert |
+| 빈 칸 confirm dialog/의미 | PORTED | pending-empty dialog |
+| 현재 preview | PORTED | `BmPlanPreview` |
+| observed cell 안내 | PORTED | preview 설명 |
+| `비즈니스 모델 캔버스` 제목/근거 없는 칸 설명 | PORTED | result header |
+| 다시 계획/만들기/재생성/생성 중 | PORTED | BM actions + TaskRun state |
+| API 오류/실패 code | PORTED | alerts |
+| decision/confidence/summary | PORTED | verdict Card |
+| BM 판정 없음 partial-result | PORTED | warning alert |
+| market fit 상태/요약 | PORTED | verdict detail |
+| consistency 상태/요약 | PORTED | verdict detail |
+| strength/weakness/risk와 없음 상태 | PORTED | SWR cards |
+| BMC 9 cells | PORTED | `BmCanvas` |
+| observed/planned status/kind | PORTED | cell status/kind |
+| 관측 칸 근거 tally | PORTED | canvas tally |
+| 칸별 전체 내용 | PORTED | `CellDetail` |
+| 빈 칸 사유 | PORTED | `emptyReason` |
+| model reason/source labels | PORTED | cell detail |
+| evidence/source/grade | PORTED | cell evidence |
+| marketEvidenceIds/missingEvidence/caveats | PORTED | cell detail, caveat 유지 |
+| legal used/status/summary/risks/actions | PORTED | 법률 결과 반영 Card |
+| financial handoff 전체 값/상태/누락 입력 | PORTED | 재무 전달정보 Card |
+
+### 7.3 Twin Survey
+
+| USER_VISIBLE_ITEM | STATUS | TARGET 구현 |
+|---|---|---|
+| 진행 단계/완료/경과시간 | PORTED | `TwinSteps` |
+| `무엇을 비교할까` | PORTED | setup Card |
+| current selected Concept 표시/초안 만들기 | PORTED | source 문구 + async action |
+| 개발용 sample Concept 표시 | PORTED | DEV + `VITE_TWIN_FIXTURE_MODE` 한정 |
+| 초안 생성 중/실패 reason/재시도 | PORTED | draft TaskRun state/failure |
+| 후보 axis/rationale/X/Y/선택 | PORTED | `StimulusDraftPicker` |
+| 상황 문장 편집 | PORTED | `StimulusEditor` |
+| pair axis/X/Y/serviceable/reason | PORTED | editor cards/gate |
+| 막힌 질문 수/수정 안내 | PORTED | blocked gate alert |
+| 자극쌍 없음 empty | PORTED | setup empty |
+| pair editor axis/A/B/값/저장 | PORTED | `PairEditorDialog` |
+| 표본 카드 | PORTED | sample Card |
+| 표본 50/100/300/current | PORTED | `SampleSizePicker` |
+| 예상 응답/시간 | PORTED | sample cost line |
+| 표본별 MDE warning | PORTED | sample warning |
+| 응답 계산식/양방향 이유 | PORTED | sample note |
+| 실행/다시 조사/조사 중/경과시간 | PORTED | survey action + TaskRun |
+| API 오류/실패 code 사람말 | PORTED | alerts/failureText |
+| caveat 누락/인용 금지 warning | PORTED | result warning |
+| pair X↔Y/상황/완료 표본 | PORTED | pair header |
+| X/Y profile 문장 | PORTED | profiles |
+| 우세 또는 판정 불가—못 잼 | PORTED | verdict headline |
+| X/Y/미결정 수·비율 bar | PORTED | composition bar |
+| decision reason | PORTED | verdict reason |
+| 대표 인터뷰 profile/choice/quote | PORTED | interview cards |
+| 인터뷰 quote 없음 | PORTED | interview empty |
+| Δ/CI/MDE/위치성분/content share/응답자 | PORTED | measurement detail |
+| respondent class별 명수 | PORTED | class list |
+| short cells/실효표본 warning | PORTED | short-cell note |
+| KISDI synthetic limitation | PORTED | footnote |
+| 쌍별 caveat 중복 제거 집합 | PORTED | `TwinFootnote` |
+
+Session 2 범위의 `NOT_PORTED` 행은 없다.

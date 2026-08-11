@@ -82,6 +82,16 @@ services:
       AI_E2E_FAULTS_ENABLED: ${AI_E2E_FAULTS_ENABLED:-false}
       AI_E2E_FAULT_MODE: ${AI_E2E_FAULT_MODE:-}
       AI_E2E_FAULT_DELAY_SECONDS: ${AI_E2E_FAULT_DELAY_SECONDS:-5}
+      OPENAI_API_KEY: ${MARKET_RESEARCH_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-${AI_BASE_URL:-}}
+      KOSIS_API_KEY: ${KOSIS_API_KEY:-}
+      DART_API_KEY: ${DART_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      BM_MODEL: ${BM_MODEL:-${AI_MODEL}}
+      TWIN_BANK_DIR: /app/app/twin/bank
+    volumes:
+      - ./ai/app/research/research2/runs:/app/app/research/research2/runs:ro
+      - ./ai/app/twin/bank:/app/app/twin/bank:ro
     depends_on:
       minio:
         condition: service_healthy

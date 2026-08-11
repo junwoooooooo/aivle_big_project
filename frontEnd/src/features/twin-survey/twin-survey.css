@@ -1,0 +1,317 @@
+/* 패널 트윈 조사.
+   토큰·셸·공용 컴포넌트는 여기서 정의하지 않는다:
+     shared/styles/tokens.css             색·여백·반경
+     app/project-shell/project-shell.css  .pipeline-shell · .pipeline-page-heading
+     shared/ui/ui.css                     .ui-card · .ui-badge · .ui-alert · .ui-button
+
+   ⚠ 접두사는 `twin-` 이다. 부품(StimulusEditor·SampleSizePicker)이 이미 그 접두사를 쓴다.
+     `tone-*` 는 전역 클래스가 아니라서 여기서 정의하는데, **반드시 twin- 요소에 붙여** 쓴다.
+     CSS 는 전역이라 벗겨 두면 다른 화면의 같은 이름을 덮는다. */
+
+.twin-page { display: grid; align-content: start; gap: 1.5rem; min-width: 0; }
+.twin-page__actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; }
+.twin-page__elapsed { color: var(--color-text-secondary); font-size: .85rem; }
+
+/* ── 상세 2단계 ────────────────────────────────────────────────────────
+   모듈 이름은 셸이 그린다. 여기는 «그 모듈 안 어디인가»만, **한 줄로** 말한다.
+   단계 표시는 화면의 주인공이 아니다 — 판만 차지하면 정작 값이 밀린다. */
+.twin-steps {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  margin: 0; padding: 0; list-style: none;
+}
+.twin-steps__step {
+  display: inline-flex; align-items: center; gap: .4rem;
+  color: var(--color-text-secondary); font-size: .8rem;
+}
+/* 1 → 2 로 이어지는 선. 항목 사이에만 그린다. */
+.twin-steps__step + .twin-steps__step::before {
+  content: ''; width: 1.5rem; height: 1px; margin-right: .1rem;
+  background: var(--color-border-default);
+}
+.twin-steps__dot {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.15rem; height: 1.15rem; border-radius: 50%;
+  background: var(--color-bg-subtle); color: var(--color-text-secondary);
+  font-size: .65rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.twin-steps__detail {
+  padding: .05rem .35rem; border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle); font-size: .7rem; font-variant-numeric: tabular-nums;
+}
+
+.twin-steps__step[data-state="current"] { color: var(--color-text-primary); font-weight: 700; }
+.twin-steps__step[data-state="current"] .twin-steps__dot {
+  background: var(--twin-step-accent); color: #fff;
+}
+.twin-steps__step[data-state="done"] .twin-steps__dot {
+  background: var(--twin-step-done); color: #fff;
+}
+.twin-steps__step[data-state="waiting"] { opacity: .55; }
+
+/* 이 화면의 강조색. 전역 토큰에 accent 계열이 없어서 여기서 든다. */
+.twin-page { --twin-step-accent: #1d6f9e; --twin-step-done: #1d9e75; }
+
+/* ── 맨 아래 면책 각주 ─────────────────────────────────────────────────
+   ⚠ 값에 붙은 경계(쌍별 caveats)는 **여기로 내려오지 않는다** — 결과 카드 안에 남는다.
+   둘을 합치면 값만 떼어 인용하는 것을 막는 장치가 사라진다(CLAUDE.md 규칙 7). */
+.twin-footnote {
+  margin: .5rem 0 0; padding-top: .9rem; border-top: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary); font-size: .75rem; line-height: 1.7;
+}
+.twin-footnote p { margin: 0; }
+.twin-footnote details { margin-top: .5rem; }
+.twin-footnote summary { cursor: pointer; }
+.twin-footnote ul { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
+
+/* ── 자극 초안 ─────────────────────────────────────────────────────── */
+.twin-page__draft-start { display: grid; gap: .875rem; }
+.twin-page__draft-start p { margin: 0; font-size: .9rem; color: var(--color-text-secondary); }
+.twin-page__samples { display: flex; flex-wrap: wrap; gap: .5rem; }
+.twin-page__draft-actions { display: flex; align-items: center; gap: .75rem; }
+/* 「직접 만들기」는 곁길이라 버튼처럼 세우지 않는다 — 기본 길은 초안이다. */
+.twin-page__manual {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--color-text-secondary); font-size: .85rem; text-decoration: underline;
+}
+.twin-page__manual:disabled { cursor: default; opacity: .5; }
+
+.twin-draft { display: grid; gap: .75rem; }
+.twin-draft__lead { margin: 0; font-size: .9rem; color: var(--color-text-secondary); }
+.twin-draft__card {
+  display: grid; grid-template-columns: auto 1fr; align-items: start; gap: .625rem;
+  padding: .75rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control);
+}
+.twin-draft__body { display: grid; gap: .25rem; }
+.twin-draft__axis { font-weight: 600; font-size: .9rem; }
+.twin-draft__sides { font-size: .875rem; }
+.twin-draft__why { font-size: .85rem; color: var(--color-text-secondary); }
+.twin-draft__dropped { font-size: .85rem; color: var(--color-text-secondary); }
+.twin-draft__dropped ul { margin: .5rem 0 0; padding-left: 1.125rem; display: grid; gap: .375rem; }
+.twin-draft__actions { display: flex; justify-content: flex-end; }
+
+/* ── 자극 편집 ─────────────────────────────────────────────────────── */
+.twin-editor { display: grid; gap: 1rem; }
+.twin-editor__situation { display: grid; gap: .35rem; font-size: .9rem; }
+.twin-editor__situation input { padding: .5rem .625rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); }
+.twin-editor__list { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.twin-editor__blocked { margin: 0; font-size: .875rem; font-weight: 600; }
+.twin-editor__empty { margin: 0; color: var(--color-text-secondary); font-size: .875rem; }
+
+/* 비교안 요약 카드 — 카드 전체가 편집 버튼이다. */
+.twin-pair-card {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: .3rem .75rem; padding: .8rem .95rem; text-align: left; font: inherit; cursor: pointer;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); color: inherit;
+}
+.twin-pair-card:hover:not(:disabled) { border-color: var(--twin-step-accent); }
+.twin-pair-card:disabled { cursor: default; opacity: .6; }
+.twin-pair-card__axis { color: var(--color-text-secondary); font-size: .75rem; font-weight: 700; }
+.twin-pair-card__edit { color: var(--twin-step-accent); font-size: .75rem; font-weight: 700; }
+/* 이 줄이 본문이다 — 크게, 그리고 두 안을 대칭으로 둔다. */
+.twin-pair-card__versus {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem;
+  font-size: .95rem; line-height: 1.5;
+}
+.twin-pair-card__side { min-width: 0; }
+.twin-pair-card__vs { color: var(--color-text-secondary); }
+.twin-pair-card__verdict { grid-column: 1 / -1; font-size: .78rem; font-weight: 700; }
+
+/* 편집 창 */
+.twin-pair-form { display: grid; gap: 1rem; min-width: min(28rem, 70vw); }
+.twin-pair-form__field, .twin-pair-form__side label { display: grid; gap: .3rem; font-size: .85rem; }
+.twin-pair-form__field > span, .twin-pair-form__side label > span { font-weight: 600; }
+.twin-pair-form__field small { color: var(--color-text-secondary); font-size: .75rem; }
+.twin-pair-form input {
+  padding: .5rem .625rem; font: inherit;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-control);
+}
+.twin-pair-form__sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.twin-pair-form__side {
+  display: grid; gap: .55rem; margin: 0; padding: .75rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-control);
+}
+.twin-pair-form__side legend { padding: 0 .3rem; font-size: .78rem; font-weight: 700; }
+.twin-pair-form__verdict { margin: 0; font-size: .82rem; line-height: 1.6; }
+.twin-pair-form__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+
+.twin-pair-card__verdict.tone-success,
+.twin-pair-form__verdict.tone-success { color: var(--color-success-text, #1a7f37); }
+.twin-pair-card__verdict.tone-danger,
+.twin-pair-form__verdict.tone-danger,
+.twin-editor__blocked { color: var(--color-danger-text, #b42318); }
+
+@media (max-width: 620px) {
+  .twin-steps, .twin-pair-form__sides { grid-template-columns: 1fr; }
+  .twin-pair-form { min-width: 0; }
+}
+
+/* ── 가상 페르소나 수 ──────────────────────────────────────────────────
+   슬라이더지만 3단 스냅이다 — 값이 아니라 «인덱스»를 다룬다(부품 주석 참조). */
+.twin-sample { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .4rem .75rem; }
+.twin-sample__label { font-size: .9rem; font-weight: 600; align-self: center; }
+.twin-sample__value {
+  font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1;
+}
+.twin-sample__slider { grid-column: 1 / -1; width: 100%; accent-color: var(--twin-step-accent); }
+.twin-sample__ticks {
+  grid-column: 1 / -1; display: flex; justify-content: space-between;
+  margin-top: -.25rem; color: var(--color-text-secondary);
+  font-size: .7rem; font-variant-numeric: tabular-nums;
+}
+.twin-sample__cost, .twin-sample__note, .twin-sample__warning {
+  grid-column: 1 / -1; margin: 0; font-size: .8rem;
+}
+.twin-sample__cost { color: var(--color-text-secondary); }
+.twin-sample__note { color: var(--color-text-secondary); font-size: .75rem; line-height: 1.6; }
+.twin-sample__warning {
+  padding: .55rem .7rem; border-radius: var(--radius-control);
+  background: #fff3d2; color: #78570c; line-height: 1.6;
+}
+
+/* ── 결과 — 목업 `persona_interview_mockup.html` 이 정본 ────────────────
+   목업의 토큰 이름(--surface-1/2 · --border · --text-muted · --bg-success)은 이 저장소에
+   **없다**. 아래 지역 변수가 그 매핑이고, 목업의 하드코딩 색도 여기서만 산다.
+   전역에 흘리지 않으려고 `.twin-result` 아래에 가둔다 — CSS 는 전역이다. */
+.twin-result {
+  /* ⚠ **검증된 조합이다.** 이긴 쪽·진 쪽 두 계열을 dataviz 검증기에 돌려 전 항목 통과한
+     값이다(`validate_palette.js "#1d9e75,#3b7fd4" --mode light`). 옛 진 쪽 #85b7eb 은
+     회색으로 읽히고(chroma 0.09) 표면 대비가 2.05:1 이라 미결정 회색과 정상 시력에서도
+     ΔE 10.4 — 구별이 안 됐다. 색을 바꾸려면 눈으로 고르지 말고 그 검증기를 다시 돌릴 것.
+     미결정은 범주 색이 아니라 **부재**라 회색이 맞고, 구분은 색이 아니라 간격·라벨이 한다. */
+  --twin-lead: #1d9e75;          /* 이긴 쪽 */
+  --twin-trail: #3b7fd4;         /* 진 쪽 */
+  --twin-neutral: #b4b2a9;       /* 미결정·위치응답 — 계열이 아니라 중립 */
+  --twin-lead-bg: #e1f5ee;   --twin-lead-fg: #085041;
+  --twin-trail-bg: #e6f1fb;  --twin-trail-fg: #0c447c;
+  --twin-neutral-bg: #f1efe8; --twin-neutral-fg: #444441;
+  display: grid; gap: 1rem;
+}
+
+.twin-panel {
+  background: var(--color-bg-subtle); border-radius: 12px; padding: 1.25rem;
+  display: grid; gap: .75rem;
+}
+.twin-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.twin-panel__title { font-size: 1rem; font-weight: 500; margin: 0; }
+.twin-panel__subtitle { font-size: .8125rem; color: var(--color-text-secondary); margin: 2px 0 0; }
+.twin-panel__done {
+  font-size: .75rem; padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  background: var(--twin-lead-bg); color: var(--twin-lead-fg);
+}
+.twin-panel__section { font-size: .875rem; font-weight: 500; margin: .25rem 0 0; }
+.twin-panel__empty { margin: 0; font-size: .85rem; color: var(--color-text-secondary); }
+
+/* 판정 + 구성 막대 */
+.twin-verdict {
+  background: var(--color-surface); border: 1px solid var(--color-border-default);
+  border-radius: 12px; padding: 1rem 1.25rem;
+}
+.twin-verdict__line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.twin-verdict__headline { font-size: 1.375rem; font-weight: 500; }
+.twin-verdict__share { font-size: .875rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.twin-verdict__reason { margin: 10px 0 0; font-size: .8125rem; color: var(--color-text-secondary); }
+/* 누적 막대. **토막 사이를 표면색 2px 로 벌린다**(dataviz 규격) — 붙여 두면 경계가
+   색 대비에만 기대고, 미결정 회색과 진 쪽이 이어져 한 덩어리로 읽힌다. */
+.twin-bar {
+  display: flex; gap: 2px; height: 10px; border-radius: 5px;
+  background: var(--color-neutral-100, #edf1ef); overflow: hidden;
+}
+.twin-bar span { display: block; border-radius: 2px; }
+.twin-bar span:first-child { border-start-start-radius: 5px; border-end-start-radius: 5px; }
+.twin-bar span:last-child { border-start-end-radius: 5px; border-end-end-radius: 5px; }
+.twin-bar__lead { background: var(--twin-lead); }
+.twin-bar__undecided { background: var(--twin-neutral); }
+.twin-bar__trail { background: var(--twin-trail); }
+
+/* 인터뷰 카드 */
+.twin-interview {
+  background: var(--color-surface); border: 1px solid var(--color-border-default);
+  border-radius: 12px; padding: .9rem 1.1rem;
+}
+.twin-interview__head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.twin-interview__avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 500; font-size: .8125rem; font-variant-numeric: tabular-nums;
+}
+.twin-interview__who { flex: 1; min-width: 0; }
+.twin-interview__line { font-size: .875rem; font-weight: 500; margin: 0; }
+.twin-interview__sub { font-size: .75rem; color: var(--color-text-secondary); margin: 0; }
+.twin-interview__badge {
+  font-size: .75rem; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  max-width: 9rem; overflow: hidden; text-overflow: ellipsis;
+}
+.twin-interview__quote {
+  font-size: .8125rem; color: var(--color-text-secondary); margin: 0; line-height: 1.6;
+}
+.twin-interview__avatar.tone-lead, .twin-interview__badge.tone-lead {
+  background: var(--twin-lead-bg); color: var(--twin-lead-fg);
+}
+.twin-interview__avatar.tone-trail, .twin-interview__badge.tone-trail {
+  background: var(--twin-trail-bg); color: var(--twin-trail-fg);
+}
+.twin-interview__avatar.tone-neutral, .twin-interview__badge.tone-neutral {
+  background: var(--twin-neutral-bg); color: var(--twin-neutral-fg);
+}
+
+/* 경계는 값과 같은 판 안에 있고, 눈에 띄어야 한다. 빠진 경우는 더 크게 띄운다. */
+/* ⚠ **값과 같은 카드 안에 남는다**(CLAUDE.md 규칙 7). 조용하게 만들 뿐 옮기지 않는다 —
+   떨어지면 수치만 떼어 인용하는 것을 막는 장치가 사라진다. 경고색을 뺀 이유는 이것이
+   «문제»가 아니라 «이 수치를 읽는 법»이기 때문이다. 빠졌을 때만 소리가 난다. */
+.twin-panel__caveats {
+  margin: 0; padding: .5rem 0 0 1.1rem; font-size: .72rem; line-height: 1.65;
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border-default);
+}
+.twin-panel__caveats.is-missing {
+  padding: .625rem .75rem .625rem 1.75rem; border-top: 0;
+  border-left: 3px solid var(--color-status-danger);
+  color: var(--color-status-danger); font-weight: 600; font-size: .8rem;
+}
+
+/* 무엇을 비교했는가 — 응답자에게 실제로 보인 문장 그대로. 이 판이 없으면 결과는
+   «A안이 이겼다»라고만 말하고 A안이 무엇이었는지는 어디에도 없다. */
+.twin-compare {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch; gap: .5rem; margin: 0;
+}
+.twin-compare > div {
+  display: grid; gap: .2rem; align-content: start; padding: .7rem .8rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+/* 대비의 축. 조용하되 두 판을 확실히 가른다 — 이 화면이 파는 것이 «둘 중 어느 쪽»이다. */
+.twin-compare__vs {
+  align-self: center; padding: .15rem .45rem; border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle); color: var(--color-text-secondary);
+  font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+}
+.twin-compare dt { font-size: .82rem; font-weight: 700; }
+.twin-compare dd { margin: 0; color: var(--color-text-secondary); font-size: .78rem; line-height: 1.55; }
+/* 이긴 쪽을 표시한다 — 판정과 자극이 서로를 가리키게 한다.
+   ⚠ 색만으로 말하지 않는다. 왼쪽 굵은 선이 같은 것을 두 번째로 말한다. */
+.twin-compare > div[data-lead="true"] {
+  border-color: var(--twin-lead); background: var(--twin-lead-bg);
+  border-left-width: 3px;
+}
+.twin-compare > div[data-lead="true"] dt { color: var(--twin-lead-fg); }
+
+@media (max-width: 620px) {
+  .twin-compare { grid-template-columns: 1fr; }
+  .twin-compare__vs { justify-self: center; }
+}
+
+.twin-panel__figures { font-size: .8125rem; }
+.twin-panel__figures summary { cursor: pointer; color: var(--color-text-secondary); }
+.twin-panel__figures dl {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .625rem; margin: .625rem 0 0;
+}
+.twin-panel__figures dt { color: var(--color-text-secondary); font-size: .75rem; }
+.twin-panel__figures dd { margin: .125rem 0 0; font-variant-numeric: tabular-nums; }
+.twin-panel__classes {
+  display: flex; flex-wrap: wrap; gap: .75rem; margin: .625rem 0 0; padding: 0;
+  list-style: none; color: var(--color-text-secondary);
+}
+.twin-panel__short { margin: .5rem 0 0; color: var(--color-status-warning); }

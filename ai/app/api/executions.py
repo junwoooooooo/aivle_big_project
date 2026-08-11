@@ -30,6 +30,9 @@ TASK_TYPES = {
     "TECH_OPS_PROPOSAL",
     "FINANCE_ESTIMATE",
     "MARKETING_CONTENT_GENERATION",
+    "MARKET_RESEARCH",
+    "TWIN_SURVEY",
+    "TWIN_STIMULUS_DRAFT",
 }
 
 
@@ -285,6 +288,17 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)
+        elif body.taskType == "MARKET_RESEARCH":
+            from app.research.pipeline import run_market_research
+            remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
+            result = await run_market_research(body.input, body.taskAttemptId, remaining)
+        elif body.taskType == "TWIN_STIMULUS_DRAFT":
+            from app.twin.stimulus_draft import execute_twin_stimulus_draft
+            result = await execute_twin_stimulus_draft(body.input)
+        elif body.taskType == "TWIN_SURVEY":
+            from app.twin import execute_twin_survey
+            remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
+            result = await execute_twin_survey(body.input, remaining)
         elif body.taskType == "IDEA_BRIEF_DERIVATION":
             from app.tasks.idea_brief import execute_idea_brief_derivation
             result = await execute_idea_brief_derivation(body.input)

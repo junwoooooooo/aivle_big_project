@@ -7,6 +7,7 @@ public enum PipelineModuleType {
     CONCEPT_SELECTION,
     MARKET_ANALYSIS,
     BUSINESS_MODEL,
+    TWIN_SURVEY,
     TECH_OPS,
     FINANCE,
     MARKETING

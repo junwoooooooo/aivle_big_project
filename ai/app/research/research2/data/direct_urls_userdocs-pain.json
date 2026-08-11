@@ -1,0 +1,14 @@
+{
+  "_설명": "userdocs-pain 적재분. 입수만 사람이고 심사는 엔진이 원래 잣대로 한다.",
+  "_경계": "외식업 214곳 기준 — 미용실 직접 통계 아님, 인접 업종 근거",
+  "channel": "user_doc",
+  "by_slot": {
+    "S16": [
+      "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156737813",
+      "https://www.sedaily.com/NewsView/2K74UIRW8K",
+      "https://www.ajunews.com/view/20260101111542028",
+      "https://www.intn.co.kr/news/articleView.html?idxno=2048189",
+      "https://www.korea.kr/news/reporterView.do?newsId=148815794"
+    ]
+  }
+}

@@ -69,7 +69,7 @@ public class ProjectJobQueryService {
     }
 
     private ProjectJobView view(TaskRun run) {
-        JobModule module = module(run.getTaskType());
+        JobModule module = module(run);
         String rawStatus = run.getState().name();
         boolean actionable = actionable(run);
         String presentationStatus = presentationStatus(run.getState(), actionable);
@@ -128,8 +128,8 @@ public class ProjectJobQueryService {
         return rawStatus.name();
     }
 
-    private JobModule module(TaskType type) {
-        return switch (type) {
+    private JobModule module(TaskRun run) {
+        return switch (run.getTaskType()) {
             case IDEA_ATTACHMENT_PARSE, IDEA_BRIEF_DERIVATION -> JobModule.IDEA;
             case CONCEPT_PORTFOLIO_V2_RUN, CONCEPT_PORTFOLIO_V2_CONTINUE,
                 CONCEPT_PORTFOLIO_V2_SELECTION_ACTION -> JobModule.CONCEPT_PORTFOLIO;
@@ -139,11 +139,15 @@ public class ProjectJobQueryService {
             case TECH_OPS_PROPOSAL -> JobModule.TECH_OPS;
             case FINANCE_ESTIMATE -> JobModule.FINANCE;
             case MARKETING_CONTENT_GENERATION -> JobModule.MARKETING;
+            case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
+                ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
+            case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.TWIN;
         };
     }
 
     private enum JobModule {
         IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
+        MARKET("/market"), BUSINESS_MODEL("/business-model"), TWIN("/twin-survey"),
         TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }

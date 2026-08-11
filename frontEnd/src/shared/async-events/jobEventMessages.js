@@ -56,6 +56,21 @@ const messages = Object.freeze({
   'job.marketing.legal_checking': '금지 표현과 필수 고지를 확인하고 있습니다.',
   'job.marketing.completed': '마케팅 콘텐츠가 준비되었습니다.',
   'job.marketing.failed': '마케팅 콘텐츠 작업을 완료하지 못했습니다.',
+  'job.market.research.queued': '시장조사 실행을 준비하고 있습니다.',
+  'job.market.research.preparing': '시장조사 입력과 수집 단계를 준비하고 있습니다.',
+  'job.market.research.completed': '시장조사 결과가 준비되었습니다.',
+  'job.market.research.failed': '시장조사를 완료하지 못했습니다.',
+  'job.business-model.queued': 'Business Model 분석을 준비하고 있습니다.',
+  'job.business-model.preparing': '시장 결과와 실행 계획을 확인하고 있습니다.',
+  'job.business-model.completed': 'Business Model 결과가 준비되었습니다.',
+  'job.business-model.failed': 'Business Model 분석을 완료하지 못했습니다.',
+  'job.twin.stimulus.preparing': 'Twin 비교안 초안을 만들고 있습니다.',
+  'job.twin.stimulus.completed': 'Twin 비교안 초안이 준비되었습니다.',
+  'job.twin.stimulus.failed': 'Twin 비교안 초안을 만들지 못했습니다.',
+  'job.twin.survey.queued': 'Twin 조사를 준비하고 있습니다.',
+  'job.twin.survey.running': '표본 응답을 생성하고 집계하고 있습니다.',
+  'job.twin.survey.completed': 'Twin 조사 결과가 준비되었습니다.',
+  'job.twin.survey.failed': 'Twin 조사를 완료하지 못했습니다.',
 });
 
 export const ACTIVE_JOB_EVENT_KEYS = Object.freeze(Object.keys(messages));

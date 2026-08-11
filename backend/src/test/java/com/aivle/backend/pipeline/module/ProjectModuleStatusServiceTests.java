@@ -25,6 +25,10 @@ import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepositor
 import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
+import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
+import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
+import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputPreparation;
@@ -46,6 +50,10 @@ class ProjectModuleStatusServiceTests {
     private final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
     private final MarketAnalysisSeedSnapshotRepository snapshots = mock(MarketAnalysisSeedSnapshotRepository.class);
     private final ModuleRunRepository runs = mock(ModuleRunRepository.class);
+    private final MarketResearchRunRepository marketRuns = mock(MarketResearchRunRepository.class);
+    private final MarketResearchVersionRepository marketVersions = mock(MarketResearchVersionRepository.class);
+    private final TwinSurveyRunRepository twinRuns = mock(TwinSurveyRunRepository.class);
+    private final TwinSurveyVersionRepository twinVersions = mock(TwinSurveyVersionRepository.class);
     private final MarketingContentRepository marketing = mock(MarketingContentRepository.class);
     private final MarketingSourceSnapshotRepository marketingSources = mock(MarketingSourceSnapshotRepository.class);
     private final TechOpsInputPreparationRepository techOpsPreparations = mock(TechOpsInputPreparationRepository.class);
@@ -53,7 +61,8 @@ class ProjectModuleStatusServiceTests {
     private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
     private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
-        projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs, marketing, marketingSources,
+        projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs,
+        marketRuns, marketVersions, twinRuns, twinVersions, marketing, marketingSources,
         techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots);
 
     @Test
@@ -79,7 +88,8 @@ class ProjectModuleStatusServiceTests {
 
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
-            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
+            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TWIN_SURVEY,
+            PipelineModuleType.TECH_OPS,
             PipelineModuleType.FINANCE, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
@@ -100,7 +110,7 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(4).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
     }
 
     @Test

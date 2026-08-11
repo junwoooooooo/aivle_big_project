@@ -9,3 +9,6 @@
 .pytest_cache
 .idea
 !AGENTS.md
+
+# KISDI 파생 Twin Bank는 재배포 금지 자산이며 외부 read-only mount로만 제공한다.
+ai/app/twin/bank/

@@ -1,0 +1,3509 @@
+{
+  "run_id": "pet-treat-15",
+  "reference_date": "2026-08-09",
+  "finished_at": "2026-08-09T22:31:11",
+  "wall_clock_sec": 44.0,
+  "adapters": {
+    "kosis": "ok",
+    "web": "ok"
+  },
+  "coverage_caveat": null,
+  "notes": [],
+  "slot_set_hash": "aec843d15ea9",
+  "무인_기록": {
+    "_규칙": "개입 = 사람을 불러야 했던 사건. fail-open 은 개입이 아니라 결정이다(사람을 안 부르고 진행). 둘을 섞지 않는다.",
+    "개입_횟수": 10,
+    "개입_멈춤": 0,
+    "개입": [
+      {
+        "종류": "retry_hint",
+        "상세": "S2: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S3: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S4: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S7: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S8: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S9: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S10: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S11: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "S12: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      },
+      {
+        "종류": "retry_hint",
+        "상세": "R9: 실명이 확인된 경쟁사가 없다 — 사람이 승인하면 1회 재조사",
+        "멈췄나": false,
+        "at": "2026-08-09T22:31:11"
+      }
+    ],
+    "결정_횟수": 0,
+    "결정_규칙없음": 0,
+    "결정": [],
+    "사전등록": {
+      "부록": "부록 Z",
+      "부록_총수": 67,
+      "expected_mtime": "2026-08-09T21:45:08",
+      "잰_시점": "2026-08-09T22:30:28",
+      "델타_초": 2719.7,
+      "판정": "사전등록",
+      "_한계": "mtime 비교라 **착수 직전에 써도 통과한다.** 이 값이 만드는 것은 차단이 아니라 감사 가능성이다 — 언제 썼는지가 원장에 남는다.",
+      "진입점": "Meter.create",
+      "node": "a3_search"
+    }
+  },
+  "input": {
+    "concept": {
+      "concept_id": "CPT-PET-TREAT",
+      "name": "반려동물 수제 간식 브랜드",
+      "problem": "반려견 보호자가 시판 간식의 원료·첨가물을 신뢰하지 못해 성분을 일일이 확인하지만, 소량·수제 제품은 유통기한이 짧고 구매처가 흩어져 있어 반복 구매가 어렵다",
+      "target": "반려견을 키우며 온라인으로 간식을 정기 구매하는 보호자",
+      "solution": "국내산 단일 원료로 만든 수제 간식을 소포장해 정기배송한다. 원료 산지와 제조일을 포장마다 표기하고, 개봉 후 보관 기간에 맞춰 배송 주기를 조정한다",
+      "region": "대한민국",
+      "hypotheses": [],
+      "price_hypothesis_krw": null,
+      "constraint": {
+        "budget_krw": 5000000,
+        "months": 10,
+        "team": 2
+      }
+    },
+    "slots": [
+      {
+        "slot_id": "S1",
+        "var_id": "V1",
+        "formula_id": "F_TAM",
+        "claim_type": "TAM",
+        "subject": "반려동물 용품 시장",
+        "metric": "거래액",
+        "period": "2025",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "애완용품"
+        ],
+        "must_not_contain": [
+          "사육"
+        ],
+        "value_range": [
+          1000000000,
+          500000000000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S2",
+        "var_id": "V2",
+        "formula_id": "F_TAM",
+        "claim_type": "TAM",
+        "subject": "반려동물 용품 시장",
+        "metric": "시장 점유율",
+        "period": "2025",
+        "unit": "%",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "간식"
+        ],
+        "must_not_contain": [
+          "사료"
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S3",
+        "var_id": "V3",
+        "formula_id": "F_SAM",
+        "claim_type": "SAM",
+        "subject": "반려동물 수제 간식",
+        "metric": "거래액",
+        "period": "2025",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "소포장"
+        ],
+        "must_not_contain": [
+          "대량"
+        ],
+        "value_range": [
+          10000000,
+          1000000000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S4",
+        "var_id": "V4",
+        "formula_id": "F_SAM",
+        "claim_type": "SAM",
+        "subject": "반려동물 수제 간식",
+        "metric": "시장 점유율",
+        "period": "2025",
+        "unit": "%",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "정기배송"
+        ],
+        "must_not_contain": [
+          "일회성"
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S5",
+        "var_id": "V5",
+        "formula_id": "F_GROWTH",
+        "claim_type": "GROWTH",
+        "subject": "반려동물 용품 시장",
+        "metric": "거래액",
+        "period": "2024",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [],
+        "must_not_contain": [],
+        "value_range": [
+          1000000000,
+          500000000000
+        ],
+        "period_min": 2023,
+        "period_max": 2026,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S6",
+        "var_id": "V6",
+        "formula_id": "F_GROWTH",
+        "claim_type": "GROWTH",
+        "subject": "반려동물 용품 시장",
+        "metric": "거래액",
+        "period": "2023",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [],
+        "must_not_contain": [],
+        "value_range": [
+          1000000000,
+          500000000000
+        ],
+        "period_min": 2023,
+        "period_max": 2025,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S7",
+        "var_id": "V7",
+        "formula_id": "F_COMP",
+        "claim_type": "COMP",
+        "subject": "반려동물 수제 간식",
+        "metric": "가입 매장 수",
+        "period": "2025",
+        "unit": "곳",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "커머스"
+        ],
+        "must_not_contain": [
+          "오프라인"
+        ],
+        "value_range": [
+          10,
+          1000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S8",
+        "var_id": "V8",
+        "formula_id": "F_COMP",
+        "claim_type": "COMP",
+        "subject": "반려동물 수제 간식",
+        "metric": "누적 가입자 수",
+        "period": "2025",
+        "unit": "명",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "회원"
+        ],
+        "must_not_contain": [
+          "비회원"
+        ],
+        "value_range": [
+          1000,
+          100000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S9",
+        "var_id": "V9",
+        "formula_id": "F_DIFF",
+        "claim_type": "COMPARABLE",
+        "subject": "반려동물 수제 간식",
+        "metric": "누적 가입자 수",
+        "period": "2025",
+        "unit": "명",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "정기"
+        ],
+        "must_not_contain": [
+          "가변"
+        ],
+        "value_range": [
+          1000,
+          100000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S10",
+        "var_id": "V10",
+        "formula_id": "F_CHANNEL",
+        "claim_type": "CHANNEL",
+        "subject": "반려동물 수제 간식",
+        "metric": "고객 획득 비용",
+        "period": "2025",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "온라인"
+        ],
+        "must_not_contain": [
+          "오프라인"
+        ],
+        "value_range": [
+          5000,
+          50000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S11",
+        "var_id": "V11",
+        "formula_id": "F_PAIN",
+        "claim_type": "PAIN",
+        "subject": "반려동물 용품",
+        "metric": "문제 경험률",
+        "period": "2025",
+        "unit": "%",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "신뢰"
+        ],
+        "must_not_contain": [
+          "만족"
+        ],
+        "value_range": [
+          0,
+          100
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      },
+      {
+        "slot_id": "S12",
+        "var_id": "V12",
+        "formula_id": "F_PRICE",
+        "claim_type": "PRICE",
+        "subject": "반려동물 수제 간식",
+        "metric": "이용 요금",
+        "period": "2025",
+        "unit": "원",
+        "region": "대한민국",
+        "subject_code": null,
+        "stat_code": null,
+        "corp_name": null,
+        "must_contain": [
+          "국내산"
+        ],
+        "must_not_contain": [
+          "수입"
+        ],
+        "value_range": [
+          1000,
+          200000
+        ],
+        "period_min": 2023,
+        "period_max": 2027,
+        "accept": {
+          "min_score": 5,
+          "min_sources": 2,
+          "min_facts": 2
+        },
+        "경계": null,
+        "경계_출처": null,
+        "proxy_선언": null,
+        "proxy_사유": null,
+        "경계_proxy": null
+      }
+    ]
+  },
+  "verdict": null,
+  "report": {
+    "conclusion": [
+      "핵심 차단 사유 1건, 경고 0건. (0건은 상위 위반 때문에 검사하지 않음)",
+      "슬롯 12개 중 3개 충족, 0개는 표본 부족(thin), 9개 공백.",
+      "채택 가능한 값이 없다 — 두 경로가 갈렸다."
+    ],
+    "headline_numbers": [],
+    "how_computed": [],
+    "falsifiers": [],
+    "reconciliations": [],
+    "ledger": [
+      {
+        "fact_id": "F001",
+        "slot_id": "S1",
+        "url": "https://kosis.kr/statHtml/statHtml.do?itmId=T20&objL1=017&objL2=00&orgId=101&prdDe=2025&tblId=DT_1KE10041",
+        "kind": "gov_stat",
+        "kind_by": "whitelist:kosis.kr",
+        "score": 5,
+        "label": "확인됨",
+        "cross": 1,
+        "reasons": [],
+        "conflict": "",
+        "off_slot_reason": null,
+        "scope": "",
+        "scope_note": "",
+        "채택": true,
+        "채택_불가_사유": [],
+        "등급": "확정",
+        "등급_근거": "등급표:gov_stat",
+        "retrieved_at": "2026-08-09T19:35:19"
+      },
+      {
+        "fact_id": "F002",
+        "slot_id": "S2",
+        "url": "https://ntis.go.kr/outcomes/popup/srchTotlPapr.do?cmd=get_contents&rstId=JNL-2019-00110944601",
+        "kind": "aggregate",
+        "kind_by": "downgrade:*.go.kr",
+        "score": 0,
+        "label": "미검증",
+        "cross": 0,
+        "reasons": [
+          "인용문이 본문에 없음 — 근거로 쓸 수 없다"
+        ],
+        "conflict": "",
+        "off_slot_reason": null,
+        "scope": "",
+        "scope_note": "",
+        "채택": false,
+        "채택_불가_사유": [
+          "인용 대조 실패"
+        ],
+        "등급": "추정",
+        "등급_근거": "등급표:aggregate",
+        "retrieved_at": "2026-08-09T19:35:44"
+      },
+      {
+        "fact_id": "F003",
+        "slot_id": "S3",
+        "url": "https://kosis.kr/statHtml/statHtml.do?itmId=T20&objL1=017&objL2=00&orgId=101&prdDe=2025&tblId=DT_1KE10041",
+        "kind": "gov_stat",
+        "kind_by": "whitelist:kosis.kr",
+        "score": 0,
+        "label": "off_slot",
+        "cross": 0,
+        "reasons": [
+          "슬롯 불일치 — 격리 보관"
+        ],
+        "conflict": "",
+        "off_slot_reason": "must_contain 없음: ['소포장']",
+        "scope": "",
+        "scope_note": "",
+        "채택": false,
+        "채택_불가_사유": [
+          "슬롯 불일치 — 격리 보관"
+        ],
+        "등급": "확정",
+        "등급_근거": "등급표:gov_stat",
+        "retrieved_at": "2026-08-09T19:35:19"
+      },
+      {
+        "fact_id": "F004",
+        "slot_id": "S5",
+        "url": "https://kosis.kr/statHtml/statHtml.do?itmId=T20&objL1=017&objL2=00&orgId=101&prdDe=2024&tblId=DT_1KE10041",
+        "kind": "gov_stat",
+        "kind_by": "whitelist:kosis.kr",
+        "score": 5,
+        "label": "확인됨",
+        "cross": 1,
+        "reasons": [],
+        "conflict": "",
+        "off_slot_reason": null,
+        "scope": "",
+        "scope_note": "",
+        "채택": true,
+        "채택_불가_사유": [],
+        "등급": "확정",
+        "등급_근거": "등급표:gov_stat",
+        "retrieved_at": "2026-08-09T19:35:19"
+      },
+      {
+        "fact_id": "F005",
+        "slot_id": "S6",
+        "url": "https://kosis.kr/statHtml/statHtml.do?itmId=T20&objL1=017&objL2=00&orgId=101&prdDe=2023&tblId=DT_1KE10041",
+        "kind": "gov_stat",
+        "kind_by": "whitelist:kosis.kr",
+        "score": 5,
+        "label": "확인됨",
+        "cross": 1,
+        "reasons": [],
+        "conflict": "",
+        "off_slot_reason": null,
+        "scope": "",
+        "scope_note": "",
+        "채택": true,
+        "채택_불가_사유": [],
+        "등급": "확정",
+        "등급_근거": "등급표:gov_stat",
+        "retrieved_at": "2026-08-09T19:35:21"
+      },
+      {
+        "fact_id": "F006",
+        "slot_id": "S12",
+        "url": "https://total.seosan.go.kr/total/selectEdcAtrCourseViewU.do?cl1No=&cl2No=&edcCourseNo=11290&key=2&pageIndex=4&pageUnit=10&searchInsttCode=&searchKrwd=",
+        "kind": "aggregate",
+        "kind_by": "downgrade:*.go.kr",
+        "score": 0,
+        "label": "off_slot",
+        "cross": 0,
+        "reasons": [
+          "슬롯 불일치 — 격리 보관"
+        ],
+        "conflict": "",
+        "off_slot_reason": "must_contain 없음: ['국내산']",
+        "scope": "",
+        "scope_note": "",
+        "채택": false,
+        "채택_불가_사유": [
+          "슬롯 불일치 — 격리 보관"
+        ],
+        "등급": "추정",
+        "등급_근거": "등급표:aggregate",
+        "retrieved_at": "2026-08-09T22:31:03"
+      }
+    ],
+    "not_found": {
+      "empty_slots": [
+        "S2",
+        "S3",
+        "S4",
+        "S7",
+        "S8",
+        "S9",
+        "S10",
+        "S11",
+        "S12"
+      ],
+      "thin_slots": [],
+      "unfilled_vars": [],
+      "suspect_var": [],
+      "off_slot": {
+        "count": 2,
+        "by_reason": {
+          "must_contain 없음": 2
+        },
+        "unverified_quote": 1
+      },
+      "adapters": {
+        "kosis": "ok",
+        "web": "ok"
+      },
+      "retry_hints": [
+        "S2: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S3: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S4: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S7: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S8: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S9: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S10: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S11: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "S12: 수집 0건 — 검색·fetch 로그를 볼 것",
+        "R9: 실명이 확인된 경쟁사가 없다 — 사람이 승인하면 1회 재조사"
+      ],
+      "unit_mismatch": [],
+      "range_capped": [],
+      "skipped_checks": [],
+      "unknown_error_codes": [],
+      "contradictions": [],
+      "url_filtered": [],
+      "자료_부재_확정": [],
+      "independent_topdown_blocked": [
+        "독립 Top-down(T3 상위N사 매출합 ÷ 추정점유율)은 **이 시장에서 지금 불가능하다.** 0단계 실측:",
+        "① 상위권이 비상장이다 — 코케비즈·토스플레이스·쿠팡·스포카·한국결제네트웍스·비바리퍼블리카 **6사 모두 DART 상장 0건**(corpCode 전수 조회).",
+        "② 상장 1사(카페24, 042000)는 **전사 매출**이라 카페 SaaS 시장 매출이 아니다 — scope='company_total' 꼬리표가 붙는 값이다.",
+        "③ 보도에서 관측되는 것은 **거래액(GMV)이지 매출이 아니다** — 카페24 거래액 679억·12조, 코케비즈 거래액 100억. **GMV 는 플랫폼을 통과한 거래 총액이고 그 회사의 수익이 아니다.** 창업자가 가장 흔하게 속는 숫자이므로 매출로 바꿔 쓰지 않는다.",
+        "→ 따라서 현재 SAM 의 두 경로는 **비독립**이다(Top-down 의 세그먼트비중이 Bottom-up 과 같은 사실에서 왔다). 수렴해도 삼각측량이 아니다."
+      ]
+    },
+    "injected_extract": []
+  },
+  "metrics": {
+    "llm.calls": 6,
+    "llm.a3_search.calls": 4,
+    "llm.a3_search.sec": 59.5,
+    "llm.tokens_in": 74229,
+    "llm.tokens_out": 5179,
+    "llm.web_queries": 39,
+    "llm.a3_extract.calls": 2,
+    "llm.a3_extract.sec": 3.9,
+    "a3_candidate.rows": 11,
+    "a3_candidate.ok": 11,
+    "a1_slot.rows": 12,
+    "a1_slot.ok": 12,
+    "a3_document.rows": 47,
+    "a3_document.ok": 47,
+    "a3_finding.rows": 12,
+    "a3_finding.found": 6,
+    "a3_finding.not_found": 6,
+    "a4_facts.rows": 6,
+    "a4_facts.ok": 6,
+    "a4_ledger.rows": 6,
+    "a4_ledger.ok": 6,
+    "a4_coverage.rows": 12,
+    "a4_coverage.충족": 3,
+    "a4_coverage.공백": 9,
+    "a4_slots.total": 12,
+    "a4_year.2025": 4,
+    "a4_year_source.문맥에서 슬롯 기간 창 안의 연도": 4,
+    "a4_year_source.인용문 안의 연도": 1,
+    "a4_year.2024": 1,
+    "a4_year.2023": 1,
+    "a4_year_source.본문에서 슬롯 기간 창 안의 연도": 1,
+    "a4_off_slot.must_contain 없음": 2,
+    "a4_off_slot_by_type.must_contain 없음|SAM": 1,
+    "a4_off_slot_by_type.must_contain 없음|PRICE": 1,
+    "c1_chain.rows": 13,
+    "c1_chain.ok": 13,
+    "c2_violations.rows": 12,
+    "c2_violations.not_applicable": 8,
+    "c2_violations.violated": 1,
+    "c2_violations.passed": 3,
+    "c3_report.rows": 1,
+    "c3_report.ok": 1,
+    "intervention.total": 10,
+    "intervention.nonblocking": 10,
+    "intervention.rows": 10,
+    "intervention.ok": 10
+  },
+  "rules": {
+    "whitelist": {
+      "version": "v8-2026-08-09",
+      "_규칙": "출처 유형(kind)은 도메인으로만 정한다. 모델의 어떤 출력도 쓰지 않는다(절대규칙 2). **등재 심사 질문은 둘이다** (증거 기준 선언, CLAUDE.md §0, 2026-08-09 사용자 확정): ① **실무 시장조사에서 인용되는 종류인가** ② **발행 주체가 확인되는가**. '결과가 나빠서'는 여전히 사유가 아니다. ⚠ **옛 문구는 「'누가 발행했는가' 하나뿐」이었다** — 그 문구가 ①을 배제해 상업 리서치사를 「통계기관이 아니다」로 거절하게 만들었다. 선언이 그것을 바로잡았다.",
+      "kinds": {
+        "gov_stat": [
+          "kosis.kr",
+          "kostat.go.kr",
+          "data.go.kr",
+          "index.go.kr",
+          "mdis.kostat.go.kr",
+          "mods.go.kr",
+          "sri.kostat.go.kr",
+          "sbiz.or.kr",
+          "mss.go.kr",
+          "dataseoul.s3.ap-northeast-2.amazonaws.com"
+        ],
+        "public_filing": [
+          "dart.fss.or.kr",
+          "opendart.fss.or.kr",
+          "alio.go.kr",
+          "kind.krx.co.kr"
+        ],
+        "panel_data": [
+          "wiseapp.co.kr",
+          "mobileindex.com",
+          "igaworks.com",
+          "nielsen.com"
+        ],
+        "survey_firm": [
+          "opensurvey.co.kr",
+          "trendmonitor.co.kr",
+          "gallup.co.kr",
+          "kantar.com",
+          "kbiz.or.kr",
+          "kisdi.re.kr"
+        ],
+        "official_page": [
+          "apps.apple.com",
+          "play.google.com",
+          "loyverse.com",
+          "orderlist.co.kr",
+          "cafepost.kr",
+          "kcd.co.kr",
+          "cashnote.kr",
+          "korea.kr",
+          "bizinfo.go.kr",
+          "coupangpos.com",
+          "hpos.co.kr",
+          "centumpos.com",
+          "kopays.net",
+          "needs.team",
+          "mirimate.co.kr",
+          "cafe-note.foundry.ai.kr",
+          "foodlogic.co.kr",
+          "about.cafe24wms.com",
+          "m.ktv.go.kr",
+          "dl.nanet.go.kr",
+          "manual.daouoffice.co.kr",
+          "product.kt.com",
+          "m.corp.kt.com",
+          "kakaocorp.com",
+          "partner.kakaopay.com",
+          "shopify.com",
+          "cafe24.com",
+          "help.cafe24.com",
+          "support.cafe24.com",
+          "shopnotice.cafe24.com",
+          "news.cafe24.com",
+          "developers.cafe24.com",
+          "biz.koke.kr",
+          "kokebizinsight.stibee.com",
+          "tossplace.com",
+          "bworld.co.kr",
+          "skpos.co.kr",
+          "wowpos.kr",
+          "nwpos.co.kr",
+          "posmos.net",
+          "kcp.kpos.store",
+          "kpn.co.kr",
+          "misik.io",
+          "aftercompany.co.kr",
+          "spoqa.co.kr",
+          "sosomarket.co.kr",
+          "hanwha.co.kr",
+          "hanwhavision.com",
+          "gongbiz.kr",
+          "crm.gongbiz.kr",
+          "handsos.com",
+          "help.naver.com",
+          "smartplace.naver.com",
+          "noshowhair.com"
+        ],
+        "press": [
+          "yna.co.kr",
+          "hankyung.com",
+          "mk.co.kr",
+          "chosun.com",
+          "donga.com",
+          "joongang.co.kr",
+          "hani.co.kr",
+          "khan.co.kr",
+          "sedaily.com",
+          "edaily.co.kr",
+          "mt.co.kr",
+          "fnnews.com",
+          "etnews.com",
+          "zdnet.co.kr",
+          "imbc.com",
+          "kbs.co.kr",
+          "sbs.co.kr",
+          "ytn.co.kr",
+          "news1.kr",
+          "newsis.com",
+          "asiae.co.kr",
+          "platum.kr",
+          "venturesquare.net",
+          "sentv.co.kr",
+          "asiatoday.co.kr",
+          "ajunews.com",
+          "intn.co.kr",
+          "cstimes.com"
+        ],
+        "legal_source": [
+          "law.go.kr",
+          "moleg.go.kr",
+          "easylaw.go.kr"
+        ],
+        "community": [
+          "cafe.naver.com",
+          "blog.naver.com",
+          "reddit.com",
+          "clien.net",
+          "dcinside.com",
+          "ppomppu.co.kr"
+        ],
+        "press_release": [
+          "newswire.co.kr"
+        ],
+        "research_firm": [
+          "statista.com",
+          "euromonitor.com",
+          "mordorintelligence.com"
+        ]
+      },
+      "suffix_downgrade": {
+        "_why": "위 목록에 없는 *.go.kr / *.or.kr 은 공공기관 일반 페이지다. 지자체 보도자료가 섞이므로 통계 생산물로 올려주지 않는다. 반대로 진짜 통계 채널(mods.go.kr 등)은 위에 개별 등재한다.",
+        "go.kr": "aggregate",
+        "or.kr": "aggregate"
+      },
+      "default_kind": "aggregate",
+      "registry": [
+        {
+          "domain": "mods.go.kr",
+          "kind": "gov_stat",
+          "on": "2026-08-05",
+          "by": "junwoo",
+          "why": "국가데이터처 공표자료 채널 — 통계 생산 주체가 직접 발행"
+        },
+        {
+          "domain": "loyverse.com",
+          "kind": "official_page",
+          "on": "2026-08-05",
+          "by": "junwoo",
+          "why": "자사 제품의 가격·기능을 자기가 밝힌 1차 출처"
+        },
+        {
+          "domain": "orderlist.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-05",
+          "by": "junwoo",
+          "why": "자사 제품 공식 페이지 (1차 출처)"
+        },
+        {
+          "domain": "cafepost.kr",
+          "kind": "official_page",
+          "on": "2026-08-05",
+          "by": "junwoo",
+          "why": "자사 가격 페이지 (1차 출처)"
+        },
+        {
+          "domain": "mss.go.kr",
+          "kind": "gov_stat",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "중소벤처기업부 — 「소상공인 실태조사」의 **발행 부처**. 시행기관 sbiz.or.kr 은 이미 등재돼 있었는데 부처만 빠져 있던 비대칭을 메운다"
+        },
+        {
+          "domain": "korea.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "대한민국 정책브리핑 — 정부 발표를 **재유통하는 포털**이고 통계 생산 주체가 아니다. 그래서 gov_stat 이 아니라 official_page 급. 원출처(소관 부처)를 따로 찾는 것이 옳다"
+        },
+        {
+          "domain": "bizinfo.go.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "기업마당 — 중기부가 운영하는 **정책 재유통 포털**. 위와 같은 이유로 gov_stat 아님"
+        },
+        {
+          "domain": "coupangpos.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "쿠팡포스 — 자사 서비스의 가격·기능을 자기가 밝힌 1차 출처"
+        },
+        {
+          "domain": "hpos.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "H포스 — 같음"
+        },
+        {
+          "domain": "centumpos.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "센텀포스 — 같음"
+        },
+        {
+          "domain": "kopays.net",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "한국지급결제 — 같음"
+        },
+        {
+          "domain": "needs.team",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "MIRI(재고관리) 운영사 — 같음"
+        },
+        {
+          "domain": "mirimate.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "MIRI 서비스 도메인 — 같음"
+        },
+        {
+          "domain": "cafe-note.foundry.ai.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페노트 — 같음"
+        },
+        {
+          "domain": "foodlogic.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "푸드로직 — 같음"
+        },
+        {
+          "domain": "about.cafe24wms.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "스마트재고(카페24 WMS) 서비스 소개 — 그 서비스 운영 주체의 1차 출처"
+        },
+        {
+          "domain": "newswire.co.kr",
+          "kind": "press_release",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "뉴스와이어 — **보도자료 배포 대행**이지 매체가 아니다. 발행자는 의뢰 기업 자신이므로 press(3, 언론)로 올리면 자기 홍보가 언론 등급을 받는다. 별도 kind 로 두고 자기발표로 취급한다"
+        },
+        {
+          "domain": "kind.krx.co.kr",
+          "kind": "public_filing",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "한국거래소 전자공시(KIND) — 법정 공시 원본",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "dataseoul.s3.ap-northeast-2.amazonaws.com",
+          "kind": "gov_stat",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "서울 열린데이터광장이 배포하는 「소상공인 실태조사(승인번호 제142021호)」 원본. 호스트가 S3 버킷이라 소유자 확인이 도메인만으로는 약하다 — dataseoul 접두사가 서울시 것임을 확인하고 등재",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "kbiz.or.kr",
+          "kind": "survey_firm",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "중소기업중앙회 — 자체 실태조사를 발행하는 조사 주체. *.or.kr 접미 강등의 예외로 개별 등재(sbiz.or.kr 전례)",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "sentv.co.kr",
+          "kind": "press",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "서울경제TV — 방송 매체",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "m.ktv.go.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "KTV 국민방송 — 정부 발표를 재유통하는 채널. korea.kr 과 같은 급(통계 생산 주체 아님)",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "dl.nanet.go.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "국회도서관 — 공공기관이 발행하는 소장정보. **v4 에서 \"값이 없다\"는 내용 판단으로 반대했던 것을 통일 기준(발행자만)으로 재분류**",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "manual.daouoffice.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "다우기술 — 자사 서비스 매뉴얼. **v4 에서 \"무관\"이라는 내용 판단으로 반대했던 것을 재분류**",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "product.kt.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "㈜케이티 — S4 조사 대상 서비스(사장이지) 운영사 자신",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "m.corp.kt.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "㈜케이티",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "kakaocorp.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카카오 뉴스룸 — 자사 발표",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "partner.kakaopay.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카카오페이 — 자사 서비스",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "shopify.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "Shopify Inc. — 자사 가격표. 지역 부적합은 off_slot 이 잡는다",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24 — 자사 공식",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "help.cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "support.cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "shopnotice.cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "news.cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "developers.cafe24.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "카페24",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "biz.koke.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "코케비즈 — 자사 채널",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "kokebizinsight.stibee.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "코케비즈 뉴스레터",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "tossplace.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "토스플레이스",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "bworld.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "SK브로드밴드 B world",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "skpos.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "SKPOS",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "wowpos.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "WOWPOS",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "nwpos.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "누리네트웍스",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "posmos.net",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "포스모스",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "kcp.kpos.store",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "KCP",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "kpn.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "한국결제네트웍스",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "misik.io",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "미식",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "aftercompany.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "애프티",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "spoqa.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "스포카",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "sosomarket.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "소소상점",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "hanwha.co.kr",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "한화그룹 뉴스룸",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "hanwhavision.com",
+          "kind": "official_page",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "한화비전",
+          "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+        },
+        {
+          "domain": "asiatoday.co.kr",
+          "kind": "press",
+          "on": "2026-08-08",
+          "by": "②-b-A 등재 심사",
+          "why": "아시아투데이 — 종합 일간지. 본문에 기사 형식·발행 주체 확인"
+        },
+        {
+          "domain": "ajunews.com",
+          "kind": "press",
+          "on": "2026-08-08",
+          "by": "②-b-A 등재 심사",
+          "why": "아주경제 — 경제 일간지. 중기부 실태조사를 인용 보도한 기사 본문 확인"
+        },
+        {
+          "domain": "intn.co.kr",
+          "kind": "press",
+          "on": "2026-08-08",
+          "by": "②-b-A 등재 심사",
+          "why": "일간NTN — 조세·경제 전문 언론. 부처 보도자료 인용 기사 확인"
+        },
+        {
+          "domain": "cstimes.com",
+          "kind": "press",
+          "on": "2026-08-08",
+          "by": "②-b-A 등재 심사",
+          "why": "컨슈머타임스 — 소비자 전문 언론. 기자 실명(진보현) 바이라인 확인"
+        },
+        {
+          "domain": "kisdi.re.kr",
+          "kind": "survey_firm",
+          "on": "2026-08-08",
+          "by": "②-b-A 등재 심사",
+          "why": "정보통신정책연구원(KISDI) — 정부출연 연구기관. 통계 생산 주체는 아니므로 gov_stat 이 아니라 조사·연구 발행자 등급"
+        },
+        {
+          "domain": "gongbiz.kr",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "공비서 운영사 공식 — 요금제 페이지에서 자기 식별 확인(「공비서 원장님+ / 요금제 안내」). 관측 대상 경쟁사(S10·S14)"
+        },
+        {
+          "domain": "crm.gongbiz.kr",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "공비서 운영사 하위 도메인(고객관리). 개발 서버가 아니다"
+        },
+        {
+          "domain": "handsos.com",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "핸드SOS 운영사 공식 — 본문에서 자사 서비스(이지폰 부가서비스) 설명 확인. 관측 대상 경쟁사(S11)"
+        },
+        {
+          "domain": "help.naver.com",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "네이버 공식 고객센터 — 네이버 예약 이용 안내의 1차 발행자. 관측 대상(S12·S17)"
+        },
+        {
+          "domain": "smartplace.naver.com",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "네이버 스마트플레이스 공식 — 같은 발행자, 사업자용 채널(S11·S12)"
+        },
+        {
+          "domain": "noshowhair.com",
+          "kind": "official_page",
+          "on": "2026-08-08",
+          "by": "②-b-A 검수 답신",
+          "why": "미용실 노쇼 관리 SaaS 운영사 공식. 관측 대상 대체재(S8). ⚠ **경계: 본문이 「현재 개발 중인 서비스입니다 · 실제 서비스 제공은 아직 불가능합니다」라고 밝힌다 — 게시된 요금은 예정 가격이다.** 발행자 등급은 「누가 발행했는가」로 정하므로 official_page 가 맞지만, 이 값을 대체재 밴드에 쓸 때는 미출시임을 함께 읽어야 한다"
+        },
+        {
+          "domain": "mordorintelligence.com",
+          "kind": "research_firm",
+          "on": "2026-08-09",
+          "by": "junwoo",
+          "why": "상업 시장조사 리서치사 — 산업별 시장규모·CAGR 리포트를 유료로 발행한다. §0 증거 기준 선언의 `research_firm`(방법론 비공개·유료벽) 정의에 정확히 해당하고, 심사 질문 둘을 통과한다: ①실무 시장조사가 인용하는 종류인가 — 그렇다(컨설팅·VC 실사) ②발행 주체가 확인되는가 — 그렇다. Statista·Euromonitor 와 같은 칸(3점).",
+          "⚠_등재는_검증_면제가_아니다": "**이 도메인에서 온 사실 3건은 전부 `미검증`(인용문이 본문에 없음)으로 죽었다**(`pet-treat-03` F001~F003). 등재해도 그 3건은 **그대로 죽는다** — 등급 상한이 아니라 **인용 대조**에서 죽었기 때문이다. **등재는 입장 허가지 검증 면제가 아니다** — `quote_verified` 는 그대로 탄다(2026-08-09 사용자 명시).",
+          "⚠_재게시_특례": "백로그 47·48 이 그대로 걸린다 — 리서치사 문서가 **원출처를 재게시**한 것이면 원출처 등급으로 내려야 하고, 그 판정은 **아직 코드로 강제되지 않는다**(문서 단위 판정인데 `kind_of()` 는 도메인 단위)."
+        }
+      ],
+      "rejected": [
+        {
+          "domain": "cashpop.io",
+          "on": "2026-08-05",
+          "by": "junwoo",
+          "why": "미국 POS·결제 서비스. 1차 출처인 것은 맞으나 조사 대상 범위 밖"
+        },
+        {
+          "domain": "v.daum.net",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "포털 재게시본 — URL 로 원 발행자를 알 수 없다. **발행자 불명**은 등재 사유가 없다",
+          "audit": "v5"
+        },
+        {
+          "domain": "saaskorea.com",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "제3자가 편집한 디렉터리 — 어느 수치의 1차 발행자가 아니다",
+          "audit": "v5"
+        },
+        {
+          "domain": "gjcouncil.go.kr",
+          "on": "2026-08-06",
+          "by": "junwoo",
+          "why": "광주광역시의회 — suffix_downgrade(*.go.kr → aggregate)의 원래 취지에 정확히 해당. 지자체 자체 문서를 통계 생산물로 올려주지 않는다",
+          "audit": "v5"
+        },
+        {
+          "domain": "updog.kr",
+          "on": "2026-08-09",
+          "by": "junwoo",
+          "why": "**발행 주체가 확인되지 않는다** — 페이지가 `index.html` 한 장이고 운영 주체·조사 방법 표기가 없다. 심사 질문 ②에서 탈락. `pet-treat-03` F004 가 이 도메인이었고 `off_slot` 으로 죽었다.",
+          "⚠_실효": "백로그 30 — `kind_of()` 는 `rejected` 를 보지 않는다. 이 등재는 **문서 효력만** 갖는다(「거부했다」와 「아직 안 봤다」가 동작상 같다)."
+        }
+      ],
+      "_kinds_주석": "",
+      "_press_release": "press_release 는 **자기발표**다. scoring.cross.self_published_kinds 에 들어 있어 official_page 와 교차확인을 주고받지 못한다. 두 곳을 같이 본다.",
+      "_v5": "v5 는 **두 팔의 미등재 도메인 전수**를 팔 표시를 가린 채 한 목록으로 감사한 결과다(runs/audit-v5.md, seed=20260806). v4 는 대조군 문서만 감사해 만들어져 **자가 한쪽 팔에 맞춰져 있었다** — 그 편향을 걷어낸 것이 v5 다. 기준은 여전히 「누가 발행했는가」 하나뿐이고, 내용 적합성은 off_slot 몫이다.",
+      "_이력": [
+        {
+          "version": "v7-2026-08-08",
+          "판": "②-b-A (검수 답신 — 운영사 공식 페이지 등재)",
+          "원칙": "**official_page 는 언론 등재 원칙과 별개 종류다**(사용자 판정 2026-08-08). 선례 loyverse·cafepost. 조건 3개를 **전부** 만족할 때만: ① 본문에서 발행 주체 자기 식별 확인 ② **관측 대상 서비스**의 운영사(경쟁사·대체재) ③ 개발 서버 제외.",
+          "무엇": "official_page 6곳 등재. 보류 13곳 중 7곳은 조건 미달로 **보류 유지**.",
+          "불변": "자기발표 버킷(`cross.self_published_kinds`)은 그대로다 — official_page 끼리는 여전히 한 화자로 접힌다. 등재가 교차 가점을 만들어내지 않는다.",
+          "기대": "확인됨 델타 0. **수익원 칸 요금 사실 3건이 aggregate 1점 → official_page 4점 = 실무 신뢰 진입.** beauty-06d 로 분리 측정."
+        },
+        {
+          "version": "v6-2026-08-08",
+          "판": "②-b-A (등재 심사)",
+          "원칙": "사용자 위임 (2026-08-08): **언론사·연구기관·공공기관만.** 커뮤니티·개인블로그·콘텐츠마케팅 도메인 불가. 사유는 「누가 발행했는가」 하나뿐이며 「결과가 나빠서」는 사유가 아니다.",
+          "무엇": "press 4곳 · survey_firm 1곳 신규 등재. 후보 26곳 중 21곳은 **보류**했다(사유는 registry 의 _보류 참조).",
+          "근거": "전부 beauty-05 원장의 본문에서 발행자 자기 식별을 확인했다 — 추측 0건.",
+          "기대": "확인됨 델타 0. asiatoday(F006) 2→3 · ajunews(F009) 2→3 뿐이고 둘 다 임계 5 미달."
+        },
+        {
+          "version": "v8-2026-08-09",
+          "판": "⑥ 마감",
+          "무엇": "① `_규칙` 개정 — 등재 심사 질문을 **둘**로(실무 인용 종류 + 발행 주체 확인) ② `research_firm` kind 신설(statista.com·euromonitor.com, 3점)",
+          "왜": "**증거 기준 선언**(CLAUDE.md §0, 2026-08-09 사용자 확정) — 「이 서비스의 증거 채택 기준은 시장조사 실무다. 학술 감사 기준이 아니다. 정직성은 채택 여부가 아니라 등급 표기로 지킨다」. 옛 문구 「'누가 발행했는가' 하나뿐」이 상업 리서치사를 구조적으로 배제하고 있었다.",
+          "기대": "기존 원장 영향 **0** — statista·euromonitor 는 기존 원장에 등장하지 않는다(등재는 새 문서부터 적용된다)."
+        }
+      ],
+      "_보류": {
+        "_규칙": "등재하지 않은 후보. **거부(rejected)가 아니라 보류다** — 원칙에 안 맞거나 발행자를 특정 못 했다는 뜻이고, 근거가 생기면 다시 심사한다. ⚠ 엔진은 `rejected` 도 `_보류` 도 읽지 않는다 — `kind_of()` 는 `kinds` → `suffix_downgrade` → `default_kind` 만 본다. 둘 다 **문서 효력만** 있다(백로그: 실효를 주려면 kind_of 에 분기가 필요).",
+        "서비스_운영사_자기페이지": {
+          "도메인": [
+            "shiftee.io",
+            "cutly.kr",
+            "yo-b.com",
+            "stripe.com",
+            "mieum.kr",
+            "ailyhm.com"
+          ],
+          "왜": "official_page 조건 3개 중 하나 이상 미달. ② **관측 대상 서비스가 아니다** — shiftee(근태관리)·cutly(URL 단축)·yo-b(브랜드 디자인)·stripe(결제, CAC 콘텐츠)는 검색이 잘못 물어온 무관 서비스다. 이들을 넣으면 화이트리스트가 「검색이 물어온 것」으로 오염된다. ① **자기 식별 확인 불가** — mieum(js_shell 46자)·ailyhm(empty)은 본문이 없어 발행 주체를 확인할 수 없다"
+        },
+        "발행자_불명_또는_콘텐츠마케팅": {
+          "도메인": [
+            "unbuiltlab.com",
+            "categoryofbusiness.com",
+            "keyzard.cc",
+            "gongbizguide.oopy.io",
+            "bakertilly.com"
+          ],
+          "왜": "자기 식별이 없거나(unbuiltlab — 본문에 발행 주체 표기 0, mojibake 흔적) 자사 마케팅 자산 성격이 강하다(bakertilly — 벤치마크 리포트이되 회계법인 자산). 경계선은 **보수적으로** 둔다"
+        },
+        "플랫폼_커뮤니티": {
+          "도메인": [
+            "kmong.com",
+            "pf.kakao.com"
+          ],
+          "왜": "플랫폼이 발행자다 — 수치의 1차 발행자가 아니다"
+        },
+        "영구_불가": {
+          "도메인": [
+            "crm-dev5.gongbiz.kr"
+          ],
+          "왜": "**개발 서버.** 발행물이 아니라 작업 중인 화면이다. 어떤 원칙에서도 등재하지 않는다(사용자 판정 2026-08-08, 영구)."
+        }
+      },
+      "_research_firm": {
+        "_규칙": "**상업 리서치사** — 자체 조사·리포트를 직접 발행하는 곳. 실무(컨설팅·VC 실사)가 표준 재료로 쓰는 종류다.",
+        "등급": "실무 신뢰 계열(3점). **gov_stat 5점(확정)과 섞지 않는다.**",
+        "_왜_3점인가": "`cross_bonus=+1` · `확인됨` 임계 5. 3점으로 두면 **서로 다른 리서치사 2곳이 유사 값을 낼 때 4점(실무 신뢰 상단)**이 되고 **확정(5)에는 닿지 않는다** — 「해외 세분류에서 실질적 최고 등급」과 「gov 와 안 섞는다」가 점수 조작 없이 **기존 규칙만으로** 동시에 성립한다.",
+        "경계": [
+          "상업 리서치사 추정치다 — 관측이 아니다.",
+          "방법론이 비공개이거나 유료벽 뒤에 있고, 회사 간 편차가 존재한다."
+        ],
+        "_실무_근거": "해외 세분류 시장(동남아 K-뷰티 등)은 국가 통계에 항목이 없어 리서치사 추정이 사실상 유일 출처다. 실제 시장조사·IR 관행과 일치한다.",
+        "접기": "같은 리서치사 리포트를 받아쓴 기사들은 **1겹**으로 접는다(`rules/source_signature`). 서로 **다른** 리서치사 2곳은 **독립 교차**로 인정한다 — 다겹 규칙 그대로.",
+        "⚠_Statista_특례": {
+          "규칙": "Statista 는 **자체 조사분과 타 출처 재게시분이 섞인다.** 문서 단위에서 **원출처 표기가 확인되는 것만 유효**하고, 재게시분은 **그 원출처의 등급을 따른다.** 원출처 불명이면 **aggregator 처리**(2점).",
+          "⚠_미구현": "이 특례는 **문서 단위 판정**이라 `kind_of()`(도메인 단위)로는 실행되지 않는다. **지금은 문서 효력만 있다** — 백로그 30(rejected·_보류 무실효)과 같은 뿌리이고, 실효를 주려면 발췌 층에 분기가 필요하다(백로그 47).",
+          "당장의_방어": "재게시분이 그대로 3점을 받을 수 있다. 그래서 Statista 문서는 **개별 심사 목록**(백로그 48)에 올려 사람이 원출처를 확인한다."
+        },
+        "_심사_대기": {
+          "도메인": [
+            "nielseniq.com",
+            "kantar.com",
+            "mintel.com",
+            "grandviewresearch.com",
+            "mordorintelligence.com"
+          ],
+          "왜": "선언의 심사 질문 둘을 만족할 가능성이 높으나 **이번 판정에서 사용자가 지목한 것은 Statista·유로모니터급**이다. 개별 등재는 별도 심사 — 추측으로 넣지 않는다"
+        }
+      }
+    },
+    "scoring": {
+      "version": "scoring-v6-2026-08-09",
+      "_규칙": "점수는 이 표에서만 나온다. 코드에 상수를 박지 않는다(절대규칙 7).",
+      "_이력": [
+        {
+          "version": "v5-2026-08-09",
+          "판": "⑩ ②-a (자기 요금 페이지 연도 예외)",
+          "무엇": "`missing_year_exemption` 신설 — kind=official_page 이고 슬롯이 PRICE 이며 `retrieved_at` 이 기록된 사실에 한해 `missing_year_penalty` 를 면제한다.",
+          "왜": "판 ⑩ 0단계 실측: `gongbiz.kr` 요금표 3건이 전부 `4 − 1 = 3점`(출처약함)이었고 사유가 「필수 요소 누락: year」였다. **요금 페이지는 상시 게시물이라 연도 표기가 없는 것이 정상**이고, 연도 부재는 자료의 결함이 아니라 자료의 성질이다. 그 자리에 감점을 걸면 「가격을 관측해도 가격 밴드가 안 열리는」 구조가 된다.",
+          "왜_안전한가": "① **범위가 좁다** — 자기 제품 요금을 자기가 밝힌 1차 출처(`official_page`) × PRICE 슬롯에만 걸린다. gov_stat·press·연도가 의미 있는 계량은 전부 종전대로다. ② **대가를 받는다** — `retrieved_at` 이 없으면 예외가 안 걸린다. 「언제 본 값인지 모르는 가격」은 그대로 감점된다. ③ **상한이 그대로다** — 면제해도 official_page 는 4점이고 `확인됨`(5)에는 닿지 않는다. 자기발표는 한 화자로 접히므로 교차 가점도 없다. 즉 **이 예외만으로는 아무 사실도 확인됨이 되지 않는다.**",
+          "안_바꾼_것": "`missing_year_penalty` 값 · `base_score` · `caps` · `label_thresholds` · 교차 규칙 전부 무변경. 연도 미상이 `match_key` unknown 버킷으로 가는 것도 그대로다(사유 문자열도 남는다) — **점수만 면제하고 교차는 면제하지 않는다.**",
+          "기대": "`beauty` 원장에서 `official_page` × PRICE 사실 3건이 3 → 4 로 오른다. 라벨은 `출처약함` → `출처약함`(임계 5 미달) 그대로이고, **확인됨 델타는 0**이다. 신뢰 등급 표기는 `실무 신뢰` 로 오른다. ⚠ 옛 실행을 `--from a4` 로 복원하면 문서에 `retrieved_at` 이 없어 **예외가 안 걸린다** — 효과를 보려면 그 페이지를 다시 받아야 한다.",
+          "규약": "「계측된 개정」(CLAUDE.md §5) — 값은 전부 이 파일에, `enabled` 로 켜고 끈다, 재채점은 변경별 분리"
+        },
+        {
+          "version": "v4-2026-08-08",
+          "판": "②-b-B (PDF 적재 + S16 표적 재수집)",
+          "무엇": "`content_status.pdf` 신설 — 매직바이트·Content-Type 판정, `max_pages`, 그리고 **`pdf_unreadable` 상태값**",
+          "왜": "PDF 가 `empty` 로 뭉개져 「빈 페이지」와 「PDF 라 못 읽음」이 구분되지 않았다(백로그 23). mss 노쇼 보도자료는 본문 HTML 이 껍데기고 수치가 첨부 PDF 에만 있다(백로그 24 — 도메인 등급 ≠ 그 문서가 그 값을 담았는가).",
+          "기대": "S16 확인됨 1건(`gov_stat` 5 · year 2025). 심사 기준 무변경 — 임계·base_score·caps 를 하나도 건드리지 않았다. `pdf_unreadable` 은 `usable` 이 아니므로 상한 2 가 그대로 걸린다.",
+          "규약": "「계측된 개정」(CLAUDE.md §5) — 값은 전부 이 파일에, 사전등록은 `expected.md` 부록 D"
+        },
+        {
+          "version": "v3-2026-08-08",
+          "판": "②-b-A (심사층 위생 수리)",
+          "무엇": "연도 인식 3종 수리 — ① `year_fields.pick_window` (주움 창 = 판정 창) ② `year_fields.two_digit` (’25 형식) ③ `year_fields.exclude_spans` (전화번호·사업자번호 구간 제거)",
+          "왜": "`beauty-05` 실측. ①은 자기모순(주워 놓고 스스로 격리) ②는 한국 공문서 표준 표기 미인식 ③은 전화번호를 연도로 오인. 셋 다 **잘못 읽는 것**을 고치는 위생 수리이고, 심사 기준을 낮추지 않는다 — 임계·base_score·caps 무변경.",
+          "기대": "확인됨 델타 **0**. 재는 것은 `off_slot` 탈출 수와 연도 인식 수다. 자세한 사전등록은 `expected.md` 부록 C.",
+          "규약": "「계측된 개정」(CLAUDE.md §5) — 값은 전부 이 파일에, 재채점은 변경별 분리(`beauty-06a`), before/after 표 필수"
+        },
+        {
+          "판": "⑥ 마감",
+          "무엇": "`base_score.research_firm = 3` 신설",
+          "왜": "증거 기준 선언 — 상업 리서치사를 **자기 등급으로** 받는다. 3점이면 리서치사 2곳 교차 시 4점(실무 신뢰 상단)이고 확정(5)에는 안 닿는다.",
+          "⚠_이름_혼동": "`survey_firm`(4)·`panel_data`(4)와 다르다 — 그 둘은 **조사·패널 데이터**(방법론이 드러난 1차 수집), `research_firm`(3)은 **시장 규모 추정 리포트**(방법론 비공개·유료벽)다. 점수가 다른 이유가 이것이다."
+        }
+      ],
+      "base_score": {
+        "gov_stat": 5,
+        "public_filing": 5,
+        "legal_source": 5,
+        "panel_data": 4,
+        "survey_firm": 4,
+        "official_page": 4,
+        "press": 3,
+        "press_release": 3,
+        "aggregate": 2,
+        "community": 1,
+        "research_firm": 3
+      },
+      "fresh_years": 3,
+      "stale_penalty": 1,
+      "missing_year_penalty": 1,
+      "missing_year_exemption": {
+        "_why": "연도 표기가 없는 것이 **자료의 결함이 아니라 성질**인 자리가 있다. 자기 제품의 요금 페이지가 그렇다 — 상시 게시물이라 발행 연도를 적지 않는다. 그 자리에 `missing_year_penalty` 를 걸면 가격을 관측해도 가격 밴드가 구조적으로 안 열린다(판 ⑩ 실측).",
+        "_대가": "예외는 공짜가 아니다. **`retrieved_at`(우리가 그 페이지를 받아 온 시각)이 기록돼 있어야만** 걸린다. 연도가 없는데 조회 시점도 모르면 그 값이 언제의 가격인지 알 방법이 아무 데도 없다 — 그건 감점이 맞다.",
+        "_한계": "이 예외는 **점수 1점**이고 상한을 올리지 않는다. official_page 는 여전히 4점이 최대이고 `확인됨`(5)에 닿지 않는다 — 자기발표는 한 화자로 접혀 교차 가점도 못 받는다. **이 예외만으로 확인됨이 되는 사실은 없다.**",
+        "_교차는_면제하지_않는다": "연도 미상 사실이 `match_key` 의 unknown 버킷으로 가는 동작은 **그대로 둔다.** 점수만 면제하고 교차는 면제하지 않는다 — 연도를 모르는 값끼리 서로를 보증하게 만들면 F4 가 되돌아온다.",
+        "enabled": true,
+        "kinds": [
+          "official_page"
+        ],
+        "claim_types": [
+          "PRICE"
+        ],
+        "require_retrieved_at": true,
+        "reason": "연도 미표기 면제 — 자기 요금 페이지(상시 게시물). 조회 시점 {retrieved_at}",
+        "reason_denied": "연도 미표기 면제 불가 — 조회 시점(retrieved_at) 미기록"
+      },
+      "cross_bonus": 1,
+      "cross_min_sources": 2,
+      "_cross_조건": "match_key 가 같고 **화자**가 서로 다를 때만 +1. 자유 텍스트로 비교하면 모순 수치가 서로를 보증한다(F4).",
+      "cross": {
+        "_why": "도메인이 다르다고 화자가 다른 것이 아니다. 회사 공식 페이지와 그 회사가 낸 보도자료 배포본은 **도메인은 둘, 말하는 사람은 하나**다. 그대로 두면 official_page(4) + press_release 조합이 +1 을 받아 자기 말만으로 5점(확인됨)에 닿는다.",
+        "self_published_kinds": [
+          "official_page",
+          "press_release"
+        ],
+        "self_published_bucket": "self_published",
+        "_왜_회사별로_접지_않나": "URL 로는 '어느 회사가 발표했는지'를 알 수 없다 — 배포 대행 도메인(newswire 류)에는 그 정보가 없다. 회사 단위로 접으려면 발행 주체를 식별해야 하는데 그건 결정론으로 안 된다. **모르는 것은 보수적으로** — 자기발표 전체를 한 화자로 둔다.",
+        "_남는_것": "독립 발행자(통계기관·언론·조사기관)와의 교차는 그대로 살아 있다. gov_stat 1곳 + 회사 자기발표 1곳 = 화자 2 → +1 은 정상 작동한다.",
+        "_기각한_대안": "press_release 를 2점으로 낮춰 '조합해도 5에 못 닿게' 하는 임시안은 **목적을 달성하지 못한다.** cross_bonus 는 상대의 kind 를 보지 않으므로, press_release 가 2점이어도 그 짝인 official_page 는 4+1=5 로 확인됨이 된다. 막아야 하는 것은 점수가 아니라 **가점의 조건**이다.",
+        "_미해결_인접구멍": "교차확인은 **값을 보지 않는다.** match_key(subject_code|metric|period)만 같으면 값이 달라도 서로 +1 을 준다 — full-01 의 「서비스 침투율」 아래에 68 · 105,000 · 479,000 · 757,000 이 함께 있었다(실측). F4 가 부분적으로 재발한 자리다. 별건으로 잰다(백로그 7).",
+        "require_same_unit": true,
+        "_require_same_unit": "**1겹.** unit_norm 이 다르면 애초에 같은 사실이 아니다. 실측: 「서비스 침투율|비율|2022」 한 그룹에 68.0 % 와 757,000 개가 같이 있었다(11,000배). match_key 에 단위가 없어서 생긴 일이다. match_key 자체는 건드리지 않는다 — 비교 축이 바뀌면 과거 원장과 문자열이 안 맞는다(백로그 9).",
+        "value_match": {
+          "_why": "**2겹.** 완전 일치는 과잉이다 — 실측: 「95,000개 정도」(반올림 표기)와 「9만5,337개」(정확값)는 같은 사실이다. 무제한 허용은 구멍 그대로다.",
+          "significant_digits": true,
+          "_significant_digits": "두 값의 유효숫자 자릿수를 세어(후행 0 제외) **적은 쪽 자릿수로 둘 다 반올림**해 같으면 같은 값. 반올림해 쓴 표기라는 현상 자체를 모델링한다.",
+          "max_rel_diff": 0.05,
+          "_max_rel_diff": "유효숫자만 쓰면 유효숫자 1자리에서 100,000 과 149,000 이 같아진다(33% 차이). 상대차 상한을 **함께** 건다. 반대로 상대차만 쓰면 105,000 과 110,000(4.5%)이 붙는데 그건 서로 다른 요금제다 — 유효숫자 규칙이 그것을 가른다. **두 조건은 상보적이고 둘 다 만족해야 한다.**"
+        },
+        "scale_suspect": {
+          "_why": "**3겹.** 정확히 10^n 배는 같은 값이 아니라 **단위 오독 의심**이다. 실측: 「원두 kg당 폐기 비용」에 350 원과 350,000 이 함께 있었다(정확히 1,000배). 같은 값으로 접으면 100배 틀린 값이 조용히 흐르고, 남으로만 두면 원인을 못 찾는다.",
+          "enabled": true,
+          "powers": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            8
+          ],
+          "_powers": "10^n. 만(4)·억(8)·천(3)·백만(6) 같은 한국어 자릿수 오독을 덮는다.",
+          "_처리": "가점 0 + 표시만. **조용히 변환하지 않는다** — unit_norm 에 \"비율\"→\"%\" 를 넣지 말라고 되돌린 것과 같은 이유다(100배 틀린 값이 조용히 흐른다)."
+        },
+        "conflict": {
+          "_why": "값이 갈리는 교차를 **가점 0 으로 끝내지 않는다.** 「같은 것을 묻는데 출처마다 값이 다르다」는 그 자체가 발견이다. 실측: 경쟁사 점유율 17.7 · 60.5 · 73.0 % (단위도 같다) — 버그가 아니라 정의가 갈리는 지표라는 신호인데 지금은 그냥 사라진다.",
+          "report_key": "contradictions",
+          "_philosophy": "B3 의 diverged 와 같은 철학 — 그럴듯한 쪽을 고르지 않고 격차를 보고한다."
+        }
+      },
+      "label_thresholds": {
+        "확인됨": 5,
+        "출처약함": 3
+      },
+      "caps": {
+        "no_usable_body": 2,
+        "_why_no_usable_body": "본문을 확보하지 못한 자료는 상한 2 (절대규칙 3). content_status != usable 이면 여기 걸린다.",
+        "kind_not_allowed": 2,
+        "_why_kind_not_allowed": "슬롯이 허용하지 않는 출처 유형",
+        "quote_not_verified": 0,
+        "_why_quote_not_verified": "인용문이 본문에 없다 = 근거가 아니다 (F7)"
+      },
+      "content_status": {
+        "_판정순서": "위에서부터 먼저 맞는 것을 채택. 전부 결정론이며 LLM 0회.",
+        "_실측": "tests/calibrate_content.py 로 10개 페이지를 실제로 받아 정했다(2026-08-05). 추측한 임계치는 그 자체가 버그가 된다.",
+        "_관측": {
+          "kosis.kr/statHtml (통계표)": {
+            "text_len": 15,
+            "digits": 0,
+            "판정": "js_shell"
+          },
+          "mss.go.kr 포털 메인": {
+            "text_len": 355,
+            "digits": 1,
+            "판정": "js_shell"
+          },
+          "imnews 기사": {
+            "text_len": 388,
+            "digits": 38,
+            "판정": "usable — 짧지만 숫자가 있다"
+          },
+          "etnews 기사": {
+            "text_len": 579,
+            "digits": 3,
+            "판정": "usable — 숫자는 적지만 본문은 있다"
+          },
+          "cafepost 가격": {
+            "text_len": 464,
+            "digits": 63,
+            "판정": "usable"
+          },
+          "apps.apple.com": {
+            "text_len": 5234,
+            "digits": 232,
+            "판정": "usable"
+          }
+        },
+        "_교훈": "길이만 보면 오분류한다. 실제 기사가 388자였다. **길이와 숫자를 함께** 봐야 한다. 숫자가 적은 본문(etnews 3개)은 js_shell 이 아니라 usable 로 두고, 값을 못 찾는 것은 extract 가 not_found 로 말하게 한다 — 원인을 뭉개지 않는다.",
+        "empty": {
+          "max_text_len": 0
+        },
+        "mojibake": {
+          "_why": "UTF-8 바이트를 latin-1 로 읽으면 'ì' 'ë' 로 시작하는 2바이트 덩어리가 된다. 본문이 이 상태면 인용도 단위도 믿을 수 없다 — HTTP 200 이고 길이도 충분해서 usable 로 새어 들어간다.",
+          "_관측": "full-01 의 kind.krx.co.kr 문서 — '모집 또는 매출총액' 이 'ëª¨ì§ ëë ë§¤ì¶ì´ì¡' 으로 들어왔고 단위 '원' 이 'ì' 로 파싱됐다.",
+          "min_ratio": 0.05,
+          "_ratio": "깨진 덩어리가 차지하는 문자 비율. 프랑스어·스페인어 악센트는 뒤 글자가 ASCII 라 걸리지 않는다."
+        },
+        "paywall": {
+          "keywords": [
+            "로그인 후 이용",
+            "구독자 전용",
+            "유료 회원",
+            "Subscribe to read"
+          ]
+        },
+        "js_shell": {
+          "max_text_len": 400,
+          "max_digit_count": 5,
+          "_조건": "text_len < 400 **그리고** digits < 5 일 때만. 둘 중 하나만으로는 안 된다.",
+          "loading_keywords": [
+            "로딩중",
+            "잠시만 기다",
+            "Loading",
+            "loading"
+          ],
+          "loading_head_chars": 120,
+          "_loading": "**길이·숫자로는 못 잡는 껍데기가 있다.** stat.eseoul.go.kr 통계표가 '로딩중입니다.잠시만 기다려주시기 바랍니다' 616자 · 숫자 26개로 usable 을 통과했다(fixed-01 의 S2 문서 4건 전부). 숫자 26개는 데이터가 아니라 화면 장식이었고, 그만큼 not_found 의 분모가 부풀었다. 껍데기는 **맨 앞에서 로딩을 알린다** — 그래서 키워드가 앞 120자 안에 있을 때만 친다.",
+          "_왜_위치를_보나": "키워드만 보면 오분류한다. mods.go.kr 의 3,182자짜리 **진짜 페이지**에 'loading' 이 2,780번째 자리에 있다(스크립트 잔재). 실측 분리: 껍데기 8건은 전부 pos 0~104 · 진짜 문서는 pos 2,780 — 여백이 넓어 120 은 안전하다.",
+          "_실측": "저장된 문서 294건 전수(full-03 133 + full-04 132 + fixed-01 29). usable 152건 중 **8건 강등**(stat.eseoul.go.kr 4 · opendart XBRL 뷰어 2 · stat.kosis.kr 통계표 트리 2) · **오분류 0건**. 강등된 8건은 눈으로 전부 확인했다 — 통계표 목록·뷰어 껍데기이고 값이 없다.",
+          "_강등만_한다": "이 규칙은 usable 을 내리기만 하고 올리지 않는다. 파생 실행의 재판정도 같다 — 원본 판정을 존중하되 **새로 생긴 강등만** 적용한다(mojibake 와 같은 취급)."
+        },
+        "usable": {
+          "_else": "위에 안 걸리면 전부"
+        },
+        "pdf": {
+          "_why": "PDF 는 지금까지 `empty` 로 떨어졌다 — 「빈 페이지」와 「PDF 라 못 읽음」이 원장에서 같은 값이었다. mss.go.kr 노쇼 보도자료는 본문 HTML 에 제목·담당부서만 있고 수치는 **첨부 PDF 에만** 있다(백로그 23·24).",
+          "_판정순서": "① 매직바이트 `%PDF-` ② Content-Type. 관공서 `Download.do` 는 첨부를 `application/octet-stream` 으로 주므로 매직바이트가 먼저다.",
+          "magic": "%PDF-",
+          "content_type_contains": [
+            "application/pdf",
+            "application/x-pdf"
+          ],
+          "min_text_len": 1,
+          "_min_text_len": "텍스트층이 없는 스캔본은 여기서 걸린다. OCR 은 하지 않는다 — 추측을 본문으로 만들면 인용 대조(F7)가 무의미해진다.",
+          "max_pages": 40,
+          "_max_pages": "상한을 넘긴 페이지는 읽지 않는다. 실측 대상(mss 보도자료)은 7p.",
+          "unreadable_status": "pdf_unreadable",
+          "_unreadable_status": "본문을 못 얻은 PDF 의 content_status. `usable` 이 아니므로 `caps.no_usable_body`(=2) 가 그대로 걸린다 — 심사를 봐주는 값이 아니라 **실패를 구분해 남기는** 값이다(절대규칙 5)."
+        }
+      },
+      "reference_date": {
+        "_why": "신선도 계산에 date.today() 를 쓰면 날짜가 바뀌는 순간 '같은 원장 → 같은 결과'가 깨진다. 기준일은 실행 시 result.json 에 박고 인자로 넘긴다.",
+        "policy": "from_result_json"
+      },
+      "coverage": {
+        "_why": "must_contain/value_range 는 불량품을 거르는 칸이고, 이건 모자란 것을 알아채는 칸이다. 걸러내는 칸만 있으면 1건짜리 슬롯이 조용히 통과한다.",
+        "default_min_facts": 2,
+        "thin_policy": "라벨은 그대로 두고 thin=true 로 표시해 보고서 §7 로 보낸다. 규칙을 완화하지도, 자동 재검색 루프를 돌지도 않는다.",
+        "emit_retry_hint_at": [
+          "A4",
+          "C2"
+        ],
+        "thin_effect_in_B": {
+          "_why": "thin 이 표시만 하고 아무것도 막지 않으면, 2점짜리가 SOM 계산에 들어간다. 신뢰도 표시 경로를 하나로 통일한다 — thin 은 assumption_count 로 흡수된다.",
+          "충족_thin_false": {
+            "compute": true,
+            "assumption_delta": 0,
+            "report": "값 제시"
+          },
+          "충족_thin_true": {
+            "compute": true,
+            "assumption_delta": 1,
+            "report": "표본 N건 미만 표기"
+          },
+          "보강필요": {
+            "compute": false,
+            "assumption_delta": null,
+            "report": "공백"
+          },
+          "공백": {
+            "compute": false,
+            "assumption_delta": null,
+            "report": "공백"
+          }
+        },
+        "단일_원천_연계열": {
+          "enabled": true,
+          "_규칙": "**공식 통계의 연 계열은 한 슬롯 = 한 표 · 한 해 = 한 셀**이라 독립 2건이 **구조적으로 나올 수 없다.** 지금 기준이면 `gov_stat` 확정값이 영원히 「얇음」이다.",
+          "_근거": "§0 증거 기준 선언 — 실무 시장조사에서 공식 통계는 그 자체로 인용 가능한 원천이고, **정직성은 채택 거부가 아니라 표기로 지킨다.**",
+          "적용_조건": {
+            "최소_점수": 5,
+            "허용_kind": [
+              "gov_stat"
+            ],
+            "_왜_좁게": "**낮은 등급 원천으로의 확산 금지**(사용자 도장 조건). 이 예외는 「공식 통계 5점」에만 걸린다 — `press`·`research_firm`·`official_page` 는 해당 없다.",
+            "확인됨_정확히": 1,
+            "_왜_1건": "도장 문구가 「단일 원천」이다. confirmed=2 가 3 에 미달하는 경우까지 면제하면 「교차가 부족하다」를 덮는 것이지 「교차가 구조적으로 불가하다」가 아니다."
+          },
+          "완화_min_facts": 1,
+          "딱지": "단일 원천 — 공식 통계 연 계열이라 독립 교차가 구조적으로 불가하다",
+          "_딱지_왜": "**해소가 아니라 값으로 유지한다.** 수신 모듈은 이 값이 교차확인된 것인지 **알 권리가 있다.** 딱지를 떼면 「2건이 서로 확인했다」와 구별되지 않는다.",
+          "대조_기반_필수": true
+        }
+      },
+      "as_of": {
+        "_why": "신선도뿐 아니라 period 해석('최근 3년')에도 오늘 날짜가 끼어든다. as_of 하나를 result.json 에서 받아 전 블록이 공유한다.",
+        "source": "result.json.reference_date",
+        "used_by": [
+          "A4 신선도",
+          "B period 해석",
+          "C 사슬"
+        ]
+      },
+      "estimate_band": {
+        "_why": "가정이 많을수록 범위가 넓어져야 한다. 폭을 코드에 박지 않는다.",
+        "_주의": "가감(point*(1±s))으로 하면 가정 2개에서 하한이 0, 3개에서 음수가 된다. 배수로 한다: lo=point/f, hi=point*f, f=(1+per_assumption)^n",
+        "per_assumption": 0.5,
+        "max_factor": 8.0
+      },
+      "reconcile": {
+        "_why": "두 경로 중앙값이 이 배수 이상 벌어지면 채택값을 만들지 않는다. 격차 자체가 보고서 내용이다.",
+        "diverged_gap_ratio": 3.0,
+        "converged_gap_ratio": 1.5
+      },
+      "off_slot": {
+        "_why": "슬롯이 2023 을 물었는데 2026 값이 '확인됨'으로 통과했다(실측). 기간 불일치를 거르는 겹이 없었다.",
+        "period_tolerance_years": 2,
+        "_주의": "연도를 모르면(None) 판정하지 않는다 — 이미 필수요소 누락으로 감점된다. 두 번 벌하지 않는다."
+      },
+      "year_fields": {
+        "_why": "한 필드에 두 시점을 담으면 같은 사실이 갈라진다. '가입자 10만 명'이 2025년 기사와 2026년 기사에서 각각 나왔다는 이유로 match_key 가 달라져 교차확인이 안 붙었다(실측).",
+        "fact_year": "사실의 시점. match_key · 신선도 · off_slot 기간 겹에 쓴다.",
+        "published_year": "문서 발행 시점. 참고용이며 match_key 에 넣지 않는다.",
+        "order": [
+          "인용문 안의 연도",
+          "문맥에서 슬롯 기간 창 안의 연도",
+          "본문에서 슬롯 기간 창 안의 연도",
+          "null"
+        ],
+        "_금지": "발행일로 사실 연도를 메우지 않는다. null 이면 필수요소 누락으로 감점되고, 그게 정직한 상태다.",
+        "pick_window": {
+          "_why": "**주움 창과 판정 창이 달라서 A4 가 스스로 주운 연도로 스스로를 격리했다.** 실측(beauty-05 S16): 주움은 코드 하드코딩 ±3, 판정은 period_tolerance_years ±2 + clamp_window_to_fresh → 창 2023~2027. 본문의 「’22년 이후 3년 이내」에서 2022 를 주워 놓고 기간 불일치로 격리했다. 자기모순이라 둘 중 어느 쪽이 옳은지의 문제가 아니라 **하나여야 하는 문제**다.",
+          "use_slot_window": true,
+          "_use_slot_window": "슬롯에 저장된 `period_min`/`period_max` 를 **그대로** 주움 창으로 쓴다. 판정이 읽는 바로 그 값이라 구조적으로 어긋날 수 없다. 창이 없는 슬롯(period 미상)은 예전처럼 뽑지 않는다.",
+          "_기대_효과": "창 밖 연도는 **애초에 안 줍는다** → `year=None` → 필수 요소 누락 −1. **격리(off_slot, score 0)가 아니라 감점(−1)** 으로 바뀐다. 사실이 원장에 살아남는다.",
+          "fallback_span": 2,
+          "_fallback_span": "`period_min`/`period_max` 가 없는 옛 원장 호환용. `off_slot.period_tolerance_years` 와 같은 값을 적는다."
+        },
+        "two_digit": {
+          "_why": "**한국 정부 문서의 표준 연도 표기를 못 읽었다.** 실측: `mss.go.kr` 노쇼 실태조사 PDF 원문의 연도 정보 10건이 전부 `‘25.11.24.`·`’22년`·`’26년` 형식이라 `(?:19|20)\\d{2}` 가 **하나도** 못 잡았다. 4자리만 보는 것은 한국 공문서에서 사실상 눈을 감는 것이다.",
+          "enabled": true,
+          "pattern": "[\\u2018\\u2019'](\\d{2})\\s*[.년]",
+          "century": 2000,
+          "_경계": "따옴표로 시작하는 형태만 받는다. `25.11.24` 같은 맨숫자는 받지 않는다 — 그건 연도인지 아닌지 문자열로 알 수 없다."
+        },
+        "exclude_spans": {
+          "_why": "**전화번호에서 연도를 주웠다.** 실측: 같은 PDF 의 4자리 매치 9건 중 **7건이 전화번호**(`033-243-1950`→1950, `02-2066-6348`→2066). 창 안에 남는 유일한 후보 2026 은 **보도시점**이라, 이 문서를 적재하면 body_scan 이 「발행일로 메우지 않는다」를 **본문 경로로 우회**하게 된다.",
+          "enabled": true,
+          "patterns": [
+            "\\d{2,4}-\\d{3,4}-\\d{4}",
+            "\\d{3}-\\d{2}-\\d{5}"
+          ],
+          "_patterns": "① 전화번호 ② 사업자등록번호. 매치 구간을 **연도 탐색 전에 지운다** — 거르는 게 아니라 아예 안 보이게 한다."
+        },
+        "body_scan": {
+          "enabled": true,
+          "_why": "실측(gate3-01): 코케비즈 3문서의 `context` 에 연도가 하나도 없었고 세 사실 모두 `year=None` → 필수요소 누락 −1 로 확인됨이 1점 모자랐다. 본문에는 연도가 있다.",
+          "_발행일과_다르다": "발행일은 «문서가 나온 때»고 이건 «본문이 말하는 때»다. **추측이 아니라 관측의 위치만 넓힌 것**이다. 발행일 fallback 은 여전히 금지.",
+          "require_unique": true,
+          "_require_unique": "창 안에 연도가 **둘 이상이면 고르지 않고 null 로 둔다.** '가까운 것'을 고르는 순간 조용한 추측이 된다. **하나일 때만 채택.**"
+        }
+      },
+      "_변경": "v2 — content_status 에 mojibake 추가. 인코딩이 깨진 본문을 usable 로 두면 깨진 인용이 근거로 올라간다.",
+      "scope_labels": {
+        "_why": "경계 표시는 **절대 제거하지 않는다**(작업 규율). DART 는 회사의 재무제표를 주므로 그 매출은 언제나 **전사 매출**이고, 우리가 묻는 것은 '카페 SaaS 시장 안에서의 매출' 이다. 값이 맞아도 범위가 다르면 다른 사실이다 — 꼬리표 없이 원장에 앉으면 읽는 사람이 시장규모로 오해한다.",
+        "company_total": "전사 매출 — 시장 내 매출이 아니라 **그 회사 전체** 매출이다. 시장 규모의 **상한선**으로만 읽을 것."
+      },
+      "suspect_var": {
+        "_정의": "**민감도 최대**인 가정 변수. 곱셈 모델에서 민감도는 값의 크기를 따라가므로 단가(30,000)가 침투율(0.1)보다 먼저 뽑힌다.",
+        "_왜_불확실성이_아니라_민감도인가": "이 칸의 이름은 **재조사 힌트**다. 재조사로 줄일 수 있는 것은 가격(세상에 있다)이지 침투율(세상에 없다)이 아니다. 불확실성 최대를 뽑으면 '못 찾을 것을 다시 찾아라'가 되어 힌트가 쓸모없어진다.",
+        "_그러나_독자에게는_둘_다_필요하다": "민감도 최대와 불확실성 최대는 **다른 개념**이고, 그 차이 자체가 독자에게 필요한 정보다. 보고서 §2 에 불확실성 최대 변수를 한 줄 병기한다.",
+        "uncertainty_metric": "assumption_range_ratio",
+        "_uncertainty_metric": "가정의 range 상한/하한 비. 침투율 [0.05,0.15]=3.0 · 단가 [20k,55k]=2.75 · 세그먼트비중 [0.15,0.25]=1.67 · 연환산 [10,12]=1.2 → 침투율이 최대다. 결정론이다.",
+        "uncertainty_note": "최대 불확실성 변수는 {var}({role}) — 재조사로 좁힐 수 없는 구조적 가정이다 (가정 밴드 {lo}~{hi}, 비 {ratio}배). 위 suspect_var 는 **민감도** 최대이고 이것은 **불확실성** 최대다 — 다른 개념이다."
+      }
+    },
+    "units": {
+      "version": "v2-2026-08-05",
+      "_규칙": "원문 표기를 값으로 바꾸는 표. 값을 만들어내지 않는다 — 파싱 실패는 null 이고, null 은 감점 사유일 뿐 추측 사유가 아니다.",
+      "ko_multipliers": {
+        "조": 1000000000000,
+        "억": 100000000,
+        "만": 10000,
+        "천": 1000
+      },
+      "_ko_주의": "'15조 5000억' 처럼 단위가 겹쳐 나온다. 큰 단위부터 훑어 **누적**해야 한다. 앞자리만 취하면 15,000,000,005,000 이 된다(실제로 났던 버그).",
+      "prefix_modifiers": {
+        "_why": "'약 30만' '30만여' 는 근사치다. 값은 그대로 쓰되 approx 플래그를 남긴다.",
+        "approx": [
+          "약",
+          "대략",
+          "여",
+          "가량",
+          "안팎",
+          "내외",
+          "이상",
+          "이하",
+          "초과",
+          "미만"
+        ]
+      },
+      "unit_norm": {
+        "명": "명",
+        "인": "명",
+        "여명": "명",
+        "개": "개",
+        "개소": "개",
+        "곳": "곳",
+        "개사": "곳",
+        "사": "곳",
+        "업체": "곳",
+        "건": "건",
+        "회": "건",
+        "원": "원",
+        "만원": "원",
+        "억원": "원",
+        "조원": "원",
+        "천원": "원",
+        "%": "%",
+        "퍼센트": "%",
+        "％": "%",
+        "p": "%p",
+        "%p": "%p",
+        "달러": "USD",
+        "USD": "USD",
+        "$": "USD",
+        "US$": "USD",
+        "엔": "JPY",
+        "위안": "CNY",
+        "유로": "EUR",
+        "백분율": "%",
+        "퍼센트포인트": "%p"
+      },
+      "_비율을_넣지_않는_이유": "'비율' 을 % 로 매핑해 봤다가 **되돌렸다.** 이 토큰은 두 뜻으로 쓰인다 — A1 이 슬롯에 적을 때는 척도 미지정('비율을 찾는다')이고, assumptions.v1.json 에서는 **분수**다(침투율 value 0.1). b_estimate._unit_mismatch 가 이 표로 양쪽을 정규화하므로, 매핑을 넣는 순간 슬롯 '%'(=10)와 가정 0.1 이 같은 단위가 되어 **unit_mismatch 로 시끄럽게 멈추던 자리가 조용히 통과한다** — 100배 틀린 값이 흐른다. 얻는 것은 off_slot 1건, 잃는 것은 모든 비율 추정의 안전장치다. 고치려면 표기가 아니라 **assumptions 의 척도를 먼저 확정**해야 한다.",
+      "unit_scale_in_name": {
+        "_why": "'만원' 은 단위이면서 배수다. 'X만원' 은 X * 10000 원.",
+        "만원": 10000,
+        "억원": 100000000,
+        "조원": 1000000000000,
+        "천원": 1000,
+        "백만원": 1000000,
+        "십억원": 1000000000,
+        "백억원": 10000000000,
+        "천억원": 100000000000,
+        "_판⑱_추가": "판 ⑱ 부류 수리. **개별 등재가 아니라 부류로** 넣는다 — 「백만원」 하나만 넣으면 다음 통계의 「십억원」에서 같은 판을 또 돈다(사용자 판정). KOSIS 상용 단위 우선."
+      },
+      "compatible": {
+        "_why": "슬롯 unit 과 사실 unit 이 다르면 off_slot 3겹째에 걸린다. 다만 아래는 같은 것으로 본다.",
+        "개": [
+          "개",
+          "곳",
+          "개소"
+        ],
+        "곳": [
+          "곳",
+          "개",
+          "개소",
+          "매장"
+        ],
+        "명": [
+          "명",
+          "인"
+        ],
+        "원": [
+          "원"
+        ],
+        "%": [
+          "%"
+        ],
+        "_곳_매장": "실측 근거: 같은 사실(코케비즈 「누적 가입 매장 2만」)을 발행자마다 '곳'(플래텀)·'매장'(서울경제TV·자사)으로 적는다. 표기가 갈려 교차확인이 깨지던 자리다. **'개' 는 넣지 않는다** — 범용 조수사라 사업체 수·제품 수 등 다른 뜻과도 호환돼 버린다. 동의어는 **토큰이 한 뜻일 때만** 안전하다(‘비율’→‘%’ 를 되돌린 것과 같은 교훈)."
+      },
+      "currency_note": "USD 를 원으로 환산하지 않는다. 환율은 시점 의존이라 결정론이 깨진다. 다른 통화는 unit_norm 이 다르므로 교차확인에서 자동으로 분리된다.",
+      "nullish_tokens": {
+        "_why": "모델은 '모른다'를 상황에 따라 다르게 쓴다. 이걸 값으로 취급하면 **모델의 정직함을 코드가 지운다** (stat_code 'None' 을 '기재함'으로 셌던 사고). 파싱하는 지점 한 곳에서 전부 None 으로 정규화한다.",
+        "tokens": [
+          "",
+          "-",
+          "--",
+          "null",
+          "none",
+          "n/a",
+          "na",
+          "nan",
+          "undefined",
+          "unknown",
+          "미상",
+          "모름",
+          "없음",
+          "해당없음",
+          "해당 없음",
+          "미정",
+          "미기재",
+          "unspecified"
+        ],
+        "_주의": "새 표현을 발견하면 여기만 고친다. 필드별로 흩어놓으면 다음에 또 샌다."
+      },
+      "_변경": "v2 유지 — '비율' 추가를 시도했다가 되돌렸다(위 `_비율을_넣지_않는_이유`). guards.v1.json 의 _percent.units 는 여전히 '비율' 을 % 로 치므로 **두 파일이 다른 말을 하는 상태가 남아 있다**: 값범위는 [0,100] 을 주면서 단위 겹에서는 딴 것으로 친다. 이건 표기 문제가 아니라 **'비율' 이라는 토큰이 척도 미지정과 분수 두 뜻으로 쓰이는 문제**라, 단위 표를 고쳐 덮으면 안 된다.",
+      "unit_scale_normalize": {
+        "_왜": "**공백 하나가 배수를 죽인다.** 전수 감사에서 「억 원」·「조 원」(공백 표기)이 미등재로 잡혔는데 「억원」·「조원」은 등재돼 있었다 — 백로그 35(「서  울」)와 **같은 병**이 단위 축에서 재발한 것이다. **개별 등재는 다음 공백 변형에서 또 진다** → 정규화로 푼다.",
+        "enabled": true,
+        "strip_chars": [
+          " ",
+          " ",
+          "\t"
+        ],
+        "_strip_chars": "공백·비분리공백·탭. **대조 직전에만** 지운다 — 원문 표기는 그대로 남는다."
+      },
+      "unknown_multiplier": {
+        "_왜": "배수 접두어가 있는데 표에 없으면 **조용히 1배가 아니라 명시 실패**다. `resolve_axes` 의 「합계 대체 금지」와 **같은 원칙** — 조용한 대체는 지어내기다. 판 ⑰ 실측: 「백만원」이 1배로 읽혀 **100만 배 축소**된 값이 나왔고 `value_range` 가 막았다. 가드가 없었으면 그대로 흘렀다.",
+        "enabled": true,
+        "prefixes": [
+          "백만",
+          "천만",
+          "십억",
+          "백억",
+          "천억",
+          "십조",
+          "백조",
+          "만",
+          "억",
+          "조",
+          "천"
+        ],
+        "_동작": "값을 `None` 으로 만든다 — 값이 없으면 확인됨이 될 수 없고 계산에도 안 들어간다.",
+        "화폐_접미": [
+          "원"
+        ],
+        "_화폐_접미": "⚠ **접두어 목록 방식은 뚫린다** (판 ⑲ 실측: 「십경원」이 목록에 없어 **1배로 통과**했다). **화이트리스트로 뒤집는다**: 「…원」으로 끝나는데 순수 「원」도 아니고 `unit_scale_in_name` 에도 없으면 **모르는 배수**다. 목록을 늘려 쫓는 방식은 다음 표기에서 또 진다 — **아는 것만 통과시키는 쪽**이 부류 수리다."
+      },
+      "_이력": [
+        {
+          "version": "2026-08-09 판 ⑱ ②",
+          "무엇": "① 배수 단위 부류 등재(백만·십억·백억·천억) ② `unit_scale_normalize`(공백 제거 후 대조) ③ `unknown_multiplier` 명시 실패",
+          "왜": "전수 감사: 등재 4종 / 본 적 있는 단위 17종 · 미등재 배수 3종(백만원·억 원·조 원)",
+          "규약": "**부류 사전 승인** 4조건 — ⓐ단일 원천(이 파일) ⓑ조용한 대체 금지 ⓒ사용 기록 값으로 ⓓbefore/after 실측"
+        }
+      ]
+    },
+    "consistency": {
+      "version": "v2-2026-08-09",
+      "_규칙": "논리 사슬 검사 12개. 코드가 아니라 데이터다. check 는 c_chain.py 가 해석하는 선언형이며, 새 규칙을 넣을 때 코드를 고치지 않는다.",
+      "chain_cells": [
+        "target_def",
+        "TAM",
+        "SAM",
+        "SOM",
+        "revenue_y1",
+        "target_customers",
+        "price",
+        "CAC",
+        "new_customers",
+        "marketing_budget",
+        "LTV",
+        "total_budget",
+        "alt_price_band"
+      ],
+      "rules": [
+        {
+          "id": "R1",
+          "name": "SOM ≤ SAM ≤ TAM",
+          "severity": "blocker",
+          "check": {
+            "type": "ordered",
+            "cells": [
+              "SOM",
+              "SAM",
+              "TAM"
+            ]
+          },
+          "message": "시장 규모의 포함 관계가 뒤집혔다",
+          "depends_on": []
+        },
+        {
+          "id": "R2",
+          "name": "1년차 매출 ≤ SOM",
+          "severity": "blocker",
+          "check": {
+            "type": "lte",
+            "left": "revenue_y1",
+            "right": "SOM"
+          },
+          "message": "1년차 매출이 획득가능시장보다 크다",
+          "depends_on": [
+            "R1"
+          ]
+        },
+        {
+          "id": "R3",
+          "name": "가격 × 목표고객수 ≈ 1년차 매출 (±10%)",
+          "severity": "blocker",
+          "check": {
+            "type": "product_approx",
+            "factors": [
+              "price",
+              "target_customers"
+            ],
+            "equals": "revenue_y1",
+            "tolerance": 0.1,
+            "unit_align": {
+              "cell": "price",
+              "to": "equals",
+              "_why": "가격 칸을 `equals`(revenue_y1)의 단위 기준으로 맞춘 뒤 곱한다. 어느 칸을 맞출지 **명시**한다 — 자동 추론하면 개수 단위(곳)까지 환산 대상으로 오인한다."
+            }
+          },
+          "message": "매출식이 가격·고객수와 맞지 않는다",
+          "depends_on": [
+            "R2"
+          ]
+        },
+        {
+          "id": "R4",
+          "name": "CAC × 신규고객수 ≤ 마케팅 예산",
+          "severity": "warn",
+          "check": {
+            "type": "product_lte",
+            "factors": [
+              "CAC",
+              "new_customers"
+            ],
+            "right": "marketing_budget"
+          },
+          "message": "획득 비용이 예산을 넘는다",
+          "depends_on": [
+            "R5"
+          ]
+        },
+        {
+          "id": "R5",
+          "name": "마케팅 예산 ≤ 총예산",
+          "severity": "blocker",
+          "check": {
+            "type": "lte",
+            "left": "marketing_budget",
+            "right": "total_budget"
+          },
+          "message": "마케팅 예산이 총예산을 넘는다",
+          "depends_on": []
+        },
+        {
+          "id": "R6",
+          "name": "LTV / CAC ≥ 1",
+          "severity": "warn",
+          "check": {
+            "type": "ratio_gte",
+            "left": "LTV",
+            "right": "CAC",
+            "min": 1.0
+          },
+          "message": "고객 한 명을 데려오는 비용이 그 고객이 주는 가치보다 크다",
+          "depends_on": []
+        },
+        {
+          "id": "R7",
+          "name": "우리 가격이 대체재 밴드와 비교 가능",
+          "severity": "warn",
+          "check": {
+            "type": "in_band_or_comparable",
+            "value": "price",
+            "band": "alt_price_band"
+          },
+          "message": "대체재 가격 밴드가 없거나 단위가 달라 비교 자체가 안 된다",
+          "_note": "밴드 밖이라고 위반이 아니다. 비교가 불가능한 것이 위반이다. 가격 판단은 사람 몫.",
+          "depends_on": []
+        },
+        {
+          "id": "R8",
+          "name": "SAM 대상 = 사용자 타겟 정의",
+          "severity": "blocker",
+          "check": {
+            "type": "subject_match",
+            "cell": "SAM",
+            "against": "target_def"
+          },
+          "message": "SAM 을 계산한 모집단이 선언한 타겟과 다르다",
+          "_note": "사람이 가장 자주 놓치는 항목. 슬롯 subject_code 로 대조한다.",
+          "depends_on": [
+            "R1"
+          ]
+        },
+        {
+          "id": "R9",
+          "name": "경쟁사 ≥ 1곳 실명 확인",
+          "severity": "blocker",
+          "check": {
+            "type": "min_confirmed",
+            "claim_type": "COMP",
+            "min": 1
+          },
+          "message": "실명이 확인된 경쟁사가 없다",
+          "_note": "실무에서 조사 능력 자체를 의심받는 지점이라 blocker 다.",
+          "depends_on": []
+        },
+        {
+          "id": "R10",
+          "name": "모든 수치에 출처 또는 계산식",
+          "severity": "blocker",
+          "check": {
+            "type": "all_cells_sourced"
+          },
+          "message": "출처 없이 나타난 숫자가 있다",
+          "depends_on": []
+        },
+        {
+          "id": "R11",
+          "name": "같은 지표가 문서 내 두 값으로 안 나옴",
+          "severity": "blocker",
+          "check": {
+            "type": "no_duplicate_metric"
+          },
+          "message": "같은 지표가 서로 다른 값으로 두 번 나온다",
+          "_note": "match_key 기준으로 본다. 사람이 가장 자주 놓치는 항목.",
+          "depends_on": []
+        },
+        {
+          "id": "R12",
+          "name": "법률 suspect 전부 해소 또는 비용 반영",
+          "severity": "warn",
+          "check": {
+            "type": "legal_resolved"
+          },
+          "message": "미해소 법률 쟁점이 비용에도 반영되지 않았다",
+          "depends_on": []
+        }
+      ],
+      "price_band": {
+        "_why": "R7(우리 가격이 대체재 밴드와 비교 가능)이 보는 밴드의 **재료 기준**. 옛 구현은 `blocks/c_chain.py::_price_band` 안에 「라벨이 확인됨인 것」이라고 박혀 있었다(규약 ① 위반). 값으로 뺀다.",
+        "_임계_분리": "게이트 축의 `확인됨` 임계와 **다른 임계다.** 요금의 1차 출처는 운영사 자기 페이지(official_page 4점)이고 자기발표는 한 화자로 접혀 5점에 닿을 수 없다 — 5를 요구하면 「관측이 정확할수록 밴드가 안 열린다」. 산출물마다 필요한 증거의 종류가 다르므로 임계도 산출물별로 적는다.",
+        "_등급과_분리": "밴드 재료로 쓰는 것이 **등급을 올리는 것은 아니다.** 라벨(`출처약함`)도 신뢰 등급 표기(`실무 신뢰`)도 이 규칙이 바꾸지 않는다.",
+        "min_facts": 2,
+        "claim_types": [
+          "PRICE"
+        ],
+        "require_currency_unit": true,
+        "accept": [
+          {
+            "id": "confirmed",
+            "_why": "종전 동작. 라벨이 `확인됨` 이면 kind 를 묻지 않는다.",
+            "enabled": true,
+            "labels": [
+              "확인됨"
+            ]
+          },
+          {
+            "id": "official_price_page",
+            "_why": "자기 제품 요금을 자기가 밝힌 1차 출처. 가격에 관한 한 이보다 나은 출처가 없고, 구조적으로 5점에 못 닿는다.",
+            "enabled": true,
+            "kinds": [
+              "official_page"
+            ],
+            "min_score": 4,
+            "require_quote_verified": true
+          }
+        ],
+        "_미해결": "단위만 보고 **의미를 안 본다** — COMP 슬롯의 매출액이 가격 밴드 재료로 들어간다. 백로그.",
+        "_왜_COMP_를_뺐나": "판 ⑩ 실측: COMP 를 두자 밴드가 **[15,000원 ~ 12,035,007,218,975원]** 이 됐다. 위쪽 끝은 네이버 **전사 매출액**(S13)이다 — 단위는 「원」이라 통과하지만 **가격이 아니다.** 그 밴드로 가격 가설 39,000원을 재면 무조건 「안에 든다」가 나오고, 판정 층이 **「검증됨」 도장**을 찍는다. 근거 없는 도장이 찍히는 것이 이 파이프라인이 없애려는 실패 그 자체다. ⚠ **크기 필터로 거르면 안 된다**(§4 「크기 필터로 종류 오류를 거르지 마라」) — 상한을 걸면 규모가 작은 오답만 살아남는다. 종류로 가른다: COMP 슬롯이 재는 것은 **경쟁사 규모**(매출액·가입 매장 수)이지 대체재 가격이 아니다. 대체재 가격은 PRICE 슬롯이 재고, 어휘에서도 `대체재가격` 자리는 PRICE 와 짝지어져 있다.",
+        "_이_변경은_좁힘이다": "옛 값 [\"PRICE\",\"COMP\"] → [\"PRICE\"]. 밴드에 들어올 수 있는 사실이 **줄어든다.** 완화가 아니라 오래 숨어 있던 종류 오류를 닫는 것이다 — 옛 원장에서는 PRICE 확인됨이 0건이라 밴드가 애초에 안 서서 **드러나지 않았다.**"
+      },
+      "retry_hint": {
+        "_why": "재조사를 자동 루프로 만들지 않는다. 힌트만 내고 사람이 승인해 1회만 재실행한다.",
+        "emit_for": [
+          "R8",
+          "R9",
+          "R10"
+        ],
+        "sources": {
+          "A4": "min_facts 미달(thin) 또는 공백 슬롯 — 원장을 다 만든 직후가 부족한 슬롯이 가장 잘 보이는 자리다",
+          "C2": [
+            "R8",
+            "R9",
+            "R10"
+          ]
+        }
+      },
+      "_의존": "규칙에는 순서가 있다. 1번(SOM<=SAM<=TAM)이 깨졌는데 3번(가격x고객수=매출)을 검사하면 무의미한 위반이 줄줄이 나온다. blocker 가 걸리면 그 아래 의존 규칙은 skipped 로 표시한다.",
+      "report_notes": {
+        "_why": "§7 은 '더 찾아라'(retry_hints)와 '찾아도 없다'(여기)를 구분해야 한다. 성격이 다른 것을 같은 칸에 넣으면 읽는 사람이 재조사로 해결될 문제라고 오해한다.",
+        "independent_topdown_blocked": [
+          "독립 Top-down(T3 상위N사 매출합 ÷ 추정점유율)은 **이 시장에서 지금 불가능하다.** 0단계 실측:",
+          "① 상위권이 비상장이다 — 코케비즈·토스플레이스·쿠팡·스포카·한국결제네트웍스·비바리퍼블리카 **6사 모두 DART 상장 0건**(corpCode 전수 조회).",
+          "② 상장 1사(카페24, 042000)는 **전사 매출**이라 카페 SaaS 시장 매출이 아니다 — scope='company_total' 꼬리표가 붙는 값이다.",
+          "③ 보도에서 관측되는 것은 **거래액(GMV)이지 매출이 아니다** — 카페24 거래액 679억·12조, 코케비즈 거래액 100억. **GMV 는 플랫폼을 통과한 거래 총액이고 그 회사의 수익이 아니다.** 창업자가 가장 흔하게 속는 숫자이므로 매출로 바꿔 쓰지 않는다.",
+          "→ 따라서 현재 SAM 의 두 경로는 **비독립**이다(Top-down 의 세그먼트비중이 Bottom-up 과 같은 사실에서 왔다). 수렴해도 삼각측량이 아니다."
+        ],
+        "single_path": "대조 없음 — **교차검증되지 않은 단일 경로**. Top-down·Bottom-up 중 하나만 계산돼 서로를 대조하지 못했다. 값은 쓰되 **검증된 값이 아니다.**",
+        "_single_path_why": "경로가 하나뿐이라고 값을 버리면 사슬이 통째로 비어 R1~R3 가 영영 안 켜진다. 그렇다고 조용히 채택하면 삼각측량이 사라진다. → **채택하되 꼬리표를 단다.** scope='company_total' 을 §6 에만 두지 않고 §1 까지 올린 것과 같은 이유 — 핵심 숫자만 읽는 사람이 못 보면 없는 것과 같다.",
+        "nonindependent_converged": "수렴했으나 **두 경로가 비독립** — 삼각측량이 아니다. Top-down 의 세그먼트비중이 Bottom-up 과 같은 사실에서 왔다.",
+        "competition_axis_status": [
+          "경쟁 축 — **실명 3사 관측 · 출처 4점까지 확보.** 코케비즈(자사 공식 + 서울경제TV + 플래텀) · 쿠팡포스(자사 가격) · 토스플레이스(자사).",
+          "**확인됨 미달이었던 원인은 자료 부재가 아니라 파이프라인 겹이었다** — 4라운드에 걸쳐 매번 다른 겹이 드러났다: ①문서 조회 비대칭(버그 E) → ②단위 `매장`∉`곳` → ③발췌가 문서당 1건을 안 냄 → ④연도 미상 시 `match_key` 폴백.",
+          "겹을 벗긴 뒤 **같은 수집을 공짜로 재채점하니 R9 가 통과했다**(gate3-01-regrade: 자사 official_page 4 + 교차 1 = 5 확인됨).",
+          "**R9 규칙 자체는 완화하지 않았다** — §10 「커버리지가 낮다고 규칙을 완화하지 않는다, 완화는 마지막」 그대로다. 고친 것은 전부 규칙이 아니라 **규칙을 잘못 적용하던 배관**이다.",
+          "남은 한 겹: **플래텀 본문에는 연도가 아예 없다**(결정론 스캔 확인). 그 행은 `match_key` 가 갈려 교차에서 빠진다 — 「출처가 연도를 안 밝힌 것」이고 데이터의 성질이다."
+        ],
+        "price_axis_status": [
+          "가격 밴드 축 — R7 판정 불가. 사유는 **자료 부재가 아니라 조회 경로 결함이 섞여 있다.**",
+          "① PRICE·COMP 슬롯의 화폐 단위 `확인됨` 이 2건 미만이다(관측된 가격은 전부 자기발표 4점 이하).",
+          "② **DART 경로가 현재 미작동** — 회사가 조회되는 순간 `NameError` 로 죽는다(버그 H · `dart.py:95` `_year_of` 미정의 · 백로그 0.5). 즉 「상장 경쟁사 매출」 축은 자료가 없어서가 아니라 **우리 코드가 못 읽어서** 비어 있다.",
+          "③ 정정: 전 코퍼스 DART 실패 32건은 **미등록이 아니라 표기 불일치**였다 — 슬롯이 '커피빈' 이라 적었고 DART 등록명은 **'커피빈코리아'** 다(#7 분리로 확인). 그 전까지는 둘이 같은 사유로 뭉뚱그려져 「그 회사는 공시 안 함」처럼 읽혔다."
+        ]
+      },
+      "chain_cell_units": {
+        "_why": "사슬 칸에 **단위 선언이 없어서** R3 가 월 가격과 연 매출을 그냥 곱해 비교했다(report3-02: 차이 96%). 값만 있고 단위가 없으면 곱셈은 조용히 틀린다.",
+        "TAM": "원/연",
+        "SAM": "원/연",
+        "SOM": "원/연",
+        "revenue_y1": "원/연",
+        "price": "원/월",
+        "target_customers": "곳",
+        "new_customers": "곳",
+        "CAC": "원",
+        "LTV": "원",
+        "marketing_budget": "원",
+        "total_budget": "원",
+        "alt_price_band": "원/월",
+        "target_def": null
+      },
+      "unit_conversions": {
+        "_why": "**환산은 명시적으로만.** 표에 없으면 환산하지 않고 판정 불가로 멈춘다 — B블록의 `unit_mismatch` 와 같은 철학이다. 틀린 곱을 만드느니 시끄럽게 멈춘다.",
+        "원/월→원/연": 12
+      },
+      "_이력": [
+        {
+          "version": "v2-2026-08-09",
+          "판": "⑩ ②-b (가격 밴드 산출물별 임계 분리)",
+          "무엇": "`price_band` 블록 신설 — R7 이 보는 밴드의 채택 기준을 코드에서 규칙으로 빼고, `official_page` × PRICE 사실을 **score ≥ 4 + quote_verified** 로 밴드 재료에 넣는다.",
+          "왜": "판 ⑩ 실측: 밴드는 `확인됨`(score 5)만 셌는데, **요금은 5점이 나올 수 없는 계량**이다 — 요금의 1차 출처는 운영사 자기 페이지(`official_page` 4점)이고, 자기발표는 한 화자로 접혀 교차 가점을 못 받는다. 즉 「가격을 정확히 관측할수록 밴드가 안 열리는」 구조였다. **임계 하나로 모든 산출물을 재던 것이 문제다.**",
+          "무엇이_임계_분리인가": "게이트 축 판정(수요·경쟁)의 `확인됨` 임계는 **건드리지 않는다.** 가격 밴드라는 **산출물 하나**의 재료 기준만 따로 적는다. 「경쟁사 실명」에 5점을 요구하는 이유(공시·통계로 확인 가능)와 「대체재 요금」에 4점을 허용하는 이유(1차 출처가 구조적으로 4점)는 다른 이유다.",
+          "등급_표기는_안_올린다": "**밴드 재료로 쓰는 것과 등급을 올리는 것은 다른 일이다.** 이 사실들의 라벨은 `출처약함` 그대로이고, 신뢰 등급 표기는 `실무 신뢰`(4점·official_page)다. 캔버스에 `확정` 으로 적히지 않는다 — 사용자 결정(2026-08-09).",
+          "방어": "`require_quote_verified` 로 인용 대조를 **필수**로 둔다(절대규칙 3·F7). 그리고 `kinds` 를 `official_page` 로 좁혀 aggregate(2점)·community(1점)가 밴드에 새어 들어오지 않게 한다.",
+          "기대": "beauty 원장에서 밴드 재료가 1건(S13 매출액) → 4건(+ gongbiz 요금 3건)이 되고 R7 이 `violated` → `passed`. 게이트 축 「가격 — 대체재 밴드」가 미충족 → **충족**. ⚠ 다른 축·다른 원장의 판정은 무변경이어야 한다(회귀 0).",
+          "남은_결함": "해결됨 — `claim_types` 를 PRICE 로 좁혀 COMP 매출액이 가격 밴드에 섞이던 자리를 닫았다. 판 ⑩ 안에서 발견하고 판 ⑩ 안에서 고쳤다.",
+          "규약": "「계측된 개정」(CLAUDE.md §5) — 값은 전부 이 파일에, `enabled` 로 켜고 끈다, 재채점은 변경별 분리"
+        }
+      ]
+    },
+    "assumptions": {
+      "version": "v2-2026-08-08",
+      "_이력": [
+        {
+          "version": "v2-2026-08-08",
+          "판": "④ (관측 보강 — KOSIS 트리오, 진로 C)",
+          "무엇": "`세그먼트비중` 의 **근거를 교체**했다. 값(0.19)·range·assumption_count 는 **무변경**.",
+          "왜": "옛 근거는 카페 원장의 지역 비중 차용이라 업종·역할 2중 불일치였다. 판 ④ 0단계 실측으로 (i) 「1인」 구간이 국가통계에 **없음**이 확정됐고(표 6개 전수) (ii) 1~4명 비율 **96.6%** 라는 구조적 상한이 관측됐다. 그래서 근거를 「미관측 + 상한 96.6% 울타리」로 바꿨다.",
+          "기대": "TAM·SOM 의 **값 무변경**(0.19 그대로). 바뀌는 것은 가정 목록의 문장과 경고가 **2중 → 1중**이 되는 것뿐이다. 개선은 **가정의 질**이지 개수가 아니다.",
+          "규약": "「계측된 개정」(CLAUDE.md §5) — 값은 이 파일에, 실측 근거는 `runs/kosis-probe-04/kosis_probe.md`"
+        }
+      ],
+      "_규칙": "가정값의 출처는 rules/ 또는 원장이다. **코드에 상수로 박지 않는다.** basis 는 왜 그 값인지이며, range 는 민감도 분석에 쓰인다.",
+      "by_role": {
+        "침투율": {
+          "value": 0.1,
+          "range": [
+            0.05,
+            0.15
+          ],
+          "basis": "국내 소상공인 SaaS 도입률 공개 추정 밴드 (확정 근거 아님 — 가정)",
+          "falsified_if": "SW 도입률 10% 미만이면 성립 안 함",
+          "unit": "비율"
+        },
+        "단가": {
+          "value": 30000,
+          "range": [
+            20000,
+            55000
+          ],
+          "unit": "원",
+          "basis": "S6 요금제 3종(11,000·22,000·33,000원) 관측 참조 — 중간 요금제 근사. 원장에 값이 셋인데 규칙 없이 하나를 조용히 집는 것보다 **가정임을 선언하고 관측을 근거로 다는 것**이 정직하다. 요금제 슬롯이 분리되면 그것으로 대체된다.",
+          "falsified_if": "실제 지불 단가가 20,000원 미만이면 매출 추정이 과대"
+        },
+        "세그먼트비중": {
+          "value": 0.19,
+          "range": [
+            0.15,
+            0.25
+          ],
+          "unit": "비율",
+          "basis": "**가정이다 — 관측이 아니다.** 관측된 부분은 상한뿐이다: KOSIS `101/DT_1K52F03`(시도·산업·종사자규모별, 2024) 두발 미용업 **1~4명 111,347 / 계 115,310 = 96.6%**(kosis-probe-04 실측). 그 96.6% 안에서 **「종사자 1인」이 몇 %인지는 관측되지 않았다** — 국가통계의 최소 구간이 「1~4명」이고 「1인」 구간은 표 6개를 전수 확인해도 없다. 따라서 이 값 0.19 는 **1~4명 중 1인 구성비에 대한 근거 없는 가정**이며, 구조적 상한은 0.966 이다.",
+          "_출신_교체": "판 ④(2026-08-08) 이전의 근거는 「카페 원장의 서울 20,264 / 전국 106,452 ≈ 0.19」였다. 그것은 **업종 불일치**(카페→미용)이자 **역할 불일치**(«지역 비중»을 «1인 비중» 자리에)인 2중 결함이었다. 지역 비중은 이제 서울 사업체 수로 **직접 관측**되므로(S5) 비중으로 빌려 쓸 이유가 사라졌다. 교체된 것은 **가정의 출신이지 가정의 개수가 아니다** — 개선은 질이고, assumption_count 는 그대로다.",
+          "falsified_if": "1~4명 중 1인 사업체 구성비가 15% 미만이거나 25% 초과면 이 추정의 전제가 깨진다. 구조적으로 96.6% 를 넘을 수는 없다.",
+          "_관측된_상한": 0.966,
+          "_상한_출처": "kosis-probe-04 · 101/DT_1K52F03 · 두발 미용업(S96112) · 2024 · 111,347/115,310"
+        },
+        "추정점유율": {
+          "value": 0.3,
+          "range": [
+            0.2,
+            0.45
+          ],
+          "basis": "상위 N사 합산 점유율 가정",
+          "falsified_if": "상위 N사 점유율이 20% 미만이면 분모가 무의미해짐",
+          "unit": "비율"
+        },
+        "연환산": {
+          "value": 12,
+          "range": [
+            10,
+            12
+          ],
+          "unit": "개월",
+          "basis": "월 구독료를 연 매출로 환산하는 계수. **이탈 없는 만액 가정**이다 — 12개월 전액 결제. 이탈률 슬롯이 생기면 **이 가정이 첫 교체 대상**이다.",
+          "falsified_if": "연 평균 유지 개월이 10 미만이면 연 매출이 과대추정된다"
+        },
+        "도달가능비중": {
+          "value": 0.3,
+          "range": [
+            0.15,
+            0.5
+          ],
+          "unit": "비율",
+          "basis": "서울 내 직접 영업으로 닿을 수 있는 비중. **원장 근거 없음** — 채널 슬롯이 없어 관측으로 뒷받침되지 않는다. '없음'이라 적힌 가정은 §7 과 함께 **여기를 검증하라**는 지도다.",
+          "falsified_if": "실제 도달 가능 비중이 15% 미만이면 SOM 이 과대"
+        },
+        "1년차획득률": {
+          "value": 0.05,
+          "range": [
+            0.02,
+            0.1
+          ],
+          "unit": "비율",
+          "basis": "도달 가능 모수 중 1년 안에 실제 유료 전환되는 비율. **업계 통념 수준, 원장 근거 없음.** 초기 B2B SaaS 의 1년차 전환은 통상 한 자릿수 퍼센트로 이야기되지만 우리가 확인한 수치가 아니다 — 그럴듯한 출처를 지어 붙이지 않는다.",
+          "falsified_if": "1년차 획득률이 2% 미만이면 1년차 매출 추정이 통째로 무의미"
+        }
+      },
+      "_단위": "각 가정에 unit 을 명시한다. substitute 는 슬롯 unit 과 대조만 하고 **변환하지 않는다** — 변환 규칙이 확정되기 전에 굳히면 100배 오차가 조용히 흐른다.",
+      "var_roles": {
+        "_why": "`var_role` 은 **자유 문자열이었다.** 실측: 전 코퍼스에 41종 601건이 by_role 에 없는 이름이었다(A1 이 `unit_price`·`penetration_rate`·`segment_ratio` 처럼 영문으로도 지어냈다). 이름이 안 맞으면 가정을 못 찾아 조용히 «계산 불가» 가 되고, **왜 못 찾았는지가 이름 문제인지 근거 부재인지 구분되지 않는다.**",
+        "_두_종류": "가정으로 채우는 역할(by_role 에 값이 있다)과 **원장에서 채우는 역할**(사업체수 등, 가정이 없는 것이 정상)이 있다. 둘 다 허용 목록에 있어야 한다.",
+        "allowed": [
+          "침투율",
+          "단가",
+          "세그먼트비중",
+          "추정점유율",
+          "연환산",
+          "도달가능비중",
+          "1년차획득률",
+          "사업체수",
+          "인구",
+          "거래건수",
+          "건당금액",
+          "상위시장규모"
+        ],
+        "_ledger_filled": [
+          "사업체수",
+          "인구",
+          "거래건수",
+          "건당금액",
+          "상위시장규모"
+        ],
+        "_fail_closed": "허용 목록에 없는 role 은 **계산 불가로 멈춘다.** 조용히 가정 없이 흐르지 않는다."
+      }
+    },
+    "adapters": {
+      "version": "adapters-v9-2026-08-09",
+      "_규칙": "5단계부터 외부가 들어온다. 실패 모드가 '코드가 틀림'에서 '네트워크가 죽음'으로 바뀐다. 어떤 실패가 어떤 값이 되는지를 코드가 아니라 여기서 정한다.",
+      "failure_map": {
+        "no_key": {
+          "finding_status": "not_configured",
+          "adapter_state": "not_configured",
+          "_why": "키가 아예 없다. 커버리지 하한 고지 대상."
+        },
+        "auth_failed": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "auth_failed",
+          "_why": "키는 있는데 거부됐다(만료·오타·한도). not_configured 와 **구분**해야 원인을 찾는다."
+        },
+        "bad_stat_code": {
+          "finding_status": "not_found",
+          "adapter_state": "ok",
+          "_why": "잘못된 통계표 ID 는 시스템 오류가 아니라 **조사 결과**다. 예외로 터뜨리면 전체 실행이 죽는다."
+        },
+        "empty_result": {
+          "finding_status": "not_found",
+          "adapter_state": "ok",
+          "_why": "응답은 왔는데 값이 빈 배열. 못 찾은 것이다."
+        },
+        "timeout": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "degraded",
+          "_why": "재시도 정보를 함께 남긴다."
+        },
+        "http_error": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "degraded"
+        },
+        "parse_error": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "degraded"
+        },
+        "unknown_code": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "stopped",
+          "_why": "분류할 수 없는 응답 코드. 인증 문제일 수도(멈춰야 함) 조사 결과일 수도(넘어가야 함) 있어 판단이 안 된다. **모르는 상태는 보수적으로 — 멈춘다.** 계속 가면 커버리지가 조용히 낮아지고 원인을 못 가린다.",
+          "record_in_report": "unknown_error_codes"
+        },
+        "llm_error": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "degraded",
+          "_why": "LLM 호출 실패(일시적). 그 슬롯만 비고 나머지는 계속 간다."
+        },
+        "llm_quota": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "stopped",
+          "_why": "크레딧 소진·레이트리밋. 계속 돌리면 남은 슬롯이 전부 조용히 빈손이 되고, 나중에 '검색이 나빴나'와 구분이 안 된다. **멈추고 §7 에 남긴다.**",
+          "record_in_report": "unknown_error_codes"
+        },
+        "bad_request": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "stopped",
+          "_why": "요청 자체가 잘못됐다(필수 변수 누락·범위 초과). **우리 코드 버그다.** 조용히 not_found 로 넘기면 커버리지가 낮은 이유를 영영 못 찾는다. 멈추고 §7 에 남긴다.",
+          "record_in_report": "unknown_error_codes"
+        },
+        "unmapped_metric": {
+          "finding_status": "fetch_failed",
+          "adapter_state": "stopped",
+          "_why": "슬롯 metric 이 DART 계정 표의 어느 항목에도 안 걸린다. **우리 규칙의 구멍이지 조사 결과가 아니다.** 예전에는 이때 `wanted` 가 빈 집합이 되어 `if wanted and ...` 가드가 통째로 풀리고 재무상태표 191행이 전부 통과했다 — full-04 에서 '당기법인세자산 2,456,770원' 이 「경쟁사의 매출」 확인됨 5점이 된 경로다. **표가 못 맞추면 조용히 전부 통과가 아니라 시끄럽게 멈춘다.**",
+          "record_in_report": "unknown_error_codes"
+        },
+        "axis_resolution_failed": {
+          "finding_status": "not_found",
+          "adapter_state": "ok",
+          "_왜": "**축을 못 골랐다**는 것은 「그 기간 데이터가 없다」와 **다른 사건**이다. 옛 코드는 축 실패를 `empty_result` 로 뭉개 「검증 통과 표 N개 모두 데이터 없음」이라 말했다 — **틀린 사유는 다음 판이 엉뚱한 데를 판다**(판 ⑬ 교훈). `adapter_state=ok` 인 이유: 어댑터가 고장난 게 아니라 **조사 결과**다.",
+          "_합계_대체_금지": "축을 못 고를 때 「합계」로 대신 채우는 것은 fail-open 이 아니라 **대체에 의한 지어내기**다 — 세그먼트 값 자리에 전체 집계를 **무표기로** 싣기 때문이다. 상위 구간을 쓰려면 **사다리 2단 요건**(상한 울타리 + 경계 선언)을 채워야 한다."
+        }
+      },
+      "retry": {
+        "max_attempts": 2,
+        "backoff_sec": 1.0,
+        "timeout_sec": 20
+      },
+      "kosis": {
+        "base": "https://kosis.kr/openapi/Param/statisticsParameterData.do",
+        "list_base": "https://kosis.kr/openapi/statisticsList.do",
+        "source_url_template": "https://kosis.kr/statHtml/statHtml.do?orgId={orgId}&tblId={tblId}",
+        "_stat_code": "슬롯의 stat_code 는 'orgId/tblId' 형식이다. 단계 5 에서는 사람이 손으로 넣는다 — A1 이 올바른 통계표 ID 를 뽑는지는 별개 문제이고 단계 7 에서 따로 확인한다.",
+        "defaults": {
+          "prdSe": "Y",
+          "newEstPrdCnt": 3,
+          "format": "json",
+          "jsonVD": "Y"
+        },
+        "error_codes": {
+          "_why": "KOSIS 는 오류도 HTTP 200 으로 준다. 코드 의미를 코드가 아니라 여기서 정한다.",
+          "auth": [
+            "11",
+            "32",
+            "33"
+          ],
+          "not_found": [
+            "21",
+            "22",
+            "23"
+          ],
+          "_examples": {
+            "11": "유효하지 않은 인증KEY (실측)",
+            "20": "필수요청변수값이 누락되었습니다 (objL) — **우리 요청이 잘못된 것** (실측)",
+            "21": "해당 통계표가 존재하지 않습니다 (실측)",
+            "22": "요청 데이터 없음",
+            "30": "데이터가 존재하지 않습니다 — **인증 아님**(실측). 그 표에 그 기간·조건 데이터가 없다는 뜻.",
+            "31": "40,000셀을 초과한 결과값은 요청하실 수 없습니다 — **범위를 좁혀야 한다** (실측)"
+          },
+          "_주의": "코드 의미는 문서가 아니라 실측으로 채운다. 모르는 코드는 parse_error 로 떨어지므로 로그에서 바로 보인다.",
+          "_미분류": "여기 없는 코드는 unknown_code 로 떨어져 실행을 멈추고, 보고서 §7 unknown_error_codes 에 남는다. 새 코드를 발견할 때마다 이 표에 추가한다.",
+          "bad_request": [
+            "20",
+            "31"
+          ],
+          "_교훈": "코드 의미를 짐작하면 안 된다. 20(변수 누락)·31(셀 초과)·30(데이터 없음)을 전부 인증 실패로 잘못 분류했었다. 짐작한 만큼 '우리 버그'가 '남 탓'이 된다.",
+          "bad_request_msgs": [
+            "잘못된 요청",
+            "필수요청변수",
+            "초과한 결과값"
+          ],
+          "_21_주의": "err 21 은 '해당 통계표가 존재하지 않습니다'와 '잘못된 요청 변수를 호출 하였습니다' **둘 다**에 쓰인다(실측). 코드만 보면 우리 코드 버그가 '조사 결과'로 둔갑한다.",
+          "no_data": [
+            "30"
+          ],
+          "not_found_msgs": [
+            "존재하지 않습니다",
+            "데이터가 없",
+            "결과가 없"
+          ],
+          "_메시지_주의": "err 21 은 코드가 같아도 뜻이 둘이라 메시지로 가른다. 그런데 KOSIS 가 문구를 바꾸면 조용히 깨진다 — 어느 쪽에도 안 맞으면 unknown_code 로 떨어뜨려 **멈추고** §7 에 남긴다. 그때 이 목록에 추가한다."
+        },
+        "route_metrics": {
+          "_why": "슬롯의 metric 이 **국가통계가 실제 발행하는 계량**이면 웹검색이 아니라 통계 API 로 보낸다. 실측: 「커피전문점 사업체 수」를 검색시켰더니 KOSIS **Q&A 게시판의 질문 글**이 왔다. 표는 실재하는데(101/DT_1K52F01) 검색이 못 찾는다.",
+          "_왜_claim_type_이_아닌가": "full-02 에서 claim_type 이 TAM/SAM 이면 kosis 로 보냈다가 10슬롯이 전부 not_found 로 죽었다. 삼켜진 것이 '카페 침투율'·'카페 단가' 처럼 **통계표에 있을 리 없는 값**이었다. 무엇을 묻는가(claim_type)가 아니라 **그 값이 통계로 나오는가(metric)** 가 기준이다.",
+          "_넣지_않은_것": "침투율·단가·점유율·시장규모는 넣지 않는다. 국가통계가 발행하지 않는 계량이라 kosis 로 보내면 not_found 만 쌓인다.",
+          "_slotcheck_상호참조": "목록이 slotcheck.period.lagged_metrics 와 겹치지만 **뜻이 다르다** — 저쪽은 '통계는 늦게 나온다'(기간 보정), 이쪽은 '통계로 나온다'(경로 결정). 별개 목록으로 두되 계량을 추가할 때는 **둘 다** 볼 것.",
+          "enabled": true,
+          "match": [
+            "사업체 수",
+            "사업체수",
+            "종사자 수",
+            "종사자수",
+            "가맹점 수",
+            "매장 수",
+            "인구",
+            "세대수",
+            "면적",
+            "생산액",
+            "출하액",
+            "거래액"
+          ],
+          "exclude": [
+            "가입",
+            "가입자",
+            "구독"
+          ],
+          "_exclude": "match 는 부분문자열이라 「**가입** 매장 수」가 '매장 수' 에 걸린다(실측: S3 이 kosis 로 샜다). 그건 국가통계가 아니라 **특정 회사의 고객 수**다 — 통계 API 로 보내면 not_found 만 나오고 폴백 비용만 는다. 계량 목록을 좁히는 대신 예외로 둔 이유: '매장 수' 자체는 가맹점 통계에서 유효하다.",
+          "fallback_to": "web",
+          "fallback_on": [
+            "not_found"
+          ],
+          "_fallback_on": "폴백은 **못 찾은 것**에만 건다. failure_map 에서 finding_status 가 not_found 인 것(bad_stat_code·empty_result)이 여기 해당한다 — 그건 시스템 오류가 아니라 조사 결과다. not_configured(키 없음)·fetch_failed(auth_failed·timeout·http_error)는 **폴백 금지**: 키·네트워크 문제를 web 성공으로 덮으면 보고서 §7 의 커버리지 고지가 장님이 된다.",
+          "_fallback_범위": "폴백은 이 규칙으로 라우팅된 슬롯(Route.fallback_to)에만 붙는다. stat_code 로 kosis 에 간 슬롯의 동작은 12-1 의 측정 대상이 아니라 그대로 둔다 — 한 번에 하나만 바꾼다.",
+          "_어댑터_상태": "폴백이 돌아도 kosis 는 ok 다. 못 찾은 건 조사 결과이지 어댑터 고장이 아니다. web 상태는 따로 기록되고, 폴백이 몇 번 돌았는지는 run.jsonl 의 a3_fallback 으로 센다.",
+          "_거래액": "판 ⑬ ② 신설. **하네스 어휘는 이미 `거래액 → kosis` 라고 선언했는데 이 목록에 없어서 엔진이 web 으로 보냈다** — 같은 것을 두 곳이 다르게 말한 자리다(백로그 59 와 같은 종류). `pet-treat-03` 실측: S1·S3 이 `거래액` 인데 `→ web | 기본 경로` 로 갔고, 프로브가 실증한 KOSIS 계열(`101/DT_1KE10041` 애완용품 2017~2024)에 **한 번도 닿지 않았다.** ⚠ 이것은 심사 기준이 아니라 **「그 값이 국가통계로 나오는가」의 목록**이다 — 점수·임계·합격선을 하나도 건드리지 않는다."
+        },
+        "search_base": "https://kosis.kr/openapi/statisticsSearch.do",
+        "resolve": {
+          "_why": "모델에게 수천 개 통계표 ID 를 외우게 하는 건 무리다(실측: 3회 실행에서 형식조차 매번 다르게 틀렸다). A1 은 '무엇을 찾는지'만 내고, 어댑터가 통계표 검색 API 로 ID 를 찾는다. **모델이 못하는 일을 안 시키는 게 프롬프트를 고치는 것보다 확실하다.**",
+          "enabled": true,
+          "max_candidates": 20,
+          "min_token_overlap": 2,
+          "_min_token_overlap": "슬롯 subject·metric 의 토큰이 통계표 이름과 최소 몇 개 겹쳐야 채택하는가. 낮추면 엉뚱한 표를 잡고, 높이면 아무것도 못 찾는다.",
+          "prefer_org_ids": [
+            "101"
+          ],
+          "_prefer": "동점이면 통계청(101) 을 먼저. 그래도 동점이면 TBL_ID 사전순 — 실행마다 달라지지 않게.",
+          "region_fallbacks": [
+            "전국",
+            "계",
+            "전체",
+            "합계"
+          ],
+          "axis_fallbacks": [
+            "계",
+            "전체",
+            "합계",
+            "소계"
+          ],
+          "item_fallbacks": [],
+          "_축": "통계표의 분류 축은 objL1..objLn 에 **전부** 채워야 한다(하나라도 빠지면 err 20). 축 순서는 메타(getMeta type=ITM)의 OBJ_ID 등장 순서다. 못 고른 축은 ALL 로 두되, 전부 ALL 이면 40,000셀을 넘어 err 31 이 난다.",
+          "_코드체계": "KOSIS 산업 항목 ID 는 KSIC 에 대분류 문자가 붙는다 (KSIC 56221 → KOSIS I56221). 그래서 A1 의 subject_code 를 그대로 쓰지 않고 **항목 이름으로 역검색**한다 — stat_code 를 검색으로 바꾼 것과 같은 방식이다.",
+          "verify_top_n": 10,
+          "_검증": "이름 겹침으로 표를 고르지 않는다 — 산업 키워드는 표 이름이 아니라 표 안의 항목이라 이름만 보면 빗나간다. 후보를 순서대로 열어 **메타에 그 항목이 실재하는 표**를 채택한다. 표 이름 겹침은 후보 정렬에만 쓴다.",
+          "verify_keep": 6,
+          "_기간": "KOSIS 는 같은 통계를 기간별로 다른 표에 나눠 둔다(DT_1K52C01=2006~2019, DT_1K52D01=2020~). 이름·항목·지역이 다 맞아도 연도가 없으면 err 30 이다. 그래서 검증 통과 후보를 여러 개 들고 있다가 **연도가 나올 때까지** 다음 표로 넘어간다.",
+          "_이름속기간": "표 이름에 수록 기간이 적혀 있다(’06~ / ’20~). 슬롯 연도를 담지 못하는 표를 먼저 열면 err 30 만 반복하므로 정렬 1순위로 쓴다.",
+          "main_axis_keywords": [
+            "산업",
+            "업종",
+            "품목",
+            "분류",
+            "상품군"
+          ],
+          "_main_axis_keywords": "**주 축**은 슬롯의 subject 가 지목하는 축이다. 여기서 못 고르면 **폴백하지 않고 실패**한다 — 「커피」로 「커피가공업」을 집거나 '계'(전체)를 집으면 **다른 집계를 가져와 놓고 맞은 것처럼 보인다.** 실측: 항목·산업별 110건 전부 완전일치라 동작 변화 0건이어야 한다.",
+          "_부차_축": "행정구역별·사업체구분별처럼 슬롯이 값을 지정하지 않는 축은 `전국`·`계` 폴백을 허용한다 — 그건 오집이 아니라 **의도된 집계 선택**이다(S1 '전국 커피전문점 사업체 수'). 다만 **선택은 기록한다**: `axis_default={축: 값}`. 동작은 그대로, '조용히'만 제거한다.",
+          "_ALL_금지": "축을 못 고를 때 `ALL`(전체)로 채우던 fail-open 을 제거했다. 못 고르면 **수집 실패**다. 실측 사용 0건이라 동작 변화 0건이어야 한다.",
+          "contains_match_unique": true,
+          "_contains_match_unique": "포함 매칭에서 후보가 둘 이상이면 **고르지 않고 실패**한다. 실측 사용 0건.",
+          "subject_별칭": {
+            "_규칙": "**세는 대상이 표의 「항목」 축에 있는 경우** (판 ⑥-2). `_find_item` 은 항목 이름을 구 단위로 찾는데, 짧은 낱말(2글자)은 포함 비교를 하지 않아 「인구」가 「총인구수」와 안 맞았다. 계열 A 표(산업별 축에 업종명이 그대로 있다)에서는 안 드러나던 결함이다.",
+            "_왜_별칭인가": "포함 비교의 최소 길이를 낮추면 「커피」가 「커피가공업」을 잡는 옛 사고가 돌아온다(§4 「크기 필터로 종류 오류를 거르지 마라」와 같은 종류). 그래서 **느슨하게 하지 않고, 아는 짝만 값으로 적는다** — 못 맞추면 여전히 멈춘다.",
+            "enabled": true,
+            "map": {
+              "인구": [
+                "총인구수",
+                "인구수",
+                "총인구"
+              ],
+              "총인구": [
+                "총인구수"
+              ],
+              "거래액": [
+                "거래액"
+              ],
+              "가구": [
+                "가구수",
+                "총가구"
+              ],
+              "반려동물 용품": [
+                "애완용품"
+              ],
+              "반려동물 간식": [
+                "애완용품"
+              ],
+              "반려동물 수제 간식": [
+                "애완용품"
+              ],
+              "반려동물 용품 시장": [
+                "애완용품"
+              ]
+            },
+            "_map": "왼쪽은 슬롯 subject, 오른쪽은 표 항목 축에 실제로 적힌 이름. **오른쪽은 프로브로 눈으로 확인한 것만 적는다**(kosis-probe-B-pop·C-gmv2 실측). 추측으로 채우면 통과 불가능한 벽이나 조용한 오답이 된다.",
+            "_판⑬_추가": "`pet-treat-03` 실측: 표는 **맞게 찾았는데**(`DT_1KE10041` 후보로 올라옴) 항목 축에서 subject 를 못 찾아 `항목없음` 으로 죽었다. 표에 적힌 이름은 **「애완용품」**이고 슬롯은 「반려동물 용품 시장」·「반려동물 수제 간식」이었다 — 백로그 41·42 와 같은 병(표기 불일치). **오른쪽 「애완용품」은 프로브로 눈으로 확인한 것이다**(`runs/kosis-probe-yearaxis` · `A/017` 완전일치). ⚠ **이것은 백로그 5(업종 사전 자동 구축)를 손으로 채운 것**이고 컨셉마다 되풀이된다 — 확장되는 해법이 아니다. 근본 경로는 **컨셉의 `_다듬기5.4_업종_분류` 를 0단계 프로브 결과로 채우는 것**이고(그 칸이 pet-treat 에서 `null` 이었다), 그건 하네스 재생성이 필요해 유료다. ⚠ **「애완용품」은 사료·용품·간식을 다 담는 상위 카테고리다 — 수제 간식은 그 안의 일부이므로 상한으로만 읽어야 한다**(CLAUDE.md §0 사다리 2단, 거래액 축).",
+            "_별칭은_정확일치다": "⚠ **이 표는 정확 일치다.** 「반려동물 용품」을 넣어도 「반려동물 용품 **시장**」은 안 맞는다(판 ⑬ 실측: 2슬롯 중 1개만 풀렸다). 슬롯 subject 는 LLM 이 쓰는 자유 텍스트라 **표기 변형을 손으로 쫓는 것은 확장되지 않는다** — 지금 한 것은 **이 스냅샷을 끝까지 태우기 위한 손 채움**이지 해법이 아니다. 느슨한 매칭은 금지다(백로그 34 fail-open · 「커피」가 「커피가공업」을 잡던 사고).",
+            "_축_선택에도_쓴다": "판 ⑯ 수리. 이 표는 **표 찾기(`resolve_stat_code`)에만** 쓰이고 **축 고르기(`resolve_axes`)에는 안 쓰였다** — 그래서 드라이런은 「애완용품」을 맞추고 수집은 못 맞춰 합계로 폴백했다. **같은 물음을 두 곳이 각자 푼 것**이고 (판 ⑫ 키 분열 · 판 ⑬ 라우팅 분열과 같은 계보) 이제 **둘 다 이 표를 본다.**",
+            "상위_카테고리": {
+              "_왜": "별칭이 잇는 두 이름이 **같은 범위가 아닐 수 있다.** 「애완용품」은 사료·용품·간식을 다 담는 **상위 카테고리**이고 「반려동물 수제 간식」은 그 안의 일부다. 다리로 통과시키되 **상한으로만 읽히게** 해야 한다 — 안 그러면 상위 집계를 하위인 척 쓰는 것이고, 그것이 이 파이프라인이 없애려는 실패다(사다리 2단 · 울타리 없는 2단 금지).",
+              "map": {
+                "애완용품": {
+                  "상한_울타리": true,
+                  "경계": [
+                    "⚠ **「애완용품」은 사료·용품·간식을 다 담는 상위 카테고리다** — 수제 간식은 그 안의 일부이므로 이 값은 **상한으로만** 읽어야 한다(폴백 사다리 2단).",
+                    "⚠ 비중을 재지 않은 채 이 값을 쓰면 **시장을 부풀린다.**"
+                  ]
+                }
+              }
+            }
+          },
+          "_main_axis_상품군": "판 ⑯ 추가. 「상품군별」은 **세는 대상 축**이라 주 축이다. 없던 시절 `is_main=False` 가 되어 `axis_fallbacks`(계·전체·합계)가 허용됐고, `pet-treat-04` 가 **「합계(000)」로 폴백해 274조**(온라인쇼핑 전체)를 가져왔다. 주 축이면 **폴백 없이 fail-closed** 다 — 못 고르면 다른 집계를 가져오는 것이고 그것은 「맞은 것처럼 보이는 오답」이다.",
+          "표_계열": {
+            "enabled": true,
+            "_규칙": "표마다 **무엇이 축인가**가 다르다. 사업체 표는 「업종」이 항목 축이라 `subject` 로 찾을 수 있지만, **인구 표에는 subject 축이 아예 없다** — 판 ㉕ 0단계 프로브 실측: `101/DT_1B04005N` 의 축은 **ITEM(총인구수·남자·여자) × 행정구역(4,818) × 5세별(22)** 이다. 「개인 금융 관리」가 들어갈 자리가 **없다.** 그래서 이 계열은 **subject 를 항목에서 찾지 않고 축 필터 조합으로** 해석한다(백로그 44).",
+            "_경로_추가지_교체가_아니다": "사업체형은 손대지 않는다. 여기 등재된 계량에만 이 경로가 적용되고, 나머지는 전부 기존 subject 경로로 간다.",
+            "계열": {
+              "인구형": {
+                "match_metrics": [
+                  "인구",
+                  "대상 연령대 인구 비중"
+                ],
+                "항목_이름": "총인구수",
+                "_항목_이름_왜": "이 계열에서 **세는 대상**은 subject 가 아니라 ITEM 축의 이 값이다. 느슨한 포함 비교가 아니라 **이 이름 하나**로 맞춘다 — 못 맞추면 멈춘다.",
+                "축_역할": {
+                  "항목": "ITEM",
+                  "지역": "행정구역",
+                  "연령": "세별"
+                },
+                "_실측_표": [
+                  "101/DT_1B04005N (ITEM × 행정구역 4818 × 5세별 22)",
+                  "101/DT_1B040A3 (ITEM × 행정구역 418 · 연령축 없음)"
+                ],
+                "tables": [
+                  "101/DT_1B04005N",
+                  "101/DT_1B040A3"
+                ],
+                "_tables_왜": "표 **검색**도 `subject` 로 돈다 — 「개인 금융 관리」로는 인구 표가 후보에 들어오지도 않는다. 그래서 이 계열은 **0단계 프로브로 실재를 확인한 표를 직접 물린다.** ⚠ 이것은 손 별칭과 다르다: 별칭은 **컨셉마다** 되풀이되지만, 이 표 목록은 **계열당 한 번**이고 컨셉과 무관하다(인구 표는 어느 B 컨셉이든 같은 표다)."
+              }
+            },
+            "실패_코드": "axis_resolution_failed",
+            "_실패_왜": "해석 실패는 **명시 실패**다. 합계·전체로 조용히 대체하지 않는다 — 판 ⑮ 가 그 폴백으로 **274조(온라인쇼핑 전체)**를 가져왔고 `must_contain` 이 겨우 막았다."
+          }
+        },
+        "meta_base": "https://kosis.kr/openapi/statisticsData.do"
+      },
+      "dart": {
+        "base": "https://opendart.fss.or.kr/api",
+        "corp_code_zip": "https://opendart.fss.or.kr/api/corpCode.xml",
+        "source_url_template": "https://dart.fss.or.kr/dsab007/main.do?corpCode={corp_code}",
+        "report_code": "11011",
+        "_report_code": "11011=사업보고서(연간)",
+        "accounts": {
+          "_왜_account_id": "한글 계정명(account_nm)으로 매칭하면 회사마다 달라 놓친다 — 실측: 카페24 는 '매출액' 이 아니라 **'영업수익'** 을 쓴다. `account_id` 는 IFRS/DART 분류코드라 회사가 바뀌어도 같다.",
+          "_왜_sj_div": "재무제표 구분을 안 보면 **재무상태표(BS) 계정이 매출 슬롯의 사실이 된다.** full-04 가 정확히 그랬다. 매출·이익은 손익계산서(IS/CIS)에서만 온다.",
+          "_매칭_방향": "규칙의 `match` 낱말이 **metric 안에 들어 있으면** 그 규칙이다. 반대로 하면(표의 키가 metric 과 같아야 하면) A1 이 쓰는 자유 서술 metric('경쟁사의 매출')에 절대 안 걸린다 — 그게 이번 구멍의 직접 원인이었다.",
+          "by_metric": [
+            {
+              "match": [
+                "매출",
+                "수익",
+                "revenue"
+              ],
+              "account_ids": [
+                "ifrs-full_Revenue",
+                "ifrs-full_RevenueFromContractsWithCustomers"
+              ],
+              "sj_div": [
+                "IS",
+                "CIS"
+              ]
+            },
+            {
+              "match": [
+                "영업이익"
+              ],
+              "account_ids": [
+                "dart_OperatingIncomeLoss"
+              ],
+              "sj_div": [
+                "IS",
+                "CIS"
+              ]
+            },
+            {
+              "match": [
+                "순이익",
+                "당기순"
+              ],
+              "account_ids": [
+                "ifrs-full_ProfitLoss"
+              ],
+              "sj_div": [
+                "IS",
+                "CIS"
+              ]
+            },
+            {
+              "match": [
+                "자산총계",
+                "총자산"
+              ],
+              "account_ids": [
+                "ifrs-full_Assets"
+              ],
+              "sj_div": [
+                "BS"
+              ]
+            }
+          ],
+          "max_mismatch_items": 3,
+          "_max_mismatch_items": "계정이 하나도 안 맞을 때 **버리지 않고** 몇 건을 격리용으로 실어 보낸다(절대규칙 5 — 실패는 값이다). 전부 보내면 191행이 원장을 덮으므로 상한을 둔다. A4 가 `account_mismatch` 로 격리하고 §7 로 보낸다 — 'DART 가 매출 계정을 안 준 회사' 와 '매출이 진짜 없는 회사' 를 나중에 가르기 위해서다."
+        }
+      },
+      "web": {
+        "_why": "A3 web 어댑터 설정. **search_prompt 는 비교 축이다** — 규칙은 result.json 에 값째로 복사되므로 어느 실행이 어느 문안으로 수집했는지가 자동으로 남는다.",
+        "search_prompt": "v1",
+        "_search_prompt": "prompts.SEARCH_VARIANTS 의 키. 기본 v1 = 원래 문안. v12-2 는 작업 12-2 문안인데 **판정 불가로 끝나 미채택**이다(expected.md 부록 C) — 명시적으로 골라야만 쓰인다. 미채택 문안을 기본에 두면 그 사이 도는 모든 수집이 미채택 조건으로 오염된다.",
+        "url_filter": {
+          "_why": "12-3 에서 v12-2 프롬프트의 **배제 목록만은 효과가 있었다**(껍데기율 0.500→0.245, z=-2.80). 그런데 같은 문안이 도메인 다양성을 4.75→2.94 로 깎았고(M4 위반) 주지표는 못 움직였다. **모델에게 부탁하는 대신 URL 로 결정론으로 거르면** 그 개선만 떼어 올 수 있고, LLM 분산도 없고, 무료다.",
+          "_적용지점": "A3 fetch 앞. 후보에서 제외하고 **사유를 남긴다**(버리되 조용히 버리지 않는다 — 규칙 5).",
+          "_판정근거": "내용이 아니라 **URL 만** 본다. 본문을 보고 거르면 그건 content_status 의 일이고, 이 필터의 값어치(무료·결정론)가 사라진다.",
+          "enabled": true,
+          "_enabled": "시뮬레이션(tools/sim_url_filter.py)으로 저장 문서 2,975행·고유 URL 532건에 소급 적용해 **확정 오발 0건**을 확인한 뒤 켰다.",
+          "patterns": [
+            {
+              "id": "portal_repost",
+              "re": "//(v\\.daum\\.net|[a-z0-9]*\\.?news\\.naver\\.com|v\\.kakao\\.com)",
+              "why": "포털 재게시본 — **원 발행자를 URL 로 알 수 없다.** 화이트리스트 v5 에서 같은 사유로 등재를 거부한 도메인이라 근거가 일관된다. 실측 12건 적발 · base>=4 오발 0건"
+            },
+            {
+              "id": "terms_policy",
+              "re": "/terms|termsofuse|/privacy|/agreement",
+              "why": "이용약관·개인정보처리방침. **`/policy` 는 뺐다** — korea.kr/news/policyNewsView.do(정책브리핑 뉴스) 7건을 잡았다. 실측 2건 적발(mirimate.co.kr/termsofuse · cafe24pro_terms.html) · 둘 다 진짜 약관"
+            },
+            {
+              "id": "notice",
+              "re": "//shopnotice\\.",
+              "why": "쇼핑몰 공지사항 채널. 도메인 한정이라 오발 여지가 없다"
+            },
+            {
+              "id": "manual_devdoc",
+              "re": "//(developers|manual|docs)\\.",
+              "why": "개발자 문서·매뉴얼 서브도메인. 수치가 있는 자리가 아니다"
+            }
+          ],
+          "_폐기한_패턴": {
+            "board_list": "**폐기.** /bbs/·/board·/list 는 정부 기관이 보도자료를 두는 자리다. 실측: base_score=5·usable 인 것만 21건이 죽었다 — mss.go.kr 「소상공인 실태조사」 보도자료(S5 의 정답) · mods.go.kr 공표자료 12건 · kostat.go.kr. **URL 형태로 게시판=쓰레기라고 할 수 없다.**",
+            "search_result": "**폐기.** /search 가 상세 페이지 URL 에도 들어간다 — dl.nanet.go.kr/search/searchInnerDetail.do(국회도서관 상세, 주제 적중)를 죽였다.",
+            "auth_pay": "**폐기.** /payment 가 wiseapp.co.kr/payment/info(panel_data)를 잡았고, 그것을 빼면 저장 데이터에서 적발이 0건이라 패턴 자체가 무용하다.",
+            "help_center": "**보류(미채택).** URL 만으로 「고객센터 안내글」과 「그 회사가 공식으로 밝힌 정보」를 못 가른다 — global-support.cafe24.com/.../Pricing 은 실제 가격 정보다. 애매한 것은 넣지 않는다.",
+            "recruit": "저장 데이터에 적발 0건. 넣어도 잡을 것이 없어 뺐다."
+          }
+        }
+      },
+      "_이력": [
+        {
+          "version": "2026-08-09 판 ⑯ ①",
+          "무엇": "① `main_axis_keywords` 에 `상품군` ② `subject_별칭` 을 축 선택에도 적용 ③ `axis_resolution_failed` 실패 유형 신설",
+          "왜": "`pet-treat-04` 가 `objL1=000`(합계)로 폴백해 274조를 가져왔다. `must_contain` 이 막았지만 **마지막 그물에 기대는 방어는 방어가 아니다**",
+          "성격": "**좁힘이다** — 지금 통과하던 것(합계 대체)이 실패로 바뀐다"
+        },
+        {
+          "version": "2026-08-09 판 ⑬ ②",
+          "무엇": "`kosis.route_metrics.match` 에 `거래액` 추가",
+          "왜": "하네스 어휘(`vocab.metric.catalog.거래액.route = kosis`)와 엔진 라우팅 목록이 갈라져 있었다. 계열 C 의 TAM 밑동이 통째로 web 으로 샜다",
+          "검증": "드라이런(수집 0 · LLM 0)으로 before/after. **기존 원장 영향 0** — 라우팅은 수집 시점에 정해지므로 저장된 원장은 재채점해도 안 바뀐다",
+          "안_바꾼_것": "`exclude`·`fallback_on`·점수·임계 전부 무변경"
+        },
+        {
+          "version": "v1-2026-08-05+series-v1-2026-08-09",
+          "판": "⑥-2",
+          "무엇": "kosis.resolve.subject_별칭 신설 — 세는 대상이 「항목」 축에 있는 표(인구·거래액) 지원",
+          "왜": "판 ⑥ Q2: 인구 표는 축이 ITEM=총인구수 · 행정구역 · 연령이라 subject 축이 없다. 「subject 는 표의 항목이다」는 계열 A 표에서만 참이었다.",
+          "기대": "계열 A 영향 0 — 별칭 표에 업종명이 하나도 없으므로 기존 경로를 건드리지 않는다.",
+          "규약": "「계측된 개정」 ① — 값은 규칙에, 코드는 읽기만"
+        }
+      ]
+    },
+    "guards": {
+      "version": "v2-2026-08-08",
+      "_이력": "2026-08-08 — CHANNEL claim_type 신설(백로그 17)에 맞춰 by_claim_type.CHANNEL 1개 추가. 기존 8종은 diff 0.\n2026-08-08 (판 ④) — by_claim_type.GROWTH 1개 추가(TAM 동형복사). 연도별 사업체 수를 전용 축으로 분리해 TAM 기준값 선택에서 제외한다 — verdict._pick_base 수리와 이중 방어. 기존 9종은 diff 0. ⚠ 이 키를 읽는 코드는 blocks/a_design.slots_from_formulas 하나뿐이고 그건 A1 경로다. 동결 스냅샷(--slots)으로 도는 실행에서는 읽히지 않는다 — 그래도 등재하는 이유는 fail-open 을 만들지 않기 위해서다(백로그 27 과 같은 괴리를 새로 만들지 않는다).",
+      "_규칙": "슬롯 가드(must_contain·must_not_contain·value_range)는 원래 사람이 적는 칸이다(F6). 그런데 A1 이 만든 슬롯은 사람 슬롯과 metric 문자열이 달라 매칭이 거의 전멸했다(27개 중 25개가 맨몸). 가드가 없으면 off_slot 5겹 중 3겹이 무력하다. **claim_type 별 최소 가드**를 기본값으로 깔되, 사람이 적은 것이 있으면 그것이 이긴다.",
+      "_주의": "이건 사람 가드의 대체가 아니라 하한선이다. 기본 가드로 통과한 슬롯도 §7 no_guard_slots 에 '기본값만 적용' 으로 남긴다.",
+      "by_claim_type": {
+        "TAM": {
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "해외송금",
+            "가상자산"
+          ],
+          "value_range": [
+            100,
+            100000000
+          ]
+        },
+        "SAM": {
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "해외송금"
+          ],
+          "value_range": [
+            10,
+            100000000
+          ]
+        },
+        "COMP": {
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "채용공고"
+          ],
+          "value_range": [
+            1,
+            100000000
+          ]
+        },
+        "COMPARABLE": {
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "해외송금"
+          ],
+          "value_range": [
+            1,
+            100000000
+          ]
+        },
+        "CHANNEL": {
+          "_동형복사": "COMPARABLE 기원 — 백로그 17 신설(2026-08-08) 때 값을 그대로 베꼈다. 실제 CAC·전환 자료와의 정합은 **판 ② 실측 후 재검토**한다. 지금 이 값이 맞다는 근거는 없고, 다만 가드가 하나도 없는 상태보다 낫다는 하한선이다.",
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "해외송금"
+          ],
+          "value_range": [
+            1,
+            100000000
+          ]
+        },
+        "PAIN": {
+          "must_not_contain": [],
+          "value_range": [
+            0,
+            100000000
+          ]
+        },
+        "PRICE": {
+          "must_not_contain": [
+            "연봉",
+            "채용",
+            "시급"
+          ],
+          "value_range": [
+            100,
+            100000000
+          ]
+        },
+        "ALT": {
+          "must_not_contain": [
+            "연봉",
+            "채용"
+          ],
+          "value_range": [
+            0,
+            100000000
+          ]
+        },
+        "LEGAL": {
+          "must_not_contain": [],
+          "value_range": null
+        },
+        "GROWTH": {
+          "_동형복사": "TAM 기원 — 판 ④(2026-08-08) 신설 때 값을 그대로 베꼈다. GROWTH 슬롯은 사업체 수 관측이라 TAM 과 같은 종류의 값이고, 다른 것은 **용도**(성장률 계산의 재료)뿐이다. 축을 가른 이유는 값이 달라서가 아니라 **TAM 기준값 선택에 섞이면 안 되기 때문**이다.",
+          "must_not_contain": [
+            "송금",
+            "환전",
+            "해외송금",
+            "가상자산"
+          ],
+          "value_range": [
+            100,
+            100000000
+          ]
+        }
+      },
+      "_percent": {
+        "_why": "단위가 % 인 슬롯은 값범위가 0~100 이다. claim_type 과 무관하게 단위가 이긴다.",
+        "units": [
+          "%",
+          "비율"
+        ],
+        "value_range": [
+          0,
+          100
+        ]
+      },
+      "_currency": {
+        "_why": "**`claim_type` 별 기본 상한 1억(1e8)은 화폐 단위 슬롯에 쓸 수 없다.** 상장사 매출·시장규모는 조 단위다 — 실측: 카페24 2025년 영업수익 **3,147억원**(DART `ifrs-full_Revenue`). full-04 에서 이 값이 값범위 밖으로 걸리고, 하필 규모가 작은 오답(당기법인세자산 245만원)만 범위 안이라 「경쟁사의 매출」 확인됨 5점이 됐다. **상한이 낮으면 맞는 값을 거르고 틀린 작은 값을 남긴다.**",
+        "_상한_근거": "'결과가 나빠서' 가 아니다. 1,000조(1e15)는 **한국 명목 GDP(약 2,500조)의 절반** 수준으로, 국내 시장·기업 관련 어떤 원화 수치도 이 위로 갈 수 없다. 즉 여전히 헛소리 방어선이며 실제 값만 통과시킨다. 낮추려면 GDP 같은 **외부 기준**을 근거로 든다.",
+        "_단위가_이긴다": "`_percent` 와 같은 원칙이다 — 단위가 %면 [0,100], 원이면 이 범위. `claim_type` 기본값보다 우선한다. COMP 슬롯이라도 '가입 매장 수(곳)' 는 화폐가 아니므로 기본 [1,1e8] 을 그대로 쓴다.",
+        "units": [
+          "원",
+          "KRW"
+        ],
+        "value_range": [
+          1,
+          1000000000000000
+        ]
+      },
+      "value_range": {
+        "_왜": "**기대가 관측을 검열할 수 없다** (2026-08-09 사용자 판정). 판 ⑱ 실측: 하네스가 적은 `[1e9, 1e11]` 이 **gov_stat 참값 2.79조**를 격리했다 — 슬롯의 **기대**가 국가통계 **관측**을 버린 것이고, 자가 틀린 것이지 값이 틀린 것이 아니다(백로그 14).",
+        "_왜_그래도_남기나": "**끄면 안 된다.** 판 ⑱ 골든 관통에서 이 가드가 `bad_unit`(배수 미적용 = **100만 배 축소**)을 잡았다. 없애면 그것이 그대로 흐른다.",
+        "_그래서_자릿수다": "**크기가 아니라 자릿수로 본다.** 「조금 벗어남」은 기대가 좁은 것이고 「10^4 배 벗어남」은 단위·축이 틀린 것이다 — **종류가 다른 사건**이라 다르게 다룬다. ⚠ §5 「크기 필터로 종류 오류를 거르지 마라」와 부딪치지 않는다: 여기서 거르는 것이 **바로 종류 오류(단위·축)**이고, 종류가 맞는데 크기만 다른 것은 **통과시킨 뒤 표시**한다.",
+        "_단독_방어가_아니다": "판 ⑱ 이 `unknown_multiplier` 명시 실패를 만들어 단위 오류의 **1차 방어가 따로 생겼다.** 이 가드는 이제 **2차**다 — 그래서 느슨해질 수 있다.",
+        "enabled": true,
+        "차단_자릿수_차이": 3,
+        "_차단_자릿수_차이": "|log10(값) − log10(가장 가까운 경계)| 가 이 값을 **넘으면** 차단(off_slot). 이내면 **통과시키되 `기대_밖` 플래그와 차이를 값으로 남긴다** — **조용한 통과 금지.**",
+        "플래그_사유": "기대_밖 — 슬롯 기대 [{lo:g}, {hi:g}] 밖이지만 자릿수 차이 {diff:.1f}(≤{cap}) 이라 통과. **기대가 좁을 수 있다**",
+        "차단_사유": "값범위 밖(자릿수 차이 {diff:.1f} > {cap}): {v:g} ∉ [{lo:g}, {hi:g}] — 단위·축 오류 의심",
+        "_채택_등급은_별도": "**통과가 곧 확정이 아니다.** 등급은 `scoring` 이 정하고 이 플래그는 **표시**다 — 캔버스까지 실려 사람이 「기대가 좁았나 값이 이상한가」를 볼 수 있어야 한다.",
+        "_이력_판⑲": "자릿수 그물로 재정의. `bad_unit`(자릿수 6)은 여전히 차단 · `bad_axis` 는 `must_contain` 이 잡는다 — 골든 3종으로 매번 확인."
+      }
+    },
+    "slotcheck": {
+      "version": "slotcheck-v5-2026-08-09",
+      "_규칙": "A1 이 만든 슬롯을 받아 **내용**을 강제하는 표. A1 출력에 검증기가 없어 형식만 맞으면 빈 슬롯이 그대로 수집으로 나갔다(full-01: must_contain 25/27 빈칸, period 27/27 이 2022, subject 에 주제어 없음 → 검색이 반도체로 샘). 보정은 값을 만들어내는 것이 아니라 **A1 이 비운 칸을 규칙으로 채우는 것**이고, 무엇을 채웠는지는 전부 a1_audit 에 남는다.",
+      "period": {
+        "_why": "A1 이 절대연도를 박으면 그 연도가 **검색 쿼리에 그대로 들어간다**(a3_candidate.from_query = '대한민국 상위 카페 시장 규모 매출 2022'). 그래서 검색·발췌가 통째로 그 해에 묶이고, 수집된 fact 의 연도가 2022 아니면 없음이 된다(실측 9건/7건, 2023년 이후 0건). period 는 as_of 에서 유도해야 한다.",
+        "default_offset": 1,
+        "_default_offset": "기본은 as_of-1. 2026년에 물으면 2025년 값을 찾는다.",
+        "lagged_offset": 2,
+        "_lagged_offset": "국가통계는 구조적으로 늦는다. 아래 metric 에 걸리면 as_of-2.",
+        "_adapters_상호참조": "adapters.kosis.route_metrics.match 와 목록이 겹치지만 **뜻이 다르다** — 여기는 '통계는 늦게 나온다'(기간 보정), 저기는 '통계로 나온다'(경로 결정). 계량을 추가할 때는 **둘 다** 볼 것.",
+        "lagged_metrics": [
+          "사업체 수",
+          "사업체수",
+          "종사자 수",
+          "종사자수",
+          "가맹점 수",
+          "인구",
+          "세대수"
+        ],
+        "clamp_window_to_fresh": true,
+        "_clamp_window_to_fresh": "기간 겹의 하한을 **as_of_year - scoring.fresh_years** 아래로 내리지 않는다. period_tolerance_years 가 대칭(±2)이라 as_of-2 슬롯(2024)이면 창이 2022~2026 이 되어 2022 자료가 통과한 뒤 stale_penalty 로 감점된다 — 지금 걷어내려는 그 천장이 그 슬롯들에만 되살아난다. 기준은 언제나 **as_of_year** 다. period 기준으로 읽으면 2024-3=2021 이 되어 이 규칙이 무효가 된다.",
+        "_창을_슬롯에_저장하는_이유": "a_desk 가 비교 시점에 clamp 하면 창이 기록에 남지 않는다. Slot.period_min/period_max 로 저장하면 result.json 에 값째로 남아 '이 슬롯이 왜 이걸 잘랐는지'를 나중에 추적할 수 있다(절대규칙 7).",
+        "성장률_연계열": {
+          "_왜": "성장률은 **두 해를 이어야** 구간이 생긴다. 계량별 연도가 하나로 고정돼 있으면 **구조적으로 계산 불가**다 — 판 ⑲ 가 계열 C 에서 실측했고, 판 ④ 의 미용실은 **사람이 손으로** S20·S21 을 넣어 우회했다(백로그 53).",
+          "_좁게": "**`F_GROWTH` 식에 속한 슬롯에만** 적용한다. 다른 식의 period 규칙은 **그대로**다 — 칸 전반을 여는 것이 아니라 **한 식의 한 축**만 연다.",
+          "enabled": true,
+          "formula_ids": [
+            "F_GROWTH"
+          ],
+          "최소_연도_수": 2,
+          "허용_오프셋": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "_허용_오프셋": "as_of 기준 1~4년 전. KOSIS 연 계열은 8개년이 실측돼 있다(2017~2024).",
+          "최소_연도_수_강제": false,
+          "_최소_연도_수_강제": "⚠ **기본 off.** 켜면 `F_GROWTH` 에 1개 연도만 있는 **기존 초안이 전부 새로 위반**된다(판 ⑳ 회귀 실측: 초안 6건 중 4건이 미통과 +1). **허용과 강제는 다르다** — 이 개정의 목적은 연 계열을 **허용**하는 것이고, 2년치를 **요구**하는 것은 프롬프트가 할 일이다. 둘을 같이 켜야 짝이 맞는다."
+        }
+      },
+      "subject": {
+        "_why": "'서비스 침투율' 은 검색어가 아니다. subject 가 곧 쿼리인데 주제어가 없으면 검색이 아무 데로나 간다 — full-01 에서 반도체(investkorea·trade.gov) 자료가 실제로 들어왔다.",
+        "require_topic_word": true,
+        "prefix_format": "{topic} {subject}",
+        "_prefix_format": "주제어가 없으면 앞에 붙인다. 지역은 붙이지 않는다 — subject_contains_region 검사가 따로 있고 '서울 서울 커피전문점' 이 실제로 나갔던 적이 있다."
+      },
+      "must_contain": {
+        "_why": "가드가 하나도 없는 상태를 면하는 **하한선**이지 성능 개선이 아니다. subject 로 검색해 찾은 문서는 당연히 그 주제어를 갖고 있으므로 걸러내는 것은 거의 없다. 자기가 던진 그물을 검사하는 꼴이다 — off_slot 감소를 이 항목의 성과로 잡지 않는다.",
+        "fill_when_empty": true,
+        "max_filled": 2,
+        "skip_claim_types": [
+          "COMP",
+          "COMPARABLE",
+          "PAIN"
+        ],
+        "_skip_claim_types": "이 셋은 **정의상 남의 시장을 묻는 슬롯**이다 — 경쟁사 점유율·유사 서비스 시장규모·업계 손실액. 거기에 우리 아이템 주제어를 요구하면 멀쩡한 자료가 격리된다. 설계 결함이지 AND/OR 문제가 아니다(must_contain 은 원래 any 다). 실측: full-03 에서 이 셋이 must_contain 격리 6건 전부였고(COMP 5·PAIN 1), 면제하면 6건이 풀린다. 다만 그중 5건은 곧바로 단위 겹으로 떨어져 **순 해제는 1건**이다 — 크기를 알고 넣는다.",
+        "_max_filled": "3개 이상이면 과도하게 좁다(must_contain_3plus 경고). 채워 넣는 쪽은 2개까지."
+      },
+      "stat_code": {
+        "_why": "형식이 틀린 코드는 있는 것보다 없는 게 낫다. 어댑터가 통계표 검색+메타로 ID 를 스스로 찾으므로, 틀린 코드를 들고 가면 오히려 못 찾는다. (full-01: 'KOSIS/115301' 1건)",
+        "drop_malformed": true
+      },
+      "discard": {
+        "_why": "'검색도 채점도 성립하지 않는 슬롯' 을 수집에 내보내지 않는다. full-03 에서 A1 이 COMPARABLE·PAIN 에 `metric='값' · unit=null` 슬롯 4개(S15~S18)를 만들었다 — 무엇을 찾으라는 건지 쿼리로 쓸 수 없고, 단위가 없어 off_slot 5겹 중 단위·값범위 두 겹이 통째로 무력하다. 폐기는 값을 버리는 게 아니라 **답이 나올 수 없는 질문을 안 던지는 것**이고, 사유는 코드로 남아 a1_audit → 보고서 §7 로 간다(절대규칙 5).",
+        "_B에_주는_영향": "없다. b_estimate 는 var_id 에 슬롯이 없으면 가정값으로 떨어지고, 가정값도 없으면 '계산 불가' 를 남긴다 — 폐기 전에도 이 슬롯들은 확인됨 0 이라 같은 자리였다.",
+        "reasons": {
+          "empty_subject_or_metric": {
+            "enabled": true,
+            "_why": "subject·metric 이 곧 검색 쿼리다. 비면 던질 말이 없다."
+          },
+          "metric_not_indicative": {
+            "enabled": true,
+            "metrics": [
+              "값",
+              "수치",
+              "데이터",
+              "통계",
+              "정보"
+            ],
+            "_why": "'카페 유사 서비스 통계 의 값' 은 질문이 아니다. 무엇을 세는지가 없으면 발췌가 무엇을 뽑아야 할지 정할 수 없고, 실제로 S15·S16 은 not_found 였다."
+          },
+          "unit_missing": {
+            "enabled": true,
+            "_why": "단위가 없으면 단위 겹과 값범위 겹이 둘 다 안 돈다. 가드 5겹 중 2겹이 빠진 채로 나가느니 안 나가는 게 낫다."
+          },
+          "no_publisher": {
+            "enabled": false,
+            "subjects": [],
+            "_자리": "**아직 켜지 않는다.** '그 숫자를 발행하는 기관이 없다' 는 판정이 들어올 자리다 — '카페 SaaS 시장규모'·'카페 SaaS 침투율' 처럼 국내에 발행처가 없는 슬롯이 full-03 에서 6개였고 전부 not_found 였다. 위 둘과 같은 종류의 판정('답이 나올 수 없다')이라 같은 표에 둔다. 켜려면 판정 근거를 먼저 정해야 한다 — 지금 켜면 '못 찾았으니 없는 것' 이 되어 회수율 문제를 폐기로 덮는다."
+          }
+        }
+      },
+      "subject_terms": {
+        "_why": "**실재하는 통계를 말이 안 맞아서 못 찾고 있었다.** full-03 usable 66건 중 '비알콜' 0건 — 통계청이 커피전문점을 부르는 이름(비알콜음료점업, KSIC 56220)이 한 건도 안 잡혔다. 반면 '카페' 로 잡힌 31건 중 12건은 카페24(전자상거래 호스팅사), 1건은 키즈카페였다. 아래 표는 **코드가 아니라 규칙**이므로 업종이 바뀌면 이 파일만 고친다(절대규칙 7).",
+        "aliases": {
+          "카페": [
+            "커피전문점",
+            "비알콜음료점업"
+          ],
+          "커피": [
+            "커피전문점",
+            "비알콜음료점업"
+          ]
+        },
+        "_aliases": "must_contain 을 채울 때 주제어 뒤에 이어 붙인다. must_contain 은 any(OR) 이므로 넓히는 방향이고, KOSIS 표가 쓰는 말로 된 문서가 격리되지 않게 한다. **검색 쿼리에는 아직 넣지 않는다** — 쿼리를 바꾸면 회수율 축이 같이 움직여 이번 변경의 효과를 못 잰다(지도: 검색은 실행마다 0.2↔0.5 로 흔들린다). 쿼리 반영은 별도 라운드."
+      },
+      "topic_words": {
+        "_why": "concept 에서 뽑는다. 코드에 업종 상수를 박으면 다음 아이템에서 조용히 틀린다.",
+        "from_fields": [
+          "name",
+          "target",
+          "problem"
+        ],
+        "min_len": 2,
+        "max_words": 3,
+        "false_friends": {
+          "_why": "주제어가 **다른 말의 부분문자열**로 걸리는 것을 막는다. must_contain 이 문서 전문을 보므로 '카페24' 한 번이면 호스팅사 요금제 페이지가 카페 슬롯을 통과한다(full-03 에서 12건). 도메인 차단이 아니라 토큰 문제라 여기서 푼다 — cafe24.com 은 COMP 슬롯('유사 SaaS 기업 매출')에서는 정당한 출처일 수 있고, '결과가 나빠서' 를 차단 사유로 삼지 않는다(지도 §10).",
+          "카페": [
+            "카페24",
+            "cafe24",
+            "Cafe24",
+            "CAFE24",
+            "키즈카페",
+            "북카페",
+            "만화카페",
+            "PC카페"
+          ]
+        },
+        "stopwords": [
+          "자동화",
+          "서비스",
+          "시장",
+          "규모",
+          "비중",
+          "비율",
+          "단가",
+          "가격",
+          "수량",
+          "비용",
+          "매출",
+          "건수",
+          "금액",
+          "사업체",
+          "고객",
+          "관리",
+          "플랫폼",
+          "솔루션",
+          "기반",
+          "개인",
+          "이용",
+          "유사",
+          "상위",
+          "경쟁사",
+          "평균",
+          "추정",
+          "침투율",
+          "세그먼트"
+        ]
+      },
+      "claim_types_by_formula": {}
+    },
+    "source_signature": {
+      "version": "sig-v1-2026-08-08",
+      "_규칙": "원 출처 서명 사전. **LLM 0회 · 결정론적 패턴만.** 문서 본문에 「발행주체」와 「조사명」이 **둘 다** 나타나면 그 문서를 그 원 출처에 귀속시킨다. 한쪽만으로는 귀속하지 않는다 — 부처 이름은 아무 기사에나 나온다.",
+      "_왜": "교차확인의 화자를 **도메인**으로 세면, 같은 보도자료를 받아쓴 복제 기사 4~7개가 서로를 «독립 발행자»로 보증한다. 실측(beauty-06a): 중기부 「소상공인 노쇼 피해 실태조사」의 65% 를 ajunews(F009)와 sedaily(F016)가 서로 교차 확인해 각각 +1 을 받았다. 둘은 **같은 조사 한 건**이다. 이것은 가점을 깎는 변경이 아니라 **없던 독립성을 만들어내던 착시의 수리**다.",
+      "_심사_완화가_아니다": "임계(label_thresholds)·base_score·caps·quote_verified·off_slot 겹은 **하나도 건드리지 않는다.** 바꾸는 것은 「몇 명이 말했는가」를 세는 방법뿐이고, 방향은 **더 엄격해지는 쪽**이다. 검증 방법의 표현력을 늘린 것이지 기준을 낮춘 것이 아니다.",
+      "_fail_closed": "서명이 추출되지 않은 문서는 **가점 근거가 될 수 없다.** 「모르면 독립으로 쳐준다」는 fail-open 이고, 그게 지금의 착시를 만든 구조다. 모르면 세지 않는다.",
+      "cross": {
+        "enabled": true,
+        "_enabled": "false 로 두면 예전 동작(도메인 단위 화자)으로 즉시 되돌아간다 — 되돌리기는 후퇴가 아니라 측정 조건 복구다.",
+        "require_signature": false,
+        "_require_signature": "**false 로 확정했다(②-b-A 실측, 2026-08-08).** 원안은 true 였으나 그러면 서명 사전에 없는 **모든** 출처가 화자에서 빠져 「독립 발행자(통계기관·언론)와의 교차는 그대로 살아 있다」는 기존 방어선이 통째로 죽는다 — `tests/test_step2.py` 의 「official_page + gov_stat → +1」 항목 3건이 이것을 잡았다. 사전이 **완전할 때만** true 가 fail-closed 이고, 지금처럼 서명 1건뿐이면 fail-closed 가 아니라 **전면 차단**이다. 서명의 역할은 **접기(fold)** 이지 게이트가 아니다: 서명이 있으면 같은 조사끼리 1겹으로 접히고, 없으면 예전대로 도메인·자기발표 버킷으로 센다. 목적(복제 기사 착시 제거)은 이것만으로 달성된다."
+      },
+      "signatures": [
+        {
+          "id": "mss-noshow-2025",
+          "발행주체": [
+            "중소벤처기업부",
+            "중기부"
+          ],
+          "조사명": [
+            "소상공인 노쇼 피해 실태조사",
+            "노쇼 피해 실태조사"
+          ],
+          "_출처": "2025-11-24~12-10 조사 · 2025-12-31 발표 · 외식업 214개사. mss.go.kr bcIdx=1064466",
+          "_실측": "beauty-05 원장에서 이 페어가 7개 문서에 동시 검출됐다: sedaily×2 · ajunews · intn · asiatoday · blog.naver · kfcf.or.kr. chosun 은 조사명 별칭(「노쇼 피해 실태조사」)으로만 걸린다.",
+          "_경계": "korea.kr 브리핑(direct-0)은 「중소벤처기업부」만 있고 조사명이 없어 **서명 미추출**이다 — fail-closed 가 실제로 작동하는 자리다."
+        }
+      ],
+      "_사전_확장_규칙": "새 서명은 **실측으로만** 추가한다. 「이런 조사가 있을 것 같다」로 넣지 않는다. 조사명 별칭을 넓힐수록 **과대 접기**(서로 다른 조사를 한 겹으로) 위험이 커지므로, 별칭 추가는 그 별칭이 실제 문서에서 관측됐을 때만 한다.",
+      "_한계": "이것은 **기존 코퍼스 소급용 다리**다. 근본 해법은 `Document.title`·발행주체 필드를 스키마에 두고 수집 단계에서 채우는 것이며(②-b-B 백로그), 본문 문자열 매칭은 그때까지의 임시 수단이다. 본문에 발행주체가 안 적힌 문서는 원리적으로 귀속할 수 없다."
+    },
+    "fill": {
+      "version": "fill-v2-2026-08-09",
+      "_한_줄": "지어내지 않고, URL·조회일로 추적되고, 인용이 원문에서 대조되면 채운다. 정보 제공이 목적이며 확실성은 등급이 표기한다.",
+      "_왜_이_파일이_생겼나": [
+        "지금까지 파이프라인은 **채움과 등급을 라벨 하나(`확인됨`)로 겸했다.**",
+        "그 결과 미등재 도메인은 적재조차 안 됐고(하드 드롭), 적재돼도 aggregate 2점 → `미확인` 이라",
+        "`_confirmed()` 를 쓰는 판정 6개와 게이트 5축이 통째로 못 봤다.",
+        "성적표의 `미확보` 상당수가 **자료 부재가 아니라 심사에서 죽은 것**이었다.",
+        "이 파일은 그 둘을 **직교 두 축**으로 가른다 — `채택`(채우는가) 과 `등급`(얼마나 확실한가)."
+      ],
+      "_안_바꾸는_것": [
+        "`rules/scoring.v1.json` 은 **무변경**. `base_score` 를 올리면 등급·표기·계측 3축으로 동시에 번진다",
+        "(aggregate 2→3 + 교차 +1 = 4 → trust_labels 실무_신뢰 진입 = **낮은 등급의 높은 표기** = 금지선).",
+        "등급은 `등급표[kind]` 에서 **직접** 나오고 점수를 경유하지 않는다.",
+        "`label`·`score` 도 한 글자도 안 바꾼다 — 옛 축은 그대로 살아 있고 새 축이 옆에 선다."
+      ],
+      "채택_요건": {
+        "_규칙": "이 넷이 전부다. 다섯째를 넣으려면 이 파일에 도장이 있어야 한다.",
+        "요건": [
+          {
+            "id": "관측_존재",
+            "뜻": "값이 사실(ledger row)에서 나왔다. 지어낸 값이 아니다.",
+            "사유": "관측 없음"
+          },
+          {
+            "id": "url",
+            "뜻": "출처 URL 이 있다 — 되짚을 수 있어야 한다.",
+            "사유": "url 없음"
+          },
+          {
+            "id": "retrieved_at",
+            "뜻": "조회일이 있다. **Document → Fact 승계**이며 만들어 넣지 않는다(백필 금지).",
+            "사유": "retrieved_at 없음"
+          },
+          {
+            "id": "quote_verified",
+            "뜻": "인용이 원문 문자열과 대조됐다(절대 규칙 3).",
+            "사유": "인용 대조 실패"
+          }
+        ],
+        "_백필_금지": "조회일이 없으면 **만들어 넣지 않고 채택 불가**로 두고 재수집 힌트에 올린다. 조회일을 지어내는 것은 지어내기다.",
+        "_3값_상태_기각": "「미상」 같은 셋째 상태를 만들지 않는다 — 정보는 늘리되 **상태 종류는 늘리지 않는다**. 무엇이 빠졌는지는 `채택_불가_사유` 목록이 담는다."
+      },
+      "채택_불가_부류": {
+        "_명문": "추적 불가(발행 주체 불명 · 원출처 불명 재게시)와 비관측(커뮤니티 추측)은 **등급 문제가 아니라 채택 요건 미달**이다.",
+        "_왜": [
+          "주체 불명은 인용을 대조해도 「누구 말인지」가 없어 교차 확인이 성립하지 않는다.",
+          "추측은 관측이 아니라 v2 대전제(「관측 존재」)에서 이미 탈락한다.",
+          "그래서 이 둘은 `등급표` 에 오지 않는다 — 등급을 낮게 주는 것이 아니라 **받지 않는다**.",
+          "§0 증거 기준 선언과 v2 는 충돌이 아니라 **같은 원칙의 두 표현**이다."
+        ],
+        "kinds": {
+          "community": "비관측 — 커뮤니티 추측"
+        },
+        "_aggregate_는_왜_빠졌나": [
+          "처음엔 `aggregate` 를 「추적 불가」로 넣었다. **실측이 그것을 반박했다**(판 ㉙ ⓓ, beauty-12 S16).",
+          "`aggregate` 는 서로 다른 **셋**을 담는 catch-all 이다:",
+          "  ⓐ `default:unlisted` — 아직 안 본 도메인. 발행 주체는 대개 확인된다",
+          "  ⓑ `downgrade:*.go.kr|*.or.kr` — 공공기관·협회 일반 페이지. **발행 주체가 확인된다**",
+          "  ⓒ 진짜 원출처 불명 재게시 — 이것만이 「추적 불가」다",
+          "셋을 한 이름으로 막으면 ⓑ 가 같이 죽는다. 실측: `foodtoday.or.kr` 이 「소상공인시장진흥공단·한국외식업중앙회가 외식업 214개사를 조사」라고 **발행 주체와 조사명을 다 적은 채로** 「추적 불가」로 막혔다.",
+          "§0 의 심사 질문은 둘뿐이다 — ①실무에서 인용되는 종류인가 ②**발행 주체가 확인되는가**. ⓑ 는 둘 다 통과한다.",
+          "→ **추적 불가의 담지자는 `rejected` 목록 하나로 좁힌다.** kind 로는 가르지 않는다.",
+          "⚠ 이것은 완화가 아니라 **정정**이다. 등급은 그대로 `추정`(최하 관측 등급)이고, 바뀌는 것은 「채택 자체를 막을 것인가」뿐이다.",
+          "⚠ ⓒ 를 kind 로 표현할 방법은 아직 없다 — 백로그 47(Statista 문서 단위 판정)과 같은 뿌리다."
+        ],
+        "기본_미등재_kind": "aggregate",
+        "기본_미등재_kind_by": "default:unlisted",
+        "등재_거부_적용": true,
+        "등재_거부_사유": "추적 불가 — 등재 거부 도메인",
+        "_등재_거부_왜_지금": [
+          "`whitelist.rejected` 는 **읽는 코드가 0** 이었다(백로그 30) — 「거부했다」와 「아직 안 봤다」가 동작상 같았다.",
+          "판 ㉙ 이 미등재를 여는 판이므로 그대로 두면 `v.daum.net`(포털 재게시 · 발행자 불명) 같은 문서가 **개방의 문으로 같이 들어온다**.",
+          "⚠ 점수·등급·`kind_of` 는 건드리지 않는다 — **새 축(채택)에서만** 막는다. 그래야 개방 효과를 분리해서 잴 수 있다.",
+          "계보: 「추적 불가는 등급 문제가 아니라 채택 요건 미달」(결정 ②)의 **적용 확장**. 새 철학이 아니다."
+        ],
+        "_어떻게_가르나": "`kind_by` 가 `default:unlisted` 면 「미등재라서 aggregate」이고, 그 밖의 경로로 aggregate 가 된 것은 「원출처 불명 재게시」다. 이 구분이 없으면 개방과 금지가 같은 칸에서 싸운다."
+      },
+      "등급표": {
+        "_규칙": "도메인은 **입장 심사가 아니라 등급 산정에만** 쓴다. 화이트리스트는 폐지가 아니라 **역할 변경**이다.",
+        "확정": [
+          "gov_stat",
+          "public_filing",
+          "legal_source"
+        ],
+        "실무 신뢰": [
+          "official_page",
+          "press",
+          "press_release",
+          "survey_firm",
+          "panel_data",
+          "research_firm"
+        ],
+        "추정": [
+          "retailer",
+          "blog",
+          "aggregate"
+        ],
+        "_기본": "추정",
+        "_기본_왜": "미분류는 **낮은 쪽**으로 떨어진다. 모르면 보수적으로 — fail-closed."
+      },
+      "등급_상향": {
+        "_규칙": "독립 화자 ≥2 면 **최대 1단계**. `등급_근거` 를 못 남기면 **상향 없음**(fail-closed).",
+        "독립_화자_최소": 2,
+        "최대_단계": 1,
+        "사다리": [
+          "추정",
+          "실무 신뢰",
+          "확정"
+        ],
+        "_화자_접기": "자기발표 접기와 `source_signature` 원출처 귀속을 **상향 판정에도 그대로 적용**한다. 도메인 수를 화자 수로 읽으면 복제 기사들이 서로를 보증한다(②-b-A 에서 실측).",
+        "_한계": "`대조_기반` 의 도메인 수는 발행 주체 수가 아니다(백로그 61). 이 층은 `cross` 가 이미 접은 화자 수를 쓴다."
+      },
+      "항목": {
+        "_규칙": "도장 문구 그대로. 항목별 문턱은 **여기에서만** 온다.",
+        "1_시장크기": {
+          "문턱": "관측 1건",
+          "채워짐": 1,
+          "부분": 0
+        },
+        "2_성장률": {
+          "문턱": "2년치 or 직접률 or proxy선언",
+          "갈래": [
+            "2년치",
+            "직접률",
+            "proxy선언"
+          ]
+        },
+        "3_경쟁사": {
+          "문턱": "실명 + URL 2곳(1곳이면 부분)",
+          "채워짐": 2,
+          "부분": 1
+        },
+        "4_가격": {
+          "문턱": "표시가격 2건이면 밴드(추정), 1건이면 부분",
+          "채워짐": 2,
+          "부분": 1
+        },
+        "5_수요": {
+          "문턱": "정량 1건 or 정성 2건(추정)",
+          "정량_채워짐": 1,
+          "정성_채워짐": 2
+        },
+        "6_계산": {
+          "문턱": "TAM 산출(가정 명시)",
+          "가정_명시_필수": true
+        },
+        "7_못찾은것": {
+          "문턱": "항상",
+          "_왜": "§7 은 빼지 않는다. 보고서에서 유일하게 조건 없는 칸이다."
+        }
+      },
+      "산출물별": {
+        "_문법": "각 항목에 **`_왜_분리` 가 없으면 로드 실패**. 판 ⑩ 버그(관측이 정확할수록 밴드가 안 열림)는 산출물이 **상위 문턱을 상속**해서 생겼다 — 상속을 문법으로 금지한다.",
+        "가격_밴드": {
+          "_왜_분리": "요금 페이지는 연도가 없고(상시 게시물) 자기발표라 교차 가점도 없어 구조적으로 4점이 상한이다. 밴드가 5점을 요구하면 「가격을 정확히 관측할수록 밴드가 안 열리는」 구조가 된다.",
+          "min_score": 4,
+          "require_quote_verified": true,
+          "claim_types": [
+            "PRICE"
+          ],
+          "_claim_types_왜": "판 ⑩ 에서 전사 매출액(12조)이 단위가 「원」이라는 이유로 밴드에 들어왔다. **크기가 아니라 종류로** 닫는다(백로그 60)."
+        }
+      },
+      "어휘": {
+        "_왜": "`service/verdict.py` 의 코드 상수를 규약 ①(값은 rules/*.json)로 이관한다.",
+        "개수_단위": [
+          "개",
+          "곳",
+          "명",
+          "개사",
+          "개소",
+          "가구"
+        ],
+        "금액_단위": [
+          "원",
+          "천원",
+          "만원",
+          "백만원",
+          "억원",
+          "십억원",
+          "조원"
+        ],
+        "가격_밴드_최소_건수": 2,
+        "차별점_가격_축_표지": [
+          "요금",
+          "가격",
+          "단가",
+          "구독료"
+        ]
+      },
+      "소비자_배선": {
+        "_무엇": "`{소비자: 읽는_축}` 토글. **마이그레이션 단위**이자 `grade_audit` 정적 감사의 화이트리스트다.",
+        "_축": {
+          "옛": "label == '확인됨'",
+          "새": "채택 == True"
+        },
+        "_공존은_한시적": "전환이 끝나면 겸용 라벨(`확인됨`)의 **등급 의미를 폐기**한다. 남은 곳은 **다음 판 이내** 완료 조건.",
+        "_표는_코드에서_왔다": "이 목록은 짐작이 아니라 `tools/grade_audit.py` 의 AST 전수 스캔 결과다. 소스에 없는 자리를 적으면 「유령 등록」으로 실패하고, 새 소비자가 등록 없이 생기면 「미등록」으로 실패한다 — **표가 코드보다 오래되는 것**을 도구가 막는다.",
+        "_비판정_은_무엇인가": "라벨을 **세거나 찍기만** 하고 그것으로 채움을 가르지 않는 자리(진행 출력·평가 지표·라벨 생성 그 자체). 전환 대상이 아니다 — 여기까지 새 축으로 바꾸면 옛 축의 계측이 사라져 before/after 를 못 잰다.",
+        "배선": {
+          "a_desk.grade": "비판정",
+          "a_desk.check_coverage": "새",
+          "b_estimate.substitute": "새",
+          "c_chain._price_band": "옛_규칙구동",
+          "c_chain._apply_check": "새",
+          "schema.Ledger.confirmed": "새",
+          "verdict._confirmed": "새",
+          "verdict._price_band_rows": "옛_규칙구동",
+          "bm_scorer._cites": "새",
+          "bm_layer.build_competition": "새",
+          "eval.metrics": "비판정",
+          "eval.compare": "비판정",
+          "run.main": "비판정",
+          "schema.<module>": "비판정"
+        },
+        "_옛_규칙구동_이란": "축이 코드가 아니라 `rules/consistency.price_band.accept.labels` 에 있는 자리다. 전환은 **코드 수정이 아니라 그 규칙 블록 개정**이고, 산출물별 임계(`fill.v2.산출물별.가격_밴드`)와 함께 움직여야 하므로 이 판에서 손대지 않는다 — 「한 번에 하나만」.",
+        "_전환_현황": {
+          "새": [
+            "a_desk.check_coverage",
+            "b_estimate.substitute",
+            "bm_layer.build_competition",
+            "bm_scorer._cites",
+            "c_chain._apply_check",
+            "schema.Ledger.confirmed",
+            "verdict._confirmed"
+          ],
+          "옛_규칙구동": [
+            "c_chain._price_band",
+            "verdict._price_band_rows"
+          ],
+          "_남은_것": "2 자리. **다음 판 이내** 완료 조건(조건 ⓑ)."
+        }
+      },
+      "_이력": [
+        {
+          "판": "㉙ S2",
+          "무엇": "채움 기준 v2 를 규칙 파일로 신설. 채택 요건 4 · 등급표 · 채택 불가 부류 · 상향 · 항목 문턱 · 산출물별 · 어휘 · 소비자 배선.",
+          "왜": "채움과 등급을 라벨 하나로 겸해 온 탓에 성적표의 미확보 상당수가 자료 부재가 아니라 심사 사망이었다.",
+          "왜_안전한가": "이 판 S2 시점에서는 **읽는 코드가 0** 이다 — 파일만 선다. 소비자 전환은 S6 에서 하나씩, 변경별 분리 재채점과 함께.",
+          "안_바꾼_것": "scoring.v1.json · label · score · 기존 원장 · 게이트 임계",
+          "기대": "861 green 유지 · 기존 원장 델타 0"
+        },
+        {
+          "판": "㉙ S6",
+          "무엇": "판정 소비자 9 중 7 을 새 축(`채택`)으로 전환. 나머지 2 는 규칙 구동이라 별건.",
+          "왜": "채움과 등급을 라벨 하나로 겸하던 것을 끊는다.",
+          "왜_안전한가": "전환 직전 4계열 전수 실측에서 **새 축이 옛 축의 상위집합**임을 확인했다 — 확인됨 행이 전부 채택이기도 하다(A 5/5 · B 2/2 · C 3/3 · D 3/3). 즉 잃는 행이 0이다. ⚠ A 는 처음엔 상위집합이 **아니었다**(확인됨 6 · 채택 3 · 겹침 0) — 옛 수집이 `retrieved_at` 을 안 찍던 시절 것이라서다. **백필하지 않고 재수집으로**(beauty-12) 메웠다.",
+          "안_바꾼_것": "scoring · label · score · 게이트 임계 · 가격 밴드 규칙",
+          "기대": "A/C/D 통계 3칸 델타 0 · B 채움 증가"
+        }
+      ]
+    },
+    "_versions": {
+      "whitelist": "v8-2026-08-09",
+      "scoring": "scoring-v6-2026-08-09",
+      "units": "v2-2026-08-05",
+      "consistency": "v2-2026-08-09",
+      "assumptions": "v2-2026-08-08",
+      "adapters": "adapters-v9-2026-08-09",
+      "guards": "v2-2026-08-08",
+      "slotcheck": "slotcheck-v5-2026-08-09",
+      "source_signature": "sig-v1-2026-08-08",
+      "fill": "fill-v2-2026-08-09"
+    }
+  },
+  "a1_audit": {
+    "_note": "--from a4 (A1 은 원본 pet-treat-14 것)"
+  },
+  "a1_rejected": [],
+  "unguarded_slots": [],
+  "source_run": "pet-treat-14",
+  "from_stage": "a4",
+  "slots_overlay": false,
+  "slots_overlay_diff": []
+}
