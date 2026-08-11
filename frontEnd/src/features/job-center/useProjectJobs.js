@@ -50,5 +50,11 @@ export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
     setSelectedJobId(jobId);
   }, []);
 
-  return { ...state, selectedJobId, selectJob, events, notice: null, refresh };
+  const selectedJob = [...state.active, ...state.recent]
+    .find((job) => job.jobId === selectedJobId);
+  const notice = selectedJob?.presentationStatus === 'RESOLVED_INPUT'
+    ? { status: 'RESOLVED_INPUT', jobId: selectedJob.jobId }
+    : null;
+
+  return { ...state, selectedJobId, selectJob, events, notice, refresh };
 }

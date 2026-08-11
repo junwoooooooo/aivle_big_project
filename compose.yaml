@@ -91,6 +91,7 @@ services:
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       BM_MODEL: ${BM_MODEL:-${AI_MODEL}}
       TWIN_BANK_DIR: /app/app/twin/bank
+      TWIN_CONCURRENCY: ${TWIN_CONCURRENCY:-32}
     volumes:
       - ./ai/app/research/research2/runs:/app/app/research/research2/runs:ro
       - ./ai/app/twin/bank:/app/app/twin/bank:ro

@@ -23,6 +23,8 @@ import com.aivle.backend.pipeline.finance.repository.FinancialInputPreparationRe
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
+import com.aivle.backend.pipeline.marketing.domain.MarketingContent;
+import com.aivle.backend.pipeline.marketing.domain.MarketingContentType;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
@@ -39,9 +41,12 @@ import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotReposit
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class ProjectModuleStatusServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
@@ -215,5 +220,20 @@ class ProjectModuleStatusServiceTests {
         assertThatThrownBy(() -> service.findAll(8L, 41L))
             .isInstanceOfSatisfying(BusinessException.class,
                 exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    @Test
+    void keepsCompletedMarketingContentCompleteWhenTheLatestVisualTaskFails() {
+        MarketingContent content = MarketingContent.queued("content-1", 41L, "source-1", "sha256:source",
+            "{}", "{}", MarketingContentType.SOCIAL_POST, "SOCIAL", "title", 7L);
+        content.start();
+        content.completeRevision();
+        TaskRun visualTask = mock(TaskRun.class);
+        when(visualTask.getState()).thenReturn(TaskRunState.FAILED);
+
+        PipelineModuleStatus status = ReflectionTestUtils.invokeMethod(
+            service, "marketingStatus", content, "source-1", visualTask);
+
+        assertThat(status).isEqualTo(PipelineModuleStatus.COMPLETED);
     }
 }

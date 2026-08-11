@@ -7,6 +7,21 @@ import { useProjectEvents } from './useProjectEvents.js';
 vi.mock('./authenticatedSseClient.js', () => ({ consumeAuthenticatedSse: vi.fn() }));
 
 describe('useProjectEvents cursor hardening', () => {
+  it('reconnects through SSE without issuing REST polling requests', async () => {
+    vi.useFakeTimers();
+    const client = { get: vi.fn(), stream: vi.fn() };
+    consumeAuthenticatedSse
+      .mockRejectedValueOnce(new Error('temporary disconnect'))
+      .mockImplementationOnce(() => new Promise(() => {}));
+    const wrapper = ({ children }) => <ApiClientProvider client={client}>{children}</ApiClientProvider>;
+    const { result } = renderHook(() => useProjectEvents('41'), { wrapper });
+    await act(async () => {});
+    expect(result.current.transport).toBe('reconnecting');
+    await act(async () => { vi.advanceTimersByTime(1500); });
+    expect(consumeAuthenticatedSse).toHaveBeenCalledTimes(2);
+    expect(client.get).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
   it('increments revision only for a new global eventId', async () => {
     vi.useFakeTimers();
     let subscription;

@@ -128,6 +128,32 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         }
     }
 
+    @Test
+    void upgradesTheSessionOneV13SchemaThroughAllTransplantedLineageMigrations() throws Exception {
+        String schema = "upgrade_v13_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV13 = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration")
+            .target("13").load();
+        assertThat(throughV13.migrate().migrationsExecuted).isEqualTo(13);
+
+        Flyway latest = Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(5);
+        latest.validate();
+
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            assertTables(connection, schema, "market_research_runs", "market_research_versions",
+                "twin_survey_runs", "twin_survey_versions", "bm_plan_preparations");
+            assertThat(constraintCount(connection, schema, "market_research_runs", "fk_market_research_run_seed")).isOne();
+            assertThat(constraintCount(connection, schema, "twin_survey_runs", "fk_twin_survey_run_selection")).isOne();
+            assertThat(constraintCount(connection, schema, "financial_input_preparations", "fk_financial_preparation_bm_version")).isOne();
+            assertThat(indexCount(connection, schema, "financial_input_snapshots", "uk_financial_snapshot_active_preparation")).isOne();
+        }
+    }
+
     private void assertTables(Connection connection, String schema, String... tables) throws Exception {
         for (String table : tables) {
             assertThat(tableCount(connection, schema, table)).as("table %s", table).isEqualTo(1);
@@ -162,6 +188,36 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             statement.setString(1, schema);
             statement.setString(2, table);
             statement.setString(3, column);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1);
+            }
+        }
+    }
+
+    private int constraintCount(Connection connection, String schema, String table, String constraint) throws Exception {
+        try (var statement = connection.prepareStatement("""
+            select count(*) from information_schema.table_constraints
+            where constraint_schema = ? and table_name = ? and constraint_name = ?
+            """)) {
+            statement.setString(1, schema);
+            statement.setString(2, table);
+            statement.setString(3, constraint);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1);
+            }
+        }
+    }
+
+    private int indexCount(Connection connection, String schema, String table, String index) throws Exception {
+        try (var statement = connection.prepareStatement("""
+            select count(*) from pg_indexes
+            where schemaname = ? and tablename = ? and indexname = ?
+            """)) {
+            statement.setString(1, schema);
+            statement.setString(2, table);
+            statement.setString(3, index);
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
                 return result.getInt(1);

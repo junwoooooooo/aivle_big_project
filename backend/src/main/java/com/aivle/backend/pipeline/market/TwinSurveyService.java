@@ -29,9 +29,9 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * 패널 트윈 조사. <b>패턴 B</b> — 큐에 넣고 {@link TwinSurveyWorker} 가 돌린다.
  *
- * <p>{@link MarketResearchService} 와 같은 구조다: {@code start} 는 TaskRun 만 만들고
- * 상태 전이는 {@code current()} 가 불릴 때 {@link #synchronize} 가 한다.
- * <b>지연 반영이라 화면이 폴링해야 전이한다.</b>
+ * <p>{@link MarketResearchService} 와 같은 구조다: {@code start} 는 TaskRun 만 만들고,
+ * 상태 전이와 결과 materialization은 worker 완료 트랜잭션에서 수행한다.
+ * {@code current()} 는 canonical 상태를 읽기만 한다.
  */
 @Service
 public class TwinSurveyService {

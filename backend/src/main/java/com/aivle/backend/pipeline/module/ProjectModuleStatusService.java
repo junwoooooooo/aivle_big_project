@@ -314,7 +314,7 @@ public class ProjectModuleStatusService {
         return switch (visualTask.getState()) {
             case QUEUED, READY -> PipelineModuleStatus.QUEUED;
             case RUNNING -> PipelineModuleStatus.RUNNING;
-            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+            case FAILED, CANCELLED, TIMED_OUT -> contentStatus;
             case SUCCEEDED, NEEDS_INPUT -> contentStatus;
         };
     }
