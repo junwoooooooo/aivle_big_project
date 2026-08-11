@@ -5,7 +5,13 @@
 """
 from __future__ import annotations
 
-from .bm.contracts import GrowthRateData, MarketJoinData, MarketSizeData, PriceAnalysisData
+from .bm.contracts import (
+    ConceptSnapshot,
+    GrowthRateData,
+    MarketJoinData,
+    MarketSizeData,
+    PriceAnalysisData,
+)
 
 
 def _evidence(item: dict) -> dict:
@@ -25,6 +31,9 @@ def _evidence(item: dict) -> dict:
 def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData:
     import bm_adapter
 
+    donor_snapshot = bm_adapter._snapshot(concept)
+    canonical_snapshot = ConceptSnapshot.model_validate(
+        donor_snapshot.model_dump(mode="python"))
     market = market_result.get("market") or {}
     tam, sam, growth = market.get("tam") or {}, market.get("sam") or {}, market.get("growth") or {}
     evidence = [_evidence(item) for item in (market_result.get("evidence") or [])]
@@ -44,7 +53,7 @@ def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData
     }
     return MarketJoinData(
         concept_id=concept_id,
-        concept_snapshot=bm_adapter._snapshot(concept),
+        concept_snapshot=canonical_snapshot,
         market_size=MarketSizeData(tam=tam.get("value"), sam=sam.get("value"),
                                    som=(market.get("som") or {}).get("value"), unit="KRW"),
         growth_rate=GrowthRateData(value=growth.get("value"), unit="%/년"),

@@ -22,6 +22,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from pydantic import ValidationError
+
 from . import serialize
 from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail
 
@@ -254,12 +256,30 @@ async def run_market_research(task_input: dict, run_id: str,
                         "BM immutable source JSON 형식 불량") from failure
         if not isinstance(market_result, dict) or market_result.get("mode") != "FULL":
             raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "Market FULL 결과 없음")
-        return await _bm_product(
-            market_result, concept, concept_id.strip(), run_id,
-            Budget(total=int(task_input.get("llmBudget") or 1)),
-            _plan_material(task_input.get("planMaterial")),
-            _plan_constraints(task_input.get("executionConstraints")),
-            legal if isinstance(legal, dict) else None, event_sink)
+        try:
+            return await asyncio.wait_for(_bm_product(
+                market_result, concept, concept_id.strip(), run_id,
+                Budget(total=int(task_input.get("llmBudget") or 1)),
+                _plan_material(task_input.get("planMaterial")),
+                _plan_constraints(task_input.get("executionConstraints")),
+                legal if isinstance(legal, dict) else None, event_sink),
+                timeout=max(0.001, timeout_seconds))
+        except asyncio.TimeoutError as failure:
+            raise _fail("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED",
+                        "BM Product 실행이 기한을 넘겼다") from failure
+        except (serialize.ContractDrift, ValidationError, KeyError, TypeError) as failure:
+            raise _fail("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION",
+                        "BM Product 결과 계약을 검증할 수 없다") from failure
+        except _Hard as failure:
+            if isinstance(failure.__cause__,
+                          (serialize.ContractDrift, ValidationError, KeyError, TypeError)):
+                raise _fail("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION",
+                            "BM Product 결과 계약을 검증할 수 없다") from failure
+            raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+                        "BM Product 실행을 완료할 수 없다") from failure
+        except Exception as failure:  # noqa: BLE001 - Product 경계 밖 500 유출 금지
+            raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+                        "BM Product 실행을 완료할 수 없다") from failure
 
     # ── fixture/RESCORE 이름표 해석. **공식 Product 경로가 아니다** ───────────
     if mode == "FULL" and not bool(task_input.get("fixtureMode")):
@@ -450,9 +470,14 @@ def _full(source_run: str, concept_path: str, concept_id: str,
     evidence_ids = {item["id"] for item in evidence}
 
     result = _read_result(source_run)
+    not_found = dict(((result.get("report") or {}).get("not_found") or {}))
+    if collection_wired:
+        # donor fixture의 특정 카페 SaaS 실험에서만 유효한 정적 보고 문구다.
+        # Product 수집 결과의 실제 결측·경계 정보는 유지하고 이 블록만 내보내지 않는다.
+        not_found.pop("independent_topdown_blocked", None)
     market = serialize.market(
         verdict, cards,
-        ((result.get("report") or {}).get("not_found") or {}),
+        not_found,
         result.get("coverage_caveat"), evidence_ids,
         # 슬롯 정의 — 「S2」를 사람이 읽는 문구로 옮기는 데 쓴다. 원장에 이미 있어 새 I/O 는 없다.
         slots=((result.get("input") or {}).get("slots") or []))

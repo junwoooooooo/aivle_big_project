@@ -103,6 +103,59 @@ def test_product_full_builds_envelope_from_workspace_run(product_run_override):
     assert result["scorecard"]
 
 
+def _arbitrary_product_concept(tmp_path: Path) -> str:
+    source = json.loads((RESEARCH_HOME / CONCEPT).read_text(encoding="utf-8"))
+    source.update({
+        "concept_id": "fridge-optimizer",
+        "name": "냉장고 재료 활용 최적화 서비스",
+        "target": "식재료 낭비를 줄이려는 1인 가구",
+        "problem": "보유 재료를 제때 활용하기 어렵다",
+        "solution": "냉장고 재료를 기준으로 메뉴와 소비 순서를 추천한다",
+    })
+    concept_path = tmp_path / "arbitrary-product-concept.json"
+    concept_path.write_text(json.dumps(source, ensure_ascii=False), encoding="utf-8")
+    return str(concept_path)
+
+
+def test_product_full_suppresses_fixture_only_report_note(
+        product_run_override, tmp_path):
+    run_id, _bm_scorer, _scorecard = product_run_override
+
+    result = pipeline._full(
+        source_run=run_id,
+        concept_path=_arbitrary_product_concept(tmp_path),
+        concept_id="fridge-optimizer",
+        run_id="arbitrary-product-output",
+        budget=pipeline.Budget(0),
+        rescore=False,
+        collection_wired=True,
+    )
+
+    not_found = result["market"]["notFound"]
+    assert all(item.get("item") != "independent_topdown_blocked"
+               for item in not_found)
+    rendered = json.dumps(not_found, ensure_ascii=False)
+    for fixture_token in ("카페24", "카페 SaaS", "코케비즈", "토스플레이스"):
+        assert fixture_token not in rendered
+
+
+def test_fixture_rescore_keeps_donor_report_note(product_run_override):
+    run_id, _bm_scorer, _scorecard = product_run_override
+
+    result = pipeline._full(
+        source_run=run_id,
+        concept_path=CONCEPT,
+        concept_id="beauty-noshow",
+        run_id="fixture-output",
+        budget=pipeline.Budget(0),
+        rescore=True,
+        collection_wired=False,
+    )
+
+    assert any(item.get("item") == "independent_topdown_blocked"
+               for item in result["market"]["notFound"])
+
+
 def test_unset_override_keeps_bundled_donor_fixtures(monkeypatch):
     import bm_scorer
     import runlog
