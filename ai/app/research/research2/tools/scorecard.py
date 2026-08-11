@@ -25,6 +25,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+RUNS_DIR = os.environ.get("RESEARCH2_RUNS_DIR") or os.path.join(ROOT, "runs")
 sys.path.insert(0, ROOT)
 
 import fillaxis as _fx                                             # noqa: E402
@@ -40,7 +41,7 @@ def _run(mod: list, *args) -> dict:
 
 def ledger_rows(run: str) -> list:
     rows = []
-    for ln in io.open(os.path.join(ROOT, "runs", run, "run.jsonl"), encoding="utf-8"):
+    for ln in io.open(os.path.join(RUNS_DIR, run, "run.jsonl"), encoding="utf-8"):
         o = json.loads(ln)
         if o.get("node") == "a4_ledger":
             p = o["payload"]
@@ -49,7 +50,7 @@ def ledger_rows(run: str) -> list:
 
 
 def slots_of(run: str) -> dict:
-    res = json.load(io.open(os.path.join(ROOT, "runs", run, "result.json"), encoding="utf-8"))
+    res = json.load(io.open(os.path.join(RUNS_DIR, run, "result.json"), encoding="utf-8"))
     return {s["slot_id"]: s for s in (res.get("input") or {}).get("slots") or []}, res
 
 

@@ -27,13 +27,14 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 import fillaxis as _fx                              # noqa: E402
 RULES = os.path.join(ROOT, "rules", "bm_gate.v1.json")
+RUNS_DIR = os.environ.get("RESEARCH2_RUNS_DIR") or os.path.join(ROOT, "runs")
 
 
 # ══════════════════════════════════════════════════════════════
 # 원장 읽기 — 이 파일이 원장을 만지는 유일한 곳
 # ══════════════════════════════════════════════════════════════
 def load_ledger(run_id: str) -> dict:
-    d = os.path.join(ROOT, "runs", run_id)
+    d = os.path.join(RUNS_DIR, run_id)
     res_p, jl_p = os.path.join(d, "result.json"), os.path.join(d, "run.jsonl")
     if not os.path.exists(res_p):
         raise FileNotFoundError(f"원장이 없다: {res_p}")
