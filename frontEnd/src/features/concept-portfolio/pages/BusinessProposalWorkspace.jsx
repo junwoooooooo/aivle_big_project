@@ -7,19 +7,19 @@ import { formatLocalTime } from '../../../shared/async-events/formatLocalTime.js
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_LABELS, HYPOTHESIS_TYPES, buildHypothesisChanges,
-  canOpenComparison, candidateDefaultField, candidateFieldOptions, candidateRequests,
+  canOpenComparison, candidateFieldOptions, candidateRequests, createCandidateDraft,
   comparisonRows, hypothesisDecisionLabel, hypothesisDisplay, hypothesisValueText, portfolioRunPresentation,
-  selectedConceptId, serializeCandidateFact, toggleComparedConcept,
+  selectedConceptId, serializeCandidateFacts, toggleComparedConcept,
 } from '../businessProposalModel.js';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 import '../styles/business-proposal.css';
+import '../styles/business-proposal-polish.css';
 
 export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   const { projectId } = useParams();
   const outlet = useOutletContext() ?? {};
   const portfolio = useConceptPortfolio(projectId, outlet.liveRevision);
-  const progressJobId = portfolio.run?.productStatus === 'RUNNING'
-    ? (portfolio.run.activeTaskRunId ?? portfolio.run.initialTaskRunId) : null;
+  const progressJobId = portfolio.run?.activeTaskRunId ?? portfolio.run?.initialTaskRunId ?? null;
   const progressEvents = useJobEvents(progressJobId);
   const [clock, setClock] = useState(Date.now());
   const [mode, setMode] = useState(initialMode);
@@ -58,16 +58,14 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
     selectionBaseline.current = { selectionId, conceptIds: currentIds };
   }, [portfolio.concepts, portfolio.selection?.selectionId]);
 
-  const draft = (request) => drafts[request.inputRequestId] ?? {
-    field: candidateDefaultField(request), value: '',
-  };
+  const draft = (request) => drafts[request.inputRequestId] ?? createCandidateDraft(request);
   const updateDraft = (request, next) => setDrafts((current) => ({
     ...current, [request.inputRequestId]: { ...draft(request), ...next },
   }));
   const submitInput = (request) => {
     const current = draft(request);
-    const payload = serializeCandidateFact(current.field, current.value);
-    if (payload) portfolio.respond(request.inputRequestId, payload, current.value);
+    const payload = serializeCandidateFacts(request, current);
+    if (payload) portfolio.respond(request.inputRequestId, payload, request.question ?? '');
   };
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
@@ -79,7 +77,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
 
     {portfolio.error && <section className="business-proposal__error" role="alert"><span>{getUserErrorMessage(portfolio.error)}</span><button type="button" onClick={portfolio.refresh}>다시 시도</button></section>}
     {!portfolio.run && <section className="business-proposal__empty"><h2>사업안 검토를 시작할 수 있습니다.</h2><p>확정된 아이디어를 바탕으로 최대 5개의 사업안을 검토합니다.</p><button type="button" disabled={portfolio.busy} onClick={portfolio.start}>사업안 검토 시작</button></section>}
-    {portfolio.run && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} />}
+    {portfolio.run && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={() => outlet.openWorkCenterJob?.(progressJobId)} />}
     {recoveredNotice && <p className="business-proposal__notice" role="status">추가 사업안이 준비되었습니다. 현재 선택은 유지됩니다.</p>}
 
     {mode === 'compare' && <Comparison concepts={comparedConcepts} onSelect={portfolio.select} busy={portfolio.busy} />}
@@ -88,12 +86,12 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
         selected={concept.conceptId === selectedId} compared={compared.includes(concept.conceptId)}
         compareDisabled={!compared.includes(concept.conceptId) && compared.length >= 3}
         requests={candidateRequests(portfolio.inputRequests, concept.candidateId)}
-        drafts={drafts} onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation}
+        drafts={drafts} onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start}
         onCompare={() => setCompared((value) => toggleComparedConcept(value, concept.conceptId))}
         onSelect={() => portfolio.select(concept.conceptId)} busy={portfolio.busy} />)}
     </section>}
-    {portfolio.concepts.length > 0 && unmatchedInputs.length > 0 && <InputGroup title="추가 검토 중인 사업안" description="아래 정보는 검토 완료된 다른 사업안의 선택을 막지 않습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
-    {portfolio.concepts.length === 0 && actionableInputs.length > 0 && <InputGroup title="사업안을 완성하려면 실제 사업정보가 필요합니다." requests={actionableInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
+    {portfolio.concepts.length > 0 && unmatchedInputs.length > 0 && <InputGroup title="추가 검토 중인 사업안" description="아래 정보는 검토 완료된 다른 사업안의 선택을 막지 않습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start} busy={portfolio.busy} />}
+    {portfolio.concepts.length === 0 && actionableInputs.length > 0 && <InputGroup title="사업안을 완성하려면 실제 사업정보가 필요합니다." requests={actionableInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start} busy={portfolio.busy} />}
 
     {portfolio.selection && <section className="validation-assumptions">
       <header><p>다음 분석에 사용할 검증 가정을 확인해 주세요.<br />현재 사업안을 바탕으로 AI가 제안한 값입니다. 실제 계획과 다르면 수정할 수 있습니다.</p><span>{portfolio.selection.activeTaskRunId ? '처리 중 · 잠시 기다려 주세요' : `${portfolio.selection.hypothesisConfirmedCount}/7 확인`}</span></header>
@@ -113,33 +111,41 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   </main>;
 }
 
-export function PortfolioStatus({ run, busy, onRestart, events = [], now = Date.now() }) {
+export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = Date.now() }) {
   const view = portfolioRunPresentation(run);
   const running = run.productStatus === 'RUNNING';
   const recent = events.slice(-5);
   const started = Date.parse(events[0]?.occurredAt ?? run.updatedAt ?? '');
   const elapsed = Number.isFinite(started) ? Math.max(0, Math.floor((now - started) / 1000)) : 0;
   const latest = Date.parse(recent.at(-1)?.occurredAt ?? '');
-  return <section className="portfolio-status"><div><strong>{view.title}{running ? '.'.repeat((Math.floor(now / 700) % 3) + 1) : ''}</strong>{view.detail && <span>{view.detail}</span>}{running && <small>경과 {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}{Number.isFinite(latest) ? ` · 마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : ''}</small>}</div>{running ? <span>검토 결과를 준비하고 있습니다.</span> : <span>{run.producedConceptCount ?? 0}개 사업안 · 추가 검토 {run.openInputCount ?? 0}건</span>}{view.restart && <button type="button" disabled={busy} onClick={onRestart}>{view.action}</button>}{running && recent.length > 0 && <ol className="portfolio-status__events">{recent.map((event) => <li key={event.eventId ?? event.sequence}><time>{formatLocalTime(event.occurredAt)}</time><span>{jobEventMessage(event)}</span></li>)}</ol>}</section>;
+  const summary = [...events].reverse().find((event) => event.stage === 'SUMMARY')?.messageParams ?? {};
+  const reviewed = summary.reviewed ?? run.runSummary?.candidateGenerated;
+  const failed = run.productStatus === 'FAILED';
+  const needsInput = run.productStatus === 'NEEDS_INPUT';
+  const failureEvent = [...events].reverse().find((event) => event.status === 'FAILED');
+  const outcome = needsInput && reviewed != null
+    ? `${reviewed}개의 사업안 후보를 검토했습니다. 현재 바로 선택 가능한 사업안은 없으며, ${run.openInputCount ?? summary.needsInput ?? 0}개의 사업안은 실제 운영정보 확인 후 검토를 계속할 수 있습니다.`
+    : failed && reviewed != null
+      ? `${reviewed}개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.`
+      : `${run.producedConceptCount ?? 0}개 사업안 · 추가 검토 ${run.openInputCount ?? 0}건`;
+  return <section className="portfolio-status"><div><strong>{view.title}{running ? '.'.repeat((Math.floor(now / 700) % 3) + 1) : ''}</strong>{view.detail && <span>{view.detail}</span>}{running && <small>경과 {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}{Number.isFinite(latest) ? ` · 마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : ''}</small>}</div><span>{running ? '검토 결과를 준비하고 있습니다.' : outcome}</span>{failed && run.failureCode !== 'NO_ACCEPTED_CONCEPTS' && failureEvent && <span className="portfolio-status__failure-reason"><strong>원인</strong> {jobEventMessage(failureEvent)}</span>}<div className="portfolio-status__actions">{view.restart && <button type="button" disabled={busy} onClick={onRestart}>{view.action}</button>}{(failed || running) && onDetail && <button type="button" onClick={onDetail}>작업 상세 보기</button>}</div>{running && recent.length > 0 && <ol className="portfolio-status__events">{recent.map((event) => <li key={event.eventId ?? event.sequence}><time>{formatLocalTime(event.occurredAt)}</time><span>{jobEventMessage(event)}</span></li>)}</ol>}</section>;
 }
 
-function ProposalCard({ concept, selected, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onCompare, onSelect, busy }) {
-  return <article className="proposal-card" data-selected={selected}><header><div><h2>{concept.conceptName}</h2><span>{selected ? '현재 선택' : '선택 가능'}</span></div><label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 담기</label></header><p>{concept.summary}</p><LegalSummary review={concept.legalReview} />{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? { field: candidateDefaultField(request), value: '' }} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} busy={busy} />)}<button type="button" className="proposal-card__select" disabled={busy || selected} onClick={onSelect}>{selected ? '선택됨' : '이 사업안 선택'}</button></article>;
+function ProposalCard({ concept, selected, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onExplore, onCompare, onSelect, busy }) {
+  return <article className="proposal-card" data-selected={selected}><header><div><h2>{concept.conceptName}</h2><span>{selected ? '현재 선택' : '선택 가능'}</span></div><label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 담기</label></header><p>{concept.summary}</p><LegalSummary review={concept.legalReview} />{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}<button type="button" className="proposal-card__select" disabled={busy || selected} onClick={onSelect}>{selected ? '선택됨' : '이 사업안 선택'}</button></article>;
 }
 
 function LegalSummary({ review }) { const value = review ?? {}; return <section className="legal-summary"><strong>선택 전 법률·규제 요약</strong><p>{value.safeSummary ?? value.summary ?? value.conclusion ?? '검토 결과가 사업안에 반영되었습니다.'}</p></section>; }
 
-export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, busy }) {
+export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, onExplore, busy }) {
   if (request.status === 'ANSWERED' && request.nextAction === 'RETRY_CONTINUATION') return <section className="candidate-input"><strong>제출한 정보의 반영을 완료하지 못했습니다.</strong><p>같은 정보를 다시 입력하지 않고 반영 작업만 다시 시도합니다.</p><button type="button" disabled={busy} onClick={onRetry}>추가 사업정보 반영 다시 시도</button></section>;
   const options = candidateFieldOptions(request);
-  const selectedField = draft.field;
-  const contract = CANDIDATE_FACT_FIELDS[selectedField];
-  const payload = serializeCandidateFact(selectedField, draft.value);
+  const payload = serializeCandidateFacts(request, draft);
   const unresolved = request.nextAction === 'INPUT_TARGET_UNRESOLVED' || options.length === 0;
-  return <section className="candidate-input"><header><div><small>추가 검토 중인 사업안</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header><div><strong>확인이 필요한 내용</strong><p>{request.question ?? request.safeSummary ?? '실제 사업정보를 확인해 주세요.'}</p></div>{request.reason && <div><strong>왜 필요한가</strong><p>{request.reason}</p></div>}{unresolved ? <div role="alert"><strong>필요한 정보 항목을 특정하지 못했습니다.</strong><p>{(request.unknownFacts ?? []).join(' ') || '질문 내용을 다시 확인해야 합니다.'}</p><span>임의의 사업정보를 선택하지 않고 서버의 항목 재확인을 기다립니다.</span></div> : <>{candidateDefaultField(request) ? <p>답변 항목: {CANDIDATE_FACT_FIELDS[candidateDefaultField(request)].label}</p> : <label>답변할 사업정보<select aria-label="답변할 사업정보" value={selectedField} onChange={(event) => onDraft({ field: event.target.value, value: '' })}><option value="">항목을 선택해 주세요</option>{options.map((field) => <option key={field} value={field}>{CANDIDATE_FACT_FIELDS[field].label}</option>)}</select></label>}<label>{contract?.type === 'list' ? '한 줄에 한 항목씩 입력해 주세요.' : '실제 사업 사실을 입력해 주세요.'}<textarea value={draft.value} onChange={(event) => onDraft({ value: event.target.value })} /></label><button type="button" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button></>}</section>;
+  return <section className="candidate-input"><header><div><small>추가 검토 중인 사업안</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header><div><strong>확인이 필요한 내용</strong><p>{request.question ?? request.safeSummary ?? '실제 사업정보를 확인해 주세요.'}</p></div>{request.reason && <div><strong>왜 필요한가</strong><p>{request.reason}</p></div>}{unresolved ? <div role="alert"><strong>필요한 사업정보 항목을 자동으로 특정하지 못했습니다.</strong><p>{(request.unknownFacts ?? []).join(' ') || '질문 내용을 다시 확인해야 합니다.'}</p><button type="button" disabled={busy} onClick={onExplore}>다른 방향 다시 탐색</button></div> : <><div className="candidate-input__fields">{options.map((field) => { const contract = CANDIDATE_FACT_FIELDS[field]; return <label key={field}><strong>{contract.label}</strong><span>{contract.type === 'list' ? '한 줄에 한 항목씩 입력해 주세요. 해당 사항이 없으면 ‘해당 없음’을 입력할 수 있습니다.' : '실제 사업 사실을 입력해 주세요.'}</span><textarea aria-label={contract.label} value={draft.values?.[field] ?? ''} onChange={(event) => onDraft({ values: { ...(draft.values ?? {}), [field]: event.target.value } })} /></label>; })}</div><div className="candidate-input__actions"><button type="button" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button><button type="button" disabled={busy} onClick={onExplore}>다른 방향 다시 탐색</button></div></>}</section>;
 }
 
-function InputGroup({ title, description, requests, drafts, onDraft, onSubmit, onRetry, busy }) { return <section className="business-proposal__input-first"><h2>{title}</h2>{description && <p>{description}</p>}{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? { field: candidateDefaultField(request), value: '' }} onDraft={(next) => onDraft(request, next)} onSubmit={() => onSubmit(request)} onRetry={() => onRetry(request.inputRequestId)} busy={busy} />)}</section>; }
+function InputGroup({ title, description, requests, drafts, onDraft, onSubmit, onRetry, onExplore, busy }) { return <section className="business-proposal__input-first"><h2>{title}</h2>{description && <p>{description}</p>}{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onSubmit(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}</section>; }
 
 function Comparison({ concepts, onSelect, busy }) { if (!canOpenComparison(concepts.map((item) => item.conceptId))) return <section className="proposal-comparison"><h2>사업안 비교</h2><p>비교할 사업안을 2개 이상, 최대 3개까지 선택해 주세요. 비교하지 않고도 바로 선택할 수 있습니다.</p></section>; const rows = comparisonRows(concepts); return <section className="proposal-comparison"><h2>사업안 비교</h2><div className="proposal-comparison__matrix" style={{ '--proposal-columns': concepts.length }}><div className="proposal-comparison__corner">비교 항목</div>{concepts.map((concept) => <header key={concept.conceptId}><strong>{concept.conceptName}</strong><button type="button" disabled={busy} onClick={() => onSelect(concept.conceptId)}>이 사업안 선택</button></header>)}{rows.flatMap((row) => [<strong className="proposal-comparison__label" key={`${row.label}-label`}>{row.label}</strong>, ...row.values.map((value, index) => <p key={`${row.label}-${concepts[index].conceptId}`}>{value}</p>)])}</div></section>; }
 

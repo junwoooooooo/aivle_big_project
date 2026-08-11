@@ -65,6 +65,21 @@ export function serializeCandidateFact(field, rawValue) {
   return values.length > 0 ? { [field]: values } : null;
 }
 
+export function createCandidateDraft(request) {
+  return { values: Object.fromEntries(candidateFieldOptions(request).map((field) => [field, ''])) };
+}
+
+export function serializeCandidateFacts(request, draft) {
+  const fields = candidateFieldOptions(request);
+  if (fields.length === 0) return null;
+  const values = draft?.values ?? {};
+  const entries = fields.map((field) => {
+    const serialized = serializeCandidateFact(field, values[field]);
+    return serialized ? [field, serialized[field]] : null;
+  });
+  return entries.some((entry) => entry == null) ? null : Object.fromEntries(entries);
+}
+
 export function hypothesisValueText(value) {
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) return value.join(', ');

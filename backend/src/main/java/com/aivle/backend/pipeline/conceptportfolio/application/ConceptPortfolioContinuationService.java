@@ -45,6 +45,7 @@ public class ConceptPortfolioContinuationService {
     private final CanonicalInputHasher inputHasher;
     private final ConceptPortfolioJsonHasher jsonHasher;
     private final JobEventPublisher events;
+    private final EffectiveAffectedFieldResolver affectedFields;
     private final ObjectMapper mapper;
     private final Clock clock;
 
@@ -55,11 +56,12 @@ public class ConceptPortfolioContinuationService {
             ConceptInputResponseRepository responses, UserRepository users,
             TaskRunService taskRuns, CanonicalInputHasher inputHasher,
             ConceptPortfolioJsonHasher jsonHasher, JobEventPublisher events,
-            ObjectMapper mapper, Clock clock) {
+            EffectiveAffectedFieldResolver affectedFields, ObjectMapper mapper, Clock clock) {
         this.runs = runs; this.concepts = concepts; this.continuations = continuations;
         this.inputRequests = inputRequests; this.responses = responses; this.users = users;
         this.taskRuns = taskRuns; this.inputHasher = inputHasher; this.jsonHasher = jsonHasher;
-        this.events = events; this.mapper = mapper; this.clock = clock;
+        this.events = events; this.affectedFields = affectedFields;
+        this.mapper = mapper; this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +89,7 @@ public class ConceptPortfolioContinuationService {
             return accepted(replay.get(), request, run);
         }
         requireContinuable(run, request);
-        validateFacts(body.confirmedFacts(), mapper.readTree(request.getAffectedFieldsJson()));
+        validateFacts(body.confirmedFacts(), affectedFields.resolve(request));
         ConceptInputResponse saved = responses.save(ConceptInputResponse.create(request,
             users.findByIdAndDeletedAtIsNull(ownerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)),
@@ -129,7 +131,7 @@ public class ConceptPortfolioContinuationService {
         }
         ConceptInputResponse stored = storedResponse(request);
         JsonNode facts = mapper.readTree(stored.getResponseJson()).path("confirmedFacts");
-        validateFacts(facts, mapper.readTree(request.getAffectedFieldsJson()));
+        validateFacts(facts, affectedFields.resolve(request));
         JsonNode taskInput = taskInput(run, request, facts);
         TaskRun task = createTask(ownerId, projectId, run, body.idempotencyKey(), taskInput);
         request.attachRetry(task.getId());
@@ -158,7 +160,14 @@ public class ConceptPortfolioContinuationService {
         input.put("schemaVersion", "1.0");
         input.put("inputRequestId", request.getId());
         input.set("continuationContext", mapper.readTree(context.getContextJson()));
-        input.set("continuationArtifact", mapper.readTree(request.getArtifactJson()));
+        ObjectNode artifact = (ObjectNode) mapper.readTree(request.getArtifactJson()).deepCopy();
+        JsonNode effective = affectedFields.resolve(request);
+        artifact.set("affectedFields", effective.deepCopy());
+        JsonNode required = artifact.get("requiredInput");
+        if (required != null && required.isObject()) {
+            ((ObjectNode) required).set("affectedFields", effective.deepCopy());
+        }
+        input.set("continuationArtifact", artifact);
         input.set("confirmedFacts", facts.deepCopy());
         var comparison = input.putArray("comparisonConcepts");
         concepts.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderByDisplayOrder(
@@ -173,7 +182,9 @@ public class ConceptPortfolioContinuationService {
         }
         Set<String> affectedFields = new java.util.HashSet<>();
         if (affected != null && affected.isArray()) affected.forEach(item -> affectedFields.add(item.asText()));
+        Set<String> providedFields = new java.util.HashSet<>();
         for (String name : facts.propertyNames()) {
+            providedFields.add(name);
             JsonNode value = facts.get(name);
             if (!TEXT_FACTS.contains(name) && !LIST_FACTS.contains(name)) {
                 throw new BusinessException(ErrorCode.ANALYSIS_INPUT_INVALID);
@@ -192,6 +203,9 @@ public class ConceptPortfolioContinuationService {
                         throw new BusinessException(ErrorCode.ANALYSIS_INPUT_INVALID);
                 });
             }
+        }
+        if (!affectedFields.isEmpty() && !providedFields.equals(affectedFields)) {
+            throw new BusinessException(ErrorCode.ANALYSIS_INPUT_INVALID);
         }
     }
 
@@ -254,7 +268,7 @@ public class ConceptPortfolioContinuationService {
         String question = first(value.getPresentationQuestionKo(), value.getSourceQuestion(),
             value.getSafeSummary());
         String nextAction;
-        JsonNode affectedFields = mapper.readTree(value.getAffectedFieldsJson());
+        JsonNode affectedFields = this.affectedFields.resolve(value);
         if ("GLOBAL".equals(value.getScope())) nextAction = "UPDATE_IDEA_BRIEF";
         else if (value.getStatus() == ConceptInputRequestStatus.OPEN && affectedFields.isEmpty())
             nextAction = "INPUT_TARGET_UNRESOLVED";

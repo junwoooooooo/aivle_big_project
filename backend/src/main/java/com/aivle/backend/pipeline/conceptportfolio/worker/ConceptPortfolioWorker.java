@@ -87,7 +87,8 @@ public class ConceptPortfolioWorker {
                     JobEvent.Status.COMPLETED, null);
             }
         } catch (ExecutionFailure failure) {
-            terminalFailure(claim, context, failure.code(), failure.reason(), failure.retryable());
+            terminalFailure(claim, context, failure.code(), failure.reason(), failure.retryable(),
+                failure.validationFields(), failure.retryAfterMillis());
         } catch (ContractViolation failure) {
             try {
                 materialization.failContract(claim, context, null);
@@ -140,9 +141,16 @@ public class ConceptPortfolioWorker {
 
     private void terminalFailure(TaskRunService.Claim claim, TaskRunWorkerContext context,
             String code, String reason, boolean retryable) {
+        terminalFailure(claim, context, code, reason, retryable, List.of(), null);
+    }
+
+    private void terminalFailure(TaskRunService.Claim claim, TaskRunWorkerContext context,
+            String code, String reason, boolean retryable,
+            List<InternalAiExecutionClient.ValidationIssue> validationFields,
+            Long retryAfterMillis) {
         try {
             materialization.failExecution(claim, context, code, reason, retryable);
-            publishFailure(context, code, reason, retryable);
+            publishFailure(context, code, reason, retryable, validationFields, retryAfterMillis);
         } catch (TaskRunFailure stale) {
             logAuthorityLoss(context, stale);
         }
@@ -160,12 +168,30 @@ public class ConceptPortfolioWorker {
 
     private void publishFailure(TaskRunWorkerContext context, String code, String reason,
             boolean retryable) {
+        publishFailure(context, code, reason, retryable, List.of(), null);
+    }
+
+    private void publishFailure(TaskRunWorkerContext context, String code, String reason,
+            boolean retryable, List<InternalAiExecutionClient.ValidationIssue> validationFields,
+            Long retryAfterMillis) {
         String safeCode = safeIdentifier(code, "EXECUTION_FAILED");
         String safeReason = safeIdentifier(reason, "UNEXPECTED_EXECUTION_FAILURE");
         Map<String, Object> params = new java.util.LinkedHashMap<>();
         params.put("failureCode", safeCode);
         params.put("failureReason", safeReason);
         params.put("retryable", retryable);
+        if (retryAfterMillis != null && retryAfterMillis >= 0) {
+            params.put("retryAfterMillis", retryAfterMillis);
+        }
+        if (validationFields != null && !validationFields.isEmpty()) {
+            params.put("validationFields", validationFields.stream().limit(5).map(issue -> {
+                Map<String, Object> item = new java.util.LinkedHashMap<>();
+                item.put("path", bounded(issue.path(), 160));
+                item.put("category", bounded(issue.category(), 80));
+                item.put("expectedType", bounded(issue.expectedType(), 80));
+                return item;
+            }).toList());
+        }
         events.publish(new JobEventPublisher.Command(context.projectId(), context.taskRunId(),
             context.taskRunId(), "FAILED", "job.concept-portfolio.failed",
             JobEvent.Status.FAILED, "job.concept-portfolio.failed", params, safeCode));
@@ -173,6 +199,12 @@ public class ConceptPortfolioWorker {
 
     private String safeIdentifier(String value, String fallback) {
         return value != null && value.matches("[A-Z][A-Z0-9_.-]{0,79}") ? value : fallback;
+    }
+
+    private String bounded(String value, int max) {
+        if (value == null) return "";
+        String normalized = value.strip();
+        return normalized.length() <= max ? normalized : normalized.substring(0, max);
     }
 
     private void publish(TaskRunWorkerContext context, String stage, String key,

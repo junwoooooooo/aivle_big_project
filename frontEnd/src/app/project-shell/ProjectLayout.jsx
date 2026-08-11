@@ -13,6 +13,7 @@ import { createConceptPortfolioApi } from '../../features/concept-portfolio/api/
 import { startNewConceptPortfolioRun } from '../../features/concept-portfolio/hooks/useConceptPortfolio.js';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import './project-shell.css';
+import './project-shell-polish.css';
 
 function nextDisabledReason(next) {
   if (!next || ![MODULE_STATUS.NOT_READY, MODULE_STATUS.NOT_CONNECTED].includes(next.status)) return '';
@@ -21,13 +22,14 @@ function nextDisabledReason(next) {
   return `${next.label} 단계의 시작 조건을 먼저 완료해 주세요.`;
 }
 
-export function DesktopStepNavigation({ previous, next }) {
+export function DesktopStepNavigation({ previous, current, next }) {
   const disabledReason = nextDisabledReason(next);
   return <nav className="pipeline-shell__step-navigation" aria-label="이전 및 다음 단계">
-    <div>{previous && <Link to={previous.href}>← 이전 단계 · {previous.shortLabel ?? previous.label}</Link>}</div>
+    <div>{previous && <Link to={previous.href}>← {previous.shortLabel ?? previous.label}</Link>}</div>
+    <strong>현재 단계 · {current?.shortLabel ?? current?.label}</strong>
     <div>{next && (disabledReason
-      ? <><span className="pipeline-shell__step-disabled" aria-disabled="true">다음 단계 · {next.shortLabel ?? next.label} →</span><small>{disabledReason}</small></>
-      : <Link to={next.href}>다음 단계 · {next.shortLabel ?? next.label} →</Link>)}</div>
+      ? <><span className="pipeline-shell__step-disabled" aria-disabled="true">{next.shortLabel ?? next.label} → <em>잠김</em></span><small>{disabledReason}</small></>
+      : <Link to={next.href}>{next.shortLabel ?? next.label} →</Link>)}</div>
   </nav>;
 }
 
@@ -95,7 +97,7 @@ function ProjectLayoutContent() {
   return <div className="pipeline-shell">
     <header className="pipeline-shell__header"><div className="pipeline-shell__project"><p>{project.industryCategory || '사업 분야 미입력'}</p><h1>{project.name}</h1></div><div className="pipeline-shell__module"><div><span>현재 단계</span><h2>{current.label}</h2></div><span className="pipeline-status" data-tone={currentStatus.tone}>{currentStatus.label}</span></div><div className="pipeline-shell__actions"><button type="button" onClick={(event) => openWorkCenter(null, event.currentTarget)}>작업 센터</button><Link to={projectRoutes.settings(projectId)} state={{ backgroundLocation: location, returnTo: location.pathname }}>프로젝트 설정</Link></div></header>
     <div className="pipeline-shell__mobile-controls"><label><span>현재 단계</span><select value={current.id} onChange={(event) => navigate(modules.find(({ id }) => id === event.target.value).href)}>{modules.map((module) => <option key={module.id} value={module.id}>{module.label}</option>)}</select></label><nav aria-label="이전 및 다음 단계">{previous ? <Link to={previous.href}>← 이전</Link> : <span />}{next ? <Link to={next.href}>다음 →</Link> : <span />}</nav></div>
-    <div className="pipeline-shell__body"><aside className="pipeline-shell__sidebar"><nav aria-label="프로젝트 단계"><ul>{modules.map((module) => { const view = getModuleStatusView(module.status); return <li key={module.id}><NavLink to={module.href} aria-current={module.id === current.id ? 'page' : undefined}><span>{module.label}</span><small data-tone={view.tone}>{view.label}</small></NavLink></li>; })}</ul></nav></aside><main className="pipeline-shell__main">{moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>단계 상태를 불러오지 못했습니다.</strong><span>{getUserErrorMessage(moduleState.error)} 작업 화면은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}<Outlet context={{ modules, moduleState, liveRevision: live.revision, projectEventTransport: live.transport }} /><DesktopStepNavigation previous={previous} next={next} /></main><aside className="pipeline-shell__work-center"><JobCenter projectId={projectId} compact refreshKey={live.revision} onTerminal={moduleState.retry} onRetryJob={retryPortfolioJob} sheet={workCenter} onOpenList={(event) => openWorkCenter(null, event?.currentTarget)} onOpenJob={(jobId, trigger) => openWorkCenter(jobId, trigger)} onCloseSheet={closeWorkCenter} onShowList={() => setWorkCenter((value) => ({ ...value, view: 'list', focusJobId: null, direction: 'backward' }))} /></aside></div>
+    <div className="pipeline-shell__body"><aside className="pipeline-shell__sidebar"><nav aria-label="프로젝트 단계"><ul>{modules.map((module) => { const view = getModuleStatusView(module.status); return <li key={module.id}><NavLink to={module.href} aria-current={module.id === current.id ? 'page' : undefined}><span>{module.label}</span><small data-tone={view.tone}>{view.label}</small></NavLink></li>; })}</ul></nav></aside><main className="pipeline-shell__main"><DesktopStepNavigation previous={previous} current={current} next={next} />{moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>단계 상태를 불러오지 못했습니다.</strong><span>{getUserErrorMessage(moduleState.error)} 작업 화면은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}<Outlet context={{ modules, moduleState, liveRevision: live.revision, projectEventTransport: live.transport, openWorkCenterJob: (jobId) => openWorkCenter(jobId) }} /></main><aside className="pipeline-shell__work-center"><JobCenter projectId={projectId} compact refreshKey={live.revision} onTerminal={moduleState.retry} onRetryJob={retryPortfolioJob} sheet={workCenter} onOpenList={(event) => openWorkCenter(null, event?.currentTarget)} onOpenJob={(jobId, trigger) => openWorkCenter(jobId, trigger)} onCloseSheet={closeWorkCenter} onShowList={() => setWorkCenter((value) => ({ ...value, view: 'list', focusJobId: null, direction: 'backward' }))} /></aside></div>
     <ProjectHelpControl current={current} currentStatus={currentStatus} />
   </div>;
 }

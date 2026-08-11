@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
   candidateFieldOptions, candidateRequests, comparisonRows, hypothesisDecisionLabel,
-  hypothesisDisplay, portfolioRunPresentation, serializeCandidateFact, toggleComparedConcept,
+  createCandidateDraft, hypothesisDisplay, portfolioRunPresentation, serializeCandidateFact,
+  serializeCandidateFacts, toggleComparedConcept,
 } from './businessProposalModel.js';
 
 describe('candidate input strict contract', () => {
@@ -24,6 +25,18 @@ describe('candidate input strict contract', () => {
     expect(Object.keys(CANDIDATE_FACT_FIELDS)).toHaveLength(8);
     expect(readFileSync('src/features/concept-portfolio/pages/BusinessProposalWorkspace.jsx', 'utf8'))
       .not.toContain(['actual', 'Business', 'Fact'].join(''));
+  });
+  it('serializes every requested field together and requires every value', () => {
+    const request = { affectedFields: ['personalDataUsage', 'paymentFlow'] };
+    expect(createCandidateDraft(request)).toEqual({ values: { personalDataUsage: '', paymentFlow: '' } });
+    expect(serializeCandidateFacts(request, { values: {
+      personalDataUsage: '이름\n예약 이력', paymentFlow: '카드 결제\n판매자 정산',
+    } })).toEqual({
+      personalDataUsage: ['이름', '예약 이력'], paymentFlow: ['카드 결제', '판매자 정산'],
+    });
+    expect(serializeCandidateFacts(request, { values: {
+      personalDataUsage: '이름', paymentFlow: '',
+    } })).toBeNull();
   });
   it('keeps answered technical failures retryable without reopening input', () => {
     expect(candidateRequests([{ scope: 'CANDIDATE', status: 'ANSWERED', nextAction: 'RETRY_CONTINUATION' }])).toHaveLength(1);

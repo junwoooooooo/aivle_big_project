@@ -27,8 +27,27 @@ class AiTaskProgressServiceTests {
         when(attempts.findByIdAndTaskRunId("attempt", "run")).thenReturn(Optional.of(attempt));
         assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
         verify(events).publish(argThat(command -> command.jobId().equals("run")
-            && command.messageKey().equals("job.concept-portfolio.trace.directions")
-            && command.messageParams().get("traceSequence").equals(1)));
+            && command.messageKey().equals("job.concept-portfolio.trace.drafts-generated")
+            && command.messageParams().get("traceSequence").equals(1)
+            && command.messageParams().get("traceStage").equals("PLANNING")
+            && command.messageParams().get("traceAction").equals("DRAFTS_GENERATED")
+            && command.messageParams().get("traceDetail").equals("safe")));
+    }
+
+    @Test
+    void boundsSafeTraceDetailToPayloadPolicyLimit() {
+        TaskRun run = run(TaskRunState.RUNNING, "attempt");
+        TaskAttempt attempt = mock(TaskAttempt.class);
+        when(attempt.getState()).thenReturn(TaskAttemptState.RUNNING);
+        when(runs.findById("run")).thenReturn(Optional.of(run));
+        when(attempts.findByIdAndTaskRunId("attempt", "run")).thenReturn(Optional.of(attempt));
+        var request = new AiTaskProgressController.ProgressRequest("run", "attempt", "correlation", 1,
+            "EXPANDING", "EXPANDED", "PASS", "x".repeat(500), null, null, null, null, Instant.now());
+
+        service.accept(request);
+
+        verify(events).publish(argThat(command ->
+            ((String) command.messageParams().get("traceDetail")).length() == 256));
     }
 
     @Test

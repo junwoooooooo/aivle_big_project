@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_JOB_EVENT_KEYS, isUserVisibleJobEvent, jobEventMessage } from './jobEventMessages.js';
+import { ACTIVE_JOB_EVENT_KEYS, groupJobEvents, isUserVisibleJobEvent, jobEventMessage,
+  traceDetailForDisplay } from './jobEventMessages.js';
 
 describe('V2 job event message registry', () => {
   it('covers actual initial, continuation and selection action keys', () => {
@@ -26,5 +27,25 @@ describe('V2 job event message registry', () => {
     expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',
       messageParams: { failureCode: 'RESULT_SCHEMA_INVALID', retryable: false } }))
       .toContain('서비스 형식');
+  });
+  it('shows safe trace detail and filters internal terminology', () => {
+    expect(traceDetailForDisplay({ messageParams: { traceDetail: '거래·결제 구조를 확인했습니다.' } }))
+      .toBe('거래·결제 구조를 확인했습니다.');
+    expect(traceDetailForDisplay({ messageParams: { traceDetail: 'Candidate lineage hash checked' } }))
+      .toBe('');
+  });
+  it('groups only consecutive generic duplicates and preserves significant events', () => {
+    const generic = (id) => ({ eventId: String(id), occurredAt: `2026-08-11T00:00:0${id}Z`,
+      status: 'RUNNING', messageKey: 'job.concept-portfolio.trace.proposals',
+      messageParams: { traceDetail: '구조를 확인하고 있습니다.', traceAction: 'STARTED' } });
+    const grouped = groupJobEvents(Array.from({ length: 8 }, (_, index) => generic(index + 1)));
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].groupCount).toBe(8);
+    const rejected = { ...generic(9), status: 'REJECTED',
+      messageParams: { traceDetail: '제외됨', traceAction: 'REJECTED' } };
+    expect(groupJobEvents([generic(1), rejected, generic(2)])).toHaveLength(3);
+    for (const status of ['NEEDS_INPUT', 'FAILED', 'COMPLETED']) {
+      expect(groupJobEvents([{ ...generic(1), status }, { ...generic(2), status }])).toHaveLength(2);
+    }
   });
 });

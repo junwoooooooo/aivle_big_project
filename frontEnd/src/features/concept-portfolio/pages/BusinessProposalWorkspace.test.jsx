@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import BusinessProposalWorkspace, { CandidateInput, HypothesisField, LegalReport } from './BusinessProposalWorkspace.jsx';
+import BusinessProposalWorkspace, { CandidateInput, HypothesisField, LegalReport, PortfolioStatus } from './BusinessProposalWorkspace.jsx';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 
 vi.mock('../hooks/useConceptPortfolio.js', () => ({ useConceptPortfolio: vi.fn() }));
@@ -23,29 +23,38 @@ const renderWorkspace = () => render(<MemoryRouter initialEntries={['/app/projec
 describe('CandidateInput', () => {
   it('uses the one allowed string field without guessing', () => {
     const onDraft = vi.fn();
-    render(<CandidateInput request={{ status: 'OPEN', question: '판매 주체는?', affectedFields: ['sellerRole'] }} draft={{ field: 'sellerRole', value: '' }} onDraft={onDraft} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
-    expect(screen.getByText('답변 항목: 실제 판매 주체')).toBeInTheDocument();
+    render(<CandidateInput request={{ status: 'OPEN', question: '판매 주체는?', affectedFields: ['sellerRole'] }} draft={{ values: { sellerRole: '' } }} onDraft={onDraft} onSubmit={vi.fn()} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
+    expect(screen.getByLabelText('실제 판매 주체')).toBeInTheDocument();
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
   });
-  it('requires target selection for multiple affected fields', () => {
+  it('renders and submits multiple affected fields together', () => {
     const onDraft = vi.fn();
-    render(<CandidateInput request={{ status: 'OPEN', question: '무엇인가요?', affectedFields: ['sellerRole', 'paymentFlow'] }} draft={{ field: '', value: '값' }} onDraft={onDraft} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
+    const onSubmit = vi.fn();
+    const request = { status: 'OPEN', question: '무엇인가요?', affectedFields: ['personalDataUsage', 'paymentFlow'] };
+    const view = render(<CandidateInput request={request} draft={{ values: { personalDataUsage: '', paymentFlow: '' } }} onDraft={onDraft} onSubmit={onSubmit} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
+    expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('개인정보 이용')).toBeInTheDocument();
+    expect(screen.getByLabelText('결제·수취 흐름')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '정보 제출' })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('답변할 사업정보'), { target: { value: 'paymentFlow' } });
-    expect(onDraft).toHaveBeenCalledWith({ field: 'paymentFlow', value: '' });
+    view.rerender(<CandidateInput request={request} draft={{ values: { personalDataUsage: '이름', paymentFlow: '카드' } }} onDraft={onDraft} onSubmit={onSubmit} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
+    fireEvent.click(screen.getByRole('button', { name: '정보 제출' }));
+    expect(onSubmit).toHaveBeenCalled();
   });
   it('does not offer a guessed eight-field selector when the target is unresolved', () => {
-    render(<CandidateInput request={{ status: 'OPEN', question: '실제 운영 정보를 확인해 주세요.', reason: '법률 판단에 필요합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ field: '', value: '' }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
+    const onExplore = vi.fn();
+    render(<CandidateInput request={{ status: 'OPEN', question: '실제 운영 정보를 확인해 주세요.', reason: '법률 판단에 필요합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} onExplore={onExplore} busy={false} />);
     expect(screen.getByText('방문 돌봄 연결')).toBeInTheDocument();
     expect(screen.getByText('돌봄 제공자를 연결합니다.')).toBeInTheDocument();
     expect(screen.getByText('법률 판단에 필요합니다.')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('필요한 정보 항목을 특정하지 못했습니다.');
+    expect(screen.getByRole('alert')).toHaveTextContent('필요한 사업정보 항목을 자동으로 특정하지 못했습니다.');
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '정보 제출' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '다른 방향 다시 탐색' }));
+    expect(onExplore).toHaveBeenCalled();
   });
   it('retries an answered continuation without asking for the same fact', () => {
     const onRetry = vi.fn();
-    render(<CandidateInput request={{ status: 'ANSWERED', nextAction: 'RETRY_CONTINUATION' }} draft={{ field: '', value: '' }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={onRetry} busy={false} />);
+    render(<CandidateInput request={{ status: 'ANSWERED', nextAction: 'RETRY_CONTINUATION' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={onRetry} onExplore={vi.fn()} busy={false} />);
     fireEvent.click(screen.getByText('추가 사업정보 반영 다시 시도'));
     expect(onRetry).toHaveBeenCalled();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -79,6 +88,22 @@ describe('BusinessProposalWorkspace', () => {
     renderWorkspace();
     fireEvent.click(screen.getByText('변경사항 법률·규제 재검토 다시 시도'));
     expect(retryDelta).toHaveBeenCalled();
+  });
+});
+
+describe('Portfolio status summary', () => {
+  it('uses actual review counts and keeps technical failure distinct', () => {
+    render(<PortfolioStatus run={{ productStatus: 'FAILED', producedConceptCount: 0, openInputCount: 0 }}
+      events={[{ stage: 'SUMMARY', messageParams: { reviewed: 5, prepared: 0, needsInput: 0 } }]}
+      onRestart={vi.fn()} onDetail={vi.fn()} />);
+    expect(screen.getByText('5개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '작업 상세 보기' })).toBeInTheDocument();
+  });
+  it('explains actionable zero-accepted NEEDS_INPUT', () => {
+    render(<PortfolioStatus run={{ productStatus: 'NEEDS_INPUT', producedConceptCount: 0, openInputCount: 1 }}
+      events={[{ stage: 'SUMMARY', messageParams: { reviewed: 5, needsInput: 1 } }]} />);
+    expect(screen.getByText(/5개의 사업안 후보를 검토했습니다/)).toHaveTextContent('1개의 사업안은 실제 운영정보 확인 후');
   });
 });
 

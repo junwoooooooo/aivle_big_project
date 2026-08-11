@@ -21,6 +21,7 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 class ConceptPortfolioContinuationServiceTests {
@@ -67,7 +68,8 @@ class ConceptPortfolioContinuationServiceTests {
         when(responses.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         service = new ConceptPortfolioContinuationService(runs, concepts, continuations, inputs,
             responses, users, taskRuns, hasher, new ConceptPortfolioJsonHasher(mapper), events,
-            mapper, Clock.fixed(Instant.parse("2026-08-10T00:00:00Z"), ZoneOffset.UTC));
+            new EffectiveAffectedFieldResolver(mapper), mapper,
+            Clock.fixed(Instant.parse("2026-08-10T00:00:00Z"), ZoneOffset.UTC));
     }
 
     @Test
@@ -118,6 +120,20 @@ class ConceptPortfolioContinuationServiceTests {
     }
 
     @Test
+    void requiresEveryEffectiveAffectedFieldInOneSubmission() {
+        ConceptInputRequest multiple = ConceptInputRequest.open(run, continuation,
+            "candidate-2", "lineage-2", "CANDIDATE", "개인정보와 결제 방식", "이유", "답변", "요약",
+            "[]", "[\"personalDataUsage\",\"paymentFlow\"]",
+            "{\"candidateId\":\"candidate-2\"}", "sha256:" + "f".repeat(64));
+        when(inputs.findLocked(multiple.getId())).thenReturn(Optional.of(multiple));
+
+        assertCode(() -> service.submit(7L, 42L, "run", multiple.getId(),
+            new SubmitInputResponseRequest(
+                mapper.readTree("{\"personalDataUsage\":[\"이름\"]}"), "partial", null)),
+            ErrorCode.ANALYSIS_INPUT_INVALID);
+    }
+
+    @Test
     void retriesTechnicalFailureWithStoredResponseWithoutCreatingAnotherResponse() {
         request.answer("failed-task", LocalDateTime.parse("2026-08-10T00:00:00"));
         assertCode(() -> service.submit(7L, 42L, "run", request.getId(),
@@ -153,6 +169,25 @@ class ConceptPortfolioContinuationServiceTests {
         });
         when(runs.findOwned(8L, 42L, "run")).thenReturn(Optional.empty());
         assertCode(() -> service.list(8L, 42L, "run"), ErrorCode.RESOURCE_NOT_FOUND);
+    }
+
+    @Test
+    void listRecoversExistingUnresolvedRequestWithoutMutatingStoredFields() {
+        ConceptInputRequest unresolved = ConceptInputRequest.open(run, continuation,
+            "candidate-2", "lineage-2", "CANDIDATE",
+            "What specific personal data will be collected and how will it be used? "
+                + "What payment methods will be accepted and how will they be processed?",
+            "Legal review requires actual operating facts", "답변", "요약", "[]", "[]",
+            "{\"candidateId\":\"candidate-2\"}", "sha256:" + "e".repeat(64));
+        when(inputs.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderByCreatedAtAscIdAsc("run", 42L))
+            .thenReturn(List.of(unresolved));
+
+        var value = service.list(7L, 42L, "run").get(0);
+
+        assertThat(value.affectedFields()).extracting(JsonNode::asText)
+            .containsExactly("personalDataUsage", "paymentFlow");
+        assertThat(value.nextAction()).isEqualTo("PROVIDE_REQUIRED_INPUT");
+        assertThat(unresolved.getAffectedFieldsJson()).isEqualTo("[]");
     }
 
     private void assertCode(Runnable action, ErrorCode expected) {

@@ -138,6 +138,27 @@ class ConceptPortfolioWorkerTests {
         } finally { harness.executor.shutdownNow(); }
     }
 
+    @Test
+    void preservesBoundedValidationDiagnosticsInTerminalEvent() {
+        Harness harness = new Harness();
+        var issues = List.of(
+            new InternalAiExecutionClient.ValidationIssue("result.continuationArtifacts[0]", "array", "TYPE"),
+            new InternalAiExecutionClient.ValidationIssue("result.requiredInputs", "object", "SCHEMA"));
+        when(harness.ai.executeWorker(any(), eq("attempt"), any()))
+            .thenThrow(new ExecutionFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false,
+                issues, 1200L));
+        try {
+            assertThat(harness.worker.processOne()).isTrue();
+            ArgumentCaptor<JobEventPublisher.Command> events =
+                ArgumentCaptor.forClass(JobEventPublisher.Command.class);
+            verify(harness.publisher, atLeastOnce()).publish(events.capture());
+            JobEventPublisher.Command failed = events.getAllValues().stream()
+                .filter(value -> value.status() == JobEvent.Status.FAILED).findFirst().orElseThrow();
+            assertThat((List<?>) failed.messageParams().get("validationFields")).hasSize(2);
+            assertThat(failed.messageParams().get("retryAfterMillis")).isEqualTo(1200L);
+        } finally { harness.executor.shutdownNow(); }
+    }
+
     private static final class Harness {
         final TaskRunService taskRuns = mock(TaskRunService.class);
         final InternalAiExecutionClient ai = mock(InternalAiExecutionClient.class);

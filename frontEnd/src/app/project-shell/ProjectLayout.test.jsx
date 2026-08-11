@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { readFileSync } from 'node:fs';
 import { DesktopStepNavigation, ProjectHelpControl, workCenterViewState } from './ProjectLayout.jsx';
 
 describe('Project helper control', () => {
@@ -28,10 +29,12 @@ describe('desktop project navigation and Work Center state', () => {
   it('shows previous and gated next navigation', () => {
     render(<MemoryRouter><DesktopStepNavigation
       previous={{ href: '/app/projects/41/idea', shortLabel: '아이디어' }}
+      current={{ shortLabel: '사업안' }}
       next={{ id: 'market', href: '/app/projects/41/market', shortLabel: '시장 분석', status: 'NOT_READY' }}
     /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '← 이전 단계 · 아이디어' })).toHaveAttribute('href', '/app/projects/41/idea');
-    expect(screen.getByText('다음 단계 · 시장 분석 →')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('link', { name: '← 아이디어' })).toHaveAttribute('href', '/app/projects/41/idea');
+    expect(screen.getByText(/현재 단계 · 사업안/)).toBeInTheDocument();
+    expect(screen.getByText(/시장 분석 →/)).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText(/사업안을 선택하고 검증 가정을 확정한 후/)).toBeInTheDocument();
   });
 
@@ -39,7 +42,14 @@ describe('desktop project navigation and Work Center state', () => {
     render(<MemoryRouter><DesktopStepNavigation previous={null}
       next={{ id: 'concepts', href: '/app/projects/41/concepts', shortLabel: '사업안', status: 'READY' }}
     /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '다음 단계 · 사업안 →' }))
+    expect(screen.getByRole('link', { name: '사업안 →' }))
       .toHaveAttribute('href', '/app/projects/41/concepts');
+  });
+
+  it('places one desktop navigator before the routed main content', () => {
+    const source = readFileSync('src/app/project-shell/ProjectLayout.jsx', 'utf8');
+    const layout = source.slice(source.indexOf('return <div className="pipeline-shell">'));
+    expect(layout.match(/<DesktopStepNavigation/g)).toHaveLength(1);
+    expect(layout.indexOf('<DesktopStepNavigation')).toBeLessThan(layout.indexOf('<Outlet'));
   });
 });

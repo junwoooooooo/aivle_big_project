@@ -39,7 +39,10 @@ public class AiTaskProgressService {
         try {
             Map<String, Object> params = new LinkedHashMap<>();
             params.put("traceSequence", request.sequence());
+            params.put("traceStage", request.stage());
+            params.put("traceAction", request.action());
             params.put("traceStatus", request.status());
+            params.put("traceDetail", bounded(request.safeSummary(), 256));
             if (request.reasonCode() != null) params.put("reasonCode", request.reasonCode());
             if (request.decision() != null) params.put("decision", request.decision());
             String key = messageKey(request.stage(), request.action(), request.reasonCode());
@@ -60,18 +63,46 @@ public class AiTaskProgressService {
             if ("LEGAL_NOT_IMPLEMENTABLE".equals(reasonCode)) return "job.concept-portfolio.trace.excluded-legal";
             return "job.concept-portfolio.trace.excluded";
         }
+        if ("NEEDS_INPUT".equals(stage) || "INPUT_REJECTED".equals(action)) {
+            return "job.concept-portfolio.trace.needs-input";
+        }
         if ("COMPLETED".equals(action)) return "job.concept-portfolio.trace.ai-completed";
         if (stage.startsWith("LEGAL")) {
+            if ("STARTED".equals(action)) return "job.concept-portfolio.trace.legal-started";
             if ("REVIEWED".equals(action)) return "job.concept-portfolio.trace.legal-reviewed";
+            if ("REDESIGNED".equals(action) || "REPLANNED".equals(action)) {
+                return "job.concept-portfolio.trace.recovery";
+            }
             return "job.concept-portfolio.trace.legal";
         }
-        if ("PLANNING".equals(stage) || "PLAN_VALIDATING".equals(stage)
-                || "SEED_ANALYZING".equals(stage)) {
+        if ("SEED_ANALYZING".equals(stage) && ("ANALYZED".equals(action)
+                || "DESIGN_SPACE_READY".equals(action))) {
+            return "job.concept-portfolio.trace.conditions-analyzed";
+        }
+        if ("PLANNING".equals(stage) && "DRAFTS_GENERATED".equals(action)) {
+            return "job.concept-portfolio.trace.drafts-generated";
+        }
+        if ("PLAN_VALIDATING".equals(stage)) {
+            return "job.concept-portfolio.trace.direction-validating";
+        }
+        if ("PLANNING".equals(stage) || "SEED_ANALYZING".equals(stage)) {
             return "job.concept-portfolio.trace.directions";
+        }
+        if ("EXPANDING".equals(stage) && "EXPANDED".equals(action)) {
+            return "job.concept-portfolio.trace.proposal-generated";
+        }
+        if ("CANDIDATE_VALIDATING".equals(stage) && "VALIDATED".equals(action)) {
+            return "job.concept-portfolio.trace.proposal-validated";
         }
         if ("EXPANDING".equals(stage) || "CANDIDATE_VALIDATING".equals(stage)) {
             return "job.concept-portfolio.trace.proposals";
         }
         return "job.concept-portfolio.trace.conditions";
+    }
+
+    private static String bounded(String value, int max) {
+        if (value == null) return "";
+        String normalized = value.strip();
+        return normalized.length() <= max ? normalized : normalized.substring(0, max);
     }
 }

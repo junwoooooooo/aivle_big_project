@@ -23,6 +23,7 @@ public class ConceptPortfolioMaterializationService {
     private final ConceptPortfolioProductStatusMapper statuses;
     private final ConceptPortfolioJsonHasher hashes;
     private final TaskRunService taskRuns;
+    private final EffectiveAffectedFieldResolver affectedFields;
     private final ObjectMapper mapper;
 
     public ConceptPortfolioMaterializationService(ConceptPortfolioRunRepository runs,
@@ -30,10 +31,12 @@ public class ConceptPortfolioMaterializationService {
             ConceptPortfolioContinuationRepository continuations,
             ConceptInputRequestRepository inputRequests, ConceptPortfolioResultContract contract,
             ConceptPortfolioProductStatusMapper statuses, ConceptPortfolioJsonHasher hashes,
-            TaskRunService taskRuns, ObjectMapper mapper) {
+            TaskRunService taskRuns, EffectiveAffectedFieldResolver affectedFields,
+            ObjectMapper mapper) {
         this.runs = runs; this.concepts = concepts; this.continuations = continuations;
         this.inputRequests = inputRequests; this.contract = contract; this.statuses = statuses;
-        this.hashes = hashes; this.taskRuns = taskRuns; this.mapper = mapper;
+        this.hashes = hashes; this.taskRuns = taskRuns;
+        this.affectedFields = affectedFields; this.mapper = mapper;
     }
 
     @Transactional
@@ -159,7 +162,8 @@ public class ConceptPortfolioMaterializationService {
                 ConceptPortfolioResultContract.optionalText(input, "reason"),
                 ConceptPortfolioResultContract.optionalText(input, "possibleUserAction"),
                 ConceptPortfolioResultContract.optionalText(input, "safeSummary"),
-                arrayJson(input.get("unknownFacts")), arrayJson(input.get("affectedFields")),
+                arrayJson(input.get("unknownFacts")),
+                arrayJson(affectedFields.resolve(input, artifact)),
                 artifact == null ? null : mapper.writeValueAsString(artifact), hashes.hash(input)));
             count++;
         }

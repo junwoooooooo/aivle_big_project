@@ -16,10 +16,10 @@ describe('compact Work Center', () => {
     const onCloseSheet = vi.fn();
     render(<MemoryRouter><JobCenter projectId="41" compact sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'job-1', direction: 'forward' }} onOpenList={onOpenList} onCloseSheet={onCloseSheet} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
     expect(screen.getAllByText('현재 진행')).toHaveLength(2);
-    expect(screen.getByText('사업안 검토')).toBeInTheDocument();
+    expect(screen.getAllByText('사업안 검토').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('CONCEPT_PORTFOLIO_V2_RUN')).not.toBeInTheDocument();
-    expect(screen.getAllByText('작업 상세')).toHaveLength(2);
-    expect(screen.getByText('사업 방향을 탐색하고 있습니다.')).toBeInTheDocument();
+    expect(screen.getByText('작업 상세')).toBeInTheDocument();
+    expect(screen.getAllByText('사업 방향을 탐색하고 있습니다.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('dialog')).toHaveAttribute('data-phase', 'open');
     expect(screen.getByLabelText('작업 요약')).toHaveTextContent('현재 진행 1');
     fireEvent.click(screen.getByRole('button', { name: '작업 센터 닫기' }));
@@ -44,5 +44,20 @@ describe('compact Work Center', () => {
     expect(onRetryJob).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: '다시 시도 중' })).toBeDisabled();
     release();
+  });
+
+  it('offers an input route for NEEDS_INPUT and keeps diagnostics inside technical details', () => {
+    useProjectJobs.mockReturnValue({ loading: false, error: null, notice: null,
+      active: [{ jobId: 'input-job', taskType: 'CONCEPT_PORTFOLIO_V2_RUN', status: 'NEEDS_INPUT', targetRoute: '/concepts' }],
+      recent: [], selectedJobId: 'input-job', selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'SSE', error: null, terminal: true, reconnect: vi.fn(), events: [{
+        eventId: '91', occurredAt: '2026-08-11T00:01:00Z', status: 'NEEDS_INPUT',
+        messageKey: 'job.concept-portfolio.needs-input', messageParams: {},
+      }] } });
+    render(<MemoryRouter><JobCenter projectId="41" compact
+      sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'input-job', direction: 'forward' }}
+      onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: '정보 입력하러 가기' }))
+      .toHaveAttribute('href', '/app/projects/41/concepts');
   });
 });

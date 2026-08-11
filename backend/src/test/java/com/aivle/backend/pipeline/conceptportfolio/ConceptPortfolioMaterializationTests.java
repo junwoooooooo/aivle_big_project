@@ -46,7 +46,8 @@ class ConceptPortfolioMaterializationTests {
         when(continuations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         service = new ConceptPortfolioMaterializationService(runs, concepts, continuations, inputs,
             new ConceptPortfolioResultContract(), new ConceptPortfolioProductStatusMapper(),
-            new ConceptPortfolioJsonHasher(mapper), taskRuns, mapper);
+            new ConceptPortfolioJsonHasher(mapper), taskRuns,
+            new EffectiveAffectedFieldResolver(mapper), mapper);
     }
 
     @ParameterizedTest
