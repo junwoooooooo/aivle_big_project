@@ -18,17 +18,20 @@ public class FinancialPreparationFactory {
     public static final List<String> INITIAL_INVESTMENT_KEYS = List.of("initialDevelopmentAndRnDCost",
         "initialEquipmentAndInfrastructureCost", "initialPatentAndLicensingCost");
     public static final List<String> CAC_INPUT_KEYS = List.of("totalMarketingCost", "totalSalesCost", "newCustomerCount");
+    public static final List<String> REVENUE_INPUT_KEYS = List.of("revenueModel", "unitPrice",
+        "monthlySubscriptionPrice", "monthlyChurnRate");
     public static final List<String> CONDITIONAL_COST_KEYS = List.of("unitVariableCost", "paymentFee",
         "partnerPayout", "shippingCost", "customerIncrementalInfraCost");
     public static final List<String> REQUIRED_KEYS = List.of("annualFixedLaborCost",
         "annualFixedRentAndManagementCost", "annualFixedInfrastructureCost", "initialDevelopmentAndRnDCost",
         "initialEquipmentAndInfrastructureCost", "initialPatentAndLicensingCost", "threeYearTargets",
-        "totalMarketingCost", "totalSalesCost", "newCustomerCount");
+        "totalMarketingCost", "totalSalesCost", "newCustomerCount", "revenueModel");
     public static final List<String> ALL_KEYS = List.of("annualFixedLaborCost",
         "annualFixedRentAndManagementCost", "annualFixedInfrastructureCost", "initialDevelopmentAndRnDCost",
         "initialEquipmentAndInfrastructureCost", "initialPatentAndLicensingCost", "threeYearTargets",
         "totalMarketingCost", "totalSalesCost", "newCustomerCount", "unitVariableCost", "paymentFee",
-        "partnerPayout", "shippingCost", "customerIncrementalInfraCost");
+        "partnerPayout", "shippingCost", "customerIncrementalInfraCost", "revenueModel", "unitPrice",
+        "monthlySubscriptionPrice", "monthlyChurnRate");
 
     private final ObjectMapper mapper;
     public FinancialPreparationFactory(ObjectMapper mapper) { this.mapper = mapper; }
@@ -45,6 +48,7 @@ public class FinancialPreparationFactory {
         inheritTargetsOrOpen(fields, facts.path("threeYearTargets"), provenance.path("threeYearTargets"), snapshot);
         for (String key : CAC_INPUT_KEYS) inheritDirectOrOpen(fields, key, facts, provenance, snapshot);
         for (String key : CONDITIONAL_COST_KEYS) inheritDirectOrOpen(fields, key, facts, provenance, snapshot);
+        for (String key : REVENUE_INPUT_KEYS) open(fields, key);
 
         ObjectNode references = mapper.createObjectNode();
         reference(references, "fixedOperatingCost", facts.path("fixedOperatingCost"),
@@ -65,10 +69,75 @@ public class FinancialPreparationFactory {
             "CAC = (총 마케팅비 + 총 영업비) / 신규 고객 수");
         assistance(assistance, "conditionalCosts", "외부 분석 계약에 필요한 경우에만 조건부 단위원가를 입력하세요.",
             "배송이 없는 서비스라면 shippingCost는 비워 둡니다.");
-        for (String key : ALL_KEYS) {
-            if (!"newCustomerCount".equals(key)) estimateAssistance(assistance, key);
-        }
+        for (String key : ALL_KEYS) estimateAssistance(assistance, key);
         return new InitialPreparation(fields, references, assistance);
+    }
+
+    /** TechOps 확정 사실은 잠그고 Market/BM 근거와 가설은 검토 가능한 입력으로 합친다. */
+    public InitialPreparation create(TechOpsInputSnapshot techOps, JsonNode marketResult,
+            JsonNode businessModelResult, Long marketVersionId, Long businessModelVersionId) {
+        InitialPreparation base = create(techOps);
+        ObjectNode fields = base.financialFields();
+        ObjectNode references = base.upstreamReferences();
+        JsonNode market = marketResult.path("market");
+        JsonNode handoff = businessModelResult.path("bm").path("financialHandoff");
+        JsonNode price = market.path("price");
+        if (price.path("base").isNumber() && price.path("base").asDouble() > 0) {
+            assumedMoneyIfOpen(fields, "monthlySubscriptionPrice", price.path("base"), price,
+                "market.price.base", "시장 가격 가설 — 확인 후 재무 가정으로 확정 필요");
+            assumedMoneyIfOpen(fields, "unitPrice", price.path("base"), price,
+                "market.price.base", "시장 가격 가설 — 확인 후 재무 가정으로 확정 필요");
+        }
+        String revenueModel = revenueModel(handoff.path("revenueModel").asText(""));
+        if (revenueModel != null) assumedTextIfOpen(fields, "revenueModel", revenueModel,
+            "bm.financialHandoff.revenueModel", "BM 재무 전달정보의 수익모델 가설");
+
+        ObjectNode marketReference = references.putObject("marketAnalysis");
+        marketReference.put("sourceVersionId", marketVersionId);
+        marketReference.set("tam", market.path("tam").deepCopy());
+        marketReference.set("sam", market.path("sam").deepCopy());
+        marketReference.set("growth", market.path("growth").deepCopy());
+        marketReference.set("price", price.deepCopy());
+        marketReference.set("evidence", marketResult.path("evidence").deepCopy());
+        marketReference.set("scorecard", marketResult.path("scorecard").deepCopy());
+        marketReference.put("label", "시장 규모·성장률·가격·계산 근거");
+        marketReference.put("provenance", "marketResearchVersion.result");
+        ObjectNode bmReference = references.putObject("businessModel");
+        bmReference.put("sourceVersionId", businessModelVersionId);
+        bmReference.set("result", businessModelResult.deepCopy());
+        bmReference.set("financialHandoff", handoff.deepCopy());
+        bmReference.put("label", "시장→BM 분석 결과와 재무 전달정보");
+        bmReference.put("provenance", "businessModelVersion.result");
+        ObjectNode techOpsReference = references.putObject("techOpsSnapshot");
+        techOpsReference.put("sourceSnapshotId", techOps.getId());
+        techOpsReference.put("sourceMarketSeedSnapshotId", techOps.getSourceMarketSeedSnapshotId());
+        techOpsReference.put("snapshotHash", techOps.getSnapshotHash());
+        techOpsReference.put("label", "기술·운영 확정 Snapshot");
+        return new InitialPreparation(fields, references, base.assistance());
+    }
+
+    private void assumedMoneyIfOpen(ObjectNode fields, String key, JsonNode amount, JsonNode source,
+            String path, String note) {
+        if (fields.path(key).path("readOnly").asBoolean(false)) return;
+        ObjectNode item = fields.putObject(key); ObjectNode value = item.putObject("value");
+        value.put("amount", amount.decimalValue()); value.put("currency", source.path("currency").asText("KRW"));
+        item.put("source", "MARKET_ANALYSIS_ASSUMPTION"); item.put("decision", "ASSUMPTION");
+        item.put("readOnly", false); item.put("provenance", path); item.put("sourceNote", note);
+    }
+
+    private void assumedTextIfOpen(ObjectNode fields, String key, String value, String path, String note) {
+        if (fields.path(key).path("readOnly").asBoolean(false)) return;
+        ObjectNode item = fields.putObject(key); item.put("value", value);
+        item.put("source", "BUSINESS_MODEL_ASSUMPTION"); item.put("decision", "ASSUMPTION");
+        item.put("readOnly", false); item.put("provenance", path); item.put("sourceNote", note);
+    }
+
+    private String revenueModel(String value) {
+        String normalized = value == null ? "" : value.toUpperCase(java.util.Locale.ROOT);
+        if (normalized.contains("구독") || normalized.contains("SUBSCRIPTION")) return "SUBSCRIPTION";
+        if (normalized.contains("혼합") || normalized.contains("HYBRID") || normalized.contains("MIXED")) return "HYBRID";
+        if (!normalized.isBlank()) return "ONE_TIME";
+        return null;
     }
 
     private void inheritMoneyOrOpen(ObjectNode fields, String key, JsonNode aggregate, JsonNode provenance,

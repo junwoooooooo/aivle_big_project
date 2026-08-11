@@ -6,10 +6,16 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.finance.domain.*;
 import com.aivle.backend.pipeline.finance.repository.*;
+import com.aivle.backend.pipeline.market.MarketResearchRun;
+import com.aivle.backend.pipeline.market.MarketResearchService;
+import com.aivle.backend.pipeline.market.MarketResearchVersion;
+import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
+import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -33,9 +39,12 @@ import tools.jackson.databind.node.ObjectNode;
 public class FinancialService {
     private static final Set<String> TARGET_METRICS = Set.of("salesVolume", "customerCount", "subscriberCount", "transactionCount");
     private final ProjectRepository projects;
+    private final ConceptPortfolioSelectionRepository portfolioSelections;
     private final ConceptSelectionRepository selections;
     private final MarketAnalysisSeedSnapshotRepository marketSeeds;
     private final TechOpsInputSnapshotRepository techOpsSnapshots;
+    private final MarketResearchService marketResearch;
+    private final MarketResearchVersionRepository marketVersions;
     private final FinancialInputPreparationRepository preparations;
     private final FinancialInputSnapshotRepository snapshots;
     private final FinancialPreparationFactory preparationFactory;
@@ -45,18 +54,28 @@ public class FinancialService {
     private final ObjectMapper mapper;
     private final TaskRunService taskRuns;
     private final CanonicalInputHasher inputHasher;
+    private final SnapshotHasher snapshotHasher;
     private final JobEventPublisher jobEvents;
 
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        TechOpsInputSnapshot source = currentTechOpsSnapshot(projectId);
-        var existing = preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
+        CurrentSources source = currentSources(ownerId, projectId);
+        var existing = preparations
+            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId());
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.create(source);
+        var initial = preparationFactory.create(source.techOps(), mapper.readTree(source.market().getResultJson()),
+            mapper.readTree(source.businessModel().getResultJson()), source.market().getId(), source.businessModel().getId());
+        ObjectNode lineage = mapper.createObjectNode();
+        lineage.put("techOpsSnapshotId", source.techOps().getId());
+        lineage.put("techOpsSnapshotHash", source.techOps().getSnapshotHash());
+        lineage.put("marketResearchVersionId", source.market().getId());
+        lineage.put("businessModelVersionId", source.businessModel().getId());
         String id = UUID.randomUUID().toString();
-        var saved = preparations.save(FinancialInputPreparation.create(id, projectId, source.getId(),
-            source.getSourceMarketSeedSnapshotId(), source.getSnapshotHash(),
+        var saved = preparations.save(FinancialInputPreparation.create(id, projectId, source.techOps().getId(),
+            source.techOps().getSourceMarketSeedSnapshotId(), source.market().getId(), source.businessModel().getId(),
+            snapshotHasher.hash(lineage),
             mapper.writeValueAsString(initial.financialFields()), mapper.writeValueAsString(initial.upstreamReferences()),
             mapper.writeValueAsString(initial.assistance()), ownerId));
         return view(saved);
@@ -65,13 +84,13 @@ public class FinancialService {
     @Transactional(readOnly = true)
     public PreparationView current(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
-        return view(requireCurrent(projectId));
+        return view(requireCurrent(ownerId, projectId));
     }
 
     @Transactional
     public PreparationView patchFields(Long ownerId, Long projectId, FinancialFieldsPatch request) {
         requireOwnedForUpdate(ownerId, projectId);
-        FinancialInputPreparation preparation = lockedCurrent(projectId);
+        FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId);
         ensureMutable(preparation);
         if (!request.values().isObject()) throw invalid("재무 입력은 필드별 객체여야 합니다.");
         ObjectNode fields = (ObjectNode) mapper.readTree(preparation.getFinancialFieldsJson());
@@ -103,7 +122,7 @@ public class FinancialService {
     public EstimateActionResponse generateEstimate(Long ownerId, Long projectId, String fieldKey,
             String idempotencyKey, String correlationId) {
         requireOwnedForUpdate(ownerId, projectId);
-        FinancialInputPreparation preparation = lockedCurrent(projectId); ensureMutable(preparation);
+        FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId); ensureMutable(preparation);
         validateEstimateField(preparation, fieldKey);
         ObjectNode assistance = (ObjectNode) mapper.readTree(preparation.getAssistanceJson());
         ObjectNode proposal = (ObjectNode) assistance.withObject(fieldKey);
@@ -131,7 +150,7 @@ public class FinancialService {
     @Transactional
     public EstimateActionResponse decideEstimate(Long ownerId, Long projectId, String fieldKey,
             EstimateDecisionRequest request, String idempotencyKey, String correlationId) {
-        requireOwnedForUpdate(ownerId, projectId); FinancialInputPreparation preparation=lockedCurrent(projectId); ensureMutable(preparation);
+        requireOwnedForUpdate(ownerId, projectId); FinancialInputPreparation preparation=lockedCurrent(ownerId, projectId); ensureMutable(preparation);
         validateEstimateField(preparation, fieldKey);
         ObjectNode fields=(ObjectNode) mapper.readTree(preparation.getFinancialFieldsJson());
         ObjectNode assistance=(ObjectNode) mapper.readTree(preparation.getAssistanceJson());
@@ -140,7 +159,8 @@ public class FinancialService {
         if (field.path("readOnly").asBoolean(false)) throw invalid("상위 확정값은 AI 추정으로 바꾸지 않습니다.");
         switch(action) {
             case "ACCEPT" -> {
-                JsonNode value=proposal.path("proposalValue"); validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
+                JsonNode value=decisionValue(fieldKey, proposal.path("proposalValue"));
+                validateField(fieldKey,value,FinancialPreparationFactory.REQUIRED_KEYS.contains(fieldKey));
                 field.set("value",value.deepCopy()); field.put("source","AI_ESTIMATE"); field.put("decision","ACCEPTED");
                 field.put("provenance","assistance."+fieldKey+".proposalVersion:"+proposal.path("proposalVersion").asInt(1));
                 proposal.put("decision","ACCEPTED"); proposal.put("estimateStatus", "ACCEPTED");
@@ -151,6 +171,10 @@ public class FinancialService {
                 field.set("value",request.value().deepCopy()); field.put("source","USER_INPUT"); field.put("decision","USER_EDITED_ACCEPTED");
                 field.put("provenance","user-edited-ai-estimate"); proposal.put("decision","USER_EDITED_ACCEPTED");
                 proposal.put("estimateStatus", "ACCEPTED"); proposal.putNull("activeTaskRunId"); proposal.putNull("safeError");
+            }
+            case "REJECT" -> {
+                proposal.put("decision", "REJECTED"); proposal.put("estimateStatus", "NONE");
+                proposal.putNull("activeTaskRunId"); proposal.putNull("safeError");
             }
             case "REQUEST_ALTERNATIVE" -> {
                 if (active(proposal)) {
@@ -186,7 +210,7 @@ public class FinancialService {
     @Transactional
     public SnapshotView finalizeSnapshot(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        FinancialInputPreparation preparation = lockedCurrent(projectId);
+        FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId);
         var existing = snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(preparation.getId(), projectId);
         if (existing.isPresent()) return snapshotView(existing.get());
         if (hasActiveEstimate(mapper.readTree(preparation.getAssistanceJson()))) {
@@ -198,7 +222,7 @@ public class FinancialService {
         if (!missing.isEmpty()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY,
             "필수 재무 입력을 완료해 주세요: " + String.join(", ", missing));
         for (String key : FinancialPreparationFactory.REQUIRED_KEYS) validateField(key, fields.path(key).path("value"), true);
-        for (String key : FinancialPreparationFactory.CONDITIONAL_COST_KEYS)
+        for (String key : FinancialPreparationFactory.ALL_KEYS)
             validateField(key, fields.path(key).path("value"), false);
         if (calculator.calculateCac(fields) == null) throw invalid("마케팅비와 영업비의 통화를 맞추고 신규 고객 수를 1 이상 입력해 주세요.");
         String id = UUID.randomUUID().toString();
@@ -206,14 +230,28 @@ public class FinancialService {
         var built = snapshotFactory.create(id, now, preparation);
         return snapshotView(snapshots.save(FinancialInputSnapshot.create(id, projectId, preparation.getId(),
             preparation.getSourceTechOpsSnapshotId(), preparation.getSourceMarketSeedSnapshotId(),
+            preparation.getSourceMarketResearchVersionId(), preparation.getSourceBusinessModelVersionId(),
             FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now)));
+    }
+
+    @Transactional
+    public PreparationView reopenPreparation(Long ownerId, Long projectId) {
+        requireOwnedForUpdate(ownerId, projectId);
+        FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId);
+        FinancialInputSnapshot snapshot = snapshots
+            .findByPreparationIdAndProjectIdAndDeletedAtIsNull(preparation.getId(), projectId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY));
+        snapshot.softDelete();
+        return view(preparation);
     }
 
     @Transactional(readOnly = true)
     public SnapshotView currentSnapshot(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
-        TechOpsInputSnapshot source = currentTechOpsSnapshot(projectId);
-        return snapshotView(snapshots.findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(source.getId(), projectId)
+        CurrentSources source = currentSources(ownerId, projectId);
+        return snapshotView(snapshots
+            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY)));
     }
 
@@ -224,7 +262,8 @@ public class FinancialService {
             .map(FinancialInputSnapshot::getId).orElse(null);
         return new PreparationView(FinancialPreparationFactory.CONTRACT, FinancialPreparationFactory.SCHEMA_VERSION,
             value.getId(), value.getProjectId(), value.getSourceTechOpsSnapshotId(), value.getSourceMarketSeedSnapshotId(),
-            value.getSourceSnapshotHash(), value.getRevision(), fields, mapper.readTree(value.getUpstreamReferencesJson()),
+            value.getSourceMarketResearchVersionId(), value.getSourceBusinessModelVersionId(), value.getSourceSnapshotHash(),
+            stale(value), value.getRevision(), fields, mapper.readTree(value.getUpstreamReferencesJson()),
             mapper.readTree(value.getAssistanceJson()), calculator.calculateCac(fields), missing, missing.isEmpty(),
             snapshotId, value.getUpdatedAt());
     }
@@ -232,16 +271,16 @@ public class FinancialService {
     private SnapshotView snapshotView(FinancialInputSnapshot value) {
         return new SnapshotView(FinancialInputSnapshotFactory.CONTRACT, value.getId(), value.getSchemaVersion(),
             value.getProjectId(), value.getPreparationId(), value.getSourceTechOpsSnapshotId(),
-            value.getSourceMarketSeedSnapshotId(), value.getSnapshotHash(), value.getFinalizedAt(),
-            mapper.readTree(value.getSnapshotJson()));
+            value.getSourceMarketSeedSnapshotId(), value.getSourceMarketResearchVersionId(),
+            value.getSourceBusinessModelVersionId(), value.getSnapshotHash(), value.getFinalizedAt(),
+            mapper.readTree(value.getSnapshotJson()), stale(value));
     }
 
     private TaskRunService.CreateResult queueEstimate(Long ownerId, Long projectId, FinancialInputPreparation preparation,
             String fieldKey, int version, JsonNode rejected, String idempotencyKey,
             String correlationId, String actionType) {
-        TechOpsInputSnapshot source = currentTechOpsSnapshot(projectId);
         String contextJson = mapper.writeValueAsString(java.util.Map.of(
-            "techOpsSnapshot", mapper.readTree(source.getSnapshotJson()),
+            "upstreamReferences", mapper.readTree(preparation.getUpstreamReferencesJson()),
             "financialFields", mapper.readTree(preparation.getFinancialFieldsJson())));
         String rejectedJson = rejected == null || rejected.isNull()
             ? "" : mapper.writeValueAsString(rejected);
@@ -249,8 +288,10 @@ public class FinancialService {
             java.util.Map.entry("preparationId", preparation.getId()),
             java.util.Map.entry("fieldKey", fieldKey), java.util.Map.entry("proposalVersion", version),
             java.util.Map.entry("rejectedProposalJson", rejectedJson),
-            java.util.Map.entry("sourceTechOpsSnapshotId", source.getId()),
-            java.util.Map.entry("sourceSnapshotHash", source.getSnapshotHash()),
+            java.util.Map.entry("sourceTechOpsSnapshotId", preparation.getSourceTechOpsSnapshotId()),
+            java.util.Map.entry("sourceMarketResearchVersionId", preparation.getSourceMarketResearchVersionId()),
+            java.util.Map.entry("sourceBusinessModelVersionId", preparation.getSourceBusinessModelVersionId()),
+            java.util.Map.entry("sourceSnapshotHash", preparation.getSourceSnapshotHash()),
             java.util.Map.entry("expectedPreparationRevision", preparation.getRevision()),
             java.util.Map.entry("contextJson", contextJson),
             java.util.Map.entry("commandIdempotencyKey", commandKey(idempotencyKey))));
@@ -277,7 +318,7 @@ public class FinancialService {
     }
 
     private void validateEstimateField(FinancialInputPreparation preparation, String fieldKey) {
-        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "newCustomerCount".equals(fieldKey)) {
+        if (!FinancialPreparationFactory.ALL_KEYS.contains(fieldKey) || "revenueModel".equals(fieldKey)) {
             throw invalid("AI 추정 지원 대상이 아닙니다: " + fieldKey);
         }
         JsonNode field = mapper.readTree(preparation.getFinancialFieldsJson()).path(fieldKey);
@@ -302,25 +343,80 @@ public class FinancialService {
         return value.strip();
     }
 
-    private FinancialInputPreparation requireCurrent(Long projectId) {
-        TechOpsInputSnapshot source = currentTechOpsSnapshot(projectId);
-        return preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(projectId, source.getId())
+    private FinancialInputPreparation requireCurrent(Long ownerId, Long projectId) {
+        CurrentSources source = currentSources(ownerId, projectId);
+        return preparations
+            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 
-    private FinancialInputPreparation lockedCurrent(Long projectId) {
-        FinancialInputPreparation current = requireCurrent(projectId);
+    private FinancialInputPreparation lockedCurrent(Long ownerId, Long projectId) {
+        FinancialInputPreparation current = requireCurrent(ownerId, projectId);
         return preparations.findLocked(current.getId(), projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 
     private TechOpsInputSnapshot currentTechOpsSnapshot(Long projectId) {
+        var portfolio = portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
+        if (portfolio != null) {
+            var seed = marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(portfolio.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE,
+                    "current Market Analysis Seed가 필요합니다."));
+            return techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(seed.getId(), projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY));
+        }
         var selection = selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
         var seed = marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
         return techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(seed.getId(), projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY));
+    }
+
+    private CurrentSources currentSources(Long ownerId, Long projectId) {
+        TechOpsInputSnapshot techOps = currentTechOpsSnapshot(projectId);
+        var marketCurrent = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.FULL);
+        var bmCurrent = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.BM);
+        if (marketCurrent.version() == null || marketCurrent.stale()) {
+            throw new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED,
+                "current Market Research 결과가 필요합니다.");
+        }
+        if (bmCurrent.version() == null || bmCurrent.stale()) {
+            throw new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED,
+                "current Business Model 결과와 재무 전달정보가 필요합니다.");
+        }
+        MarketResearchVersion market = marketVersions.findById(marketCurrent.version().id())
+            .filter(value -> value.getProject().getId().equals(projectId) && value.getDeletedAt() == null)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
+        MarketResearchVersion businessModel = marketVersions.findById(bmCurrent.version().id())
+            .filter(value -> value.getProject().getId().equals(projectId) && value.getDeletedAt() == null)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
+        if (businessModel.getKind() != MarketResearchRun.Kind.BM
+                || market.getKind() != MarketResearchRun.Kind.FULL
+                || !market.getId().equals(businessModel.getSourceRun().getSourceMarketVersionId())) {
+            throw new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED,
+                "Market/BM source lineage가 current 상태가 아닙니다.");
+        }
+        return new CurrentSources(techOps, market, businessModel);
+    }
+
+    private boolean stale(FinancialInputPreparation value) {
+        try {
+            CurrentSources current = currentSources(value.getUpdatedByUserId(), value.getProjectId());
+            return !current.techOps().getId().equals(value.getSourceTechOpsSnapshotId())
+                || !current.market().getId().equals(value.getSourceMarketResearchVersionId())
+                || !current.businessModel().getId().equals(value.getSourceBusinessModelVersionId());
+        } catch (BusinessException unavailable) { return true; }
+    }
+
+    private boolean stale(FinancialInputSnapshot value) {
+        try {
+            CurrentSources current = currentSources(value.getCreatedByUserId(), value.getProjectId());
+            return !current.techOps().getId().equals(value.getSourceTechOpsSnapshotId())
+                || !current.market().getId().equals(value.getSourceMarketResearchVersionId())
+                || !current.businessModel().getId().equals(value.getSourceBusinessModelVersionId());
+        } catch (BusinessException unavailable) { return true; }
     }
 
     private void ensureMutable(FinancialInputPreparation value) {
@@ -342,6 +438,16 @@ public class FinancialService {
                 throw invalid("신규 고객 수는 1 이상의 정수여야 합니다.");
             return;
         }
+        if ("revenueModel".equals(key)) {
+            if (!value.isTextual() || !Set.of("ONE_TIME", "SUBSCRIPTION", "HYBRID").contains(value.asText()))
+                throw invalid("수익 모델은 ONE_TIME, SUBSCRIPTION, HYBRID 중 하나여야 합니다.");
+            return;
+        }
+        if ("monthlyChurnRate".equals(key)) {
+            if (!value.isNumber() || value.asDouble() < 0 || value.asDouble() > 100)
+                throw invalid("월 이탈률은 0~100 사이여야 합니다.");
+            return;
+        }
         if (!value.isObject() || !value.path("amount").isNumber() || value.path("amount").asDouble() < 0
                 || value.path("currency").asText("").isBlank())
             throw invalid("비용은 0 이상의 금액과 통화를 포함해야 합니다: " + key);
@@ -361,6 +467,16 @@ public class FinancialService {
         return years[1] && years[2] && years[3];
     }
 
+    private JsonNode decisionValue(String fieldKey, JsonNode proposalValue) {
+        if ("monthlyChurnRate".equals(fieldKey) && proposalValue.isObject()) {
+            return proposalValue.path("percent");
+        }
+        if ("newCustomerCount".equals(fieldKey) && proposalValue.isObject()) {
+            return proposalValue.path("count");
+        }
+        return proposalValue;
+    }
+
     private BusinessException invalid(String message) { return new BusinessException(ErrorCode.FINANCIAL_INPUT_INVALID, message); }
     private void requireOwnedForUpdate(Long ownerId, Long projectId) {
         projects.findByIdForUpdate(projectId).filter(value -> value.getOwner().getId().equals(ownerId))
@@ -370,4 +486,6 @@ public class FinancialService {
         projects.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, ownerId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
     }
+    private record CurrentSources(TechOpsInputSnapshot techOps, MarketResearchVersion market,
+                                  MarketResearchVersion businessModel) {}
 }

@@ -5,6 +5,7 @@ import static com.aivle.backend.pipeline.finance.api.FinancialApiModels.*;
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.pipeline.finance.application.FinancialService;
+import com.aivle.backend.pipeline.finance.application.FinancialAnalysisService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class FinancialController {
     private final FinancialService service;
+    private final FinancialAnalysisService analysis;
     private final CurrentUserProvider user;
 
     @PostMapping("/preparation/initialize")
@@ -66,5 +68,26 @@ public class FinancialController {
     @GetMapping("/input-snapshots/current")
     public ApiResponse<SnapshotView> currentSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(service.currentSnapshot(user.currentUserId(), projectId), request.getHeader("X-Request-Id"));
+    }
+
+    @PostMapping("/input-snapshots/current/reopen")
+    public ApiResponse<PreparationView> reopenSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(service.reopenPreparation(user.currentUserId(), projectId),
+            request.getHeader("X-Request-Id"));
+    }
+
+    @PostMapping("/analysis-runs")
+    public ResponseEntity<ApiResponse<AnalysisActionResponse>> startAnalysis(@PathVariable Long projectId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey, HttpServletRequest request) {
+        AnalysisActionResponse result = analysis.start(user.currentUserId(), projectId, idempotencyKey,
+            request.getHeader("X-Request-Id"));
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
+    }
+
+    @GetMapping("/analysis/current")
+    public ApiResponse<AnalysisView> currentAnalysis(@PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(analysis.current(user.currentUserId(), projectId),
+            request.getHeader("X-Request-Id"));
     }
 }

@@ -1,7 +1,6 @@
 package com.aivle.backend.postgres;
 
 import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +22,6 @@ class PostgreSqlContainerSmokeTests extends PostgreSqlIntegrationTestSupport {
     @Autowired
     private Flyway flyway;
 
-    @BeforeEach
-    void cleanDatabase() {
-        jdbcTemplate.execute(
-            "truncate table users, stored_files restart identity cascade"
-        );
-    }
-
     @Test
     void startsPinnedPostgreSqlAndAppliesAllMigrations() {
         String version = jdbcTemplate.queryForObject("select version()", String.class);
@@ -42,12 +34,12 @@ class PostgreSqlContainerSmokeTests extends PostgreSqlIntegrationTestSupport {
         assertThat(version).contains("PostgreSQL 17.10");
         assertThat(timezone).isEqualTo("UTC");
         assertThat(encoding).isEqualTo("UTF8");
-        assertThat(flyway.info().applied()).hasSize(16);
+        assertThat(flyway.info().applied()).hasSize(18);
         assertThat(flyway.info().current().getVersion().getVersion())
-            .isEqualTo("16");
+            .isEqualTo("19");
         System.out.printf(
-            "SESSION2_PG_FRESH postgres=\"%s\" flywayLatest=16 "
-                + "applied=16 applicationContext=PASS "
+            "SESSION3_PG_FRESH postgres=\"%s\" flywayLatest=19 "
+                + "applied=18 applicationContext=PASS "
                 + "ddlAutoValidate=PASS%n",
             version
         );

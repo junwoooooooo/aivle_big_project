@@ -49,7 +49,7 @@ describe('useFinance', () => {
     useJobEvents.mockImplementation(() => ({ terminal, events: [] }));
     const { result, rerender } = renderHook(() => useFinance('7'));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(useJobEvents).toHaveBeenLastCalledWith('task-1');
+    expect(useJobEvents.mock.calls.some(([taskId]) => taskId === 'task-1')).toBe(true);
     const before = client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length;
 
     terminal = true;
@@ -57,5 +57,35 @@ describe('useFinance', () => {
 
     await waitFor(() => expect(client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length)
       .toBeGreaterThan(before));
+  });
+
+  it('분석 TaskRun을 SSE로 추적한다', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, inputSnapshotId: 'snapshot-1', assistance: {} };
+    const client = { get: vi.fn(async (path) => {
+      if (path.endsWith('/finance/preparation')) return { data: preparation };
+      if (path.endsWith('/input-snapshots/current')) return { data: { snapshotId: 'snapshot-1' } };
+      if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+      if (path.endsWith('/analysis/current')) return { data: { taskRunId: 'analysis-1', status: 'RUNNING' } };
+      throw { status: 404 };
+    }), post: vi.fn(), patch: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.analysis?.taskRunId).toBe('analysis-1'));
+    expect(useJobEvents.mock.calls.some(([taskId]) => taskId === 'analysis-1')).toBe(true);
+  });
+
+  it('reopen은 current snapshot 공식 API만 호출한다', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, inputSnapshotId: 'snapshot-1', assistance: {} };
+    const client = { get: vi.fn(async (path) => {
+      if (path.endsWith('/finance/preparation')) return { data: preparation };
+      if (path.endsWith('/input-snapshots/current')) return { data: { snapshotId: 'snapshot-1' } };
+      if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+      throw { status: 404 };
+    }), post: vi.fn(async () => ({ data: {} })), patch: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(() => result.current.reopen());
+    expect(client.post.mock.calls.some(([path]) => path.endsWith('/input-snapshots/current/reopen'))).toBe(true);
   });
 });

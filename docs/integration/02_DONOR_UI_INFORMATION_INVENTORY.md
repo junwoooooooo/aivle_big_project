@@ -327,3 +327,32 @@
 | 쌍별 caveat 중복 제거 집합 | PORTED | `TwinFootnote` |
 
 Session 2 범위의 `NOT_PORTED` 행은 없다.
+
+### 7.4 Finance (Session 3)
+
+기존 4절의 공식 Finance 행을 삭제·축약하지 않고 구현 상태를 대응시켰다.
+
+| USER_VISIBLE_ITEM 묶음 | STATUS | TARGET 구현 |
+|---|---|---|
+| 준비 실패·BM 완료 필요·필수 입력·Snapshot 상태 | PORTED | `FinancePage.jsx` empty/header/finalize state |
+| Market 규모·성장률·가격, BM financial handoff, TechOps Snapshot과 정확한 version/id | PORTED | upstream source card와 전체 Evidence/Caveat 상세 |
+| 고정비·초기투자·3개년 목표·수익모델·가격·이탈률·CAC·조건부 원가 | PORTED | Finance preparation 입력 sections |
+| source/provenance, 사용자 입력, Market/BM 가정, AI estimate 구분 | PORTED | field source labels, recommendation detail, upstream detail |
+| AI 추천 상태·값·근거·가정·confidence·받기·채택·수정채택·거절·대안 요청 | PORTED | `EstimateControls`, `Recommendation` |
+| 저장·확정·입력 수정(reopen)·handoff·stale | PORTED | Snapshot/action panels와 stale warning |
+| 분석 실행·TaskRun 진행·실패·retryable·AI report fallback | PORTED | analysis action/status/error/fallback warning |
+| 누적 매출·영업이익·필요 운전자금·BEP KPI | PORTED | `AnalysisReport.jsx` KPI grid |
+| 3개년 P&L 전체 행과 영업이익률 | PORTED | annual projection table |
+| 월별 매출·영업이익·누적 현금흐름 차트와 상세 표 | PORTED | SVG line charts와 expandable table |
+| 보수·기준·낙관 stress, scenario BEP/필요자금/누적현금 | PORTED | stress cards와 scenario chart |
+| Monte Carlo P10/P50/P90·손실확률·회수확률·횟수·seed | PORTED | risk section |
+| findings·cautions·recommended actions·disclaimer·report source/provider status | PORTED | report judgment/footer |
+
+공식 Finance의 `PRESERVE_REQUIRED=YES` 행 중 `NOT_PORTED`는 없다.
+
+#### Sandbox/demo 분리 판정
+
+| DONOR SURFACE | STATUS | 판정 |
+|---|---|---|
+| `FinancialModulePage.jsx` sandbox 입력·미리보기 API | NOT_PORTED + reason | 개발용 중복 API이며 공식 `/api/v3/projects/{projectId}/finance/...`에 노출하지 않았다. donor 파일은 삭제·변경하지 않았다. |
+| `FinanceDemoFallback` 가짜 데이터 실행 | NOT_OFFICIAL | sample/demo upstream 금지에 따라 공식 Project Finance route에서 노출하지 않았다. donor 구현은 read-only donor에 보존되어 있다. |

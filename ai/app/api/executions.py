@@ -29,6 +29,7 @@ TASK_TYPES = {
     "CONCEPT_DELTA_LEGAL_REVIEW",
     "TECH_OPS_PROPOSAL",
     "FINANCE_ESTIMATE",
+    "FINANCE_ANALYSIS_REPORT",
     "MARKETING_CONTENT_GENERATION",
     "MARKET_RESEARCH",
     "TWIN_SURVEY",
@@ -285,6 +286,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 "proposalVersion": body.input.get("proposalVersion"),
                 "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
             })
+        elif body.taskType == "FINANCE_ANALYSIS_REPORT":
+            from app.tasks.finance_analysis_report import execute_finance_analysis_report
+            result = await execute_finance_analysis_report(body.input)
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)

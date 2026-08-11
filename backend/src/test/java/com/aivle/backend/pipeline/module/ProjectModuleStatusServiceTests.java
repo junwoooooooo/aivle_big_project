@@ -38,6 +38,7 @@ import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepo
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -60,10 +61,11 @@ class ProjectModuleStatusServiceTests {
     private final TechOpsInputSnapshotRepository techOpsSnapshots = mock(TechOpsInputSnapshotRepository.class);
     private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
     private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
+    private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
         projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs,
         marketRuns, marketVersions, twinRuns, twinVersions, marketing, marketingSources,
-        techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots);
+        techOpsPreparations, techOpsSnapshots, financialPreparations, financialSnapshots, taskRuns);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
@@ -169,12 +171,34 @@ class ProjectModuleStatusServiceTests {
         ConceptSelection selection = mock(ConceptSelection.class); MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
         TechOpsInputSnapshot techOpsSnapshot = mock(TechOpsInputSnapshot.class);
         FinancialInputPreparation preparation = mock(FinancialInputPreparation.class);
+        var marketRun = mock(com.aivle.backend.pipeline.market.MarketResearchRun.class);
+        var bmRun = mock(com.aivle.backend.pipeline.market.MarketResearchRun.class);
+        var marketVersion = mock(com.aivle.backend.pipeline.market.MarketResearchVersion.class);
+        var bmVersion = mock(com.aivle.backend.pipeline.market.MarketResearchVersion.class);
+        var marketTask = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
+        var bmTask = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
         when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1"); when(techOpsSnapshot.getId()).thenReturn("tech-1");
         when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
         when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
         when(techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("market-seed-1", 41L))
             .thenReturn(Optional.of(techOpsSnapshot));
-        when(financialPreparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(41L, "tech-1"))
+        when(marketRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
+        when(marketRun.getTaskRun()).thenReturn(marketTask); when(marketTask.getState()).thenReturn(com.aivle.backend.taskrun.domain.TaskRunState.SUCCEEDED);
+        when(marketTask.getId()).thenReturn("market-task");
+        when(marketVersion.getId()).thenReturn(101L); when(marketVersion.getSourceRun()).thenReturn(marketRun);
+        when(bmRun.getId()).thenReturn(301L); when(bmRun.getSourceMarketVersionId()).thenReturn(101L);
+        when(bmRun.getTaskRun()).thenReturn(bmTask); when(bmTask.getState()).thenReturn(com.aivle.backend.taskrun.domain.TaskRunState.SUCCEEDED);
+        when(bmTask.getId()).thenReturn("bm-task");
+        when(bmVersion.getId()).thenReturn(201L);
+        when(marketRuns.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, com.aivle.backend.pipeline.market.MarketResearchRun.Kind.FULL)).thenReturn(Optional.of(marketRun));
+        when(marketRuns.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, com.aivle.backend.pipeline.market.MarketResearchRun.Kind.BM)).thenReturn(Optional.of(bmRun));
+        when(marketVersions.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
+            41L, com.aivle.backend.pipeline.market.MarketResearchRun.Kind.FULL)).thenReturn(Optional.of(marketVersion));
+        when(marketVersions.findBySourceRunIdAndDeletedAtIsNull(301L)).thenReturn(Optional.of(bmVersion));
+        when(financialPreparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+            41L, "tech-1", 101L, 201L))
             .thenReturn(Optional.of(preparation));
 
         var finance = service.findAll(7L, 41L).stream()

@@ -25,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(18);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -34,8 +34,9 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .toList();
 
         assertThat(appliedVersions).containsExactly(
-            "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
+            "18", "19");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("19");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -50,6 +51,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
                 "market_analysis_seed_snapshots", "module_handoffs", "module_runs", "module_results",
                 "tech_ops_input_preparations", "tech_ops_evidence_references",
                 "tech_ops_input_snapshots", "marketing_source_snapshots", "pipeline_marketing_contents",
+                "financial_input_preparations", "financial_input_snapshots",
                 "pipeline_marketing_content_revisions", "pipeline_marketing_assets",
                 "concept_portfolio_runs", "concept_portfolio_concepts", "concept_portfolio_continuations",
                 "concept_input_requests", "concept_input_responses", "concept_portfolio_selections",
@@ -78,7 +80,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(9);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(11);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -99,7 +101,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(10);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());

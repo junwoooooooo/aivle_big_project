@@ -137,7 +137,7 @@ public class ProjectJobQueryService {
                 CONCEPT_LEGAL_REVIEW, CONCEPT_REDESIGN -> JobModule.CONCEPT_FACTORY;
             case CONCEPT_HYPOTHESIS_ALTERNATIVE, CONCEPT_DELTA_LEGAL_REVIEW -> JobModule.CONCEPT_SELECTION;
             case TECH_OPS_PROPOSAL -> JobModule.TECH_OPS;
-            case FINANCE_ESTIMATE -> JobModule.FINANCE;
+            case FINANCE_ESTIMATE, FINANCE_ANALYSIS_REPORT -> JobModule.FINANCE;
             case MARKETING_CONTENT_GENERATION -> JobModule.MARKETING;
             case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
                 ? JobModule.BUSINESS_MODEL : JobModule.MARKET;

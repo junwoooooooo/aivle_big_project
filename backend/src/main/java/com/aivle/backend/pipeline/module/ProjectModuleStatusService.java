@@ -31,6 +31,9 @@ import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepositor
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
+import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +61,7 @@ public class ProjectModuleStatusService {
     private final TechOpsInputSnapshotRepository techOpsSnapshotRepository;
     private final FinancialInputPreparationRepository financialPreparationRepository;
     private final FinancialInputSnapshotRepository financialSnapshotRepository;
+    private final TaskRunRepository taskRunRepository;
 
     public List<ProjectModuleStatusResponse> findAll(Long userId, Long projectId) {
         projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
@@ -89,10 +93,12 @@ public class ProjectModuleStatusService {
         MarketResearchVersion currentMarketVersion = latestMarketVersion != null && selectedSnapshot != null
             && selectedSnapshot.getId().equals(latestMarketVersion.getSourceRun().getSourceMarketSeedSnapshotId())
                 ? latestMarketVersion : null;
+        MarketResearchVersion currentBusinessVersion = businessRun == null || currentMarketVersion == null
+            || !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()) ? null
+            : marketResearchVersionRepository.findBySourceRunIdAndDeletedAtIsNull(businessRun.getId()).orElse(null);
         TwinSurveyRun twinRun = twinSurveyRunRepository
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
-        ModuleRun financialRun = latestRun(projectId, ModuleType.FINANCIAL_ANALYSIS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
         var marketingSource = selectedSnapshot == null ? null
             : marketingSourceRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
@@ -103,12 +109,19 @@ public class ProjectModuleStatusService {
         var techOpsSnapshot = selectedSnapshot == null ? null
             : techOpsSnapshotRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
-        var financialPreparation = techOpsSnapshot == null ? null
-            : financialPreparationRepository.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(
-                projectId, techOpsSnapshot.getId()).orElse(null);
-        var financialSnapshot = techOpsSnapshot == null ? null
-            : financialSnapshotRepository.findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(
-                techOpsSnapshot.getId(), projectId).orElse(null);
+        var financialPreparation = techOpsSnapshot == null || currentMarketVersion == null || currentBusinessVersion == null
+            ? null : financialPreparationRepository
+                .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+                    projectId, techOpsSnapshot.getId(), currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .orElse(null);
+        var financialSnapshot = techOpsSnapshot == null || currentMarketVersion == null || currentBusinessVersion == null
+            ? null : financialSnapshotRepository
+                .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+                    projectId, techOpsSnapshot.getId(), currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .orElse(null);
+        TaskRun financialTask = financialSnapshot == null ? null : taskRunRepository
+            .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, "FINANCIAL_ANALYSIS_REPORT", financialSnapshot.getId()).orElse(null);
 
         String confirmedBriefId = brief == null ? null : brief.getConfirmedSnapshotId();
         PipelineModuleStatus conceptStatus = conceptStatus(conceptRun, portfolioSelection, confirmedBriefId);
@@ -129,10 +142,11 @@ public class ProjectModuleStatusService {
             : techOpsPreparation == null ? PipelineModuleStatus.READY
             : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : externalStatus(techOpsRun, techOpsSnapshot.getId());
-        PipelineModuleStatus financialStatus = techOpsSnapshot == null ? PipelineModuleStatus.NOT_READY
+        PipelineModuleStatus financialStatus = techOpsSnapshot == null || currentMarketVersion == null
+                || currentBusinessVersion == null ? PipelineModuleStatus.NOT_READY
             : financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : externalStatus(financialRun, financialSnapshot.getId());
+            : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
 
         return List.of(
             response(projectId, PipelineModuleType.IDEA, ideaStatus(brief),
@@ -178,11 +192,14 @@ public class ProjectModuleStatusService {
                 techOpsRun == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt() : techOpsRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.FINANCE, financialStatus,
                 techOpsSnapshot == null ? List.of("techOpsInputSnapshotId")
+                    : currentMarketVersion == null ? List.of("marketResearchVersionId")
+                    : currentBusinessVersion == null ? List.of("businessModelVersionId")
                     : financialSnapshot == null ? List.of("financialRequiredInputs")
-                    : financialRun == null ? List.of("financialModuleConnection") : List.of(),
-                new NextAction("재무 입력 준비", "/finance"), financialRun == null ? null : financialRun.getId(), null,
+                    : financialTask == null ? List.of("financialAnalysisReport") : List.of(),
+                new NextAction("재무 입력 준비", "/finance"), financialTask == null ? null : financialTask.getId(),
+                financialTask == null || financialTask.terminal() ? null : financialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
-                financialRun == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialRun.getUpdatedAt()),
+                financialTask == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialTask.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 marketingSource == null ? List.of("marketingSourceSnapshotId") : List.of(),
                 new NextAction("마케팅 콘텐츠", "/marketing"), marketing == null ? null : marketing.getId(),
@@ -245,6 +262,16 @@ public class ProjectModuleStatusService {
     private PipelineModuleStatus analysisStatus(MarketResearchRun run, boolean stale) {
         if (stale) return PipelineModuleStatus.STALE;
         return switch (run.getTaskRun().getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case NEEDS_INPUT -> PipelineModuleStatus.NEEDS_INPUT;
+            case SUCCEEDED -> PipelineModuleStatus.COMPLETED;
+            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+        };
+    }
+
+    private PipelineModuleStatus taskStatus(TaskRunState state) {
+        return switch (state) {
             case QUEUED, READY -> PipelineModuleStatus.QUEUED;
             case RUNNING -> PipelineModuleStatus.RUNNING;
             case NEEDS_INPUT -> PipelineModuleStatus.NEEDS_INPUT;
