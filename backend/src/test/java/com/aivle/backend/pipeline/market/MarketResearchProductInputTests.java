@@ -9,6 +9,7 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortf
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -41,6 +42,9 @@ class MarketResearchProductInputTests {
     @Test
     void productInputPassesCanonicalHasher() {
         String input = factory.full(seed("seed-2"), selection("concept-2"), "2026-08-11");
+        assertThat(input.getBytes(StandardCharsets.UTF_8).length)
+            .isPositive()
+            .isLessThanOrEqualTo(2 * 1024 * 1024);
         assertThatCode(() -> new CanonicalInputHasher(mapper)
             .hash(TaskType.MARKET_RESEARCH, "1.0", "ko-KR", input))
             .doesNotThrowAnyException();

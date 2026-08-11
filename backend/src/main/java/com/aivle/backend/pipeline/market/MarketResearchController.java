@@ -2,6 +2,7 @@ package com.aivle.backend.pipeline.market;
 
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
+import com.aivle.backend.common.web.RequestIds;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -96,7 +97,6 @@ public class MarketResearchController {
     public record PlanRequest(JsonNode plan, JsonNode constraints) { }
 
     private String id(HttpServletRequest request) {
-        Object value = request.getAttribute("requestId");
-        return value == null ? null : value.toString();
+        return RequestIds.resolve(request);
     }
 }
