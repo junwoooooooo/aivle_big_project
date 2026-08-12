@@ -26,6 +26,9 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+
+import runpath                                          # noqa: E402
 
 #: 숫자 — 천단위 쉼표·소수점·퍼센트 허용
 _NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
@@ -110,7 +113,10 @@ def main():
     a = ap.parse_args()
     skip = {x.strip() for x in a.skip.split(",") if x.strip()}
 
-    d = os.path.join(ROOT, "runs", a.run)
+    # ⚠ 원장은 **두 자리**에 있다 — 씨앗 `runs/` 와 수집이 만든 `runs-generated/`.
+    #   여기가 `runs/` 만 보고 있어서 새로 수집한 판을 「없다」고 했다(`tavily_intake`·
+    #   `scorecard` 에서 이미 한 번씩 고친 것과 같은 병). 답은 `runpath` 한 곳이다.
+    d = runpath.read_dir(a.run)
     res = json.load(io.open(os.path.join(d, "result.json"), encoding="utf-8"))
     bodies = json.load(io.open(os.path.join(d, "a3_bodies.json"), encoding="utf-8"))
     slots = {s["slot_id"]: s for s in res["input"]["slots"]}

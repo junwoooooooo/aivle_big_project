@@ -12,7 +12,7 @@ full-01 에서 A1 이 만든 슬롯 27개가 이랬다:
     python tests/test_step8.py
 """
 from __future__ import annotations
-import os, sys
+import json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -201,7 +201,10 @@ def FACT(fid, tid, url, quote, val):
 
 
 f24 = FACT("F1", "T1", d24.url, "월 9,900원", 9900.0)
-fks = FACT("F2", "T2", dks.url, "10만 3,000개", 103000.0)
+# 인용문은 **문장**이다. 판 ㊱ 의 무서술 겹이 붙은 뒤로 「10만 3,000개」처럼 숫자+단위뿐인
+# 인용은 격리된다 — 무엇을 센 값인지 문서 본문에만 기대게 되기 때문이다(절대규칙 3).
+# 이 검사가 보려는 것은 `mask_false_friends` 이지 인용 품질이 아니므로 문장으로 적는다.
+fks = FACT("F2", "T2", dks.url, "커피전문점 사업체 수는 10만 3,000개로 집계됐다", 103000.0)
 r24 = A4.off_slot_reason(f24, sl, d24, rules)
 rks = A4.off_slot_reason(fks, sl, dks, rules)
 check("카페24 문서는 must_contain 으로 격리", r24 is not None and "must_contain" in r24, str(r24))
@@ -420,6 +423,67 @@ check("scope 가 비면 꼬리표도 빈다",
       A4.grade([web_fact], {"S01": SWON}, {}, rules, 2026).rows[0].scope_note == "")
 
 # ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════
+# 계량 전형 밴드 — **찾아놓고 버리는 일**을 막는다 (판 ㉜)
+# ══════════════════════════════════════════════════════════════
+print("\n[전형 밴드] 슬롯 기대가 틀렸다고 참값을 버리지 않는다")
+# 판 ㉜ 실측(`p32-auto01`): 하네스가 거래액 밴드를 [1e8, 2e9] 로 적었고 참값은 38.0조였다.
+# 자릿수 차이 4.28 이라 그물(cap 3)을 그냥 넘어 **격리**됐다. 같은 원인으로 6슬롯이 죽고
+# 성적표 4과목과 blocker 1개(R9 경쟁사 0곳)가 함께 무너졌다.
+# 그물은 판 ⑱ 의 **1.45자릿수** 어긋남을 보고 맞춘 값이라 4.28 을 못 걸렀다.
+VB = rules["guards"]["value_range"]["계량_전형_밴드"]
+
+
+def _band_fact(val, unit="원"):
+    return Fact(fact_id="F1", slot_id="S01", var_id="V1", trace_id="T",
+                url="https://kosis.kr/x", quote=f"해당 계량의 관측값은 {val}{unit}이다",
+                value_num=val, unit_norm=unit,
+                year=2025, dedup_key="d", match_key="m", quote_verified=True,
+                content_status="usable")
+
+
+NARROW = S("S01", claim_type="TAM", subject="냉동 간편식", metric="거래액", unit="원",
+           must_contain=[], value_range=[1e8, 2e9])          # 하네스가 실제로 적은 값
+TRUE_GMV = 3.80411e13                                        # KOSIS DT_1KE10041 참값
+
+f = _band_fact(TRUE_GMV)
+check("슬롯 기대가 좁아도 계량 전형 밴드 안이면 격리하지 않는다",
+      A4.off_slot_reason(f, NARROW, None, rules) is None,
+      str(A4.off_slot_reason(f, NARROW, None, rules)))
+check("구했다는 사실을 **값으로** 남긴다 (조용한 구조 금지)",
+      (f.기대_밖 or {}).get("구조됨") is True and f.기대_밖.get("계량_전형_밴드"),
+      json.dumps(f.기대_밖, ensure_ascii=False)[:120])
+
+print("\n  ⚠ 단위 오류 방어를 뚫으면 안 된다 — 구조는 **살리는 쪽으로만** 쓴다")
+# 100만 배 확대는 전형 밴드 밖이라 여전히 차단이다.
+check("bad_unit(100만 배 확대)은 여전히 격리된다",
+      "값범위 밖" in str(A4.off_slot_reason(_band_fact(3.8e19), NARROW, None, rules)))
+# 계량이 다르면 밴드도 다르다 — 도시락 가격 슬롯에 조 단위가 오면 구조하지 않는다.
+PRICE = S("S02", claim_type="PRICE", subject="편의점 도시락", metric="판매가", unit="원",
+          must_contain=[], value_range=[2000, 15000])
+check("계량이 다르면 밴드도 다르다 (판매가 슬롯에 38조는 격리)",
+      "값범위 밖" in str(A4.off_slot_reason(_band_fact(TRUE_GMV), PRICE, None, rules)))
+check("밴드가 없는 계량은 종전대로 (없는 기준으로 구조하지 않는다)",
+      "시장 점유율" not in VB)
+
+print("\n  슬롯 기대가 틀리면 그물이 헛돈다 — 막지는 않되 **보이게** 한다")
+# 자릿수 차이는 «값 vs 슬롯 기대» 라서, 기대가 틀린 자리에서는 **틀린 값이 기대와 가까워**
+# 조용히 통과한다. `_currency._why` 의 카페24 사고(작은 오답 245만원만 범위 안이라
+# 확인됨 5점)가 그 모양이었다. 여기서 막으면 전형 밴드가 **새 검열자**가 되므로 표시만 한다.
+f2 = _band_fact(3.8e7)                    # 38조를 100만 배 축소한 값
+check("좁은 기대 옆에 붙은 bad_unit 은 자릿수 그물을 그냥 지난다 (알고 두는 구멍)",
+      A4.off_slot_reason(f2, NARROW, None, rules) is None)
+check("그래도 전형 밴드 밖이라는 사실은 남는다",
+      "전형_밴드_밖" in (f2.기대_밖 or {}),
+      json.dumps(f2.기대_밖, ensure_ascii=False)[:140])
+
+print("\n  표는 사람의 판단이다 — 근거 없이 숫자만 두지 않는다")
+check("모든 계량에 _근거 가 붙어 있다",
+      all(v.get("_근거") for v in VB.values()),
+      str([k for k, v in VB.items() if not v.get("_근거")]))
+check("밴드는 [하한, 상한] 이고 상한이 크다",
+      all(len(v["밴드"]) == 2 and v["밴드"][1] > v["밴드"][0] for v in VB.values()))
+
 print(f"\n===== {ok} 통과 / {len(fail)} 실패")
 for f in fail:
     print("  X ", f)

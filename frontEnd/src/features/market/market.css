@@ -255,3 +255,7 @@
 .bm-det__t { margin-top: .6rem; }
 .bm-det__m { margin-top: 1rem; color: var(--color-text-primary); font-size: .81rem; line-height: 1.7; }
 .bm-det__m b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }
+.competitor-seeds__row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 12px; margin: 12px 0; }
+.competitor-seeds__actions { display: flex; gap: 8px; margin-top: 12px; }
+.competitor-seeds__hint { color: var(--color-text-muted, #596579); font-size: .9rem; }
+@media (max-width: 760px) { .competitor-seeds__row { grid-template-columns: 1fr; } }

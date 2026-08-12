@@ -29,15 +29,19 @@ def product_run_override(tmp_path, monkeypatch):
 
     import bm_scorer
     import runlog
+    import runpath
     import scorecard
 
     with monkeypatch.context() as scoped:
         scoped.setenv("RESEARCH2_RUNS_DIR", str(runs_dir))
+        scoped.setenv("RESEARCH2_GENERATED_RUNS_DIR", str(tmp_path / "runs-generated"))
+        importlib.reload(runpath)
         importlib.reload(bm_scorer)
         importlib.reload(scorecard)
         importlib.reload(runlog)
         yield TEMP_RUN_ID, bm_scorer, scorecard
 
+    importlib.reload(runpath)
     importlib.reload(bm_scorer)
     importlib.reload(scorecard)
     importlib.reload(runlog)
@@ -159,19 +163,23 @@ def test_fixture_rescore_keeps_donor_report_note(product_run_override):
 def test_unset_override_keeps_bundled_donor_fixtures(monkeypatch):
     import bm_scorer
     import runlog
+    import runpath
     import scorecard
 
     with monkeypatch.context() as scoped:
         scoped.delenv("RESEARCH2_RUNS_DIR", raising=False)
+        scoped.delenv("RESEARCH2_GENERATED_RUNS_DIR", raising=False)
+        importlib.reload(runpath)
         importlib.reload(bm_scorer)
         importlib.reload(scorecard)
         importlib.reload(runlog)
-        assert Path(bm_scorer.RUNS_DIR) == RESEARCH_HOME / "runs"
+        assert Path(runpath.RUNS_DIR) == RESEARCH_HOME / "runs"
         for run_id in ("beauty-13", "ledger-05", "pet-treat-15"):
             ledger = bm_scorer.load_ledger(run_id)
             assert ledger["slots"]
             assert ledger["ledger_rows"]
 
+    importlib.reload(runpath)
     importlib.reload(bm_scorer)
     importlib.reload(scorecard)
     importlib.reload(runlog)

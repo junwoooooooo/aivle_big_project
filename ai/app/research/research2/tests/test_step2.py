@@ -67,6 +67,57 @@ for c in cases:
 check(f"파싱 {len(cases)}케이스 전부 통과", not bad, f"실패 {len(bad)}건: " + "; ".join(bad[:5]))
 
 # ══════════════════════════════════════════════════════════════
+print("\n[범위 표기] 「2,400~3,400원」은 **값 둘**이다 (판 ㉜)")
+# 이 표에 범위 사례가 **0건**이었다. 그래서 결함이 안 잡혔고, 하필 pin-09 가 6/6 을 낸
+# 가격 값이 바로 그 모양이었다(배달비). `_NUM` 이 `search`(첫 매치)라 갈래마다 다르게 틀렸다:
+#   ① 범위가 number_raw → 조용히 **하한**만 남는다(플래그도 없다)  ← 더 위험하다
+#   ② 범위가 unit_raw   → `화폐_접미` 화이트리스트에 걸려 **null**
+rcases = json.load(io.open(os.path.join(HERE, "cases_numbers.json"),
+                           encoding="utf-8"))["range_cases"]
+rbad = []
+for c in rcases:
+    parts = A.split_range(c["raw"], c["unit"], rules["units"])
+    got = [A.parse_number(pn, pu, rules["units"]) for pn, pu, _ in parts]
+    vals, units_ = [g[0] for g in got], [g[1] for g in got]
+    want = c["want"]
+    ok_ = (len(vals) == len(want)
+           and all(v is not None and abs(v - w) < max(abs(w) * 1e-9, 1e-9)
+                   for v, w in zip(vals, want))
+           and all(u == c["want_unit"] for u in units_))
+    if not ok_:
+        rbad.append(f"{c['raw']!r}+{c['unit']!r} → {vals}/{units_} (기대 {want}/{c['want_unit']})")
+check(f"범위 {len(rcases)}케이스 전부 통과", not rbad,
+      f"실패 {len(rbad)}건: " + "; ".join(rbad[:4]))
+check("쪼갠 조각에 하한·상한 표시가 붙는다 (원장에서 2건인 이유가 남아야 한다)",
+      [t for _, _, t in A.split_range("2,400~3,400", "원", rules["units"])]
+      and all("하한" in t or "상한" in t
+              for _, _, t in A.split_range("2,400~3,400", "원", rules["units"])))
+check("범위가 아니면 표시가 비어 있다 (안 쪼갠 것과 구별된다)",
+      A.split_range("30만", "명", rules["units"])[0][2] == "")
+# **대표값을 만들지 않는다** — 중간값 따위를 세우면 원문에 없는 수를 지어내는 것이다.
+check("중간값 같은 것을 지어내지 않는다 (조각은 원문의 수 그대로)",
+      [v for v, _, _ in A.split_range("2,400~3,400", "원", rules["units"])] == ["2,400", "3,400"])
+
+print("\n[수 재선택] 단위가 어긋나면 인용 **안에서** 다시 읽는다 (판 ㉜)")
+# 발췌 프롬프트는 슬롯 단위를 **일부러 안 본다**(「슬롯과 맞는지 판단하지 마라」 — 모델이
+# 조용히 버리면 그 판단이 아무 데도 안 남는다). 그 대가로 이런 일이 생겼다:
+#   슬롯 = 배달 음식/이용 요금(원) · 모델이 고른 값 = 7.8(%)
+# 심사는 그것을 거를 뿐 **같은 문장에 있던 원 값**을 되찾지 못한다.
+_Q = "중개수수료 7.8%에 배달비 2,400~3,400원"
+check("원 슬롯이면 원 값을 되찾는다", A.reread_for_unit(_Q, "원", rules["units"])
+      == ("2,400~3,400", "원"), str(A.reread_for_unit(_Q, "원", rules["units"])))
+check("% 슬롯이면 % 값을 그대로 쓴다 (되찾을 일이 없다)",
+      (A.reread_for_unit(_Q, "%", rules["units"]) or ("",))[0] == "7.8")
+check("맞는 단위가 없으면 되찾지 않는다 (없는 값을 만들지 않는다)",
+      A.reread_for_unit(_Q, "개", rules["units"]) is None)
+check("슬롯이 단위를 안 적었으면 손대지 않는다",
+      A.reread_for_unit(_Q, "", rules["units"]) is None)
+# ⚠ **인용 안에서만** 본다. 문서 전체를 뒤지면 인용과 값이 갈라져 quote_verified 가
+#   뜻을 잃는다 — 「이 문장이 이 값을 말한다」가 거짓이 된다.
+check("인용 밖의 값은 안 가져온다 (quote_verified 의 뜻을 지킨다)",
+      A.reread_for_unit("배달 이용이 늘었다", "원", rules["units"]) is None)
+
+# ══════════════════════════════════════════════════════════════
 print("\n[수용기준 5] 같은 URL 2건 → Fact 1건")
 slot = Slot(slot_id="S1", var_id="V1", formula_id="F1", claim_type="TAM",
             subject="커피전문점", subject_code="KSIC-56221", metric="사업체 수",

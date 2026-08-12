@@ -35,9 +35,11 @@ class MarketResearchStartGateTests {
     private final CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
     private final MarketResearchInputFactory inputs = mock(MarketResearchInputFactory.class);
     private final BmPlanPreparationService plans = mock(BmPlanPreparationService.class);
+    private final ResearchCompetitorSeedService competitorSeeds = mock(ResearchCompetitorSeedService.class);
     private final JobEventPublisher events = mock(JobEventPublisher.class);
     private final MarketResearchService service = new MarketResearchService(
-        projects, selections, seeds, runs, versions, taskRuns, hasher, inputs, plans, events, new ObjectMapper());
+        projects, selections, seeds, runs, versions, taskRuns, hasher, inputs, plans,
+        competitorSeeds, events, new ObjectMapper());
 
     @Test
     void ownedReadyCurrentSelectionAndSeedCreateAQueuedMarketTask() {
@@ -55,7 +57,10 @@ class MarketResearchStartGateTests {
         when(seeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(9L)).thenReturn(Optional.of(seed));
         when(seed.getSourceType()).thenReturn("CONCEPT_PORTFOLIO_V2");
         when(seed.getId()).thenReturn("seed-9");
-        when(inputs.full(seed, selection, "2026-08-11")).thenReturn("{}");
+        var currentPlan = new BmPlanPreparationService.PlanView(
+            new ObjectMapper().createObjectNode(), new ObjectMapper().createObjectNode(), 0);
+        when(plans.current(41L)).thenReturn(currentPlan);
+        when(inputs.full(seed, selection, "2026-08-11", null, currentPlan.constraints())).thenReturn("{}");
         when(hasher.hash(any(), any(), any(), any())).thenReturn("sha256:" + "a".repeat(64));
         when(task.getId()).thenReturn("task-1");
         when(task.getState()).thenReturn(TaskRunState.QUEUED);
@@ -67,7 +72,7 @@ class MarketResearchStartGateTests {
 
         assertThat(result.taskRunId()).isEqualTo("task-1");
         assertThat(result.taskState()).isEqualTo("QUEUED");
-        verify(inputs).full(seed, selection, "2026-08-11");
+        verify(inputs).full(seed, selection, "2026-08-11", null, currentPlan.constraints());
     }
 
     @Test

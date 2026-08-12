@@ -37,6 +37,7 @@ public class MarketResearchService {
     private final CanonicalInputHasher hasher;
     private final MarketResearchInputFactory inputs;
     private final BmPlanPreparationService bmPlans;
+    private final ResearchCompetitorSeedService competitorSeeds;
     private final JobEventPublisher events;
     private final ObjectMapper mapper;
 
@@ -46,10 +47,12 @@ public class MarketResearchService {
             MarketResearchRunRepository runs, MarketResearchVersionRepository versions,
             TaskRunService taskRuns, CanonicalInputHasher hasher,
             MarketResearchInputFactory inputs, BmPlanPreparationService bmPlans,
+            ResearchCompetitorSeedService competitorSeeds,
             JobEventPublisher events, ObjectMapper mapper) {
         this.projects=projects; this.selections=selections; this.seeds=seeds;
         this.runs=runs; this.versions=versions; this.taskRuns=taskRuns; this.hasher=hasher;
-        this.inputs=inputs; this.bmPlans=bmPlans; this.events=events; this.mapper=mapper;
+        this.inputs=inputs; this.bmPlans=bmPlans; this.competitorSeeds=competitorSeeds;
+        this.events=events; this.mapper=mapper;
     }
 
     @Transactional
@@ -62,7 +65,8 @@ public class MarketResearchService {
             .filter(value -> "CONCEPT_PORTFOLIO_V2".equals(value.getSourceType()))
             .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE,
                 "current Market Analysis Seed가 필요합니다."));
-        String input=inputs.full(seed,selection,validAsOf(asOf));
+        String input=inputs.full(seed,selection,validAsOf(asOf),competitorSeeds.conceptBlock(projectId),
+            bmPlans.current(projectId).constraints());
         return start(ownerId,project,MarketResearchRun.Kind.FULL,null,input,selection.getConceptId(),
             idempotencyKey,correlationId,null,seed.getId(),selection.getId(),
             selection.getHypothesisRevision(),null);
@@ -195,6 +199,14 @@ public class MarketResearchService {
     @Transactional
     public BmPlanPreparationService.PlanView savePlan(Long ownerId,Long projectId,JsonNode plan,JsonNode constraints){
         owned(ownerId,projectId);return bmPlans.save(projectId,ownerId,plan,constraints);
+    }
+    @Transactional(readOnly=true)
+    public ResearchCompetitorSeedService.SeedsView currentCompetitorSeeds(Long ownerId,Long projectId){
+        owned(ownerId,projectId);return competitorSeeds.current(projectId);
+    }
+    @Transactional
+    public ResearchCompetitorSeedService.SeedsView saveCompetitorSeeds(Long ownerId,Long projectId,JsonNode payload){
+        owned(ownerId,projectId);return competitorSeeds.replace(projectId,ownerId,payload);
     }
 
     private ConceptPortfolioSelection readySelection(Long projectId){

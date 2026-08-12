@@ -135,6 +135,12 @@ class Slot:
     stat_code: str | None = None
     corp_name: str | None = None
     must_contain: list[str] = field(default_factory=list)
+    # **표기 변종** (판 ㉛). `subject` 를 가리키는 다른 표기들 — 「NAVER」·「네이버주식회사」.
+    # `must_contain` 이 낱말 하나로 막을 때 A4 가 이 목록으로 다리를 놓는다.
+    # ⚠ **하네스가 슬롯을 설계할 때 LLM 이 한 번 뽑고, A4 는 결정론적 문자열 대조만 한다.**
+    #   판정 한가운데에서 물으면 `--from` 재실행이 같은 원장에 다른 답을 내고, 그러면
+    #   before/after 를 못 잰다. 어느 별칭이 통과시켰는지는 `Fact.표기_다리` 에 남는다.
+    subject_aliases: list[str] = field(default_factory=list)
     must_not_contain: list[str] = field(default_factory=list)
     value_range: list[float] | None = None
 
@@ -256,6 +262,13 @@ class Document:
     # 없으면 예외를 주지 않는다 — 「언제 본 값인지 모르는 가격」을 밴드에 넣지 않기 위해서다.
     # 옛 실행에서 복원한 문서는 이 칸이 없어 None 이고, 그때는 예외가 **안 걸린다**(의도한 동작).
     retrieved_at: str | None = None
+    # **이 문서가 PDF 였는가.** 판 ㉟ ②-b — `content_status` 만으로는 성공한 PDF 와 HTML 이
+    # 구별되지 않는다. 해석기가 들어와 PDF 가 살아나는 순간 「PDF 였다」가 원장에서 사라지고
+    # 「PDF 를 되살렸다」를 잴 수 없게 된다. 표적 URL 은 `filedown.php`·`download.do` 라
+    # 확장자 추측도 안 먹는다 — 받은 자리에서 값으로 박아 두는 수밖에 없다.
+    # ⚠ 옛 원장에서 복원한 문서는 이 칸이 없어 False 다. **0 이 아니라 미측정**이므로
+    #   읽는 쪽(`tools/funnel.py`)이 그렇게 표시한다.
+    is_pdf: bool = False
 
 
 @dataclass
@@ -284,6 +297,20 @@ class Finding:
     status: Literal["found", "not_found", "fetch_failed", "not_configured"]
     findings: list[FindingItem] = field(default_factory=list)
     note: str = ""             # not_found 사유 — 조용히 사라지지 않게 (규칙 5)
+    # 발췌 깔때기의 **값**. 예전에는 「상한 5 으로 2개 제외: [...]」처럼 `note` 문자열
+    # 안에만 있었다 — 문자열은 셀 수 없어 「우리가 버렸다」가 「자료가 없다」와 구별되지
+    # 않았다. `run.py` 가 이것만 떼어 `a3_extract` 원장 노드로 남기고, a3_finding 에는
+    # 싣지 않는다(같은 사실을 두 곳에 두면 갈라진다). 읽는 쪽은 `tools/funnel.py`.
+    extract_log: dict = field(default_factory=dict)
+    # 어댑터가 **다른 이름의 집계를 가져왔다**는 사실. [{슬롯_표기, 통계_표기}].
+    # 판 ㉛ A: 상위 카테고리 울타리는 `off_slot_reason` 의 다리 갈래에서만 붙었고
+    # 그 갈래는 `must_contain` 이 있어야 실행됐다 — 하네스가 그 칸을 비우면 34.8조가
+    # **경계 없이** TAM 에 앉는다. 치환이 일어난 자리(어댑터)에서 값으로 내려보낸다.
+    표기_치환: list = field(default_factory=list)
+    # 어댑터가 **조회로 대상을 확정했다**는 사실. {경로_칸, 값, 어떻게}.
+    # 슬롯이 `stat_code` 를 선언하지 않아도 어댑터는 검색으로 표를 확정한다 —
+    # 보증은 「슬롯이 적었는가」가 아니라 「대상이 확정됐는가」다(판 ㉛A 도장).
+    경로_보증: dict = field(default_factory=dict)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -326,10 +353,30 @@ class Fact:
     # **기대 밖 플래그** (판 ⑲). `value_range` 를 벗어났지만 **자릿수 차이가 작아** 통과시킨
     # 경우의 표시. 비어 있으면 기대 안이다. **통과가 곧 확정은 아니다** — 등급은 따로 매긴다.
     기대_밖: dict = field(default_factory=dict)
+    # **수 재선택** (판 ㉜). 발췌 프롬프트는 슬롯 단위를 **일부러 안 본다**(「슬롯과 맞는지
+    # 판단하지 마라」 — 모델이 조용히 버리면 그 판단이 아무 데도 안 남기 때문이다).
+    # 그 대가로 모델이 **같은 문장 안에서 단위가 다른 수**를 고르는 일이 생긴다 —
+    # 실측: 「중개수수료 7.8%에 배달비 2,400~3,400원」에서 `원` 슬롯에 7.8(%)을 골랐다.
+    # 그때 코드가 인용 안에서 단위 맞는 수로 **바꿔 읽고**, 바꿨다는 사실을 여기 남긴다.
+    # 비어 있으면 모델이 고른 것을 그대로 쓴 것이다 — **조용한 덮어쓰기가 없다는 증거**다.
+    수_재선택: dict = field(default_factory=dict)
+    # **범위 쪼갬** (판 ㉜). 「2,400~3,400원」 같은 범위 표기에서 갈라져 나온 사실이면
+    # 어느 쪽(하한·상한)인지와 원문 표기가 여기 남는다. 원장에 2건으로 보이는 **이유**다.
+    범위_쪼갬: dict = field(default_factory=dict)
     # **표기 다리** (판 ⑰). 슬롯 어휘와 통계 어휘가 달라 `must_contain` 이 막을 때,
     # `subject_별칭` 표가 통과시켰다면 **어느 별칭이 통과시켰는지** 여기 값으로 남는다.
     # 비어 있으면 다리를 안 탄 것이다 — **조용한 치환이 없다는 증거**이기도 하다.
     표기_다리: list = field(default_factory=list)
+    # **슬롯 보증** (판 ㉛). `must_contain` 을 **건너뛴** 경우 그 근거를 값으로 남긴다.
+    # 경로가 정체를 이미 확정한 자리 — `stat_code`(통계표 확정) · `corp_name`(corpCode 로
+    # 법인 확정) — 에서만 붙는다. 비어 있으면 낱말 대조를 정상적으로 통과한 것이다.
+    # ⚠ 면제를 **조용히** 하지 않기 위한 칸이다. 이 값이 없으면 「왜 통과했는지」를
+    #   나중에 코드를 읽어야만 알 수 있고, 그건 기록이 아니라 추론이다(표기_다리와 같은 계보).
+    슬롯_보증: dict = field(default_factory=dict)
+    # 어댑터가 조회로 확정한 대상 — `Finding.경로_보증` 이 그대로 내려온 것.
+    # 슬롯이 칸을 비워 뒀어도 보증은 **실제로 있었다**. 위 `슬롯_보증` 은 그 **판정 결과**고
+    # 이것은 **판정 재료**다 — 둘을 한 칸에 섞으면 「무엇이 면제했는가」를 못 따진다.
+    경로_보증: dict = field(default_factory=dict)
     # 문서를 받아 온 시점(`Document.retrieved_at` 을 그대로 실어 나른다).
     # **연도 감점 예외의 전제 조건**이라 판정에 쓰인다 — year_source 와 달리 계측용이 아니다.
     retrieved_at: str | None = None
@@ -534,6 +581,14 @@ NOT_FOUND_KEYS = (
     "unknown_error_codes",  # 분류 못 한 외부 응답 코드 — 발견할 때마다 규칙 파일에 추가한다
     "contradictions",     # 같은 대상·단위인데 값이 갈린 것 · 스케일 의심 (백로그 7)
     "url_filtered",       # A3 에서 URL 로 거른 후보 — 무엇을 안 열었는지 밝힌다 (12-4)
+    # 발췌 상한에 걸려 **모델에게 물어보지도 않은** usable 문서 (판 ㉛).
+    # 예전엔 `note` 문자열 안에만 있어 성적표에서 「못 찾았다」와 구별되지 않았다 —
+    # 「우리가 안 물었다」는 `url_filtered` 와 같은 부류지 자료 부재가 아니다.
+    "extract_capped",
+    # HTTP 200 을 받고도 본문이 0자였던 문서 (판 ㉛). **거른 것이 아니라 못 가져온 것**이다.
+    # 실측 6건이 전부 JS 렌더 페이지였다 — 다음 행동이 「재조사」가 아니라 「수집 수단」이라
+    # `empty_slots`(근거 0건인 조사 칸)와 섞지 않는다.
+    "fetch_empty",
     "independent_topdown_blocked",   # '더 찾아라' 가 아니라 '찾아도 없다' — retry_hints 와 다르다
     # **자료 부재 확정** (판 ⑯ ②). 「아직 못 찾았다」가 아니라 **「그 형태로 발행되지 않는다」**다.
     # `retry_hints`(더 찾아라)·`empty_slots`(수집 0건)와 **섞지 않는다** — 셋은 다음 행동이 다르다:

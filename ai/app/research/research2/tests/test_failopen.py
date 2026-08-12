@@ -40,7 +40,11 @@ def check(name, cond, detail=""):
 
 
 TAG = "zz-failopen-test"
-OUT = os.path.join(ROOT, "runs", "harness", TAG)
+sys.path.insert(0, ROOT)
+import runpath                                                       # noqa: E402
+# 하네스 산출은 `runs-generated/` 로 옮겼다(씨앗 `runs/` 는 컨테이너에서 `:ro`).
+# ⚠ 여기를 안 옮기면 **옛 자리에 남은 산물**을 보고 통과처럼 읽는다 — 실제로 그랬다.
+OUT = runpath.harness_write_dir(TAG)
 CONCEPT = os.path.join(ROOT, "data", "concept_zz-failopen-test.json")
 
 #: 게이트를 **구조적으로** 통과할 수 없는 초안 — 통제 어휘 밖 계량 하나면 충분하다.

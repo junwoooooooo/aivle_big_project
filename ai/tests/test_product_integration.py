@@ -53,10 +53,6 @@ def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(mon
 
     def fake_run(command, **kwargs):
         calls.append((command, kwargs))
-        progress = command[command.index("--progress-jsonl") + 1]
-        with open(progress, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps({"stage": "MARKET_A1", "action": "COMPLETED",
-                                     "status": "RUNNING", "safeSummary": "공식 3개, 슬롯 9개"}) + "\n")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -87,11 +83,12 @@ def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(mon
     command = calls[0][0]
     assert command[1:3] == ["-u", "run.py"]
     assert "--concept" in command
-    assert command[command.index("--progress-jsonl") + 1] == str(progress_path)
+    assert "--progress-jsonl" not in command
     assert "--from" not in command
     assert json.loads(output_path.read_text(encoding="utf-8"))["ok"] is True
     events = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()]
-    assert [event["stage"] for event in events] == ["MARKET_A1", "MARKET_SERIALIZATION"]
+    assert [event["stage"] for event in events] == [
+        "MARKET_COLLECTION", "MARKET_COLLECTION", "MARKET_SERIALIZATION"]
     assert all(set(event) <= {"stage", "action", "status", "safeSummary",
                               "reasonCode", "decision"} for event in events)
     if previous_runs_dir is None:

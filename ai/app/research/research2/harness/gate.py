@@ -628,6 +628,43 @@ def check_unit_subject(slots: list, series_rule: dict, concept: dict | None) -> 
     return {"name": name, "passed": not bad, "violations": bad, "rows": rows, "계열": series}
 
 
+def check_subject_aliases(slots: list, vocab: dict) -> dict:
+    """G23 — 표기 변종이 **같은 대상의 다른 이름**인가 (판 ㉛).
+
+    별칭은 `must_contain` 을 통과시키는 다리다. 다리에 **다른 대상**을 얹으면 엉뚱한
+    문서가 슬롯을 채운다 — 「완화가 아니라 다리」라는 판 ⑰ 의 전제가 그 자리에서 깨진다.
+    코드는 「같은 대상인가」를 못 판단하므로(의미 판정은 코드가 못 한다 — 판 ⑭ 실측)
+    **셀 수 있는 것만** 잰다: 개수 상한 · 빈 문자열 · subject 와 동일 · 자기들끼리 중복 ·
+    금지 낱말(경쟁·유사·기타 같은 «다른 대상» 표지).
+    """
+    cfg = (vocab.get("subject_aliases") or {})
+    if not cfg.get("enabled", True):
+        return {"name": "표기 변종", "passed": True, "violations": []}
+    cap = int(cfg.get("최대_개수") or 4)
+    금지 = cfg.get("금지_낱말") or []
+    bad = []
+    for s_ in slots:
+        al = s_.get("subject_aliases") or []
+        subj = (s_.get("subject") or "").strip()
+        sid = s_.get("slot_id")
+        if len(al) > cap:
+            bad.append({"slot_id": sid, "why": f"표기 변종 {len(al)}개 — 상한 {cap}"})
+        seen = set()
+        for a in al:
+            a = str(a).strip()
+            if not a:
+                bad.append({"slot_id": sid, "why": "빈 표기 변종"})
+            elif a == subj:
+                bad.append({"slot_id": sid, "alias": a, "why": "subject 와 같다 — 다리가 아니다"})
+            elif a in seen:
+                bad.append({"slot_id": sid, "alias": a, "why": "중복"})
+            elif any(w in a for w in 금지):
+                bad.append({"slot_id": sid, "alias": a,
+                            "why": "다른 대상 표지가 들어 있다 — 별칭이 아니라 다른 대상이다"})
+            seen.add(a)
+    return {"name": "표기 변종", "passed": not bad, "violations": bad}
+
+
 def check_forbidden_fields(raw: dict) -> dict:
     """G5 — 절대 규칙 2. LLM 출력에 등급 칸이 있으면 그 자리에서 탈락."""
     found = []
@@ -713,6 +750,169 @@ def _kosis_exists(code: str, adapters: dict, key: str) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════
+# ── 권고 검사 ────────────────────────────────────────────────────────────
+# **탈락시키지 않는다.** `passed` 는 항상 True 이고 위반은 `권고` 칸에 담긴다.
+#
+# 왜 권고인가 — 판 ⑧ 이 「템플릿 필수 자리」에서 재시도 3/3 을 소진하고 **스냅샷 없이**
+# 죽었다. 게이트를 막는 검사는 만족 불가능해지는 순간 **수집 자체를 막는다.** 아래 둘은
+# 「이렇게 하면 잘 되더라」이지 「이러지 않으면 틀렸다」가 아니다 — 컨셉에 따라 수요를
+# 3갈래로 못 가르는 것이 정상인 경우가 있다.
+#
+# 그렇다고 조용히 두지도 않는다. `slot_harness` 가 이 칸을 **재시도 프롬프트로 되먹이고**
+# best-of-N 가중에 낮은 무게로 센다 — 막지는 않되 나은 판본을 고르게는 한다.
+def _권고(name: str, 권고: list, note: str = "") -> dict:
+    return {"name": name, "passed": True, "권고_검사": True, "권고": 권고,
+            "_규칙": note or "권고다 — 게이트를 막지 않는다. 되먹임과 best-of-N 에만 쓴다."}
+
+
+def check_must_contain(slots: list) -> dict:
+    """G24(권고) — `must_contain` 이 **자기 subject 의 낱말 하나**인가.
+
+    `must_contain` 은 `any()` 다(`blocks/a_desk.py`) — 낱말을 늘리면 조여지는 게 아니라
+    **느슨해진다.** 판 ㉛ 9회차 실측: `pin-09`(6/6)의 비지 않은 9칸은 전부 낱말이 하나이고
+    그 낱말이 자기 subject 의 부분문자열이다. 반면 `pin-06` 은 subject="1인 가구" ·
+    must_contain=["문제"] 로 성적표 6/6 을 냈는데 그 값이 「70대 이상 1인 가구
+    우울증상유병률 8.9%」였다 — **인구만 맞고 문제의 종류가 다르다.**
+
+    ⚠ **빈 `must_contain` 은 위반이 아니다.** `pin-09` 의 TAM·COMP 12칸이 비어 있고
+      그것이 옳다(경로 보증이 있거나 낱말로 가를 것이 없는 자리다).
+      「must_contain 없음」을 나무라는 것은 `tools/slot_dryrun.check_guards` 쪽 관점이고,
+      이 검사는 **적었으면 제대로 적었는가**만 본다. 둘은 일부러 다른 것을 본다.
+    """
+    권고 = []
+    for s in slots:
+        mc = [w for w in (s.get("must_contain") or []) if str(w).strip()]
+        if not mc:
+            continue
+        subj = str(s.get("subject") or "")
+        why = []
+        if len(mc) > 1:
+            why.append(f"낱말 {len(mc)}개 — any() 라 늘리면 조여지는 게 아니라 느슨해진다")
+        for w in mc:
+            if " " in w:
+                why.append(f"'{w}' 에 공백 — 원문 표기와 어긋나면 통과 불가능한 벽이 된다")
+            elif w not in subj:
+                why.append(f"'{w}' 가 자기 subject 「{subj}」에 없다 — "
+                           "아무 문서에나 있는 말이면 종류가 다른 값이 문턱을 넘는다")
+        if why:
+            권고.append({"slot_id": s.get("slot_id"), "subject": subj,
+                        "must_contain": mc, "why": why})
+    return _권고("must_contain 규율(권고)", 권고)
+
+
+def check_habitat_spread(slots: list, vocab: dict) -> dict:
+    """G25(권고) — PAIN·PRICE 가 **서로 다른 subject** 로 흩어져 있는가.
+
+    한 칸에 표적 하나면 그 서식지(값이 실리는 문서 종류)를 검색이 못 물어온 판은 칸이
+    통째로 빈다. 판 ㉛: `pin-04`(칸마다 1개) 4/6 → `pin-05`(분산 시작) 5/6 →
+    `pin-09`(PAIN 4 · PRICE 5) 6/6.
+
+    ⚠ **개수가 아니라 서로 다른 subject 를 센다.** 검색어는 subject·metric·period·region
+      으로 만들어지므로(`adapters/web.py`), `must_contain` 만 다르고 subject 가 같으면
+      **같은 검색어를 두 번 던지는 것**이다. `pin-05` 가 실제로 그 함정에 빠져 슬롯은
+      14→17 로 늘었는데 PAIN 의 서로 다른 subject 는 1 그대로였다.
+    """
+    req = ((vocab.get("요구") or {}).get("서식지_분산") or {})
+    대상 = list(req.get("대상_claim_type") or [])
+    문턱 = int(req.get("최소_서로_다른_subject") or 0)
+    if not 대상 or not 문턱:
+        return {**_권고("서식지 분산(권고)", []), "_비활성": "vocab.요구.서식지_분산 미설정"}
+    본 = {}
+    for s in slots:
+        본.setdefault(s.get("claim_type"), set()).add(s.get("subject"))
+    권고 = [{"claim_type": ct, "서로_다른_subject": len(본.get(ct) or ()), "문턱": 문턱,
+            "subject": sorted(본.get(ct) or ()),
+            "why": "표적이 한 서식지에 몰려 있다 — 그 서식지를 검색이 못 물어온 판은 "
+                   "칸이 통째로 빈다. **분산은 subject 로 한다**(must_contain 만 바꾸면 "
+                   "검색어가 같아 중복이다)"}
+           for ct in 대상 if len(본.get(ct) or ()) < 문턱]
+    return _권고("서식지 분산(권고)", 권고)
+
+
+def check_publishability(slots: list, vocab: dict, adapters: dict,
+                         concept: dict | None = None) -> dict:
+    """G27(권고) — 수요·가격 칸이 **회사를 지목**하고 있는가. 그 값은 발행되지 않는다.
+
+    ⚠ **이 검사는 `tools/design_score.py` 의 「발행_가능성」 축을 게이트로 옮긴 것이다.**
+      그 축은 판 ㉜부터 있었는데 **게이트에는 없었다** — 그래서 하네스가 위반을 보지도,
+      되먹이지도 못했다. 2026-08-12 실측(제품 경로 첫 유료 실행): PRICE 세 칸이 전부
+      「비비고 냉동식품」·「오뚜기 냉동식품」·「풀무원 간편식」이었고 **셋 다 빈손**이라
+      성적표 ④가격이 미확보로 났다. 같은 컨셉의 다른 시도는 「편의점 도시락」·「배달 음식」·
+      「외식」으로 적었다 — **지시는 이미 프롬프트 7 에 있고 모델이 요동한 것**이다.
+      그래서 처방이 「지시 정합」이 아니라 **재시도**다(`vocab.재시도.권고_재시도`).
+
+    경쟁(COMP·COMPARABLE)·채널 칸은 씨앗 실명을 쓰는 것이 **규칙**이라 보지 않는다.
+    dart 라우팅도 보지 않는다 — 공시는 회사 단위로 실제 발행된다.
+    """
+    req = ((vocab.get("요구") or {}).get("서식지_분산") or {})
+    대상_ct = list(req.get("대상_claim_type") or [])
+    if concept is None or not 대상_ct:
+        return {**_권고("발행 가능성(권고)", []),
+                "_비활성": "컨셉 미지정 또는 대상 claim_type 미설정 — 씨앗 이름을 모르면 "
+                        "회사 지목을 못 가른다"}
+    seeds = ((concept.get("_경쟁_씨앗") or {}).get("seeds") or [])
+    이름 = sorted({str(x).strip() for s in seeds
+                  for x in (s.get("이름"), s.get("운영사")) if str(x or "").strip()},
+                 key=len, reverse=True)
+    권고 = []
+    for s in slots:
+        if s.get("claim_type") not in 대상_ct:
+            continue
+        route, _why = route_of(s, adapters)
+        if route == "dart":
+            continue
+        subj = str(s.get("subject") or "")
+        맞은 = [n for n in 이름 if n in subj]
+        if 맞은 or s.get("corp_name"):
+            권고.append({"slot_id": s.get("slot_id"), "claim_type": s.get("claim_type"),
+                        "subject": subj, "metric": s.get("metric"),
+                        "지목": 맞은 or [s.get("corp_name")],
+                        "why": "회사를 지목한 수요·가격 표적은 발행되지 않는다 "
+                               "(실측: 「프레시지 월 구독료」 0건 · 「비비고 냉동식품 판매가」 "
+                               "0건). 통계·보도에 실제로 실리는 **대체재·이용 행태**로 "
+                               "물어라 — 편의점 도시락가·배달비·외식비·혼자 식사 비율 같은 자리다"})
+    return _권고("발행 가능성(권고)", 권고)
+
+
+def check_range_band(slots: list, guards: dict | None = None) -> dict:
+    """G26(권고) — 슬롯의 `value_range` 가 그 계량의 **전형 밴드**와 겹치는가.
+
+    판 ㉜ 실측: 하네스가 거래액 밴드를 `[1e8, 2e9]` 로 적었고 참값은 38.0조였다.
+    **6슬롯·성적표 4과목·blocker 1개가 이 하나의 하류**였다. 수집이 값을 찾아놓고 버린 것이다.
+    수집 층에는 구조 갈래를 넣었지만(`a_desk.off_slot_reason`), **설계 시점에 미리 보이는
+    편이 싸다** — 여기서 걸리면 유료 수집을 태우기 전에 고칠 수 있다.
+
+    ⚠ **합격 조건은 `data/slots_hmr-pin09.json` 이 걸리는 것이다.** 그 스냅샷은 성적표
+      6/6 을 낸 기준 설계인데 S1 이 `[1e9, 5e10]` 이고 거래액 전형은 1e11~1e14 다 —
+      **겹치지 않는다.** 그 6/6 의 ①시장크기는 자릿수 차이 2.88 로 문턱 3.0 을 **간신히**
+      지나 서 있었다. 이 검사가 pin-09 를 통과시키면 **검사가 무른 것**이다.
+
+    규칙 값은 `rules/guards.v1.json` 에 있다 — `blocks/` 와 이 하네스가 **같은 표**를 봐야
+    「설계는 통과인데 수집이 버린다」가 안 생긴다.
+    """
+    if guards is None:
+        guards = _load(os.path.join(ROOT, "rules", "guards.v1.json"))
+    bands = ((guards.get("value_range") or {}).get("계량_전형_밴드") or {})
+    if not bands:
+        return {**_권고("value_range 전형 밴드(권고)", []),
+                "_비활성": "guards.value_range.계량_전형_밴드 미설정"}
+    권고 = []
+    for s in slots:
+        band = (bands.get(s.get("metric")) or {}).get("밴드")
+        vr = s.get("value_range")
+        if not band or not vr or len(vr) != 2:
+            continue                       # 밴드 없는 계량은 판정하지 않는다
+        lo, hi = vr
+        if hi < band[0] or lo > band[1]:   # 겹치지 않는다
+            권고.append({"slot_id": s.get("slot_id"), "metric": s.get("metric"),
+                        "subject": s.get("subject"),
+                        "value_range": [lo, hi], "전형_밴드": list(band),
+                        "why": f"「{s.get('metric')}」의 전형 크기는 [{band[0]:g}, {band[1]:g}] "
+                               f"인데 이 슬롯의 기대는 [{lo:g}, {hi:g}] 다 — 겹치지 않는다. "
+                               "이대로 수집하면 **맞는 값이 격리된다**(판 ㉜ 에서 6슬롯이 그랬다)"})
+    return _권고("value_range 전형 밴드(권고)", 권고)
+
+
 def run_gate(raw: dict, slots: list, formulas: list, vocab: dict, adapters: dict,
              hypotheses: dict, kosis_key: str | None = None,
              slotcheck: dict | None = None, as_of_year: int | None = None,
@@ -744,7 +944,20 @@ def run_gate(raw: dict, slots: list, formulas: list, vocab: dict, adapters: dict
         check_slot_keys(slots, vocab),
         check_extract_hints(slots, vocab, concept),
         check_unit_subject(slots, series_rule, concept),
+        check_subject_aliases(slots, vocab),
+        # ── 여기부터 권고. `passed` 는 항상 True 라 게이트 판정을 바꾸지 않는다 ──
+        check_must_contain(slots),
+        check_habitat_spread(slots, vocab),
+        check_range_band(slots),
+        check_publishability(slots, vocab, adapters, concept),
     ]
     return {"passed": all(c["passed"] for c in checks),
             "checks": checks, "rules_series_unit": series_rule,
-            "요약": {c["name"]: ("통과" if c["passed"] else "실패") for c in checks}}
+            # ⚠ **`요약` 은 「통과/실패」 이분법으로 둔다.** `tools/harness_variance.py` 가
+            #   «"통과" 가 아닌 것 = 미통과» 로 세기 때문에, 여기에 「권고 N건」을 섞으면
+            #   그 도구의 «검사별_미통과_횟수» 에 권고가 조용히 실패로 합류한다.
+            #   권고는 아래 별도 칸으로 낸다 — 다른 도구의 뜻을 바꾸지 않으면서 보이게.
+            "요약": {c["name"]: ("통과" if c["passed"] else "실패") for c in checks},
+            "권고_요약": {c["name"]: len(c.get("권고") or [])
+                       for c in checks if c.get("권고_검사")},
+            "권고_수": sum(len(c.get("권고") or []) for c in checks)}

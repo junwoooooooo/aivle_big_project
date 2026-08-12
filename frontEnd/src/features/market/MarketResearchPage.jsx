@@ -9,6 +9,7 @@ import AssumptionLedger from './AssumptionLedger.jsx';
 import Emphasis from './emphasis.jsx';
 import useMarketLiveState from './useMarketPolling.js';
 import useCellFocus from './useCellFocus.js';
+import CompetitorSeedForm from './CompetitorSeedForm.jsx';
 import {
   NOT_FOUND_GROUP, SCORE_STATE_VIEW,
   abbreviateKrw, bucketEvidence, competitorGaps, formatValue, hostOf,
@@ -85,6 +86,9 @@ export default function MarketResearchPage() {
           확정 가설·최종 법률 결과·Market Analysis Seed를 사용합니다.</p>
         {source ? <p>선택 revision {source.selectionRevision} · Seed {source.marketSeedSnapshotId}</p> : null}
       </Card> : null}
+      {!DEMO_MODE ? <Accordion title="경쟁·현재 대안 씨앗">
+        <CompetitorSeedForm api={api} disabled={busy || active} />
+      </Accordion> : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {stale ? <Alert tone="warning">상위 selected Concept 또는 Market Seed가 바뀌었습니다. 이 결과는 과거 이력이며 다시 조사해야 합니다.</Alert> : null}

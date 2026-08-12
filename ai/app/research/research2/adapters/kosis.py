@@ -272,10 +272,15 @@ def _pick(items: list, wants: set, fallback_names=(), unique_contains=True) -> t
 
 
 def resolve_axes(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str) -> tuple:
-    """(itmId, {objL1: code, ...}, why). 축을 **하나도 빠짐없이** 채운다 — 빠지면 err 20."""
+    """(itmId, {objL1: code, ...}, why, 표기_치환). 축을 **하나도 빠짐없이** 채운다 — 빠지면 err 20.
+
+    네 번째 값이 **치환 기록**이다. 별칭으로 다른 이름의 항목을 집었으면 그 사실을
+    **여기서** 값으로 낸다 — 치환이 일어난 자리이기 때문이다. 예전에는 `why` 문자열
+    안에만 있었고(「(별칭 'X')」), 문자열은 셀 수도 조건으로 쓸 수도 없었다.
+    """
     axes, items = table_meta(org_id, tbl_id, rules, key)
     if not axes:
-        return None, None, "메타 조회 실패"
+        return None, None, "메타 조회 실패", []
 
     cfg = rules["adapters"]["kosis"]["resolve"]
     # 구(phrase) 를 먼저 본다 — 토큰만 보면 '커피' 로 '커피가공업' 을 잡는다
@@ -285,8 +290,11 @@ def resolve_axes(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str) ->
     # 수집은 못 맞춰 「합계」로 폴백**했다(`pet-treat-04` 274조). **같은 물음을 두 곳이
     # 각자 풀면 두 번 갈라진다** — 판 ⑫ 키 분열·판 ⑬ 라우팅 분열과 같은 계보다.
     _al = cfg.get("subject_별칭") or {}
+    aliases: list = []
     if _al.get("enabled"):
-        want_subject |= set((_al.get("map") or {}).get((slot.subject or "").strip(), []))
+        aliases = list((_al.get("map") or {}).get((slot.subject or "").strip(), []))
+        want_subject |= set(aliases)
+    표기_치환: list = []
     want_metric = {slot.metric or ""} | set(_TOKEN.findall(slot.metric or ""))
     # **표 계열의 항목 이름도 축 선택에 쓴다** (판 ㉕ — 판 ⑯ 계보 **다섯 번째**).
     # 표 찾기(`resolve_stat_code`)에는 `표_계열` 을 줬는데 여기엔 안 줘서, 인구 표에서
@@ -315,7 +323,7 @@ def resolve_axes(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str) ->
             itm_id, itm_why, _t = _pick(axis["items"], want_metric,
                                         cfg.get("item_fallbacks", []), uc)
             if itm_id is None:
-                return None, None, f"항목 축 실패({itm_why}) — 폴백하지 않는다"
+                return None, None, f"항목 축 실패({itm_why}) — 폴백하지 않는다", []
             continue
         n += 1
         is_region = ("지역" in nm or "행정" in nm or "시도" in nm)
@@ -326,7 +334,15 @@ def resolve_axes(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str) ->
         code, w, tier = _pick(axis["items"], want_region if is_region else want_subject, fb, uc)
         if code is None:
             # **`ALL` 로 채우지 않는다.** 축을 못 고르면 수집 실패다(옛 fail-open 제거).
-            return None, None, f"'{nm}' 축 실패({w}) — ALL 로 채우지 않는다"
+            return None, None, f"'{nm}' 축 실패({w}) — ALL 로 채우지 않는다", []
+        # **치환을 여기서 값으로 잡는다.** 집은 항목 이름이 슬롯 표기가 아니라 별칭이면,
+        # 우리는 **다른 이름의 집계를 가져온 것**이다. 그 사실이 사실(Fact)까지 가야
+        # 상위 카테고리 울타리를 붙일 수 있다 — `must_contain` 이 비어 있어도.
+        if not is_region and aliases:
+            picked = next((i["name"] for i in axis["items"] if i["id"] == code), "")
+            if _norm(picked) != _norm(slot.subject or "") and \
+                    any(_norm(picked) == _norm(a) for a in aliases):
+                표기_치환.append({"슬롯_표기": slot.subject, "통계_표기": picked})
         objs[f"objL{n}"] = code
         why.append(f"{nm}={code}({w})")
         if tier == "fallback":
@@ -335,7 +351,7 @@ def resolve_axes(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str) ->
     ax = ("항목=" + str(itm_id) + f"({itm_why}); " + "; ".join(why))
     if defaults:
         ax += " | axis_default=" + json.dumps(defaults, ensure_ascii=False)
-    return itm_id, objs, ax
+    return itm_id, objs, ax, 표기_치환
 
 
 def collect(slot: Slot, rules: dict, trace_id: str | None = None,
@@ -388,7 +404,7 @@ def _fetch_table(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str,
     cfg = rules["adapters"]["kosis"]
 
     # 축을 **전부** 채운다. 하나라도 빠지면 err 20(필수요청변수 누락), 다 ALL 이면 err 31(셀 초과).
-    itm_id, objs, axis_why = resolve_axes(slot, org_id, tbl_id, rules, key)
+    itm_id, objs, axis_why, 표기_치환 = resolve_axes(slot, org_id, tbl_id, rules, key)
     if objs is None:
         # 축을 못 고르면 **이 표는 못 쓴다.** 옛 코드는 ALL 로 채워 다른 집계를 가져왔다.
         # ⚠ **사유를 뭉개지 않는다**(판 ⑯). 예전에는 그냥 `None` 을 돌려 다음 후보로 넘어갔고,
@@ -479,4 +495,8 @@ def _fetch_table(slot: Slot, org_id: str, tbl_id: str, rules: dict, key: str,
                         published_at=str(data[0].get("PRD_DE") or "") or None)
     f = make_finding(slot, tid, items)
     f.note = f"stat_code={org_id}/{tbl_id} ({resolved_by}) | {axis_why}"
+    f.표기_치환 = 표기_치환          # 조용한 치환 금지 — A4 가 여기서 울타리를 읽는다
+    # **대상을 확정한 것은 여기다.** 슬롯이 `stat_code` 를 비워 뒀어도 우리는 통계표를
+    # 지목해 받아 왔다 — 그 사실을 값으로 내려보내야 A4 가 낱말 대조를 면제할 수 있다.
+    f.경로_보증 = {"경로_칸": "stat_code", "값": f"{org_id}/{tbl_id}", "어떻게": resolved_by}
     return AdapterResult(f, doc, adapter_state="ok")

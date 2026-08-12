@@ -308,7 +308,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
             })
         elif body.taskType == "TECH_OPS_ADVISORY":
-            from app.tasks.tech_ops_advisor import execute_tech_ops_advisory
+            from app.tasks.tech_ops_advisor.runtime_adapter import execute_tech_ops_advisory
             from app.progress.safe_task_progress import progress_sender_from_environment
             async with progress_sender_from_environment(
                 task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,

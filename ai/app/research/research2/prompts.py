@@ -134,13 +134,43 @@ CLAIM_TYPE_HINT = {
 }
 
 
-def claim_type_hint(claim_type: str) -> str:
-    """모르는 유형에는 **아무것도 지어내지 않는다** — 틀린 힌트가 검색을 좁히면 더 나쁘다."""
-    return CLAIM_TYPE_HINT.get(claim_type) or "(지정 없음 — 위 3번의 순서를 그대로 따라라)"
+#: 문안별 힌트 덮어쓰기. **왜 CLAIM_TYPE_HINT 를 직접 안 고치나** — 그 표는 v12-2 가
+#: 이미 렌더해 쓰던 것이라, 글을 고치면 「v12-2」라는 이름이 가리키는 문안이 조용히
+#: 달라진다(원장에는 변종 **이름**만 남는다). 문안을 바꿀 땐 이름을 새로 만든다(절대규칙 7).
+CLAIM_TYPE_HINT_BY_VARIANT = {
+    "v33-pain": {
+        # 판 ㉟~㊱ 실측: 검색은 실태조사를 물어왔다. 물어온 것이 **사업자 대상**이었다 —
+        # 4.5%(입점업체 적정 중개수수료) · 69.3%(배달앱 이용사업자 n=300) ·
+        # 28.3%(소상공인 만족도). 셋 다 수치·단위는 맞고 **모집단만 달랐다.**
+        # 옛 힌트는 「설문·실태조사에서 찾아라」까지만 말하고 «누구에게 물었나»가 없었다.
+        "PAIN": "이 값은 **설문·실태조사 결과**다. 그리고 **응답자가 소비자·일반 국민인 "
+                "조사**여야 한다 — 사업자·점주·입점업체·소상공인에게 물은 조사는 같은 "
+                "낱말을 써도 **다른 물음**이다(예: 「사업자의 배달비 부담률」은 소비자의 "
+                "부담 경험률이 아니다). 통계청 사회조사·국민 대상 실태조사처럼 "
+                "**일반 가구·개인 표본**을 쓴 조사의 원 보고서를 찾고, 없으면 그 조사를 "
+                "발표한 부처의 보도자료를 찾아라.",
+    },
+}
 
+
+def claim_type_hint(claim_type: str, variant: str | None = None) -> str:
+    """모르는 유형에는 **아무것도 지어내지 않는다** — 틀린 힌트가 검색을 좁히면 더 나쁘다."""
+    over = CLAIM_TYPE_HINT_BY_VARIANT.get(variant or "", {})
+    return (over.get(claim_type) or CLAIM_TYPE_HINT.get(claim_type)
+            or "(지정 없음 — 위 3번의 순서를 그대로 따라라)")
+
+
+# ── 판 ㊱ 6′ — v1 + **한 줄**. 다른 것은 글자 하나 안 바꾼다 ──────────────────
+#   `search()` 는 `claim_type_hint` 를 **넘기고 있었는데** v1 에 자리가 없어
+#   `render()` 가 조용히 버렸다. 좋은 힌트가 한 번도 모델에 닿은 적이 없다.
+#   ⚠ v1 을 직접 고치지 않는다 — 고치면 pin-09 를 포함한 전 원장의 비교 축이
+#     소급 파괴된다. 문안은 **이름을 만들고 규칙으로 고른다.**
+SEARCH_V33_PAIN = SEARCH_V1.replace(
+    "\n규칙:",
+    "\n자료 성격: {claim_type_hint}\n\n규칙:")
 
 #: 변종 표. **기본은 v1** — 미채택 문안은 명시적으로 골라야만 쓰인다.
-SEARCH_VARIANTS = {"v1": SEARCH_V1, "v12-2": SEARCH_V12_2}
+SEARCH_VARIANTS = {"v1": SEARCH_V1, "v12-2": SEARCH_V12_2, "v33-pain": SEARCH_V33_PAIN}
 DEFAULT_SEARCH_VARIANT = "v1"
 #: 기본 문안. `prompts.SEARCH` 를 읽는 쪽은 **기본 경로**를 보는 것이다.
 SEARCH = SEARCH_V1

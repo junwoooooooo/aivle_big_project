@@ -119,7 +119,12 @@ class MarketJoinData(BaseModel):
 
 # ══════════════════════════════════════════════════════════════
 def _canvas(run: str, concept: str) -> dict:
-    out = subprocess.run([sys.executable, "-m", "service.canvas", run,
+    # ⚠ `-X utf8` 은 **장식이 아니다.** 없으면 자식이 한글 JSON 을 CP949 로 뱉다 죽고,
+    #   부모의 stderr 디코딩까지 터져 `out.stderr` 가 **None** 이 된다 — 그러면 실패가
+    #   `TypeError: 'NoneType' object is not subscriptable` 로 둔갑해 원인을 못 찾는다.
+    #   `tools/scorecard.py::_run` 에서 이미 한 번 고친 병이고, 여기 사본이 남아
+    #   `test_step14` §4 를 막고 있었다(베낀 조회는 갈라진다).
+    out = subprocess.run([sys.executable, "-X", "utf8", "-m", "service.canvas", run,
                           "--concept", concept, "--json"],
                          cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
     if out.returncode != 0:
@@ -128,7 +133,7 @@ def _canvas(run: str, concept: str) -> dict:
 
 
 def _verdict(run: str, concept: str) -> dict:
-    out = subprocess.run([sys.executable, "service/verdict.py", run,
+    out = subprocess.run([sys.executable, "-X", "utf8", "service/verdict.py", run,
                           "--concept", concept, "--json"],
                          cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
     if out.returncode != 0:
@@ -138,6 +143,11 @@ def _verdict(run: str, concept: str) -> dict:
 
 CAVEAT_KEYS = ("경계", "경계_proxy", "상한_울타리")
 
+#: `상한_울타리` 는 bool 표식이라 문장이 필요하다. 정본 문장은 계약층
+#: (`ai/app/research/serialize.py::_CEILING_SENTENCE`) 과 **같은 말**이어야 한다 —
+#: 캔버스와 payload 가 같은 울타리를 다르게 말하면 사람이 둘을 다른 사실로 읽는다.
+CEILING_SENTENCE = "⚠ 상한 울타리 — 이 값은 **상한으로만** 읽어야 한다(상위 집계를 밑동으로 썼다)."
+
 
 def _caveats(c: dict) -> list:
     """카드가 든 경계를 **전부** 모은다. 하나라도 빠지면 도달하지 않은 것이다(§4)."""
@@ -145,6 +155,10 @@ def _caveats(c: dict) -> list:
     for k in CAVEAT_KEYS:
         v = c.get(k)
         if not v:
+            continue
+        if k == "상한_울타리":
+            # bool 표식이다 — 그대로 넣으면 캔버스에 `"True"` 가 실린다(판 ㉛A 실측).
+            out.append(CEILING_SENTENCE)
             continue
         for t in (v if isinstance(v, list) else [v]):
             if str(t).strip():

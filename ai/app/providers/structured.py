@@ -134,6 +134,9 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
                               upstream_status=429, schema_name=schema_name,
                               retry_after_ms=_retry_after_ms(response))
     if response.status_code >= 500:
+        logger.error("Provider server error taskType=%s model=%s status=%s body=%s",
+                     task_type or "STRUCTURED_TASK", model, response.status_code,
+                     re.sub(r"(?i)(bearer\\s+|sk-)[a-z0-9._-]+", r"\1[REDACTED]", response.text)[:800])
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
                               upstream_status=response.status_code, schema_name=schema_name)
     if response.status_code == 400 and response_schema is not None:

@@ -44,6 +44,18 @@ public class MarketResearchController {
             MarketResearchRun.Kind.FULL), id(request));
     }
 
+    @GetMapping("/market-research/competitor-seeds")
+    public ApiResponse<ResearchCompetitorSeedService.SeedsView> currentCompetitorSeeds(
+            @PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(service.currentCompetitorSeeds(currentUser.currentUserId(), projectId), id(request));
+    }
+
+    @PutMapping("/market-research/competitor-seeds")
+    public ApiResponse<ResearchCompetitorSeedService.SeedsView> saveCompetitorSeeds(
+            @PathVariable Long projectId, @RequestBody JsonNode body, HttpServletRequest request) {
+        return ApiResponse.success(service.saveCompetitorSeeds(currentUser.currentUserId(), projectId, body), id(request));
+    }
+
     /** 정확한 MarketResearchVersion을 근거로 BM 캔버스를 만든다. */
     @PostMapping("/business-model")
     public ResponseEntity<ApiResponse<MarketResearchService.RunView>> startBm(

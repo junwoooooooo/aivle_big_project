@@ -25,23 +25,34 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-RUNS_DIR = os.environ.get("RESEARCH2_RUNS_DIR") or os.path.join(ROOT, "runs")
+sys.path.insert(0, ROOT)
+import runpath                                           # noqa: E402
 sys.path.insert(0, ROOT)
 
 import fillaxis as _fx                                             # noqa: E402
 
 
 def _run(mod: list, *args) -> dict:
-    out = subprocess.run([sys.executable] + mod + list(args),
-                         cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+    """자식 파이썬을 **UTF-8 로 띄운다.**
+
+    ⚠ Windows 지뢰(판 ㉛ 실측). `-X utf8` 은 **부모에만** 걸리고 자식은 물려받지 않는다.
+    그래서 자식의 표준출력이 CP949 가 되고, 판정 JSON 은 한글이라 그 자리에서
+    `UnicodeEncodeError` 로 죽는다(rc=1). 게다가 부모가 stderr 를 utf-8 로 읽으려다
+    reader 스레드까지 죽어 **`out.stderr` 가 `None` 이 되고**, 그러면 사유를 적으려던
+    `raise` 문이 `TypeError` 로 바뀐다 — **실패가 엉뚱한 예외로 둔갑한다.**
+    `-X utf8` 을 자식에게 넘기고, 디코딩 실패는 값을 잃되 보고는 되게 `replace` 로 둔다.
+    """
+    out = subprocess.run([sys.executable, "-X", "utf8"] + mod + list(args),
+                         cwd=ROOT, capture_output=True, text=True,
+                         encoding="utf-8", errors="replace")
     if out.returncode != 0:
-        raise SystemExit(f"{mod} 실패:\n{out.stderr[-1200:]}")
+        raise SystemExit(f"{mod} 실패:\n{(out.stderr or '(stderr 없음)')[-1200:]}")
     return json.loads(out.stdout)
 
 
 def ledger_rows(run: str) -> list:
     rows = []
-    for ln in io.open(os.path.join(RUNS_DIR, run, "run.jsonl"), encoding="utf-8"):
+    for ln in io.open(os.path.join(runpath.read_dir(run), "run.jsonl"), encoding="utf-8"):
         o = json.loads(ln)
         if o.get("node") == "a4_ledger":
             p = o["payload"]
@@ -49,8 +60,24 @@ def ledger_rows(run: str) -> list:
     return rows
 
 
+def fact_values(run: str) -> dict:
+    """`{fact_id: value_num}`. **원장 `a4_facts` 노드에서 읽는다.**
+
+    ⚠ 예전에는 `result.json["facts"]` 를 봤는데 **그 키는 존재한 적이 없다.** 그래서
+    정량 필터가 항상 빈 dict 를 조회했고, 아무것도 안 잡히니 `... or True` 로 무력화됐다
+    — 필터가 상시 참이라 「정량」이 곧 「전체 PAIN」이었다(판 ㉛ 실측).
+    """
+    out = {}
+    for ln in io.open(os.path.join(runpath.read_dir(run), "run.jsonl"), encoding="utf-8"):
+        o = json.loads(ln)
+        if o.get("node") == "a4_facts":
+            p = o["payload"]
+            out[p.get("fact_id")] = p.get("value_num")
+    return out
+
+
 def slots_of(run: str) -> dict:
-    res = json.load(io.open(os.path.join(RUNS_DIR, run, "result.json"), encoding="utf-8"))
+    res = json.load(io.open(os.path.join(runpath.read_dir(run), "result.json"), encoding="utf-8"))
     return {s["slot_id"]: s for s in (res.get("input") or {}).get("slots") or []}, res
 
 
@@ -71,6 +98,7 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     항목 = fill["항목"]
     slots, res = slots_of(run)
     rows = ledger_rows(run)
+    facts = fact_values(run)
     v = verdict if verdict is not None else _run(
         ["service/verdict.py", run, "--concept", concept, "--json"])
     m = v.get("시장_추정") or {}
@@ -96,8 +124,12 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     g = m.get("성장률_추정") or {}
     갈래 = ("2년치" if len(g.get("입력") or {}) >= 2 else
            ("직접률" if g.get("값") is not None else None))
+    #: 문턱은 **규칙 파일에서만** 온다(파일 머리 규약). 예전엔 이 칸과 `6_계산` 두 곳만
+    #  코드 안 조건문이라 규칙을 고쳐도 표가 안 따라왔다.
+    갈래_ok = 항목["2_성장률"].get("채워짐_갈래") or 항목["2_성장률"].get("갈래") or []
     out["2_성장률"] = {"갈래": 갈래, "값_퍼센트": g.get("값_퍼센트"),
-                    "상태": "채워짐" if g.get("값") is not None else "미확보"}
+                    "상태": "채워짐" if (갈래 in 갈래_ok and g.get("값") is not None)
+                          else "미확보"}
 
     # ③ 경쟁사 — 실명 + URL 몇 곳
     comp = by_claim("COMP", "COMPARABLE")
@@ -112,13 +144,20 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
 
     # ⑤ 수요 — 정량 1건 or 정성 2건
     pain = by_claim("PAIN")
-    정량 = [r for r in pain if (res.get("facts") or {}).get(r["fact_id"]) or True]
-    out["5_수요"] = {"n": len(pain),
+    # 정량 = **수치가 있는** 관측. 정성 = 나머지(인용은 있으나 값이 없는 것).
+    # 둘의 문턱이 다르다 — 규칙 파일이 「정량 1건 or 정성 2건」이라고 적어 두었고,
+    # 여태 그 or 의 오른쪽은 도달 불가였다.
+    정량 = [r for r in pain if facts.get(r["fact_id"]) is not None]
+    정성 = [r for r in pain if facts.get(r["fact_id"]) is None]
+    out["5_수요"] = {"n": len(pain), "n_정량": len(정량), "n_정성": len(정성),
                    "최고_등급": (sorted({r.get("등급") for r in pain},
                                     key=lambda x: ["추정", "실무 신뢰", "확정"].index(x)
                                     if x in ("추정", "실무 신뢰", "확정") else -1)[-1]
                               if pain else None),
-                   "상태": 상태(len(정량), 항목["5_수요"]["정량_채워짐"])}
+                   "상태": ("채워짐"
+                          if (len(정량) >= 항목["5_수요"]["정량_채워짐"]
+                              or len(정성) >= 항목["5_수요"]["정성_채워짐"])
+                          else ("부분" if pain else "미확보"))}
 
     # ⑥ 계산 — TAM 산출 + 가정 명시
     # ⚠ 가정은 **요인 표에서 센다**(`assumption_count`). 문장 수를 세면 한 요인이 세
@@ -128,9 +167,10 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     가정수 = tam.get("assumption_count")
     if 가정수 is None:
         가정수 = len(tam.get("가정") or [])
+    가정_필수 = bool(항목["6_계산"].get("가정_명시_필수"))
     out["6_계산"] = {"TAM": tam.get("값"), "가정수": 가정수,
-                   "상태": ("채워짐" if tam.get("값") is not None and 가정수
-                          else ("부분" if tam.get("값") is not None else "미확보"))}
+                   "상태": ("미확보" if tam.get("값") is None
+                          else ("채워짐" if (가정수 or not 가정_필수) else "부분"))}
 
     # ⑦ 못 찾은 것 — **항상**
     nf = (res.get("report") or {}).get("not_found") or {}

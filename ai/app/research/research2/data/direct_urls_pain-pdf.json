@@ -1,0 +1,21 @@
+{
+ "_왜": "판 ㉟ 3단계 L1 검증 고리. pdfplumber 가 없어 죽은 PDF **만** 되살린다. URL 은 전부 r4 원장(0c54ffb5-b7bf-46b0-adc2-be284fed6acb)에 이미 있는 것이라 새 검색이 0회다 — LLM 은 살아난 문서 수만큼의 발췌뿐(≈6).",
+ "_한계": "URL 을 사람이 넣었다. 이 고리의 성공은 6/6 의 증명이 **아니다** — 「검색이 그 PDF 를 물어오는가」는 4단계가 답한다. channel=gov_doc 라 회수율·검색 지표 분모에서 빠진다.",
+ "channel": "gov_doc",
+ "refetch": true,
+ "by_slot": {
+  "S12": [
+   "https://www.kiri.or.kr/pdf/%EC%A0%84%EB%AC%B8%EC%9E%90%EB%A3%8C/KIRI_20170714_103923.pdf?utm_source=openai",
+   "https://jthink.kr/jthink/eng/filedown.php?fn1=20251016151030_98811.pdf&fn2=25PR01_24JU25_%EC%82%AC%ED%9A%8C%EC%A0%81%20%EC%A7%88%EC%97%90%20%EA%B4%80%ED%95%9C%20%EC%97%B0%EA%B5%AC.pdf",
+   "https://www.kihasa.re.kr/api/kihasa/file/download?seq=10475&utm_source=openai"
+  ],
+  "S13": [
+   "https://www.mafra.go.kr/bbs/home/798/593021/download.do?utm_source=openai"
+  ],
+  "S14": [
+   "https://clik.nanet.go.kr/clikr-collection/policyinfo/207/1037/2023/CLIKC7167051653623091_attach_1.pdf",
+   "https://www.gmr.or.kr/storage/board/gallery/2024/11/15/GALLERY_ATTACH_1731629505505.pdf",
+   "https://www.evaluation.go.kr/upload2/atch/eval/20250508092516770.pdf"
+  ]
+ }
+}

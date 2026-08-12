@@ -1,61 +1,428 @@
 {
-  "_설명": "숫자 파싱 50 케이스. 실제로 웹에서 나온 표기들이다. want=null 은 '파싱 실패가 정답'인 케이스 — 값을 만들어내지 않는 것도 능력이다.",
-  "cases": [
-    { "raw": "10만 729",        "unit": "개",   "want": 100729,        "want_unit": "개" },
-    { "raw": "8만 3,445",       "unit": "개",   "want": 83445,         "want_unit": "개" },
-    { "raw": "407만 3천",       "unit": "개",   "want": 4073000,       "want_unit": "개" },
-    { "raw": "623만 8,580",     "unit": "개",   "want": 6238580,       "want_unit": "개" },
-    { "raw": "2,532만 1,526",   "unit": "명",   "want": 25321526,      "want_unit": "명" },
-    { "raw": "30만",            "unit": "명",   "want": 300000,        "want_unit": "명" },
-    { "raw": "110만",           "unit": "명",   "want": 1100000,       "want_unit": "명" },
-    { "raw": "210만",           "unit": "명",   "want": 2100000,       "want_unit": "명" },
-    { "raw": "85만 9천",        "unit": "개",   "want": 859000,        "want_unit": "개" },
-    { "raw": "22,135",          "unit": "개",   "want": 22135,         "want_unit": "개" },
-
-    { "raw": "15조 5000억",     "unit": "원",   "want": 15500000000000, "want_unit": "원" },
-    { "raw": "1조 3668억",      "unit": "원",   "want": 1366800000000,  "want_unit": "원" },
-    { "raw": "9,621억",         "unit": "원",   "want": 962100000000,   "want_unit": "원" },
-    { "raw": "1조1673억",       "unit": "원",   "want": 1167300000000,  "want_unit": "원" },
-    { "raw": "3.5억",           "unit": "원",   "want": 350000000,      "want_unit": "원" },
-    { "raw": "1.2조",           "unit": "원",   "want": 1200000000000,  "want_unit": "원" },
-    { "raw": "120",             "unit": "억원", "want": 12000000000,    "want_unit": "원" },
-    { "raw": "55,000",          "unit": "원",   "want": 55000,          "want_unit": "원" },
-    { "raw": "99,000",          "unit": "원",   "want": 99000,          "want_unit": "원" },
-    { "raw": "30,000",          "unit": "원",   "want": 30000,          "want_unit": "원" },
-    { "raw": "3",               "unit": "만원", "want": 30000,          "want_unit": "원" },
-    { "raw": "1,500",           "unit": "천원", "want": 1500000,        "want_unit": "원" },
-
-    { "raw": "46.6",            "unit": "%",    "want": 46.6,           "want_unit": "%" },
-    { "raw": "39.6",            "unit": "퍼센트","want": 39.6,          "want_unit": "%" },
-    { "raw": "2.65",            "unit": "%",    "want": 2.65,           "want_unit": "%" },
-    { "raw": "0.5",             "unit": "%p",   "want": 0.5,            "want_unit": "%p" },
-    { "raw": "100",             "unit": "%",    "want": 100,            "want_unit": "%" },
-
-    { "raw": "$25",             "unit": "USD",  "want": 25,             "want_unit": "USD" },
-    { "raw": "25",              "unit": "달러", "want": 25,             "want_unit": "USD" },
-    { "raw": "149",             "unit": "$",    "want": 149,            "want_unit": "USD" },
-    { "raw": "0.15",            "unit": "USD",  "want": 0.15,           "want_unit": "USD" },
-
-    { "raw": "약 30만",         "unit": "명",   "want": 300000,         "want_unit": "명", "approx": true },
-    { "raw": "30만여",          "unit": "명",   "want": 300000,         "want_unit": "명", "approx": true },
-    { "raw": "대략 1,000",      "unit": "곳",   "want": 1000,           "want_unit": "곳", "approx": true },
-    { "raw": "5만 가량",        "unit": "건",   "want": 50000,          "want_unit": "건", "approx": true },
-    { "raw": "100만 이상",      "unit": "명",   "want": 1000000,        "want_unit": "명", "approx": true },
-
-    { "raw": "1,000",           "unit": "개소", "want": 1000,           "want_unit": "개" },
-    { "raw": "500",             "unit": "곳",   "want": 500,            "want_unit": "곳" },
-    { "raw": "12",              "unit": "업체", "want": 12,             "want_unit": "곳" },
-    { "raw": "3,000",           "unit": "여명", "want": 3000,           "want_unit": "명" },
-    { "raw": "7",               "unit": "건",   "want": 7,              "want_unit": "건" },
-    { "raw": "0",               "unit": "원",   "want": 0,              "want_unit": "원" },
-    { "raw": "100729",          "unit": "",     "want": 100729,         "want_unit": null },
-
-    { "raw": "",                "unit": "개",   "want": null },
-    { "raw": "미상",            "unit": "개",   "want": null },
-    { "raw": "해당없음",         "unit": "명",   "want": null },
-    { "raw": "N/A",             "unit": "%",    "want": null },
-    { "raw": "-",               "unit": "원",   "want": null },
-    { "raw": "몇만",            "unit": "명",   "want": null },
-    { "raw": "수천",            "unit": "개",   "want": null }
-  ]
+ "_설명": "숫자 파싱 50 케이스. 실제로 웹에서 나온 표기들이다. want=null 은 '파싱 실패가 정답'인 케이스 — 값을 만들어내지 않는 것도 능력이다.",
+ "_범위_설명": "범위 케이스는 **`split_range` 를 잰다** — `parse_number` 가 아니다. 그 둘은 다른 함수이고 위 50 케이스는 `parse_number` 의 계약이라 건드리지 않았다. 판 ㉜ 실측: `_NUM` 이 `search`(첫 매치)라 「2,400~3,400」+「원」이 **조용히 하한 2400** 이 됐고, 범위가 `unit_raw` 로 가면 `화폐_접미` 화이트리스트에 걸려 **null** 이 됐다 — 같은 표기가 갈래마다 다르게 틀렸다. want 는 [하한, 상한] 이고, 범위가 아닌 것은 want 가 1개다.",
+ "cases": [
+  {
+   "raw": "10만 729",
+   "unit": "개",
+   "want": 100729,
+   "want_unit": "개"
+  },
+  {
+   "raw": "8만 3,445",
+   "unit": "개",
+   "want": 83445,
+   "want_unit": "개"
+  },
+  {
+   "raw": "407만 3천",
+   "unit": "개",
+   "want": 4073000,
+   "want_unit": "개"
+  },
+  {
+   "raw": "623만 8,580",
+   "unit": "개",
+   "want": 6238580,
+   "want_unit": "개"
+  },
+  {
+   "raw": "2,532만 1,526",
+   "unit": "명",
+   "want": 25321526,
+   "want_unit": "명"
+  },
+  {
+   "raw": "30만",
+   "unit": "명",
+   "want": 300000,
+   "want_unit": "명"
+  },
+  {
+   "raw": "110만",
+   "unit": "명",
+   "want": 1100000,
+   "want_unit": "명"
+  },
+  {
+   "raw": "210만",
+   "unit": "명",
+   "want": 2100000,
+   "want_unit": "명"
+  },
+  {
+   "raw": "85만 9천",
+   "unit": "개",
+   "want": 859000,
+   "want_unit": "개"
+  },
+  {
+   "raw": "22,135",
+   "unit": "개",
+   "want": 22135,
+   "want_unit": "개"
+  },
+  {
+   "raw": "15조 5000억",
+   "unit": "원",
+   "want": 15500000000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "1조 3668억",
+   "unit": "원",
+   "want": 1366800000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "9,621억",
+   "unit": "원",
+   "want": 962100000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "1조1673억",
+   "unit": "원",
+   "want": 1167300000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "3.5억",
+   "unit": "원",
+   "want": 350000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "1.2조",
+   "unit": "원",
+   "want": 1200000000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "120",
+   "unit": "억원",
+   "want": 12000000000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "55,000",
+   "unit": "원",
+   "want": 55000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "99,000",
+   "unit": "원",
+   "want": 99000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "30,000",
+   "unit": "원",
+   "want": 30000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "3",
+   "unit": "만원",
+   "want": 30000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "1,500",
+   "unit": "천원",
+   "want": 1500000,
+   "want_unit": "원"
+  },
+  {
+   "raw": "46.6",
+   "unit": "%",
+   "want": 46.6,
+   "want_unit": "%"
+  },
+  {
+   "raw": "39.6",
+   "unit": "퍼센트",
+   "want": 39.6,
+   "want_unit": "%"
+  },
+  {
+   "raw": "2.65",
+   "unit": "%",
+   "want": 2.65,
+   "want_unit": "%"
+  },
+  {
+   "raw": "0.5",
+   "unit": "%p",
+   "want": 0.5,
+   "want_unit": "%p"
+  },
+  {
+   "raw": "100",
+   "unit": "%",
+   "want": 100,
+   "want_unit": "%"
+  },
+  {
+   "raw": "$25",
+   "unit": "USD",
+   "want": 25,
+   "want_unit": "USD"
+  },
+  {
+   "raw": "25",
+   "unit": "달러",
+   "want": 25,
+   "want_unit": "USD"
+  },
+  {
+   "raw": "149",
+   "unit": "$",
+   "want": 149,
+   "want_unit": "USD"
+  },
+  {
+   "raw": "0.15",
+   "unit": "USD",
+   "want": 0.15,
+   "want_unit": "USD"
+  },
+  {
+   "raw": "약 30만",
+   "unit": "명",
+   "want": 300000,
+   "want_unit": "명",
+   "approx": true
+  },
+  {
+   "raw": "30만여",
+   "unit": "명",
+   "want": 300000,
+   "want_unit": "명",
+   "approx": true
+  },
+  {
+   "raw": "대략 1,000",
+   "unit": "곳",
+   "want": 1000,
+   "want_unit": "곳",
+   "approx": true
+  },
+  {
+   "raw": "5만 가량",
+   "unit": "건",
+   "want": 50000,
+   "want_unit": "건",
+   "approx": true
+  },
+  {
+   "raw": "100만 이상",
+   "unit": "명",
+   "want": 1000000,
+   "want_unit": "명",
+   "approx": true
+  },
+  {
+   "raw": "1,000",
+   "unit": "개소",
+   "want": 1000,
+   "want_unit": "개"
+  },
+  {
+   "raw": "500",
+   "unit": "곳",
+   "want": 500,
+   "want_unit": "곳"
+  },
+  {
+   "raw": "12",
+   "unit": "업체",
+   "want": 12,
+   "want_unit": "곳"
+  },
+  {
+   "raw": "3,000",
+   "unit": "여명",
+   "want": 3000,
+   "want_unit": "명"
+  },
+  {
+   "raw": "7",
+   "unit": "건",
+   "want": 7,
+   "want_unit": "건"
+  },
+  {
+   "raw": "0",
+   "unit": "원",
+   "want": 0,
+   "want_unit": "원"
+  },
+  {
+   "raw": "100729",
+   "unit": "",
+   "want": 100729,
+   "want_unit": null
+  },
+  {
+   "raw": "",
+   "unit": "개",
+   "want": null
+  },
+  {
+   "raw": "미상",
+   "unit": "개",
+   "want": null
+  },
+  {
+   "raw": "해당없음",
+   "unit": "명",
+   "want": null
+  },
+  {
+   "raw": "N/A",
+   "unit": "%",
+   "want": null
+  },
+  {
+   "raw": "-",
+   "unit": "원",
+   "want": null
+  },
+  {
+   "raw": "몇만",
+   "unit": "명",
+   "want": null
+  },
+  {
+   "raw": "수천",
+   "unit": "개",
+   "want": null
+  }
+ ],
+ "range_cases": [
+  {
+   "raw": "2,400~3,400",
+   "unit": "원",
+   "want": [
+    2400,
+    3400
+   ],
+   "want_unit": "원",
+   "_왜": "판 ㉜ 실물 — 배달비. pin-09 가 6/6 을 낸 채택 값이 이 모양이었다"
+  },
+  {
+   "raw": "2,400∼3,400",
+   "unit": "원",
+   "want": [
+    2400,
+    3400
+   ],
+   "want_unit": "원",
+   "_왜": "전각 물결표(U+223C). 한국 정부 문서가 이것을 쓴다"
+  },
+  {
+   "raw": "2,400원~3,400원",
+   "unit": "원",
+   "want": [
+    2400,
+    3400
+   ],
+   "want_unit": "원",
+   "_왜": "양쪽에 단위가 붙은 표기 — 이어 붙이면 '원원' 이 되어 상한이 죽던 자리"
+  },
+  {
+   "raw": "2,400",
+   "unit": "원∼3,400원",
+   "want": [
+    2400,
+    3400
+   ],
+   "want_unit": "원",
+   "_왜": "범위가 unit_raw 로 샌 갈래. 예전엔 여기서 **null** 이 나왔다"
+  },
+  {
+   "raw": "",
+   "unit": "2,400원∼3,400원",
+   "want": [
+    2400,
+    3400
+   ],
+   "want_unit": "원",
+   "_왜": "번호 칸이 통째로 비고 단위 칸에 다 온 갈래 (실측된 모양이다)"
+  },
+  {
+   "raw": "10만~30만",
+   "unit": "원",
+   "want": [
+    100000,
+    300000
+   ],
+   "want_unit": "원",
+   "_왜": "한국어 배수는 **수의 일부**다 — '만' 을 단위로 떼면 양쪽 다 null 이 된다"
+  },
+  {
+   "raw": "120억~500억",
+   "unit": "원",
+   "want": [
+    12000000000,
+    50000000000
+   ],
+   "want_unit": "원"
+  },
+  {
+   "raw": "1.5~2.5",
+   "unit": "%",
+   "want": [
+    1.5,
+    2.5
+   ],
+   "want_unit": "%"
+  },
+  {
+   "raw": "-3.2",
+   "unit": "%",
+   "want": [
+    -3.2
+   ],
+   "want_unit": "%",
+   "_왜": "**ASCII 하이픈은 범위 구분자가 아니다.** 넣으면 음수가 범위로 읽힌다"
+  },
+  {
+   "raw": "10만 729",
+   "unit": "개",
+   "want": [
+    100729
+   ],
+   "want_unit": "개",
+   "_왜": "공백은 범위가 아니다 — 겹친 배수 표기다"
+  },
+  {
+   "raw": "407만 3천",
+   "unit": "개",
+   "want": [
+    4073000
+   ],
+   "want_unit": "개"
+  },
+  {
+   "raw": "120",
+   "unit": "억원",
+   "want": [
+    12000000000
+   ],
+   "want_unit": "원",
+   "_왜": "'억원' 은 단위다(unit_scale_in_name). 배수 글자만으로 된 '만' 과 구별해야 한다"
+  },
+  {
+   "raw": "2,400~3,400~4,000",
+   "unit": "원",
+   "want": [
+    2400
+   ],
+   "want_unit": "원",
+   "_왜": "3조각 이상은 범위가 아니라 목록·날짜다 — **모르면 손대지 않는다**"
+  }
+ ]
 }

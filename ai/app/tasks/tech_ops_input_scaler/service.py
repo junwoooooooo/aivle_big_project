@@ -1,15 +1,40 @@
-"""Market/BM/TechOps Snapshot을 손실성 LLM 요약 없이 근거 ledger로 변환한다."""
+"""Deterministic Market/BM -> commercialization evidence handoff.
+
+This component never asks an LLM to summarize upstream analysis.  It converts
+the Market/BM payload into immutable, traceable facts before the advisor is
+allowed to interpret them.
+"""
+
+from __future__ import annotations
 
 import json
 from typing import Any, Iterator
 
-from app.tasks.tech_ops_input_scaler.models import ScaledTechOpsInput, TechOpsAdvisoryInput
+from app.tasks.tech_ops_input_scaler.models import (
+    ConfirmedFact,
+    ExternalEvidence,
+    MarketSignal,
+    TechOpsCommercializationInput,
+)
 
-MAX_VALUE = 420
-RELEVANCE = ("tam", "sam", "som", "growth", "price", "demand", "compet", "customer",
-             "revenue", "cost", "margin", "channel", "partner", "operation", "risk", "시장",
-             "성장", "가격", "수요", "경쟁", "고객", "수익", "비용", "채널", "운영", "공급")
-TRACE = ("runid", "createdat", "generatedat", ".seconds", ".status", "llmcalls", "trace")
+MAX_FACTS = 150
+MAX_FACTS_PER_SOURCE = MAX_FACTS // 2
+MAX_VALUE_CHARS = 360
+MAX_SIGNALS = 24
+MAX_EVIDENCE = 20
+
+_TRACE_MARKERS = (
+    "runid", "conceptid", "generatedat", "createdat", "asof", "stages[",
+    ".status", ".seconds", ".llmcalls", ".mode", "trace", "requestid",
+)
+_COMMERCIALIZATION_MARKERS = (
+    "tam", "sam", "som", "growth", "cagr", "price", "demand", "compet",
+    "proxy", "segment", "target", "customer", "problem", "solution", "feature",
+    "value", "revenue", "cost", "margin", "channel", "model", "risk", "partner",
+    "operation", "reservation", "booking", "noshow", "cancel", "integration", "api",
+    "privacy", "subscription", "retention", "시장", "성장", "가격", "수요", "경쟁",
+    "고객", "문제", "솔루션", "예약", "미용", "노쇼", "취소", "채널", "비용", "매출",
+)
 
 
 def _walk(value: Any, path: str = "") -> Iterator[tuple[str, Any]]:
@@ -24,63 +49,137 @@ def _walk(value: Any, path: str = "") -> Iterator[tuple[str, Any]]:
 
 
 def _text(value: Any) -> str:
-    raw = value.strip() if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
-    return raw[:MAX_VALUE] + ("…" if len(raw) > MAX_VALUE else "")
+    if isinstance(value, str):
+        value = value.strip()
+    else:
+        value = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return value[:MAX_VALUE_CHARS] + ("…" if len(value) > MAX_VALUE_CHARS else "")
 
 
-def _facts(source: str, payload: Any, start: int, limit: int, status: str) -> list[dict[str, Any]]:
-    rows = []
-    for path, value in _walk(payload):
-        if value in (None, "", [], {}) or isinstance(value, bool):
+def _usable(value: Any) -> bool:
+    return value not in (None, "", [], {})
+
+
+def _facts(source: str, value: Any, start: int, limit: int) -> list[ConfirmedFact]:
+    rows: list[ConfirmedFact] = []
+    for path, leaf in _walk(value):
+        if not _usable(leaf) or isinstance(leaf, bool):
             continue
-        rows.append({"factId": f"FACT-{start + len(rows):03d}", "path": f"{source}.{path}",
-                     "value": _text(value), "source": source, "evidenceLevel": 1, "status": status})
+        rows.append(ConfirmedFact(
+            factId=f"FACT-{start + len(rows):03d}", path=f"{source}.{path}",
+            value=_text(leaf), source=source,
+        ))
         if len(rows) >= limit:
             break
     return rows
 
 
-def _rank(row: dict[str, Any]) -> tuple[int, str]:
-    text = f"{row['path']} {row['value']}".lower()
-    return (sum(marker in text for marker in TRACE) * 10 - sum(marker in text for marker in RELEVANCE), row["factId"])
+def _commercialization_rank(fact: ConfirmedFact, index: int) -> tuple[int, int]:
+    text = f"{fact.path} {fact.value}".lower()
+    trace_penalty = 4 if any(marker in text for marker in _TRACE_MARKERS) else 0
+    relevance = sum(marker in text for marker in _COMMERCIALIZATION_MARKERS)
+    return (trace_penalty - relevance, index)
 
 
-def _urls(*payloads: tuple[str, Any]) -> list[dict[str, Any]]:
-    rows, seen = [], set()
-    for source, payload in payloads:
-        for path, value in _walk(payload):
-            if not isinstance(value, str) or not value.startswith(("https://", "http://")) or value in seen:
+def _prioritize_facts(facts: list[ConfirmedFact]) -> list[ConfirmedFact]:
+    """Keep all facts, but surface business facts before run metadata."""
+    return [fact for index, fact in sorted(
+        enumerate(facts), key=lambda item: _commercialization_rank(item[1], item[0])
+    )]
+
+
+def _looks_like_url(value: str) -> bool:
+    return value.startswith(("https://", "http://"))
+
+
+def _evidence(market: Any, bm: Any) -> list[ExternalEvidence]:
+    rows: list[ExternalEvidence] = []
+    seen: set[str] = set()
+    for source, payload in (("MARKET", market), ("BM", bm)):
+        for path, leaf in _walk(payload):
+            if not isinstance(leaf, str) or not _looks_like_url(leaf) or leaf in seen:
                 continue
-            seen.add(value)
-            rows.append({"evidenceId": f"EXT-{len(rows)+1:03d}", "title": path.rsplit(".", 1)[-1],
-                         "url": value, "source": f"{source}.{path}", "evidenceLevel": 2,
-                         "status": "UPSTREAM_SOURCE"})
-            if len(rows) >= 20:
+            seen.add(leaf)
+            title = path.rsplit(".", 1)[-1].replace("_", " ") or source
+            rows.append(ExternalEvidence(
+                evidenceId=f"EXT-{len(rows) + 1:03d}", title=title,
+                url=leaf, source=f"{source}.{path}",
+            ))
+            if len(rows) >= MAX_EVIDENCE:
                 return rows
     return rows
 
 
-def _product(concept: Any, tech: Any) -> str:
-    for payload in (concept, tech):
-        for path, value in _walk(payload):
-            if any(key in path.lower() for key in ("conceptname", "productname", "summary", "name")) and value:
-                return _text(value)
-    return "current Concept와 Market/BM에 연결된 상용화 검증 대상"
+def _product_summary(concept: Any, bm: Any, market: Any) -> str:
+    preferred = ("concept_name", "conceptname", "product_name", "productname", "title", "name")
+    for payload in (concept, bm, market):
+        for path, leaf in _walk(payload):
+            if any(key in path.lower() for key in preferred) and _usable(leaf):
+                return _text(leaf)
+    return "시장·BM 분석 결과를 기반으로 한 상용화 검증 대상"
 
 
-async def scale_tech_ops_input(payload: dict[str, Any]) -> dict[str, Any]:
-    value = TechOpsAdvisoryInput.model_validate(payload)
-    market = _facts("MARKET", value.marketResult, 1, 60, "UPSTREAM_ANALYSIS")
-    bm = _facts("BM", value.businessModelResult, 61, 60, "UPSTREAM_ANALYSIS")
-    tech = _facts("TECH_OPS", value.techOpsInputSnapshot, 121, 40, "USER_CONFIRMED_OR_ACCEPTED")
-    concept = _facts("CONCEPT_LEGAL", {"concept": value.conceptHandoff, "legal": value.legalHandoff},
-                     161, 20, "CANONICAL_HANDOFF")
-    facts = market + bm + tech + concept
-    advisor = sorted(market, key=_rank)[:30] + sorted(bm, key=_rank)[:30]
-    advisor += sorted(tech + concept, key=_rank)[:30]
-    user_evidence = list(value.techOpsInputSnapshot.get("evidenceReferences") or [])[:40]
-    scaled = ScaledTechOpsInput(productSummary=_product(value.conceptHandoff, value.techOpsInputSnapshot),
-        layer1Facts=facts, advisorFacts=advisor,
-        layer2Evidence=_urls(("MARKET", value.marketResult), ("BM", value.businessModelResult)),
-        userEvidence=user_evidence)
-    return scaled.model_dump(mode="json")
+def _signals(facts: list[ConfirmedFact]) -> list[MarketSignal]:
+    keywords = ("tam", "sam", "som", "market", "growth", "cagr", "demand", "price", "compet", "customer", "proxy", "시장", "성장", "수요", "가격", "경쟁")
+    rows: list[MarketSignal] = []
+    for fact in facts:
+        if fact.source != "MARKET" or not any(word in f"{fact.path} {fact.value}".lower() for word in keywords):
+            continue
+        source_type = "PROXY" if "proxy" in f"{fact.path} {fact.value}".lower() else "UPSTREAM"
+        rows.append(MarketSignal(
+            topic=fact.path, value=fact.value, sourceType=source_type,
+            caveat="시장분석 원본에서 보존한 값이며, Proxy 여부는 원본 표기를 따른다.",
+            basisIds=[fact.factId],
+        ))
+        if len(rows) >= MAX_SIGNALS:
+            break
+    return rows
+
+
+def _assumptions(facts: list[ConfirmedFact]) -> list[str]:
+    keywords = ("revenue", "price", "cost", "margin", "channel", "value", "model", "customer", "unit", "cac", "수익", "가격", "비용", "채널", "고객")
+    rows: list[str] = []
+    for fact in facts:
+        if fact.source == "BM" and any(word in f"{fact.path} {fact.value}".lower() for word in keywords):
+            rows.append(f"[{fact.factId}] {fact.path}: {fact.value}")
+            if len(rows) >= MAX_SIGNALS:
+                break
+    return rows
+
+
+def _advisor_facts(facts: list[ConfirmedFact]) -> list[ConfirmedFact]:
+    """Prioritize commercialization-relevant facts while preserving Market/BM balance."""
+    markers = (
+        "tam", "sam", "som", "growth", "cagr", "price", "demand", "compet", "proxy",
+        "revenue", "cost", "margin", "channel", "customer", "value", "model", "risk",
+        "시장", "성장", "가격", "수요", "경쟁", "수익", "비용", "채널", "고객",
+    )
+    ranked = sorted(
+        enumerate(facts),
+        key=lambda item: _commercialization_rank(item[1], item[0]),
+    )
+    # Half of the prompt budget is reserved for each upstream module.  A large
+    # market payload must never push every BM assumption out of the prompt.
+    market = [fact for _, fact in ranked if fact.source == "MARKET"][:30]
+    bm = [fact for _, fact in ranked if fact.source == "BM"][:30]
+    return market + bm
+
+
+async def scale_tech_ops_input(payload: dict) -> dict:
+    """Build Layer 1 facts and Layer 2 upstream-source evidence without AI."""
+    market = payload.get("marketResult") or {}
+    bm = payload.get("bmResult") or {}
+    market_facts = _facts("MARKET", market, 1, MAX_FACTS_PER_SOURCE)
+    bm_facts = _facts("BM", bm, MAX_FACTS_PER_SOURCE + 1, MAX_FACTS_PER_SOURCE)
+    facts = _prioritize_facts((market_facts + bm_facts)[:MAX_FACTS])
+    normalized = TechOpsCommercializationInput(
+        productSummary=_product_summary(payload.get("conceptHandoff") or {}, bm, market),
+        marketSignals=_signals(facts),
+        bmAssumptions=_assumptions(facts),
+        missingInputs=[],
+        layer1Facts=facts,
+        layer2Evidence=_evidence(market, bm),
+    )
+    output = normalized.model_dump(mode="json")
+    output["advisorFacts"] = [row.model_dump(mode="json") for row in _advisor_facts(facts)]
+    return output

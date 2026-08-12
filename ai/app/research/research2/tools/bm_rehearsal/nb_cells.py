@@ -233,7 +233,6 @@ def resolve_bm_input(
     )
 
 
-
 ALLOWED_CANVAS_SOURCE_LABELS = {
     "concept_snapshot",
     "market_size",

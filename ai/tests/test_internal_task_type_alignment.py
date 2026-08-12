@@ -16,6 +16,7 @@ EXPECTED_TASK_TYPES = {
     "CONCEPT_HYPOTHESIS_ALTERNATIVE",
     "CONCEPT_DELTA_LEGAL_REVIEW",
     "TECH_OPS_PROPOSAL",
+    "TECH_OPS_ADVISORY",
     "FINANCE_ESTIMATE",
     "FINANCE_ANALYSIS_REPORT",
     "MARKETING_CONTENT_GENERATION",
@@ -44,4 +45,4 @@ def test_java_and_fastapi_task_types_are_aligned_with_internal_worker_types():
 
     assert TASK_TYPES == EXPECTED_TASK_TYPES
     assert java_task_types == EXPECTED_TASK_TYPES | NON_AI_TASK_TYPES
-    assert len(java_task_types) == 20
+    assert len(java_task_types) == 21

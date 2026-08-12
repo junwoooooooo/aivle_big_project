@@ -51,6 +51,31 @@ def weakest(grades: list, ladder: list) -> str:
     return min(known, key=ladder.index)
 
 
+def merge_bridge_caveats(card: dict, fact: dict) -> dict:
+    """다리로 들어온 값의 **상한 울타리를 카드에 싣는다.**
+
+    ⚠ 이 울타리는 **슬롯이 아니라 사실**에 붙어 있다 — 슬롯이 선언한 경계가 아니라
+    **어댑터가 다른 이름의 집계로 치환한 결과**이기 때문이다. 위 반복문은 슬롯만 보므로
+    여기가 끊겨 있었다: 판 ⑰ 조건 3 은 「경계가 canvas 까지 가야 한다」인데
+    사다리 2단이 **판 ㉛A 에서 처음 발동**해(그 전엔 `expected.md` 에 「미도달」) 드러났다.
+
+    경계는 **덮어쓰지 않고 더한다** — 슬롯 경계와 울타리 경계는 다른 사실이다.
+    """
+    bridges = [b for b in (fact.get("표기_다리") or []) if b.get("상한_울타리")]
+    if not bridges:
+        return card
+    card["상한_울타리"] = True
+    card["표기_다리"] = bridges            # 조용한 치환 금지 — 무엇을 무엇으로 바꿨는지
+    있던 = card.get("경계")
+    모음 = [있던] if isinstance(있던, str) and 있던.strip() else list(있던 or [])
+    for b in bridges:
+        for x in b.get("경계") or []:
+            if x not in 모음:
+                모음.append(x)
+    card["경계"] = 모음
+    return card
+
+
 def build(run: str, concept: str) -> dict:
     r = _rules()
     ladder = _ladder(r)
@@ -96,6 +121,7 @@ def build(run: str, concept: str) -> dict:
         for k in ("경계", "경계_proxy", "proxy_선언", "상한_울타리"):
             if s.get(k):
                 card[k] = s[k]
+        merge_bridge_caveats(card, f)
         cards.append(card)
 
     by_id = {c["카드_id"]: c for c in cards}

@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime
 import io
 import json
@@ -34,7 +35,11 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
+# ⚠ `runpath` 는 **ROOT** 에 있다(잎 모듈). HERE 만 넣으면 CLI 로 부를 때 죽는다 —
+#   파이프라인에서 부를 때는 그쪽이 이미 ROOT 를 넣어 둬서 **드러나지 않았다**.
+sys.path.insert(0, ROOT)
 
+import runpath                                                    # noqa: E402
 import gate as G                                                   # noqa: E402
 
 # 1차 초안에서 gpt-4o-mini 는 형식 예시를 그대로 베끼거나 통제 어휘를 어겼다(2회 폐기).
@@ -185,8 +190,37 @@ var_role 표 (식 안에서 그 변수가 맡은 자리. 자리와 계량 종류
    **증감률 계산은 판정 층이 한다** — 우리가 관측할 것은 **두 해의 값**이지 남이 계산한 비율이 아니다.
 6. value_range 는 그 값이 가질 수 있는 [최소, 최대] 다. 자릿수를 틀리게 하는 값을
    걸러내는 용도이지 정답을 좁히는 용도가 아니다. 넓게 잡아라.
-7. must_contain 은 그 문서가 반드시 담고 있어야 할 낱말 1~2개. must_not_contain 은
-   확실히 다른 주제로 새는 낱말.
+   ⚠ **상한은 하한보다 반드시 커야 한다.** `[0, 0]` 처럼 같게 적으면 그 슬롯의 **모든 값이
+   걸러져 통째로 빈손**이 된다. 무료 서비스는 `[0, 0]` 이 아니라 `[0, 소액 상한]` 으로 적는다.
+   ⚠ **계량 표에 「전형 크기」가 적힌 계량은 그 구간과 반드시 겹치게 잡아라.** 겹치지 않으면
+   맞는 값이 통째로 격리된다 — 실측: 거래액을 `[1e9, 1e10]` 으로 적어 참값 38.0조(3.8e13)가
+   버려졌고 성적표 4과목이 그 하나의 하류였다. 세그먼트가 작아 보여도 **상한을 전형 크기까지
+   열어라**(좁히는 것은 이 칸의 일이 아니다). 겹치지 않으면 코드가 전형 크기로 갈아끼운다.
+7. must_contain 은 그 문서가 반드시 담고 있어야 할 낱말이다. **`any()` 로 평가된다** —
+   그래서 낱말을 늘리면 조여지는 게 아니라 **느슨해진다.** 반대로 알기 쉬우니 주의하라.
+   ⚠ **낱말은 하나만 적고, 그 낱말은 반드시 그 슬롯의 `subject` 안에 있는 말이어야 한다.**
+   「문제」·「성장」처럼 아무 문서에나 있는 말을 적으면 **종류가 다른 값이 문턱을 넘는다** —
+   실측: subject="1인 가구" · must_contain=["문제"] 인 수요 슬롯을 「70대 이상 1인 가구
+   우울증상유병률 8.9%」가 채웠다. 인구만 맞고 문제의 종류가 다르다.
+   예) subject="편의점 도시락" → ["도시락"] / subject="1인 가구 혼자 식사" → ["혼자"]
+   가를 것이 없으면 **빈 배열로 둔다.** 억지로 채우지 마라.
+   must_not_contain 은 확실히 다른 주제로 새는 낱말이며, **이 컨셉과 무관한 말을 적지 마라** —
+   실측: HMR 컨셉 슬롯에 ["반려동물"] 이 남아 있어 찾아낸 값이 통째로 격리됐다.
+7-0. **PAIN·PRICE 는 표적을 하나만 두지 마라.** 같은 값이 실리는 문서 종류(서식지)가
+   표적마다 다르다 — 하나에 걸면 그 서식지를 검색이 못 물어온 판은 **칸이 통째로 빈다.**
+   이 두 claim_type 은 **subject 가 서로 다른 변수를 3개 이상** 만들어라.
+   ⚠ **분산은 subject 로 한다.** 검색어는 subject·metric·period·region 으로 만들어지므로,
+   `must_contain` 만 다르고 subject 가 같으면 **같은 검색어를 두 번 던지는 것**이다 —
+   분산이 아니라 중복이고, 실측에서 슬롯만 늘고 칸은 그대로 비었다.
+   ⚠ **회사를 지목하지 마라.** 그 값은 발행되지 않는다(실측: 「프레시지 월 구독료」 0건).
+   **통계·보도자료에 실제로 비율·금액으로 실리는 대상**을 골라라 — 대체재 가격(배달비·
+   편의점 도시락가·외식비)과 타깃의 행동률(혼자 식사 비율·결식률)이 그런 자리다.
+7-1. subject_aliases 는 **그 subject 를 가리키는 다른 표기** 0~4개다. 같은 대상을 부르는
+   이름이 문서마다 다르기 때문에 둔다 — 회사는 공시에서 법인명(「NAVER」·「네이버주식회사」),
+   보도에서 서비스명으로 불리고, 업종은 통계표 항목명과 일상 표기가 다르다.
+   **같은 대상의 다른 이름만 적는다.** 상위 개념·경쟁사·유사 업종을 적지 마라 —
+   그건 다리가 아니라 다른 대상이고, 넣으면 엉뚱한 문서가 통과한다.
+   모르면 빈 배열로 둔다. 지어내지 마라.
 8. canvas_cell 은 이 관측이 채울 BM 캔버스 칸이고, **claim_type 과 짝이 정해져 있다**:
    고객 세그먼트=TAM·SAM / 가치 제안=PAIN·COMP·COMPARABLE / 채널=CHANNEL /
    수익원=PRICE·ALT. 짝이 어긋나면 탈락한다.
@@ -251,7 +285,10 @@ var_role 표 (식 안에서 그 변수가 맡은 자리. 자리와 계량 종류
 
 [분량 — 지키지 않으면 탈락한다]
 - formulas 는 위 목록의 **8개 전부**. 하나라도 빠뜨리지 마라.
-- F_TAM·F_SAM 은 변수 5개(사업체수·세그먼트비중·침투율·단가·연환산), 나머지 식은 1~3개.
+- F_TAM·F_SAM 은 변수 5개(사업체수·세그먼트비중·침투율·단가·연환산).
+- **F_PAIN·F_PRICE 는 3~5개** — 규칙 7-0 의 서식지 분산이 여기서 나온다.
+  같은 var_role 을 여러 변수가 써도 된다. **subject 가 서로 다르면 다른 변수다.**
+- 나머지 식(F_GROWTH·F_COMP·F_DIFF·F_CHANNEL)은 1~3개.
 - F_COMP 는 **씨앗 3개를 각각 변수 하나로** + **매출액 변수 1개**(규칙 19).
 - 캔버스 칸 4개(고객 세그먼트·가치 제안·채널·수익원)가 **전부** 최소 1개 슬롯을 갖도록
   observable=true 변수를 배치하라. 한 칸이라도 비면 탈락한다.
@@ -264,6 +301,7 @@ var_role 표 (식 안에서 그 변수가 맡은 자리. 자리와 계량 종류
       "unit": "개", "region": "대한민국", "subject_code": null, "stat_code": null,
       "corp_name": null, "claim_type": "TAM", "canvas_cell": "고객 세그먼트",
       "observable": true, "must_contain": ["..."], "must_not_contain": ["..."],
+      "subject_aliases": [],
       "value_range": [1000, 500000], "추출_힌트": [],
       "proxy_선언": {{"대상": "", "사유": ""}}}}
   ]}}
@@ -276,10 +314,19 @@ def _load(p):
 
 
 def _env_key(name: str):
-    """adapters/base.py:26 과 같은 탐색 순서. 엔진을 import 하지 않으려고 옮겨 적었다."""
+    """adapters/base.py 와 같은 탐색 순서. 엔진을 import 하지 않으려고 옮겨 적었다.
+
+    ⚠ **베낀 값은 갈라진다 — 실제로 갈라졌다.** 판 ㉝ 이식(`시장조사/research2` →
+      `ai/app/research/research2`)으로 저장소 루트가 두 단계 멀어졌을 때 `base.py` 는
+      깊이를 6으로 고쳤지만 **이 사본은 4로 남았다.** 그래서 컨테이너 밖에서 하네스만
+      「OPENAI_API_KEY 없음」으로 죽었다 — preflight 는 `base.py` 를 써서 「ok」라 했고,
+      두 답이 정반대였다. 2026-08-11 수집 배선 실측에서 잡혔다.
+      **깊이를 고칠 일이 생기면 `adapters/base.py` 와 여기를 같이 고친다.**
+    """
     if os.environ.get(name):
         return os.environ[name]
-    for rel in (".env", "../.env", "../../.env", "../../../.env"):
+    for rel in (".env", "../.env", "../../.env", "../../../.env",
+                "../../../../.env", "../../../../../.env"):
         p = os.path.normpath(os.path.join(ROOT, rel))
         if os.path.exists(p):
             for line in io.open(p, encoding="utf-8"):
@@ -363,11 +410,19 @@ def _series_line(concept: dict) -> str:
 
 
 def build_prompt(concept: dict, vocab: dict, as_of_year: int, violations: list | None = None,
-                 corpcode: dict | None = None) -> str:
+                 corpcode: dict | None = None, guards: dict | None = None) -> str:
     # 규칙 6 — research_view 와 같은 필드만 넘긴다. 가설(_hypotheses_v2)·제약은 넣지 않는다.
     view = {k: concept[k] for k in ("name", "problem", "target", "solution", "region")}
     ind = (concept.get("_다듬기5") or {}).get("4_업종_분류") or {}
     cat = vocab["metric"]["catalog"]
+    # 계량마다 **전형 크기**를 옆에 박는다. 검사(`check_range_band`)와 교정(`repair_design`)은
+    # 이 표를 보는데 프롬프트는 「넓게 잡아라」만 말하고 있었다 — **검사하는 것과 지시하는
+    # 것이 달랐다.** 실측: 자동 설계가 거래액 밴드를 [1e9, 1e10] 으로 적었고 참값은 38.0조라
+    # 4칸이 전부 어긋났다. 모델은 어길 수 없는 것을 어긴 게 아니라 **모르는 것을 못 맞췄다**
+    # (백로그 59 계보 — 판 ⑩ 의 허용 계량 목록과 같은 처방이다).
+    if guards is None:
+        guards = _load(os.path.join(ROOT, "rules", "guards.v1.json"))
+    _bands = (guards.get("value_range") or {}).get("계량_전형_밴드") or {}
     body = PROMPT.format(
         concept=json.dumps(view, ensure_ascii=False, indent=1),
         industry=json.dumps({k: v for k, v in ind.items() if not k.startswith("_")},
@@ -384,8 +439,11 @@ def build_prompt(concept: dict, vocab: dict, as_of_year: int, violations: list |
                if tp in ((vocab["template"].get("허용_자리") or {}).get("map") or {}) else "")
             + f" · {why}"
             for fid, t, p, tp, why in targets(vocab, concept)),
-        metrics="\n".join(f"  {k} — 경로 {v['route']} · 종류 {v['kind']} · 단위 {v['unit']}"
-                          for k, v in cat.items()),
+        metrics="\n".join(
+            f"  {k} — 경로 {v['route']} · 종류 {v['kind']} · 단위 {v['unit']}"
+            + (f" · **전형 크기 [{(_bands[k]['밴드'])[0]:g}, {(_bands[k]['밴드'])[1]:g}]**"
+               if (_bands.get(k) or {}).get("밴드") else "")
+            for k, v in cat.items()),
         # 자리마다 **허용 계량 목록**을 같이 적는다. 게이트(`check_role_kind`)는 이 목록을
         # 강제하는데 프롬프트는 종류(kind)만 알려 주고 있었다 — **검사하는 것과 지시하는 것이
         # 달랐다.** 판 ⑩ 실측: 계열 C 초안이 「시장거래액」 자리에 `시장 규모`(금액이라 kind 는
@@ -446,6 +504,7 @@ def output_schema(vocab: dict, concept: dict | None = None) -> dict:
         "required": ["var_role", "subject", "metric", "period", "unit", "region",
                      "subject_code", "stat_code", "corp_name", "claim_type",
                      "canvas_cell", "observable", "must_contain", "must_not_contain",
+                     "subject_aliases",
                      "value_range", "추출_힌트", "proxy_선언"],
         "properties": {
             "var_role": {"type": "string", "enum": list(vocab["var_role"]["catalog"])},
@@ -462,6 +521,8 @@ def output_schema(vocab: dict, concept: dict | None = None) -> dict:
                             "enum": list(vocab["canvas"]["측정판정"]["cells"])},
             "observable": {"type": "boolean"},
             "must_contain": {"type": "array", "items": {"type": "string"}},
+            # 표기 변종(판 ㉛). 상한은 게이트가 `vocab.subject_aliases` 로 잰다.
+            "subject_aliases": {"type": "array", "items": {"type": "string"}},
             "must_not_contain": {"type": "array", "items": {"type": "string"}},
             "value_range": {"type": "array", "items": {"type": "number"}},
             # P2 배선(판 ⑥-0): 업종 표현은 통제 어휘가 아니라 **컨셉**에서 온다.
@@ -503,7 +564,10 @@ def call_llm(body: str, model: str, schema: dict | None = None) -> dict:
     if i < 0 or j < 0:
         # **사람이 와야 끝나는 자리다.** 계측하지 않으면 이 멈춤이 「개입 0」 속에 숨는다.
         _intervene("멈춤 — LLM 출력에 JSON 없음", txt[:200], blocking=True)
-        raise SystemExit("LLM 출력에 JSON 이 없다 — 게이트 이전 단계에서 멈춘다:\n" + txt[:400])
+        # ⚠ 예전에는 `SystemExit` 였다. `BaseException` 이라 아래 재시도 루프의
+        #   `except Exception` 이 **못 잡고** 프로세스가 그대로 죽었다 — 서버에서 부르면
+        #   워커가 통째로 넘어간다. `HarnessError` 로 두면 루프가 잡아 무인 기록을 남긴다.
+        raise HarnessError("LLM 출력에 JSON 이 없다 — 게이트 이전 단계에서 멈춘다:\n" + txt[:400])
     usage = {}
     try:
         usage = {"tokens_in": r.usage.input_tokens, "tokens_out": r.usage.output_tokens}
@@ -568,6 +632,36 @@ def wire(data: dict, vocab: dict, concept: dict | None = None) -> tuple[list, li
                               "고침": f"({cell}, {ct}) → (수익원, PRICE)",
                               "why": "가격 계량의 칸·claim_type 은 코드가 정한다"})
                 cell, ct = "수익원", "PRICE"
+
+            # ── 식 → claim_type **강제**. 위 가격 계량과 **같은 결**이다 ────────────
+            # 식이 정해지면 답이 하나뿐이라 세상에 대한 판단이 아니다. 그런데 여기는
+            # 게이트만 있고 배선이 없어서, 모델이 식의 target(TAM)을 따라 적으면
+            # **되먹임으로 되돌려 주고 모델이 새로 짜다가 다른 것을 깨뜨렸다**
+            # (2026-08-11 실측: 3회 시도가 서로 다른 검사를 오가며 진동했다).
+            # ⚠ 규칙은 `vocab.식_목록.claim_type_강제` 하나가 정본이다 — 게이트
+            #   (`gate.check_cell_claim_type`)가 읽는 자리와 **같은 곳**을 읽는다.
+            _force = (vocab.get("식_목록") or {}).get("claim_type_강제") or {}
+            _series = ((concept or {}).get("_계열") or {}).get("계열")
+            if _force.get("enabled") and _series not in (_force.get("제외_계열") or []):
+                want = (_force.get("map") or {}).get(fid)
+                if want and ct != want:
+                    notes.append({"var_id": vid, "formula_id": fid,
+                                  "고침": f"claim_type {ct} → {want}",
+                                  "why": "식이 정해지면 claim_type 은 하나다 — 코드가 정한다"})
+                    ct = want
+
+            # ── 역방향 corp_name 제거 ──────────────────────────────────────────
+            # `route_sources` 는 corp_name 이 있으면 **무조건 dart** 로 보낸다
+            # (blocks/a_desk.py:311). web 계량에 붙으면 공시에 없는 계정을 찾으러 가서
+            # 그대로 빈손이 된다. 어느 계량이 dart 인지는 **표가 값으로 안다**
+            # (`vocab.metric.catalog[…].route`) — 판단이 아니라 조회다.
+            corp = v.get("corp_name") or None
+            if corp and (vocab["metric"]["catalog"].get(v.get("metric")) or {}).get("route") != "dart":
+                notes.append({"var_id": vid, "metric": v.get("metric"),
+                              "고침": f"corp_name {corp} → null",
+                              "why": "web 계량에 corp_name 이 붙으면 dart 로 라우팅돼 빈손이 된다"})
+                corp = None
+
             slot = {"slot_id": f"S{len(slots) + 1}", "var_id": vid, "formula_id": fid,
                     "claim_type": ct,
                     "subject": v.get("subject") or "", "metric": v.get("metric") or "",
@@ -575,8 +669,10 @@ def wire(data: dict, vocab: dict, concept: dict | None = None) -> tuple[list, li
                     "region": v.get("region") or "대한민국",
                     "subject_code": v.get("subject_code") or None,
                     "stat_code": v.get("stat_code") or None,
-                    "corp_name": v.get("corp_name") or None,
+                    "corp_name": corp,
                     "must_contain": v.get("must_contain") or [],
+                    "subject_aliases": [a for a in (v.get("subject_aliases") or [])
+                                        if str(a).strip()],
                     "must_not_contain": v.get("must_not_contain") or [],
                     "value_range": v.get("value_range") or None,
                     "accept": {"min_score": 5, "min_facts": 2},
@@ -599,6 +695,131 @@ def wire(data: dict, vocab: dict, concept: dict | None = None) -> tuple[list, li
     return slots, formulas, notes
 
 
+def repair_design(slots: list, vocab: dict, guards: dict | None = None) -> list[dict]:
+    """**답이 하나로 정해지는 권고를 코드가 고친다.** LLM 0회 · 네트워크 0회.
+
+    (이름이 `repair` 가 아닌 이유: 이 파일에서 `raw["repair"]` 는 **JSON 파싱 복구**를
+    뜻한다 — 같은 낱말이 두 가지를 가리키면 읽는 쪽이 헷갈린다.)
+
+    권고 검사는 `passed=True` 라 재시도를 안 건다 — 그것이 「경고만」 결정의 실제
+    내용이고, 그래서 권고 8건이 떠도 설계가 한 칸도 안 바뀌었다(실측). 그중 밴드는
+    **표가 답을 값으로 들고 있다**(`rules/guards.v1.json` 계량_전형_밴드) — 판단이
+    아니라 조회라, `wire()` 의 가격 계량 칸 강제·claim_type 강제와 같은 결이다.
+
+    ⚠ **입력이 「슬롯 dict 목록」인 것이 설계의 핵심이다.** 저장된 스냅샷을 그대로
+      먹일 수 있어야 유료 실행 0회로 효과를 증명한다. 원안(raw draft)을 받게 만들면
+      그 증명이 불가능해진다.
+
+    ⚠ 제자리에서 고친다(`slots` 를 바꾼다). 원안은 `_value_range_원안` 에 남고,
+      **밑줄 접두라 `run.py:243` 이 걸러내 엔진 `Slot` 에는 안 들어간다.**
+
+    돌려주는 것 — 교정 내역 목록. 비면 아무것도 안 고쳤다는 뜻이다. **인쇄하지 않는다**
+    (부르는 쪽이 `gate.json` 에 값으로 싣는다).
+    """
+    rule = vocab.get("설계_교정") or {}
+    if not rule.get("enabled"):
+        return []
+    고침 = []
+    고침 += _교정_value_range(slots, rule.get("value_range_밴드") or {}, guards)
+    고침 += _교정_must_contain(slots, rule.get("must_contain_낱말") or {})
+    return 고침
+
+
+def _교정_value_range(slots: list, rule: dict, guards: dict | None) -> list[dict]:
+    """겹치지 않는 밴드를 **전형 밴드로 대체**한다. 답은 표에 값으로 있다."""
+    if not rule.get("enabled"):
+        return []
+    if guards is None:
+        guards = _load(os.path.join(ROOT, "rules", "guards.v1.json"))
+    bands = (guards.get("value_range") or {}).get("계량_전형_밴드") or {}
+    if not bands:
+        return []
+    원안_키 = rule.get("_원안_키") or "_value_range_원안"
+
+    고침 = []
+    for s in slots:
+        band = (bands.get(s.get("metric")) or {}).get("밴드")
+        vr = s.get("value_range")
+        if not band or not vr or len(vr) != 2:
+            continue                        # 밴드 없는 계량은 건드리지 않는다
+        lo, hi = vr
+        if not (hi < band[0] or lo > band[1]):
+            continue                        # 겹친다 — 그대로 둔다
+        s[원안_키] = [lo, hi]
+        s["value_range"] = [band[0], band[1]]
+        고침.append({"slot_id": s.get("slot_id"), "metric": s.get("metric"),
+                    "칸": "value_range",
+                    "원안": [lo, hi], "교정": [band[0], band[1]],
+                    "근거": "guards.value_range.계량_전형_밴드",
+                    "why": f"「{s.get('metric')}」의 전형 크기는 [{band[0]:g}, {band[1]:g}] "
+                           f"인데 기대가 [{lo:g}, {hi:g}] 라 겹치지 않는다 — "
+                           "이대로면 맞는 값이 격리된다"})
+    return 고침
+
+
+def _교정_must_contain(slots: list, rule: dict) -> list[dict]:
+    """낱말을 **자기 subject 안의 어절 하나**로 줄인다.
+
+    `any()` 라 낱말이 여럿이면 느슨해지고, subject 밖의 말이면 종류가 다른 값이 문턱을
+    넘는다. 그래서 답은 항상 subject 안에 있다 — 판단이 아니라 조회다.
+
+    ⚠ **없던 낱말을 지어내지 않는다.** 하나도 안 남으면 빈 채로 둔다 — 빈 `must_contain`
+      은 위반이 아니고(`gate.check_must_contain`), 채우는 것은 조회가 아니라 판단이다.
+    """
+    if not rule.get("enabled"):
+        return []
+    원안_키 = rule.get("_원안_키") or "_must_contain_원안"
+
+    고침 = []
+    for s in slots:
+        mc = [w for w in (s.get("must_contain") or []) if str(w).strip()]
+        if not mc:
+            continue
+        subj = str(s.get("subject") or "")
+        # 공백이 든 낱말은 어절로 쪼갠 뒤, subject 안에 실제로 있는 것만 남긴다.
+        후보 = [tok for w in mc for tok in str(w).split() if tok and tok in subj]
+        # 가장 긴 것 하나. 길이가 같으면 원래 순서를 지켜 결정론을 잃지 않는다.
+        새것 = [max(후보, key=len)] if 후보 else []
+        if 새것 == mc:
+            continue                        # 이미 규율을 지킨다 — 그대로 둔다
+        s[원안_키] = list(mc)
+        s["must_contain"] = 새것
+        고침.append({"slot_id": s.get("slot_id"), "metric": s.get("metric"),
+                    "칸": "must_contain", "subject": subj,
+                    "원안": list(mc), "교정": 새것,
+                    "근거": "vocab.설계_교정.must_contain_낱말",
+                    "why": f"must_contain 은 any() 라 낱말이 여럿이면 느슨해지고 subject "
+                           f"밖의 말이면 종류가 다른 값이 문턱을 넘는다 — "
+                           f"「{subj}」 안의 어절 "
+                           + (f"「{새것[0]}」 하나로 줄였다" if 새것
+                              else "이 하나도 없어 비웠다(없는 낱말을 지어내지 않는다)")})
+    return 고침
+
+
+class HarnessError(RuntimeError):
+    """하네스가 **답을 못 받았다.** 게이트 미통과(fail-open)와 다르다 —
+    저쪽은 「모델이 답했는데 검사를 못 넘었다」이고 이쪽은 「답 자체를 못 받았다」다.
+
+    예전에는 이 자리가 `SystemExit` 였다. 프로세스를 끝내는 방법이라 **함수로 부를 수가
+    없었다** — 서버에서 부르면 워커가 통째로 죽는다.
+    """
+
+
+@dataclasses.dataclass
+class HarnessOptions:
+    """⚠ 필드 이름은 CLI 인자의 `dest` 와 같아야 한다 — `main()` 이 `vars()` 를 붓는다."""
+
+    concept: str
+    tag: str
+    model: str = MODEL
+    replay: str = ""
+    as_of: int = 0
+    reason: str = ""
+
+    def __post_init__(self):
+        self.as_of = self.as_of or datetime.date.today().year
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--concept", required=True)
@@ -608,26 +829,58 @@ def main():
     ap.add_argument("--as-of", type=int, default=datetime.date.today().year)
     ap.add_argument("--reason", default="", help="스냅샷을 덮어쓰는 사유. _수정이력 에 남는다")
     a = ap.parse_args()
+    try:
+        run_harness(HarnessOptions(**vars(a)))
+    except HarnessError as stopped:
+        raise SystemExit(str(stopped))          # CLI 에서는 종전과 같이 멈춘다
+    return 0
 
+
+def run_harness(a: HarnessOptions) -> dict:
+    """슬롯·식 설계 1판. **LLM ≤3회.** 인자 파싱 밖이라 오케스트레이터가 부를 수 있다.
+
+    돌려주는 것 — `passed`(게이트 통과 여부) · `outdir`(gate.json 이 있는 자리) ·
+    `slots`/`formulas`(메모리 값) · `snapshot`(통과했을 때만 파일 경로).
+
+    ⚠ **미통과는 예외가 아니다.** fail-open 이라 `passed=False` 로 **돌아온다** —
+      부르는 쪽이 그것을 `degradation` 으로 옮긴다. 예외는 「답을 못 받았다」뿐이다.
+    """
     concept = _load(os.path.join(ROOT, a.concept) if not os.path.isabs(a.concept) else a.concept)
     vocab = _load(os.path.join(HERE, "vocab.json"))
     adapters = _load(os.path.join(ROOT, "rules", "adapters.v1.json"))
-    outdir = os.path.join(ROOT, "runs", "harness", a.tag)
+    # 씨앗 `runs/` 는 컨테이너에서 `:ro` 라 여기가 그 자리면 하네스가 죽는다.
+    outdir = runpath.harness_write_dir(a.tag)
     os.makedirs(outdir, exist_ok=True)
 
     slotcheck = _load(os.path.join(ROOT, "rules", "slotcheck.v1.json"))
     corpcode = _load(os.path.join(ROOT, "adapters", "_cache_corpcode.json"))
+    # 게이트도 자기 것을 따로 읽지만 **같은 파일**이라 갈릴 수 없다. 여기서 한 번 읽어
+    # 교정에 넘기는 것은 「교정과 판정이 같은 표를 본다」를 호출로 못박는 것이다.
+    guards = _load(os.path.join(ROOT, "rules", "guards.v1.json"))
     hyp = concept.get("_hypotheses_v2") or {}
 
     def judge(raw):
         slots, formulas, notes = wire(raw["data"], vocab, concept)
+        # ⚠ **판정 앞에 온다.** 게이트가 자기가 판정할 것을 고치면 판정이 사라지므로,
+        #   교정은 설계 층(여기)에 두고 게이트는 교정된 결과를 그대로 잰다.
+        교정 = repair_design(slots, vocab, guards)
+        if 교정:
+            _decide("설계 교정 — 답이 하나인 권고를 코드가 고쳤다", f"{len(교정)}칸",
+                    rule="vocab.설계_교정",
+                    why="고친 칸 수가 곧 **모델 초안의 오류 건수**다 (권고는 판정 앞에서 "
+                        "이미 지워지므로 권고_수로는 안 보인다): "
+                        + ", ".join(f"{c['slot_id']}.{c['칸']}" for c in 교정))
         rep = G.run_gate(raw["data"], slots, formulas, vocab, adapters, hyp,
                          _env_key("KOSIS_API_KEY"), slotcheck, a.as_of, corpcode,
                          concept=concept)
         rep["wire_notes"] = notes
+        # ⚠ `요약` 에는 절대 넣지 않는다 — `tools/harness_variance.py` 가 「통과 아님 =
+        #   미통과」로 세기 때문이다. 교정은 통과/미통과와 다른 층의 값이다.
+        rep["교정"] = 교정
+        rep["교정_수"] = len(교정)
         return slots, formulas, rep
 
-    attempts, report = [], None
+    attempts, report, best = [], None, None
     if a.replay:
         raw = _load(a.replay)
         print(f"[replay] {a.replay} — LLM 0회")
@@ -639,14 +892,17 @@ def main():
             _intervene("멈춤 — OPENAI_API_KEY 없음", "not_configured", blocking=True)
             io.open(os.path.join(outdir, "무인_기록.json"), "w", encoding="utf-8").write(
                 json.dumps(_무인_기록(), ensure_ascii=False, indent=2))
-            raise SystemExit("OPENAI_API_KEY 없음 → not_configured. 가짜 슬롯을 만들지 않는다.")
+            raise HarnessError("OPENAI_API_KEY 없음 → not_configured. 가짜 슬롯을 만들지 않는다.")
         os.environ.setdefault("OPENAI_API_KEY", _env_key("OPENAI_API_KEY"))
         # 재시도 상한은 규칙에 있다(vocab.재시도). 통과할 때까지 돌리면 하네스가 아니라 난수다.
         limit = vocab["재시도"]["max_attempts"]
+        #: 이름이 여기 있는 **권고만** 재시도를 건다. 규칙은 vocab 이 정본이고 코드는 읽기만 한다.
+        _RETRY_ADVISORY = set(vocab["재시도"].get("권고_재시도") or [])
         violations = None
         for n in range(1, limit + 1):
             try:
-                raw = call_llm(build_prompt(concept, vocab, a.as_of, violations, corpcode),
+                raw = call_llm(build_prompt(concept, vocab, a.as_of, violations, corpcode,
+                                            guards),
                                a.model, output_schema(vocab, concept))
             except Exception as e:
                 # **LLM 호출 자체가 실패하는 자리.** 게이트 실패(fail-open)와 다르다 —
@@ -664,23 +920,54 @@ def main():
                 io.open(os.path.join(outdir, "무인_기록.json"), "w", encoding="utf-8").write(
                     json.dumps({**_무인_기록(), "_시도": n, "_상한": limit},
                                ensure_ascii=False, indent=2))
-                raise SystemExit(
+                raise HarnessError(
                     f"LLM 호출 실패 (시도 {n}/{limit}) — {type(e).__name__}: {str(e)[:200]}\n"
                     f"  기록: {outdir}/무인_기록.json (차단 개입 1건)")
             io.open(os.path.join(outdir, f"llm_raw_{n}.json"), "w", encoding="utf-8").write(
                 json.dumps(raw, ensure_ascii=False, indent=2))
             slots, formulas, report = judge(raw)
+            failed = sum(len(c.get("violations") or []) or (0 if c["passed"] else 1)
+                         for c in report["checks"])
+            # 권고는 **탈락이 아니다.** 그래서 `failed` 에 더하지 않고 «둘째 열쇠»로 둔다 —
+            # 위반이 같은 판본이 둘이면 권고가 적은 쪽을 고른다. 임의의 가중치(0.25 따위)를
+            # 지어내지 않으려고 튜플 정렬을 쓴다.
+            권고 = report.get("권고_수", 0)
+            순위 = (failed, 권고)
             attempts.append({"시도": n, "usage": raw.get("usage"), "repair": raw.get("repair"),
-                             "요약": report["요약"], "통과": report["passed"]})
+                             # 모델 초안의 오류 건수. 권고가 0 이어도 이 값은 0 이 아닐 수
+                             # 있다 — 교정이 판정 앞에서 이미 지웠기 때문이다.
+                             "교정_수": report.get("교정_수", 0),
+                             "요약": report["요약"], "통과": report["passed"], "위반_수": failed,
+                             "권고_수": 권고, "권고_요약": report.get("권고_요약")})
+            # ⚠ **최선 판본을 붙든다.** 예전에는 루프가 끝나면 «마지막» 판본이 남았고,
+            #   되먹임이 진동하면 더 나쁜 판본이 채택됐다 — 2026-08-11 실측:
+            #   시도2 가 위반 1건이었는데 버려지고 위반 2건인 시도3 이 최종이 됐다.
+            #   재시도는 개선을 **보장하지 않는다**(모델이 매번 새로 짠다). 그러면
+            #   「세 번 돌렸다」가 「가장 좋은 것을 골랐다」를 뜻하게 두어야 한다.
+            if best is None or 순위 < best[3]:
+                best = (slots, formulas, report, 순위, raw, n)
             print(f"[시도 {n}/{limit}] {raw['model']} · 슬롯 {len(slots)} · 식 {len(formulas)} · "
-                  + ("통과" if report["passed"] else "미통과"))
-            if report["passed"]:
+                  + ("통과" if report["passed"] else f"미통과(위반 {failed}건)")
+                  + (f" · 권고 {권고}건" if 권고 else ""))
+            # ⚠ **권고 대부분은 재시도를 걸지 않는다** — 그것이 「경고만」 결정의 실제
+            #   내용이고, 답을 아는 권고는 `repair_design` 이 코드로 고친다. 예외는
+            #   `vocab.재시도.권고_재시도` 에 이름이 적힌 것뿐이다: **지시가 이미 있는데
+            #   모델이 요동하는 자리**라 지시로도 코드로도 못 고치고 다시 뽑아야 한다.
+            #   ⚠ `passed` 는 건드리지 않으므로 fail-open 갈래는 그대로다.
+            재뽑기 = [c["name"] for c in report["checks"]
+                    if c.get("권고") and c["name"] in _RETRY_ADVISORY]
+            if report["passed"] and not 재뽑기:
                 _decide("게이트 통과 — 재시도 종료", f"시도 {n}/{limit}",
-                        rule="vocab.재시도.max_attempts", why="전 검사 통과")
+                        rule="vocab.재시도.max_attempts",
+                        why="전 검사 통과" + (f" (권고 {권고}건은 막지 않는다)" if 권고 else ""))
                 break
+            if report["passed"] and n < limit:
+                _decide("게이트는 통과했으나 권고로 재시도", f"시도 {n + 1}/{limit}",
+                        rule="vocab.재시도.권고_재시도",
+                        why="지시가 이미 있는데 모델이 요동하는 자리다 — " + ", ".join(재뽑기))
             # **재시도는 스스로 내린 결정이다** — 사람을 부르지 않고 위반을 되먹여 다시 돈다.
             # 이 줄이 없으면 3회를 돈 실행과 1회에 끝난 실행이 기록상 구별되지 않는다.
-            if n < limit:
+            if n < limit and not report["passed"]:
                 _decide("게이트 미통과 → 재시도", f"시도 {n + 1}/{limit}",
                         rule="vocab.재시도.max_attempts",
                         why="미통과: " + ", ".join(c["name"] for c in report["checks"]
@@ -690,6 +977,22 @@ def main():
                            or {k: v for k, v in c.items()
                                if k in ("미충족_칸", "고아_슬롯") and v}}
                           for c in report["checks"] if not c["passed"]]
+            # 어차피 다시 도는 판이면 권고도 같이 실어 보낸다 — **공짜다**(호출이 안 는다).
+            # ⚠ 「탈락이 아니라 권고」라고 **문안에 적는다.** 안 적으면 모델이 규칙으로 읽고
+            #   컨셉이 허락하지 않는 분산을 억지로 만든다.
+            violations += [{"검사": c["name"], "부류": "권고(탈락 아님 — 지킬 수 있으면 지켜라)",
+                            "위반": c.get("권고")}
+                           for c in report["checks"] if c.get("권고")]
+
+    if best is not None and best[3] < (
+            sum(len(c.get("violations") or []) or (0 if c["passed"] else 1)
+                for c in report["checks"]), report.get("권고_수", 0)):
+        slots, formulas, report, _, raw, _n = best
+        _decide("최선 판본 채택", f"시도 {_n}/{limit} (위반 {best[3][0]}건 · 권고 {best[3][1]}건)",
+                rule="harness:best-of-N",
+                why="마지막 판본보다 위반이 적다 (같으면 권고가 적다)")
+        print(f"    최선 판본은 시도 {_n} (위반 {best[3][0]}건 · 권고 {best[3][1]}건) — "
+              "그것으로 마감한다")
 
     report["tag"] = a.tag
     report["model"] = raw.get("model")
@@ -728,7 +1031,13 @@ def main():
         _decide("게이트 미통과 · 재시도 소진 → fail-open 진행", "사람을 부르지 않고 종료 0",
                 rule=f"failopen:{fo.get('version')}",
                 why="미통과 검사: " + ", ".join(c["name"] for c in bad))
-        hit = {v.get("slot_id") for c in bad for v in (c.get("violations") or [])}
+        # ⚠ **위반 항목이 전부 dict 인 것은 아니다.** `check_hypothesis_leak` 은 «샌 값»을
+        #   문자열로 낸다(슬롯에 매인 위반이 아니라 값 자체가 위반이라서 옳은 모양이다).
+        #   그걸 모르고 `.get` 을 부르면 **fail-open 이 터진다** — 하필 「어떤 입력에도
+        #   출력은 나온다」를 지키라고 있는 자리가 예외로 죽는 것이다.
+        #   판 ㉜ 분산 측정에서 실제로 터졌다(AttributeError: 'str' object has no attribute 'get').
+        hit = {v.get("slot_id") for c in bad for v in (c.get("violations") or [])
+               if isinstance(v, dict)}
         cells = sorted({s.get("_canvas_cell") for s in slots
                         if s.get("slot_id") in hit and s.get("_canvas_cell")})
         n = len(attempts) or 1
@@ -755,7 +1064,10 @@ def main():
               f"  기록: {outdir}/harness_failure.json\n"
               f"  영향 칸: {', '.join(rec['영향_칸'])}")
         _flush_gate()          # fail-open 결정까지 담아 다시 쓴다
-        return 0
+        # ⚠ **미통과는 예외가 아니다.** fail-open 이라 값으로 돌아간다 —
+        #   부르는 쪽이 이것을 `degradation` 으로 옮긴다. 스냅샷은 쓰지 않았다.
+        return {"passed": False, "outdir": outdir, "slots": slots, "formulas": formulas,
+                "report": report, "snapshot": None, "failure": rec}
 
     stamp = datetime.date.today().isoformat()
 
@@ -784,7 +1096,12 @@ def main():
             rule="failopen:스냅샷 — 게이트 통과분만 기록", why="전 검사 통과")
     _flush_gate()              # 성공 갈래도 마지막 결정까지 담아 다시 쓴다
     print(f"\n스냅샷: data/slots_{a.tag}.json · data/formulas_{a.tag}.json")
-    return 0
+    return {"passed": True, "outdir": outdir, "slots": slots, "formulas": formulas,
+            "report": report, "snapshot": {
+                # `run.py --slots/--formulas` 는 ROOT 기준 상대경로를 받는다 — 절차의
+                # 정본(표준검사세트 v1.1)이 이 이름을 쓰므로 자리를 옮기지 않는다.
+                "slots": os.path.join("data", f"slots_{a.tag}.json"),
+                "formulas": os.path.join("data", f"formulas_{a.tag}.json")}}
 
 
 if __name__ == "__main__":
