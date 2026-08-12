@@ -183,7 +183,7 @@ def test_market_rescore_does_not_require_unrelated_document_text_contents(client
 
 
 def test_market_execution_passes_request_identity_to_bm_diagnostics(client, monkeypatch):
-    from app.research import pipeline
+    from app.research import product_pipeline as pipeline
 
     captured = {}
 

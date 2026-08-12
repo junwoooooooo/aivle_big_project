@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from app.research import pipeline, product_market_join
+from app.research import product_pipeline as pipeline, product_market_join
 from app.research.bm.contracts import (
     BMAnalysisResult,
     BMCanvasItem,

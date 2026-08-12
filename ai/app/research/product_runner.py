@@ -11,13 +11,9 @@ import asyncio
 import io
 import json
 import os
-import subprocess
 import sys
 
 from app.research.progress_jsonl import SafeProgressJsonl
-
-
-PRODUCT_ASSUMPTION_PROFILE = "product"
 
 
 def main() -> None:
@@ -36,39 +32,77 @@ def main() -> None:
 
     os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
     os.environ["RESEARCH2_GENERATED_RUNS_DIR"] = os.path.join(args.workspace, "runs-generated")
-    # Product 실행 경계가 authority를 고른다. concept 문자열에서 업종을 추측하지 않는다.
-    os.environ["RESEARCH2_ASSUMPTION_PROFILE"] = PRODUCT_ASSUMPTION_PROFILE
     with io.open(args.input, encoding="utf-8") as handle:
         concept = json.load(handle)
-    concept_path = os.path.join(args.workspace, "concept.json")
-    with io.open(concept_path, "w", encoding="utf-8") as handle:
-        json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
-
-    from app.research.runner import RESEARCH_HOME
-    command = [sys.executable, "-u", "run.py", "--id", args.run_id,
-               "--concept", concept_path, "--as-of", args.as_of]
     progress.emit({"stage": "MARKET_COLLECTION", "action": "STARTED", "status": "RUNNING",
                    "safeSummary": "선택한 사업안의 시장 근거를 수집하고 있습니다."})
-    process = subprocess.run(
-        command,
-        cwd=RESEARCH_HOME, check=False, capture_output=True, text=True,
-    )
-    if process.returncode:
+    try:
+        # donor orchestrator가 dynamic collection, harness/dryrun gate, dual run path,
+        # partial quarantine 및 recollect 의미를 한 곳에서 결정한다. 이 wrapper는
+        # immutable snapshot을 donor textContents 계약으로 옮길 뿐이다.
+        from app.research.pipeline import run_market_research
+        from app.research.research2 import runpath
+        if runpath.exists(args.concept_id) and not runpath.complete(args.concept_id):
+            runpath.quarantine_partial(args.concept_id)
+        task_input = {
+            "mode": "FULL",
+            "conceptId": args.concept_id,
+            "asOf": args.as_of,
+            "llmBudget": args.llm_budget,
+            "textContents": [{
+                "contentKey": "concept",
+                "chunks": [{"text": json.dumps(concept, ensure_ascii=False, sort_keys=True)}],
+            }],
+        }
+        result = asyncio.run(run_market_research(task_input, args.run_id, 24 * 60 * 60))
+        result = _fail_closed_unverified_product_assumptions(result)
+    except Exception:
         progress.emit({"stage": "MARKET_COLLECTION", "action": "FAILED", "status": "FAILED",
                        "safeSummary": "시장 근거 수집을 완료하지 못했습니다."})
         progress.close()
-        detail = (process.stderr or process.stdout or "research2 failed").splitlines()
-        raise RuntimeError(detail[-1] if detail else "research2 failed")
+        raise
     progress.emit({"stage": "MARKET_COLLECTION", "action": "COMPLETED", "status": "RUNNING",
                    "safeSummary": "시장 근거 수집을 완료했습니다."})
-
-    from app.research.pipeline import Budget, _full
-    result = _full(args.run_id, concept_path, args.concept_id, args.run_id,
-                   Budget(total=args.llm_budget), False, collection_wired=True,
-                   event_sink=progress.emit)
+    progress.emit({"stage": "MARKET_SERIALIZATION", "action": "COMPLETED",
+                   "status": "COMPLETED", "safeSummary": "시장조사 결과 정리 완료"})
     progress.close()
     with io.open(args.output, "w", encoding="utf-8") as handle:
         json.dump(result, handle, ensure_ascii=False, sort_keys=True)
+
+
+def _fail_closed_unverified_product_assumptions(result: dict) -> dict:
+    """Keep main rules exact, but never present fixture-derived numbers as Product facts.
+
+    Main's assumption rules are an audited experiment asset. They include numeric
+    hypotheses with zero upstream sources. A Product result may expose those as
+    documented assumptions, but it must not publish an estimate whose arithmetic
+    depends on them as if it were a current-project result.
+    """
+    market = result.get("market")
+    if not isinstance(market, dict):
+        return result
+    blocked: list[str] = []
+    for name in ("tam", "sam", "som"):
+        estimate = market.get(name)
+        if not isinstance(estimate, dict):
+            continue
+        factors = estimate.get("factors") or []
+        if any(
+            isinstance(factor, dict)
+            and factor.get("basis") == "가정"
+            and int(factor.get("sourceCount") or 0) == 0
+            for factor in factors
+        ):
+            market[name] = None
+            blocked.append(name.upper())
+    if blocked:
+        result.setdefault("degradations", []).append({
+            "stage": "product_post_validation",
+            "code": "UNVERIFIED_NUMERIC_ASSUMPTION",
+            "detail": "관측 근거가 없는 main 가정에 의존한 "
+                      + ", ".join(blocked) + " 계산은 Product 결과에서 공개하지 않았다",
+        })
+    return result
 
 
 if __name__ == "__main__":

@@ -16,8 +16,6 @@ from __future__ import annotations
 import copy, hashlib, io, json, os, re, threading, time
 from datetime import date, datetime
 
-from assumption_profile import rule_file as assumption_rule_file
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 RULES_DIR = os.path.join(HERE, "rules")
 # 원장 위치. **환경변수로 옮길 수 있어야 한다** (판 ㉝ 이식).
@@ -50,8 +48,6 @@ with io.open(PINS_FILE, encoding="utf-8") as _f:
 def load_rules(rules_dir: str = RULES_DIR) -> dict:
     out = {}
     for key, fname in RULE_FILES.items():
-        if key == "assumptions":
-            fname = assumption_rule_file(fname)
         with io.open(os.path.join(rules_dir, fname), encoding="utf-8") as f:
             out[key] = json.load(f)
     out["_versions"] = {k: v.get("version") for k, v in out.items() if isinstance(v, dict)}

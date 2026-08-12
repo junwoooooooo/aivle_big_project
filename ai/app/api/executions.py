@@ -327,7 +327,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             from app.tasks.marketing_visual import execute_marketing_visual
             result = await execute_marketing_visual(body.input)
         elif body.taskType == "MARKET_RESEARCH":
-            from app.research.pipeline import run_market_research
+            from app.research.product_pipeline import run_market_research
             from app.progress.safe_task_progress import progress_sender_from_environment
             remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
             async with progress_sender_from_environment(

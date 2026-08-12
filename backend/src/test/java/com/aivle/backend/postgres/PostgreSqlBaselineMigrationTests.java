@@ -25,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(20);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(22);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -35,8 +35,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
 
         assertThat(appliedVersions).containsExactly(
             "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-            "18", "19", "20", "21");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
+            "18", "19", "20", "21", "22", "23");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -57,7 +57,19 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
                 "concept_input_requests", "concept_input_responses", "concept_portfolio_selections",
                 "concept_portfolio_hypothesis_decisions", "concept_portfolio_delta_legal_reviews",
                 "concept_legal_regulatory_reports", "market_research_runs", "market_research_versions",
-                "twin_survey_runs", "twin_survey_versions", "bm_plan_preparations");
+                "twin_survey_runs", "twin_survey_versions", "bm_plan_preparations",
+                "tech_ops_advisory_reports", "research_competitor_seeds");
+
+            assertThat(constraintCount(connection, schema, "research_competitor_seeds",
+                "fk_research_competitor_seed_project")).isOne();
+            assertThat(constraintCount(connection, schema, "research_competitor_seeds",
+                "fk_research_competitor_seed_user")).isOne();
+            assertThat(constraintCount(connection, schema, "research_competitor_seeds",
+                "ck_research_competitor_seed_order")).isOne();
+            assertThat(indexCount(connection, schema, "research_competitor_seeds",
+                "uk_research_competitor_seed_name")).isOne();
+            assertThat(columnCount(connection, schema, "research_competitor_seeds", "version")).isOne();
+            assertThat(columnCount(connection, schema, "research_competitor_seeds", "display_order")).isOne();
 
             assertTablesAbsent(connection, schema,
                 "project_documents", "document_versions", "structured_plans",
@@ -80,7 +92,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(13);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(15);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -101,7 +113,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(12);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(14);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
@@ -140,7 +152,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(7);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(9);
         latest.validate();
 
         try (Connection connection = DriverManager.getConnection(

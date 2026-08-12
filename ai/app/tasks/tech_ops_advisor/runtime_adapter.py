@@ -19,14 +19,16 @@ async def execute_tech_ops_advisory(
     business_model = payload.get("businessModelResult") or payload.get("bmResult") or {}
     confirmed_input = payload.get("techOpsInputSnapshot") or {}
 
-    # main's engine accepts concept/market/bm/legal.  Preserve confirmed Phase A
-    # input as an explicit BM-side operating context instead of dropping it.
+    # The exact main engine accepts only concept/market/bm/legal. Keep the user
+    # snapshot in the accepted `bm` envelope, but give its path an unmistakable
+    # provenance boundary. The result post-processor restores its public source
+    # and decision status without changing the engine body.
     engine_input = {
         "concept": concept,
         "market": market,
         "bm": {
             "businessModel": business_model,
-            "confirmedTechOpsInput": confirmed_input,
+            "USER_CONFIRMED_TECH_OPS": confirmed_input,
         },
         "legalHandoff": payload.get("legalHandoff"),
     }
@@ -41,7 +43,20 @@ async def execute_tech_ops_advisory(
         ) for gate in validated.gates
     ):
         raise ValueError("missing legal handoff requires an OPEN legal review gate")
-    return validated.model_dump(mode="json")
+    output = validated.model_dump(mode="json")
+    _restore_confirmed_tech_ops_provenance(output)
+    return output
+
+
+def _restore_confirmed_tech_ops_provenance(result: dict[str, Any]) -> None:
+    """Facts cited by advice keep their IDs while regaining user-input authority."""
+    for fact in result.get("layer1Facts") or []:
+        if not isinstance(fact, dict):
+            continue
+        path = str(fact.get("path") or "")
+        if path.startswith("BM.USER_CONFIRMED_TECH_OPS."):
+            fact["source"] = "TECH_OPS"
+            fact["status"] = "USER_CONFIRMED_OR_ACCEPTED"
 
 
 async def _emit(sink: ProgressSink | None, stage: str, message_key: str) -> None:

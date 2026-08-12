@@ -55,8 +55,63 @@ def test_full_adapter_passes_canonical_sources_and_confirmed_input(monkeypatch):
     output = asyncio.run(runtime_adapter.execute_tech_ops_advisory(task_input()))
     assert captured["market"]["tam"] == 1000
     assert captured["bm"]["businessModel"]["revenueModel"] == "SUBSCRIPTION"
-    assert captured["bm"]["confirmedTechOpsInput"]["requiredFacts"]["ownedPersonnel"][0]["count"] == 1
+    assert captured["bm"]["USER_CONFIRMED_TECH_OPS"]["requiredFacts"]["ownedPersonnel"][0]["count"] == 1
     assert len(output["advice"]) == 7
+
+
+def test_confirmed_tech_ops_fact_keeps_distinct_prompt_path_and_result_provenance(monkeypatch):
+    captured = {}
+    generated = result()
+    generated["layer1Facts"] = [
+        {"factId": "FACT-001", "path": "MARKET.tam", "value": "1000", "source": "MARKET", "status": "CONFIRMED_FACT"},
+        {"factId": "FACT-002", "path": "BM.businessModel.channel", "value": "파트너", "source": "BM", "status": "CONFIRMED_FACT"},
+        {"factId": "FACT-003", "path": "BM.USER_CONFIRMED_TECH_OPS.requiredDecisions.delivery.value", "value": "직접 운영", "source": "BM", "status": "CONFIRMED_FACT"},
+    ]
+    generated["advice"][0]["basisIds"] = ["FACT-003"]
+
+    async def engine(payload):
+        captured.update(payload)
+        return generated
+
+    monkeypatch.setattr(runtime_adapter, "generate_tech_ops_advisory", engine)
+    output = asyncio.run(runtime_adapter.execute_tech_ops_advisory(task_input()))
+
+    assert "USER_CONFIRMED_TECH_OPS" in captured["bm"]
+    facts = {fact["factId"]: fact for fact in output["layer1Facts"]}
+    assert facts["FACT-001"]["source"] == "MARKET"
+    assert facts["FACT-002"]["source"] == "BM"
+    assert facts["FACT-003"]["source"] == "TECH_OPS"
+    assert facts["FACT-003"]["status"] == "USER_CONFIRMED_OR_ACCEPTED"
+    assert output["advice"][0]["basisIds"] == ["FACT-003"]
+
+
+def test_real_scaler_fact_path_is_restored_without_changing_basis_id():
+    engine_payload = {
+        "conceptHandoff": task_input()["conceptHandoff"],
+        "marketResult": task_input()["marketResult"],
+        "bmResult": {
+            "businessModel": task_input()["businessModelResult"],
+            "USER_CONFIRMED_TECH_OPS": task_input()["techOpsInputSnapshot"],
+        },
+    }
+
+    scaled = asyncio.run(scale_tech_ops_input(engine_payload))
+    confirmed = next(
+        fact for fact in scaled["layer1Facts"]
+        if fact["path"].startswith("BM.USER_CONFIRMED_TECH_OPS.")
+    )
+    fact_id = confirmed["factId"]
+    assert confirmed["source"] == "BM"  # exact main scaler behavior before the full adapter boundary
+    assert any(fact["factId"] == fact_id for fact in scaled["advisorFacts"])
+
+    report = {"layer1Facts": scaled["layer1Facts"], "advice": [{"basisIds": [fact_id]}]}
+    runtime_adapter._restore_confirmed_tech_ops_provenance(report)
+    restored = next(fact for fact in report["layer1Facts"] if fact["factId"] == fact_id)
+
+    assert restored["path"].startswith("BM.USER_CONFIRMED_TECH_OPS.")
+    assert restored["source"] == "TECH_OPS"
+    assert restored["status"] == "USER_CONFIRMED_OR_ACCEPTED"
+    assert report["advice"][0]["basisIds"] == [fact_id]
 
 
 def test_missing_legal_requires_open_legal_gate(monkeypatch):

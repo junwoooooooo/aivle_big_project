@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app.research import pipeline
+from app.research import product_pipeline as pipeline
 
 
 RESEARCH_HOME = Path(pipeline.RESEARCH_HOME)
@@ -31,17 +31,20 @@ def product_run_override(tmp_path, monkeypatch):
     import runlog
     import runpath
     import scorecard
+    from app.research.research2 import runpath as package_runpath
 
     with monkeypatch.context() as scoped:
         scoped.setenv("RESEARCH2_RUNS_DIR", str(runs_dir))
         scoped.setenv("RESEARCH2_GENERATED_RUNS_DIR", str(tmp_path / "runs-generated"))
         importlib.reload(runpath)
+        importlib.reload(package_runpath)
         importlib.reload(bm_scorer)
         importlib.reload(scorecard)
         importlib.reload(runlog)
         yield TEMP_RUN_ID, bm_scorer, scorecard
 
     importlib.reload(runpath)
+    importlib.reload(package_runpath)
     importlib.reload(bm_scorer)
     importlib.reload(scorecard)
     importlib.reload(runlog)

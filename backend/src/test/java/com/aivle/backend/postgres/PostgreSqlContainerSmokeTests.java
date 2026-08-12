@@ -34,12 +34,12 @@ class PostgreSqlContainerSmokeTests extends PostgreSqlIntegrationTestSupport {
         assertThat(version).contains("PostgreSQL 17.10");
         assertThat(timezone).isEqualTo("UTC");
         assertThat(encoding).isEqualTo("UTF8");
-        assertThat(flyway.info().applied()).hasSize(20);
+        assertThat(flyway.info().applied()).hasSize(22);
         assertThat(flyway.info().current().getVersion().getVersion())
-            .isEqualTo("21");
+            .isEqualTo("23");
         System.out.printf(
-            "AIDEV_RESYNC_R1_PG_FRESH postgres=\"%s\" flywayLatest=21 "
-                + "applied=20 applicationContext=PASS "
+            "MAIN_FULL_RESYNC_V4_PG_FRESH postgres=\"%s\" flywayLatest=23 "
+                + "applied=22 applicationContext=PASS "
                 + "ddlAutoValidate=PASS%n",
             version
         );

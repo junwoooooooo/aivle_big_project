@@ -1,10 +1,9 @@
 import json
 import asyncio
 import os
-import subprocess
 import sys
 
-from app.research import pipeline, product_market_join, product_runner
+from app.research import product_pipeline as pipeline, product_market_join, product_runner
 
 
 def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeypatch):
@@ -43,24 +42,17 @@ def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeyp
     assert seen["llm_budget"] == 7
 
 
-def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(monkeypatch, tmp_path):
-    monkeypatch.setenv("RESEARCH2_ASSUMPTION_PROFILE", "fixture")
+def test_product_runner_invokes_exact_main_orchestrator(monkeypatch, tmp_path):
     input_path = tmp_path / "input.json"
     output_path = tmp_path / "output.json"
     progress_path = tmp_path / "progress.jsonl"
     input_path.write_text(json.dumps({"concept_name": "Any concept"}), encoding="utf-8")
-    calls = []
-
-    def fake_run(command, **kwargs):
-        calls.append((command, kwargs))
-        return subprocess.CompletedProcess(command, 0, "", "")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    def fake_full(*args, **kwargs):
-        kwargs["event_sink"]({"stage": "MARKET_SERIALIZATION", "action": "COMPLETED",
-                              "status": "COMPLETED", "safeSummary": "결과 정리 완료"})
-        return {"mode": "FULL", "ok": True}
-    monkeypatch.setattr(pipeline, "_full", fake_full)
+    seen = {}
+    async def fake_main(task_input, run_id, timeout_seconds):
+        seen.update(task_input=task_input, run_id=run_id, timeout_seconds=timeout_seconds)
+        return {"mode": "FULL", "market": {"tam": None, "sam": None, "som": None}}
+    monkeypatch.setattr("app.research.pipeline.run_market_research", fake_main)
+    monkeypatch.setattr("app.research.research2.runpath.exists", lambda _run_id: False)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -80,12 +72,10 @@ def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(mon
     previous_runs_dir = os.environ.get("RESEARCH2_RUNS_DIR")
     product_runner.main()
 
-    command = calls[0][0]
-    assert command[1:3] == ["-u", "run.py"]
-    assert "--concept" in command
-    assert "--progress-jsonl" not in command
-    assert "--from" not in command
-    assert json.loads(output_path.read_text(encoding="utf-8"))["ok"] is True
+    assert seen["run_id"] == "run-1"
+    assert seen["task_input"]["conceptId"] == "concept-1"
+    assert json.loads(seen["task_input"]["textContents"][0]["chunks"][0]["text"])["concept_name"] == "Any concept"
+    assert json.loads(output_path.read_text(encoding="utf-8"))["mode"] == "FULL"
     events = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()]
     assert [event["stage"] for event in events] == [
         "MARKET_COLLECTION", "MARKET_COLLECTION", "MARKET_SERIALIZATION"]
