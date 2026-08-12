@@ -85,7 +85,7 @@ const messages = Object.freeze({
   'job.twin.survey.failed': 'Twin 조사를 완료하지 못했습니다.',
   'job.finance.estimate.queued': '재무 입력 추천 생성을 준비하고 있습니다.',
   'job.finance.estimate.alternative.queued': '다른 재무 입력 추천을 준비하고 있습니다.',
-  'job.finance.estimate.generating': 'Market·BM·TechOps 근거로 재무 입력 추천을 만들고 있습니다.',
+  'job.finance.estimate.generating': 'current Market·BM 근거로 재무 입력 추천을 만들고 있습니다.',
   'job.finance.estimate.completed': '재무 입력 추천이 준비되었습니다.',
   'job.finance.estimate.failed': '재무 입력 추천을 완료하지 못했습니다.',
   'job.finance.estimate.stale': '상위 입력이 바뀌어 재무 입력 추천을 적용하지 않았습니다.',

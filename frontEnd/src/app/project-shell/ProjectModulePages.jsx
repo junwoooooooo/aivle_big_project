@@ -10,7 +10,7 @@ const MODULE_DESCRIPTIONS = Object.freeze({
   businessModel: '시장 근거와 실행 계획을 결합해 Business Model을 분석합니다.',
   twinSurvey: '선택한 컨셉의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.',
   techOps: '상위 확정값을 재사용해 기술·운영 입력을 준비하고 외부 모듈에 전달합니다.',
-  finance: 'TechOps 승계값과 추가 재무 입력으로 FinancialInputSnapshot을 준비합니다.',
+  finance: 'current Market·BM 근거와 추가 재무 입력으로 FinancialInputSnapshot을 준비합니다.',
   marketing: '선택 컨셉과 확정 가설, 법률 결과로 마케팅 콘텐츠를 제작합니다.',
 });
 

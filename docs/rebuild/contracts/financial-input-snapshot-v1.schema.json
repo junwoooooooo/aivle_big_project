@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": [
     "contract", "schemaVersion", "snapshotId", "projectId", "preparationId",
-    "sourceTechOpsSnapshotId", "sourceMarketSeedSnapshotId", "sourceSnapshotHash",
+    "sourceMarketResearchVersionId", "sourceBusinessModelVersionId", "sourceSnapshotHash",
     "createdAt", "values", "valueProvenance", "calculatedCac", "upstreamReferences",
     "assistance", "hash"
   ],
@@ -16,8 +16,10 @@
     "snapshotId": { "type": "string", "minLength": 1 },
     "projectId": { "type": "integer", "minimum": 1 },
     "preparationId": { "type": "string", "minLength": 1 },
-    "sourceTechOpsSnapshotId": { "type": "string", "minLength": 1 },
-    "sourceMarketSeedSnapshotId": { "type": "string", "minLength": 1 },
+    "sourceTechOpsSnapshotId": { "type": ["string", "null"], "minLength": 1 },
+    "sourceMarketSeedSnapshotId": { "type": ["string", "null"], "minLength": 1 },
+    "sourceMarketResearchVersionId": { "type": "integer", "minimum": 1 },
+    "sourceBusinessModelVersionId": { "type": "integer", "minimum": 1 },
     "sourceSnapshotHash": { "$ref": "#/$defs/hash" },
     "createdAt": { "type": "string", "format": "date-time" },
     "values": {

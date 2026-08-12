@@ -30,6 +30,7 @@ class ModuleIntegrationV2MarketSeedTests {
         ModuleIntegrationService service = new ModuleIntegrationService(projects, legacySelections, seeds,
             mock(ModuleHandoffRepository.class), mock(ModuleRunRepository.class),
             mock(TechOpsInputSnapshotRepository.class), mock(FinancialInputSnapshotRepository.class),
+            mock(com.aivle.backend.pipeline.market.MarketResearchService.class),
             new ObjectMapper());
         MarketAnalysisSeedSnapshot v2 = MarketAnalysisSeedSnapshot.createPortfolio("seed-v2", 41L, 17L,
             "concept-v2", "report-v2", "2.0", hash('a'), hash('b'), "{}", 7L,

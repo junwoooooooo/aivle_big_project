@@ -59,6 +59,51 @@ describe('useFinance', () => {
       .toBeGreaterThan(before));
   });
 
+  it('그룹 추천은 여러 field TaskRun을 만들고 마지막에 한 번 canonical refresh한다', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, assistance: {} };
+    const client = { get: vi.fn(async (path) => {
+      if (path.endsWith('/finance/preparation')) return { data: preparation };
+      if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+      throw { status: 404 };
+    }), post: vi.fn(async () => ({ data: { status: 'QUEUED' } })), patch: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const before = client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length;
+
+    await act(() => result.current.generateEstimates(['totalMarketingCost', 'newCustomerCount']));
+
+    expect(client.post.mock.calls.filter(([path]) => path.endsWith('/generate'))).toHaveLength(2);
+    expect(client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length).toBe(before + 1);
+  });
+
+  it('그룹 추천이 부분 실패해도 canonical 상태를 다시 읽고 안전한 오류를 보존한다', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, assistance: {} };
+    const failure = { status: 409, message: '이미 실행 중' };
+    const client = { get: vi.fn(async (path) => {
+      if (path.endsWith('/finance/preparation')) return { data: preparation };
+      if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+      throw { status: 404 };
+    }), post: vi.fn(async (path) => {
+      if (path.includes('newCustomerCount')) throw failure;
+      return { data: { status: 'QUEUED' } };
+    }), patch: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const before = client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length;
+
+    let caught;
+    await act(async () => {
+      try { await result.current.generateEstimates(['totalMarketingCost', 'newCustomerCount']); }
+      catch (error) { caught = error; }
+    });
+
+    expect(caught).toBe(failure);
+    expect(client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length).toBe(before + 1);
+    await waitFor(() => expect(result.current.error).toBe(failure));
+  });
+
   it('분석 TaskRun을 SSE로 추적한다', async () => {
     const preparation = { preparationId: 'prep-1', revision: 1, inputSnapshotId: 'snapshot-1', assistance: {} };
     const client = { get: vi.fn(async (path) => {

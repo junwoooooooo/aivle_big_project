@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createFinancialDraft, financialValuesFromDraft, formatMoney } from './financeModel.js';
 
 describe('financeModel', () => {
-  it('TechOps 승계 readOnly 값은 재전송하지 않고 누락값만 요청 본문으로 만든다', () => {
+  it('상위 근거의 readOnly 값은 재전송하지 않고 사용자 입력값만 요청 본문으로 만든다', () => {
     const fields = {
       annualFixedLaborCost: { value: { amount: 120, currency: 'KRW' }, readOnly: true },
       annualFixedInfrastructureCost: { value: null, readOnly: false },

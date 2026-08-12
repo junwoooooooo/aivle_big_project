@@ -21,16 +21,35 @@ alternative from rejectedProposalJson. source must be AI_ESTIMATE."""
 
 ECONOMIC_SANITY_RULES = """
 Financial economic-sanity rules:
-- unitVariableCost, paymentFee, partnerPayout, shippingCost, and customerIncrementalInfraCost are per sale
-  or per average monthly subscriber costs, never annual totals or one-off totals.
-- Zero is allowed only when the BM explicitly makes the item not applicable. Otherwise use a conservative
-  positive benchmark and state whether it is per transaction or per subscriber-month.
-- Anchor unitVariableCost at no more than 45% of price, paymentFee at 5%, partnerPayout at 30%, and
-  customerIncrementalInfraCost at 20%. Combined per-unit costs must not exceed 70% without explicit evidence.
-- shippingCost is 0 for a purely digital service and positive only for explicit physical fulfilment.
-- totalMarketingCost and totalSalesCost are annual total KRW budgets, not monthly or per-customer amounts.
-- If explanation contains a calculation, proposedValue.amount must equal the final KRW result.
-- Use Tavily snippets only as an external benchmark, never as a verified project observation.
+- Determine the correct unit before proposing a cost. unitVariableCost, paymentFee, partnerPayout,
+  shippingCost, and customerIncrementalInfraCost are per sale or per average monthly subscriber costs,
+  never annual totals or one-off contract totals.
+- Do not default these variable costs to zero. Zero is allowed only if the BM context explicitly makes
+  the item not applicable (for example, no physical delivery). In that case, say "해당 없음 가정"
+  in assumptions and explain why. Otherwise propose a conservative positive benchmark range value.
+- For a digital subscription, include plausible per-subscriber usage, API, payment, or support costs in
+  unitVariableCost/customerIncrementalInfraCost rather than treating all delivery cost as zero.
+- For paymentFee, use a per-transaction monetary equivalent based on the market/BM price context.
+- Never treat a monthly, annual, or initial amount as a per-unit amount. State the unit in Korean in
+  the explanation, such as "건당" or "구독자당 월".
+
+Price-anchor guardrails:
+- Find the market price hypothesis or subscription price P in contextJson and use it as the anchor.
+- For a digital subscription, unitVariableCost must normally be 1%~45% of P; paymentFee normally 1%~5%
+  of P; customerIncrementalInfraCost normally 1%~20% of P. The combined per-subscriber variable cost
+  must not exceed 70% of P without an explicit, evidence-backed exceptional reason.
+- partnerPayout is 0 only when BM has no revenue-sharing partner. When a partner exists, it is a
+  per-transaction/per-subscriber amount and normally must not exceed 30% of P. Never output a monthly,
+  annual, or initial partner budget here.
+- shippingCost is 0 for a purely digital service with no physical fulfilment. It may be positive only
+  when BM explicitly includes a shipped physical product, and must then be per delivery.
+- A proposed per-unit cost greater than the market price is economically implausible. Do not output it.
+- Use Tavily snippets only when they actually support the benchmark. In assumptions state whether the
+  basis is market/BM data, a Tavily benchmark, or a conservative assumption; never claim an unverified
+  Tavily search result is a market observation.
+- totalMarketingCost and totalSalesCost are annual total KRW budgets, not per-customer or monthly costs.
+  If explanation contains a calculation, proposedValue.amount must exactly equal the final KRW result of
+  that calculation. Never write 2,376,000 KRW in prose while returning 2,376 KRW.
 """
 
 THREE_YEAR_TARGET_RULES = """

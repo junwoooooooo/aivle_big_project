@@ -53,7 +53,6 @@ public class FinancialAnalysisService {
         input.put("snapshotHash", snapshot.snapshotHash());
         input.put("sourceMarketResearchVersionId", snapshot.sourceMarketResearchVersionId());
         input.put("sourceBusinessModelVersionId", snapshot.sourceBusinessModelVersionId());
-        input.put("sourceTechOpsSnapshotId", snapshot.sourceTechOpsSnapshotId());
         input.set("deterministicResult", deterministic);
         String json = mapper.writeValueAsString(input);
         String hash = hasher.hash(TaskType.FINANCE_ANALYSIS_REPORT, "1.0", "ko-KR", json);

@@ -44,6 +44,12 @@ describe('V2 job event message registry', () => {
     expect(jobEventMessage({ messageKey: 'job.marketing.visual.generating' }))
       .toBe('광고 문구와 이미지를 생성하고 있습니다.');
   });
+  it('Finance 추천 진행 문구에 TechOps prerequisite를 노출하지 않는다', () => {
+    const message = jobEventMessage({ messageKey: 'job.finance.estimate.generating' });
+    expect(message).toContain('current Market·BM');
+    expect(message).not.toContain('TechOps');
+    expect(message).not.toContain('기술·운영');
+  });
   it('groups only consecutive generic duplicates and preserves significant events', () => {
     const generic = (id) => ({ eventId: String(id), occurredAt: `2026-08-11T00:00:0${id}Z`,
       status: 'RUNNING', messageKey: 'job.concept-portfolio.trace.proposals',

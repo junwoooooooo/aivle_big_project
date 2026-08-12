@@ -46,12 +46,15 @@ def _image_prompt(value: MarketingContentInput, result: MarketingContentResult) 
     }
     return (
         "Create a polished, photorealistic Korean commercial campaign key visual using only the "
-        "provided facts. Use a clear hero subject, realistic materials, controlled studio lighting, "
-        "intentional depth, and negative space for copy rendered separately by the application. "
-        "Do not draw words, letters, numbers, logos, watermarks, UI labels, buttons, badges, claims, or "
-        "legal text. If a reference product image is provided, preserve its recognizable shape, color, "
-        "proportions, packaging, and material details while changing only setting, composition, lighting, "
-        "and campaign mood. Campaign facts:\n" + json.dumps(facts, ensure_ascii=False, sort_keys=True)
+        "provided facts. The final image must look like a professional retail or brand advertisement, "
+        "with a clear hero subject, realistic materials, controlled studio lighting, intentional depth, "
+        "and generous negative space for copy that will be rendered separately by the application. "
+        "Do not draw any words, letters, numbers, logos, watermarks, UI labels, buttons, badges, claims, "
+        "or legal text inside the image. Do not imply any prohibited claim. If a reference product image "
+        "is provided, preserve the product's recognizable shape, color, proportions, packaging, and "
+        "material details while upgrading only the setting, composition, lighting, and campaign mood. "
+        "Avoid generic clip-art, collage layouts, excessive props, distorted packaging, and dominant text "
+        "areas. Campaign facts:\n" + json.dumps(facts, ensure_ascii=False, sort_keys=True)
     )
 
 
@@ -99,9 +102,7 @@ def _generate_image_sync(prompt: str, size: str, reference: tuple[bytes, str] | 
         if not response.data or not response.data[0].b64_json:
             raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
         generated = base64.b64decode(response.data[0].b64_json, validate=True)
-        if not 0 < len(generated) <= MAX_IMAGE_BYTES or not generated.startswith(b"\xff\xd8\xff"):
-            raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
-        return generated
+        return _validate_generated_jpeg(generated)
     except ProviderFailure:
         raise
     except (AuthenticationError, PermissionDeniedError) as failure:
@@ -115,6 +116,12 @@ def _generate_image_sync(prompt: str, size: str, reference: tuple[bytes, str] | 
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
+
+
+def _validate_generated_jpeg(content: bytes) -> bytes:
+    if not 0 < len(content) <= MAX_IMAGE_BYTES or not content.startswith(b"\xff\xd8\xff"):
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
+    return content
 
 
 async def _upload_image(content: bytes) -> str:

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import useFinance from '../hooks/useFinance.js';
@@ -10,6 +10,8 @@ import {
 import '../styles/finance.css';
 import AnalysisReport from './AnalysisReport.jsx';
 
+const FinanceRefreshContext = createContext(null);
+
 export default function FinancePage() {
   const { projectId } = useParams();
   const { liveRevision = 0 } = useOutletContext() ?? {};
@@ -18,12 +20,13 @@ export default function FinancePage() {
   if (!finance.preparation) return <section className="finance-state"><h1>재무 분석 준비</h1>
     <p role="alert">{getUserErrorMessage(finance.error)}</p>
     <Link to={`/app/projects/${projectId}/business-model`}>시장조사와 BM을 완료한 뒤 재무 분석 시작</Link></section>;
-  return <FinanceWorkspace key={`${finance.preparation.preparationId}:${finance.preparation.revision}`} finance={finance} />;
+  return <FinanceWorkspace key={`${finance.preparation.preparationId}:${finance.preparation.revision}`}
+    projectId={projectId} finance={finance} />;
 }
 
-function FinanceWorkspace({ finance }) {
+function FinanceWorkspace({ projectId, finance }) {
   const preparation = finance.preparation;
-  const fields = preparation.financialFields ?? {};
+  const fields = useMemo(() => preparation.financialFields ?? {}, [preparation.financialFields]);
   const [draft, setDraft] = useState(() => createFinancialDraft(fields));
   const locked = Boolean(preparation.inputSnapshotId);
   const missing = useMemo(() => new Set(preparation.missingRequiredInputs ?? []), [preparation.missingRequiredInputs]);
@@ -31,29 +34,46 @@ function FinanceWorkspace({ finance }) {
   const change = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const references = preparation.upstreamReferences ?? {};
   const editedValues = () => financialValuesFromDraft(draft, fields);
-  const liveCac = calculateDraftCac(draft);
+  const targetView = proposalTargets(draft, fields.threeYearTargets, preparation.assistance?.threeYearTargets);
+  const customerCountView = proposalPrimitive(draft.newCustomerCount, fields.newCustomerCount,
+    preparation.assistance?.newCustomerCount, 'count');
+  const churnView = proposalPrimitive(draft.monthlyChurnRate, fields.monthlyChurnRate,
+    preparation.assistance?.monthlyChurnRate, 'percent');
+  const liveCac = calculateDraftCac({ ...draft, newCustomerCount: customerCountView });
   const revenueFields = draft.revenueModel === 'ONE_TIME'
     ? REVENUE_MONEY_FIELDS.filter(([key]) => key === 'unitPrice')
     : draft.revenueModel === 'SUBSCRIPTION'
       ? REVENUE_MONEY_FIELDS.filter(([key]) => key === 'monthlySubscriptionPrice')
       : REVENUE_MONEY_FIELDS;
+  const groupEstimateKeys = useMemo(() => Object.keys(preparation.assistance ?? {}).filter((key) => {
+    const item = preparation.assistance?.[key];
+    return key !== 'revenueModel' && fields[key] && !fields[key].readOnly
+      && !['QUEUED', 'RUNNING', 'SUCCEEDED', 'ACCEPTED'].includes(item?.estimateStatus)
+      && !['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(item?.decision);
+  }), [fields, preparation.assistance]);
+  const refreshContainer = () => void finance.refresh({ preserveView: true });
 
-  return <main className="finance-page">
+  return <FinanceRefreshContext.Provider value={refreshContainer}><main className="finance-page">
     <header className="finance-heading"><div><p>7. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
       <span>current 시장 분석과 BM 결과의 근거를 이어받고, 부족한 값만 입력해 불변 Snapshot을 만듭니다.</span></div>
-      <strong className="finance-heading__status">{locked ? '입력 확정' : preparation.readyToFinalize ? '확정 준비' : `${preparation.missingRequiredInputs.length}개 입력 필요`}</strong></header>
+      <div className="finance-statuses" aria-label="Finance 상태">
+        <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
+        <strong className="finance-heading__status">Snapshot · {finance.snapshot ? '확정' : '미확정'}</strong>
+        <strong className="finance-heading__status">분석 · {finance.analysis?.status ?? 'NOT_STARTED'}</strong>
+        {finance.error && <strong className="finance-heading__status" data-error="true">오류</strong>}
+      </div></header>
     {finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}
 
     <section className="finance-source" aria-labelledby="finance-source-title"><div><p>시장 분석·BM에서 가져옴</p>
       <h2 id="finance-source-title">재무 가정의 원본과 근거</h2></div>
+      <RefreshButton />
       <div className="finance-source__grid">
         <Reference label="TAM" value={references.marketAnalysis?.tam} />
         <Reference label="SAM" value={references.marketAnalysis?.sam} />
         <Reference label="시장 성장률" value={references.marketAnalysis?.growth} />
         <Reference label="시장 가격 가정" value={references.marketAnalysis?.price} />
-        <Reference label="고정운영비" value={references.fixedOperatingCost?.annualEquivalent ?? references.fixedOperatingCost?.value} />
-        <Reference label="초기투자" value={references.initialInvestment?.value} />
-        <Reference label="기존 3개년 목표" value={references.threeYearTargets?.value} />
+        <Reference label="Concept 가설" value={references.conceptHypotheses?.values ?? references.conceptHypotheses} />
+        <Reference label="BM 재무 전달정보" value={references.businessModel?.financialHandoff} />
       </div><p className="finance-source__ai-note">AI 추정은 Market·BM 근거를 참고한 초안이며 자동 저장되지 않습니다. 근거와 가정을 확인한 뒤 채택하거나 수정하세요.</p>
       <details><summary>Market/BM 근거·가정·Evidence·Caveat 전체 보기</summary>
         <pre className="finance-source-detail">{JSON.stringify({ marketAnalysis: references.marketAnalysis,
@@ -69,12 +89,15 @@ function FinanceWorkspace({ finance }) {
 
     <section className="finance-section" aria-labelledby="finance-targets-title"><SectionHeading eyebrow="3개년 목표" title="사업 유형에 맞는 목표 지표" />
       <div className="finance-form-grid finance-targets">
-        <label><span>목표 지표</span><select disabled={locked || fields.threeYearTargets?.readOnly} value={draft.targetMetric}
+        <label><span>목표 지표</span><select disabled={locked || fields.threeYearTargets?.readOnly} value={targetView.targetMetric}
+          data-proposal-preview={targetView !== draft || undefined}
           onChange={(event) => change('targetMetric', event.target.value)}>{TARGET_METRICS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label><span>단위</span><input disabled={locked || fields.threeYearTargets?.readOnly} value={draft.targetUnit}
+        <label><span>단위</span><input disabled={locked || fields.threeYearTargets?.readOnly} value={targetView.targetUnit}
+          data-proposal-preview={targetView !== draft || undefined}
           onChange={(event) => change('targetUnit', event.target.value)} placeholder="명, 건, 개" /></label>
         {[1, 2, 3].map((year) => <label key={year} data-missing={missing.has('threeYearTargets')}><span>{year}년차 목표</span>
-          <input type="number" min="0" disabled={locked || fields.threeYearTargets?.readOnly} value={draft.targetYears[year - 1]}
+          <input type="number" min="0" disabled={locked || fields.threeYearTargets?.readOnly} value={targetView.targetYears[year - 1]}
+            data-proposal-preview={targetView !== draft || undefined}
             onChange={(event) => { const values = [...draft.targetYears]; values[year - 1] = event.target.value; change('targetYears', values); }} /></label>)}
       </div><SourceNote field={fields.threeYearTargets} /></section>
 
@@ -87,7 +110,8 @@ function FinanceWorkspace({ finance }) {
           onChange={change} field={fields[key]} missing={missing.has(key)} locked={locked} assistance={preparation.assistance?.[key]}
           finance={finance} safe={safe} editedValue={editedValues()[key]} />)}
         {(draft.revenueModel === 'SUBSCRIPTION' || draft.revenueModel === 'HYBRID') && <label data-missing={missing.has('monthlyChurnRate')}><span>월 이탈률 (%)</span><input type="number" min="0" max="100"
-          disabled={locked || fields.monthlyChurnRate?.readOnly} value={draft.monthlyChurnRate}
+          disabled={locked || fields.monthlyChurnRate?.readOnly} value={churnView}
+          data-proposal-preview={churnView !== draft.monthlyChurnRate || undefined}
           onChange={(event) => change('monthlyChurnRate', event.target.value)} /><SourceNote field={fields.monthlyChurnRate} /></label>}
       </div></section>
 
@@ -97,7 +121,8 @@ function FinanceWorkspace({ finance }) {
         value={draft[key]} onChange={change} field={fields[key]} missing={missing.has(key)} locked={locked}
         assistance={preparation.assistance?.[key]} finance={finance} safe={safe} editedValue={editedValues()[key]} />)}
         <label data-missing={missing.has('newCustomerCount')}><span>신규 고객 수</span><input type="number" min="1"
-          disabled={locked || fields.newCustomerCount?.readOnly} value={draft.newCustomerCount}
+          disabled={locked || fields.newCustomerCount?.readOnly} value={customerCountView}
+          data-proposal-preview={customerCountView !== draft.newCustomerCount || undefined}
           onChange={(event) => change('newCustomerCount', event.target.value)} /><SourceNote field={fields.newCustomerCount} /></label>
         <div className="finance-cac-result"><span>시스템 계산 CAC</span><strong>{formatMoney(liveCac ?? preparation.calculatedCac)}</strong>
           <small>(총 마케팅비 + 총 영업비) ÷ 신규 고객 수</small></div>
@@ -111,6 +136,11 @@ function FinanceWorkspace({ finance }) {
 
     <section className="finance-assistance" aria-labelledby="finance-assistance-title"><div><p>설명·예시·AI 추정</p><h2 id="finance-assistance-title">입력 도움말</h2></div>
       <p className="finance-ai-guide">비용·가격·3개년 목표 추천은 Market·BM과 선택적 Tavily 근거를 참고합니다. 외부 근거가 없어도 Finance 입력은 계속할 수 있으며, 추천은 검토 전 확정값이 아닙니다.</p>
+      <div className="finance-ai-scope"><strong>AI 추천 대상</strong><span>연간 고정비, 초기투자, 마케팅·영업비, 조건부 단위원가, 가격, 이탈률, 신규 고객 수, 정확한 1·2·3년 목표</span>
+        <small>추천은 input에 미리보기만 하며 ACCEPT 또는 EDIT_AND_ACCEPT 전에는 사용자 결정으로 저장되지 않습니다.</small>
+        <button className="finance-group-recommendation" type="button"
+          disabled={locked || finance.busy === 'estimate:group' || groupEstimateKeys.length === 0}
+          onClick={() => void safe(() => finance.generateEstimates(groupEstimateKeys))}>미확정 항목 그룹 추천</button></div>
       <div>{Object.entries(preparation.assistance ?? {}).map(([key, item]) => <article key={key}><strong>{fieldLabel(key)}</strong><span>{item.explanation}</span>
         {item.example && <span>{item.example}</span>}<small>{estimateLabel(item)}</small>
         {item.proposalValue != null && fields[key] && <Recommendation item={item} />}
@@ -140,7 +170,10 @@ function FinanceWorkspace({ finance }) {
     {finance.analysis?.stale && <p className="finance-warning" role="status">상위 current 입력이 바뀌어 이 재무 결과는 stale 상태입니다. 입력을 다시 확정해 주세요.</p>}
     {finance.analysis?.safeErrorCode && !finance.analysis?.result && <p className="finance-error" role="alert">재무 보고서 생성 실패: {finance.analysis.safeErrorCode}{finance.analysis.retryable ? ' · 재시도할 수 있습니다.' : ''}</p>}
     <AnalysisReport analysis={finance.analysis} />
-  </main>;
+    {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>8. 마케팅 콘텐츠</p>
+      <h2>확정한 사업 근거를 고객용 콘텐츠로 연결하세요.</h2><span>현재 Target의 Marketing Source와 통합 캔버스에서 문구와 이미지를 제작할 수 있습니다.</span></div>
+      <Link to={`/app/projects/${projectId}/marketing`}>다음 - 마케팅 콘텐츠</Link></section>}
+  </main></FinanceRefreshContext.Provider>;
 }
 
 function analysisStatus(analysis) {
@@ -158,7 +191,7 @@ function calculateDraftCac(draft) {
 
 function estimateLabel(item) {
   if (['QUEUED', 'RUNNING'].includes(item?.estimateStatus)) return '추천 생성 중';
-  if (item?.estimateStatus === 'FAILED') return '추천 생성 실패';
+  if (item?.estimateStatus === 'FAILED') return `추천 생성 실패${item?.safeError ? ` · ${item.safeError}` : ''} — 다시 요청할 수 있습니다.`;
   if (item?.estimateStatus === 'ACCEPTED' || ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(item?.decision)) return '채택됨';
   if (item?.proposalValue != null && item?.estimateStatus === 'SUCCEEDED') return 'AI 추천';
   return '추천 없음';
@@ -170,8 +203,8 @@ function EstimateControls({ fieldKey, item, field, locked, busy, generate, decid
   const proposed = item?.proposalValue != null && item?.estimateStatus === 'SUCCEEDED';
   if (!proposed) return <button type="button" disabled={busy || pending}
     onClick={() => void safe(() => generate(fieldKey))}>AI 추천 받기</button>;
-  return <div><button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'ACCEPT', value: null }))}>AI 추천 채택</button>
-    <button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'EDIT_AND_ACCEPT', value: editedValue }))}>입력값으로 수정 후 채택</button>
+  return <div className="finance-estimate-controls"><button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'ACCEPT', value: null }))}>AI 추천 채택</button>
+    <button type="button" disabled={busy || editedValue == null} onClick={() => void safe(() => decide(fieldKey, { action: 'EDIT_AND_ACCEPT', value: editedValue }))}>입력값으로 수정 후 채택</button>
     <button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'REJECT', value: null }))}>AI 추천 거절</button>
     <button type="button" disabled={busy} onClick={() => void safe(() => decide(fieldKey, { action: 'REQUEST_ALTERNATIVE', value: null }))}>다른 추천 요청</button></div>;
 }
@@ -183,13 +216,36 @@ function FinancialSection({ eyebrow, title, fields, draft, change, sourceFields,
       value={draft[key]} onChange={change} field={sourceFields[key]} missing={missing.has(key)} locked={locked}
       assistance={assistance?.[key]} finance={finance} safe={safe} editedValue={editedValues()[key]} />)}</div></section>;
 }
-function SectionHeading({ eyebrow, title }) { return <div className="finance-section__heading"><div><p>{eyebrow}</p><h2>{title}</h2></div><span>KRW 기준</span></div>; }
+function RefreshButton() {
+  const refresh = useContext(FinanceRefreshContext);
+  return refresh ? <button className="finance-container-refresh" type="button" onClick={refresh}>새로고침</button> : null;
+}
+function SectionHeading({ eyebrow, title }) { return <div className="finance-section__heading"><div><p>{eyebrow}</p><h2>{title}</h2></div>
+  <div className="finance-section__actions"><span>KRW 기준</span><RefreshButton /></div></div>; }
 function MoneyInput({ fieldKey, label, value, onChange, field, missing, locked, assistance, finance, safe, editedValue }) {
+  const displayedValue = proposalPrimitive(value, field, assistance, 'amount');
   return <label data-missing={Boolean(missing)}><span>{label}</span><input type="number" min="0" disabled={locked || field?.readOnly}
-    value={value} onChange={(event) => onChange(fieldKey, event.target.value)} /><SourceNote field={field} />
+    value={displayedValue} data-proposal-preview={displayedValue !== value || undefined}
+    onChange={(event) => onChange(fieldKey, event.target.value)} /><SourceNote field={field} />
     {assistance && <EstimateControls fieldKey={fieldKey} item={assistance} field={field} locked={locked}
       busy={finance?.busy === `estimate:${fieldKey}`} generate={finance?.generateEstimate}
       decide={finance?.decideEstimate} editedValue={editedValue} safe={safe} />}</label>;
+}
+
+function proposalPrimitive(draftValue, field, assistance, key) {
+  if (field?.readOnly || String(draftValue ?? '').trim() !== ''
+      || assistance?.estimateStatus !== 'SUCCEEDED') return draftValue;
+  const proposed = assistance?.proposalValue?.[key];
+  return proposed == null ? draftValue : String(proposed);
+}
+
+function proposalTargets(draft, field, assistance) {
+  const proposal = assistance?.proposalValue;
+  if (field?.readOnly || assistance?.estimateStatus !== 'SUCCEEDED' || !Array.isArray(proposal?.years)
+      || !draft.targetYears.every((value) => String(value ?? '').trim() === '')) return draft;
+  return { ...draft, targetMetric: proposal.metric ?? draft.targetMetric,
+    targetUnit: proposal.unit ?? draft.targetUnit,
+    targetYears: [1, 2, 3].map((year) => String(proposal.years.find((item) => item.year === year)?.value ?? '')) };
 }
 function SourceNote({ field }) {
   if (field?.source === 'MARKET_ANALYSIS_ASSUMPTION') return <small data-source="inherited">시장 분석 가정 · 확인 후 저장 필요</small>;

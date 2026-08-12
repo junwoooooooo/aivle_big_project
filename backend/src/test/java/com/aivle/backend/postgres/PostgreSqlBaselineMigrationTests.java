@@ -25,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(18);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(20);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -35,8 +35,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
 
         assertThat(appliedVersions).containsExactly(
             "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-            "18", "19");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("19");
+            "18", "19", "20", "21");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("21");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -80,7 +80,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(11);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(13);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -101,7 +101,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(12);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
@@ -140,7 +140,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(5);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(7);
         latest.validate();
 
         try (Connection connection = DriverManager.getConnection(
@@ -151,6 +151,92 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             assertThat(constraintCount(connection, schema, "twin_survey_runs", "fk_twin_survey_run_selection")).isOne();
             assertThat(constraintCount(connection, schema, "financial_input_preparations", "fk_financial_preparation_bm_version")).isOne();
             assertThat(indexCount(connection, schema, "financial_input_snapshots", "uk_financial_snapshot_active_preparation")).isOne();
+        }
+    }
+
+    @Test
+    void v20StopsWithoutDeletingRowsWhenMarketBmAuthorityHasDuplicates() throws Exception {
+        String schema = "v20_duplicate_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV19 = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").target("19").load();
+        throughV19.migrate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            statement.execute("SET session_replication_role = replica");
+            statement.execute("""
+                INSERT INTO financial_input_preparations (
+                    id, project_id, source_tech_ops_snapshot_id, source_market_seed_snapshot_id,
+                    source_market_research_version_id, source_business_model_version_id,
+                    source_snapshot_hash, financial_fields_json, upstream_references_json, assistance_json,
+                    revision, updated_by_user_id, created_at, updated_at, version
+                ) VALUES
+                    ('duplicate-a', 41, 'tech-a', 'seed-a', 101, 201,
+                     'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '{}', '{}', '{}',
+                     1, 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+                    ('duplicate-b', 41, 'tech-b', 'seed-b', 101, 201,
+                     'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', '{}', '{}', '{}',
+                     1, 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("SET session_replication_role = origin");
+        }
+        Flyway latest = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+
+        assertThatThrownBy(latest::migrate).hasMessageContaining("V20");
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            try (ResultSet result = statement.executeQuery(
+                    "SELECT count(*) FROM financial_input_preparations WHERE id LIKE 'duplicate-%'")) {
+                result.next();
+                assertThat(result.getInt(1)).isEqualTo(2);
+            }
+        }
+    }
+
+    @Test
+    void v21MigratesExistingLegacyMarketingSourceWithoutAuthorityLoss() throws Exception {
+        String schema = "v21_legacy_" + UUID.randomUUID().toString().replace("-", "");
+        Flyway throughV20 = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").target("20").load();
+        throughV20.migrate();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            statement.execute("SET session_replication_role = replica");
+            statement.execute("""
+                INSERT INTO marketing_source_snapshots (
+                    id, project_id, source_market_seed_snapshot_id, selection_id, concept_id,
+                    schema_version, snapshot_hash, snapshot_json, created_by_user_id, finalized_at,
+                    created_at, updated_at, version
+                ) VALUES ('legacy-source', 41, 'legacy-seed', 13, 'legacy-concept', '2.0',
+                    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', '{}', 7,
+                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("SET session_replication_role = origin");
+        }
+        Flyway latest = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
+        assertThat(latest.migrate().migrationsExecuted).isOne();
+        try (Connection connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("SET search_path TO " + schema);
+            try (ResultSet result = statement.executeQuery("""
+                    SELECT source_type, selection_id, concept_id, portfolio_selection_id, portfolio_concept_id
+                    FROM marketing_source_snapshots WHERE id = 'legacy-source'
+                    """)) {
+                result.next();
+                assertThat(result.getString("source_type")).isEqualTo("LEGACY");
+                assertThat(result.getLong("selection_id")).isEqualTo(13L);
+                assertThat(result.getString("concept_id")).isEqualTo("legacy-concept");
+                assertThat(result.getObject("portfolio_selection_id")).isNull();
+                assertThat(result.getObject("portfolio_concept_id")).isNull();
+            }
         }
     }
 

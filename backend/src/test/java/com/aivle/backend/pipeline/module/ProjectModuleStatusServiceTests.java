@@ -186,6 +186,7 @@ class ProjectModuleStatusServiceTests {
         when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1");
         when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
         when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
+        when(marketRun.getId()).thenReturn(300L);
         when(marketRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
         when(marketRun.getTaskRun()).thenReturn(marketTask); when(marketTask.getState()).thenReturn(com.aivle.backend.taskrun.domain.TaskRunState.SUCCEEDED);
         when(marketTask.getId()).thenReturn("market-task");
@@ -244,6 +245,14 @@ class ProjectModuleStatusServiceTests {
             .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
         assertThat(finance.status()).isEqualTo(PipelineModuleStatus.RUNNING);
         assertThat(finance.activeTaskRunId()).isEqualTo("finance-report-task");
+
+        var previousMarketRun = mock(com.aivle.backend.pipeline.market.MarketResearchRun.class);
+        when(previousMarketRun.getId()).thenReturn(299L);
+        when(previousMarketRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
+        when(marketVersion.getSourceRun()).thenReturn(previousMarketRun);
+        finance = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NOT_READY);
     }
 
     @Test

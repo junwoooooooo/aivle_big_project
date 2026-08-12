@@ -51,3 +51,33 @@ def test_price_guardrail_rewrites_per_unit_cost(monkeypatch):
     result = asyncio.run(service.execute_finance_estimate({"contextJson":context,"fieldKey":"paymentFee",
         "proposalVersion":1,"rejectedProposalJson":""}))
     assert result["proposedValue"]["amount"] == 400
+
+
+def test_donor_economic_sanity_prompt_is_not_shortened():
+    prompt = service.ECONOMIC_SANITY_RULES
+    for required in (
+        "해당 없음 가정", "per-subscriber usage, API, payment, or support costs",
+        "per-transaction monetary equivalent", "건당", "구독자당 월", "1%~45%",
+        "1%~5%", "1%~20%", "must not exceed 70%", "must not exceed 30%",
+        "purely digital service", "greater than the market price", "Tavily benchmark",
+        "annual total KRW budgets", "2,376,000 KRW",
+    ):
+        assert required in prompt
+
+
+def test_three_year_repair_failure_stops_after_exactly_one_repair(monkeypatch):
+    calls = 0
+
+    async def invalid(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return {"fieldKey": "threeYearTargets", "proposedValue": {"amount": 1, "currency": "KRW"},
+                "assumptions": ["가정"], "explanation": "잘못된 형식", "confidence": "LOW",
+                "source": "AI_ESTIMATE"}
+
+    monkeypatch.setattr(service, "execute_structured_prompt", invalid)
+    with pytest.raises(service.ProviderFailure) as raised:
+        asyncio.run(service.execute_finance_estimate({"contextJson": "{}", "fieldKey": "threeYearTargets",
+            "proposalVersion": 1, "rejectedProposalJson": ""}))
+    assert calls == 2
+    assert raised.value.reason == "AI_RESULT_INVALID"

@@ -91,7 +91,9 @@ public class ProjectModuleStatusService {
         MarketResearchVersion latestMarketVersion = marketResearchVersionRepository
             .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
                 projectId, MarketResearchRun.Kind.FULL).orElse(null);
-        MarketResearchVersion currentMarketVersion = latestMarketVersion != null && selectedSnapshot != null
+        MarketResearchVersion currentMarketVersion = latestMarketVersion != null && marketRun != null
+            && java.util.Objects.equals(latestMarketVersion.getSourceRun().getId(), marketRun.getId())
+            && selectedSnapshot != null
             && selectedSnapshot.getId().equals(latestMarketVersion.getSourceRun().getSourceMarketSeedSnapshotId())
                 ? latestMarketVersion : null;
         MarketResearchVersion currentBusinessVersion = businessRun == null || currentMarketVersion == null

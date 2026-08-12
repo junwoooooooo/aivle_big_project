@@ -68,6 +68,17 @@ export default function useFinance(projectId, liveRevision = 0) {
     ...state, estimateEvents, analysisEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
     generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
+    generateEstimates: (fieldKeys) => act('estimate:group', async () => {
+      const outcomes = await Promise.allSettled(
+        fieldKeys.map((fieldKey) => api.generateEstimate(projectId, fieldKey, commandOptions())),
+      );
+      const rejected = outcomes.find((outcome) => outcome.status === 'rejected');
+      if (rejected) {
+        await refresh({ preserveView: true });
+        throw rejected.reason;
+      }
+      return outcomes.map((outcome) => outcome.value);
+    }),
     decideEstimate: (fieldKey, payload) => act(`estimate:${fieldKey}`, () => api.decideEstimate(projectId, fieldKey, payload, commandOptions())),
     finalize: () => act('finalize', () => api.finalize(projectId)),
     reopen: () => act('reopen', () => api.reopen(projectId, commandOptions())),

@@ -33,3 +33,18 @@ def test_report_uses_only_deterministic_result_and_preserves_strict_source(monke
     assert '"seed": 7' in seen["user"]
     assert result["source"] == "AI_GENERATED_REPORT"
     assert result["providerStatus"] == "SUCCEEDED"
+
+
+def test_report_input_does_not_require_techops(monkeypatch):
+    value = _input()
+    value.pop("sourceTechOpsSnapshotId")
+
+    async def prompt(*_args, **_kwargs):
+        return {"headline": "가정 기반 결과", "findings": ["계산 결과 확인"],
+            "cautions": ["가정 변동 주의"], "recommendedActions": ["가격 검증"],
+            "disclaimer": "추정치입니다.", "source": "AI_GENERATED_REPORT",
+            "providerStatus": "SUCCEEDED", "safeFailureReason": None}
+
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_finance_analysis_report(value))
+    assert result["providerStatus"] == "SUCCEEDED"
