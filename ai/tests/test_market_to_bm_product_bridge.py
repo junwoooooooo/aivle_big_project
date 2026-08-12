@@ -146,7 +146,8 @@ def test_bm_product_maps_nested_contract_failure(monkeypatch):
 def test_bm_product_emits_truthful_stage_order(monkeypatch):
     from app.research.bm import flow
 
-    async def fake_flow(source):
+    async def fake_flow(source, diagnostic_context=None):
+        assert diagnostic_context is None
         resolved = resolve_bm_input(source)
         canvas = [
             BMCanvasItem(

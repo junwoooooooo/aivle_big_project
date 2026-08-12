@@ -222,7 +222,8 @@ def _user_planned_cells(plan_material: dict, plan_constraints: dict) -> dict:
 # ══════════════════════════════════════════════════════════════
 async def run_market_research(task_input: dict, run_id: str,
                               timeout_seconds: float,
-                              event_sink: EventSink | None = None) -> dict:
+                              event_sink: EventSink | None = None,
+                              diagnostic_context: dict[str, str] | None = None) -> dict:
     """`mode` 로 갈린다. 어느 갈래든 **봉투는 같고** 해당 없는 칸은 `null` 이다."""
     mode = (task_input.get("mode") or "FULL").strip().upper()
     if mode not in ("FULL", "BM", "RESCORE"):
@@ -262,7 +263,8 @@ async def run_market_research(task_input: dict, run_id: str,
                 Budget(total=int(task_input.get("llmBudget") or 1)),
                 _plan_material(task_input.get("planMaterial")),
                 _plan_constraints(task_input.get("executionConstraints")),
-                legal if isinstance(legal, dict) else None, event_sink),
+                legal if isinstance(legal, dict) else None, event_sink,
+                diagnostic_context),
                 timeout=max(0.001, timeout_seconds))
         except asyncio.TimeoutError as failure:
             raise _fail("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED",
@@ -610,7 +612,8 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
 async def _bm_product(market_result: dict, concept: dict, concept_id: str,
                       run_id: str, budget: Budget, plan_material: dict,
                       plan_constraints: dict, legal_context: dict | None,
-                      event_sink: EventSink | None = None) -> dict:
+                      event_sink: EventSink | None = None,
+                      diagnostic_context: dict[str, str] | None = None) -> dict:
     from .bm.flow import run_bm_pipeline_flow
     from .bm.normalize import create_bm_analysis_input
     from .product_market_join import build as build_market_join
@@ -636,7 +639,8 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
         source = create_bm_analysis_input(
             market_data=market_join, legal_data=legal_context,
             execution_constraints=plan_constraints)
-        out = await run_bm_pipeline_flow(source)
+        out = await run_bm_pipeline_flow(
+            source, diagnostic_context=diagnostic_context)
     except Exception as error:
         stage.status = "FAILED"
         stage.seconds = int(time.monotonic() - began)

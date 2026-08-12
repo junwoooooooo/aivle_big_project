@@ -44,6 +44,7 @@ def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeyp
 
 
 def test_product_runner_invokes_full_a1_to_a3_collection_without_from_resume(monkeypatch, tmp_path):
+    monkeypatch.setenv("RESEARCH2_ASSUMPTION_PROFILE", "fixture")
     input_path = tmp_path / "input.json"
     output_path = tmp_path / "output.json"
     progress_path = tmp_path / "progress.jsonl"

@@ -37,6 +37,7 @@ sys.path.insert(0, ROOT)
 import fillaxis as _fx                              # noqa: E402
 sys.path.insert(0, HERE)
 
+from assumption_profile import is_product_profile, rule_file as assumption_rule_file
 import bm_scorer                                    # 같은 서비스 층 (엔진 아님)
 
 STAMPS = ("검증됨", "미검증", "판정_불가", "축_부재")
@@ -52,7 +53,10 @@ def _rules() -> dict:
     """규칙 파일만 읽는다 — 엔진 코드가 아니라 `rules/*.json` 이 정본이다(절대 규칙 7)."""
     out = {}
     for name in ("assumptions", "consistency", "series_unit"):
-        p = os.path.join(ROOT, "rules", f"{name}.v1.json")
+        fname = f"{name}.v1.json"
+        if name == "assumptions":
+            fname = assumption_rule_file(fname)
+        p = os.path.join(ROOT, "rules", fname)
         if os.path.exists(p):
             out[name] = json.load(io.open(p, encoding="utf-8"))
     return out
@@ -410,7 +414,9 @@ def judge_market(led: dict, hyp: dict, concept: dict | None = None) -> dict:
     seg = seg_a.get("value")
     pen_a = by_role.get("침투율") or {}
     pen = pen_a.get("value")
-    months = (by_role.get("연환산") or {}).get("value") or 12
+    months = (by_role.get("연환산") or {}).get("value")
+    if months is None and not is_product_profile():
+        months = 12
     # 값 옆에 각각의 대조 기반을 두어 「무엇이 관측이고 무엇이 가정인지」가 **숫자로**
     # 드러나게 한다 — 지금까지는 문장으로만 있었고, 문장은 옮기다 빠진다.
     def _요인들(라벨, 밑동, 근거):
@@ -699,6 +705,10 @@ def judge_som(led: dict, hyp: dict) -> dict:
     by_role = (_rules().get("assumptions") or {}).get("by_role") or {}
     a = by_role.get("세그먼트비중") or {}
     seg, seg_src = a.get("value"), "가정(rules/assumptions.v1.json) — 관측 아님"
+    if seg is None and is_product_profile():
+        return {"가설": "9_SOM_초기점유", "도장": "판정_불가",
+                "why": "Product 세그먼트비중 가정이 검증되지 않아 계산하지 않는다",
+                "추정": None, "엔진_SOM": som.get("value"), "badge": som.get("badge")}
     seg = 1.0 if seg is None else seg
 
     # 침투율은 **원장이 아니라 컨셉의 SOM 가설**에서 온다 — rules 의 침투율과 다른 값이다.

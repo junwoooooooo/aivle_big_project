@@ -18,6 +18,7 @@ async def run_bm_pipeline_flow(
     *,
     client: AsyncOpenAI | None = None,
     model: str | None = None,
+    diagnostic_context: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     resolved = resolve_bm_input(bm_input)
 
@@ -26,6 +27,7 @@ async def run_bm_pipeline_flow(
         resolved=resolved,
         client=client,
         model=model,
+        diagnostic_context=diagnostic_context,
     )
 
     final_result = finalize_bm_analysis(

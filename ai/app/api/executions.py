@@ -326,6 +326,11 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 result = await run_market_research(
                     body.input, body.taskAttemptId, remaining,
                     event_sink=progress.emit if progress.enabled else None,
+                    diagnostic_context={
+                        "taskRunId": body.taskRunId,
+                        "taskAttemptId": body.taskAttemptId,
+                        "correlationId": correlation,
+                    },
                 )
         elif body.taskType == "TWIN_STIMULUS_DRAFT":
             from app.twin.stimulus_draft import execute_twin_stimulus_draft

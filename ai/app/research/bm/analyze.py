@@ -12,6 +12,7 @@ import os
 from typing import Any
 
 from openai import AsyncOpenAI
+from pydantic import ValidationError
 
 from .contracts import (
     BMAnalysisResult,
@@ -100,21 +101,28 @@ async def run_bm_analysis(
     resolved: ResolvedBMInput,
     client: AsyncOpenAI | None = None,
     model: str | None = None,
+    diagnostic_context: dict[str, str] | None = None,
 ) -> BMAnalysisResult:
     api = client or get_client()
     payload = resolved.model_dump(mode="json")
 
-    response = await api.responses.parse(
-        model=model or default_model(),
-        input=[
-            {"role": "system", "content": BM_ANALYSIS_PROMPT},
-            {
-                "role": "user",
-                "content": json.dumps(payload, ensure_ascii=False),
-            },
-        ],
-        text_format=BMAnalysisResult,
-    )
+    try:
+        response = await api.responses.parse(
+            model=model or default_model(),
+            input=[
+                {"role": "system", "content": BM_ANALYSIS_PROMPT},
+                {
+                    "role": "user",
+                    "content": json.dumps(payload, ensure_ascii=False),
+                },
+            ],
+            text_format=BMAnalysisResult,
+        )
+    except ValidationError as failure:
+        from .diagnostics import log_bm_validation_failure
+
+        log_bm_validation_failure(failure, diagnostic_context)
+        raise
 
     if response.output_parsed is None:
         raise RuntimeError("BM 분석 결과를 구조화된 형식으로 받지 못했습니다.")

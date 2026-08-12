@@ -17,6 +17,9 @@ import sys
 from app.research.progress_jsonl import SafeProgressJsonl
 
 
+PRODUCT_ASSUMPTION_PROFILE = "product"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
@@ -32,6 +35,8 @@ def main() -> None:
     progress = SafeProgressJsonl(args.progress_jsonl, truncate=True)
 
     os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
+    # Product 실행 경계가 authority를 고른다. concept 문자열에서 업종을 추측하지 않는다.
+    os.environ["RESEARCH2_ASSUMPTION_PROFILE"] = PRODUCT_ASSUMPTION_PROFILE
     with io.open(args.input, encoding="utf-8") as handle:
         concept = json.load(handle)
     concept_path = os.path.join(args.workspace, "concept.json")
