@@ -115,15 +115,15 @@ public class ProjectModuleStatusService {
         var techOpsSnapshot = selectedSnapshot == null ? null
             : techOpsSnapshotRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
-        var financialPreparation = techOpsSnapshot == null || currentMarketVersion == null || currentBusinessVersion == null
+        var financialPreparation = currentMarketVersion == null || currentBusinessVersion == null
             ? null : financialPreparationRepository
-                .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-                    projectId, techOpsSnapshot.getId(), currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+                    projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
                 .orElse(null);
-        var financialSnapshot = techOpsSnapshot == null || currentMarketVersion == null || currentBusinessVersion == null
+        var financialSnapshot = currentMarketVersion == null || currentBusinessVersion == null
             ? null : financialSnapshotRepository
-                .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-                    projectId, techOpsSnapshot.getId(), currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+                    projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
                 .orElse(null);
         TaskRun financialTask = financialSnapshot == null ? null : taskRunRepository
             .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
@@ -156,8 +156,8 @@ public class ProjectModuleStatusService {
             : techOpsPreparation == null ? PipelineModuleStatus.READY
             : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : externalStatus(techOpsRun, techOpsSnapshot.getId());
-        PipelineModuleStatus financialBaseStatus = techOpsSnapshot == null || currentMarketVersion == null
-                || currentBusinessVersion == null ? PipelineModuleStatus.NOT_READY
+        PipelineModuleStatus financialBaseStatus = currentMarketVersion == null || currentBusinessVersion == null
+            ? PipelineModuleStatus.NOT_READY
             : financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
@@ -210,8 +210,7 @@ public class ProjectModuleStatusService {
                 techOpsSnapshot == null ? null : techOpsSnapshot.getId(), null, null,
                 techOpsRun == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt() : techOpsRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.FINANCE, financialStatus,
-                techOpsSnapshot == null ? List.of("techOpsInputSnapshotId")
-                    : currentMarketVersion == null ? List.of("marketResearchVersionId")
+                currentMarketVersion == null ? List.of("marketResearchVersionId")
                     : currentBusinessVersion == null ? List.of("businessModelVersionId")
                     : financialSnapshot == null ? List.of("financialRequiredInputs")
                     : financialTask == null ? List.of("financialAnalysisReport") : List.of(),

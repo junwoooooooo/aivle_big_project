@@ -1,10 +1,13 @@
 package com.aivle.backend.pipeline.finance;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.finance.api.FinancialApiModels.EstimateDecisionRequest;
 import com.aivle.backend.pipeline.finance.application.*;
 import com.aivle.backend.pipeline.finance.domain.FinancialInputPreparation;
@@ -40,36 +43,24 @@ import tools.jackson.databind.node.ObjectNode;
 
 class FinancialServiceAsyncTests {
     @Test
-    void initializeBindsCurrentPortfolioTechOpsMarketAndBusinessModelLineage() {
+    void initializeBindsCurrentMarketAndBusinessModelWithoutTechOps() {
         Harness h = new Harness();
-        ConceptPortfolioSelection portfolio = mock(ConceptPortfolioSelection.class);
-        when(portfolio.getId()).thenReturn(77L);
-        when(h.portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L))
-            .thenReturn(Optional.of(portfolio));
-        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
-        when(seed.getId()).thenReturn("seed-v2");
-        when(h.marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(77L))
-            .thenReturn(Optional.of(seed));
-        TechOpsInputSnapshot techOps = TechOpsInputSnapshot.create("tech-v2", 41L, "tech-prep-v2", "seed-v2",
-            "2.0", h.hash, "{\"requiredFacts\":{},\"requiredFactProvenance\":{}}", 7L, Instant.EPOCH);
-        when(h.techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("seed-v2", 41L))
-            .thenReturn(Optional.of(techOps));
-        when(h.preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-            41L, "tech-v2", 101L, 201L)).thenReturn(Optional.empty());
+        when(h.preparations.findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+            41L, 101L, 201L)).thenReturn(Optional.empty());
         when(h.preparations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = h.service.initialize(7L, 41L);
 
-        assertThat(result.sourceTechOpsSnapshotId()).isEqualTo("tech-v2");
+        assertThat(result.sourceTechOpsSnapshotId()).isNull();
         assertThat(result.sourceMarketResearchVersionId()).isEqualTo(101L);
         assertThat(result.sourceBusinessModelVersionId()).isEqualTo(201L);
-        verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
+        verifyNoInteractions(h.techOpsSnapshots);
     }
 
     @Test
     void initializeIsProviderFreeAndCreatesNoEstimateTask() {
         Harness h = new Harness();
-        when(h.preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(41L, "tech-1", 101L, 201L))
+        when(h.preparations.findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(41L, 101L, 201L))
             .thenReturn(Optional.empty());
         when(h.preparations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -77,6 +68,45 @@ class FinancialServiceAsyncTests {
 
         assertThat(result.assistance().path("totalMarketingCost").path("estimateStatus").asText()).isEqualTo("NONE");
         verifyNoInteractions(h.taskRuns, h.events);
+    }
+
+    @Test
+    void initializeBlocksWhenCurrentMarketIsMissing() {
+        Harness h = new Harness();
+        when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.FULL))
+            .thenReturn(new MarketResearchService.CurrentView(null, null, null, false));
+        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Market Research");
+    }
+
+    @Test
+    void initializeBlocksWhenCurrentBusinessModelIsMissing() {
+        Harness h = new Harness();
+        when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.BM))
+            .thenReturn(new MarketResearchService.CurrentView(null, null, null, false));
+        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Business Model");
+    }
+
+    @Test
+    void initializeBlocksAStaleMarket() {
+        Harness h = new Harness();
+        when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.FULL))
+            .thenReturn(new MarketResearchService.CurrentView(null, h.marketView, null, true));
+        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Market Research");
+    }
+
+    @Test
+    void initializeBlocksAStaleBusinessModel() {
+        Harness h = new Harness();
+        when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.BM))
+            .thenReturn(new MarketResearchService.CurrentView(null, h.bmView, null, true));
+        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Business Model");
+    }
+
+    @Test
+    void initializeBlocksAMarketBusinessModelLineageMismatch() {
+        Harness h = new Harness();
+        when(h.bmRun.getSourceMarketVersionId()).thenReturn(999L);
+        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "lineage");
     }
 
     @Test
@@ -131,6 +161,14 @@ class FinancialServiceAsyncTests {
         return new ObjectMapper().readTree("{\"amount\":" + amount + ",\"currency\":\"KRW\"}");
     }
 
+    private static void assertPreparationRequired(org.assertj.core.api.ThrowableAssert.ThrowingCallable action,
+            String messageFragment) {
+        assertThatThrownBy(action).isInstanceOfSatisfying(BusinessException.class, error -> {
+            assertThat(error.getErrorCode()).isEqualTo(ErrorCode.FINANCIAL_PREPARATION_REQUIRED);
+            assertThat(error.getMessage()).contains(messageFragment);
+        });
+    }
+
     private static final class Harness {
         final ObjectMapper mapper = new ObjectMapper();
         final String hash = "sha256:" + "a".repeat(64);
@@ -151,8 +189,14 @@ class FinancialServiceAsyncTests {
         final CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
         final SnapshotHasher snapshotHasher = mock(SnapshotHasher.class);
         final JobEventPublisher events = mock(JobEventPublisher.class);
-        final FinancialService service = new FinancialService(projects, portfolioSelections, selections, marketSeeds,
-            techOpsSnapshots, marketResearch, marketVersions, preparations, snapshots, factory, snapshotFactory,
+        final MarketResearchRun marketRun = mock(MarketResearchRun.class);
+        final MarketResearchRun bmRun = mock(MarketResearchRun.class);
+        final MarketResearchService.VersionView marketView = new MarketResearchService.VersionView(
+            101L, "FULL", 1, mapper.createObjectNode(), 0, 0, null, null, 0, 0, 0);
+        final MarketResearchService.VersionView bmView = new MarketResearchService.VersionView(
+            201L, "BM", 1, mapper.createObjectNode(), 0, 0, "GO", "HIGH", null, null, null);
+        final FinancialService service = new FinancialService(projects, marketSeeds,
+            marketResearch, marketVersions, preparations, snapshots, factory, snapshotFactory,
             readiness, calculator, mapper, taskRuns, hasher, snapshotHasher, events);
         final TechOpsInputSnapshot source;
 
@@ -163,26 +207,23 @@ class FinancialServiceAsyncTests {
             ConceptSelection selection = mock(ConceptSelection.class); when(selection.getId()).thenReturn(9L);
             when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L))
                 .thenReturn(Optional.of(selection));
-            MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class); when(seed.getId()).thenReturn("seed-1");
-            when(marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(9L, 41L)).thenReturn(Optional.of(seed));
+            MarketAnalysisSeedSnapshot seed = MarketAnalysisSeedSnapshot.create("seed-1", 41L, 9L, "concept-1",
+                "2.0", hash, hash, "{\"finalHypotheses\":{}}", 7L, Instant.EPOCH);
+            when(marketSeeds.findById("seed-1")).thenReturn(Optional.of(seed));
             source = TechOpsInputSnapshot.create("tech-1", 41L, "tech-prep-1", "seed-1", "2.0", hash,
                 "{\"requiredFacts\":{},\"requiredFactProvenance\":{}}", 7L, Instant.EPOCH);
             when(techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("seed-1", 41L))
                 .thenReturn(Optional.of(source));
-            var marketView = new MarketResearchService.VersionView(101L, "FULL", 1, mapper.createObjectNode(),
-                0, 0, null, null, 0, 0, 0);
-            var bmView = new MarketResearchService.VersionView(201L, "BM", 1, mapper.createObjectNode(),
-                0, 0, "GO", "HIGH", null, null, null);
             when(marketResearch.current(7L, 41L, MarketResearchRun.Kind.FULL))
                 .thenReturn(new MarketResearchService.CurrentView(null, marketView, null, false));
             when(marketResearch.current(7L, 41L, MarketResearchRun.Kind.BM))
                 .thenReturn(new MarketResearchService.CurrentView(null, bmView, null, false));
             MarketResearchVersion market = mock(MarketResearchVersion.class);
             MarketResearchVersion bm = mock(MarketResearchVersion.class);
-            MarketResearchRun bmRun = mock(MarketResearchRun.class);
             Project sourceProject = mock(Project.class); when(sourceProject.getId()).thenReturn(41L);
             when(market.getId()).thenReturn(101L); when(market.getProject()).thenReturn(sourceProject);
             when(market.getKind()).thenReturn(MarketResearchRun.Kind.FULL); when(market.getResultJson()).thenReturn("{}");
+            when(market.getSourceRun()).thenReturn(marketRun); when(marketRun.getSourceMarketSeedSnapshotId()).thenReturn("seed-1");
             when(bm.getId()).thenReturn(201L); when(bm.getProject()).thenReturn(sourceProject);
             when(bm.getKind()).thenReturn(MarketResearchRun.Kind.BM); when(bm.getResultJson()).thenReturn("{}");
             when(bm.getSourceRun()).thenReturn(bmRun); when(bmRun.getSourceMarketVersionId()).thenReturn(101L);
@@ -214,7 +255,7 @@ class FinancialServiceAsyncTests {
             proposal.put("estimateStatus", "SUCCEEDED"); proposal.putNull("activeTaskRunId");
             FinancialInputPreparation preparation = FinancialInputPreparation.create("prep-1", 41L, "tech-1", "seed-1",
                 101L, 201L, hash, mapper.writeValueAsString(fields), "{}", mapper.writeValueAsString(assistance), 7L);
-            when(preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(41L, "tech-1", 101L, 201L))
+            when(preparations.findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(41L, 101L, 201L))
                 .thenReturn(Optional.of(preparation));
             when(preparations.findLocked("prep-1", 41L)).thenReturn(Optional.of(preparation));
         }

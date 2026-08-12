@@ -3,8 +3,13 @@ import { CONTENT_TYPES, LENGTHS, setupIsValid } from '../model/marketingContentM
 const Field = ({ label, children, hint }) => <label className="mk-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>;
 export default function MarketingSetupPanel({ value, onChange, onSubmit, disabled, busy }) {
   const set = (key) => (event) => onChange({ ...value, [key]: event.target.value });
+  const setImage = (event) => onChange({ ...value, referenceImage: event.target.files?.[0] ?? null });
   return <section className="mk-panel mk-setup" aria-labelledby="mk-setup-title">
     <div className="mk-panel__heading"><div><p>생성 설정</p><h2 id="mk-setup-title">어떤 콘텐츠를 만들까요?</h2></div></div>
+    <Field label="참고 상품 이미지 (선택)" hint="PNG 또는 JPG, 최대 20MB · 제품 외형과 패키지를 유지하고 싶을 때 첨부하세요.">
+      <input type="file" accept="image/png,image/jpeg" onChange={setImage} disabled={busy} />
+      {value.referenceImage && <small>{value.referenceImage.name}</small>}
+    </Field>
     <Field label="콘텐츠 유형"><select value={value.contentType} onChange={set('contentType')}>{CONTENT_TYPES.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></Field>
     <Field label="채널"><input value={value.channel} onChange={set('channel')} placeholder="예: Instagram, 자사몰" /></Field>
     <Field label="목적"><input value={value.purpose} onChange={set('purpose')} placeholder="예: 출시 인지도 확보" /></Field>

@@ -9,4 +9,6 @@ public interface FinancialInputSnapshotRepository extends JpaRepository<Financia
     Optional<FinancialInputSnapshot> findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(String sourceId, Long projectId);
     Optional<FinancialInputSnapshot> findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
         Long projectId, String techOpsId, Long marketVersionId, Long businessModelVersionId);
+    Optional<FinancialInputSnapshot> findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+        Long projectId, Long marketVersionId, Long businessModelVersionId);
 }

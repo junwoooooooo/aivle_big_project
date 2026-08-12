@@ -13,5 +13,9 @@ export function createMarketingContentApi(client) {
       ...options, headers: { ...options.headers, 'Idempotency-Key': idempotencyKey, 'X-Correlation-Id': idempotencyKey },
     })),
     finalize: async (projectId, contentId, options) => unwrap(await client.post(`${root(projectId)}/${encodeURIComponent(contentId)}/finalize`, {}, options)),
+    uploadReference: async (projectId, file, options) => {
+      const form = new FormData(); form.append('file', file);
+      return unwrap(await client.upload(`/api/v3/projects/${encodeURIComponent(projectId)}/evidence-artifacts`, form, options));
+    },
   });
 }

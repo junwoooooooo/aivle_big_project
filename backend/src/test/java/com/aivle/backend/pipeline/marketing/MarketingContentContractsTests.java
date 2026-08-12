@@ -76,6 +76,11 @@ class MarketingContentContractsTests {
         contract.validate(valid, MarketingContentType.EMAIL);
         ((tools.jackson.databind.node.ObjectNode) valid).put("unexpected", true);
         assertThatThrownBy(() -> contract.validate(valid, MarketingContentType.EMAIL)).isInstanceOf(IllegalArgumentException.class);
+
+        var withImage = mapper.readTree("""
+            {"contract":"marketing-content-result-v1","contentType":"EMAIL","title":"Hello","body":"Body","callToAction":null,"hashtags":[],"imageBrief":"제품 이미지","legalReview":{"compliant":true,"warnings":[],"requiredDisclosuresApplied":[]},"artifactRefs":["ai-artifacts/00000000-0000-4000-8000-000000000001.jpg"]}
+            """);
+        contract.validate(withImage, MarketingContentType.EMAIL);
     }
 
     @Test

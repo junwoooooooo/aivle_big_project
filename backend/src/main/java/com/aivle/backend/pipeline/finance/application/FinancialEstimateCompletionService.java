@@ -86,7 +86,6 @@ public class FinancialEstimateCompletionService {
     private boolean fresh(FinancialInputPreparation preparation, TaskRunWorkerContext context, JsonNode input) {
         if (!matches(preparation, context, input)
                 || preparation.getRevision() != input.path("expectedPreparationRevision").asInt()
-                || !preparation.getSourceTechOpsSnapshotId().equals(input.path("sourceTechOpsSnapshotId").asText())
                 || preparation.getSourceMarketResearchVersionId() == null
                 || preparation.getSourceMarketResearchVersionId().longValue() != input.path("sourceMarketResearchVersionId").asLong(-1)
                 || preparation.getSourceBusinessModelVersionId() == null
@@ -151,10 +150,14 @@ public class FinancialEstimateCompletionService {
         if (!java.util.Set.of("unitVariableCost", "paymentFee", "partnerPayout", "shippingCost",
                 "customerIncrementalInfraCost").contains(fieldKey)) return;
         JsonNode context = mapper.readTree(input.path("contextJson").asText("{}"));
-        BigDecimal price = context.path("upstreamReferences").path("marketAnalysis").path("price").path("base").decimalValue();
-        if (price.signum() <= 0) {
-            price = context.path("financialFields").path("monthlySubscriptionPrice").path("value").path("amount").decimalValue();
-        }
+        JsonNode fields = context.path("financialFields");
+        boolean oneTime = "ONE_TIME".equals(fields.path("revenueModel").path("value").asText());
+        BigDecimal price = fields.path(oneTime ? "unitPrice" : "monthlySubscriptionPrice")
+            .path("value").path("amount").decimalValue();
+        if (price.signum() <= 0) price = fields.path(oneTime ? "monthlySubscriptionPrice" : "unitPrice")
+            .path("value").path("amount").decimalValue();
+        if (price.signum() <= 0) price = context.path("marketAndBmReferences").path("marketAnalysis")
+            .path("price").path("base").decimalValue();
         if (price.signum() <= 0 || !value.path("amount").isNumber()) return;
         BigDecimal multiplier = switch (fieldKey) {
             case "unitVariableCost" -> BigDecimal.valueOf(0.45);
@@ -254,6 +257,7 @@ public class FinancialEstimateCompletionService {
         if (STALE.equals(reason)) return STALE;
         if ("DEADLINE_EXCEEDED".equals(code)) return "TASK_TIMEOUT";
         if ("RATE_LIMITED".equals(code)) return "RATE_LIMITED";
+        if ("RESULT_SCHEMA_INVALID".equals(code) || "AI_RESULT_INVALID".equals(reason)) return "AI_RESULT_INVALID";
         return "AI_SERVICE_UNAVAILABLE";
     }
 

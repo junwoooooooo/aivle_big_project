@@ -40,11 +40,11 @@ function FinanceWorkspace({ finance }) {
 
   return <main className="finance-page">
     <header className="finance-heading"><div><p>7. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
-      <span>시장조사·BM·기술운영의 current 결과와 근거를 이어받고, 부족한 값만 입력해 불변 Snapshot을 만듭니다.</span></div>
+      <span>current 시장 분석과 BM 결과의 근거를 이어받고, 부족한 값만 입력해 불변 Snapshot을 만듭니다.</span></div>
       <strong className="finance-heading__status">{locked ? '입력 확정' : preparation.readyToFinalize ? '확정 준비' : `${preparation.missingRequiredInputs.length}개 입력 필요`}</strong></header>
     {finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}
 
-    <section className="finance-source" aria-labelledby="finance-source-title"><div><p>시장조사·BM·기술운영에서 가져옴</p>
+    <section className="finance-source" aria-labelledby="finance-source-title"><div><p>시장 분석·BM에서 가져옴</p>
       <h2 id="finance-source-title">재무 가정의 원본과 근거</h2></div>
       <div className="finance-source__grid">
         <Reference label="TAM" value={references.marketAnalysis?.tam} />
@@ -54,11 +54,11 @@ function FinanceWorkspace({ finance }) {
         <Reference label="고정운영비" value={references.fixedOperatingCost?.annualEquivalent ?? references.fixedOperatingCost?.value} />
         <Reference label="초기투자" value={references.initialInvestment?.value} />
         <Reference label="기존 3개년 목표" value={references.threeYearTargets?.value} />
-      </div><p className="finance-source__ai-note">AI 추정은 Market·BM·TechOps 근거를 참고한 초안이며 자동 저장되지 않습니다. 근거와 가정을 확인한 뒤 채택하거나 수정하세요.</p>
+      </div><p className="finance-source__ai-note">AI 추정은 Market·BM 근거를 참고한 초안이며 자동 저장되지 않습니다. 근거와 가정을 확인한 뒤 채택하거나 수정하세요.</p>
       <details><summary>Market/BM 근거·가정·Evidence·Caveat 전체 보기</summary>
         <pre className="finance-source-detail">{JSON.stringify({ marketAnalysis: references.marketAnalysis,
-          businessModel: references.businessModel, techOpsSnapshot: references.techOpsSnapshot }, null, 2)}</pre></details>
-      <small>Market Version {preparation.sourceMarketResearchVersionId} · BM Version {preparation.sourceBusinessModelVersionId} · TechOps Snapshot {preparation.sourceTechOpsSnapshotId}</small></section>
+          businessModel: references.businessModel, conceptHypotheses: references.conceptHypotheses }, null, 2)}</pre></details>
+      <small>Market Version {preparation.sourceMarketResearchVersionId} · BM Version {preparation.sourceBusinessModelVersionId}</small></section>
 
     <FinancialSection eyebrow="고정운영비" title="연간 고정비 세부항목" fields={FIXED_COST_FIELDS}
       draft={draft} change={change} sourceFields={fields} missing={missing} locked={locked}
@@ -110,7 +110,7 @@ function FinanceWorkspace({ finance }) {
         finance={finance} safe={safe} editedValue={editedValues()[key]} />)}</div></details></section>
 
     <section className="finance-assistance" aria-labelledby="finance-assistance-title"><div><p>설명·예시·AI 추정</p><h2 id="finance-assistance-title">입력 도움말</h2></div>
-      <p className="finance-ai-guide">비용·가격·3개년 목표 추천은 Market·BM·TechOps와 선택적 Tavily 근거를 참고합니다. 외부 근거를 사용할 수 없어도 안전하게 실패하며, 추천은 검토 전 확정값이 아닙니다.</p>
+      <p className="finance-ai-guide">비용·가격·3개년 목표 추천은 Market·BM과 선택적 Tavily 근거를 참고합니다. 외부 근거가 없어도 Finance 입력은 계속할 수 있으며, 추천은 검토 전 확정값이 아닙니다.</p>
       <div>{Object.entries(preparation.assistance ?? {}).map(([key, item]) => <article key={key}><strong>{fieldLabel(key)}</strong><span>{item.explanation}</span>
         {item.example && <span>{item.example}</span>}<small>{estimateLabel(item)}</small>
         {item.proposalValue != null && fields[key] && <Recommendation item={item} />}
@@ -194,7 +194,9 @@ function MoneyInput({ fieldKey, label, value, onChange, field, missing, locked, 
 function SourceNote({ field }) {
   if (field?.source === 'MARKET_ANALYSIS_ASSUMPTION') return <small data-source="inherited">시장 분석 가정 · 확인 후 저장 필요</small>;
   if (field?.source === 'BUSINESS_MODEL_HANDOFF') return <small data-source="inherited">BM financial handoff 근거</small>;
-  return <small data-source={field?.readOnly ? 'inherited' : 'input'}>{field?.readOnly ? '상위 current Snapshot에서 가져옴' : '없을 때만 사용자 입력'}</small>;
+  if (field?.source === 'BUSINESS_MODEL_ASSUMPTION') return <small data-source="inherited">BM 분석 가정 · 확인 후 저장 필요</small>;
+  if (field?.source === 'CONCEPT_HYPOTHESIS') return <small data-source="inherited">컨셉 확정 가정 · 확인 후 저장 필요</small>;
+  return <small data-source={field?.readOnly ? 'inherited' : 'input'}>{field?.readOnly ? '기존 상위 Snapshot에서 가져옴' : '없을 때만 사용자 입력'}</small>;
 }
 function Reference({ label, value }) {
   const display = value?.amount != null ? formatMoney(value)

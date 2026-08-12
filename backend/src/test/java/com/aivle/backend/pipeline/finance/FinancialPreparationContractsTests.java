@@ -77,6 +77,36 @@ class FinancialPreparationContractsTests {
     }
 
     @Test
+    void marketBmPreparationUsesPrecedenceWithoutTechOpsAndNeverOverwritesUserDecision() {
+        var market = mapper.readTree("""
+            {"market":{"tam":{"value":100},"sam":{"value":20},"growth":{"value":12},
+             "price":{"base":10000,"currency":"KRW"}}}
+            """);
+        var bm = mapper.readTree("""
+            {"bm":{"financialHandoff":{"revenueModel":"월 구독","priceBase":12000}}}
+            """);
+        var concept = mapper.readTree("""
+            {"revenueModel":{"value":"월 구독"},"price":{"value":"월 9,000원"}}
+            """);
+        var factory = new FinancialPreparationFactory(mapper);
+        var initial = factory.createFromMarketAndBusinessModel(market, bm, concept, 101L, 201L);
+
+        assertThat(initial.financialFields().path("revenueModel").path("source").asText())
+            .isEqualTo("BUSINESS_MODEL_ASSUMPTION");
+        assertThat(initial.financialFields().path("monthlySubscriptionPrice").path("value").path("amount").asInt())
+            .isEqualTo(12000);
+        assertThat(initial.upstreamReferences().has("techOpsSnapshot")).isFalse();
+        assertThat(initial.financialFields().path("annualFixedLaborCost").path("decision").asText()).isEqualTo("OPEN");
+
+        ObjectNode fields = initial.financialFields();
+        fields.withObject("monthlySubscriptionPrice").withObject("value").put("amount", 15000);
+        fields.withObject("monthlySubscriptionPrice").put("source", "USER_INPUT").put("decision", "LOCKED");
+        factory.applyBusinessModelDefaults(fields, bm);
+        assertThat(fields.path("monthlySubscriptionPrice").path("value").path("amount").asInt()).isEqualTo(15000);
+        assertThat(fields.path("monthlySubscriptionPrice").path("source").asText()).isEqualTo("USER_INPUT");
+    }
+
+    @Test
     void readinessRequiresOnlyMandatoryFieldsAndNotConditionalCosts() {
         var fields = mapper.createObjectNode();
         FinancialPreparationFactory.REQUIRED_KEYS.forEach(key -> fields.putObject(key).put("value", key).put("decision", "LOCKED"));
@@ -142,5 +172,14 @@ class FinancialPreparationContractsTests {
         assertThat(replacement.isDeleted()).isFalse();
         String migration = Files.readString(Path.of("src/main/resources/db/migration/V19__financial_snapshot_active_preparation_unique.sql"));
         assertThat(migration).contains("WHERE deleted_at IS NULL", "uk_financial_snapshot_active_preparation");
+    }
+
+    @Test
+    void v20MakesTechOpsOptionalAndUsesMarketBmActiveAuthority() throws Exception {
+        String migration = Files.readString(Path.of(
+            "src/main/resources/db/migration/V20__finance_market_bm_authority.sql"));
+        assertThat(migration).contains("source_tech_ops_snapshot_id DROP NOT NULL",
+            "source_market_research_version_id", "source_business_model_version_id");
+        assertThat(migration).doesNotContain("ON financial_input_preparations(project_id, source_tech_ops_snapshot_id");
     }
 }

@@ -21,6 +21,15 @@
         "requiredDisclosuresApplied": {"type": "array", "maxItems": 30, "items": {"type": "string", "minLength": 1, "maxLength": 500}}
       }
     },
-    "artifactRefs": {"type": "array", "maxItems": 0, "items": {"type": "string", "minLength": 1, "maxLength": 300}}
+    "artifactRefs": {
+      "description": "내부 오브젝트 스토리지에 저장된 생성 JPEG 이미지 참조(최대 1개)",
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^ai-artifacts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.jpg$",
+        "maxLength": 300
+      }
+    }
   }
 }

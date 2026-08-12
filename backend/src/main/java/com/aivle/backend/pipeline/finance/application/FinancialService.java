@@ -6,7 +6,6 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
-import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.finance.domain.*;
 import com.aivle.backend.pipeline.finance.repository.*;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
@@ -14,10 +13,7 @@ import com.aivle.backend.pipeline.market.MarketResearchService;
 import com.aivle.backend.pipeline.market.MarketResearchVersion;
 import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
-import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
-import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
-import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -39,10 +35,7 @@ import tools.jackson.databind.node.ObjectNode;
 public class FinancialService {
     private static final Set<String> TARGET_METRICS = Set.of("salesVolume", "customerCount", "subscriberCount", "transactionCount");
     private final ProjectRepository projects;
-    private final ConceptPortfolioSelectionRepository portfolioSelections;
-    private final ConceptSelectionRepository selections;
     private final MarketAnalysisSeedSnapshotRepository marketSeeds;
-    private final TechOpsInputSnapshotRepository techOpsSnapshots;
     private final MarketResearchService marketResearch;
     private final MarketResearchVersionRepository marketVersions;
     private final FinancialInputPreparationRepository preparations;
@@ -62,20 +55,18 @@ public class FinancialService {
         requireOwnedForUpdate(ownerId, projectId);
         CurrentSources source = currentSources(ownerId, projectId);
         var existing = preparations
-            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId());
+            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+                projectId, source.market().getId(), source.businessModel().getId());
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.create(source.techOps(), mapper.readTree(source.market().getResultJson()),
-            mapper.readTree(source.businessModel().getResultJson()), source.market().getId(), source.businessModel().getId());
+        var initial = preparationFactory.createFromMarketAndBusinessModel(
+            mapper.readTree(source.market().getResultJson()), mapper.readTree(source.businessModel().getResultJson()),
+            currentConceptHypotheses(source), source.market().getId(), source.businessModel().getId());
         ObjectNode lineage = mapper.createObjectNode();
-        lineage.put("techOpsSnapshotId", source.techOps().getId());
-        lineage.put("techOpsSnapshotHash", source.techOps().getSnapshotHash());
         lineage.put("marketResearchVersionId", source.market().getId());
         lineage.put("businessModelVersionId", source.businessModel().getId());
         String id = UUID.randomUUID().toString();
-        var saved = preparations.save(FinancialInputPreparation.create(id, projectId, source.techOps().getId(),
-            source.techOps().getSourceMarketSeedSnapshotId(), source.market().getId(), source.businessModel().getId(),
-            snapshotHasher.hash(lineage),
+        var saved = preparations.save(FinancialInputPreparation.createFromMarketAndBusinessModel(id, projectId,
+            source.market().getId(), source.businessModel().getId(), snapshotHasher.hash(lineage),
             mapper.writeValueAsString(initial.financialFields()), mapper.writeValueAsString(initial.upstreamReferences()),
             mapper.writeValueAsString(initial.assistance()), ownerId));
         return view(saved);
@@ -98,7 +89,7 @@ public class FinancialService {
         for (String key : request.values().propertyNames()) {
             if (!FinancialPreparationFactory.ALL_KEYS.contains(key)) throw invalid("지원하지 않는 재무 입력 필드입니다: " + key);
             ObjectNode field = (ObjectNode) fields.path(key);
-            if (field.path("readOnly").asBoolean(false)) throw invalid("기술·운영 단계에서 가져온 값은 다시 입력할 수 없습니다: " + key);
+            if (field.path("readOnly").asBoolean(false)) throw invalid("상위 단계에서 확정된 값은 다시 입력할 수 없습니다: " + key);
             JsonNode value = request.values().get(key);
             validateField(key, value, false);
             field.set("value", value == null ? mapper.nullNode() : value.deepCopy());
@@ -228,9 +219,9 @@ public class FinancialService {
         String id = UUID.randomUUID().toString();
         Instant now = Instant.now();
         var built = snapshotFactory.create(id, now, preparation);
-        return snapshotView(snapshots.save(FinancialInputSnapshot.create(id, projectId, preparation.getId(),
-            preparation.getSourceTechOpsSnapshotId(), preparation.getSourceMarketSeedSnapshotId(),
-            preparation.getSourceMarketResearchVersionId(), preparation.getSourceBusinessModelVersionId(),
+        return snapshotView(snapshots.save(FinancialInputSnapshot.createFromMarketAndBusinessModel(
+            id, projectId, preparation.getId(), preparation.getSourceMarketResearchVersionId(),
+            preparation.getSourceBusinessModelVersionId(),
             FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now)));
     }
 
@@ -250,8 +241,8 @@ public class FinancialService {
         requireOwned(ownerId, projectId);
         CurrentSources source = currentSources(ownerId, projectId);
         return snapshotView(snapshots
-            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId())
+            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+                projectId, source.market().getId(), source.businessModel().getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY)));
     }
 
@@ -280,7 +271,7 @@ public class FinancialService {
             String fieldKey, int version, JsonNode rejected, String idempotencyKey,
             String correlationId, String actionType) {
         String contextJson = mapper.writeValueAsString(java.util.Map.of(
-            "upstreamReferences", mapper.readTree(preparation.getUpstreamReferencesJson()),
+            "marketAndBmReferences", mapper.readTree(preparation.getUpstreamReferencesJson()),
             "financialFields", mapper.readTree(preparation.getFinancialFieldsJson())));
         String rejectedJson = rejected == null || rejected.isNull()
             ? "" : mapper.writeValueAsString(rejected);
@@ -288,7 +279,6 @@ public class FinancialService {
             java.util.Map.entry("preparationId", preparation.getId()),
             java.util.Map.entry("fieldKey", fieldKey), java.util.Map.entry("proposalVersion", version),
             java.util.Map.entry("rejectedProposalJson", rejectedJson),
-            java.util.Map.entry("sourceTechOpsSnapshotId", preparation.getSourceTechOpsSnapshotId()),
             java.util.Map.entry("sourceMarketResearchVersionId", preparation.getSourceMarketResearchVersionId()),
             java.util.Map.entry("sourceBusinessModelVersionId", preparation.getSourceBusinessModelVersionId()),
             java.util.Map.entry("sourceSnapshotHash", preparation.getSourceSnapshotHash()),
@@ -346,8 +336,8 @@ public class FinancialService {
     private FinancialInputPreparation requireCurrent(Long ownerId, Long projectId) {
         CurrentSources source = currentSources(ownerId, projectId);
         return preparations
-            .findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-                projectId, source.techOps().getId(), source.market().getId(), source.businessModel().getId())
+            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+                projectId, source.market().getId(), source.businessModel().getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 
@@ -357,25 +347,7 @@ public class FinancialService {
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 
-    private TechOpsInputSnapshot currentTechOpsSnapshot(Long projectId) {
-        var portfolio = portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
-        if (portfolio != null) {
-            var seed = marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(portfolio.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE,
-                    "current Market Analysis Seed가 필요합니다."));
-            return techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(seed.getId(), projectId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY));
-        }
-        var selection = selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
-        var seed = marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
-        return techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(seed.getId(), projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY));
-    }
-
     private CurrentSources currentSources(Long ownerId, Long projectId) {
-        TechOpsInputSnapshot techOps = currentTechOpsSnapshot(projectId);
         var marketCurrent = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.FULL);
         var bmCurrent = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.BM);
         if (marketCurrent.version() == null || marketCurrent.stale()) {
@@ -398,14 +370,22 @@ public class FinancialService {
             throw new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED,
                 "Market/BM source lineage가 current 상태가 아닙니다.");
         }
-        return new CurrentSources(techOps, market, businessModel);
+        return new CurrentSources(market, businessModel);
+    }
+
+    private JsonNode currentConceptHypotheses(CurrentSources source) {
+        String seedId = source.market().getSourceRun().getSourceMarketSeedSnapshotId();
+        return marketSeeds.findById(seedId)
+            .filter(seed -> seed.getDeletedAt() == null && seed.getStaleAt() == null
+                && source.market().getProject().getId().equals(seed.getProjectId()))
+            .map(seed -> mapper.readTree(seed.getSnapshotJson()).path("finalHypotheses").deepCopy())
+            .orElseGet(mapper::createObjectNode);
     }
 
     private boolean stale(FinancialInputPreparation value) {
         try {
             CurrentSources current = currentSources(value.getUpdatedByUserId(), value.getProjectId());
-            return !current.techOps().getId().equals(value.getSourceTechOpsSnapshotId())
-                || !current.market().getId().equals(value.getSourceMarketResearchVersionId())
+            return !current.market().getId().equals(value.getSourceMarketResearchVersionId())
                 || !current.businessModel().getId().equals(value.getSourceBusinessModelVersionId());
         } catch (BusinessException unavailable) { return true; }
     }
@@ -413,8 +393,7 @@ public class FinancialService {
     private boolean stale(FinancialInputSnapshot value) {
         try {
             CurrentSources current = currentSources(value.getCreatedByUserId(), value.getProjectId());
-            return !current.techOps().getId().equals(value.getSourceTechOpsSnapshotId())
-                || !current.market().getId().equals(value.getSourceMarketResearchVersionId())
+            return !current.market().getId().equals(value.getSourceMarketResearchVersionId())
                 || !current.businessModel().getId().equals(value.getSourceBusinessModelVersionId());
         } catch (BusinessException unavailable) { return true; }
     }
@@ -486,6 +465,5 @@ public class FinancialService {
         projects.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, ownerId)
             .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
     }
-    private record CurrentSources(TechOpsInputSnapshot techOps, MarketResearchVersion market,
-                                  MarketResearchVersion businessModel) {}
+    private record CurrentSources(MarketResearchVersion market, MarketResearchVersion businessModel) {}
 }

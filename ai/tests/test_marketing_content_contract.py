@@ -92,7 +92,69 @@ def test_provider_result_with_prohibited_claim_is_blocked(monkeypatch) -> None:
     value = request_input()
     value["source"]["prohibitedClaims"] = ["전 지역 최저가"]
     monkeypatch.setattr(service, "execute_structured_prompt", prohibited_result)
+    async def must_not_generate(*_args, **_kwargs):
+        raise AssertionError("금지 표현 검증 전에 이미지를 생성하면 안 됩니다.")
+    monkeypatch.setattr(service, "generate_and_store_marketing_image", must_not_generate)
     with pytest.raises(ProviderFailure) as raised:
         asyncio.run(service.execute_marketing_content(value))
     assert raised.value.reason == "SAFETY_POLICY_BLOCKED"
+    assert raised.value.retryable is False
+
+
+def test_no_reference_generation_returns_one_bounded_artifact(monkeypatch) -> None:
+    async def provider(*_args, **_kwargs):
+        return {
+            "contract": "marketing-content-result-v1", "contentType": "BLOG_INTRO",
+            "title": "Title", "body": "Body", "callToAction": None,
+            "hashtags": [], "imageBrief": "제품 중심 스튜디오 컷",
+            "legalReview": {"compliant": True, "warnings": [], "requiredDisclosuresApplied": []},
+            "artifactRefs": [],
+        }
+    async def image(value, _result):
+        assert value.request.referenceArtifactId is None
+        return "ai-artifacts/00000000-0000-4000-8000-000000000001.jpg"
+    monkeypatch.setattr(service, "execute_structured_prompt", provider)
+    monkeypatch.setattr(service, "generate_and_store_marketing_image", image)
+    result = asyncio.run(service.execute_marketing_content(request_input()))
+    assert result["artifactRefs"] == ["ai-artifacts/00000000-0000-4000-8000-000000000001.jpg"]
+
+
+def test_reference_artifact_is_forwarded_to_image_stage(monkeypatch) -> None:
+    value = request_input()
+    value["request"]["referenceArtifactId"] = "00000000-0000-4000-8000-000000000002"
+    async def provider(*_args, **_kwargs):
+        return {
+            "contract": "marketing-content-result-v1", "contentType": "BLOG_INTRO",
+            "title": "Title", "body": "Body", "callToAction": None,
+            "hashtags": [], "imageBrief": "참고 제품을 유지한 키 비주얼",
+            "legalReview": {"compliant": True, "warnings": [], "requiredDisclosuresApplied": []},
+            "artifactRefs": [],
+        }
+    async def image(parsed, _result):
+        assert parsed.request.referenceArtifactId == "00000000-0000-4000-8000-000000000002"
+        return "ai-artifacts/00000000-0000-4000-8000-000000000003.jpg"
+    monkeypatch.setattr(service, "execute_structured_prompt", provider)
+    monkeypatch.setattr(service, "generate_and_store_marketing_image", image)
+    result = asyncio.run(service.execute_marketing_content(value))
+    assert len(result["artifactRefs"]) == 1
+
+
+def test_invalid_generated_artifact_is_mapped_safely(monkeypatch) -> None:
+    async def provider(*_args, **_kwargs):
+        return {
+            "contract": "marketing-content-result-v1", "contentType": "BLOG_INTRO",
+            "title": "Title", "body": "Body", "callToAction": None,
+            "hashtags": [], "imageBrief": "제품 이미지",
+            "legalReview": {"compliant": True, "warnings": [], "requiredDisclosuresApplied": []},
+            "artifactRefs": [],
+        }
+
+    async def invalid_image(*_args, **_kwargs):
+        return "ai-artifacts/not-a-generated-jpeg.png"
+
+    monkeypatch.setattr(service, "execute_structured_prompt", provider)
+    monkeypatch.setattr(service, "generate_and_store_marketing_image", invalid_image)
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_marketing_content(request_input()))
+    assert raised.value.reason == "AI_RESULT_INVALID"
     assert raised.value.retryable is False

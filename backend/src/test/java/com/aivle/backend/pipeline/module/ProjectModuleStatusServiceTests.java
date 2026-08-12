@@ -173,10 +173,9 @@ class ProjectModuleStatusServiceTests {
     }
 
     @Test
-    void exposesIndependentFinancialPreparationStatusAfterTechOpsSnapshotFinalization() {
+    void exposesFinancialPreparationStatusWithoutTechOpsSnapshot() {
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(mock(Project.class)));
         ConceptSelection selection = mock(ConceptSelection.class); MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
-        TechOpsInputSnapshot techOpsSnapshot = mock(TechOpsInputSnapshot.class);
         FinancialInputPreparation preparation = mock(FinancialInputPreparation.class);
         var marketRun = mock(com.aivle.backend.pipeline.market.MarketResearchRun.class);
         var bmRun = mock(com.aivle.backend.pipeline.market.MarketResearchRun.class);
@@ -184,11 +183,9 @@ class ProjectModuleStatusServiceTests {
         var bmVersion = mock(com.aivle.backend.pipeline.market.MarketResearchVersion.class);
         var marketTask = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
         var bmTask = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
-        when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1"); when(techOpsSnapshot.getId()).thenReturn("tech-1");
+        when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1");
         when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
         when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
-        when(techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("market-seed-1", 41L))
-            .thenReturn(Optional.of(techOpsSnapshot));
         when(marketRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
         when(marketRun.getTaskRun()).thenReturn(marketTask); when(marketTask.getState()).thenReturn(com.aivle.backend.taskrun.domain.TaskRunState.SUCCEEDED);
         when(marketTask.getId()).thenReturn("market-task");
@@ -204,8 +201,8 @@ class ProjectModuleStatusServiceTests {
         when(marketVersions.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
             41L, com.aivle.backend.pipeline.market.MarketResearchRun.Kind.FULL)).thenReturn(Optional.of(marketVersion));
         when(marketVersions.findBySourceRunIdAndDeletedAtIsNull(301L)).thenReturn(Optional.of(bmVersion));
-        when(financialPreparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-            41L, "tech-1", 101L, 201L))
+        when(financialPreparations.findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+            41L, 101L, 201L))
             .thenReturn(Optional.of(preparation));
         when(preparation.getId()).thenReturn("finance-prep-1");
 
@@ -236,8 +233,8 @@ class ProjectModuleStatusServiceTests {
 
         var financialSnapshot = mock(com.aivle.backend.pipeline.finance.domain.FinancialInputSnapshot.class);
         when(financialSnapshot.getId()).thenReturn("finance-snapshot-1");
-        when(financialSnapshots.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
-            41L, "tech-1", 101L, 201L)).thenReturn(Optional.of(financialSnapshot));
+        when(financialSnapshots.findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+            41L, 101L, 201L)).thenReturn(Optional.of(financialSnapshot));
         TaskRun report = mock(TaskRun.class);
         when(report.getId()).thenReturn("finance-report-task");
         when(report.getState()).thenReturn(TaskRunState.RUNNING);

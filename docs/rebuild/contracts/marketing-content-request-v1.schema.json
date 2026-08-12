@@ -21,6 +21,11 @@
       "minLength": 1,
       "maxLength": 64
     },
+    "referenceArtifactId": {
+      "description": "선택적으로 이미지 생성·편집에 사용할 동일 프로젝트의 PNG/JPEG 근거 아티팩트 ID",
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
     "contentType": {
       "enum": [
         "SOCIAL_POST",

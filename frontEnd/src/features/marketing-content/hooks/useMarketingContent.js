@@ -9,7 +9,7 @@ export default function useMarketingContent(projectId) {
   const api = useMemo(() => createMarketingContentApi(client), [client]);
   const sourceApi = useMemo(() => createMarketingSourceApi(client), [client]);
   const selectedId = useRef(null);
-  const [state, setState] = useState({ loading: true, list: [], source: null, selected: null, error: null, saving: false });
+  const [state, setState] = useState({ loading: true, list: [], source: null, selected: null, error: null, saving: false, uploading: false });
   const updateSelected = useCallback((selected) => {
     selectedId.current = selected?.content?.contentId ?? null;
     setState((value) => ({ ...value, selected }));
@@ -42,6 +42,18 @@ export default function useMarketingContent(projectId) {
   const open = useCallback(async (contentId) => {
     const detail = await api.detail(projectId, contentId); updateSelected(detail); restoreGeneration(detail); return detail;
   }, [api, projectId, restoreGeneration, updateSelected]);
+  const uploadReference = async (file) => {
+    if (!['image/png', 'image/jpeg'].includes(file?.type) || file.size <= 0 || file.size > 20 * 1024 * 1024) {
+      throw new Error('참고 이미지는 20MB 이하 PNG 또는 JPG 파일이어야 합니다.');
+    }
+    setState((value) => ({ ...value, uploading: true, error: null }));
+    try {
+      const artifact = await api.uploadReference(projectId, file, { timeoutMs: 30000 });
+      setState((value) => ({ ...value, uploading: false })); return artifact;
+    } catch (error) {
+      setState((value) => ({ ...value, uploading: false, error })); throw error;
+    }
+  };
   const create = async (request) => { const detail = await generation.create(request); await refresh(); return detail; };
   const regenerate = async () => { if (!state.selected) return null; const detail = await generation.regenerate(state.selected.content.contentId); await refresh(); return detail; };
   const save = async (result, revisionType = 'USER_EDITED') => {
@@ -50,5 +62,5 @@ export default function useMarketingContent(projectId) {
     catch (error) { setState((value) => ({ ...value, saving: false, error })); throw error; }
   };
   const finalize = async () => { if (!state.selected) return null; const detail = await api.finalize(projectId, state.selected.content.contentId); updateSelected(detail); await refresh(); return detail; };
-  return { ...state, ...generation, refresh, open, create, regenerate, save, finalize };
+  return { ...state, ...generation, refresh, open, create, regenerate, save, finalize, uploadReference };
 }

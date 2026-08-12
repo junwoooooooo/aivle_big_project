@@ -28,6 +28,8 @@ describe('FinancePage', () => {
     </Routes></MemoryRouter>);
     expect(screen.getByRole('heading', { name: '재무 가정의 원본과 근거' })).toBeInTheDocument();
     expect(screen.getByText(/Market Version 101/)).toBeInTheDocument();
+    expect(screen.queryByText(/TechOps Snapshot/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/기술.?운영 분석에서 전달된 값/)).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '연간 고정비 세부항목' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '가격 및 반복 매출 가정' })).toBeInTheDocument();
     expect(screen.getByText('시스템 계산 CAC')).toBeInTheDocument();

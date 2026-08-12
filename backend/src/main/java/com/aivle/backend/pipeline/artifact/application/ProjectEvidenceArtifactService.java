@@ -112,6 +112,15 @@ public class ProjectEvidenceArtifactService {
     public Download download(Long ownerId, Long projectId, String artifactId) {
         requireOwned(ownerId, projectId);
         ProjectEvidenceArtifact artifact = requireArtifact(projectId, artifactId);
+        return open(artifact);
+    }
+
+    @Transactional(readOnly = true)
+    public Download downloadForAi(Long projectId, String artifactId) {
+        return open(requireArtifact(projectId, artifactId));
+    }
+
+    private Download open(ProjectEvidenceArtifact artifact) {
         try {
             if (!storage.exists(artifact.getStorageKey())) {
                 throw new BusinessException(ErrorCode.EVIDENCE_ARTIFACT_NOT_FOUND);

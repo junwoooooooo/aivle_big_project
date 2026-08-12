@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 public class FinancialInputPreparation extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
-    @Column(name = "source_tech_ops_snapshot_id", nullable = false, length = 64) private String sourceTechOpsSnapshotId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_tech_ops_snapshot_id", length = 64) private String sourceTechOpsSnapshotId;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
     @Column(name = "source_market_research_version_id") private Long sourceMarketResearchVersionId;
     @Column(name = "source_business_model_version_id") private Long sourceBusinessModelVersionId;
     @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
@@ -38,6 +38,28 @@ public class FinancialInputPreparation extends BaseEntity {
         value.projectId = projectId;
         value.sourceTechOpsSnapshotId = techOpsSnapshotId;
         value.sourceMarketSeedSnapshotId = marketSeedSnapshotId;
+        value.sourceSnapshotHash = sourceHash;
+        value.financialFieldsJson = fieldsJson;
+        value.upstreamReferencesJson = referencesJson;
+        value.assistanceJson = assistanceJson;
+        value.revision = 1;
+        value.updatedByUserId = userId;
+        return value;
+    }
+
+    public static FinancialInputPreparation createFromMarketAndBusinessModel(String id, Long projectId,
+            Long marketVersionId, Long businessModelVersionId, String sourceHash, String fieldsJson,
+            String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || marketVersionId == null || businessModelVersionId == null
+                || !hash(sourceHash) || blank(fieldsJson) || blank(referencesJson)
+                || blank(assistanceJson) || userId == null) {
+            throw new IllegalArgumentException("재무 입력에는 current Market/BM source가 필요합니다.");
+        }
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id;
+        value.projectId = projectId;
+        value.sourceMarketResearchVersionId = marketVersionId;
+        value.sourceBusinessModelVersionId = businessModelVersionId;
         value.sourceSnapshotHash = sourceHash;
         value.financialFieldsJson = fieldsJson;
         value.upstreamReferencesJson = referencesJson;
