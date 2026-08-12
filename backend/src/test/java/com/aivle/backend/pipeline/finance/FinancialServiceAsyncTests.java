@@ -9,6 +9,7 @@ import com.aivle.backend.pipeline.finance.api.FinancialApiModels.EstimateDecisio
 import com.aivle.backend.pipeline.finance.application.*;
 import com.aivle.backend.pipeline.finance.domain.FinancialInputPreparation;
 import com.aivle.backend.pipeline.finance.repository.*;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
 import com.aivle.backend.pipeline.market.MarketResearchService;
@@ -38,6 +39,33 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 class FinancialServiceAsyncTests {
+    @Test
+    void initializeBindsCurrentPortfolioTechOpsMarketAndBusinessModelLineage() {
+        Harness h = new Harness();
+        ConceptPortfolioSelection portfolio = mock(ConceptPortfolioSelection.class);
+        when(portfolio.getId()).thenReturn(77L);
+        when(h.portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L))
+            .thenReturn(Optional.of(portfolio));
+        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        when(seed.getId()).thenReturn("seed-v2");
+        when(h.marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(77L))
+            .thenReturn(Optional.of(seed));
+        TechOpsInputSnapshot techOps = TechOpsInputSnapshot.create("tech-v2", 41L, "tech-prep-v2", "seed-v2",
+            "2.0", h.hash, "{\"requiredFacts\":{},\"requiredFactProvenance\":{}}", 7L, Instant.EPOCH);
+        when(h.techOpsSnapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull("seed-v2", 41L))
+            .thenReturn(Optional.of(techOps));
+        when(h.preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+            41L, "tech-v2", 101L, 201L)).thenReturn(Optional.empty());
+        when(h.preparations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = h.service.initialize(7L, 41L);
+
+        assertThat(result.sourceTechOpsSnapshotId()).isEqualTo("tech-v2");
+        assertThat(result.sourceMarketResearchVersionId()).isEqualTo(101L);
+        assertThat(result.sourceBusinessModelVersionId()).isEqualTo(201L);
+        verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
+    }
+
     @Test
     void initializeIsProviderFreeAndCreatesNoEstimateTask() {
         Harness h = new Harness();

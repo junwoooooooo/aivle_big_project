@@ -1,10 +1,14 @@
 package com.aivle.backend.pipeline.techops;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
@@ -30,6 +34,56 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 class TechOpsServiceAsyncTests {
+    @Test
+    void currentPortfolioSeedIsAuthoritativeAndDuplicateInitializeReusesPreparation() {
+        Harness h = new Harness();
+        MarketAnalysisSeedSnapshot source = h.installPortfolioSeed(41L);
+        when(h.preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(41L, "seed-v2"))
+            .thenReturn(Optional.empty())
+            .thenAnswer(_ignored -> Optional.of(h.saved));
+        when(h.preparations.save(any())).thenAnswer(invocation -> {
+            h.saved = invocation.getArgument(0);
+            return h.saved;
+        });
+
+        var first = h.service.initialize(7L, 41L, "v2-init-1", "request-v2-1");
+        var second = h.service.initialize(7L, 41L, "v2-init-2", "request-v2-2");
+
+        assertThat(first.sourceMarketSeedSnapshotId()).isEqualTo("seed-v2");
+        assertThat(first.sourceSnapshotHash()).isEqualTo(source.getSnapshotHash());
+        assertThat(second.preparationId()).isEqualTo(first.preparationId());
+        verify(h.preparations, times(1)).save(any());
+        verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
+    }
+
+    @Test
+    void portfolioSelectionWithoutCurrentSeedDoesNotFallBackToLegacy() {
+        Harness h = new Harness();
+        ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
+        when(selection.getId()).thenReturn(77L);
+        when(h.portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L))
+            .thenReturn(Optional.of(selection));
+        when(h.marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(77L))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> h.service.initialize(7L, 41L, "v2-missing", "request-v2-missing"))
+            .isInstanceOfSatisfying(BusinessException.class,
+                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
+    }
+
+    @Test
+    void portfolioSeedFromAnotherProjectIsRejected() {
+        Harness h = new Harness();
+        h.installPortfolioSeed(99L);
+
+        assertThatThrownBy(() -> h.service.initialize(7L, 41L, "v2-foreign", "request-v2-foreign"))
+            .isInstanceOfSatisfying(BusinessException.class,
+                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        verify(h.preparations, never()).save(any());
+        verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
+    }
+
     @Test
     void initializeQueuesOneBatchTaskWithoutCallingProviderAndDuplicateInitializeDoesNotQueueAgain() {
         Harness h = new Harness();
@@ -110,6 +164,7 @@ class TechOpsServiceAsyncTests {
         final ObjectMapper mapper = new ObjectMapper();
         final String hash = "sha256:" + "a".repeat(64);
         final ProjectRepository projects = mock(ProjectRepository.class);
+        final ConceptPortfolioSelectionRepository portfolioSelections = mock(ConceptPortfolioSelectionRepository.class);
         final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
         final MarketAnalysisSeedSnapshotRepository marketSeeds = mock(MarketAnalysisSeedSnapshotRepository.class);
         final TechOpsInputPreparationRepository preparations = mock(TechOpsInputPreparationRepository.class);
@@ -122,7 +177,7 @@ class TechOpsServiceAsyncTests {
         final TaskRunService taskRuns = mock(TaskRunService.class);
         final CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
         final JobEventPublisher events = mock(JobEventPublisher.class);
-        final TechOpsService service = new TechOpsService(projects, selections, marketSeeds, preparations,
+        final TechOpsService service = new TechOpsService(projects, portfolioSelections, selections, marketSeeds, preparations,
             evidence, artifacts, snapshots, factory, snapshotFactory, readiness, mapper, taskRuns, hasher, events);
         TechOpsInputPreparation saved;
 
@@ -153,6 +208,21 @@ class TechOpsServiceAsyncTests {
             when(taskRuns.createWithDisposition(anyLong(), anyLong(), eq(TaskType.TECH_OPS_PROPOSAL),
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), eq(1)))
                 .thenReturn(new TaskRunService.CreateResult(task, true, false));
+        }
+
+        MarketAnalysisSeedSnapshot installPortfolioSeed(Long sourceProjectId) {
+            ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
+            when(selection.getId()).thenReturn(77L);
+            when(portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L))
+                .thenReturn(Optional.of(selection));
+            MarketAnalysisSeedSnapshot source = MarketAnalysisSeedSnapshot.createPortfolio("seed-v2", sourceProjectId,
+                77L, "concept-v2", "legal-v2", "2.0", hash, hash,
+                "{\"contract\":\"market-analysis-seed-v2\"}", 7L, java.time.Instant.EPOCH);
+            when(marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(77L))
+                .thenReturn(Optional.of(source));
+            when(factory.create(source)).thenReturn(new TechOpsPreparationFactory.InitialPreparation(
+                mapper.createObjectNode(), decisions(true)));
+            return source;
         }
 
         ObjectNode decisions(boolean allMissing) {

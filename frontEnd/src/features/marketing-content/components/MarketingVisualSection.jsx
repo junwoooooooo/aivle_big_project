@@ -73,7 +73,8 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
       {visual.run?.state === 'FAILED' && <div className="mk-visual__failure" role="alert"><strong>이미지 생성 실패</strong>
         <p>{visualFailure(failureCode)}</p>{visual.run.retryable && <button type="button" onClick={() => void visual.retry()}>다시 시도</button>}</div>}
       {!visual.busy && !result && visual.run?.state !== 'FAILED' && <div className="mk-visual__empty"><strong>배너 결과가 아직 없습니다.</strong>
-        <p>Source 이미지와 Visual 입력을 확인한 뒤 광고 배너 만들기를 실행하세요.</p></div>}
+        <p>{!contentId || !revisionId ? '먼저 마케팅 콘텐츠와 revision을 선택해 주세요.'
+          : 'Source 이미지와 Visual 입력을 확인한 뒤 광고 배너 만들기를 실행하세요.'}</p></div>}
       {result && <><div className="mk-visual__preview">{visual.previewUrl
         ? <img src={visual.previewUrl} alt="생성된 광고 배너" /> : <span>Project Artifact 미리보기를 불러오는 중입니다.</span>}</div>
         <div className="mk-visual__copy"><span>{result.generatedCopy?.badge}</span><h3>{result.generatedCopy?.headline}</h3>

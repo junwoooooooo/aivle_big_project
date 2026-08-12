@@ -7,10 +7,12 @@ export const VISUAL_FORMATS = Object.freeze([
 export const VISUAL_ACTIVE = new Set(['QUEUED', 'READY', 'RUNNING']);
 
 export function visualDefaults(source = {}, draft = {}) {
+  const safeSource = source ?? {};
+  const safeDraft = draft ?? {};
   return {
-    promotionName: source.conceptName ?? draft.title ?? '',
-    mainBanner: String(draft.title ?? '').slice(0, 80),
-    supportingCopy: String(draft.body ?? draft.imageBrief ?? '').replace(/\s+/g, ' ').slice(0, 150),
+    promotionName: safeSource.conceptName ?? safeDraft.title ?? '',
+    mainBanner: String(safeDraft.title ?? '').slice(0, 80),
+    supportingCopy: String(safeDraft.body ?? safeDraft.imageBrief ?? '').replace(/\s+/g, ' ').slice(0, 150),
     mood: '밝고 친근한', bannerFormat: '가로형 배너', emphasisKeywords: '',
   };
 }
