@@ -54,7 +54,7 @@ function FinanceWorkspace({ projectId, finance }) {
   const refreshContainer = () => void finance.refresh({ preserveView: true });
 
   return <FinanceRefreshContext.Provider value={refreshContainer}><main className="finance-page">
-    <header className="finance-heading"><div><p>7. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
+    <header className="finance-heading"><div><p>6. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
       <span>current 시장 분석과 BM 결과의 근거를 이어받고, 부족한 값만 입력해 불변 Snapshot을 만듭니다.</span></div>
       <div className="finance-statuses" aria-label="Finance 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
@@ -170,9 +170,9 @@ function FinanceWorkspace({ projectId, finance }) {
     {finance.analysis?.stale && <p className="finance-warning" role="status">상위 current 입력이 바뀌어 이 재무 결과는 stale 상태입니다. 입력을 다시 확정해 주세요.</p>}
     {finance.analysis?.safeErrorCode && !finance.analysis?.result && <p className="finance-error" role="alert">재무 보고서 생성 실패: {finance.analysis.safeErrorCode}{finance.analysis.retryable ? ' · 재시도할 수 있습니다.' : ''}</p>}
     <AnalysisReport analysis={finance.analysis} />
-    {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>8. 마케팅 콘텐츠</p>
-      <h2>확정한 사업 근거를 고객용 콘텐츠로 연결하세요.</h2><span>현재 Target의 Marketing Source와 통합 캔버스에서 문구와 이미지를 제작할 수 있습니다.</span></div>
-      <Link to={`/app/projects/${projectId}/marketing`}>다음 - 마케팅 콘텐츠</Link></section>}
+    {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 트윈 패널 조사</p>
+      <h2>재무 판단 다음으로 고객 선택 방향을 패널에서 확인하세요.</h2><span>확정 Concept의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.</span></div>
+      <Link to={`/app/projects/${projectId}/twin-survey`}>다음 - 트윈 패널 조사</Link></section>}
   </main></FinanceRefreshContext.Provider>;
 }
 

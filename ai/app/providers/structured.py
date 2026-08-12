@@ -102,10 +102,12 @@ def _retry_after_ms(response) -> int | None:
 async def execute_structured_prompt(system: str, user: str, model_override: str | None = None,
                                     response_schema: dict[str, Any] | None = None,
                                     schema_name: str | None = None,
-                                    task_type: str | None = None) -> dict[str, Any]:
+                                    task_type: str | None = None,
+                                    timeout_seconds_override: float | None = None) -> dict[str, Any]:
     api_key, model, base_url = _configuration(model_override)
     try:
-        timeout_seconds = float(os.getenv("AI_PROVIDER_TIMEOUT_SECONDS", "60"))
+        timeout_seconds = (float(timeout_seconds_override) if timeout_seconds_override is not None
+                           else float(os.getenv("AI_PROVIDER_TIMEOUT_SECONDS", "60")))
         if timeout_seconds <= 0:
             raise ValueError
     except ValueError as failure:

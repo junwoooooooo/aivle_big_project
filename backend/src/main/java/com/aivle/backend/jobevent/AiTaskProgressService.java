@@ -15,7 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AiTaskProgressService {
     private static final java.util.Set<TaskType> ALLOWED_TASK_TYPES = java.util.Set.of(
-        TaskType.CONCEPT_PORTFOLIO_V2_RUN, TaskType.MARKET_RESEARCH, TaskType.TWIN_SURVEY);
+        TaskType.CONCEPT_PORTFOLIO_V2_RUN, TaskType.MARKET_RESEARCH, TaskType.TWIN_SURVEY,
+        TaskType.TECH_OPS_ADVISORY);
     public enum Outcome { ACCEPTED, IGNORED, NOT_FOUND, INVALID }
 
     private final TaskRunRepository runs;
@@ -65,6 +66,7 @@ public class AiTaskProgressService {
                 ? "job.business-model.trace" : "job.market.trace";
         }
         if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
+        if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
         return messageKey(stage, action, reasonCode);
     }
 
@@ -74,6 +76,7 @@ public class AiTaskProgressService {
                 ? "job.business-model.trace" : "job.market.trace";
         }
         if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
+        if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
         return "job.concept-portfolio.trace";
     }
 

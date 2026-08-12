@@ -12,6 +12,7 @@ export const JOB_TASK_LABELS = Object.freeze({
   CONCEPT_HYPOTHESIS_ALTERNATIVE: '사업가설 대안 생성',
   CONCEPT_DELTA_LEGAL_REVIEW: '사업가설 변경 법률 검토',
   TECH_OPS_PROPOSAL: '기술·운영 분석',
+  TECH_OPS_ADVISORY: '기술·운영 상용화 자문',
   TWIN_STIMULUS_DRAFT: 'Twin 비교안 초안',
   TWIN_SURVEY: 'Twin 조사',
   FINANCE_ESTIMATE: '재무 입력 AI 추정',

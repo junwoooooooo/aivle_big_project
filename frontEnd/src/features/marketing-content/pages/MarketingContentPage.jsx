@@ -62,7 +62,7 @@ export default function MarketingContentPage() {
   }
 
   return <div className="mk-page">
-    <header className="mk-page__header"><div><p>Marketing Content</p><h1>확정된 Concept를 실제 콘텐츠로</h1>
+    <header className="mk-page__header"><div><p>8. 마케팅 콘텐츠 제작</p><h1>확정된 Concept를 실제 콘텐츠로</h1>
       <span>선택 Concept, 최종 가설과 Legal Result를 고정한 Marketing Source로 생성·편집·저장합니다.</span></div>
       <button type="button" onClick={() => void hook.refresh()}>새로고침</button></header>
     {hook.error && <div className="mk-alert mk-alert--danger" role="alert">{marketingFailureMessage(hook.error, latestEvent?.technicalCode)}</div>}

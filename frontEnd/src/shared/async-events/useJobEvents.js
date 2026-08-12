@@ -98,7 +98,7 @@ export function useJobEvents(jobId, options = {}) {
           throw new Error('event stream closed');
         } catch (error) {
           if (controller.signal.aborted || terminal.current) return;
-          if (isAuthenticationError(error)) {
+          if (isAuthenticationError(error) || isMissingJob(error)) {
             dispatch({ type: 'ERROR', error });
             return;
           }
@@ -139,6 +139,10 @@ export function useJobEvents(jobId, options = {}) {
 
 function isAuthenticationError(error) {
   return error?.status === 401 || error?.status === 403;
+}
+
+function isMissingJob(error) {
+  return error?.status === 404 || error?.code === 'JOB_NOT_FOUND';
 }
 
 function wait(milliseconds, signal) {

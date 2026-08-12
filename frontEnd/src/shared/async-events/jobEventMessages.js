@@ -1,8 +1,8 @@
 const messages = Object.freeze({
   'job.idea.queued': '아이디어 정리 작업을 준비하고 있습니다.',
   'job.idea.started': '아이디어 정리를 시작했습니다.',
-  'job.idea.extracting': '아이디어의 핵심 조건을 확인하고 있습니다.',
-  'job.idea.questions.preparing': '추가로 확인할 내용을 정리하고 있습니다.',
+  'job.idea.extracting': '입력에서 핵심 정보를 추출하고 있습니다.',
+  'job.idea.questions.preparing': '후속 질문을 준비하고 있습니다.',
   'job.idea.brief.preparing': '아이디어 정본을 준비하고 있습니다.',
   'job.idea.completed': '아이디어 정리가 완료되었습니다.',
   'job.idea.failed': '아이디어 정리를 완료하지 못했습니다.',
@@ -52,6 +52,7 @@ const messages = Object.freeze({
   'job.concept.run.needs_input': '추가로 확인할 사업정보가 있습니다.',
   'job.concept.run.completed': '이전 방식의 사업안 검토가 완료되었습니다.',
   'job.concept.run.failed': '이전 방식의 사업안 검토를 완료하지 못했습니다.',
+  'job.concept.slot.validating_legal': '규제 경계와 구현 방식을 확인하고 있습니다.',
   'job.marketing.queued': '마케팅 콘텐츠 작업을 준비하고 있습니다.',
   'job.marketing.started': '마케팅 콘텐츠 작업을 시작했습니다.',
   'job.marketing.source_prepared': '확정된 기획 자료를 준비했습니다.',
@@ -93,6 +94,15 @@ const messages = Object.freeze({
   'job.finance.analysis.reporting': '결정론 계산 결과로 재무 분석 설명을 작성하고 있습니다.',
   'job.finance.analysis.completed': '재무 분석 보고서가 준비되었습니다.',
   'job.finance.analysis.fallback': 'AI 설명 생성에 실패해 결정론 계산 Fallback 보고서를 준비했습니다.',
+  'job.tech-ops.advisory.queued': '기술·운영 상용화 자문을 준비하고 있습니다.',
+  'job.tech-ops.advisory.scaling': 'current Market·BM과 확정 입력을 근거 ledger로 정리하고 있습니다.',
+  'job.tech-ops.advisory.evidence': '선택적 외부 근거를 확인하고 있습니다.',
+  'job.tech-ops.advisory.generating': '상용화 조언과 파일럿·운영 조건을 작성하고 있습니다.',
+  'job.tech-ops.advisory.validating': '조언 영역과 근거 연결을 검증하고 있습니다.',
+  'job.tech-ops.advisory.completed': '기술·운영 상용화 자문 보고서가 준비되었습니다.',
+  'job.tech-ops.advisory.failed': '기술·운영 상용화 자문을 완료하지 못했습니다.',
+  'job.tech-ops.advisory.stale': '상위 current 입력이 바뀌어 자문 결과를 저장하지 않았습니다.',
+  'job.tech-ops.advisory.progress': '{traceDetail}',
 });
 
 export const ACTIVE_JOB_EVENT_KEYS = Object.freeze(Object.keys(messages));

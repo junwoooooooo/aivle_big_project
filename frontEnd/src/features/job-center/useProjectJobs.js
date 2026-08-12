@@ -37,7 +37,11 @@ export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
     return () => clearTimeout(timer);
   }, [projectId, refresh, refreshKey]);
 
-  const events = useJobEvents(selectedJobId);
+  const selectedJob = [...state.active, ...state.recent]
+    .find((job) => job.jobId === selectedJobId);
+  const liveJobId = state.active.some((job) => job.jobId === selectedJobId)
+    ? selectedJobId : null;
+  const events = useJobEvents(liveJobId);
   useEffect(() => {
     if (!events.terminal || !selectedJobId || handledTerminal.current === selectedJobId) return;
     handledTerminal.current = selectedJobId;
@@ -50,8 +54,6 @@ export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
     setSelectedJobId(jobId);
   }, []);
 
-  const selectedJob = [...state.active, ...state.recent]
-    .find((job) => job.jobId === selectedJobId);
   const notice = selectedJob?.presentationStatus === 'RESOLVED_INPUT'
     ? { status: 'RESOLVED_INPUT', jobId: selectedJob.jobId }
     : null;

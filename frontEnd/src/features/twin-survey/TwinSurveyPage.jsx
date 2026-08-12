@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { Alert, Button, Card, LoadingState } from '../../shared/ui';
@@ -125,6 +125,7 @@ export default function TwinSurveyPage() {
 
   return (
     <section className="twin-page">
+      <div className="pipeline-page-heading"><p>7. 트윈 패널 조사</p><h2>선택 방향과 측정 가능성을 패널에서 확인합니다</h2></div>
       {/* 모듈 이름은 셸(`ProjectLayout`)이 이미 그린다 — 여기서 다시 그리면 껍데기가 두 겹이다.
           그 자리에 산문 대신 «지금 어디까지 왔나»를 둔다. */}
       <TwinSteps pairCount={pairs.length} active={active} done={Boolean(result)} elapsed={elapsed} />
@@ -213,6 +214,7 @@ export default function TwinSurveyPage() {
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {stale ? <Alert tone="warning">상위 selected Concept 또는 Market Seed가 바뀌었습니다. 이 조사는 과거 이력이며 다시 실행해야 합니다.</Alert> : null}
+      {result && !stale ? <Link className="ui-button ui-button--primary" to={`/app/projects/${projectId}/marketing`}>다음 - 8. 마케팅 콘텐츠 제작</Link> : null}
       {run?.state === 'FAILED' && run?.errorCode ? (
         <Alert tone="danger">실행이 실패했다 — {failureText(run.errorCode)}</Alert>
       ) : null}

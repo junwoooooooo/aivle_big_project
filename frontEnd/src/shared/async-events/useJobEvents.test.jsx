@@ -63,6 +63,22 @@ describe('useJobEvents SSE-only transport', () => {
     expect(result.current.connectionState).toBe('error');
   });
 
+  it.each([
+    Object.assign(new Error('missing'), { status: 404 }),
+    Object.assign(new Error('missing'), { code: 'JOB_NOT_FOUND' }),
+  ])('stops reconnecting when the job no longer exists', async (error) => {
+    const client = { stream: vi.fn(async () => { throw error; }), get: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useJobEvents('missing-job', { reconnectDelayMs: 100 }));
+
+    await flush();
+    await act(async () => { vi.advanceTimersByTime(500); await flush(); });
+
+    expect(client.stream).toHaveBeenCalledOnce();
+    expect(client.get).not.toHaveBeenCalled();
+    expect(result.current.connectionState).toBe('error');
+  });
+
   it('stops reconnecting when a terminal event arrives', async () => {
     const encoder = new TextEncoder();
     const client = {

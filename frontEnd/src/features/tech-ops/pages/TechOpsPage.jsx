@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
+import { JobTimeline } from '../../../shared/async-events/index.js';
 import { DECISION_FIELDS, createFactDraft, decisionComplete, displayValue, factsFromDraft, proposalDraft, proposalValue } from '../model/techOpsModel.js';
 import useTechOps from '../hooks/useTechOps.js';
 import '../styles/tech-ops.css';
@@ -29,8 +30,8 @@ function TechOpsWorkspace({ techOps }) {
   const safe = async (action) => { try { await action(); } catch { /* hook가 안전한 오류 상태를 제공한다. */ } };
 
   return <main className="tech-ops-page">
-    <header className="tech-ops-heading"><p>6. 기술·운영 분석</p><h1>분석에 전달할 입력을 확정합니다</h1>
-      <span>상위 단계에서 이미 확정된 값은 다시 입력하지 않습니다. 실제 분석 알고리즘은 외부 모듈이 담당합니다.</span></header>
+    <header className="tech-ops-heading"><p>5. 기술·운영 분석</p><h1>상용화 입력을 확정하고 실행 가능한 자문을 만듭니다</h1>
+      <span>상위 단계에서 확정된 값과 current Market·BM 계보를 보존하고, 사용자 입력을 상용화 자문에 연결합니다.</span></header>
     {techOps.error && <p className="tech-ops-error" role="alert">{getUserErrorMessage(techOps.error)}</p>}
     {['QUEUED', 'RUNNING'].includes(preparation.proposalGenerationStatus) && <p role="status">
       {Object.values(preparation.proposalDecisions ?? {}).some((item) => item.pendingAlternativeTaskRunId)
@@ -97,7 +98,39 @@ function TechOpsWorkspace({ techOps }) {
         : <button type="button" disabled={techOps.busy === 'handoff'} onClick={() => void safe(techOps.handoff)}>기술·운영 분석 Handoff 준비</button>}
       {techOps.run && <small>외부 연결 상태: {techOps.run.status}{techOps.run.stale ? ' · 입력 갱신 필요' : ''}</small>}
     </section>
+    {techOps.snapshot && <CommercializationAdvisory techOps={techOps} safe={safe} />}
   </main>;
+}
+
+function CommercializationAdvisory({ techOps, safe }) {
+  const advisory = techOps.advisory;
+  const result = advisory?.result;
+  const active = ['QUEUED', 'RUNNING'].includes(advisory?.status);
+  return <section className="tech-ops-advisory" aria-labelledby="tech-ops-advisory-title">
+    <div className="tech-ops-section__heading"><div><p>Phase B · Commercialization Advisory</p><h2 id="tech-ops-advisory-title">기술·운영 상용화 자문</h2></div><span>{advisory?.stale ? '갱신 필요' : advisory?.status ?? 'NOT_STARTED'}</span></div>
+    <p className="tech-ops-note">확정된 사용자 입력과 current Concept·Market FULL·BM 계보를 사용합니다. 사용자 Evidence와 외부 참고 근거는 구분해 표시합니다.</p>
+    {advisory?.stale && <p className="tech-ops-error" role="status">상위 current 소스가 바뀌었습니다. 새 자문을 실행해 주세요.</p>}
+    {advisory?.status === 'FAILED' && <p className="tech-ops-error" role="alert">자문 생성 실패: {advisory.errorCode ?? 'AI_SERVICE_UNAVAILABLE'}</p>}
+    {active && <JobTimeline events={techOps.advisoryEvents.events} title="상용화 자문 진행 상황" />}
+    <button className="tech-ops-primary" type="button" disabled={active || techOps.busy === 'advisory'} onClick={() => void safe(techOps.startAdvisory)}>{result ? '상용화 자문 다시 실행' : '상용화 자문 실행'}</button>
+    {result && <AdvisoryReport result={result} preparation={techOps.preparation} />}
+  </section>;
+}
+
+function AdvisoryReport({ result, preparation }) {
+  return <div className="tech-ops-report"><header><div><p>{result.decision}</p><h3>{result.productName}</h3></div><p>{result.summary}</p></header>
+    <ReportGroup title="7개 상용화 조언" items={result.advice} render={(item) => <><b>{item.area} · {item.priority}</b><p>{item.advice}</p><small>검증: {item.validationMethod} · 근거 {item.basisIds.join(', ')}</small></>} />
+    <ReportGroup title="파일럿 계획" items={[result.pilotPlan]} render={(item) => <><b>{item.objective}</b><p>범위: {item.scope.join(' · ')}</p><p>지표: {item.metrics.join(' · ')}</p><p>중단: {item.stopConditions.join(' · ')}</p><p>확장: {item.scaleConditions.join(' · ')}</p></>} />
+    <ReportGroup title="운영 비용 계측" items={result.operatingCosts} render={(item) => <><b>{item.category} · {item.behavior}</b><p>{item.driver}</p><small>{item.trigger} · {item.measurementUnit} · {item.pilotMeasurement} · 근거 {item.basisIds.join(', ')}</small></>} />
+    <ReportGroup title="상용화 준비도" items={result.readiness} render={(item) => <><b>{item.topic} · {item.priority}</b><p>{item.assessment}</p><small>주의: {item.watchouts.join(' · ')}</small><small>통제: {item.controls.join(' · ')}</small><small>검증: {item.validationMethod} · 근거 {item.basisIds.join(', ')}</small></>} />
+    <ReportGroup title="출시 게이트" items={result.gates} render={(item) => <><b>{item.title} · {item.status}</b><p>{item.exitCriteria}</p><small>담당 {item.owner} · 근거 {item.basisIds.join(', ')}</small></>} />
+    <details><summary>분석 근거 보기</summary><p><b>Layer 1 canonical facts</b></p><ul>{result.layer1Facts.map((item) => <li key={item.factId}>{item.factId} · {item.source} · {item.path}: {item.value}</li>)}</ul><p><b>Layer 2 external references</b></p><ul>{result.layer2Evidence.map((item) => <li key={item.evidenceId}>{item.evidenceId} · {item.title} {item.url && <a href={item.url} target="_blank" rel="noreferrer">원문</a>}</li>)}</ul><p><b>User-provided Evidence</b></p><ul>{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}>{item.originalFilename ?? item.displayName} · USER_PROVIDED_EVIDENCE</li>)}</ul></details>
+    <p className="tech-ops-disclaimer">{result.disclaimer}</p><Link className="tech-ops-next" to="../finance">다음 - 6. 재무 분석</Link>
+  </div>;
+}
+
+function ReportGroup({ title, items = [], render }) {
+  return <section><h3>{title}</h3><div className="tech-ops-report__grid">{items.map((item, index) => <article key={`${title}-${index}`}>{render(item)}</article>)}</div></section>;
 }
 
 function formatBytes(value) {

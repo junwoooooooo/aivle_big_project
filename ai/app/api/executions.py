@@ -28,6 +28,7 @@ TASK_TYPES = {
     "CONCEPT_HYPOTHESIS_ALTERNATIVE",
     "CONCEPT_DELTA_LEGAL_REVIEW",
     "TECH_OPS_PROPOSAL",
+    "TECH_OPS_ADVISORY",
     "FINANCE_ESTIMATE",
     "FINANCE_ANALYSIS_REPORT",
     "MARKETING_CONTENT_GENERATION",
@@ -306,6 +307,16 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 "proposalVersion": body.input.get("proposalVersion"),
                 "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
             })
+        elif body.taskType == "TECH_OPS_ADVISORY":
+            from app.tasks.tech_ops_advisor import execute_tech_ops_advisory
+            from app.progress.safe_task_progress import progress_sender_from_environment
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await execute_tech_ops_advisory(
+                    body.input, event_sink=progress.emit if progress.enabled else None,
+                )
         elif body.taskType == "FINANCE_ANALYSIS_REPORT":
             from app.tasks.finance_analysis_report import execute_finance_analysis_report
             result = await execute_finance_analysis_report(body.input)

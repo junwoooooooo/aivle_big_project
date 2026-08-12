@@ -80,6 +80,7 @@ export default function BmCanvasPage() {
         <Button onClick={trigger} disabled={busy || active}>
           {active ? '생성 중…' : result ? '다시 생성' : '캔버스 만들기'}
         </Button>
+        {result ? <Button onClick={() => navigate(projectRoutes.techOps(projectId))}>다음 - 기술·운영 분석</Button> : null}
       </div>
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
@@ -279,8 +280,4 @@ function SwrBox({ title, items, tone }) {
       </ul>
     </div>
   );
-}
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
 }
