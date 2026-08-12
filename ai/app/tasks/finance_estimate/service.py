@@ -73,7 +73,9 @@ async def execute_finance_estimate(task_input:dict)->dict:
     prompt_input["tavilyEvidence"] = tavily_evidence
     raw=await execute_structured_prompt(MARKET_BM_FINANCE_PROMPT + ECONOMIC_SANITY_RULES + THREE_YEAR_TARGET_RULES,json.dumps(prompt_input,ensure_ascii=False,sort_keys=True),
         response_schema=FinanceEstimateResult.model_json_schema(),schema_name="finance_estimate_v1",task_type="FINANCE_ESTIMATE")
-    try: return _apply_price_guardrails(FinanceEstimateResult.model_validate(raw), value).model_dump(mode="json")
+    try:
+        result = _apply_price_guardrails(FinanceEstimateResult.model_validate(raw), value)
+        return _with_external_evidence(result, tavily_evidence)
     except ValidationError as failure:
         if value.fieldKey != "threeYearTargets":
             raise ProviderFailure("RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",502,False) from failure
@@ -81,7 +83,9 @@ async def execute_finance_estimate(task_input:dict)->dict:
             "Return only a valid finance_estimate_v1 result for fieldKey threeYearTargets. proposedValue must contain metric, unit, and exactly years 1, 2, 3; never return Money.",
             json.dumps(prompt_input, ensure_ascii=False, sort_keys=True),
             response_schema=FinanceEstimateResult.model_json_schema(), schema_name="finance_estimate_v1_repair", task_type="FINANCE_ESTIMATE")
-        try: return _apply_price_guardrails(FinanceEstimateResult.model_validate(repair), value).model_dump(mode="json")
+        try:
+            result = _apply_price_guardrails(FinanceEstimateResult.model_validate(repair), value)
+            return _with_external_evidence(result, tavily_evidence)
         except ValidationError as repair_failure:
             raise ProviderFailure("RESULT_SCHEMA_INVALID","AI_RESULT_INVALID",502,False) from repair_failure
 
@@ -119,3 +123,10 @@ def _apply_price_guardrails(result: FinanceEstimateResult, request: FinanceEstim
         f"{request.fieldKey}는 건당 또는 구독자당 월 {conservative_amount:,.0f}원으로 검토하세요."
     )
     return result
+
+
+def _with_external_evidence(result: FinanceEstimateResult, tavily_evidence: list[dict[str, str]]) -> dict:
+    """Tavily data is server metadata, not an LLM structured-output property."""
+    output = result.model_dump(mode="json")
+    output["externalEvidence"] = [{"provider": "TAVILY", **item} for item in tavily_evidence]
+    return output

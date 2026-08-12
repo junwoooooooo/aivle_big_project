@@ -45,6 +45,13 @@ class Count(StrictModel):
     count: int = Field(strict=True, ge=1)
 
 
+class ExternalEvidence(StrictModel):
+    provider: Literal["TAVILY"]
+    title: str = Field(min_length=1, max_length=200)
+    url: str = Field(min_length=1, max_length=500)
+    content: str = Field(max_length=1200)
+
+
 class FinanceEstimateResult(StrictModel):
     fieldKey: EstimateField
     proposedValue: Money | Targets | Rate | Count

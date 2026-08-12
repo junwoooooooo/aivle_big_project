@@ -58,6 +58,7 @@ public class FinancialEstimateCompletionService {
         ObjectNode proposal = (ObjectNode) assistance.path(fieldKey);
         proposal.set("proposalValue", result.path("proposedValue").deepCopy());
         proposal.set("assumptions", result.path("assumptions").deepCopy());
+        proposal.set("externalEvidence", result.path("externalEvidence").deepCopy());
         proposal.put("explanation", result.path("explanation").asText());
         proposal.put("confidence", result.path("confidence").asText());
         proposal.put("source", "AI_ESTIMATE");

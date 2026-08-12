@@ -269,6 +269,14 @@ function EstimateControls({ fieldKey, item, field, locked, busy, generate, decid
     onClick={() => void safe(() => decide(fieldKey, { action: 'REQUEST_ALTERNATIVE', value: null }))}>다른 추천 요청</button></span>;
 }
 
+function EvidenceLinks({ evidence = [] }) {
+  if (!Array.isArray(evidence) || evidence.length === 0) return null;
+  return <span className="finance-external-evidence"><strong>외부 검색 근거 (Tavily)</strong>
+    {evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">
+      {item.title || item.url}
+    </a>)}</span>;
+}
+
 function FinancialSection({ eyebrow, title, fields, draft, change, sourceFields, missing, locked, assistance, finance, safe, editedValues }) {
   return <section className="finance-section"><SectionHeading eyebrow={eyebrow} title={title} />
     <div className="finance-form-grid">{fields.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
@@ -294,7 +302,7 @@ function MoneyInput({ fieldKey, label, value, onChange, field, missing, locked, 
     value={displayedValue} onChange={(event) => onChange(fieldKey, event.target.value)} /><SourceNote field={field} />
     {assistance && canShowInlineEstimate(field, assistance, value) && <EstimateControls fieldKey={fieldKey} item={assistance} field={field} locked={locked}
       busy={finance?.busy === `estimate:${fieldKey}`} generate={finance?.generateEstimate}
-      decide={finance?.decideEstimate} editedValue={editedValue} safe={safe} />}</label>;
+      decide={finance?.decideEstimate} editedValue={editedValue} safe={safe} />}<EvidenceLinks evidence={assistance?.externalEvidence} /></label>;
 }
 function fieldLabel(key) {
   return ({ annualFixedLaborCost: '연간 고정 인건비', annualFixedRentAndManagementCost: '연간 임차·관리비',

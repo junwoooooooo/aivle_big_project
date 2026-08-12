@@ -1,9 +1,13 @@
 """Small, fail-open Tavily context lookup for financial input recommendations."""
 
+import logging
 import os
 from typing import Any
 
 import httpx
+
+
+log = logging.getLogger(__name__)
 
 
 _FIELD_QUERY = {
@@ -39,10 +43,15 @@ async def search_finance_benchmarks(field_key: str) -> list[dict[str, str]]:
                 "include_answer": False, "include_raw_content": False,
             })
         if response.status_code != 200:
+            log.warning("finance Tavily search failed fieldKey=%s status=%s", field_key, response.status_code)
             return []
         payload: dict[str, Any] = response.json()
-        return [{"title": str(item.get("title", ""))[:200], "url": str(item.get("url", ""))[:500],
+        results = [{"title": str(item.get("title", ""))[:200], "url": str(item.get("url", ""))[:500],
                  "content": str(item.get("content", ""))[:1200]}
                 for item in payload.get("results", []) if item.get("url")][:3]
-    except (httpx.HTTPError, ValueError, TypeError):
+        log.info("finance Tavily search fieldKey=%s query=%r results=%s urls=%s", field_key, query,
+                 len(results), [item["url"] for item in results])
+        return results
+    except (httpx.HTTPError, ValueError, TypeError) as error:
+        log.warning("finance Tavily search unavailable fieldKey=%s error=%s", field_key, type(error).__name__)
         return []

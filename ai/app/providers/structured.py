@@ -141,8 +141,9 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
     if response.status_code == 400 and response_schema is not None:
         error_type, error_param, safe_message = _safe_provider_error(response)
         if error_type == "invalid_request_error" and error_param == "response_format":
-            logger.warning("Provider response schema rejected taskType=%s model=%s schemaName=%s",
-                           task_type or "STRUCTURED_TASK", model, schema_name or "structured_result")
+            logger.warning("Provider response schema rejected taskType=%s model=%s schemaName=%s reason=%s",
+                           task_type or "STRUCTURED_TASK", model, schema_name or "structured_result",
+                           safe_message or "provider did not supply a message")
             raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False,
                                   upstream_status=400, provider_error_type=error_type,
                                   provider_error_param=error_param,

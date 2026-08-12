@@ -340,6 +340,7 @@ public class FinancialPreparationFactory {
         if (!item.has("explanation")) item.put("explanation", "값 입력이 어려우면 AI 추천을 요청할 수 있습니다.");
         if (!item.has("example")) item.put("example", "추천값은 사용자 확인 전까지 재무 입력으로 사용되지 않습니다.");
         item.putNull("proposalValue"); item.putNull("assumptions"); item.putNull("confidence");
+        item.putArray("externalEvidence");
         item.put("source", "AI_ESTIMATE"); item.put("decision", "PROPOSED");
         item.put("proposalVersion", 0); item.put("estimateStatus", "NONE");
         item.putNull("activeTaskRunId"); item.putNull("safeError");
