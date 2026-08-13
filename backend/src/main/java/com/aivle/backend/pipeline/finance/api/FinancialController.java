@@ -15,6 +15,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +28,7 @@ public class FinancialController {
     private final FinancialSnapshotAnalysisService analysisService;
     private final FinancialAnalysisReportService reportService;
     private final FinancialDemoService demoService;
+    private final com.aivle.backend.pipeline.finance.application.FinancialInputDocumentService documentService;
     private final CurrentUserProvider user;
 
     @PostMapping("/preparation/initialize")
@@ -42,6 +46,20 @@ public class FinancialController {
     public ApiResponse<PreparationView> patch(@PathVariable Long projectId, @Valid @RequestBody FinancialFieldsPatch body,
             HttpServletRequest request) {
         return ApiResponse.success(service.patchFields(user.currentUserId(), projectId, body), request.getHeader("X-Request-Id"));
+    }
+
+    @GetMapping(value="/preparation/template", produces="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    public ResponseEntity<ByteArrayResource> template(@PathVariable Long projectId) {
+        service.current(user.currentUserId(), projectId);
+        byte[] body=documentService.template(projectId);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+            .header("Content-Disposition", "attachment; filename=financial-input-template.docx").body(new ByteArrayResource(body));
+    }
+
+    @PostMapping(value="/preparation/import", consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<PreparationView> importDocument(@PathVariable Long projectId, @RequestPart("file") MultipartFile file, HttpServletRequest request) {
+        return ApiResponse.success(service.importFields(user.currentUserId(), projectId,
+            new FinancialFieldsPatch(documentService.parse(file))), request.getHeader("X-Request-Id"));
     }
 
     @PostMapping("/preparation/assistance/{fieldKey}/decision")

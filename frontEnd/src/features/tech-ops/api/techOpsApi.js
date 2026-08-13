@@ -31,4 +31,7 @@ export const createTechOpsApi = (client) => Object.freeze({
       ...options,
       timeoutMs: options?.timeoutMs ?? 240_000,
     })).data,
+  downloadCommercializationReport: async (projectId, result, options) => client.post(
+    `${tech(projectId)}/advisory/document`, result, { ...options, responseType: 'blob', timeoutMs: options?.timeoutMs ?? 60_000 },
+  ),
 });

@@ -59,6 +59,17 @@ public class FinancialInputPreparation extends BaseEntity {
         return value;
     }
 
+    public static FinancialInputPreparation createStandalone(String id, Long projectId, String sourceHash,
+            String fieldsJson, String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || !hash(sourceHash) || blank(fieldsJson) || blank(referencesJson)
+                || blank(assistanceJson) || userId == null) throw new IllegalArgumentException("Financial preparation is invalid.");
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id; value.projectId = projectId; value.sourceSnapshotHash = sourceHash;
+        value.financialFieldsJson = fieldsJson; value.upstreamReferencesJson = referencesJson;
+        value.assistanceJson = assistanceJson; value.revision = 1; value.updatedByUserId = userId;
+        return value;
+    }
+
     public void updateFinancialFields(String json, Long userId) {
         if (blank(json) || userId == null) throw new IllegalArgumentException("재무 입력값이 올바르지 않습니다.");
         financialFieldsJson = json;

@@ -46,12 +46,16 @@ export default function TechOpsPage() {
   const client = useApiClient();
   const [report, setReport] = useState(() => loadSavedReport(projectId));
   const [state, setState] = useState({ running: false, error: null });
+  const [downloading, setDownloading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
-    setReport(loadSavedReport(projectId));
-    setState({ running: false, error: null });
-    setElapsedSeconds(0);
+    const timer = window.setTimeout(() => {
+      setReport(loadSavedReport(projectId));
+      setState({ running: false, error: null });
+      setElapsedSeconds(0);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [projectId]);
 
   useEffect(() => {
@@ -77,6 +81,22 @@ export default function TechOpsPage() {
     }
   };
 
+  const downloadReport = async () => {
+    if (!report?.result) return;
+    setDownloading(true);
+    try {
+      const blob = await createTechOpsApi(client).downloadCommercializationReport(projectId, report.result);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url; anchor.download = 'tech-ops-analysis-report.docx'; anchor.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setState((current) => ({ ...current, error }));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return <main className="tech-ops-page commercialization-start-page">
     <header className="commercialization-start-page__hero">
       <div className="pipeline-page-heading">
@@ -93,6 +113,6 @@ export default function TechOpsPage() {
     {state.error && <section className="tech-ops-error" role="alert"><b>분석을 시작할 수 없습니다.</b><br />{getUserErrorMessage(state.error)}</section>}
     {!report && !state.running && <section className="commercialization-start-page__empty"><h2>분석 시작 전</h2><p>버튼을 누르면 프로젝트의 최신 시장·BM 결과를 읽어 상용화 조언을 생성합니다. 생성된 결과는 이 프로젝트에 고정되어 다른 화면으로 이동하거나 새로고침해도 유지됩니다.</p></section>}
     {state.running && <CommercializationProgress elapsedSeconds={elapsedSeconds} />}
-    <CommercializationAdvisory report={report} />
+    <CommercializationAdvisory report={report} onDownload={() => void downloadReport()} downloading={downloading} />
   </main>;
 }

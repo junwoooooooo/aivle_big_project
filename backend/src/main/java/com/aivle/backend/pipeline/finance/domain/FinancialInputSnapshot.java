@@ -60,6 +60,18 @@ public class FinancialInputSnapshot extends BaseEntity {
         return value;
     }
 
+    public static FinancialInputSnapshot createStandalone(String id, Long projectId, String preparationId,
+            String schemaVersion, String hash, String json, Long userId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || blank(preparationId) || blank(schemaVersion) || !hash(hash)
+                || blank(json) || userId == null || finalizedAt == null)
+            throw new IllegalArgumentException("Financial snapshot is invalid.");
+        FinancialInputSnapshot value = new FinancialInputSnapshot();
+        value.id=id; value.projectId=projectId; value.preparationId=preparationId;
+        value.schemaVersion=schemaVersion; value.snapshotHash=hash; value.snapshotJson=json;
+        value.createdByUserId=userId; value.finalizedAt=finalizedAt;
+        return value;
+    }
+
     private static boolean blank(String value) { return value == null || value.isBlank(); }
     private static boolean hash(String value) { return value != null && value.matches("sha256:[0-9a-f]{64}"); }
 }

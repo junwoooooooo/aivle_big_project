@@ -79,6 +79,7 @@ export function createApiClient({
       requestId,
       authenticate = true,
       refreshOnUnauthorized = true,
+      responseType,
       timeoutMs: requestTimeoutMs = timeoutMs,
     } = options;
     const isMultipart = typeof FormData !== 'undefined' && body instanceof FormData;
@@ -121,7 +122,7 @@ export function createApiClient({
         }
       }
 
-      const payload = await readResponseBody(response);
+      const payload = responseType === 'blob' ? await response.blob() : await readResponseBody(response);
       if (!response.ok) {
         throw new ApiError({
           status: response.status,

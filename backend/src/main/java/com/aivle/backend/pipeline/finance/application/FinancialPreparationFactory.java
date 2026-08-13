@@ -39,6 +39,16 @@ public class FinancialPreparationFactory {
     private final ObjectMapper mapper;
     public FinancialPreparationFactory(ObjectMapper mapper) { this.mapper = mapper; }
 
+    /** A finance run is user-authored.  Upstream modules are reference material only, never inputs. */
+    public InitialPreparation createStandalone() {
+        ObjectNode fields = mapper.createObjectNode();
+        for (String key : ALL_KEYS) open(fields, key);
+        ObjectNode references = mapper.createObjectNode();
+        references.put("mode", "USER_DOCUMENT_INPUT");
+        references.put("note", "재무 계산에는 사용자가 업로드한 입력값만 사용합니다.");
+        return new InitialPreparation(fields, references, mapper.createObjectNode());
+    }
+
     public InitialPreparation create(TechOpsInputSnapshot snapshot) {
         JsonNode source = mapper.readTree(snapshot.getSnapshotJson());
         JsonNode facts = source.path("requiredFacts");

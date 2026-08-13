@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface FinancialInputPreparationRepository extends JpaRepository<FinancialInputPreparation, String> {
+    Optional<FinancialInputPreparation> findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(Long projectId);
     Optional<FinancialInputPreparation> findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(Long projectId, String sourceId);
     Optional<FinancialInputPreparation> findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(Long projectId, Long sourceId);
 

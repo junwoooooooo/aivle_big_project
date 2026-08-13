@@ -57,6 +57,8 @@ export default function useFinance(projectId) {
   return {
     ...state, estimateEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
+    importDocument: (file) => act('import', () => api.importDocument(projectId, file)),
+    downloadTemplate: () => act('template', () => api.template(projectId)),
     generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
     generateEstimates: (fieldKeys) => act('estimate-group', async () => Promise.all(
       fieldKeys.map((fieldKey) => api.generateEstimate(projectId, fieldKey, commandOptions())))),
