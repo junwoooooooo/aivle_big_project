@@ -5,6 +5,12 @@ import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.nio.charset.StandardCharsets;
+import java.net.SocketTimeoutException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.UnknownHostException;
+import java.net.http.HttpTimeoutException;
+import javax.net.ssl.SSLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -18,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.ResourceAccessException;
 import tools.jackson.databind.JsonNode;
@@ -95,6 +102,8 @@ public class InternalAiExecutionClient {
     );
 
     private final RestClient client;
+    private final RestClient longRunningClient;
+    private final RestClient marketResearchClient;
     private final RestClient conceptPortfolioClient;
     private final RestClient twinSurveyClient;
     private final AiServerProperties properties;
@@ -102,10 +111,14 @@ public class InternalAiExecutionClient {
 
     @Autowired
     public InternalAiExecutionClient(@Qualifier("aiServerRestClient") RestClient client,
+            @Qualifier("longRunningAiServerRestClient") RestClient longRunningClient,
+            @Qualifier("marketResearchAiServerRestClient") RestClient marketResearchClient,
             @Qualifier("conceptPortfolioAiServerRestClient") RestClient conceptPortfolioClient,
             @Qualifier("twinSurveyAiServerRestClient") RestClient twinSurveyClient,
             AiServerProperties properties, ObjectMapper mapper) {
         this.client = client;
+        this.longRunningClient = longRunningClient;
+        this.marketResearchClient = marketResearchClient;
         this.conceptPortfolioClient = conceptPortfolioClient;
         this.twinSurveyClient = twinSurveyClient;
         this.properties = properties;
@@ -113,7 +126,12 @@ public class InternalAiExecutionClient {
     }
 
     public InternalAiExecutionClient(RestClient client, AiServerProperties properties, ObjectMapper mapper) {
-        this(client, client, client, properties, mapper);
+        this(client, client, client, client, client, properties, mapper);
+    }
+
+    public InternalAiExecutionClient(RestClient client, RestClient conceptPortfolioClient,
+            RestClient twinSurveyClient, AiServerProperties properties, ObjectMapper mapper) {
+        this(client, client, client, conceptPortfolioClient, twinSurveyClient, properties, mapper);
     }
 
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
@@ -155,13 +173,21 @@ public class InternalAiExecutionClient {
             enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             throw parseFailure(responseBytes, run.taskType());
         } catch (ResourceAccessException timeoutOrConnectionFailure) {
+            throw transportFailure(timeoutOrConnectionFailure);
+        } catch (RestClientException dependencyFailure) {
             throw new ExecutionFailure(
-                "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
+                "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
             );
         }
     }
 
     RestClient clientFor(TaskType taskType) {
+        if (taskType == TaskType.MARKET_RESEARCH) {
+            return marketResearchClient;
+        }
+        if (taskType == TaskType.MARKETING_CONTENT_GENERATION) {
+            return longRunningClient;
+        }
         if (taskType == TaskType.TWIN_SURVEY) {
             return twinSurveyClient;
         }
@@ -169,6 +195,37 @@ public class InternalAiExecutionClient {
             || taskType == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE
             || taskType == TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION
             ? conceptPortfolioClient : client;
+    }
+
+    static ExecutionFailure transportFailure(ResourceAccessException failure) {
+        Throwable cause = failure;
+        while (cause != null) {
+            if (cause instanceof ConnectException
+                || cause instanceof NoRouteToHostException
+                || cause instanceof UnknownHostException
+                || cause instanceof SSLException) {
+                return new ExecutionFailure(
+                    "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
+                );
+            }
+            String message = cause.getMessage() == null
+                ? ""
+                : cause.getMessage().toLowerCase(java.util.Locale.ROOT);
+            if (cause instanceof SocketTimeoutException
+                || cause instanceof HttpTimeoutException
+                || cause instanceof java.util.concurrent.TimeoutException
+                || cause.getClass().getSimpleName().contains("Timeout")
+                || message.contains("timed out")
+                || message.contains("timeout")) {
+                return new ExecutionFailure(
+                    "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
+                );
+            }
+            cause = cause.getCause();
+        }
+        return new ExecutionFailure(
+            "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
+        );
     }
 
     JsonNode requestPayload(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {

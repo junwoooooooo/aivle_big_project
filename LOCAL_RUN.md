@@ -6,7 +6,13 @@
 Copy-Item .env.example .env
 ```
 
-`.env`에는 `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_INTERNAL_SERVICE_TOKEN`, `JWT_SECRET`, `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`를 설정한다. OpenAI 호환 Provider라면 필요에 따라 `AI_BASE_URL`도 설정한다. 실제 Secret은 저장소에 커밋하지 않는다.
+`.env`에는 `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL`, `AI_INTERNAL_SERVICE_TOKEN`, `JWT_SECRET`, `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`를 설정한다. Market Research2를 실행하려면 `MARKET_RESEARCH_OPENAI_API_KEY` 또는 `OPENAI_API_KEY`도 별도로 필요하다. OpenAI 호환 Provider라면 필요에 따라 `AI_BASE_URL`을 설정하되, Research2용 `OPENAI_BASE_URL`은 Responses API와 `web_search`를 지원해야 한다. 실제 Secret은 저장소에 커밋하지 않는다.
+
+값을 노출하지 않고 필수 설정과 Twin Bank 경로를 확인한다.
+
+```powershell
+python scripts/check_local_env.py --compose
+```
 
 ```powershell
 docker compose up --build
@@ -23,12 +29,17 @@ docker compose up --build
 3. Idea TEXT 또는 FILE 입력
 4. AI Interpretation
 5. Idea Origin 질문 답변 및 확정
-6. Legal Precheck 실행과 결과 확인
-7. Legal Guardrail 확인
-8. Concept Generation 실행
-9. 적격 Concept 3개 표시 확인
+6. Concept Portfolio V2 및 법률 검토
+7. selected Concept 기반 Market FULL 실행
+8. current Market 기반 Business Model 실행
+9. Concept + Market + BM 기반 기술·운영 분석
+10. current Market + BM exact lineage 기반 재무 분석
+11. Twin 패널 조사
+12. Marketing Content 생성·검토·확정
 
-현재 공식 Journey는 적격 Concept 3개 표시에서 종료한다.
+Market fresh collection은 최대 20분 execution budget을 사용하며, 화면과 Work Center에 heartbeat가
+계속 표시된다. 5분 전후에 중단되면 정상 timeout이 아니라 transport 설정 회귀이므로
+`AI_SERVER_MARKET_RESEARCH_READ_TIMEOUT`과 Backend/AI 로그를 확인한다.
 
 ## B. 보존된 기존 MVP 실험 기능 확인
 

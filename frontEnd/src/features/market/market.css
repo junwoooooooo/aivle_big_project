@@ -12,6 +12,7 @@
 .market-page { display: grid; align-content: start; gap: 1.75rem; min-width: 0; }
 .market-page > .pipeline-page-heading { margin-bottom: -1.25rem; }  /* 머리글은 바로 아래와 한 덩이 */
 .market-page__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.market-page__live-progress { display: block; margin-top: .35rem; }
 .market-note { color: var(--color-text-secondary); font-size: .85rem; margin: 0 0 .75rem; }
 .mr-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 

@@ -32,12 +32,14 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class MarketResearchWorker {
     /**
-     * 시장조사 전 구간은 <b>90~266초</b>라 2분 예산으로는 구조적으로 못 끝난다.
+     * 저장 원장 재채점은 90~266초지만 새 Product concept은 harness·dryrun·fresh collection까지
+     * 수행한다. Main의 20분 실행 의도를 보존해야 이미 지불한 수집 결과가 짧은 deadline 때문에
+     * 폐기되지 않는다.
      * lease 는 예산보다 넉넉해야 한다 — 같거나 짧으면 정상 실행이 만료로 회수돼
      * 260초짜리가 중복 실행된다.
      */
-    private static final Duration BUDGET = Duration.ofMinutes(6);
-    private static final Duration LEASE = BUDGET.plusMinutes(2);
+    static final Duration BUDGET = Duration.ofMinutes(20);
+    static final Duration LEASE = BUDGET.plusMinutes(2);
 
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("storageUrl", "objectKey", "presignedUrl",
         "localPath", "fileBytes", "base64", "prompt", "rawProviderResponse", "credential");

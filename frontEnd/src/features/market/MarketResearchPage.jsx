@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { createMarketApi } from './marketApi.js';
+import { marketRunFailureMessage } from './marketRuntime.js';
 import { projectRoutes } from '../../app/routing/projectRoutes.js';
+import { traceDetailForDisplay, useJobEvents } from '../../shared/async-events/index.js';
 import { Accordion, Alert, Badge, Button, Card, LoadingState } from '../../shared/ui';
 import { GradeBadge, SourceLink } from './BmCanvas.jsx';
 import AssumptionLedger from './AssumptionLedger.jsx';
@@ -53,6 +55,7 @@ export default function MarketResearchPage() {
   const { run, result, version, source, stale, error, busy, loading, active, elapsed,
     trigger, triggerAction } =
     useMarketLiveState(load, start, liveRevision);
+  const jobEvents = useJobEvents(run?.taskRunId);
   // KPI → 과목 섹션 착지. 포커스·rAF 함정은 훅 주석에 있다.
   const focus = useCellFocus('sec-');
 
@@ -119,10 +122,12 @@ export default function MarketResearchPage() {
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {stale ? <Alert tone="warning">상위 selected Concept 또는 Market Seed가 바뀌었습니다. 이 결과는 과거 이력이며 다시 조사해야 합니다.</Alert> : null}
-      {active ? <Alert tone="info">조사 중이다 — <strong>{elapsed}초</strong> 경과.</Alert> : null}
+      {active ? <Alert tone="info">조사 중이다 — <strong>{elapsed}초</strong> 경과.
+        <MarketProgress events={jobEvents.events} />
+      </Alert> : null}
       {run?.state === 'FAILED' ? (
         <Alert tone="danger">
-          실행이 실패했다{run.errorCode ? ` (${run.errorCode})` : ''}.
+          {marketRunFailureMessage(run.errorCode)}{run.errorCode ? ` (${run.errorCode})` : ''}.
           {run.retryable ? ' 다시 시도할 수 있다.' : ' 입력을 확인해야 한다.'}
         </Alert>
       ) : null}
@@ -135,6 +140,12 @@ export default function MarketResearchPage() {
       )}
     </section>
   );
+}
+
+export function MarketProgress({ events = [] }) {
+  const latest = [...events].reverse().find((event) => event?.messageKey === 'job.market.trace');
+  const detail = traceDetailForDisplay(latest);
+  return detail ? <span className="market-page__live-progress">{detail}</span> : null;
 }
 
 function ResultBody({ result, activeId, onJump, onNext }) {

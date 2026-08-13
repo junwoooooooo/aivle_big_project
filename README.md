@@ -43,6 +43,20 @@ current Concept/Market version, manifest 및 파일 체크섬을 검증한 뒤 �
 - `AI_INTERNAL_SERVICE_TOKEN` / `AI_SERVER_INTERNAL_API_KEY`: AI와 Backend가 공유하는 내부 실행 토큰
 - `TWIN_BANK_HOST_DIR`: 운영 Twin Bank read-only mount. E2E는 실제 조사 자산 대신 synthetic fixture 사용
 
+`OPENAI_BASE_URL`을 지정하는 경우 단순 Chat Completions 호환만으로는 충분하지 않습니다. 현재
+Research2가 사용하는 OpenAI Responses API와 `web_search` tool 계약을 지원해야 합니다.
+일반 AI용 `AI_API_KEY`만 설정하고 Market 전용/fallback 키를 비워 두면 Market은 구성 완료로 보지 않습니다.
+
+비밀값을 출력하지 않는 로컬 사전 점검:
+
+```bash
+python scripts/check_local_env.py --compose
+```
+
+Backend의 AI HTTP client는 작업 규모별로 분리됩니다. 기본 짧은 작업은 30초, Marketing Content는
+7분, Concept Portfolio는 15분, Twin Survey는 14분이며, fresh Market collection은 20분 worker
+deadline과 22분 transport/lease envelope를 사용합니다.
+
 새 환경변수를 추가한 경우 다음 검사를 통과해야 합니다.
 
 ```bash

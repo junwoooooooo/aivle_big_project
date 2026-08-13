@@ -1,9 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import useMarketLiveState from './useMarketPolling.js';
+import useMarketLiveState, { MARKET_EXECUTION_GUIDANCE_LIMIT_MS } from './useMarketPolling.js';
 
 describe('useMarketLiveState SSE refresh seam', () => {
+  it('does not warn before the 20-minute Market worker deadline', () => {
+    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBe(22 * 60 * 1000);
+    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBeGreaterThanOrEqual(20 * 60 * 1000);
+  });
   it('reloads canonical current state when the project live revision changes', async () => {
     const load = vi.fn().mockResolvedValue({ run: null, version: null });
     const start = vi.fn();
