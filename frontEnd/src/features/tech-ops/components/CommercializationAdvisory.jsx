@@ -2,7 +2,11 @@ const priorityLabel = { CRITICAL: '즉시 확인', HIGH: '우선 확인', MEDIUM
 const decisionLabel = { GO: '진행 가능', REVISE: '보완 후 진행', NO_GO: '진행 보류' };
 
 function shortText(value, limit = 150) {
-  const text = String(value ?? '').trim();
+  const text = String(value ?? '')
+    .replace(/\s*.?FACT-\d+(?:\s*[,·/]\s*FACT-\d+)*.?/gi, '')
+    .replace(/\s*(?:근거\s*(?:ID|번호)\s*[:：]?\s*)?(?:FACT-\d+(?:\s*[,·/]\s*FACT-\d+)*)/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
   return text.length > limit ? `${text.slice(0, limit).trim()}…` : text;
 }
 
