@@ -88,7 +88,7 @@ function FinanceWorkspace({ projectId, finance }) {
       assistance={preparation.assistance} finance={finance} safe={safe} editedValues={editedValues} />
 
     <section className="finance-section" aria-labelledby="finance-targets-title"><SectionHeading eyebrow="3개년 목표" title="사업 유형에 맞는 목표 지표" />
-      <div className="finance-form-grid finance-targets">
+      <div className="finance-form-grid finance-targets project-form-layout">
         <label><span>목표 지표</span><select disabled={locked || fields.threeYearTargets?.readOnly} value={targetView.targetMetric}
           data-proposal-preview={targetView !== draft || undefined}
           onChange={(event) => change('targetMetric', event.target.value)}>{TARGET_METRICS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -102,7 +102,7 @@ function FinanceWorkspace({ projectId, finance }) {
       </div><SourceNote field={fields.threeYearTargets} /></section>
 
     <section className="finance-section" aria-labelledby="finance-revenue-title"><SectionHeading eyebrow="수익 모델" title="가격 및 반복 매출 가정" />
-      <div className="finance-form-grid">
+      <div className="finance-form-grid project-form-layout">
         <label data-missing={missing.has('revenueModel')}><span>수익 모델</span><select disabled={locked || fields.revenueModel?.readOnly}
           value={draft.revenueModel} onChange={(event) => change('revenueModel', event.target.value)}>
           {REVENUE_MODELS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><SourceNote field={fields.revenueModel} /></label>
@@ -117,7 +117,7 @@ function FinanceWorkspace({ projectId, finance }) {
 
     <section className="finance-section" aria-labelledby="finance-cac-title"><SectionHeading eyebrow="CAC" title="고객 획득 비용 구성값" />
       <p className="finance-note">CAC를 직접 계산하지 마세요. 비용과 신규 고객 수를 입력하면 시스템이 계산합니다.</p>
-      <div className="finance-form-grid">{CAC_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
+      <div className="finance-form-grid project-form-layout">{CAC_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
         value={draft[key]} onChange={change} field={fields[key]} missing={missing.has(key)} locked={locked}
         assistance={preparation.assistance?.[key]} finance={finance} safe={safe} editedValue={editedValues()[key]} />)}
         <label data-missing={missing.has('newCustomerCount')}><span>신규 고객 수</span><input type="number" min="1"
@@ -130,7 +130,7 @@ function FinanceWorkspace({ projectId, finance }) {
 
     <section className="finance-section"><details><summary>조건부 단위원가 입력</summary>
       <p className="finance-note">사업 구조나 외부 모듈 계약에 필요한 항목만 입력하세요. 모든 사업에 강제되지 않습니다.</p>
-      <div className="finance-form-grid">{CONDITIONAL_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
+      <div className="finance-form-grid project-form-layout">{CONDITIONAL_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
         value={draft[key]} onChange={change} field={fields[key]} locked={locked} assistance={preparation.assistance?.[key]}
         finance={finance} safe={safe} editedValue={editedValues()[key]} />)}</div></details></section>
 
@@ -212,7 +212,7 @@ function EstimateControls({ fieldKey, item, field, locked, busy, generate, decid
 function FinancialSection({ eyebrow, title, fields, draft, change, sourceFields, missing, locked,
   assistance, finance, safe, editedValues }) {
   return <section className="finance-section"><SectionHeading eyebrow={eyebrow} title={title} />
-    <div className="finance-form-grid">{fields.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
+    <div className="finance-form-grid project-form-layout">{fields.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
       value={draft[key]} onChange={change} field={sourceFields[key]} missing={missing.has(key)} locked={locked}
       assistance={assistance?.[key]} finance={finance} safe={safe} editedValue={editedValues()[key]} />)}</div></section>;
 }

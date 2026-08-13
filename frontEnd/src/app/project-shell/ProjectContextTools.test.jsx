@@ -6,7 +6,13 @@ import { describe, expect, it, vi } from 'vitest';
 import ProjectContextTools from './ProjectContextTools.jsx';
 import { ProjectChromeProvider, useProjectChrome } from './ProjectChromeContext.jsx';
 
-vi.mock('../../features/job-center/JobCenter.jsx', () => ({ default: () => <div>프로젝트 작업</div> }));
+vi.mock('../../features/job-center/JobCenter.jsx', async () => {
+  const { Link } = await import('react-router-dom');
+  return { default: ({ quickOpen, sheet, onOpenList, onCloseSheet, onNavigate }) => <>
+    {quickOpen && <div className="project-work-popover"><span>프로젝트 작업</span><button type="button" onClick={onOpenList}>전체 작업 보기</button></div>}
+    {sheet?.mounted && <div role="presentation" data-testid="work-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}><section role="dialog" aria-label="전체 작업"><button type="button" onClick={onCloseSheet}>작업 센터 닫기</button><Link to="/app/projects/41/idea" onClick={onNavigate}>업무 화면 열기</Link></section></div>}
+  </> };
+});
 
 const model = {
   projectId: '41', currentJourney: { id: 'validation', shortLabel: '사업 검증' },
@@ -58,5 +64,36 @@ describe('project context tools', () => {
     expect(screen.getByRole('button', { name: '이전 단계 없음' })).toBeDisabled();
     expect(screen.getByRole('link', { name: '다음 단계: 사업 기획' })).toHaveAttribute('href', '/app/projects/41/idea');
     expect(screen.queryByText('마지막 단계')).not.toBeInTheDocument();
+  });
+
+  it('Quick은 스크롤을 잠그지 않고 Full의 닫기·배경·Escape·경로 이동·unmount는 잠금을 복원한다', async () => {
+    const view = render(<MemoryRouter initialEntries={['/app/projects/41/market']}><ProjectChromeProvider><RegisteredTools /></ProjectChromeProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: '작업' }));
+    expect(document.body.style.overflow).not.toBe('hidden');
+    fireEvent.click(screen.getByRole('button', { name: '전체 작업 보기' }));
+    await waitFor(() => expect(document.body.style.overflow).toBe('hidden'));
+    expect(document.querySelectorAll('.project-work-popover')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: '작업 센터 닫기' }));
+    await waitFor(() => expect(document.body.style.overflow).not.toBe('hidden'));
+
+    fireEvent.click(screen.getByRole('button', { name: '작업' }));
+    fireEvent.click(screen.getByRole('button', { name: '전체 작업 보기' }));
+    fireEvent.mouseDown(screen.getByTestId('work-backdrop'));
+    await waitFor(() => expect(document.body.style.overflow).not.toBe('hidden'));
+
+    fireEvent.click(screen.getByRole('button', { name: '작업' }));
+    fireEvent.click(screen.getByRole('button', { name: '전체 작업 보기' }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(document.body.style.overflow).not.toBe('hidden'));
+
+    fireEvent.click(screen.getByRole('button', { name: '작업' }));
+    fireEvent.click(screen.getByRole('button', { name: '전체 작업 보기' }));
+    fireEvent.click(screen.getByRole('link', { name: '업무 화면 열기' }));
+    await waitFor(() => expect(document.body.style.overflow).not.toBe('hidden'));
+
+    fireEvent.click(screen.getByRole('button', { name: '작업' }));
+    fireEvent.click(screen.getByRole('button', { name: '전체 작업 보기' }));
+    view.unmount();
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 });

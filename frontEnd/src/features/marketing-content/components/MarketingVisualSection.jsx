@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
 import useMarketingVisual from '../hooks/useMarketingVisual.js';
 import { VISUAL_FORMATS, VISUAL_MOODS, validateVisualInput, visualDefaults, visualFailure } from '../model/marketingVisualModel.js';
+import { FileDropzone } from '../../../shared/ui/index.js';
 
 export default function MarketingVisualSection({ projectId, detail, revision, source, draft }) {
   const contentId = detail?.content?.contentId;
@@ -48,7 +49,7 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
         <div><dt>콘텐츠</dt><dd>{detail?.content?.contentType ?? '선택 필요'} · {detail?.content?.channel ?? '채널 미지정'}</dd></div>
         <div><dt>주요 특징</dt><dd>{source?.keyFeatures?.join(' · ') || '저장된 값 없음'}</dd></div>
         <div><dt>수정 이력</dt><dd>{revision ? `#${revision.revisionNumber}` : '선택 필요'}</dd></div></dl></div>
-    <div className="mk-visual__grid"><div className="mk-visual__form">
+    <div className="mk-visual__grid"><div className="mk-visual__form project-form-layout">
       <label>프로모션 이름<input value={form.promotionName} maxLength={100} onChange={(event) => set('promotionName', event.target.value)} /></label>
       <label>메인 배너 문구<input value={form.mainBanner} maxLength={80} onChange={(event) => set('mainBanner', event.target.value)} /></label>
       <label>보조 문구<textarea value={form.supportingCopy} maxLength={150} onChange={(event) => set('supportingCopy', event.target.value)} /></label>
@@ -57,12 +58,8 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
         <label>배너 형식<select value={form.bannerFormat} onChange={(event) => set('bannerFormat', event.target.value)}>
           {VISUAL_FORMATS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
       <label>강조 키워드<input value={form.emphasisKeywords} placeholder="쉼표로 최대 10개" onChange={(event) => set('emphasisKeywords', event.target.value)} /></label>
-      <div className="mk-visual__upload"><label htmlFor="mk-visual-image">상품 이미지 업로드</label>
-        <span>PNG/JPG/JPEG/WEBP · 최대 10MB</span><input id="mk-visual-image" type="file" accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => { setFile(event.target.files?.[0] ?? null); setNotice(''); }} />
-        {file && <div className="mk-visual__file">{filePreview && <img src={filePreview} alt="업로드 파일 미리보기" />}
-          <span><strong>{file.name}</strong><small>{Math.ceil(file.size / 1024)}KB</small></span>
-          <button type="button" onClick={() => setFile(null)}>제거</button></div>}</div>
+      <FileDropzone id="mk-visual-image" label="이미지 선택" description="상품 이미지를 끌어 놓거나 선택하세요" acceptLabel="PNG, JPG 또는 WEBP · 최대 10MB" accept="image/png,image/jpeg,image/webp" files={file ? [file] : []} onFilesChange={(files) => { setFile(files[0] ?? null); setNotice(''); }} />
+      {filePreview && <img className="mk-visual__selected-preview" src={filePreview} alt="업로드 파일 미리보기" />}
       <div className="mk-visual__legal"><strong>광고 표현 기준</strong>
         <p>허용 주장: {source?.allowedClaims?.join(' · ') || '등록 없음'}</p>
         <p>금지 주장: {source?.prohibitedClaims?.join(' · ') || '등록 없음'}</p>

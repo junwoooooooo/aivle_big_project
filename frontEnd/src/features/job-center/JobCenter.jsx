@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
@@ -59,12 +60,27 @@ function FullWorkList({ jobs, onSelect }) {
     <div className="work-history__metrics" aria-label="작업 요약"><span>현재 진행 <strong>{running.length}</strong></span><span>입력 필요 <strong>{needsInput.length}</strong></span><span>전체 이력 <strong>{jobs.history.totalElements}</strong></span></div>
     <div className="work-history__filters" role="group" aria-label="작업 상태 필터">{[['all', '전체'], ['active', '진행 중'], ['input', '입력 필요'], ['closed', '완료·종료']].map(([value, label]) => <button key={value} type="button" className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}</div>
     {jobs.history.error && <div role="alert" className="work-history__error"><span>{getUserErrorMessage(jobs.history.error)}</span><button type="button" onClick={() => jobs.loadHistory({ reset: jobs.history.page < 0 })}>다시 시도</button></div>}
-    {jobs.history.page < 0 && jobs.history.loading ? <p>작업 이력을 불러오고 있습니다.</p> : visible.length > 0 ? <ol>{visible.map((job) => <li key={job.jobId} data-status={displayStatus(job)}><button type="button" onClick={() => onSelect(job.jobId)}><i aria-hidden="true" /><span><strong>{jobTaskLabel(job.taskType, job.subjectType)}</strong><small>{jobModuleLabel(job.module)} · {recentJobMessage(job)}</small></span><time dateTime={job.updatedAt}>{formatLocalTime(job.updatedAt ?? job.startedAt)}</time><em>{statusLabel(displayStatus(job))}</em><AppIcon name="chevronRight" size={16} /></button></li>)}</ol> : <p className="work-history__empty">조건에 맞는 작업이 없습니다.</p>}
+    {jobs.history.page < 0 && jobs.history.loading ? <p>작업 이력을 불러오고 있습니다.</p> : visible.length > 0 ? <ol>{visible.map((job) => <li key={job.jobId} data-status={displayStatus(job)}><button type="button" onClick={() => onSelect(job.jobId)}><i aria-hidden="true" /><span><strong>{jobTaskLabel(job.taskType, job.subjectType)}</strong><small>{jobModuleLabel(job.module)} · {recentJobMessage(job)}</small></span><time dateTime={job.updatedAt}>{formatLocalTime(job.updatedAt ?? job.startedAt)}</time><em>{statusLabel(displayStatus(job))}</em><AppIcon name="chevronRight" size={16} /></button></li>)}</ol> : jobs.history.totalElements === 0 ? <div className="work-history__empty"><strong>아직 실행한 작업이 없습니다.</strong><p>각 업무 단계에서 분석을 시작하면 여기에 진행 상황과 기록이 표시됩니다.</p></div> : <p className="work-history__empty">조건에 맞는 작업이 없습니다.</p>}
     {jobs.history.hasMore && <button type="button" className="work-history__more" disabled={jobs.history.loading} onClick={() => jobs.loadHistory()}>{jobs.history.loading ? '불러오는 중' : '이전 작업 더 보기'}</button>}
   </section>;
 }
 
-function JobDetail({ jobs, selectedJob, onBack, projectId, onRetryJob }) {
+function trapDialogFocus(event) {
+  if (event.key !== 'Tab') return;
+  const focusable = Array.from(event.currentTarget.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'));
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function JobDetail({ jobs, selectedJob, onBack, projectId, onRetryJob, onNavigate }) {
   const failed = selectedJob && ['FAILED', 'TIMED_OUT'].includes(displayStatus(selectedJob));
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState('');
@@ -87,11 +103,12 @@ function JobDetail({ jobs, selectedJob, onBack, projectId, onRetryJob }) {
   }, [selectedJob]);
   const elapsedSeconds = Number.isFinite(startedAt) && clock > 0 ? Math.max(0, Math.floor((clock - startedAt) / 1000)) : 0;
   const validationFields = latest?.messageParams?.validationFields ?? [];
-  return <section className="job-center__timeline" aria-live="polite"><header className="job-detail__header"><div><button type="button" aria-label="전체 작업으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" size={21} /></button><div><h3>{selectedJob ? jobTaskLabel(selectedJob.taskType, selectedJob.subjectType) : '작업 상세'}</h3>{selectedJob && <small>{statusLabel(displayStatus(selectedJob))}</small>}</div></div>{selectedJob && <Link to={targetHref(projectId, selectedJob.targetRoute)}>업무 화면 열기<AppIcon name="arrowUpRight" size={15} /></Link>}</header>{selectedJob && <dl className="job-center__current"><div><dt>현재 작업</dt><dd>{jobTaskLabel(selectedJob.taskType, selectedJob.subjectType)}</dd></div><div><dt>최근 처리</dt><dd>{latest ? jobEventMessage(latest) : recentJobMessage(selectedJob)}</dd></div><div><dt>경과 시간</dt><dd>{Math.floor(elapsedSeconds / 60)}분 {elapsedSeconds % 60}초</dd></div><div><dt>마지막 변경</dt><dd>{latest ? formatLocalTime(latest.occurredAt) : formatLocalTime(selectedJob.updatedAt)}</dd></div></dl>}{failed && <div className="job-center__failure"><strong>작업을 완료하지 못했습니다.</strong><span>입력 내용을 확인하거나 잠시 후 다시 시도해 주세요.</span><span>{selectedJob.retryable === false ? '새 실행 가능 여부를 업무 화면에서 확인해 주세요.' : '새 작업으로 다시 시도할 수 있습니다.'}</span>{canRetryHere && <button type="button" disabled={retrying} onClick={retry}>{retrying ? '다시 시도 중' : '다시 시도'}</button>}{(validationFields.length > 0 || traceDetailForDisplay(latest)) && <details><summary>기술 정보</summary>{traceDetailForDisplay(latest) && <p>{traceDetailForDisplay(latest)}</p>}{validationFields.length > 0 && <ul>{validationFields.slice(0, 5).map((field, index) => <li key={`${field.path}-${index}`}>{field.path} · {field.expectedType}</li>)}</ul>}</details>}{retryError && <span role="alert">{retryError}</span>}</div>}{selectedJob && displayStatus(selectedJob) === 'NEEDS_INPUT' && <div className="job-center__input-action"><p>계속하려면 업무 화면에서 필요한 내용을 입력해 주세요.</p></div>}{jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>상태 다시 확인</button>}{groupedEvents.length === 0 ? <p>아직 표시할 처리 기록이 없습니다.</p> : <ol>{groupedEvents.map((event) => <li key={`${event.eventId ?? event.sequence}-${event.occurredAt}`}><time>{event.groupCount > 1 ? `${formatLocalTime(event.groupStartedAt)}~${formatLocalTime(event.occurredAt)}` : formatLocalTime(event.occurredAt)}</time><div><strong>{jobEventMessage(event)}{event.groupCount > 1 ? ` × ${event.groupCount}` : ''}</strong></div><span>{statusLabel(event.status)}</span></li>)}</ol>}</section>;
+  return <section className="job-center__timeline" aria-live="polite"><header className="job-detail__header"><div><button type="button" aria-label="전체 작업으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" size={21} /></button><div><h3>{selectedJob ? jobTaskLabel(selectedJob.taskType, selectedJob.subjectType) : '작업 상세'}</h3>{selectedJob && <small>{statusLabel(displayStatus(selectedJob))}</small>}</div></div>{selectedJob && <Link to={targetHref(projectId, selectedJob.targetRoute)} onClick={onNavigate}>업무 화면 열기<AppIcon name="arrowUpRight" size={15} /></Link>}</header>{selectedJob && <dl className="job-center__current"><div><dt>현재 작업</dt><dd>{jobTaskLabel(selectedJob.taskType, selectedJob.subjectType)}</dd></div><div><dt>최근 처리</dt><dd>{latest ? jobEventMessage(latest) : recentJobMessage(selectedJob)}</dd></div><div><dt>경과 시간</dt><dd>{Math.floor(elapsedSeconds / 60)}분 {elapsedSeconds % 60}초</dd></div><div><dt>마지막 변경</dt><dd>{latest ? formatLocalTime(latest.occurredAt) : formatLocalTime(selectedJob.updatedAt)}</dd></div></dl>}{failed && <div className="job-center__failure"><strong>작업을 완료하지 못했습니다.</strong><span>입력 내용을 확인하거나 잠시 후 다시 시도해 주세요.</span><span>{selectedJob.retryable === false ? '새 실행 가능 여부를 업무 화면에서 확인해 주세요.' : '새 작업으로 다시 시도할 수 있습니다.'}</span>{canRetryHere && <button type="button" disabled={retrying} onClick={retry}>{retrying ? '다시 시도 중' : '다시 시도'}</button>}{(validationFields.length > 0 || traceDetailForDisplay(latest)) && <details><summary>기술 정보</summary>{traceDetailForDisplay(latest) && <p>{traceDetailForDisplay(latest)}</p>}{validationFields.length > 0 && <ul>{validationFields.slice(0, 5).map((field, index) => <li key={`${field.path}-${index}`}>{field.path} · {field.expectedType}</li>)}</ul>}</details>}{retryError && <span role="alert">{retryError}</span>}</div>}{selectedJob && displayStatus(selectedJob) === 'NEEDS_INPUT' && <div className="job-center__input-action"><p>계속하려면 업무 화면에서 필요한 내용을 입력해 주세요.</p></div>}{jobs.events.error && <button type="button" onClick={jobs.events.reconnect}>상태 다시 확인</button>}{groupedEvents.length === 0 ? <p>아직 표시할 처리 기록이 없습니다.</p> : <ol>{groupedEvents.map((event) => <li key={`${event.eventId ?? event.sequence}-${event.occurredAt}`}><time>{event.groupCount > 1 ? `${formatLocalTime(event.groupStartedAt)}~${formatLocalTime(event.occurredAt)}` : formatLocalTime(event.occurredAt)}</time><div><strong>{jobEventMessage(event)}{event.groupCount > 1 ? ` × ${event.groupCount}` : ''}</strong></div><span>{statusLabel(event.status)}</span></li>)}</ol>}</section>;
 }
 
 export default function JobCenter({ projectId, onTerminal, onRetryJob, refreshKey = 0, compact = false,
-  sheet, onOpenList, onOpenJob, onCloseSheet, onShowList }) {
+  quickOpen = true, quickContainerId, sheet, onOpenList, onOpenJob, onCloseSheet, onShowList, onNavigate }) {
+  const sheetRef = useRef(null);
   const projectJobs = useProjectJobs(projectId, { onTerminal, refreshKey });
   const jobs = {
     ...projectJobs,
@@ -104,23 +121,25 @@ export default function JobCenter({ projectId, onTerminal, onRetryJob, refreshKe
   useEffect(() => {
     if (sheet?.mounted && sheet.view === 'list' && history.page < 0 && !history.loading) loadHistory({ reset: true });
   }, [history.loading, history.page, loadHistory, sheet?.mounted, sheet?.view]);
+  useEffect(() => {
+    if (sheet?.mounted) sheetRef.current?.querySelector('button')?.focus();
+  }, [sheet?.mounted]);
 
-  return <>
-    <section id="project-task-center" className={`pipeline-task-center job-center${compact ? ' job-center--compact' : ''}`} aria-labelledby="task-center-title">
+  const quick = <section id="project-task-center" className={`pipeline-task-center job-center${compact ? ' job-center--compact' : ''}`} aria-labelledby="task-center-title">
       <header><div><p>작업 센터</p><h2 id="task-center-title">프로젝트 작업</h2></div><button type="button" onClick={jobs.refresh}>새로고침</button></header>
       {jobs.loading && <p>작업 목록을 불러오고 있습니다.</p>}
       {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}
       {!jobs.loading && !jobs.error && <QuickJobGroups jobs={jobs} onSelect={select} />}
       {compact && <button type="button" className="job-center__detail-button" onClick={onOpenList}>전체 작업 보기</button>}
-    </section>
-    {sheet?.mounted && <div className="work-center-sheet__backdrop" data-phase={sheet.phase} onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}>
-      <section className="work-center-sheet" data-phase={sheet.phase} role="dialog" aria-modal="true" aria-labelledby="work-center-sheet-title">
+    </section>;
+  const full = sheet?.mounted && <div className="work-center-sheet__backdrop" data-phase={sheet.phase} onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}>
+      <section ref={sheetRef} className="work-center-sheet" data-phase={sheet.phase} role="dialog" aria-modal="true" aria-labelledby="work-center-sheet-title" onKeyDown={trapDialogFocus}>
         <header><div><p>작업 센터</p><h2 id="work-center-sheet-title">{sheet.view === 'detail' ? '작업 상세' : '프로젝트 작업'}</h2></div><button type="button" aria-label="작업 센터 닫기" onClick={onCloseSheet}><AppIcon name="close" size={20} /></button></header>
         <div key={sheet.view} className="work-center-sheet__content" data-direction={sheet.direction}>
-          {sheet.view === 'detail' ? <JobDetail jobs={jobs} selectedJob={selectedJob} onBack={onShowList} projectId={projectId} onRetryJob={onRetryJob} />
+          {sheet.view === 'detail' ? <JobDetail jobs={jobs} selectedJob={selectedJob} onBack={onShowList} projectId={projectId} onRetryJob={onRetryJob} onNavigate={onNavigate} />
             : <FullWorkList jobs={jobs} onSelect={(jobId) => { jobs.selectJob(jobId); onOpenJob(jobId); }} />}
         </div>
       </section>
-    </div>}
-  </>;
+    </div>;
+  return <>{compact ? quickOpen && !sheet?.mounted && <div id={quickContainerId} className="project-tool-popover project-work-popover">{quick}</div> : quick}{full && createPortal(full, document.body)}</>;
 }

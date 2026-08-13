@@ -217,7 +217,7 @@ export function ProjectCreatePage() {
       <PageHeader eyebrow="새 프로젝트" title="검증할 사업 아이디어를 만드세요" description="지금은 최소 정보만 필요합니다. 세부 자료와 분석 실행은 프로젝트 안에서 직접 시작합니다." />
       {globalError && <div ref={errorRef} tabIndex="-1"><Alert tone="danger" title="프로젝트를 만들지 못했습니다">{globalError}</Alert></div>}
       <PolicyNotice restriction={restriction} onRetry={() => void servicePolicy.refresh().catch(() => undefined)} />
-      <form className="project-form" onSubmit={handleSubmit} noValidate>
+      <form className="project-form project-form-layout" onSubmit={handleSubmit} noValidate>
         <TextInput ref={titleInputRef} id="project-title" label="프로젝트 이름" value={values.title} error={errors.title} maxLength="150" onChange={update('title')} disabled={restriction.blocked} required />
         <TextInput id="project-category" label="사업 분야" description="선택 입력입니다." value={values.industryCategory} error={errors.industryCategory} maxLength="100" onChange={update('industryCategory')} disabled={restriction.blocked} />
         <Textarea id="project-description" label="간단한 설명" description="선택 입력입니다." value={values.description} error={errors.description} maxLength="10000" onChange={update('description')} disabled={restriction.blocked} />
@@ -280,7 +280,7 @@ export function ProjectBriefInputPage() {
       />
       {error && <Alert tone="danger" title="사업 개요를 저장하지 못했습니다">{error}</Alert>}
       <PolicyNotice restriction={restriction} onRetry={() => void servicePolicy.refresh().catch(() => undefined)} />
-      <form className="project-form" onSubmit={handleSubmit} noValidate>
+      <form className="project-form project-form-layout" onSubmit={handleSubmit} noValidate>
         <TextInput id="project-brief-title" label="프로젝트 이름" value={values.title} maxLength="150" onChange={update('title')} disabled={restriction.blocked} required />
         <TextInput id="project-brief-category" label="사업 분야" value={values.industryCategory} maxLength="100" onChange={update('industryCategory')} disabled={restriction.blocked} />
         <Textarea id="project-brief-description" label="사업 개요" description="누구의 어떤 문제를 어떻게 해결하는지 자유롭게 작성해 주세요." value={values.description} maxLength="10000" onChange={update('description')} disabled={restriction.blocked} />

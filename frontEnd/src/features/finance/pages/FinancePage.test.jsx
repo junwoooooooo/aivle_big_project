@@ -31,7 +31,7 @@ vi.mock('../hooks/useFinance.js', () => ({ default: () => ({ loading: false, bus
 
 describe('FinancePage', () => {
   it('승계 표시, 세부 재무 입력, 시스템 CAC 영역을 독립 화면에 표시한다', () => {
-    render(<MemoryRouter initialEntries={['/app/projects/1/finance']}><Routes>
+    const { container } = render(<MemoryRouter initialEntries={['/app/projects/1/finance']}><Routes>
       <Route path="/app/projects/:projectId/finance" element={<FinancePage />} />
     </Routes></MemoryRouter>);
     expect(screen.getByRole('heading', { name: '재무 가정의 원본과 근거' })).toBeInTheDocument();
@@ -48,7 +48,8 @@ describe('FinancePage', () => {
     expect(screen.getAllByRole('button', { name: 'AI 추천 채택' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: '다른 추천 요청' }).length).toBeGreaterThan(0);
     expect(screen.getByText('AI 추천', { selector: 'small' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '입력 Snapshot 확정' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '입력 내용 저장' })).toBeDisabled();
+    expect(container.querySelectorAll('.finance-form-grid.project-form-layout').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: '다음 - 트윈 패널 조사' }))
       .toHaveAttribute('href', '/app/projects/1/twin-survey');
   });

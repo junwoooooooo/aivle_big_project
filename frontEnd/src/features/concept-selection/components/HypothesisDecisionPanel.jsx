@@ -53,7 +53,7 @@ function HypothesisRow({ hypothesis, pending, onAction }) {
       <button type="button" disabled={disabled} onClick={() => setEditing((value) => !value)}>수정 후 채택</button>
       <button type="button" disabled={disabled} onClick={() => run('REQUEST_ALTERNATIVE')}>{status === 'alternative' ? '다른 제안 생성 중…' : '다른 제안'}</button>
     </div>}
-    {editing && <div><label><span>수정값</span><textarea rows="5" value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
+    {editing && <div className="project-form-layout"><label><span>수정값</span><textarea rows="5" value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
       <button type="button" disabled={disabled} onClick={acceptEdit}>{status === 'checking' && hypothesis.legalImpact === 'LEGAL_SENSITIVE' ? '법률 영향 확인 중…' : '수정값 채택'}</button></div>}
     {error && <p role="alert">{error}</p>}
   </article>;

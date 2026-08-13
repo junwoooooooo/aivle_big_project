@@ -15,17 +15,16 @@ describe('compact Work Center', () => {
     const onOpenList = vi.fn();
     const onCloseSheet = vi.fn();
     render(<MemoryRouter><JobCenter projectId="41" compact sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'job-1', direction: 'forward' }} onOpenList={onOpenList} onCloseSheet={onCloseSheet} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
-    expect(screen.getAllByText('현재 진행')).toHaveLength(2);
     expect(screen.getAllByText('사업안 만들기').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('CONCEPT_PORTFOLIO_V2_RUN')).not.toBeInTheDocument();
     expect(screen.getByText('작업 상세')).toBeInTheDocument();
     expect(screen.getAllByText('사업 방향을 탐색하고 있습니다.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('dialog')).toHaveAttribute('data-phase', 'open');
-    expect(screen.getByLabelText('작업 요약')).toHaveTextContent('현재 진행 1');
+    expect(screen.queryByLabelText('작업 요약')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '작업 센터 닫기' }));
     expect(onCloseSheet).toHaveBeenCalled();
-    fireEvent.click(screen.getByText('전체 작업 보기'));
-    expect(onOpenList).toHaveBeenCalled();
+    expect(screen.queryByText('전체 작업 보기')).not.toBeInTheDocument();
+    expect(onOpenList).not.toHaveBeenCalled();
   });
 
   it('starts a fresh Portfolio run once from the failed detail retry', async () => {
@@ -74,5 +73,27 @@ describe('compact Work Center', () => {
     expect(screen.getByText('+ 외 1건')).toBeInTheDocument();
     expect(screen.getByText('+ 외 17건')).toBeInTheDocument();
     expect(screen.getByLabelText('작업 요약')).toHaveTextContent('최근 작업 20');
+  });
+
+  it('Full은 Quick popover 밖의 body portal에 하나만 렌더링한다', () => {
+    useProjectJobs.mockReturnValue({ loading: false, error: null, active: [], recent: [], selectedJobId: null,
+      selectJob: vi.fn(), refresh: vi.fn(), history: { items: [], page: 0, hasMore: false, totalElements: 0, loading: false, error: null },
+      loadHistory: vi.fn(), events: { error: null, reconnect: vi.fn(), events: [] } });
+    const { container } = render(<MemoryRouter><JobCenter projectId="41" compact quickOpen
+      quickContainerId="project-work-center-popover" sheet={{ mounted: true, phase: 'open', view: 'list', direction: 'forward' }}
+      onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    expect(container.querySelectorAll('.project-work-popover')).toHaveLength(0);
+    expect(document.body.querySelectorAll('.work-center-sheet')).toHaveLength(1);
+    const dialog = screen.getByRole('dialog');
+    const buttons = dialog.querySelectorAll('button:not([disabled])');
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    expect(first).toHaveFocus();
+    last.focus();
+    fireEvent.keyDown(last, { key: 'Tab' });
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
+    expect(last).toHaveFocus();
+    expect(screen.getByText('아직 실행한 작업이 없습니다.')).toBeInTheDocument();
   });
 });

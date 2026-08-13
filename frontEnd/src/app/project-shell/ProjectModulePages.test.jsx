@@ -22,5 +22,8 @@ describe('project overview journey map', () => {
     expect(screen.queryByText('사업 기획 열기')).not.toBeInTheDocument();
     expect(document.querySelector('.journey-map')).toBeInTheDocument();
     expect(document.querySelector('.pipeline-overview__grid')).not.toBeInTheDocument();
+    expect([...screen.getByRole('list').children].map((node) => node.querySelector('.journey-map__step').textContent)).toEqual(['1단계', '2단계', '3단계', '4단계', '5단계', '6단계']);
+    expect(document.querySelector('.journey-map__path path')).toHaveAttribute('d', expect.stringContaining('M80 180'));
+    expect(screen.getByRole('link', { name: '사업 기획 시작하기' }).querySelector('path')).toHaveAttribute('d', 'M7 17 17 7M9 7h8v8');
   });
 });

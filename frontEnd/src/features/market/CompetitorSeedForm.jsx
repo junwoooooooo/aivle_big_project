@@ -53,7 +53,7 @@ export default function CompetitorSeedForm({ api, disabled }) {
         쓴다. <strong>씨앗이지 조사 결과가 아니다</strong> — 조사가 찾은 것과 합쳐 같은 잣대로 검증한다.
       </p>
       {rows.map((row, index) => (
-        <div key={index} className="competitor-seeds__row">
+        <div key={index} className="competitor-seeds__row project-form-layout">
           <TextInput label="이름" value={row.name} onChange={set(index, 'name')} disabled={locked} placeholder="예: 공비서" />
           <TextInput label="왜 경쟁인가" value={row.reason} onChange={set(index, 'reason')} disabled={locked}
             placeholder="예: 노쇼 방지 방식이 우리 차별점과 겹친다" />

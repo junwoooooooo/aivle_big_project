@@ -1,4 +1,4 @@
-import { Button, FileInput, Textarea } from '../../../shared/ui/index.js';
+import { Button, FileDropzone, ProjectFormRow, ProjectFormSection } from '../../../shared/ui/index.js';
 
 import ErrorSummary from './ErrorSummary.jsx';
 
@@ -25,41 +25,29 @@ export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange,
   return (
     <form className="idea-intake-form" onSubmit={onSubmit} noValidate>
       <ErrorSummary errors={errors} />
-      <section className="idea-form-section" aria-labelledby="idea-core-heading">
-        <div className="idea-section-heading">
-          <p>필수 입력 · 3개</p>
-          <h3 id="idea-core-heading">아이디어의 출발점을 알려주세요</h3>
-          <span>이 세 가지가 있으면 컨셉 탐색을 시작할 수 있습니다.</span>
-        </div>
-        <div className="idea-form-grid idea-form-grid--required">
-          {REQUIRED_FIELDS.map(([field, label, description]) => (
-            <Textarea key={field} id={field} label={label} description={description} required rows="4"
-              value={draft.intake[field]} error={errors[field]}
-              onChange={(event) => onChange(field, event.target.value)} />
-          ))}
-        </div>
-      </section>
+      <ProjectFormSection className="idea-form-section" eyebrow="필수 입력 · 3개" title="아이디어의 출발점을 알려주세요" description="이 세 가지가 있으면 사업안 탐색을 시작할 수 있습니다.">
+        {REQUIRED_FIELDS.map(([field, label, description]) => <ProjectFormRow key={field} id={field} label={label} description={description} required error={errors[field]}>
+          {(fieldProps) => <textarea rows="4" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
+        </ProjectFormRow>)}
+      </ProjectFormSection>
 
       <details className="idea-optional-section">
         <summary><strong>이미 정한 내용이 있다면 입력해 주세요</strong><span>선택 입력 · 비워 두어도 진행할 수 있습니다.</span></summary>
         <section className="idea-form-section" aria-label="사용자가 확정한 선택 조건">
           <p className="idea-locked-notice">입력한 값은 사용자 확정 조건으로 잠기며 AI가 임의로 변경하지 않습니다.</p>
-          <div className="idea-form-grid">
+          <div className="project-form-layout">
             {OPTIONAL_FIELDS.map(([field, label, description]) => (
-              <Textarea key={field} id={field} label={label} description={description} rows="3"
-                value={draft.intake[field]}
-                onChange={(event) => onChange(field, event.target.value)} />
+              <ProjectFormRow key={field} id={field} label={label} description={description}>
+                {(fieldProps) => <textarea rows="3" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
+              </ProjectFormRow>
             ))}
           </div>
         </section>
       </details>
 
-      <section className="idea-form-section" aria-labelledby="idea-files-heading">
-        <div className="idea-section-heading"><p>선택 입력</p><h3 id="idea-files-heading">참고 파일</h3><span>아이디어를 설명하는 자료가 있다면 선택해 주세요.</span></div>
-        <FileInput id="referenceFiles" label="참고 파일 선택" description="여러 파일을 선택할 수 있습니다." multiple
-          onChange={(event) => onFilesChange(Array.from(event.target.files ?? []))} />
-        {draft.referenceFiles.length > 0 && <ul className="idea-file-list" aria-label="선택한 참고 파일">{draft.referenceFiles.map((file) => <li key={`${file.name}-${file.size}`}>{file.name}</li>)}</ul>}
-      </section>
+      <ProjectFormSection className="idea-form-section" eyebrow="선택 입력" title="참고 파일" description="아이디어를 설명하는 자료가 있다면 선택해 주세요.">
+        <FileDropzone id="referenceFiles" label="파일 선택" description="파일을 끌어 놓거나 선택하세요" acceptLabel="여러 개의 참고 파일을 선택할 수 있습니다." files={draft.referenceFiles} multiple onFilesChange={onFilesChange} />
+      </ProjectFormSection>
 
       <div className="idea-primary-action idea-primary-action--sticky">
         <Button type="submit">안전 확인 및 AI 해석</Button>

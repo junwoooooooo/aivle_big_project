@@ -12,6 +12,11 @@ const JOURNEY_DESCRIPTIONS = Object.freeze({
   finalReport: '앞선 결과를 한 문서로 정리해 의사결정에 활용합니다.',
 });
 
+const JOURNEY_POSITIONS = Object.freeze([
+  ['8%', '50%'], ['25%', '27.78%'], ['42%', '51.94%'],
+  ['58%', '26.11%'], ['75%', '50%'], ['92%', '31.94%'],
+]);
+
 function JourneyStatusBadge({ status }) {
   const view = getJourneyStatusView(status);
   return <span className="pipeline-status" data-tone={view.tone}>{view.label}</span>;
@@ -22,12 +27,13 @@ export function ProjectOverviewPage() {
   const currentIndex = journeys.findIndex(({ status }) => status !== JOURNEY_STATUS.COMPLETED);
   return <section className="pipeline-overview" aria-labelledby="project-overview-title">
     <div className="pipeline-page-heading"><p>6단계 사업 여정</p><h2 id="project-overview-title">프로젝트 개요</h2><span>현재 위치와 다음 할 일을 하나의 흐름에서 확인하세요.</span></div>
-    <div className="journey-map"><svg className="journey-map__path" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M90 90 C250 25 360 145 500 90 S750 25 910 90 C970 125 970 235 910 270 C760 335 650 215 500 270 S245 335 90 270" /></svg><ol>{journeys.map((journey, index) => {
+    <div className="journey-map"><svg className="journey-map__path" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M80 180 C140 180 190 100 250 100 S360 187 420 187 S520 94 580 94 S690 180 750 180 S860 115 920 115" /></svg><ol>{journeys.map((journey, index) => {
       const action = getJourneyActionView(journey.status);
-      return <li key={journey.id} className={`${index === currentIndex ? 'is-current' : ''} is-${journey.status.toLowerCase()}`}>
+      const [x, y] = JOURNEY_POSITIONS[index] ?? JOURNEY_POSITIONS.at(-1);
+      return <li key={journey.id} style={{ '--journey-x': x, '--journey-y': y }} className={`${index === currentIndex ? 'is-current' : ''} is-${journey.status.toLowerCase()}`}>
         <span className="journey-map__station" aria-hidden="true">{journey.status === JOURNEY_STATUS.COMPLETED ? <AppIcon name="check" size={17} /> : index + 1}</span>
         <div><span className="journey-map__step">{index + 1}단계</span><h3>{journey.shortLabel}</h3><p>{JOURNEY_DESCRIPTIONS[journey.id]}</p><JourneyStatusBadge status={journey.status} /></div>
-        <Link to={journey.href} aria-label={`${journey.shortLabel} ${action}`} title={action}><AppIcon name="arrowRight" size={18} /></Link>
+        <Link to={journey.href} aria-label={`${journey.shortLabel} ${action}`} title={action}><AppIcon name="arrowUpRight" size={18} /></Link>
       </li>;
     })}</ol></div>
   </section>;

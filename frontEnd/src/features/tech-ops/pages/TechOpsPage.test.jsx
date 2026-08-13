@@ -73,8 +73,9 @@ describe('TechOpsPage proposal generation state', () => {
       snapshot: { snapshotId: 'snap-1', snapshotHash: `sha256:${'a'.repeat(64)}` }, advisory: { status: 'SUCCEEDED', stale: false, result },
       advisoryEvents: { events: [] }, busy: null, error: null, saveFacts: vi.fn(), decide: vi.fn(), retryProposals: vi.fn(),
       removeEvidence: vi.fn(), finalize: vi.fn(), handoff: vi.fn(), startAdvisory: vi.fn() });
-    renderPage();
-    expect(screen.getByRole('heading', { name: '기술·운영 상용화 자문' })).toBeInTheDocument();
+    const { container } = renderPage();
+    expect(screen.getByRole('heading', { name: '기술·운영 자문' })).toBeInTheDocument();
+    expect(container.querySelector('.tech-ops-form-grid.project-form-layout')).toBeInTheDocument();
     expect(screen.getByText('7개 상용화 조언')).toBeInTheDocument();
     expect(screen.getByText('운영 비용 계측')).toBeInTheDocument();
     expect(screen.getByText('상용화 준비도')).toBeInTheDocument();

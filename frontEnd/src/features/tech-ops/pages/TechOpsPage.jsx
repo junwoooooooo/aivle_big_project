@@ -4,6 +4,7 @@ import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
 import { DECISION_FIELDS, createFactDraft, decisionComplete, displayValue, factsFromDraft, proposalDraft, proposalValue } from '../model/techOpsModel.js';
 import useTechOps from '../hooks/useTechOps.js';
+import { FileDropzone } from '../../../shared/ui/index.js';
 import '../styles/tech-ops.css';
 
 const EVIDENCE_TYPES = [['QUOTE', '견적서'], ['BOM', 'BOM'], ['SUPPLIER', '공급사 정보'], ['SPECIFICATION', '사양서'], ['PILOT', '파일럿 자료']];
@@ -46,7 +47,7 @@ function TechOpsWorkspace({ techOps }) {
       <small>저장 전에는 수정할 수 있습니다.</small></section>
 
     <section className="tech-ops-section" aria-labelledby="tech-facts-title"><div className="tech-ops-section__heading"><div><p>프로젝트 정보</p><h2 id="tech-facts-title">분석 전 필수 입력</h2></div><span>{locked ? '입력 저장 완료' : '직접 입력'}</span></div>
-      <div className="tech-ops-form-grid">
+      <div className="tech-ops-form-grid project-form-layout">
         <label className="wide"><span>제품·서비스 사양 요약</span><textarea disabled={locked} value={facts.productSummary} onChange={(event) => setFacts({ ...facts, productSummary: event.target.value })} /></label>
         <label className="wide"><span>핵심 기능</span><textarea disabled={locked} value={facts.productFeatures} onChange={(event) => setFacts({ ...facts, productFeatures: event.target.value })} placeholder="한 줄에 하나씩 입력" /></label>
         <label><span>목표 출시일</span><input type="date" disabled={locked} value={facts.targetLaunchDate} onChange={(event) => setFacts({ ...facts, targetLaunchDate: event.target.value })} /></label>
@@ -79,9 +80,8 @@ function TechOpsWorkspace({ techOps }) {
 
     <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>직접 등록한 자료</span></div>
       <p className="tech-ops-note">견적서·부품 목록·공급사·사양서·시험 운영 자료를 등록할 수 있습니다. AI 제안은 근거 자료로 저장하지 않습니다.</p>
-      {!locked && <div className="tech-ops-evidence-form"><select aria-label="자료 유형" value={evidence.evidenceType} onChange={(event) => setEvidence({ ...evidence, evidenceType: event.target.value })}>{EVIDENCE_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-        <input key={evidence.inputKey} type="file" aria-label="근거 파일" accept=".pdf,.csv,.xlsx,.xls,.docx,.txt,.png,.jpg,.jpeg"
-          onChange={(event) => setEvidence({ ...evidence, file: event.target.files?.[0] ?? null })} />
+      {!locked && <div className="tech-ops-evidence-form tech-ops-evidence-form--dropzone"><select aria-label="자료 유형" value={evidence.evidenceType} onChange={(event) => setEvidence({ ...evidence, evidenceType: event.target.value })}>{EVIDENCE_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+        <FileDropzone key={evidence.inputKey} label="근거 파일 선택" description="근거 파일을 끌어 놓거나 선택하세요" acceptLabel="PDF, 표, 문서 또는 이미지 파일" accept=".pdf,.csv,.xlsx,.xls,.docx,.txt,.png,.jpg,.jpeg" aria-label="근거 파일" files={evidence.file ? [evidence.file] : []} onFilesChange={(files) => setEvidence({ ...evidence, file: files[0] ?? null })} />
         <input aria-label="자료 설명" placeholder="선택 사항" value={evidence.description} onChange={(event) => setEvidence({ ...evidence, description: event.target.value })} />
         <button type="button" disabled={!evidence.file || techOps.busy === 'evidence'} onClick={() => void safe(async () => {
           await techOps.uploadEvidence(evidence.file, evidence.evidenceType, evidence.description);

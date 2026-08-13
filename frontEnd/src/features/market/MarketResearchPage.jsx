@@ -98,6 +98,7 @@ export default function MarketResearchPage() {
       </Accordion> : null}
       {result && version && !stale ? <Accordion title="기존 원장에서 근거 다시 수집">
         <p>현재 Market version의 검증된 원장을 복원해 전체 또는 지정 슬롯만 다시 수집합니다.</p>
+        <div className="project-form-layout">
         <label>슬롯 ID (쉼표 구분, 비우면 전체)
           <input value={recollectSlots} disabled={busy || active}
             onChange={(event) => setRecollectSlots(event.target.value)} placeholder="S1,S5" />
@@ -114,6 +115,7 @@ export default function MarketResearchPage() {
             <option value="source">원본 유지</option><option value="current">현재 값 사용</option>
           </select>
         </label>
+        </div>
         <Button disabled={busy || active} onClick={() => triggerAction(() =>
           api.recollectMarketResearch(version.id, {
             asOf: today(), slots: recollectSlots, from: recollectFrom, slotsFrom,

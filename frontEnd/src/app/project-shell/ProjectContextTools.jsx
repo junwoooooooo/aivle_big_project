@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import JobCenter from '../../features/job-center/JobCenter.jsx';
-import { AppIcon } from '../../shared/ui/index.js';
+import { AppIcon, useBodyScrollLock } from '../../shared/ui/index.js';
 import { getJourneyStatusView } from '../module-status/projectJourneyModel.js';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import { useProjectChrome } from './ProjectChromeContext.jsx';
@@ -43,6 +43,7 @@ export default function ProjectContextTools() {
   const rootRef = useRef(null);
   const triggers = useRef({});
   const closeTimer = useRef(null);
+  const previousPath = useRef(location.pathname);
 
   const closeTool = useCallback((restoreFocus = false) => {
     const trigger = openTool ? triggers.current[openTool] : null;
@@ -51,6 +52,7 @@ export default function ProjectContextTools() {
     if (restoreFocus) requestAnimationFrame(() => trigger?.focus());
   }, [location.pathname, openTool]);
   const closeSheet = useCallback(() => {
+    window.clearTimeout(closeTimer.current);
     setSheet((current) => ({ ...current, phase: 'closing' }));
     closeTimer.current = window.setTimeout(() => {
       setSheet(initialSheet());
@@ -63,6 +65,11 @@ export default function ProjectContextTools() {
       ? { ...current, view: jobId ? 'detail' : 'list', focusJobId: jobId, direction: jobId ? 'forward' : 'backward' }
       : { mounted: true, phase: 'opening', view: jobId ? 'detail' : 'list', focusJobId: jobId, direction: 'forward' });
     requestAnimationFrame(() => setSheet((current) => ({ ...current, phase: 'open' })));
+  }, []);
+
+  const closeSheetImmediately = useCallback(() => {
+    window.clearTimeout(closeTimer.current);
+    setSheet(initialSheet());
   }, []);
 
   useEffect(() => {
@@ -78,12 +85,16 @@ export default function ProjectContextTools() {
     window.addEventListener('keydown', onKeyDown);
     return () => { window.removeEventListener('pointerdown', onPointerDown); window.removeEventListener('keydown', onKeyDown); };
   }, [closeSheet, closeTool, openTool, sheet.mounted]);
+  useBodyScrollLock(sheet.mounted);
   useEffect(() => {
-    if (!sheet.mounted) return undefined;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, [sheet.mounted]);
+    if (previousPath.current !== location.pathname) {
+      window.clearTimeout(closeTimer.current);
+      setSheet(initialSheet());
+      setOpenState({ id: null, path: location.pathname });
+      setNavigatorExpanded(false);
+      previousPath.current = location.pathname;
+    }
+  }, [location.pathname]);
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   const buttons = useMemo(() => [
@@ -97,6 +108,6 @@ export default function ProjectContextTools() {
     <div className="project-context-tools__triggers">{buttons.map((button) => <button key={button.id} ref={(node) => { triggers.current[button.id] = node; }} type="button" aria-label={button.label} aria-expanded={openTool === button.id} aria-controls={TOOL_IDS[button.id]} onClick={() => { setNavigatorExpanded(false); setOpenState((current) => ({ id: current.path === location.pathname && current.id === button.id ? null : button.id, path: location.pathname })); }}><AppIcon name={button.icon} /><span>{button.label}</span></button>)}</div>
     {openTool === 'helper' && <HelpPopover model={model} />}
     {openTool === 'navigator' && <JourneyPopover model={model} expanded={navigatorExpanded} onExpandedChange={setNavigatorExpanded} />}
-    {openTool === 'workCenter' && <div id={TOOL_IDS.workCenter} className="project-tool-popover project-work-popover"><JobCenter projectId={model.projectId} compact refreshKey={model.refreshKey} onTerminal={model.onTerminal} onRetryJob={model.onRetryJob} sheet={sheet} onOpenList={() => openSheet()} onOpenJob={(jobId) => openSheet(jobId)} onCloseSheet={closeSheet} onShowList={() => setSheet((current) => ({ ...current, view: 'list', focusJobId: null, direction: 'backward' }))} /></div>}
+    {(openTool === 'workCenter' || sheet.mounted) && <JobCenter projectId={model.projectId} compact quickOpen={openTool === 'workCenter' && !sheet.mounted} quickContainerId={TOOL_IDS.workCenter} refreshKey={model.refreshKey} onTerminal={model.onTerminal} onRetryJob={model.onRetryJob} sheet={sheet} onOpenList={() => { closeTool(); openSheet(); }} onOpenJob={(jobId) => { closeTool(); openSheet(jobId); }} onCloseSheet={closeSheet} onNavigate={closeSheetImmediately} onShowList={() => setSheet((current) => ({ ...current, view: 'list', focusJobId: null, direction: 'backward' }))} />}
   </div>;
 }

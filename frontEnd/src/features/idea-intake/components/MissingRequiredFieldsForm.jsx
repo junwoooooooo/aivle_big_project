@@ -1,4 +1,4 @@
-import { Button } from '../../../shared/ui/index.js';
+import { Button, ProjectFormRow } from '../../../shared/ui/index.js';
 
 import ErrorSummary from './ErrorSummary.jsx';
 
@@ -20,15 +20,14 @@ export default function MissingRequiredFieldsForm({
       <span>법률·운영 상세가 아니라 문제와 사용자 의도만 확인합니다.</span>
     </div>
     <ErrorSummary errors={errors} title="입력이 필요한 항목이 있습니다." />
-    <div className="idea-question-grid">{fieldKeys.map((fieldKey) => {
+    <div className="idea-question-grid project-form-layout">{fieldKeys.map((fieldKey) => {
       const definition = catalogByKey[fieldKey];
       if (!definition) return null;
-      return <div className="idea-question-card" key={fieldKey}>
-        <label htmlFor={`missing-field-${fieldKey}`}><strong>{definition.label}</strong></label>
-        <p>{PROMPTS[fieldKey] ?? `${definition.label}에 필요한 사실을 입력해 주세요.`}</p>
-        <textarea id={`missing-field-${fieldKey}`} value={fields[fieldKey]?.value ?? ''}
-          onChange={(event) => onChange(fieldKey, event.target.value)} />
-      </div>;
+      return <ProjectFormRow key={fieldKey} id={`missing-field-${fieldKey}`} label={definition.label}
+        description={PROMPTS[fieldKey] ?? `${definition.label}에 필요한 사실을 입력해 주세요.`} error={errors[fieldKey]}>
+        {(fieldProps) => <textarea value={fields[fieldKey]?.value ?? ''}
+          onChange={(event) => onChange(fieldKey, event.target.value)} {...fieldProps} />}
+      </ProjectFormRow>;
     })}</div>
     <div className="idea-primary-action idea-primary-action--sticky">
       <Button type="submit">누락 정보 반영하고 다시 정리하기</Button>
