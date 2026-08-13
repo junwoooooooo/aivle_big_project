@@ -53,7 +53,8 @@ describe('project pages', () => {
     });
     expect(await screen.findByRole('link', { name: '실제 프로젝트' })).toBeInTheDocument();
     expect(screen.getByText('작성 중')).toBeInTheDocument();
-    expect(screen.getByText('8단계 모듈')).toBeInTheDocument();
+    expect(screen.getByText('사업 기획')).toBeInTheDocument();
+    expect(screen.getByText('0 / 6')).toBeInTheDocument();
   });
 
   it('renders a retryable project load error', async () => {

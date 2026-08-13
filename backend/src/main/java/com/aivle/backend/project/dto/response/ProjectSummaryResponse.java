@@ -3,4 +3,5 @@ import com.aivle.backend.common.entity.ProjectStatus;
 import java.time.LocalDateTime;
 public record ProjectSummaryResponse(Long id, String title, String industryCategory,
                                      ProjectStatus status,
-                                     LocalDateTime createdAt, LocalDateTime updatedAt) {}
+                                     LocalDateTime createdAt, LocalDateTime updatedAt,
+                                     String currentJourneyLabel, int completedJourneyCount) {}

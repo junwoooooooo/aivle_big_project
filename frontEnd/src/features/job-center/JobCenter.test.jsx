@@ -57,7 +57,21 @@ describe('compact Work Center', () => {
     render(<MemoryRouter><JobCenter projectId="41" compact
       sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'input-job', direction: 'forward' }}
       onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '정보 입력하러 가기' }))
+    expect(screen.getByRole('link', { name: '작업 화면 열기' }))
       .toHaveAttribute('href', '/app/projects/41/concepts');
+  });
+
+  it('quick은 1/1/3 규칙과 나머지 건수를 표시한다', () => {
+    const job = (id, status) => ({ jobId: id, taskType: 'MARKET_RESEARCH', status, targetRoute: '/market' });
+    useProjectJobs.mockReturnValue({ loading: false, error: null,
+      active: [job('r1', 'RUNNING'), job('r2', 'RUNNING'), job('r3', 'RUNNING'), job('i1', 'NEEDS_INPUT'), job('i2', 'NEEDS_INPUT')],
+      recent: Array.from({ length: 20 }, (_, index) => job(`done-${index}`, 'COMPLETED')),
+      selectedJobId: null, selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'SSE', error: null, reconnect: vi.fn(), events: [] } });
+    render(<MemoryRouter><JobCenter projectId="41" compact onOpenList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByText('+ 외 2건')).toBeInTheDocument();
+    expect(screen.getByText('+ 외 1건')).toBeInTheDocument();
+    expect(screen.getByText('+ 외 17건')).toBeInTheDocument();
+    expect(screen.getByLabelText('작업 요약')).toHaveTextContent('최근 작업 20');
   });
 });
