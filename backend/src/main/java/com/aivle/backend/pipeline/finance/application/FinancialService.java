@@ -56,11 +56,13 @@ public class FinancialService {
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        var existing = preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId);
+        MarketResearchVersion source = currentBusinessModel(projectId);
+        Long businessModelRunId = source.getSourceRun().getId();
+        var existing = preparations.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(projectId, businessModelRunId);
         if (existing.isPresent()) return view(existing.get());
         var initial = preparationFactory.createStandalone();
         String id = UUID.randomUUID().toString();
-        var saved = preparations.save(FinancialInputPreparation.createStandalone(id, projectId,
+        var saved = preparations.save(FinancialInputPreparation.createFromBusinessModel(id, projectId, businessModelRunId,
             snapshotHasher.hash(mapper.createObjectNode()),
             mapper.writeValueAsString(initial.financialFields()), mapper.writeValueAsString(initial.upstreamReferences()),
             mapper.writeValueAsString(initial.assistance()), ownerId));

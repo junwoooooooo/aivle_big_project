@@ -13,6 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 
@@ -35,11 +40,11 @@ public class TechOpsAdvisoryDocumentService {
             callout(document, "이 문서는 기술 구현 가능성, 운영 준비도, 파일럿 계획과 출시 조건을 한눈에 검토하기 위한 참고 자료입니다.");
 
             heading(document, "1. 한눈에 보는 결론", 1);
-            keyValueTable(document, Map.of(
-                "분석 대상", text(result, "productName", "기술·운영 적용성"),
-                "종합 판정", decision(text(result, "decision", "미정")),
-                "핵심 요약", text(result, "summary", "요약 정보 없음")
-            ));
+            Map<String, String> overview = new LinkedHashMap<>();
+            overview.put("종합 판정", decision(text(result, "decision", "미정")));
+            overview.put("분석 대상", text(result, "productName", "기술·운영 적용성"));
+            overview.put("핵심 요약", text(result, "summary", "요약 정보 없음"));
+            keyValueTable(document, overview);
 
             heading(document, "2. 시장·사업모델에서 확인한 전제", 1);
             Map<String, String> context = friendlyFacts(result.path("layer1Facts"));
@@ -48,7 +53,9 @@ public class TechOpsAdvisoryDocumentService {
             note(document, "참고: 시장 규모와 성장률은 시장 분석 단계의 관측값·가정을 요약한 것입니다. 내부 FACT 번호나 시스템 경로는 표시하지 않습니다.");
 
             heading(document, "3. 우선 실행할 기술·운영 과제", 1);
-            for (JsonNode item : result.path("advice")) adviceCard(document, item);
+            note(document, "각 과제는 실행할 일과 검증 설계를 분리해 표시합니다. 설계값으로 제안된 표본·기간·기준은 실행 전에 담당자가 확정해야 합니다.");
+            int adviceNumber = 1;
+            for (JsonNode item : result.path("advice")) adviceCard(document, item, adviceNumber++);
 
             heading(document, "4. 파일럿 실행 계획", 1);
             JsonNode pilot = result.path("pilotPlan");
@@ -96,16 +103,35 @@ public class TechOpsAdvisoryDocumentService {
         return values;
     }
 
-    private void adviceCard(XWPFDocument document, JsonNode item) { keyValueTable(document, Map.of("영역", area(text(item, "area", "기타")), "우선순위", priority(text(item, "priority", "MEDIUM")), "권고 내용", text(item, "advice", "정보 없음"), "검증 방법", text(item, "validationMethod", "정보 없음"))); }
+    private void adviceCard(XWPFDocument document, JsonNode item, int number) {
+        XWPFParagraph header = document.createParagraph();
+        header.setSpacingBefore(number == 1 ? 40 : 160);
+        header.setSpacingAfter(90);
+        header.setKeepNext(true);
+        shade(header, LIGHT_BLUE);
+        leftBorder(header, BLUE, 18);
+        XWPFRun index = run(header, String.format("%02d  ", number), true, 10, "5B7185");
+        index.setCharacterSpacing(20);
+        run(header, area(text(item, "area", "기타")), true, 12, BLUE);
+        run(header, "   " + priority(text(item, "priority", "MEDIUM")), true, 9, priorityColor(text(item, "priority", "MEDIUM")));
+
+        labelledBlock(document, "실행 권고", text(item, "advice", "정보 없음"), false);
+        labelledBlock(document, "검증 설계", text(item, "validationMethod", "정보 없음"), true);
+    }
     private void costCard(XWPFDocument document, JsonNode item) { keyValueTable(document, Map.of("운영비 항목", text(item, "category", "정보 없음"), "비용 발생 요인", text(item, "driver", "정보 없음"), "발생 조건", text(item, "trigger", "정보 없음"), "파일럿 측정 방법", text(item, "pilotMeasurement", "정보 없음"))); }
     private void readinessCard(XWPFDocument document, JsonNode item) { keyValueTable(document, Map.of("준비 영역", topic(text(item, "topic", "기타")), "평가", text(item, "assessment", "정보 없음"), "검증 방법", text(item, "validationMethod", "정보 없음"), "권장 통제", join(item.path("controls")))); }
     private void gateCard(XWPFDocument document, JsonNode item) { keyValueTable(document, Map.of("출시 조건", text(item, "title", "정보 없음"), "상태", text(item, "status", "미정"), "담당", text(item, "owner", "미정"), "통과 기준", text(item, "exitCriteria", "정보 없음"))); }
 
     private void title(XWPFDocument document, String value) { paragraph(document, value, true, 24, BLUE); }
     private void subtitle(XWPFDocument document, String value) { paragraph(document, value, false, 10, "667085"); }
-    private void heading(XWPFDocument document, String value, int level) { paragraph(document, value, true, level == 1 ? 16 : 12, BLUE); }
+    private void heading(XWPFDocument document, String value, int level) {
+        XWPFParagraph paragraph = paragraph(document, value, true, level == 1 ? 16 : 12, BLUE);
+        paragraph.setSpacingBefore(level == 1 ? 260 : 150);
+        paragraph.setSpacingAfter(level == 1 ? 120 : 80);
+        paragraph.setKeepNext(true);
+    }
     private void paragraph(XWPFDocument document, String value) { paragraph(document, value, false, 10, "1F2937"); }
-    private void paragraph(XWPFDocument document, String value, boolean bold, int size, String color) { XWPFParagraph paragraph = document.createParagraph(); paragraph.setSpacingAfter(120); XWPFRun run = paragraph.createRun(); run.setFontFamily("Malgun Gothic"); run.setFontSize(size); run.setBold(bold); run.setColor(color); run.setText(value == null || value.isBlank() ? "정보 없음" : value); }
+    private XWPFParagraph paragraph(XWPFDocument document, String value, boolean bold, int size, String color) { XWPFParagraph paragraph = document.createParagraph(); paragraph.setSpacingAfter(120); paragraph.setSpacingBetween(1.15); run(paragraph, value == null || value.isBlank() ? "정보 없음" : value, bold, size, color); return paragraph; }
     private void callout(XWPFDocument document, String value) { paragraph(document, "핵심 안내  |  " + value, true, 10, BLUE); }
     private void note(XWPFDocument document, String value) { paragraph(document, "참고  |  " + value, false, 9, "667085"); }
     /** Report layout intentionally uses labelled paragraphs, not tables, to prevent page-space waste. */
@@ -114,15 +140,36 @@ public class TechOpsAdvisoryDocumentService {
         XWPFParagraph spacer = document.createParagraph(); spacer.setSpacingAfter(100);
     }
     private void labelledParagraph(XWPFDocument document, String label, String value) {
-        XWPFParagraph paragraph = document.createParagraph(); paragraph.setSpacingAfter(80);
-        XWPFRun labelRun = paragraph.createRun(); labelRun.setFontFamily("Malgun Gothic"); labelRun.setFontSize(10); labelRun.setBold(true); labelRun.setColor(BLUE); labelRun.setText(label + "  ");
-        XWPFRun valueRun = paragraph.createRun(); valueRun.setFontFamily("Malgun Gothic"); valueRun.setFontSize(10); valueRun.setColor("1F2937"); valueRun.setText(value == null || value.isBlank() ? "정보 없음" : value);
+        XWPFParagraph paragraph = document.createParagraph(); paragraph.setSpacingAfter(80); paragraph.setSpacingBetween(1.15);
+        run(paragraph, label + "  ", true, 10, BLUE);
+        run(paragraph, value == null || value.isBlank() ? "정보 없음" : value, false, 10, "1F2937");
     }
+    private void labelledBlock(XWPFDocument document, String label, String value, boolean validation) {
+        XWPFParagraph labelParagraph = document.createParagraph();
+        labelParagraph.setSpacingBefore(30); labelParagraph.setSpacingAfter(35); labelParagraph.setKeepNext(true);
+        run(labelParagraph, label, true, 9, validation ? "276749" : BLUE);
+        XWPFParagraph body = paragraph(document, value, false, 10, "1F2937");
+        body.setIndentationLeft(240); body.setIndentationRight(120); body.setSpacingAfter(validation ? 130 : 70);
+        if (validation) shade(body, "F2F8F4");
+    }
+    private XWPFRun run(XWPFParagraph paragraph, String value, boolean bold, int size, String color) {
+        XWPFRun run = paragraph.createRun(); run.setFontFamily("Malgun Gothic"); run.setFontSize(size); run.setBold(bold); run.setColor(color); run.setText(value); return run;
+    }
+    private void shade(XWPFParagraph paragraph, String fill) {
+        CTPPr properties = paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
+        CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd(); shading.setVal(STShd.CLEAR); shading.setFill(fill);
+    }
+    private void leftBorder(XWPFParagraph paragraph, String color, int size) {
+        CTPPr properties = paragraph.getCTP().isSetPPr() ? paragraph.getCTP().getPPr() : paragraph.getCTP().addNewPPr();
+        CTBorder border = properties.isSetPBdr() ? properties.getPBdr().isSetLeft() ? properties.getPBdr().getLeft() : properties.getPBdr().addNewLeft() : properties.addNewPBdr().addNewLeft();
+        border.setVal(STBorder.SINGLE); border.setColor(color); border.setSz(java.math.BigInteger.valueOf(size)); border.setSpace(java.math.BigInteger.valueOf(8));
+    }
+    private String priorityColor(String value) { return Map.of("CRITICAL", "B42318", "HIGH", "A15C00", "MEDIUM", "52606D", "LOW", "667085").getOrDefault(value, "52606D"); }
     private void listSection(XWPFDocument document, String label, JsonNode values) { if (!values.isArray() || values.isEmpty()) return; heading(document, label, 2); for (JsonNode value : values) paragraph(document, value.asText()); }
     private String text(JsonNode node, String key, String fallback) { String value = node.path(key).asText(); return value == null || value.isBlank() ? fallback : value; }
     private String join(JsonNode values) { if (!values.isArray() || values.isEmpty()) return "정보 없음"; StringBuilder out = new StringBuilder(); for (JsonNode value : values) { if (!out.isEmpty()) out.append("\n"); out.append(value.asText()); } return out.toString(); }
     private String formatNumber(String value) { try { return String.format("%,.0f", new BigDecimal(value)); } catch (NumberFormatException ignored) { return value; } }
-    private String decision(String value) { return Map.of("GO", "진행 가능", "REVISE", "보완 후 진행", "NO_GO", "진행 보류").getOrDefault(value, value); }
+    private String decision(String value) { return Map.of("GO", "진행 가능", "CONDITIONAL_GO", "조건부 진행", "REVISE", "보완 후 진행", "NO_GO", "진행 보류").getOrDefault(value, value); }
     private String priority(String value) { return Map.of("CRITICAL", "즉시 확인", "HIGH", "우선 확인", "MEDIUM", "확인 필요", "LOW", "참고").getOrDefault(value, value); }
     private String area(String value) { return Map.of("MARKET_BM", "시장·사업모델", "PRODUCT_TECH", "제품·기술 구현", "OPERATIONS", "운영 구조", "RISK_GATE", "출시 위험", "PARTNER_SUPPLY", "파트너·공급", "PILOT", "파일럿", "SCALE", "확장 준비").getOrDefault(value, value); }
     private String topic(String value) { return Map.of("DATA_AI", "데이터·AI 운영", "CUSTOMER_TRUST", "고객 신뢰", "OBSERVABILITY_SLA", "관측성·서비스 수준", "SCALABILITY", "확장 준비도").getOrDefault(value, value); }

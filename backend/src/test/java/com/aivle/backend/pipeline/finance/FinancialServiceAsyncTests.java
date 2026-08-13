@@ -24,6 +24,8 @@ import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.journey.MarketResearchVersionRepository;
+import com.aivle.backend.journey.MarketResearchVersion;
+import com.aivle.backend.journey.MarketResearchRun;
 import com.aivle.backend.user.entity.User;
 import java.time.Instant;
 import java.util.List;
@@ -37,13 +39,20 @@ class FinancialServiceAsyncTests {
     @Test
     void initializeIsProviderFreeAndCreatesNoEstimateTask() {
         Harness h = new Harness();
-        when(h.preparations.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(41L, "tech-1"))
+        MarketResearchVersion businessModel = mock(MarketResearchVersion.class);
+        MarketResearchRun run = mock(MarketResearchRun.class);
+        when(run.getId()).thenReturn(101L);
+        when(businessModel.getSourceRun()).thenReturn(run);
+        when(h.marketResearchVersions.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
+            41L, MarketResearchRun.Kind.BM)).thenReturn(Optional.of(businessModel));
+        when(h.preparations.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(41L, 101L))
             .thenReturn(Optional.empty());
         when(h.preparations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = h.service.initialize(7L, 41L);
 
         assertThat(result.assistance().path("totalMarketingCost").path("estimateStatus").asText()).isEqualTo("NONE");
+        assertThat(result.sourceMarketResearchRunId()).isEqualTo(101L);
         verifyNoInteractions(h.taskRuns, h.events);
     }
 

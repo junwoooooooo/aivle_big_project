@@ -29,6 +29,13 @@ pilotPlan은 objective, scope, metrics, stopConditions, scaleConditions를 가�
 2) summary와 조언은 실제 제품명, 시장/BM 수치·Proxy·가격·수요·경쟁·채널 중 제공된 사실을 구체적으로 인용합니다.
    "시장 조사 강화", "기술 검토 필요", "운영 체계 구축" 같은 일반론만으로 한 항목을 작성하지 마십시오.
    각 항목에는 해당 서비스의 실제 고객·가격·채널·경쟁·수요·제품/BM 가정 중 하나와 그로 인한 구체적 운영 조건을 함께 씁니다.
+   advice는 다음 순서의 3~5문장으로 작성하십시오: (a) 확인된 사실 또는 빠진 결정, (b) 그대로 둘 때의 사업 영향,
+   (c) 담당 역할이 수행할 구체 행동과 산출물. "조사한다", "검토한다", "구축한다"로 끝내지 말고 비교표,
+   사양서, SOP, 테스트 로그, 파트너 조건표처럼 완료 여부를 확인할 수 있는 산출물을 명시하십시오.
+   제공된 근거에 숫자가 없으면 숫자를 만들지 말고 "미확정"이라고 쓰고, 누가 어떤 입력값을 확정해야 하는지 밝히십시오.
+   validationMethod는 반드시 표본/대상, 기간 또는 반복 횟수, 수집할 원시 기록, 계산할 지표, 통과·중단 기준을 포함하십시오.
+   예: "안경 사용자 15명에게 2개 가격안을 제시"처럼 사업 사실에 맞게 쓰되, 근거에 없는 목표치는
+   "권장 파일럿 설계값(확정 필요)"이라고 명확히 표시하십시오.
 3) MARKET_BM, PRODUCT_TECH, OPERATIONS, RISK_GATE, PARTNER_SUPPLY, PILOT, SCALE 영역을 모두 포함해 7개 조언을 만드십시오.
 4) 게이트는 6개 이상, 비용 계측은 결제/통합·인증/접근통제·운영/CS·인프라/알림·수령/품질 중 해당 영역을 포함해 5개 이상 만드십시오.
    비용은 금액 예측이 아니라 비용 유발 요인, 발생 조건, 계측 단위, 파일럿 계측 방법이어야 합니다.
@@ -135,6 +142,7 @@ def _is_substantive(value: AdvisoryResult) -> bool:
         and {item.topic for item in value.readiness} == {"DATA_AI", "CUSTOMER_TRUST", "OBSERVABILITY_SLA", "SCALABILITY"}
         and all(item.basisIds for item in value.advice)
         and all(len(item.advice.strip()) >= 70 and item.advice not in generic for item in value.advice)
+        and all(len(item.validationMethod.strip()) >= 100 for item in value.advice)
         and all(item.behavior != "UNKNOWN" and item.measurementUnit.strip() not in {"원", "KRW"} for item in value.operatingCosts)
         and all(len(item.pilotMeasurement.strip()) >= 80 for item in value.operatingCosts)
         and all(len(item.exitCriteria.strip()) >= 150 for item in value.gates)
@@ -269,6 +277,9 @@ async def generate_tech_ops_advisory(payload: dict) -> dict:
             "must be at least two concrete sentences: name the product workflow, the record or evidence to retain, and the measurable "
             "pass condition. Every cost measurement must name an observable event, operational owner/time, and a reason code or status. "
             "Use the supplied customer, price, channel, competitor, API, booking/cancellation/no-show, partner, or market facts."
+            " For every advice item, name the missing decision, accountable role, concrete deliverable, pilot sample or repetitions, "
+            "raw record, metric formula, and pass/stop threshold. If a number is not evidenced, label it as a recommended pilot design "
+            "that requires confirmation; never present it as a known business fact."
         )
         report = _parse_advisory(await _request_advice(repair_input), fallback_basis)
         # A valid response must never become a 500 merely because its wording

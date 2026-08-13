@@ -22,7 +22,36 @@ const reportKo = (text) => ({
   .replace(/^Required working capital:/, '필요 운전자금:')
   .replace(/^Monte Carlo loss probability:/, '몬테카를로 손실 확률:'));
 
+const compactKrw = (value) => {
+  const amount = Math.abs(Number(value ?? 0));
+  const sign = Number(value ?? 0) < 0 ? '-' : '';
+  if (amount >= 100000000) return `${sign}${(amount / 100000000).toFixed(1)}억`;
+  if (amount >= 10000) return `${sign}${Math.round(amount / 10000)}만`;
+  return `${sign}${fmt(amount)}`;
+};
+
+function FinancialPerformanceChart({ rows = [] }) {
+  const revenue = rows.map((row) => Number(row.revenue ?? 0));
+  const monthlyCash = rows.map((row) => Number(row.operatingProfit ?? 0));
+  const cumulative = rows.map((row) => Number(row.cumulativeCashFlow ?? 0));
+  if (!revenue.length) return null;
+  const width = 900; const height = 438; const left = 64; const right = 26; const top = 28; const panel = 82; const gap = 42;
+  const chartWidth = width - left - right;
+  const x = (index) => left + index * chartWidth / Math.max(revenue.length - 1, 1);
+  const scale = (values, y) => { const rawMin = Math.min(0, ...values); const rawMax = Math.max(0, ...values); const rawRange = rawMax - rawMin || 1; const min = rawMin - rawRange * .12; const max = rawMax + rawRange * .12; const range = max - min; return { min, max, y: (value) => y + (max - value) * panel / range, zero: y + max * panel / range }; };
+  const revenueScale = scale(revenue, top); const cashScale = scale(monthlyCash, top + panel + gap); const cumulativeScale = scale(cumulative, top + (panel + gap) * 2);
+  const monthlyBep = monthlyCash.findIndex((value) => value >= 0); const payback = cumulative.findIndex((value) => value >= 0);
+  const points = (values, chart) => values.map((value, index) => `${x(index)},${chart.y(value)}`).join(' ');
+  const xTicks = [...new Set([0, Math.floor((revenue.length - 1) / 3), Math.floor((revenue.length - 1) * 2 / 3), revenue.length - 1])];
+  const grid = (chart, key) => <g key={key}><line x1={left} x2={width - right} y1={chart.y(chart.max)} y2={chart.y(chart.max)} className="finance-performance-chart__grid" /><line x1={left} x2={width - right} y1={chart.zero} y2={chart.zero} className="finance-performance-chart__zero" /><line x1={left} x2={width - right} y1={chart.y(chart.min)} y2={chart.y(chart.min)} className="finance-performance-chart__grid" /><text x={left - 10} y={chart.y(chart.max) + 4} textAnchor="end" className="finance-performance-chart__tick">{compactKrw(chart.max)}</text><text x={left - 10} y={chart.zero + 4} textAnchor="end" className="finance-performance-chart__tick">0</text><text x={left - 10} y={chart.y(chart.min) + 4} textAnchor="end" className="finance-performance-chart__tick">{compactKrw(chart.min)}</text></g>;
+  const marker = (index, chart, color, label) => index < 0 ? null : <g><line x1={x(index)} x2={x(index)} y1={chart.y(chart.max)} y2={chart.y(chart.min)} stroke={color} strokeWidth="2" strokeDasharray="5 4" /><text x={Math.min(x(index) + 5, width - right - 80)} y={chart.y(chart.max) + 14} className="finance-performance-chart__event" fill={color}>{label}</text></g>;
+  const monthBepStatus = monthlyBep >= 0 ? `${monthlyBep + 1}개월 차` : `${revenue.length}개월 안에 도달하지 못함`;
+  const paybackStatus = payback >= 0 ? `${payback + 1}개월 차` : `${revenue.length}개월 안에 회수하지 못함`;
+  return <figure className="finance-performance-chart"><figcaption><strong>매출·현금흐름 연결 예측</strong><span>매출, 월 영업이익, 누적 현금흐름을 같은 월 축으로 분리해 보여줍니다. 각 그래프의 숫자 범위는 서로 독립적입니다.</span></figcaption><div className="finance-line-chart__status"><span><b>월 손익분기점</b>{monthBepStatus}</span><span><b>초기 투자금 회수</b>{paybackStatus}</span><span><b>{revenue.length}개월 말 누적 현금흐름</b>{fmt(cumulative.at(-1))} KRW</span></div><div className="finance-performance-chart__legend"><span><i className="finance-performance-chart__revenue" />월별 매출</span><span><i className="finance-performance-chart__profit" />월 영업이익</span><span><i className="finance-performance-chart__cash" />누적 현금흐름</span><em>점선은 달성 시점만 표시됩니다.</em></div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="월별 매출, 월 영업이익, 누적 현금흐름과 손익분기점 예측"><text x={left} y={top - 10} className="finance-performance-chart__label">월별 매출</text><text x={width - right} y={top - 10} textAnchor="end" className="finance-performance-chart__value">마지막 달 {compactKrw(revenue.at(-1))} KRW</text>{grid(revenueScale, 'revenue')}<polyline points={points(revenue, revenueScale)} fill="none" stroke="#245fc0" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" /><circle cx={x(revenue.length - 1)} cy={revenueScale.y(revenue.at(-1))} r="4" fill="#245fc0" /><text x={left} y={top + panel + gap - 10} className="finance-performance-chart__label">월 영업이익</text><text x={width - right} y={top + panel + gap - 10} textAnchor="end" className="finance-performance-chart__value">마지막 달 {compactKrw(monthlyCash.at(-1))} KRW</text>{grid(cashScale, 'cash')}{monthlyCash.map((value, index) => <line key={index} x1={x(index)} x2={x(index)} y1={cashScale.zero} y2={cashScale.y(value)} stroke={value >= 0 ? '#16826c' : '#d14343'} strokeWidth={Math.max(5, Math.min(12, chartWidth / revenue.length * .58))} strokeLinecap="round" />)}{marker(monthlyBep, cashScale, '#b46100', `손익분기 ${monthlyBep + 1}개월`)}<text x={left} y={top + (panel + gap) * 2 - 10} className="finance-performance-chart__label">누적 현금흐름</text><text x={width - right} y={top + (panel + gap) * 2 - 10} textAnchor="end" className="finance-performance-chart__value">마지막 달 {compactKrw(cumulative.at(-1))} KRW</text>{grid(cumulativeScale, 'cumulative')}<polyline points={points(cumulative, cumulativeScale)} fill="none" stroke="#16826c" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" /><circle cx={x(cumulative.length - 1)} cy={cumulativeScale.y(cumulative.at(-1))} r="4" fill="#16826c" />{marker(payback, cumulativeScale, '#087f6b', `투자금 회수 ${payback + 1}개월`)}{xTicks.map((index) => <text key={index} x={x(index)} y={height - 20} textAnchor={index === 0 ? 'start' : index === revenue.length - 1 ? 'end' : 'middle'} className="finance-performance-chart__tick">{index + 1}개월</text>)}</svg><small className="finance-performance-chart__guide">빨간 막대는 적자, 초록 막대는 흑자입니다. 세 지표의 단위 범위가 달라 각각의 축으로 추세를 선명하게 보여줍니다.</small></figure>;
+}
+
 function LineChart({ title, subtitle, rows = [], field, color }) {
+  if (field === 'revenue') return <FinancialPerformanceChart rows={rows} />;
   if (field === 'revenue') {
     const revenue = rows.map((row) => Number(row.revenue ?? 0));
     const monthlyCash = rows.map((row) => Number(row.operatingProfit ?? 0));
