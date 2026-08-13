@@ -32,6 +32,7 @@ class InternalAiExecutionClientRoutingTests {
         assertThat(client.clientFor(TaskType.TWIN_SURVEY)).isSameAs(twinRead);
         assertThat(client.clientFor(TaskType.MARKET_RESEARCH)).isSameAs(marketRead);
         assertThat(client.clientFor(TaskType.MARKETING_CONTENT_GENERATION)).isSameAs(longRead);
+        assertThat(client.clientFor(TaskType.TECH_OPS_ADVISORY)).isSameAs(longRead);
         assertThat(client.clientFor(TaskType.FINANCE_ESTIMATE)).isSameAs(normal);
         assertThat(client.clientFor(TaskType.MARKETING_VISUAL_GENERATION)).isSameAs(normal);
         assertThat(client.clientFor(TaskType.IDEA_BRIEF_DERIVATION)).isSameAs(normal);

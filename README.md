@@ -56,9 +56,13 @@ python scripts/check_local_env.py --compose
 Twin Bank의 Compose host mount 이름은 `TWIN_BANK_HOST_DIR` 하나뿐이다.
 `TWIN_BANK_PATH`는 alias가 아니며 precheck가 이름 변경 안내와 함께 실패시킨다.
 
-Backend의 AI HTTP client는 작업 규모별로 분리됩니다. 기본 짧은 작업은 30초, Marketing Content는
-7분, Concept Portfolio는 15분, Twin Survey는 14분이며, fresh Market collection은 20분 worker
+Backend의 AI HTTP client는 작업 규모별로 분리됩니다. 기본 짧은 작업은 30초, Marketing Content와
+TechOps Advisory는 7분, Concept Portfolio는 15분, Twin Survey는 14분이며, fresh Market collection은 20분 worker
 deadline과 22분 transport/lease envelope를 사용합니다.
+
+Docker 내부 Object Storage endpoint는 `http://minio:9000`, host browser용 presigned endpoint는
+기본 `http://localhost:9000`입니다. `OBJECT_STORAGE_PUBLIC_ENDPOINT`에는 `minio`, `backend`,
+`ai-server` 같은 Docker 전용 hostname을 사용할 수 없습니다.
 
 새 환경변수를 추가한 경우 다음 검사를 통과해야 합니다.
 

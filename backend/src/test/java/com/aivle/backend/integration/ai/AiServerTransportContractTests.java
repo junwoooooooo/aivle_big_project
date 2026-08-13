@@ -36,6 +36,41 @@ class AiServerTransportContractTests {
     }
 
     @Test
+    void techOpsUsesLongTransportWhileShortTaskStillTimesOut() throws Exception {
+        HttpServer techOpsServer = delayedEchoServer(Duration.ofMillis(600));
+        try {
+            AiServerProperties properties = properties(
+                techOpsServer, Duration.ofMillis(250), Duration.ofSeconds(2));
+            InternalAiExecutionClient client = client(properties);
+            TaskRun techOps = run(TaskType.TECH_OPS_ADVISORY);
+
+            assertThat(client.execute(
+                techOps, "attempt-1", LocalDateTime.now().plusMinutes(6)
+            ).taskRunId()).isEqualTo(techOps.getId());
+        } finally {
+            techOpsServer.stop(0);
+        }
+
+        HttpServer shortTaskServer = delayedEchoServer(Duration.ofMillis(600));
+        try {
+            AiServerProperties properties = properties(
+                shortTaskServer, Duration.ofMillis(250), Duration.ofSeconds(2));
+            InternalAiExecutionClient client = client(properties);
+
+            assertThatThrownBy(() -> client.execute(
+                run(TaskType.IDEA_BRIEF_DERIVATION),
+                "attempt-1",
+                LocalDateTime.now().plusMinutes(1)
+            )).isInstanceOfSatisfying(ExecutionFailure.class, failure -> {
+                assertThat(failure.code()).isEqualTo("DEADLINE_EXCEEDED");
+                assertThat(failure.reason()).isEqualTo("REQUEST_DEADLINE_EXCEEDED");
+            });
+        } finally {
+            shortTaskServer.stop(0);
+        }
+    }
+
+    @Test
     void connectionFailureIsDependencyUnavailableNotDeadline() {
         AiServerProperties properties = new AiServerProperties(
             "http://127.0.0.1:1", Duration.ofMillis(100), Duration.ofMillis(100),

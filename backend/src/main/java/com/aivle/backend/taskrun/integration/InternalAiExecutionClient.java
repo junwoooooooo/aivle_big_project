@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.ResourceAccessException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -172,12 +171,8 @@ public class InternalAiExecutionClient {
             byte[] responseBytes = responseFailure.getResponseBodyAsByteArray();
             enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             throw parseFailure(responseBytes, run.taskType());
-        } catch (ResourceAccessException timeoutOrConnectionFailure) {
-            throw transportFailure(timeoutOrConnectionFailure);
-        } catch (RestClientException dependencyFailure) {
-            throw new ExecutionFailure(
-                "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
-            );
+        } catch (RestClientException transportFailure) {
+            throw transportFailure(transportFailure);
         }
     }
 
@@ -185,7 +180,8 @@ public class InternalAiExecutionClient {
         if (taskType == TaskType.MARKET_RESEARCH) {
             return marketResearchClient;
         }
-        if (taskType == TaskType.MARKETING_CONTENT_GENERATION) {
+        if (taskType == TaskType.MARKETING_CONTENT_GENERATION
+            || taskType == TaskType.TECH_OPS_ADVISORY) {
             return longRunningClient;
         }
         if (taskType == TaskType.TWIN_SURVEY) {
@@ -197,7 +193,7 @@ public class InternalAiExecutionClient {
             ? conceptPortfolioClient : client;
     }
 
-    static ExecutionFailure transportFailure(ResourceAccessException failure) {
+    static ExecutionFailure transportFailure(RestClientException failure) {
         Throwable cause = failure;
         while (cause != null) {
             if (cause instanceof ConnectException
@@ -224,7 +220,7 @@ public class InternalAiExecutionClient {
             cause = cause.getCause();
         }
         return new ExecutionFailure(
-            "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
+            "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
         );
     }
 
