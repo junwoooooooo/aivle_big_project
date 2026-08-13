@@ -47,6 +47,7 @@ _EVIDENCE = {
 #: 카드가 경계를 담는 칸들. **하나라도 빠뜨리면 §4 위반**이다 — 경계는 값과 같이 옮긴다.
 _CAVEAT_KEYS = ("경계", "경계_proxy", "상한_울타리")
 
+#: `상한_울타리` 는 bool 표식이라 문장이 필요하다 (`caveats_of_card` 참조).
 _CEILING_SENTENCE = "⚠ 상한 울타리 — 이 값은 **상한으로만** 읽어야 한다(상위 집계를 밑동으로 썼다)."
 
 #: 계산식 한 항(요인) 한글 키 → 계약 키. **이 표가 factors 의 allowlist 다.**
@@ -143,6 +144,10 @@ def caveats_of_card(card: dict) -> list[str]:
     for key in _CAVEAT_KEYS:
         value = card.get(key)
         if key == "상한_울타리":
+            # ⚠ 이 칸은 **문장이 아니라 표식**(bool)이다. 그대로 `_strings` 에 넣으면
+            #   사용자가 읽는 경계 목록에 `"True"` 한 줄이 섞인다(판 ㉛A 실측 —
+            #   사다리 2단이 처음 발동해서야 드러났다). **버리지는 않는다** —
+            #   경계 문장이 하나도 없는 카드에서 표식마저 빠지면 울타리가 사라진다.
             if value:
                 out.append(_CEILING_SENTENCE)
             continue
@@ -372,6 +377,15 @@ def _not_found_entries(key: str, value: Any, by_slot: dict, by_var: dict) -> lis
         if (value or {}).get("unverified_quote"):
             rows.append(f"인용 미검증 {value['unverified_quote']}건")
         return rows
+    if key == "extract_capped":
+        # **본문은 받았는데 묻지 않은 문서다.** 「찾아도 없다」가 아니라 「안 봤다」 —
+        # 이 문장이 흐려지면 성적표의 미확보가 자료 부재로 읽힌다.
+        return [with_slot(v.get("slot_id"), f" · {v.get('trace_id')} — {v.get('why')}")
+                for v in value or [] if isinstance(v, dict)]
+    if key == "fetch_empty":
+        # 200 을 받고도 본문이 0자다. 「없는 자료」가 아니라 **못 가져온 자료**다.
+        return [with_slot(v.get("slot_id"), f" · {v.get('url')} — {v.get('why')}")
+                for v in value or [] if isinstance(v, dict)]
     if key == "contradictions":
         return [f"{v.get('slot_id')} ({v.get('fact_id')}) — {v.get('note')}"
                 for v in value or [] if isinstance(v, dict)]

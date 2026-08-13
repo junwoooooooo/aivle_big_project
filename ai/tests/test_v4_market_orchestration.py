@@ -3,7 +3,7 @@ import json
 import sys
 from pathlib import Path
 
-from app.research import pipeline, product_runner
+from app.research import pipeline, product_runner, serialize
 
 
 def _reload_runpath(monkeypatch, tmp_path):
@@ -61,3 +61,25 @@ def test_expected_preregistration_resource_is_present_and_measured():
     stamp = runlog.prereg_stamp(0)
     assert Path(runlog.EXPECTED_MD).is_file()
     assert stamp.get("_한계") != "미측정"
+
+
+def test_not_found_output_distinguishes_unexamined_capped_document():
+    rows = serialize._not_found_entries(
+        "extract_capped",
+        [{"slot_id": "S1", "trace_id": "trace-1", "why": "extract limit"}],
+        {"S1": {"subject": "시장", "metric": "규모"}},
+        {},
+    )
+
+    assert rows == ["S1 — 시장 · 규모 · trace-1 — extract limit"]
+
+
+def test_not_found_output_distinguishes_empty_fetched_document():
+    rows = serialize._not_found_entries(
+        "fetch_empty",
+        [{"slot_id": "S2", "url": "https://example.test/empty", "why": "empty body"}],
+        {"S2": {"subject": "고객", "metric": "수요"}},
+        {},
+    )
+
+    assert rows == ["S2 — 고객 · 수요 · https://example.test/empty — empty body"]
