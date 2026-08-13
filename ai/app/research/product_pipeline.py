@@ -243,9 +243,12 @@ async def run_market_research(task_input: dict, run_id: str,
                         "conceptSnapshotJson 형식 불량") from failure
         if not isinstance(concept, dict) or not concept:
             raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "컨셉 스냅샷 없음")
-        return await _product_full(
-            concept, concept_id.strip(), run_id, str(task_input.get("asOf") or _now()[:10]),
-            int(task_input.get("llmBudget") or 3), timeout_seconds, event_sink)
+        arguments = (concept, concept_id.strip(), run_id,
+                     str(task_input.get("asOf") or _now()[:10]),
+                     int(task_input.get("llmBudget") or 3), timeout_seconds, event_sink)
+        if diagnostic_context is None:
+            return await _product_full(*arguments)
+        return await _product_full(*arguments, task_input, diagnostic_context)
 
     if mode == "BM" and isinstance(task_input.get("marketResultJson"), str):
         try:
@@ -338,17 +341,32 @@ async def run_market_research(task_input: dict, run_id: str,
 
 async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
                         llm_budget: int, timeout_seconds: float,
-                        event_sink: EventSink | None = None) -> dict:
+                        event_sink: EventSink | None = None,
+                        task_input: dict | None = None,
+                        diagnostic_context: dict[str, str] | None = None) -> dict:
     """Task 임시 workspace에서 donor 수집 전 구간을 실행하고 봉투만 회수한다."""
     if not _SAFE_RUN_ID.fullmatch(run_id):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "runId 형식 불량")
     ai_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     with tempfile.TemporaryDirectory(prefix="market-product-") as workspace:
+        runtime_input = task_input or {}
+        runtime_context = diagnostic_context or {}
+        from .market_ledger_artifact import MarketLedgerArtifactError, persist, restore
+        if runtime_context:
+            try:
+                await restore(runtime_input, runtime_context, workspace)
+            except MarketLedgerArtifactError as failure:
+                raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", str(failure)) from failure
         input_path = os.path.join(workspace, "input.json")
+        runtime_path = os.path.join(workspace, "runtime.json")
         output_path = os.path.join(workspace, "output.json")
         progress_path = os.path.join(workspace, "progress.jsonl")
         with io.open(input_path, "w", encoding="utf-8") as handle:
             json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
+        with io.open(runtime_path, "w", encoding="utf-8") as handle:
+            json.dump({"sourceRun": runtime_input.get("sourceRun"),
+                       "recollect": runtime_input.get("recollect")},
+                      handle, ensure_ascii=False, sort_keys=True)
         env = dict(os.environ)
         env["RESEARCH2_RUNS_DIR"] = os.path.join(workspace, "runs")
         command = [
@@ -356,6 +374,7 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             "--input", input_path, "--output", output_path,
             "--workspace", workspace, "--run-id", run_id,
             "--concept-id", concept_id, "--as-of", as_of,
+            "--runtime-input", runtime_path,
             "--llm-budget", str(max(0, llm_budget)),
         ]
         if event_sink is not None:
@@ -406,10 +425,16 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
                         detail[-1] if detail else "시장조사 엔진 실패")
         try:
             with io.open(output_path, encoding="utf-8") as handle:
-                return json.load(handle)
+                result = json.load(handle)
         except (OSError, ValueError) as failure:
             raise _fail("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION",
                         "시장조사 결과 봉투를 읽을 수 없다") from failure
+        if runtime_context:
+            try:
+                await persist(runtime_input, runtime_context, workspace, concept_id)
+            except MarketLedgerArtifactError as failure:
+                raise _fail("DEPENDENCY_UNAVAILABLE", "ARTIFACT_STORAGE_UNAVAILABLE", str(failure)) from failure
+        return result
 
 
 class _Hard(RuntimeError):

@@ -1,51 +1,70 @@
-# New Pipeline Platform
+# AIVLE 사업 검증 플랫폼
 
-이 저장소는 프로젝트별 기획을 정리하고 외부 분석 모듈과 연결하는 신규 제품 파이프라인을 구현합니다.
+사업 아이디어를 다음 제품 여정으로 검증하고 실행 결과의 근거 계보를 보존하는 통합 플랫폼입니다.
 
-1. Idea Brief 작성·확정
-2. 적격 컨셉 5개 생성과 공식 근거 기반 법률 구현 가능성 사전검토
-3. 컨셉 비교·선택
-4. Market Handoff와 외부 시장분석 결과 반영
-5. Finalized Planning 생성, BM·재무 및 Persona 외부 모듈 Handoff
-6. Marketing Content 생성·수정·확정
+1. 아이디어
+2. 사업안(Concept Portfolio V2)
+3. 시장 분석
+4. 사업 모델 분석
+5. 기술·운영 분석
+6. 재무 분석
+7. 트윈 패널 조사
+8. 마케팅 콘텐츠 제작
 
-컨셉 생성은 정확히 5개 Slot을 사용하며 후보별 최대 1회 Redesign, 최대 2회
-Replacement, 전체 최대 15개 후보 검사 한도를 적용합니다. 사실이나 근거가 부족하면 성공을
-가장하지 않고 입력 필요 또는 실패 상태로 종료합니다.
+`Marketing Visual`은 통합 Marketing Content 화면과 별도로 기존 런타임 호환성을 유지합니다.
 
-## Runtime
+## 실행 권한 구조
 
-- `frontEnd`: React/Vite Project Shell, 모듈 상태, 작업 센터와 사용자 화면
-- `backend`: Spring Boot, PostgreSQL/Flyway, TaskRun/JobEvent, 신규 `pipeline/**`
-- `ai`: FastAPI 내부 execution API와 신규 `app/tasks/**`
-- `compose.yaml`: PostgreSQL, MinIO, Backend, AI, Frontend 로컬 구성
+- Backend는 프로젝트 소유권, current/history/stale, source lineage 및 제품 상태의 canonical authority입니다.
+- AI는 Backend가 확정한 immutable 입력을 실행하는 엔진입니다. AI 로컬 디스크는 canonical 저장소가 아닙니다.
+- TaskRun/TaskAttempt는 실행·재시도·lease·recovery authority입니다.
+- JobEvent/SSE는 진행률과 갱신 신호이며 제품 상태 자체의 authority가 아닙니다.
+- Object Storage는 이미지, 증거 및 Market Research2 raw ledger 같은 durable artifact authority입니다.
 
-브라우저는 Spring Backend만 호출합니다. Backend는 상태와 snapshot을 소유하고,
-`InternalAiExecutionClient`를 통해 FastAPI의 `POST /internal/v1/ai/executions`를 호출합니다.
-AI 서버가 직접 DB 상태를 변경하지 않습니다.
+브라우저는 Spring Backend만 호출합니다. Backend worker가 내부 토큰과 실행 계보를 포함해 FastAPI의
+`POST /internal/v1/ai/executions`를 호출합니다.
 
-## Database
+## Market recollect
 
-보존 데이터가 없는 rebuild 환경을 전제로 Flyway migration은
-`backend/src/main/resources/db/migration/V1__new_pipeline_baseline.sql` 하나로 시작합니다.
-기존 DB/volume에 대한 in-place upgrade는 지원하지 않으므로 적용 전에 DB를 초기화해야 합니다.
+Market FULL 실행이 만든 Research2 원장(`run.jsonl`, `a3_bodies.json`, `result.json`)은 체크섬과
+lineage가 포함된 제한적 ZIP bundle로 Object Storage에 저장됩니다. 다음 recollect TaskRun은 소유권,
+current Concept/Market version, manifest 및 파일 체크섬을 검증한 뒤 임시 workspace의
+`runs-generated/<sourceRun>`에 원자를 복원하고 동일 Research2 recollect 엔진을 실행합니다.
+원장이 없거나 손상되면 신규 FULL 실행으로 조용히 대체하지 않고 실패합니다.
 
-## Runtime contracts
+## 환경변수 정책
 
-- 사용자가 직접 호출하는 제품 API는 `/api/v3/projects/{projectId}/...` 아래에 있습니다.
-- 작업 Event 조회는 `/api/v2/jobs/{jobId}/events`의 SSE와 `?after=<sequence>` JSON polling을 사용합니다.
-- Backend Query API가 상태 정본이며 Job Event는 갱신 신호입니다.
-- Provider 작업은 Idea Brief, Concept Candidate, Concept Legal Review, Concept Redesign,
-  Marketing Content Generation의 다섯 계약으로 제한합니다.
-- 실제 Provider 검증은 `python -m app.tools.idea_brief_provider_smoke`,
-  `python -m app.tools.concept_factory_provider_smoke`,
-  `python -m app.tools.marketing_content_provider_smoke`로 수행합니다.
+실제 비밀값은 `.env`에 두고 저장소에는 커밋하지 않습니다. 계약 기준은 `.env.example`과
+`scripts/audit_env_contract.py`입니다.
 
-## Documentation
+- `AI_API_KEY`: 플랫폼 structured provider
+- `MARKET_RESEARCH_OPENAI_API_KEY`: Compose에서 Market Research2에 우선 전달할 전용 키
+- `OPENAI_API_KEY`: Research2 직접 실행 호환 키. Compose에서는 전용 키가 비어 있을 때 fallback
+- `AI_INTERNAL_SERVICE_TOKEN` / `AI_SERVER_INTERNAL_API_KEY`: AI와 Backend가 공유하는 내부 실행 토큰
+- `TWIN_BANK_HOST_DIR`: 운영 Twin Bank read-only mount. E2E는 실제 조사 자산 대신 synthetic fixture 사용
 
-- 구현 계약: `docs/rebuild/`
-- API 요약: `docs/api/openapi.yaml`
-- 최종 구조: `docs/rebuild/FINAL_REPOSITORY_STRUCTURE.md`
-- Entity/Table 목록: `docs/rebuild/FINAL_ENTITY_TABLE_INVENTORY.md`
-- DB baseline: `docs/rebuild/FINAL_DATABASE_BASELINE.md`
-- 현재 실행 단위 검증: `docs/rebuild/verification/PRODUCT-CUTOVER-CLEANUP_USER_VERIFICATION.md`
+새 환경변수를 추가한 경우 다음 검사를 통과해야 합니다.
+
+```bash
+python scripts/audit_env_contract.py
+```
+
+## 로컬 구성
+
+`compose.yaml`은 PostgreSQL, MinIO, Backend, AI, Frontend를 구성합니다. 실제 secret `.env`를
+출력하거나 저장소에 포함하지 마십시오. E2E 정적 구성은 다음처럼 별도 예제를 사용합니다.
+
+```bash
+docker compose --env-file .env.e2e.example -f compose.yaml -f compose.e2e.yaml config
+```
+
+Docker 이미지에는 Research2 generated runs, outputs, 실제 Twin Bank 및 `.env*`가 포함되지 않도록
+`ai/.dockerignore`로 차단합니다. canonical seed fixture는 런타임 이미지가 아니라 테스트/개발 권한에
+따라 명시적으로 취급합니다.
+
+## 문서
+
+- 구현·계약: `docs/rebuild/`
+- API: `docs/api/openapi.yaml`
+- 검증 결과: `docs/rebuild/verification/`
+- 진행 보고: `docs/rebuild/progress/`

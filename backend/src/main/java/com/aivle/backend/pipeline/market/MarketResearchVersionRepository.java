@@ -13,5 +13,8 @@ public interface MarketResearchVersionRepository extends JpaRepository<MarketRes
     /** 멱등의 열쇠 — 같은 실행에 두 번 물질화하지 않는다. */
     Optional<MarketResearchVersion> findBySourceRunIdAndDeletedAtIsNull(Long sourceRunId);
 
+    Optional<MarketResearchVersion> findByIdAndProjectIdAndKindAndDeletedAtIsNull(
+        Long id, Long projectId, MarketResearchRun.Kind kind);
+
     long countByProjectIdAndKindAndDeletedAtIsNull(Long projectId, MarketResearchRun.Kind kind);
 }

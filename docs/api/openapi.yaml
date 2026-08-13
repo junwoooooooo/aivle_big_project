@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: New Pipeline API
   version: 1.0.0-cutover
-  description: Active public routes for the six-stage project pipeline. Domain Query APIs are authoritative; Job Events are refresh signals.
+  description: Active public routes for the eight-stage project pipeline. Domain Query APIs are authoritative; Job Events are refresh signals.
 servers:
   - url: /
 tags:
@@ -43,6 +43,19 @@ paths:
   /api/v3/projects/{projectId}/recent-jobs:
     parameters: [{$ref: '#/components/parameters/ProjectId'}]
     get: {tags: [Jobs], summary: List owned recent terminal jobs, responses: {'200': {description: Recent jobs}}}
+  /api/v3/projects/{projectId}/market-research:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Queue Market FULL from the current CPV2 source, responses: {'202': {description: Task accepted}}}
+  /api/v3/projects/{projectId}/market-research/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get canonical current Market FULL state, responses: {'200': {description: Current Market state}}}
+  /api/v3/projects/{projectId}/market-research/recollect:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post:
+      tags: [Pipeline]
+      summary: Queue a lineage-bound recollect from the durable current Market ledger
+      description: Fails closed when the current source version, Concept lineage, or committed ledger artifact is unavailable or mismatched.
+      responses: {'202': {description: Recollect task accepted}, '400': {description: Invalid or stale lineage}, '404': {description: Source or durable ledger unavailable}}
   /api/v3/projects/{projectId}/idea-brief:
     parameters: [{$ref: '#/components/parameters/ProjectId'}]
     get: {tags: [Pipeline], summary: Get canonical Idea Brief, responses: {'200': {description: Idea Brief}}}

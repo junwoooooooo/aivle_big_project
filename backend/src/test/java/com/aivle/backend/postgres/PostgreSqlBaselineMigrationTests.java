@@ -25,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(22);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(23);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -35,8 +35,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
 
         assertThat(appliedVersions).containsExactly(
             "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-            "18", "19", "20", "21", "22", "23");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
+            "18", "19", "20", "21", "22", "23", "24");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -58,7 +58,8 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
                 "concept_portfolio_hypothesis_decisions", "concept_portfolio_delta_legal_reviews",
                 "concept_legal_regulatory_reports", "market_research_runs", "market_research_versions",
                 "twin_survey_runs", "twin_survey_versions", "bm_plan_preparations",
-                "tech_ops_advisory_reports", "research_competitor_seeds");
+                "tech_ops_advisory_reports", "research_competitor_seeds",
+                "market_research_ledger_artifacts");
 
             assertThat(constraintCount(connection, schema, "research_competitor_seeds",
                 "fk_research_competitor_seed_project")).isOne();
@@ -70,6 +71,16 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
                 "uk_research_competitor_seed_name")).isOne();
             assertThat(columnCount(connection, schema, "research_competitor_seeds", "version")).isOne();
             assertThat(columnCount(connection, schema, "research_competitor_seeds", "display_order")).isOne();
+            assertThat(constraintCount(connection, schema, "market_research_ledger_artifacts",
+                "fk_market_ledger_project")).isOne();
+            assertThat(constraintCount(connection, schema, "market_research_ledger_artifacts",
+                "fk_market_ledger_task")).isOne();
+            assertThat(constraintCount(connection, schema, "market_research_ledger_artifacts",
+                "fk_market_ledger_attempt")).isOne();
+            assertThat(constraintCount(connection, schema, "market_research_ledger_artifacts",
+                "uk_market_ledger_version")).isOne();
+            assertThat(indexCount(connection, schema, "market_research_ledger_artifacts",
+                "idx_market_ledger_project_source")).isOne();
 
             assertTablesAbsent(connection, schema,
                 "project_documents", "document_versions", "structured_plans",
@@ -92,7 +103,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(15);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(16);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {

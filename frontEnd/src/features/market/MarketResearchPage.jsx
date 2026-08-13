@@ -44,10 +44,14 @@ export default function MarketResearchPage() {
   const { liveRevision = 0 } = useOutletContext() ?? {};
   const api = useMemo(() => createMarketApi(client, projectId), [client, projectId]);
   const [conceptKey, setConceptKey] = useState(SAMPLE_CONCEPTS[0][0]);
+  const [recollectSlots, setRecollectSlots] = useState('');
+  const [recollectFrom, setRecollectFrom] = useState('a4');
+  const [slotsFrom, setSlotsFrom] = useState('source');
 
   const load = useCallback(() => api.currentMarketResearch(), [api]);
   const start = useCallback(() => api.startMarketResearch(today()), [api]);
-  const { run, result, source, stale, error, busy, loading, active, elapsed, trigger } =
+  const { run, result, version, source, stale, error, busy, loading, active, elapsed,
+    trigger, triggerAction } =
     useMarketLiveState(load, start, liveRevision);
   // KPI → 과목 섹션 착지. 포커스·rAF 함정은 훅 주석에 있다.
   const focus = useCellFocus('sec-');
@@ -88,6 +92,29 @@ export default function MarketResearchPage() {
       </Card> : null}
       {!DEMO_MODE ? <Accordion title="경쟁·현재 대안 씨앗">
         <CompetitorSeedForm api={api} disabled={busy || active} />
+      </Accordion> : null}
+      {result && version && !stale ? <Accordion title="기존 원장에서 근거 다시 수집">
+        <p>현재 Market version의 검증된 원장을 복원해 전체 또는 지정 슬롯만 다시 수집합니다.</p>
+        <label>슬롯 ID (쉼표 구분, 비우면 전체)
+          <input value={recollectSlots} disabled={busy || active}
+            onChange={(event) => setRecollectSlots(event.target.value)} placeholder="S1,S5" />
+        </label>
+        <label>복원 단계
+          <select value={recollectFrom} disabled={busy || active}
+            onChange={(event) => setRecollectFrom(event.target.value)}>
+            <option value="a4">A4부터</option><option value="extract">추출부터</option>
+          </select>
+        </label>
+        <label>사람 입력 슬롯 기준
+          <select value={slotsFrom} disabled={busy || active}
+            onChange={(event) => setSlotsFrom(event.target.value)}>
+            <option value="source">원본 유지</option><option value="current">현재 값 사용</option>
+          </select>
+        </label>
+        <Button disabled={busy || active} onClick={() => triggerAction(() =>
+          api.recollectMarketResearch(version.id, {
+            asOf: today(), slots: recollectSlots, from: recollectFrom, slotsFrom,
+          }))}>원장 복원 후 다시 수집</Button>
       </Accordion> : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}

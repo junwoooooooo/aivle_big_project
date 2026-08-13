@@ -75,4 +75,12 @@ public class ObjectKeyGenerator {
         return "projects/" + projectId + "/evidence/" + artifactId + "/"
             + UUID.randomUUID() + "." + extension;
     }
+
+    public String marketResearchLedger(long projectId, String artifactId) {
+        if (artifactId == null || !artifactId.matches("[0-9a-f-]{36}")) {
+            throw new IllegalArgumentException("invalid market ledger artifact id");
+        }
+        return "projects/" + projectId + "/market-research/ledgers/"
+            + artifactId + "/" + UUID.randomUUID() + ".zip";
+    }
 }

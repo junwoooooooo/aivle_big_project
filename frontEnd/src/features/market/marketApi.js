@@ -12,6 +12,13 @@ export function createMarketApi(client, projectId) {
         { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
     },
     async currentMarketResearch() { return (await client.get(`${root}/market-research/current`)).data; },
+    async recollectMarketResearch(sourceMarketResearchVersionId, options = {}) {
+      return (await client.post(`${root}/market-research/recollect`, {
+        sourceMarketResearchVersionId, asOf: options.asOf,
+        slots: options.slots ?? '', from: options.from ?? 'a4',
+        slotsFrom: options.slotsFrom ?? 'source',
+      }, { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
     async currentCompetitorSeeds() { return (await client.get(`${root}/market-research/competitor-seeds`)).data; },
     async saveCompetitorSeeds(seeds) { return (await client.put(`${root}/market-research/competitor-seeds`, seeds)).data; },
     async startBusinessModel() {

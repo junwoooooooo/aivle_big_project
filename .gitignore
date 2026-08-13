@@ -15,3 +15,11 @@ ai/app/twin/bank/
 
 # Research2 검증 실행이 만드는 로컬 run 산출물은 canonical 결과가 아니다.
 ai/app/research/research2/runs-generated/
+ai/app/research/research2/outputs/
+ai/app/research/research2/runs/*
+!ai/app/research/research2/runs/beauty-13/
+!ai/app/research/research2/runs/beauty-13/**
+!ai/app/research/research2/runs/ledger-05/
+!ai/app/research/research2/runs/ledger-05/**
+!ai/app/research/research2/runs/pet-treat-15/
+!ai/app/research/research2/runs/pet-treat-15/**

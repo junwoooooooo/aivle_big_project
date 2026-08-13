@@ -25,6 +25,7 @@ def main() -> None:
     parser.add_argument("--concept-id", required=True)
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--llm-budget", type=int, default=3)
+    parser.add_argument("--runtime-input", default="")
     parser.add_argument("--progress-jsonl", default="")
     args = parser.parse_args()
 
@@ -34,6 +35,10 @@ def main() -> None:
     os.environ["RESEARCH2_GENERATED_RUNS_DIR"] = os.path.join(args.workspace, "runs-generated")
     with io.open(args.input, encoding="utf-8") as handle:
         concept = json.load(handle)
+    runtime_input = {}
+    if args.runtime_input:
+        with io.open(args.runtime_input, encoding="utf-8") as handle:
+            runtime_input = json.load(handle)
     progress.emit({"stage": "MARKET_COLLECTION", "action": "STARTED", "status": "RUNNING",
                    "safeSummary": "선택한 사업안의 시장 근거를 수집하고 있습니다."})
     try:
@@ -54,6 +59,10 @@ def main() -> None:
                 "chunks": [{"text": json.dumps(concept, ensure_ascii=False, sort_keys=True)}],
             }],
         }
+        if runtime_input.get("sourceRun"):
+            task_input["sourceRun"] = runtime_input["sourceRun"]
+        if isinstance(runtime_input.get("recollect"), dict):
+            task_input["recollect"] = runtime_input["recollect"]
         result = asyncio.run(run_market_research(task_input, args.run_id, 24 * 60 * 60))
         result = _fail_closed_unverified_product_assumptions(result)
     except Exception:

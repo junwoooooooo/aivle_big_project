@@ -48,11 +48,41 @@ public class MarketResearchInputFactory {
         root.put("conceptSnapshotJson", mapper.writeValueAsString(concept));
         root.put("marketSeedSnapshotJson", snapshot.getSnapshotJson());
         ObjectNode source = root.putObject("source");
+        source.put("projectId", selection.getProjectId());
         source.put("portfolioSelectionId", selection.getId());
         source.put("selectionRunId", selection.getRunId());
         source.put("selectionRevision", selection.getHypothesisRevision());
         source.put("marketSeedSnapshotId", snapshot.getId());
         source.put("marketSeedSnapshotHash", snapshot.getSnapshotHash());
+        source.put("selectedConceptHash", selection.getSelectedConceptHash());
+        return finish(root);
+    }
+
+    public String recollect(MarketAnalysisSeedSnapshot snapshot, ConceptPortfolioSelection selection,
+            String asOf, JsonNode competitorSeeds, JsonNode constraints,
+            MarketResearchVersion sourceVersion, String artifactId, String manifestHash,
+            String sourceRunId, String sourceTaskRunId, String sourceAttemptId,
+            String sourceCanonicalInputHash, String sourceConceptSnapshotHash, String sourceAsOf,
+            String slots, String from, String slotsFrom) {
+        ObjectNode root = (ObjectNode) mapper.readTree(
+            full(snapshot, selection, asOf, competitorSeeds, constraints));
+        root.put("sourceRun", sourceRunId);
+        ObjectNode recollect = root.putObject("recollect");
+        recollect.put("slots", slots == null ? "" : slots.trim());
+        recollect.put("from", from == null || from.isBlank() ? "a4" : from.trim());
+        recollect.put("slotsFrom", slotsFrom == null || slotsFrom.isBlank() ? "source" : slotsFrom.trim());
+        ObjectNode artifact = root.putObject("ledgerArtifact");
+        artifact.put("artifactId", artifactId);
+        artifact.put("manifestHash", manifestHash);
+        artifact.put("sourceMarketResearchVersionId", sourceVersion.getId());
+        artifact.put("sourceMarketTaskRunId", sourceTaskRunId);
+        artifact.put("sourceTaskAttemptId", sourceAttemptId);
+        artifact.put("sourceCanonicalInputHash", sourceCanonicalInputHash);
+        artifact.put("sourceConceptSnapshotHash", sourceConceptSnapshotHash);
+        artifact.put("sourceAsOf", sourceAsOf);
+        ObjectNode source = (ObjectNode) root.path("source");
+        source.put("sourceMarketResearchVersionId", sourceVersion.getId());
+        source.put("sourceMarketTaskRunId", sourceVersion.getSourceRun().getTaskRun().getId());
         return finish(root);
     }
 

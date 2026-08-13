@@ -15,6 +15,7 @@ const LIMIT_MS = 10 * 60 * 1000;
 export default function useMarketLiveState(load, start, refreshKey = 0) {
   const [run, setRun] = useState(null);
   const [result, setResult] = useState(null);
+  const [version, setVersion] = useState(null);
   const [source, setSource] = useState(null);
   const [stale, setStale] = useState(false);
   const [error, setError] = useState(null);
@@ -26,6 +27,7 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
   const apply = useCallback((payload) => {
     setRun(payload?.run ?? null);
     setResult(normalizeMarketResult(payload?.version?.result));
+    setVersion(payload?.version ?? null);
     setSource(payload?.source ?? null);
     setStale(Boolean(payload?.stale));
   }, []);
@@ -73,11 +75,11 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
     return () => { clearInterval(timer); setElapsed(0); };
   }, [active]);
 
-  const trigger = useCallback(async () => {
+  const triggerAction = useCallback(async (action) => {
     setBusy(true);
     setError(null);
     try {
-      setRun(await start());
+      setRun(await action());
       startedAt.current = Date.now();
     } catch (failure) {
       // 실행 중 재실행은 409 가 온다 — 에러가 아니라 「이미 돌고 있다」다.
@@ -87,7 +89,10 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
     } finally {
       setBusy(false);
     }
-  }, [start]);
+  }, []);
 
-  return { run, result, source, stale, error, busy, loading, active, elapsed, trigger, refresh };
+  const trigger = useCallback(async () => triggerAction(start), [start, triggerAction]);
+
+  return { run, result, version, source, stale, error, busy, loading, active, elapsed,
+    trigger, triggerAction, refresh };
 }

@@ -341,6 +341,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                         "taskRunId": body.taskRunId,
                         "taskAttemptId": body.taskAttemptId,
                         "correlationId": correlation,
+                        "canonicalInputHash": body.canonicalInputHash,
                     },
                 )
         elif body.taskType == "TWIN_STIMULUS_DRAFT":

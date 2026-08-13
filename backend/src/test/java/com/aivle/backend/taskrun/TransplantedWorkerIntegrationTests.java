@@ -11,6 +11,7 @@ import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
 import com.aivle.backend.pipeline.market.MarketResearchService;
 import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.market.MarketResearchWorker;
+import com.aivle.backend.pipeline.market.ledger.MarketLedgerArtifactService;
 import com.aivle.backend.pipeline.market.TwinStimulusDraftWorker;
 import com.aivle.backend.pipeline.market.TwinSurveyRun;
 import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
@@ -32,6 +33,11 @@ import com.aivle.backend.user.repository.UserRepository;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.io.ByteArrayOutputStream;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +65,7 @@ class TransplantedWorkerIntegrationTests {
     @Autowired TwinSurveyVersionRepository twinVersions;
     @Autowired MarketResearchService marketService;
     @Autowired MarketResearchWorker marketWorker;
+    @Autowired MarketLedgerArtifactService marketLedgerArtifacts;
     @Autowired TwinStimulusDraftWorker draftWorker;
     @Autowired TwinSurveyWorker twinWorker;
     @Autowired TaskResultRepository results;
@@ -69,7 +76,10 @@ class TransplantedWorkerIntegrationTests {
     @Test
     void marketWorkerAtomicallyAdoptsAndMaterializesExactlyOneVersionThenGetStaysReadOnly() throws Exception {
         Context context = context("market");
-        TaskRun task = queue(context, TaskType.MARKET_RESEARCH, "MARKET_RESEARCH_FULL", "concept-1", "{}");
+        String input = "{\"conceptId\":\"concept-1\",\"asOf\":\"2026-08-13\","
+            + "\"source\":{\"projectId\":" + context.project.getId()
+            + ",\"selectedConceptHash\":\"sha256:" + "a".repeat(64) + "\"}}";
+        TaskRun task = queue(context, TaskType.MARKET_RESEARCH, "MARKET_RESEARCH_FULL", "concept-1", input);
         marketRuns.saveAndFlush(MarketResearchRun.create(
             context.project, MarketResearchRun.Kind.FULL, null, task, task.getInputHash()));
         stub(fixture("market_research/full.json"));
@@ -149,6 +159,11 @@ class TransplantedWorkerIntegrationTests {
         doAnswer(invocation -> {
             TaskRun executing = invocation.getArgument(0);
             String attemptId = invocation.getArgument(1);
+            if (executing.getTaskType() == TaskType.MARKET_RESEARCH
+                    && "MARKET_RESEARCH_FULL".equals(executing.getSubjectType())) {
+                marketLedgerArtifacts.stage(executing.getId(), attemptId,
+                    ledgerBundle(executing, attemptId, result));
+            }
             return new ExecutionResponse("1.0", executing.getTaskType().name(), "1.0",
                 executing.getId(), attemptId, executing.getCorrelationId(), executing.getInputHash(),
                 "1.0", result, mapper.createArrayNode(), mapper.createArrayNode(), null);
@@ -160,6 +175,44 @@ class TransplantedWorkerIntegrationTests {
                 context.taskRunId(), attemptId, context.correlationId(), context.inputHash(),
                 "1.0", result, mapper.createArrayNode(), mapper.createArrayNode(), null);
         }).when(client).executeWorker(any(), anyString(), any());
+    }
+
+    private byte[] ledgerBundle(TaskRun task, String attemptId, JsonNode result) throws Exception {
+        JsonNode input = mapper.readTree(task.getInputSnapshot());
+        byte[] a3 = "{\"S1\":\"body\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] resultBytes = mapper.writeValueAsBytes(result);
+        byte[] run = "{\"event\":\"complete\"}\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        ObjectNode manifest = mapper.createObjectNode();
+        manifest.put("artifactContractVersion", MarketLedgerArtifactService.CONTRACT_VERSION);
+        manifest.put("projectId", task.getProject().getId());
+        manifest.put("conceptId", input.path("conceptId").asText());
+        manifest.put("conceptSnapshotHash", input.path("source").path("selectedConceptHash").asText());
+        manifest.put("canonicalInputHash", task.getInputHash());
+        manifest.put("marketTaskRunId", task.getId()); manifest.put("taskAttemptId", attemptId);
+        manifest.put("asOf", input.path("asOf").asText());
+        manifest.put("sourceRunId", input.path("conceptId").asText());
+        var files = manifest.putArray("files");
+        ledgerFile(files.addObject(), "a3_bodies.json", a3);
+        ledgerFile(files.addObject(), "result.json", resultBytes);
+        ledgerFile(files.addObject(), "run.jsonl", run);
+        manifest.put("manifestHash", sha256(mapper.writeValueAsBytes(manifest)));
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
+            ledgerEntry(zip, "a3_bodies.json", a3); ledgerEntry(zip, "result.json", resultBytes);
+            ledgerEntry(zip, "run.jsonl", run); ledgerEntry(zip, "manifest.json", mapper.writeValueAsBytes(manifest));
+        }
+        return bytes.toByteArray();
+    }
+
+    private static void ledgerFile(ObjectNode node, String name, byte[] content) {
+        node.put("name", name); node.put("sizeBytes", content.length); node.put("sha256", sha256(content));
+    }
+    private static void ledgerEntry(ZipOutputStream zip, String name, byte[] content) throws Exception {
+        zip.putNextEntry(new ZipEntry(name)); zip.write(content); zip.closeEntry();
+    }
+    private static String sha256(byte[] value) {
+        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value)); }
+        catch (Exception failure) { throw new IllegalStateException(failure); }
     }
 
     private JsonNode fixture(String relative) throws Exception {

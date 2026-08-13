@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import useMarketLiveState from './useMarketPolling.js';
@@ -15,5 +15,18 @@ describe('useMarketLiveState SSE refresh seam', () => {
     await waitFor(() => expect(load).toHaveBeenCalledTimes(1));
     rerender({ revision: 1 });
     await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+  });
+
+  it('runs a recollect action through the same TaskRun live-state seam', async () => {
+    const load = vi.fn().mockResolvedValue({ run: null, version: { id: 73 } });
+    const start = vi.fn();
+    const recollect = vi.fn().mockResolvedValue({ taskRunId: 'task-b', taskState: 'QUEUED' });
+    const { result } = renderHook(() => useMarketLiveState(load, start, 0));
+    await waitFor(() => expect(load).toHaveBeenCalledOnce());
+
+    await act(async () => result.current.triggerAction(recollect));
+
+    expect(recollect).toHaveBeenCalledOnce();
+    expect(result.current.run.taskRunId).toBe('task-b');
   });
 });

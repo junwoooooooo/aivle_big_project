@@ -5,7 +5,6 @@ import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.common.web.RequestIds;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +41,16 @@ public class MarketResearchController {
             @PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(service.current(currentUser.currentUserId(), projectId,
             MarketResearchRun.Kind.FULL), id(request));
+    }
+
+    @PostMapping("/market-research/recollect")
+    public ResponseEntity<ApiResponse<MarketResearchService.RunView>> recollect(
+            @PathVariable Long projectId, @Valid @RequestBody RecollectRequest body,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
+            service.startRecollect(currentUser.currentUserId(), projectId,
+                body.sourceMarketResearchVersionId(), body.slots(), body.from(), body.slotsFrom(), body.asOf(),
+                request.getHeader("Idempotency-Key"), id(request)), id(request)));
     }
 
     @GetMapping("/market-research/competitor-seeds")
@@ -98,6 +107,10 @@ public class MarketResearchController {
 
     /** 공식 요청은 기준일만 받고 Concept authority는 서버가 결정한다. */
     public record StartRequest(String asOf) { }
+
+    public record RecollectRequest(
+        @jakarta.validation.constraints.NotNull Long sourceMarketResearchVersionId,
+        String slots, String from, String slotsFrom, String asOf) { }
 
     /** BM source는 서버가 current immutable Market version에서 결속한다. */
     public record BmRequest() { }

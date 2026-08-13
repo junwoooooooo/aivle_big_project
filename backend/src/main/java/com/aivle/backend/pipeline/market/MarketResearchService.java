@@ -9,6 +9,7 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortf
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.market.ledger.MarketLedgerArtifactService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -39,6 +40,7 @@ public class MarketResearchService {
     private final BmPlanPreparationService bmPlans;
     private final ResearchCompetitorSeedService competitorSeeds;
     private final JobEventPublisher events;
+    private final MarketLedgerArtifactService ledgerArtifacts;
     private final ObjectMapper mapper;
 
     public MarketResearchService(ProjectRepository projects,
@@ -48,11 +50,67 @@ public class MarketResearchService {
             TaskRunService taskRuns, CanonicalInputHasher hasher,
             MarketResearchInputFactory inputs, BmPlanPreparationService bmPlans,
             ResearchCompetitorSeedService competitorSeeds,
+            MarketLedgerArtifactService ledgerArtifacts,
             JobEventPublisher events, ObjectMapper mapper) {
         this.projects=projects; this.selections=selections; this.seeds=seeds;
         this.runs=runs; this.versions=versions; this.taskRuns=taskRuns; this.hasher=hasher;
         this.inputs=inputs; this.bmPlans=bmPlans; this.competitorSeeds=competitorSeeds;
+        this.ledgerArtifacts=ledgerArtifacts;
         this.events=events; this.mapper=mapper;
+    }
+
+    @Transactional
+    public RunView startRecollect(Long ownerId, Long projectId, Long sourceVersionId,
+            String slots, String from, String slotsFrom, String asOf,
+            String idempotencyKey, String correlationId) {
+        Project project = owned(ownerId, projectId);
+        MarketResearchVersion source = versions
+            .findByIdAndProjectIdAndKindAndDeletedAtIsNull(
+                sourceVersionId, projectId, MarketResearchRun.Kind.FULL)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                "Market recollect source version is unavailable."));
+        MarketResearchVersion current = versions
+            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
+                projectId, MarketResearchRun.Kind.FULL)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        if (!current.getId().equals(source.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                "Only the current Market FULL version can be recollected.");
+        }
+        ConceptPortfolioSelection selection = readySelection(projectId);
+        MarketAnalysisSeedSnapshot seed = seeds
+            .findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(selection.getId())
+            .filter(value -> "CONCEPT_PORTFOLIO_V2".equals(value.getSourceType()))
+            .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        if (!seed.getId().equals(source.getSourceRun().getSourceMarketSeedSnapshotId())
+                || !selection.getId().equals(source.getSourceRun().getSourcePortfolioSelectionId())
+                || !Objects.equals(selection.getHypothesisRevision(), source.getSourceRun().getSourceSelectionRevision())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                "Current concept lineage differs from the recollect source.");
+        }
+        if (!(from == null || from.isBlank() || "a4".equals(from) || "extract".equals(from))
+                || !(slotsFrom == null || slotsFrom.isBlank()
+                    || "source".equals(slotsFrom) || "current".equals(slotsFrom))
+                || (slots != null && !slots.isBlank()
+                    && !slots.matches("[A-Za-z0-9._-]{1,64}(,[A-Za-z0-9._-]{1,64}){0,31}"))) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "Invalid recollect options.");
+        }
+        final MarketLedgerArtifactService.SourceView artifact;
+        try {
+            artifact = ledgerArtifacts.committedForVersion(source.getId());
+        } catch (IllegalArgumentException missing) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                "The durable Market ledger required for recollect is unavailable.");
+        }
+        String input = inputs.recollect(seed, selection, validAsOf(asOf),
+            competitorSeeds.conceptBlock(projectId), bmPlans.current(projectId).constraints(),
+            source, artifact.artifactId(), artifact.manifestHash(), artifact.sourceRunId(),
+            artifact.marketTaskRunId(), artifact.taskAttemptId(), artifact.canonicalInputHash(),
+            artifact.conceptSnapshotHash(), artifact.asOf(),
+            slots, from, slotsFrom);
+        return start(ownerId, project, MarketResearchRun.Kind.FULL, null, input,
+            selection.getConceptId(), idempotencyKey, correlationId, source.getId(), seed.getId(),
+            selection.getId(), selection.getHypothesisRevision(), null);
     }
 
     @Transactional
@@ -181,12 +239,17 @@ public class MarketResearchService {
             bm.isObject()?bm.path("confidence").asText(null):null,evidenceCount,caveatCount);
         int number=Math.toIntExact(versions.countByProjectIdAndKindAndDeletedAtIsNull(
             run.getProject().getId(),run.getKind())+1);
-        versions.save(MarketResearchVersion.of(run.getProject(),run,number,result.toString(),summary));
+        MarketResearchVersion version = versions.save(
+            MarketResearchVersion.of(run.getProject(),run,number,result.toString(),summary));
+        if (run.getKind() == MarketResearchRun.Kind.FULL) {
+            ledgerArtifacts.commit(claim.taskRunId(), claim.taskAttemptId(), version);
+        }
         run.running();run.succeed();runs.save(run);
     }
 
     @Transactional
     public void materializeFailure(String taskRunId,String code) {
+        ledgerArtifacts.discardStaged(taskRunId);
         runs.findByTaskRunIdAndDeletedAtIsNull(taskRunId).ifPresent(run->{
             if(!run.terminal()){run.fail(code);runs.save(run);}
         });

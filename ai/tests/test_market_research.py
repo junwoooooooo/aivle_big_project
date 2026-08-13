@@ -202,6 +202,7 @@ def test_market_execution_passes_request_identity_to_bm_diagnostics(client, monk
         "taskRunId": "run-market-research",
         "taskAttemptId": "attempt-bm-diagnostics",
         "correlationId": "corr-market-research",
+        "canonicalInputHash": body["canonicalInputHash"],
     }
 
 

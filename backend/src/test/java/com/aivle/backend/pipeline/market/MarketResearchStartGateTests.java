@@ -15,6 +15,7 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortf
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.market.ledger.MarketLedgerArtifactService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -36,10 +37,11 @@ class MarketResearchStartGateTests {
     private final MarketResearchInputFactory inputs = mock(MarketResearchInputFactory.class);
     private final BmPlanPreparationService plans = mock(BmPlanPreparationService.class);
     private final ResearchCompetitorSeedService competitorSeeds = mock(ResearchCompetitorSeedService.class);
+    private final MarketLedgerArtifactService ledgerArtifacts = mock(MarketLedgerArtifactService.class);
     private final JobEventPublisher events = mock(JobEventPublisher.class);
     private final MarketResearchService service = new MarketResearchService(
         projects, selections, seeds, runs, versions, taskRuns, hasher, inputs, plans,
-        competitorSeeds, events, new ObjectMapper());
+        competitorSeeds, ledgerArtifacts, events, new ObjectMapper());
 
     @Test
     void ownedReadyCurrentSelectionAndSeedCreateAQueuedMarketTask() {
