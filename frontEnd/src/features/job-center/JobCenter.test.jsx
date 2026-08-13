@@ -16,7 +16,7 @@ describe('compact Work Center', () => {
     const onCloseSheet = vi.fn();
     render(<MemoryRouter><JobCenter projectId="41" compact sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'job-1', direction: 'forward' }} onOpenList={onOpenList} onCloseSheet={onCloseSheet} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
     expect(screen.getAllByText('현재 진행')).toHaveLength(2);
-    expect(screen.getAllByText('사업안 검토').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('사업안 만들기').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText('CONCEPT_PORTFOLIO_V2_RUN')).not.toBeInTheDocument();
     expect(screen.getByText('작업 상세')).toBeInTheDocument();
     expect(screen.getAllByText('사업 방향을 탐색하고 있습니다.').length).toBeGreaterThanOrEqual(1);
@@ -57,8 +57,9 @@ describe('compact Work Center', () => {
     render(<MemoryRouter><JobCenter projectId="41" compact
       sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'input-job', direction: 'forward' }}
       onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '작업 화면 열기' }))
+    expect(screen.getByRole('link', { name: '업무 화면 열기' }))
       .toHaveAttribute('href', '/app/projects/41/concepts');
+    expect(screen.getAllByRole('link', { name: '업무 화면 열기' })).toHaveLength(1);
   });
 
   it('quick은 1/1/3 규칙과 나머지 건수를 표시한다', () => {

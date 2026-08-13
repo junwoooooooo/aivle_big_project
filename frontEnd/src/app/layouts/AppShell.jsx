@@ -60,7 +60,7 @@ function ProjectSearch({ onChoose }) {
 }
 
 function GlobalNavigation({ onNavigate }) {
-  return <nav className="app-global-nav" aria-label="주요 메뉴"><NavLink to={appRoutes.home} end onClick={onNavigate}>Home</NavLink><NavLink to={appRoutes.projects} onClick={onNavigate}>Projects</NavLink></nav>;
+  return <nav className="app-global-nav" aria-label="주요 메뉴"><NavLink to={appRoutes.home} end onClick={onNavigate}>홈</NavLink><NavLink to={appRoutes.projects} onClick={onNavigate}>프로젝트</NavLink></nav>;
 }
 
 function AppShellContent() {
@@ -142,8 +142,8 @@ function AppShellContent() {
       <header className="app-topbar">
         <Link className="app-brand" to={appRoutes.home}><span aria-hidden="true">V</span>Venture Verify</Link>
         <GlobalNavigation />
-        <ProjectContextTools />
         <div className="app-topbar__actions">
+          <ProjectContextTools />
           <ProjectSearch />
           <div className="app-account">
             <button ref={triggerRef} type="button" className="app-account-trigger" aria-label="계정 메뉴" aria-haspopup="menu" aria-expanded={accountOpen} onClick={toggleAccount}>
@@ -163,6 +163,7 @@ function AppShellContent() {
       <main id="main-content" className={`app-main ${/^\/app\/projects\/[^/]+/.test(location.pathname) ? 'app-main--project' : ''}`} tabIndex="-1"><div key={pageKey} className="app-page-transition"><Outlet /></div></main>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="메뉴">
         <GlobalNavigation onNavigate={() => setDrawerOpen(false)} />
+        <div className="app-drawer-project-tools"><ProjectContextTools /></div>
         <ProjectSearch onChoose={() => setDrawerOpen(false)} />
         <Link
           className={`app-drawer-new ${writeRestriction.blocked ? 'is-disabled' : ''}`}

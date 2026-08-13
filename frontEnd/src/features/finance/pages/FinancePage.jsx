@@ -55,11 +55,11 @@ function FinanceWorkspace({ projectId, finance }) {
 
   return <FinanceRefreshContext.Provider value={refreshContainer}><main className="finance-page">
     <header className="finance-heading"><div><p>6. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
-      <span>current 시장 분석과 BM 결과의 근거를 이어받고, 부족한 값만 입력해 불변 Snapshot을 만듭니다.</span></div>
+      <span>최신 시장 분석과 수익 구조 결과를 이어받고, 부족한 값만 입력해 재무 분석에 사용할 내용을 저장합니다.</span></div>
       <div className="finance-statuses" aria-label="Finance 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
-        <strong className="finance-heading__status">Snapshot · {finance.snapshot ? '확정' : '미확정'}</strong>
-        <strong className="finance-heading__status">분석 · {finance.analysis?.status ?? 'NOT_STARTED'}</strong>
+        <strong className="finance-heading__status">입력 · {finance.snapshot ? '저장 완료' : '입력 중'}</strong>
+        <strong className="finance-heading__status">분석 · {analysisStatus(finance.analysis)}</strong>
         {finance.error && <strong className="finance-heading__status" data-error="true">오류</strong>}
       </div></header>
     {finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}
@@ -73,9 +73,9 @@ function FinanceWorkspace({ projectId, finance }) {
         <Reference label="시장 성장률" value={references.marketAnalysis?.growth} />
         <Reference label="시장 가격 가정" value={references.marketAnalysis?.price} />
         <Reference label="Concept 가설" value={references.conceptHypotheses?.values ?? references.conceptHypotheses} />
-        <Reference label="BM 재무 전달정보" value={references.businessModel?.financialHandoff} />
+        <Reference label="수익 구조의 재무 정보" value={references.businessModel?.financialHandoff} />
       </div><p className="finance-source__ai-note">AI 추정은 Market·BM 근거를 참고한 초안이며 자동 저장되지 않습니다. 근거와 가정을 확인한 뒤 채택하거나 수정하세요.</p>
-      <details><summary>Market/BM 근거·가정·Evidence·Caveat 전체 보기</summary>
+      <details><summary>시장·수익 구조의 근거, 가정과 주의사항 전체 보기</summary>
         <pre className="finance-source-detail">{JSON.stringify({ marketAnalysis: references.marketAnalysis,
           businessModel: references.businessModel, conceptHypotheses: references.conceptHypotheses }, null, 2)}</pre></details>
       <small>Market Version {preparation.sourceMarketResearchVersionId} · BM Version {preparation.sourceBusinessModelVersionId}</small></section>
@@ -152,23 +152,23 @@ function FinanceWorkspace({ projectId, finance }) {
     {!locked && <button className="finance-save" type="button" disabled={finance.busy === 'save'}
       onClick={() => void safe(() => finance.save(financialValuesFromDraft(draft, fields)))}>재무 입력 저장</button>}
 
-    <section className="finance-finalize" aria-live="polite"><div><p>FinancialInputSnapshot</p>
-      <h2>{finance.snapshot ? '재무 분석 입력이 확정되었습니다' : preparation.readyToFinalize ? 'Snapshot을 확정할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 필수 입력이 남았습니다`}</h2>
-      <span>{finance.snapshot ? `${finance.snapshot.snapshotId} · ${finance.snapshot.snapshotHash}` : preparation.missingRequiredInputs.join(' · ')}</span></div>
+    <section className="finance-finalize" aria-live="polite"><div><p>재무 분석 입력</p>
+      <h2>{finance.snapshot ? '재무 분석 입력을 저장했습니다' : preparation.readyToFinalize ? '입력 내용을 저장할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 필수 입력이 남았습니다`}</h2>
+      <span>{finance.snapshot ? '저장된 입력을 재무 분석에 사용합니다.' : preparation.missingRequiredInputs.join(' · ')}</span>{finance.snapshot && <details><summary>기술 정보</summary><p>{finance.snapshot.snapshotId} · {finance.snapshot.snapshotHash}</p></details>}</div>
       {!finance.snapshot ? <button type="button" disabled={!preparation.readyToFinalize || finance.busy === 'finalize'}
-        onClick={() => void safe(finance.finalize)}>입력 Snapshot 확정</button>
+        onClick={() => void safe(finance.finalize)}>입력 내용 저장</button>
         : <><button type="button" disabled={finance.busy === 'reopen'} onClick={() => void safe(finance.reopen)}>입력 수정</button>
-          <button type="button" disabled={finance.busy === 'handoff'} onClick={() => void safe(finance.handoff)}>재무 분석 Handoff 준비</button></>}
-      {finance.run && <small>외부 연결 상태: {finance.run.status}{finance.run.stale ? ' · 입력 갱신 필요' : ''}</small>}
+          <button type="button" disabled={finance.busy === 'handoff'} onClick={() => void safe(finance.handoff)}>재무 분석 준비</button></>}
+      {finance.run && <small>분석 준비 상태: {({ NOT_CONNECTED: '준비 중', READY: '시작 가능', QUEUED: '대기 중', RUNNING: '분석 중', COMPLETED: '완료', FAILED: '확인 필요' })[finance.run.status] ?? '상태 확인 필요'}{finance.run.stale ? ' · 업데이트 필요' : ''}</small>}
     </section>
-    {finance.snapshot && <section className="finance-finalize" aria-live="polite"><div><p>Financial analysis module</p>
+    {finance.snapshot && <section className="finance-finalize" aria-live="polite"><div><p>재무 분석</p>
       <h2>{finance.analysis?.result?.report?.headline ?? '확정된 입력값으로 재무 분석과 보고서를 생성할 수 있습니다.'}</h2>
       <span>{analysisStatus(finance.analysis)}</span></div>
       <button type="button" disabled={finance.busy === 'analysis' || ['QUEUED', 'RUNNING'].includes(finance.analysis?.status)}
         onClick={() => void safe(finance.analyze)}>{['QUEUED', 'RUNNING'].includes(finance.analysis?.status) ? '재무 분석 실행 중…' : '재무 분석 및 보고서 생성'}</button>
     </section>}
-    {finance.analysis?.stale && <p className="finance-warning" role="status">상위 current 입력이 바뀌어 이 재무 결과는 stale 상태입니다. 입력을 다시 확정해 주세요.</p>}
-    {finance.analysis?.safeErrorCode && !finance.analysis?.result && <p className="finance-error" role="alert">재무 보고서 생성 실패: {finance.analysis.safeErrorCode}{finance.analysis.retryable ? ' · 재시도할 수 있습니다.' : ''}</p>}
+    {finance.analysis?.stale && <p className="finance-warning" role="status">앞 단계의 입력이 바뀌어 재무 결과를 업데이트해야 합니다. 입력을 다시 저장해 주세요.</p>}
+    {finance.analysis?.safeErrorCode && !finance.analysis?.result && <div className="finance-error" role="alert"><p>재무 보고서를 만들지 못했습니다.{finance.analysis.retryable ? ' 잠시 후 다시 시도해 주세요.' : ' 입력 내용을 확인해 주세요.'}</p><details><summary>기술 정보</summary><p>{finance.analysis.safeErrorCode}</p></details></div>}
     <AnalysisReport analysis={finance.analysis} />
     {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 트윈 패널 조사</p>
       <h2>재무 판단 다음으로 고객 선택 방향을 패널에서 확인하세요.</h2><span>확정 Concept의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.</span></div>
@@ -178,9 +178,9 @@ function FinanceWorkspace({ projectId, finance }) {
 
 function analysisStatus(analysis) {
   if (!analysis || analysis.status === 'NOT_STARTED') return '아직 분석을 실행하지 않았습니다.';
-  if (['QUEUED', 'RUNNING'].includes(analysis.status)) return `TaskRun ${analysis.taskRunId} · ${analysis.status}`;
-  if (analysis.fallback) return '결정론 계산 완료 · AI 설명 Provider 실패로 Fallback 보고서 사용';
-  return `TaskRun ${analysis.taskRunId} · ${analysis.status}`;
+  if (['QUEUED', 'RUNNING'].includes(analysis.status)) return '재무 분석을 진행하고 있습니다.';
+  if (analysis.fallback) return '계산 완료 · AI 설명을 완료하지 못해 기본 보고서를 사용했습니다.';
+  return ({ COMPLETED: '재무 분석을 완료했습니다.', FAILED: '재무 분석을 완료하지 못했습니다.' })[analysis.status] ?? '재무 분석 상태를 확인해 주세요.';
 }
 
 function calculateDraftCac(draft) {
@@ -191,7 +191,7 @@ function calculateDraftCac(draft) {
 
 function estimateLabel(item) {
   if (['QUEUED', 'RUNNING'].includes(item?.estimateStatus)) return '추천 생성 중';
-  if (item?.estimateStatus === 'FAILED') return `추천 생성 실패${item?.safeError ? ` · ${item.safeError}` : ''} — 다시 요청할 수 있습니다.`;
+  if (item?.estimateStatus === 'FAILED') return '추천을 만들지 못했습니다. 다시 요청할 수 있습니다.';
   if (item?.estimateStatus === 'ACCEPTED' || ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(item?.decision)) return '채택됨';
   if (item?.proposalValue != null && item?.estimateStatus === 'SUCCEEDED') return 'AI 추천';
   return '추천 없음';
@@ -249,10 +249,10 @@ function proposalTargets(draft, field, assistance) {
 }
 function SourceNote({ field }) {
   if (field?.source === 'MARKET_ANALYSIS_ASSUMPTION') return <small data-source="inherited">시장 분석 가정 · 확인 후 저장 필요</small>;
-  if (field?.source === 'BUSINESS_MODEL_HANDOFF') return <small data-source="inherited">BM financial handoff 근거</small>;
-  if (field?.source === 'BUSINESS_MODEL_ASSUMPTION') return <small data-source="inherited">BM 분석 가정 · 확인 후 저장 필요</small>;
-  if (field?.source === 'CONCEPT_HYPOTHESIS') return <small data-source="inherited">컨셉 확정 가정 · 확인 후 저장 필요</small>;
-  return <small data-source={field?.readOnly ? 'inherited' : 'input'}>{field?.readOnly ? '기존 상위 Snapshot에서 가져옴' : '없을 때만 사용자 입력'}</small>;
+  if (field?.source === 'BUSINESS_MODEL_HANDOFF') return <small data-source="inherited">수익 구조 분석에서 가져온 값</small>;
+  if (field?.source === 'BUSINESS_MODEL_ASSUMPTION') return <small data-source="inherited">수익 구조의 가정 · 확인 후 저장 필요</small>;
+  if (field?.source === 'CONCEPT_HYPOTHESIS') return <small data-source="inherited">사업안의 확정 가정 · 확인 후 저장 필요</small>;
+  return <small data-source={field?.readOnly ? 'inherited' : 'input'}>{field?.readOnly ? '앞 단계에서 저장한 값' : '값이 없을 때 직접 입력'}</small>;
 }
 function Reference({ label, value }) {
   const display = value?.amount != null ? formatMoney(value)

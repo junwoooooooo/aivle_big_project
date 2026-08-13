@@ -74,7 +74,7 @@ export default function IdeaIntakePage() {
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <><StatePanel
       title={intake.isReanalyzing ? '변경 내용을 다시 해석하고 있습니다.' : '안전 확인과 AI 해석을 진행하고 있습니다'}
       description={intake.isReanalyzing ? '최신 Seed를 다시 확인합니다.' : '입력 의미를 보존하면서 컨셉 탐색 범위를 정리합니다.'} />
-      <JobTimeline events={intake.jobEvents.events} title="Market Seed 진행 상황" /></>}
+      <JobTimeline events={intake.jobEvents.events} title="시장 입력 준비 상황" /></>}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.NEEDS_QUESTIONS && intake.questions.length > 0 && (
       <QuestionGroup questions={intake.questions} answers={intake.draft.answers} errors={intake.errors} onAnswer={intake.answerQuestion} onSubmit={intake.submitAnswers} />
     )}

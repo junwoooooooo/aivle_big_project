@@ -19,8 +19,8 @@ import { useProjectContext } from './ProjectContext.jsx';
 import { useProjects } from './hooks/useProjects.js';
 import ProjectRow from './components/ProjectRow.jsx';
 import ProjectDeleteDialog from './components/ProjectDeleteDialog.jsx';
-import { PROJECT_STATUS_VIEW } from '../../app/module-status/projectModuleModel.js';
 import { PROJECT_JOURNEYS } from '../../app/module-status/projectJourneyModel.js';
+import { PROJECT_PRESENTATION_VIEW } from './model/projectPresentation.js';
 import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { getProjectNameError } from './projectNameError.js';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
@@ -29,7 +29,7 @@ import './projects.css';
 
 function filterMatches(project, filter) {
   if (filter === 'all') return true;
-  return project.status === filter;
+  return project.presentationState === filter;
 }
 
 function PolicyNotice({ restriction, onRetry }) {
@@ -72,7 +72,7 @@ export function ProjectStatusHelpRail() {
   }, [open]);
   return <aside ref={railRef} className={`project-status-help ${open ? 'is-open' : ''}`} aria-label="프로젝트 상태 안내">
     <button type="button" className="project-status-help__trigger" aria-expanded={open} aria-controls="project-status-help-content" onClick={() => setOpen((value) => !value)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}><span aria-hidden="true">?</span><span>상태 안내</span></button>
-    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>업무 단계</h2><p>내부 분석 모듈을 사용자 업무 흐름으로 묶어 표시합니다.</p><dl>{PROJECT_JOURNEYS.map((journey) => <div key={journey.id}><dt>{journey.label}</dt><dd>프로젝트 안에서 상태와 필요한 입력을 확인합니다.</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>프로젝트 전체의 보관 및 운영 상태입니다.</p><dl>{Object.entries(PROJECT_STATUS_VIEW).map(([status, view]) => <div key={status}><dt>{view.label}</dt><dd>{({ DRAFT: '작성 중인 프로젝트', ACTIVE: '사용 중인 프로젝트', PAUSED: '확인이 필요한 프로젝트', COMPLETED: '완료된 프로젝트', ARCHIVED: '보관된 프로젝트' })[status]}</dd></div>)}</dl></div></div>}
+    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>업무 단계</h2><p>프로젝트는 사업 기획부터 최종 보고서까지 여섯 단계로 진행됩니다.</p><dl>{PROJECT_JOURNEYS.map((journey) => <div key={journey.id}><dt>{journey.label}</dt><dd>프로젝트 화면에서 현재 상태와 다음 할 일을 확인할 수 있습니다.</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>실제 진행 결과와 확인할 항목을 기준으로 표시합니다.</p><dl>{Object.entries(PROJECT_PRESENTATION_VIEW).map(([state, view]) => <div key={state}><dt>{view.label}</dt><dd>{({ NOT_STARTED: '아직 첫 업무를 시작하지 않은 프로젝트', IN_PROGRESS: '업무를 진행하고 있는 프로젝트', NEEDS_ATTENTION: '입력이나 확인이 필요한 프로젝트', COMPLETED: '모든 단계를 마친 프로젝트' })[state]}</dd></div>)}</dl></div></div>}
   </aside>;
 }
 
@@ -122,7 +122,7 @@ export function ProjectListPage() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="프로젝트 또는 사업 분야 검색" />
             </label>
             <div role="group" aria-label="프로젝트 상태 필터">
-              {[['all', '전체'], ['ACTIVE', '진행 중'], ['DRAFT', '초안'], ['PAUSED', '일시 중지'], ['COMPLETED', '완료']].map(([value, label]) => (
+              {[['all', '전체'], ['NOT_STARTED', '시작 전'], ['IN_PROGRESS', '진행 중'], ['NEEDS_ATTENTION', '확인 필요'], ['COMPLETED', '완료']].map(([value, label]) => (
                 <button key={value} type="button" className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>
               ))}
             </div>

@@ -9,7 +9,7 @@ import './final-report.css';
 
 const STATE_VIEW = {
   CURRENT: { label: '최신 보고서', tone: 'success' },
-  STALE: { label: '갱신 필요', tone: 'warning' },
+  STALE: { label: '업데이트 필요', tone: 'warning' },
   NOT_READY: { label: '준비 중', tone: 'neutral' },
 };
 
@@ -23,6 +23,12 @@ const FIELD_LABELS = {
 function fieldLabel(key) {
   if (FIELD_LABELS[key]) return FIELD_LABELS[key];
   return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replaceAll('_', ' ');
+}
+
+function sourceTypeLabel(type) {
+  return ({ PROJECT: '프로젝트 정보', IDEA_BRIEF: '사업 아이디어', CONCEPT_SELECTION: '선정 사업안',
+    MARKET_RESEARCH: '시장 분석', BUSINESS_MODEL: '수익 구조 분석', TECH_OPS: '기술·운영 계획',
+    FINANCE: '재무 분석', TWIN_SURVEY: '가상 인터뷰', MARKETING: '마케팅 콘텐츠' })[type] ?? '프로젝트 자료';
 }
 
 function ReportValue({ value, depth = 0 }) {
@@ -39,9 +45,9 @@ function ReportDocument({ view }) {
   const report = view.report ?? {};
   const metadata = report.metadata ?? {};
   return <article className="final-report-document">
-    <header className="final-report-document__cover"><p>VENTURE VERIFY</p><h1>{report.title ?? '사업 타당성 검토 보고서'}</h1><dl><div><dt>프로젝트명</dt><dd>{metadata.projectName ?? '자료 없음'}</dd></div><div><dt>사업 분야</dt><dd>{metadata.industryCategory ?? '자료 없음'}</dd></div><div><dt>작성일</dt><dd>{metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleDateString('ko-KR') : '초안'}</dd></div><div><dt>분석 기준일</dt><dd>{metadata.analysisBaseAt ? new Date(metadata.analysisBaseAt).toLocaleDateString('ko-KR') : '현재 자료 기준'}</dd></div><div><dt>보고서 Version</dt><dd>{view.version ?? '초안'}</dd></div></dl></header>
-    {(report.sections ?? []).map((section) => <section key={section.number} className="final-report-section"><h2>{section.number}. {section.title}</h2>{section.sources?.map((source) => <div key={`${section.number}-${source.type}`} className="final-report-source"><h3>{fieldLabel(source.type)}</h3>{source.status === 'MISSING' ? <p className="final-report__missing">자료 없음 · 미완료</p> : <ReportValue value={source.data} />}<footer>Source: {source.sourceId ?? source.type}</footer></div>)}</section>)}
-    <footer className="final-report-document__appendix"><h2>부록 · Evidence 및 Source lineage</h2><p>{report.caveat}</p><table><thead><tr><th>Source</th><th>ID</th><th>Version / Revision</th><th>Result hash</th></tr></thead><tbody>{(view.sourceManifest ?? []).map((source) => <tr key={`${source.type}-${source.id}`}><td>{source.type}</td><td>{source.id}</td><td>{source.version ?? source.revision ?? '-'}</td><td>{source.resultHash ?? '-'}</td></tr>)}</tbody></table></footer>
+    <header className="final-report-document__cover"><p>VENTURE VERIFY</p><h1>{report.title ?? '사업 타당성 검토 보고서'}</h1><dl><div><dt>프로젝트명</dt><dd>{metadata.projectName ?? '자료 없음'}</dd></div><div><dt>사업 분야</dt><dd>{metadata.industryCategory ?? '자료 없음'}</dd></div><div><dt>작성일</dt><dd>{metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleDateString('ko-KR') : '초안'}</dd></div><div><dt>분석 기준일</dt><dd>{metadata.analysisBaseAt ? new Date(metadata.analysisBaseAt).toLocaleDateString('ko-KR') : '현재 자료 기준'}</dd></div><div><dt>보고서 버전</dt><dd>{view.version ?? '초안'}</dd></div></dl></header>
+    {(report.sections ?? []).map((section) => <section key={section.number} className="final-report-section"><h2>{section.number}. {section.title}</h2>{section.sources?.map((source) => <div key={`${section.number}-${source.type}`} className="final-report-source"><h3>{sourceTypeLabel(source.type)}</h3>{source.status === 'MISSING' ? <p className="final-report__missing">자료 없음 · 미완료</p> : <ReportValue value={source.data} />}<footer>사용한 자료: {sourceTypeLabel(source.type)}</footer></div>)}</section>)}
+    <footer className="final-report-document__appendix"><h2>부록 · 사용된 자료와 버전</h2><p>{report.caveat}</p><details><summary>기술 정보</summary><table><thead><tr><th>자료</th><th>ID</th><th>버전 / 수정 이력</th><th>결과 식별값</th></tr></thead><tbody>{(view.sourceManifest ?? []).map((source) => <tr key={`${source.type}-${source.id}`}><td>{sourceTypeLabel(source.type)}</td><td>{source.id}</td><td>{source.version ?? source.revision ?? '-'}</td><td>{source.resultHash ?? '-'}</td></tr>)}</tbody></table></details></footer>
   </article>;
 }
 
@@ -75,10 +81,10 @@ export default function FinalReportPage() {
   const view = state.view;
   const statusView = STATE_VIEW[view.state] ?? STATE_VIEW.NOT_READY;
   return <div className="final-report-page">
-    <header className="final-report-toolbar"><div><p>FINAL REPORT</p><h2>최종 보고서</h2><span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span></div><div>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 갱신' : view.state === 'CURRENT' ? '새 버전 생성' : '최종 보고서 생성'}</Button></div></header>
+    <header className="final-report-toolbar"><div><p>최종 결과</p><h2>최종 보고서</h2><span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span></div><div>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></div></header>
     {state.error && <p className="final-report-error" role="alert">{getUserErrorMessage(state.error)}</p>}
-    {view.state === 'NOT_READY' && <section className="final-report-readiness" aria-labelledby="report-readiness-title"><h2 id="report-readiness-title">보고서 준비 상태</h2><p>현재 저장된 자료로 초안을 표시합니다. 없는 자료는 추정하지 않습니다.</p><ul>{view.readiness.map((item) => <li key={item.journeyId}><span>{item.label}</span><strong>{({ COMPLETED: '완료', IN_PROGRESS: '진행 중', READY: '시작 가능', NEEDS_INPUT: '입력 필요', ATTENTION: '확인 필요', STALE: '갱신 필요', NOT_STARTED: '준비 전' })[item.status] ?? item.status}</strong></li>)}</ul>{view.missingSources.length > 0 && <p>미완료 원천: {view.missingSources.join(', ')}</p>}</section>}
-    {view.state === 'STALE' && <p className="final-report-stale" role="status">보고서 생성 이후 원천 자료가 변경되었습니다. 저장된 보고서를 유지한 채 갱신이 필요함을 표시합니다.</p>}
+    {view.state === 'NOT_READY' && <section className="final-report-readiness" aria-labelledby="report-readiness-title"><h2 id="report-readiness-title">보고서 준비 상태</h2><p>현재 저장된 자료로 초안을 표시합니다. 없는 자료는 추정하지 않습니다.</p><ul>{view.readiness.map((item) => <li key={item.journeyId}><span>{item.label}</span><strong>{({ COMPLETED: '완료', IN_PROGRESS: '진행 중', READY: '시작 가능', NEEDS_INPUT: '입력 필요', ATTENTION: '확인 필요', STALE: '업데이트 필요', NOT_STARTED: '시작 전' })[item.status] ?? '상태 확인 필요'}</strong></li>)}</ul>{view.missingSources.length > 0 && <p>아직 준비되지 않은 자료가 있습니다.</p>}</section>}
+    {view.state === 'STALE' && <p className="final-report-stale" role="status">보고서를 만든 뒤 프로젝트 자료가 변경되었습니다. 최신 내용으로 업데이트해 주세요.</p>}
     <ReportDocument view={view} />
   </div>;
 }

@@ -21,20 +21,20 @@ function base(overrides = {}) {
 }
 
 describe('MarketingVisualSection', () => {
-  beforeEach(() => { vi.clearAllMocks(); visualState = base(); global.URL.createObjectURL = vi.fn(() => 'blob:preview'); global.URL.revokeObjectURL = vi.fn(); });
+  beforeEach(() => { vi.clearAllMocks(); visualState = base(); globalThis.URL.createObjectURL = vi.fn(() => 'blob:preview'); globalThis.URL.revokeObjectURL = vi.fn(); });
 
   it('renders the empty state when no Marketing Content or revision is selected', () => {
     expect(() => render(<MarketingVisualSection projectId="41" detail={null} revision={null} source={null} draft={null} />))
       .not.toThrow();
     expect(screen.getByText('배너 결과가 아직 없습니다.')).toBeInTheDocument();
-    expect(screen.getByText('먼저 마케팅 콘텐츠와 revision을 선택해 주세요.')).toBeInTheDocument();
+    expect(screen.getByText('먼저 마케팅 콘텐츠와 수정 이력을 선택해 주세요.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '광고 배너 만들기' })).toBeDisabled();
   });
 
   it('preserves the AIdev visual form, source summary, seven tones and source image actions', () => {
     render(<MarketingVisualSection {...props} />);
     expect(screen.getByText('AI 광고 배너 생성')).toBeInTheDocument();
-    expect(screen.getByText('등록 Source 1개')).toBeInTheDocument();
+    expect(screen.getByText('기획 자료 1개')).toBeInTheDocument();
     expect(screen.getByText(/직장인/)).toBeInTheDocument();
     expect(screen.getAllByRole('option')).toHaveLength(10);
     expect(screen.getByDisplayValue('기존 콘텐츠 제목')).toBeInTheDocument();
@@ -70,7 +70,8 @@ describe('MarketingVisualSection', () => {
     expect(screen.getByText('생성 헤드라인')).toBeInTheDocument();
     expect(screen.getByText('지금 확인하기')).toBeInTheDocument();
     expect(screen.getByText('여름 행사')).toBeInTheDocument();
-    expect(screen.getByText(/revision-1/)).toBeInTheDocument();
+    expect(screen.queryByText(/revision-1/)).not.toBeInTheDocument();
+    expect(screen.getByText('사용한 자료')).toBeInTheDocument();
     expect(screen.getByText('개인차 있음')).toBeInTheDocument();
     fireEvent.click(screen.getByText('광고 배너 저장 / 다운로드')); expect(download).toHaveBeenCalled();
   });

@@ -89,9 +89,9 @@ export default function MarketResearchPage() {
         </Card>
       ))}
       {!DEMO_MODE ? <Card title="조사 기준">
-        <p><strong>{source?.conceptName || source?.conceptId || '현재 selected Concept'}</strong>의
-          확정 가설·최종 법률 결과·Market Analysis Seed를 사용합니다.</p>
-        {source ? <p>선택 revision {source.selectionRevision} · Seed {source.marketSeedSnapshotId}</p> : null}
+        <p><strong>{source?.conceptName || source?.conceptId || '현재 선택한 사업안'}</strong>의
+          확정 가설과 최종 법률 결과, 저장된 시장 입력을 사용합니다.</p>
+        {source ? <p>선택한 사업안과 저장된 시장 입력을 사용합니다.</p> : null}
       </Card> : null}
       {!DEMO_MODE ? <Accordion title="경쟁·현재 대안 씨앗">
         <CompetitorSeedForm api={api} disabled={busy || active} />
@@ -121,13 +121,14 @@ export default function MarketResearchPage() {
       </Accordion> : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      {stale ? <Alert tone="warning">상위 selected Concept 또는 Market Seed가 바뀌었습니다. 이 결과는 과거 이력이며 다시 조사해야 합니다.</Alert> : null}
+      {stale ? <Alert tone="warning">선택한 사업안 또는 시장 입력이 바뀌었습니다. 최신 내용으로 다시 분석해 주세요.</Alert> : null}
       {active ? <Alert tone="info">조사 중이다 — <strong>{elapsed}초</strong> 경과.
         <MarketProgress events={jobEvents.events} />
       </Alert> : null}
       {run?.state === 'FAILED' ? (
         <Alert tone="danger">
-          {marketRunFailureMessage(run.errorCode)}{run.errorCode ? ` (${run.errorCode})` : ''}.
+          {marketRunFailureMessage(run.errorCode)}.
+          {run.errorCode && <details><summary>기술 정보</summary><p>{run.errorCode}</p></details>}
           {run.retryable ? ' 다시 시도할 수 있다.' : ' 입력을 확인해야 한다.'}
         </Alert>
       ) : null}

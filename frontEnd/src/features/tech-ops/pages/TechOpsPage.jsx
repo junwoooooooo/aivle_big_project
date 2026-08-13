@@ -43,9 +43,9 @@ function TechOpsWorkspace({ techOps }) {
     <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>Concept 초안 · 사용자 확인 필요</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
       <strong>{displayValue(product?.value?.summary)}</strong>
       <span>{displayValue(product?.value?.features)}</span>
-      <small>확정 전에는 수정할 수 있습니다 · Market Seed Snapshot {preparation.sourceMarketSeedSnapshotId}</small></section>
+      <small>저장 전에는 수정할 수 있습니다.</small></section>
 
-    <section className="tech-ops-section" aria-labelledby="tech-facts-title"><div className="tech-ops-section__heading"><div><p>사용자 사실</p><h2 id="tech-facts-title">분석 전 필수 입력</h2></div><span>{locked ? 'Snapshot 확정됨' : '직접 입력'}</span></div>
+    <section className="tech-ops-section" aria-labelledby="tech-facts-title"><div className="tech-ops-section__heading"><div><p>프로젝트 정보</p><h2 id="tech-facts-title">분석 전 필수 입력</h2></div><span>{locked ? '입력 저장 완료' : '직접 입력'}</span></div>
       <div className="tech-ops-form-grid">
         <label className="wide"><span>제품·서비스 사양 요약</span><textarea disabled={locked} value={facts.productSummary} onChange={(event) => setFacts({ ...facts, productSummary: event.target.value })} /></label>
         <label className="wide"><span>핵심 기능</span><textarea disabled={locked} value={facts.productFeatures} onChange={(event) => setFacts({ ...facts, productFeatures: event.target.value })} placeholder="한 줄에 하나씩 입력" /></label>
@@ -77,8 +77,8 @@ function TechOpsWorkspace({ techOps }) {
       <p className="tech-ops-note">다른 제안 요청은 직전 값과 다른 새 proposal version을 생성합니다.</p>
     </section>
 
-    <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>사용자 제공 Evidence</span></div>
-      <p className="tech-ops-note">견적서·BOM·공급사·사양서·파일럿 자료만 등록합니다. AI 제안은 Evidence로 저장되지 않습니다.</p>
+    <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>직접 등록한 자료</span></div>
+      <p className="tech-ops-note">견적서·부품 목록·공급사·사양서·시험 운영 자료를 등록할 수 있습니다. AI 제안은 근거 자료로 저장하지 않습니다.</p>
       {!locked && <div className="tech-ops-evidence-form"><select aria-label="자료 유형" value={evidence.evidenceType} onChange={(event) => setEvidence({ ...evidence, evidenceType: event.target.value })}>{EVIDENCE_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         <input key={evidence.inputKey} type="file" aria-label="근거 파일" accept=".pdf,.csv,.xlsx,.xls,.docx,.txt,.png,.jpg,.jpeg"
           onChange={(event) => setEvidence({ ...evidence, file: event.target.files?.[0] ?? null })} />
@@ -89,14 +89,14 @@ function TechOpsWorkspace({ techOps }) {
         })}>파일 업로드 및 근거 추가</button></div>}
       <ul className="tech-ops-evidence-list">{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}><div><strong>{item.originalFilename ?? item.displayName}</strong>
         <span>{item.evidenceType} · {item.mediaType ?? '파일 메타데이터 없음'} · {formatBytes(item.sizeBytes)}</span>
-        {item.sha256 && <small>{item.sha256}</small>}</div>{!locked && <button type="button" onClick={() => void safe(() => techOps.removeEvidence(item.evidenceId))}>삭제</button>}</li>)}</ul>
+        {item.sha256 && <details><summary>기술 정보</summary><small>{item.sha256}</small></details>}</div>{!locked && <button type="button" onClick={() => void safe(() => techOps.removeEvidence(item.evidenceId))}>삭제</button>}</li>)}</ul>
     </section>
 
-    <section className="tech-ops-finalize" aria-live="polite"><div><p>TechOpsInputSnapshot</p><h2>{techOps.snapshot ? '분석 입력이 확정되었습니다' : preparation.readyToFinalize ? 'Snapshot을 확정할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 입력 또는 결정이 남았습니다`}</h2>
-      <span>{techOps.snapshot ? `${techOps.snapshot.snapshotId} · ${techOps.snapshot.snapshotHash}` : preparation.missingRequiredInputs.join(' · ')}</span></div>
-      {!techOps.snapshot ? <button type="button" disabled={!preparation.readyToFinalize || techOps.busy === 'finalize'} onClick={() => void safe(techOps.finalize)}>입력 Snapshot 확정</button>
-        : <button type="button" disabled={techOps.busy === 'handoff'} onClick={() => void safe(techOps.handoff)}>기술·운영 분석 Handoff 준비</button>}
-      {techOps.run && <small>외부 연결 상태: {techOps.run.status}{techOps.run.stale ? ' · 입력 갱신 필요' : ''}</small>}
+    <section className="tech-ops-finalize" aria-live="polite"><div><p>기술·운영 분석 입력</p><h2>{techOps.snapshot ? '분석 입력을 저장했습니다' : preparation.readyToFinalize ? '입력 내용을 저장할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 입력 또는 결정이 남았습니다`}</h2>
+      <span>{techOps.snapshot ? '저장된 입력을 다음 분석에 사용합니다.' : preparation.missingRequiredInputs.join(' · ')}</span>{techOps.snapshot && <details><summary>기술 정보</summary><p>{techOps.snapshot.snapshotId} · {techOps.snapshot.snapshotHash}</p></details>}</div>
+      {!techOps.snapshot ? <button type="button" disabled={!preparation.readyToFinalize || techOps.busy === 'finalize'} onClick={() => void safe(techOps.finalize)}>입력 내용 저장</button>
+        : <button type="button" disabled={techOps.busy === 'handoff'} onClick={() => void safe(techOps.handoff)}>기술·운영 분석 준비</button>}
+      {techOps.run && <small>분석 준비 상태: {({ NOT_CONNECTED: '준비 중', READY: '시작 가능', QUEUED: '대기 중', RUNNING: '분석 중', COMPLETED: '완료', FAILED: '확인 필요' })[techOps.run.status] ?? '상태 확인 필요'}{techOps.run.stale ? ' · 업데이트 필요' : ''}</small>}
     </section>
     {techOps.snapshot && <CommercializationAdvisory techOps={techOps} safe={safe} />}
   </main>;
@@ -107,10 +107,10 @@ function CommercializationAdvisory({ techOps, safe }) {
   const result = advisory?.result;
   const active = ['QUEUED', 'RUNNING'].includes(advisory?.status);
   return <section className="tech-ops-advisory" aria-labelledby="tech-ops-advisory-title">
-    <div className="tech-ops-section__heading"><div><p>Phase B · Commercialization Advisory</p><h2 id="tech-ops-advisory-title">기술·운영 상용화 자문</h2></div><span>{advisory?.stale ? '갱신 필요' : advisory?.status ?? 'NOT_STARTED'}</span></div>
-    <p className="tech-ops-note">확정된 사용자 입력과 current Concept·Market FULL·BM 계보를 사용합니다. 사용자 Evidence와 외부 참고 근거는 구분해 표시합니다.</p>
+    <div className="tech-ops-section__heading"><div><p>출시 준비</p><h2 id="tech-ops-advisory-title">기술·운영 자문</h2></div><span>{advisory?.stale ? '업데이트 필요' : ({ QUEUED: '대기 중', RUNNING: '분석 중', COMPLETED: '완료', FAILED: '확인 필요' })[advisory?.status] ?? '시작 전'}</span></div>
+    <p className="tech-ops-note">저장한 프로젝트 입력과 최신 시장·수익 구조 결과를 사용합니다. 직접 등록한 자료와 외부 참고 자료는 구분해 표시합니다.</p>
     {advisory?.stale && <p className="tech-ops-error" role="status">상위 current 소스가 바뀌었습니다. 새 자문을 실행해 주세요.</p>}
-    {advisory?.status === 'FAILED' && <p className="tech-ops-error" role="alert">자문 생성 실패: {advisory.errorCode ?? 'AI_SERVICE_UNAVAILABLE'}</p>}
+    {advisory?.status === 'FAILED' && <div className="tech-ops-error" role="alert"><p>AI 분석을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>{advisory.errorCode && <details><summary>기술 정보</summary><p>{advisory.errorCode}</p></details>}</div>}
     {active && <JobTimeline events={techOps.advisoryEvents.events} title="상용화 자문 진행 상황" />}
     <button className="tech-ops-primary" type="button" disabled={active || techOps.busy === 'advisory'} onClick={() => void safe(techOps.startAdvisory)}>{result ? '상용화 자문 다시 실행' : '상용화 자문 실행'}</button>
     {result && <AdvisoryReport result={result} preparation={techOps.preparation} />}
@@ -124,7 +124,7 @@ function AdvisoryReport({ result, preparation }) {
     <ReportGroup title="운영 비용 계측" items={result.operatingCosts} render={(item) => <><b>{item.category} · {item.behavior}</b><p>{item.driver}</p><small>{item.trigger} · {item.measurementUnit} · {item.pilotMeasurement} · 근거 {item.basisIds.join(', ')}</small></>} />
     <ReportGroup title="상용화 준비도" items={result.readiness} render={(item) => <><b>{item.topic} · {item.priority}</b><p>{item.assessment}</p><small>주의: {item.watchouts.join(' · ')}</small><small>통제: {item.controls.join(' · ')}</small><small>검증: {item.validationMethod} · 근거 {item.basisIds.join(', ')}</small></>} />
     <ReportGroup title="출시 게이트" items={result.gates} render={(item) => <><b>{item.title} · {item.status}</b><p>{item.exitCriteria}</p><small>담당 {item.owner} · 근거 {item.basisIds.join(', ')}</small></>} />
-    <details><summary>분석 근거 보기</summary><p><b>Layer 1 canonical facts</b></p><ul>{result.layer1Facts.map((item) => <li key={item.factId}>{item.factId} · {item.source} · {item.path}: {item.value}</li>)}</ul><p><b>Layer 2 external references</b></p><ul>{result.layer2Evidence.map((item) => <li key={item.evidenceId}>{item.evidenceId} · {item.title} {item.url && <a href={item.url} target="_blank" rel="noreferrer">원문</a>}</li>)}</ul><p><b>User-provided Evidence</b></p><ul>{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}>{item.originalFilename ?? item.displayName} · USER_PROVIDED_EVIDENCE</li>)}</ul></details>
+    <details><summary>사용된 근거 자료와 기술 정보</summary><p><b>프로젝트에서 확정한 정보</b></p><ul>{result.layer1Facts.map((item) => <li key={item.factId}>{item.factId} · {item.source} · {item.path}: {item.value}</li>)}</ul><p><b>외부 참고 자료</b></p><ul>{result.layer2Evidence.map((item) => <li key={item.evidenceId}>{item.evidenceId} · {item.title} {item.url && <a href={item.url} target="_blank" rel="noreferrer">원문</a>}</li>)}</ul><p><b>직접 등록한 자료</b></p><ul>{preparation.evidenceReferences.map((item) => <li key={item.evidenceId}>{item.originalFilename ?? item.displayName}</li>)}</ul></details>
     <p className="tech-ops-disclaimer">{result.disclaimer}</p><Link className="tech-ops-next" to="../finance">다음 - 6. 재무 분석</Link>
   </div>;
 }

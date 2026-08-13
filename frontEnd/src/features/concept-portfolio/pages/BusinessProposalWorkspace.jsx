@@ -21,7 +21,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   const portfolio = useConceptPortfolio(projectId, outlet.liveRevision);
   const progressJobId = portfolio.run?.activeTaskRunId ?? portfolio.run?.initialTaskRunId ?? null;
   const progressEvents = useJobEvents(progressJobId);
-  const [clock, setClock] = useState(Date.now());
+  const [clock, setClock] = useState(0);
   const [mode, setMode] = useState(initialMode);
   const [compared, setCompared] = useState([]);
   const [drafts, setDrafts] = useState({});
@@ -45,6 +45,8 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
     const currentIds = new Set(portfolio.concepts.map((concept) => concept.conceptId));
     if (!selectionId) {
       selectionBaseline.current = { selectionId: null, conceptIds: currentIds };
+      // 선택 기준이 바뀌는 순간에만 이전 복구 알림을 초기화한다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecoveredNotice(false);
       return;
     }
@@ -54,6 +56,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
       return;
     }
     const recovered = [...currentIds].some((id) => !selectionBaseline.current.conceptIds.has(id));
+    // 새 후보 유입은 서버 선택 상태와 로컬 기준선의 차이로만 감지된다.
     if (recovered) setRecoveredNotice(true);
     selectionBaseline.current = { selectionId, conceptIds: currentIds };
   }, [portfolio.concepts, portfolio.selection?.selectionId]);
@@ -71,7 +74,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
   return <main className="business-proposal">
     <header className="business-proposal__hero">
-      <div><p>BUSINESS PROPOSAL</p><h1>검토된 사업안</h1><span>법률·규제 검토를 통과한 사업안은 1개부터 5개까지 모두 정상 결과입니다.</span></div>
+      <div><p>사업안 검토</p><h1>검토된 사업안</h1><span>법률·규제 검토를 통과한 사업안은 1개부터 5개까지 모두 정상 결과입니다.</span></div>
       <div className="business-proposal__mode"><button type="button" aria-pressed={mode === 'list'} onClick={() => setMode('list')}>사업안 목록</button><button type="button" aria-pressed={mode === 'compare'} onClick={() => setMode('compare')}>비교</button></div>
     </header>
 
@@ -107,11 +110,11 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
       </div>
     </section>}
     {portfolio.report && <LegalReport report={portfolio.report} />}
-    {portfolio.selection?.status === 'READY_FOR_MARKET' && <section className="business-proposal__ready"><strong>다음 분석 준비 완료</strong><span>확정된 사업안과 검증 가정, 최종 법률 결과가 Market Seed에 고정되었습니다.</span><Link to={projectRoutes.market(projectId)}>시장 분석으로 이동</Link></section>}
+    {portfolio.selection?.status === 'READY_FOR_MARKET' && <section className="business-proposal__ready"><strong>다음 분석 준비 완료</strong><span>확정된 사업안과 검증 가정, 최종 법률 결과를 시장 분석 입력으로 저장했습니다.</span><Link to={projectRoutes.market(projectId)}>시장 분석으로 이동</Link></section>}
   </main>;
 }
 
-export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = Date.now() }) {
+export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = 0 }) {
   const view = portfolioRunPresentation(run);
   const running = run.productStatus === 'RUNNING';
   const recent = events.slice(-5);
@@ -178,7 +181,7 @@ export function LegalReport({ report }) {
   const roleRows = [['플랫폼 역할', roles.platformRole], ['판매 주체', roles.sellerRole], ['서비스 제공 주체', roles.providerRole], ['중개 주체', roles.intermediaryRole]].filter(([, value]) => value);
   const advertising = body.advertisingExpressionCautions ?? {};
   const delta = asList(body.deltaLegalHistory);
-  return <section className="final-legal-report"><header><div><p>FINAL LEGAL REGULATORY REPORT</p><h2>최종 법률·규제 보고서</h2></div><span>검토 기준일 {report.basisDate}</span></header>
+  return <section className="final-legal-report"><header><div><p>최종 검토 결과</p><h2>최종 법률·규제 보고서</h2></div><span>검토 기준일 {report.basisDate}</span></header>
     <article className="legal-conclusion"><h3>결론</h3><strong>{conclusion.productionStatus ?? conclusion.route ?? '검토 완료'}</strong><p>{conclusion.safeSummary ?? '최종 법률·규제 검토 결과가 확정되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}</article>
     <article><h3>사업 구조와 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article>
     <BulletSection title="반드시 해야 할 조치" values={body.requiredControls} />
@@ -194,6 +197,6 @@ export function LegalReport({ report }) {
     <BulletSection title="아직 확인되지 않은 사항" values={body.unknownFacts} />
     <EvidenceSection values={body.officialEvidenceReferences} />
     <article><h3>변경사항 법률·규제 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 법률·규제 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? item.status ?? `재검토 ${index + 1}`}</li>)}</ol>}</article>
-    {body.sourceHashes && <details className="legal-technical"><summary>정본 검증 정보</summary><dl>{Object.entries(body.sourceHashes).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>}
+    {body.sourceHashes && <details className="legal-technical"><summary>기술 정보</summary><dl>{Object.entries(body.sourceHashes).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>}
   </section>;
 }

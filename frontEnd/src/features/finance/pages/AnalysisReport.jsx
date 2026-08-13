@@ -11,7 +11,7 @@ export default function AnalysisReport({ analysis }) {
     <div className="finance-section__heading"><div><p>AI Financial Report</p>
       <h2 id="finance-analysis-title">AI 기반 사업 타당성 및 재무 경제성 분석 최종 보고서</h2></div>
       <span>{analysis.fallback ? '결정론 계산 Fallback' : 'AI 보고서 생성 완료'}</span></div>
-    {analysis.fallback && <p className="finance-warning" role="status">AI 보고서 Provider가 실패하여 계산 결과는 보존하고 시스템 설명으로 대체했습니다. {report.safeFailureReason}</p>}
+    {analysis.fallback && <p className="finance-warning" role="status">AI 설명을 완료하지 못해 계산 결과는 유지하고 기본 설명으로 대체했습니다. {report.safeFailureReason}</p>}
     <h3>{report.headline}</h3>
     <div className="finance-source__grid">
       <Metric label="36개월 누적 매출" value={`${formatNumber(base?.totalRevenue)} KRW`} />
@@ -51,7 +51,7 @@ export default function AnalysisReport({ analysis }) {
     <ReportList title="핵심 발견" values={report.findings} />
     <ReportList title="주의·위험" values={report.cautions} />
     <ReportList title="권장 액션" values={report.recommendedActions} />
-    <p><strong>보고서 출처:</strong> {report.source} · <strong>Provider 상태:</strong> {report.providerStatus}</p>
+    <details><summary>기술 정보</summary><p><strong>보고서 생성 방식:</strong> {report.source} · <strong>AI 서비스 상태:</strong> {report.providerStatus}</p></details>
     <small>{report.disclaimer}</small>
   </section>;
 }

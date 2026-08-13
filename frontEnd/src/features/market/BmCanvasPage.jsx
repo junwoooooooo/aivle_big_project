@@ -84,10 +84,10 @@ export default function BmCanvasPage() {
       </div>
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      {stale ? <Alert tone="warning">상위 Market version이 바뀌었습니다. 이 캔버스는 과거 이력이며 다시 생성해야 합니다.</Alert> : null}
-      {active ? <Alert tone="info">캔버스를 만드는 중이다 — {elapsed}초 경과.</Alert> : null}
+      {stale ? <Alert tone="warning">시장 분석이 바뀌었습니다. 최신 내용으로 다시 만들어 주세요.</Alert> : null}
+      {active ? <Alert tone="info">수익 구조를 만드는 중입니다. {elapsed}초 경과</Alert> : null}
       {run?.state === 'FAILED' ? (
-        <Alert tone="danger">생성이 실패했다{run.errorCode ? ` (${run.errorCode})` : ''}.</Alert>
+        <Alert tone="danger">수익 구조 결과를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.</Alert>
       ) : null}
 
       {!result ? null : (
@@ -105,7 +105,7 @@ export default function BmCanvasPage() {
             </div>
           ) : (
             <Alert tone="warning">
-              BM 판정이 오지 않았다 — 시장조사 결과는 유효하다. 다시 생성해 볼 수 있다.
+              수익 구조 판정을 받지 못했습니다. 시장 분석 결과는 유지되며 다시 만들 수 있습니다.
             </Alert>
           )}
 
@@ -142,8 +142,8 @@ function FinancialHandoff({ value }) {
     ['TAM', value.tam], ['SAM', value.sam], ['SOM', value.som],
     ['시장 성장률', value.marketGrowthRate], ['예상 매출', value.expectedRevenue], ['단위 원가', value.unitCost],
   ];
-  return <Card title="재무 전달정보">
-    <p>전달 상태: <strong>{value.handoffStatus || '미기재'}</strong></p>
+  return <Card title="재무 분석에 사용할 정보">
+    <p>다음 단계 준비: <strong>{value.handoffStatus ? '준비됨' : '정보 없음'}</strong></p>
     <p>수익 모델: {value.revenueModel || '미입력'}</p>
     <dl className="bm-verdict__details">{numbers.map(([label, number]) => (
       <div key={label}><dt>{label}</dt><dd>{number ?? '미측정'}</dd></div>

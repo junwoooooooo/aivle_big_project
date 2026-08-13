@@ -12,10 +12,16 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
   const [filePreview, setFilePreview] = useState(null);
   const [notice, setNotice] = useState('');
 
-  useEffect(() => { setForm(visualDefaults(source, draft)); }, [contentId, revisionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 콘텐츠가 바뀌면 이전 콘텐츠의 편집값이 남지 않도록 서버 기준값으로 재설정한다.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { setForm(visualDefaults(source, draft)); }, [contentId, revisionId]);
   useEffect(() => {
+    // 파일 선택과 수명 주기를 맞춘 브라우저 객체 URL이다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!file) { setFilePreview(null); return undefined; }
-    const url = URL.createObjectURL(file); setFilePreview(url); return () => URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(file);
+    setFilePreview(url);
+    return () => URL.revokeObjectURL(url);
   }, [file]);
   const result = visual.run?.result;
   const events = useMemo(() => (visual.events.events ?? []).filter(isUserVisibleJobEvent), [visual.events.events]);
@@ -32,16 +38,16 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
   }
 
   return <section className="mk-visual" aria-labelledby="mk-visual-title">
-    <header className="mk-visual__header"><div><p>Marketing Visual</p><h2 id="mk-visual-title">AI 광고 배너 생성</h2>
-      <span>현재 Marketing Content와 법률 통제를 기준으로 배너 문구·이미지·한글 합성을 생성합니다.</span></div>
-      <strong>등록 Source 1개</strong></header>
-    <div className="mk-visual__source" aria-label="선택 상품과 Source 요약"><div><span>선택 상품 / Source</span>
-      <strong>{source?.conceptName ?? detail?.content?.title ?? 'Marketing Source'}</strong>
-      <p>{source?.valueProposition ?? '현재 Marketing Source의 핵심 가치가 연결됩니다.'}</p></div>
-      <dl><div><dt>대상 고객</dt><dd>{source?.targetSegment ?? 'Source 값 없음'}</dd></div>
+    <header className="mk-visual__header"><div><p>광고 이미지</p><h2 id="mk-visual-title">AI 광고 배너 생성</h2>
+      <span>현재 마케팅 콘텐츠와 광고 표현 기준을 바탕으로 배너 문구와 이미지를 만듭니다.</span></div>
+      <strong>기획 자료 1개</strong></header>
+    <div className="mk-visual__source" aria-label="선택 상품과 기획 자료 요약"><div><span>선택 상품 / 기획 자료</span>
+      <strong>{source?.conceptName ?? detail?.content?.title ?? '마케팅 기획 자료'}</strong>
+      <p>{source?.valueProposition ?? '현재 기획 자료의 핵심 가치가 연결됩니다.'}</p></div>
+      <dl><div><dt>대상 고객</dt><dd>{source?.targetSegment ?? '저장된 값 없음'}</dd></div>
         <div><dt>콘텐츠</dt><dd>{detail?.content?.contentType ?? '선택 필요'} · {detail?.content?.channel ?? '채널 미지정'}</dd></div>
-        <div><dt>주요 특징</dt><dd>{source?.keyFeatures?.join(' · ') || 'Source 값 없음'}</dd></div>
-        <div><dt>Revision</dt><dd>{revision ? `#${revision.revisionNumber} · ${revision.revisionType}` : '선택 필요'}</dd></div></dl></div>
+        <div><dt>주요 특징</dt><dd>{source?.keyFeatures?.join(' · ') || '저장된 값 없음'}</dd></div>
+        <div><dt>수정 이력</dt><dd>{revision ? `#${revision.revisionNumber}` : '선택 필요'}</dd></div></dl></div>
     <div className="mk-visual__grid"><div className="mk-visual__form">
       <label>프로모션 이름<input value={form.promotionName} maxLength={100} onChange={(event) => set('promotionName', event.target.value)} /></label>
       <label>메인 배너 문구<input value={form.mainBanner} maxLength={80} onChange={(event) => set('mainBanner', event.target.value)} /></label>
@@ -57,7 +63,7 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
         {file && <div className="mk-visual__file">{filePreview && <img src={filePreview} alt="업로드 파일 미리보기" />}
           <span><strong>{file.name}</strong><small>{Math.ceil(file.size / 1024)}KB</small></span>
           <button type="button" onClick={() => setFile(null)}>제거</button></div>}</div>
-      <div className="mk-visual__legal"><strong>Marketing Legal authority</strong>
+      <div className="mk-visual__legal"><strong>광고 표현 기준</strong>
         <p>허용 주장: {source?.allowedClaims?.join(' · ') || '등록 없음'}</p>
         <p>금지 주장: {source?.prohibitedClaims?.join(' · ') || '등록 없음'}</p>
         <p>필수 고지: {source?.requiredDisclosures?.join(' · ') || '등록 없음'}</p>
@@ -73,16 +79,16 @@ export default function MarketingVisualSection({ projectId, detail, revision, so
       {visual.run?.state === 'FAILED' && <div className="mk-visual__failure" role="alert"><strong>이미지 생성 실패</strong>
         <p>{visualFailure(failureCode)}</p>{visual.run.retryable && <button type="button" onClick={() => void visual.retry()}>다시 시도</button>}</div>}
       {!visual.busy && !result && visual.run?.state !== 'FAILED' && <div className="mk-visual__empty"><strong>배너 결과가 아직 없습니다.</strong>
-        <p>{!contentId || !revisionId ? '먼저 마케팅 콘텐츠와 revision을 선택해 주세요.'
-          : 'Source 이미지와 Visual 입력을 확인한 뒤 광고 배너 만들기를 실행하세요.'}</p></div>}
+        <p>{!contentId || !revisionId ? '먼저 마케팅 콘텐츠와 수정 이력을 선택해 주세요.'
+          : '참고 이미지와 화면 입력을 확인한 뒤 광고 배너 만들기를 실행하세요.'}</p></div>}
       {result && <><div className="mk-visual__preview">{visual.previewUrl
-        ? <img src={visual.previewUrl} alt="생성된 광고 배너" /> : <span>Project Artifact 미리보기를 불러오는 중입니다.</span>}</div>
+        ? <img src={visual.previewUrl} alt="생성된 광고 배너" /> : <span>생성된 이미지 미리보기를 불러오는 중입니다.</span>}</div>
         <div className="mk-visual__copy"><span>{result.generatedCopy?.badge}</span><h3>{result.generatedCopy?.headline}</h3>
           <p>{result.generatedCopy?.subheadline}</p>{result.callToAction && <strong className="mk-visual__cta">{result.callToAction}</strong>}</div>
-        <dl className="mk-visual__facts"><div><dt>Source</dt><dd>{source?.conceptName ?? 'Marketing Source'} / revision {result.marketingRevisionId}</dd></div>
+        <dl className="mk-visual__facts"><div><dt>사용한 자료</dt><dd>{source?.conceptName ?? '마케팅 기획 자료'}</dd></div>
           <div><dt>프로모션</dt><dd>{result.visual?.promotionName}</dd></div>
-          <div><dt>분위기</dt><dd>{result.visual?.mood}</dd></div><div><dt>형식</dt><dd>{result.visual?.bannerFormat}</dd></div>
-          <div><dt>모델</dt><dd>{result.banner?.model} · {result.banner?.size}</dd></div></dl>
+          <div><dt>분위기</dt><dd>{result.visual?.mood}</dd></div><div><dt>형식</dt><dd>{result.visual?.bannerFormat}</dd></div></dl>
+        <details><summary>기술 정보</summary><p>이미지 모델 {result.banner?.model} · {result.banner?.size}</p></details>
         <div className="mk-visual__disclosures"><strong>필수 고지와 통제</strong>
           <p>{result.legalReview?.requiredDisclosuresApplied?.join(' · ') || '필수 고지 없음'}</p>
           <p>{result.legalReview?.requiredControlsApplied?.join(' · ') || '필수 통제 없음'}</p></div>

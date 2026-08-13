@@ -124,6 +124,6 @@ describe('Final Legal Report actual contract', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('조회 범위에는 제한');
     expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/example');
     expect(view.container.querySelector('pre')).toBeNull();
-    expect(screen.getByText('정본 검증 정보').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByText('기술 정보').closest('details')).not.toHaveAttribute('open');
   });
 });

@@ -42,7 +42,7 @@ function IntroSection() {
         <p className="landing-eyebrow">ONE CONNECTED JOURNEY</p>
         <h2 id="intro-title">아이디어 입력부터<br />사업 검증 보고서까지.</h2>
         <p className="landing-section__lede">
-          아이디어를 구조화하고 법률 위험, 사업 콘셉트, 합성 Persona 인터뷰와 마케팅 가설을
+          아이디어를 구조화하고 법률 위험, 사업안, 가상 고객 인터뷰와 마케팅 가설을
           단계별로 검토합니다. 모든 결과는 프로젝트에 저장되어 다음 접속에서도 이어집니다.
         </p>
         <div className="problem-grid">
@@ -92,24 +92,24 @@ function TrustAndOutcome() {
           <div className="trust-grid">
             <article><h3>근거를 구분합니다</h3><p>사실, 가정, 위험과 추가 조사 필요를 서로 다른 항목으로 표시합니다.</p></article>
             <article><h3>사용자가 확정합니다</h3><p>아이디어, 콘셉트, 마케팅 Asset과 최종 Decision은 사용자가 선택합니다.</p></article>
-            <article><h3>한계를 표시합니다</h3><p>법률 검토와 합성 Persona 결과가 공식 자문이나 실제 고객 조사로 오해되지 않도록 안내합니다.</p></article>
+            <article><h3>한계를 표시합니다</h3><p>법률 검토와 가상 고객 결과가 공식 자문이나 실제 고객 조사로 오해되지 않도록 안내합니다.</p></article>
           </div>
           <p className="trust-disclaimer">AI 결과는 의사결정 지원 자료이며 법률·재무·투자 자문이나 사업 성과를 보장하지 않습니다.</p>
         </div>
       </section>
       <section className="landing-section landing-outcome" aria-labelledby="outcome-title">
         <div className="landing-container">
-          <p className="landing-eyebrow">FROM IDEA TO DECISION</p>
+          <p className="landing-eyebrow">아이디어에서 의사결정까지</p>
           <h2 id="outcome-title">막연한 아이디어를 검토 가능한 의사결정 자료로.</h2>
           <div className="outcome-grid">
             <article>
-              <p>BEFORE</p>
+              <p>시작 전</p>
               <ul><li>정리되지 않은 아이디어</li><li>확인되지 않은 법률·시장 가정</li><li>흩어진 메시지와 선택 근거</li></ul>
             </article>
             <span aria-hidden="true">→</span>
             <article className="is-after">
-              <p>AFTER</p>
-              <ul><li>확정된 Idea Version</li><li>비교 가능한 Concept와 Persona Insight</li><li>선택 근거가 담긴 Final Report</li></ul>
+              <p>완료 후</p>
+              <ul><li>확정된 사업 아이디어</li><li>비교 가능한 사업안과 고객 반응</li><li>선택 근거가 담긴 최종 보고서</li></ul>
             </article>
           </div>
         </div>
@@ -159,7 +159,7 @@ function DemoSection({ reducedMotion }) {
         <h2 id="demo-title" tabIndex="-1">서비스 흐름을 먼저 살펴보세요.</h2>
         <p className="landing-section__lede">
           아래 화면은 전체 파이프라인의 상호작용을 설명하는 가상 예시입니다. 실제 프로젝트에서는 로그인 후
-          Provider 실행 결과와 사용자 선택이 저장됩니다.
+          AI 분석 결과와 사용자 선택이 저장됩니다.
         </p>
         <DemoSimulator reducedMotion={reducedMotion} />
         <p className="demo-disclaimer">예시 데이터는 실제 고객 반응, 법률 판단 또는 사업 성과 예측이 아닙니다.</p>

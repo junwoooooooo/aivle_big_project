@@ -12,12 +12,12 @@ export const JOURNEY_STATUS = Object.freeze({
 });
 
 export const JOURNEY_STATUS_VIEW = Object.freeze({
-  NOT_STARTED: { label: '준비 전', tone: 'neutral' },
+  NOT_STARTED: { label: '시작 전', tone: 'neutral' },
   READY: { label: '시작 가능', tone: 'info' },
   IN_PROGRESS: { label: '진행 중', tone: 'info' },
   NEEDS_INPUT: { label: '입력 필요', tone: 'warning' },
   ATTENTION: { label: '확인 필요', tone: 'danger' },
-  STALE: { label: '갱신 필요', tone: 'warning' },
+  STALE: { label: '업데이트 필요', tone: 'warning' },
   COMPLETED: { label: '완료', tone: 'success' },
 });
 
@@ -38,6 +38,18 @@ const PATH_TO_JOURNEY = Object.freeze({
 
 export function getJourneyStatusView(status) {
   return JOURNEY_STATUS_VIEW[status] ?? JOURNEY_STATUS_VIEW.NOT_STARTED;
+}
+
+export function getJourneyActionView(status) {
+  return ({
+    [JOURNEY_STATUS.NOT_STARTED]: '시작하기',
+    [JOURNEY_STATUS.READY]: '시작하기',
+    [JOURNEY_STATUS.IN_PROGRESS]: '계속하기',
+    [JOURNEY_STATUS.NEEDS_INPUT]: '입력하기',
+    [JOURNEY_STATUS.ATTENTION]: '확인하기',
+    [JOURNEY_STATUS.STALE]: '업데이트하기',
+    [JOURNEY_STATUS.COMPLETED]: '결과 보기',
+  })[status] ?? '확인하기';
 }
 
 export function aggregateJourneyStatus(moduleStatuses = []) {

@@ -7,17 +7,11 @@ export const MODULE_STATUS = Object.freeze({
 });
 
 export const MODULE_STATUS_VIEW = Object.freeze({
-  NOT_READY: { label: '준비 전', tone: 'neutral' }, READY: { label: '시작 가능', tone: 'info' },
+  NOT_READY: { label: '시작 전', tone: 'neutral' }, READY: { label: '시작 가능', tone: 'info' },
   QUEUED: { label: '대기 중', tone: 'neutral' }, RUNNING: { label: '진행 중', tone: 'info' },
   NEEDS_INPUT: { label: '입력 필요', tone: 'warning' }, COMPLETED: { label: '완료', tone: 'success' },
-  FAILED: { label: '실패', tone: 'danger' }, STALE: { label: '갱신 필요', tone: 'warning' },
-  NOT_CONNECTED: { label: '연결 준비 중', tone: 'neutral' },
-});
-
-export const PROJECT_STATUS_VIEW = Object.freeze({
-  DRAFT: { label: '작성 중', tone: 'neutral' }, ACTIVE: { label: '진행 중', tone: 'info' },
-  PAUSED: { label: '확인 필요', tone: 'warning' }, COMPLETED: { label: '완료', tone: 'success' },
-  ARCHIVED: { label: '보관됨', tone: 'neutral' },
+  FAILED: { label: '확인 필요', tone: 'danger' }, STALE: { label: '업데이트 필요', tone: 'warning' },
+  NOT_CONNECTED: { label: '준비 중', tone: 'neutral' },
 });
 
 export const PROJECT_MODULES = Object.freeze([
@@ -41,7 +35,6 @@ const API_MODULE_IDS = Object.freeze({
 });
 
 export function getModuleStatusView(status) { return MODULE_STATUS_VIEW[status] ?? MODULE_STATUS_VIEW.NOT_READY; }
-export function getProjectStatusView(status) { return PROJECT_STATUS_VIEW[status] ?? { label: '상태 확인 필요', tone: 'neutral' }; }
 export function normalizeProjectModuleStatuses(items) {
   if (!Array.isArray(items)) return {};
   return Object.fromEntries(items.flatMap((item) => {

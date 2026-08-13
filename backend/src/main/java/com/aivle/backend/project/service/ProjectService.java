@@ -97,12 +97,49 @@ public class ProjectService {
             journey("출시 준비", statuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
             journey("가상 인터뷰", statuses, PipelineModuleType.TWIN_SURVEY),
             journey("마케팅 전략", statuses, PipelineModuleType.MARKETING));
-        boolean reportCurrent = finalReports.state(userId, p.getId()) == FinalReportApiModels.State.CURRENT;
+        FinalReportApiModels.State reportState = finalReports.state(userId, p.getId());
+        boolean reportCurrent = reportState == FinalReportApiModels.State.CURRENT;
+        boolean reportStale = reportState == FinalReportApiModels.State.STALE;
         int completed = (int) journeys.stream().filter(JourneySummary::completed).count() + (reportCurrent ? 1 : 0);
         String current = journeys.stream().filter(value -> !value.completed()).map(JourneySummary::label)
             .findFirst().orElse("최종 보고서");
+        List<ProjectModuleStatusResponse> attentionModules = statuses.stream()
+            .filter(this::requiresUserAttention)
+            .toList();
+        int attentionCount = attentionModules.size() + (reportStale ? 1 : 0);
+        boolean started = statuses.stream().anyMatch(this::hasStartedWork) || reportCurrent || reportStale;
+        String presentationState = completed == 6 ? "COMPLETED"
+            : attentionCount > 0 ? "NEEDS_ATTENTION"
+            : started ? "IN_PROGRESS" : "NOT_STARTED";
+        String attentionReason = !attentionModules.isEmpty()
+            ? attentionReason(attentionModules.get(0).status())
+            : reportStale ? "최종 보고서를 업데이트해 주세요." : null;
         return new ProjectSummaryResponse(p.getId(), p.getTitle(), p.getIndustryCategory(),
-                p.getStatus(), p.getCreatedAt(), p.getUpdatedAt(), current, completed);
+                p.getStatus(), p.getCreatedAt(), p.getUpdatedAt(), current, completed,
+                presentationState, attentionCount, attentionReason);
+    }
+
+    private boolean requiresUserAttention(ProjectModuleStatusResponse status) {
+        if (status.status() == PipelineModuleStatus.FAILED || status.status() == PipelineModuleStatus.STALE) {
+            return hasStartedWork(status);
+        }
+        return status.status() == PipelineModuleStatus.NEEDS_INPUT && hasStartedWork(status);
+    }
+
+    private boolean hasStartedWork(ProjectModuleStatusResponse status) {
+        return status.updatedAt() != null || status.activeRunId() != null || status.activeTaskRunId() != null
+            || status.sourceSnapshotId() != null || status.confirmedSnapshotId() != null
+            || status.status() == PipelineModuleStatus.QUEUED || status.status() == PipelineModuleStatus.RUNNING
+            || status.status() == PipelineModuleStatus.COMPLETED;
+    }
+
+    private String attentionReason(PipelineModuleStatus status) {
+        return switch (status) {
+            case NEEDS_INPUT -> "계속하려면 필요한 내용을 입력해 주세요.";
+            case STALE -> "이전 결과를 최신 내용에 맞게 업데이트해 주세요.";
+            case FAILED -> "완료하지 못한 작업을 확인해 주세요.";
+            default -> "확인이 필요한 항목이 있습니다.";
+        };
     }
 
     private JourneySummary journey(String label, List<ProjectModuleStatusResponse> statuses,

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -39,6 +40,8 @@ public interface TaskRunRepository extends JpaRepository<TaskRun, String> {
         Long projectId, com.aivle.backend.taskrun.domain.TaskType taskType, String subjectType, String subjectId);
     List<TaskRun> findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
         Long projectId, List<TaskRunState> states, Pageable pageable);
+    Page<TaskRun> findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+        Long projectId, Pageable pageable);
     Optional<TaskRun> findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
         Long projectId, List<com.aivle.backend.taskrun.domain.TaskType> taskTypes);
     Optional<TaskRun> findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(

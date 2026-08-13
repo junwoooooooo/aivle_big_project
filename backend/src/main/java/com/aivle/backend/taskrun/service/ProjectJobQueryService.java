@@ -8,6 +8,7 @@ import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptInputRequestSta
 import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptInputRequestRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.api.ProjectJobView;
+import com.aivle.backend.taskrun.api.ProjectJobHistoryResponse;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -55,6 +56,16 @@ public class ProjectJobQueryService {
         return find(projectId, RECENT_STATES).stream()
             .filter(job -> !job.rawStatus().equals(TaskRunState.NEEDS_INPUT.name()) || !job.actionable())
             .toList();
+    }
+
+    public ProjectJobHistoryResponse history(Long ownerId, Long projectId, int page, int size) {
+        requireOwned(ownerId, projectId);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        var result = taskRuns.findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            projectId, PageRequest.of(safePage, safeSize));
+        return new ProjectJobHistoryResponse(result.getContent().stream().map(this::view).toList(),
+            result.getNumber(), result.getSize(), result.hasNext(), result.getTotalElements());
     }
 
     private List<ProjectJobView> find(Long projectId, List<TaskRunState> states) {

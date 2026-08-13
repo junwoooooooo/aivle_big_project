@@ -151,7 +151,7 @@ export default function TwinSurveyPage() {
                   {label}
                 </Button>
               ))}
-            </div> : <p><strong>{draftSource || '현재 프로젝트에서 확정한 selected Concept'}</strong>를
+            </div> : <p><strong>{draftSource || '현재 프로젝트에서 확정한 사업안'}</strong>을
               기준으로 초안을 만듭니다.</p>}
             <div className="twin-page__draft-actions">
               <Button onClick={makeDraft} disabled={drafting}>
@@ -213,10 +213,10 @@ export default function TwinSurveyPage() {
       ) : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      {stale ? <Alert tone="warning">상위 selected Concept 또는 Market Seed가 바뀌었습니다. 이 조사는 과거 이력이며 다시 실행해야 합니다.</Alert> : null}
+      {stale ? <Alert tone="warning">선택한 사업안 또는 시장 입력이 바뀌었습니다. 최신 내용으로 다시 인터뷰해 주세요.</Alert> : null}
       {result && !stale ? <Link className="ui-button ui-button--primary" to={`/app/projects/${projectId}/marketing`}>다음 - 8. 마케팅 콘텐츠 제작</Link> : null}
       {run?.state === 'FAILED' && run?.errorCode ? (
-        <Alert tone="danger">실행이 실패했다 — {failureText(run.errorCode)}</Alert>
+        <Alert tone="danger">인터뷰를 완료하지 못했습니다. {failureText(run.errorCode)}</Alert>
       ) : null}
 
       {result ? <TwinResult result={result} /> : null}

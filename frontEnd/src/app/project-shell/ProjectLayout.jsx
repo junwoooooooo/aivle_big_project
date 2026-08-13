@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 
-import { ErrorState, LoadingState } from '../../shared/ui/index.js';
+import { AppIcon, ErrorState, LoadingState } from '../../shared/ui/index.js';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { useProjectEvents } from '../../shared/async-events/index.js';
@@ -14,6 +14,7 @@ import { startNewConceptPortfolioRun } from '../../features/concept-portfolio/ho
 import { createFinalReportApi } from '../../features/final-report/finalReportApi.js';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import { useProjectChrome } from './ProjectChromeContext.jsx';
+import { deriveProjectPresentationState, getProjectPresentationView } from '../../features/projects/model/projectPresentation.js';
 import './project-shell.css';
 import './project-shell-polish.css';
 
@@ -21,7 +22,7 @@ export function JourneySubsteps({ journey, currentModule }) {
   if (!journey?.children || journey.children.length < 2) return null;
   return <nav className="journey-substeps" aria-label={`${journey.shortLabel} 세부 업무`}>
     {journey.children.map((module, index) => <div key={module.id} className={module.id === currentModule.id ? 'is-current' : ''}>
-      <Link to={module.href} aria-current={module.id === currentModule.id ? 'step' : undefined}><span aria-hidden="true">{module.status === MODULE_STATUS.COMPLETED ? '●' : '○'}</span>{module.shortLabel}</Link>
+      <Link to={module.href} aria-current={module.id === currentModule.id ? 'step' : undefined}><span className={module.status === MODULE_STATUS.COMPLETED ? 'is-complete' : ''} aria-hidden="true" />{module.shortLabel}</Link>
       {index < journey.children.length - 1 && <i aria-hidden="true" />}
     </div>)}
   </nav>;
@@ -67,6 +68,7 @@ function ProjectLayoutContent() {
       : currentJourney.id === 'overview' ? getModuleStatusView(currentModule.status)
         : getJourneyStatusView(currentJourney.status ?? JOURNEY_STATUS.NOT_STARTED),
   [currentJourney, currentModule.status, moduleState.status]);
+  const projectPresentation = useMemo(() => getProjectPresentationView(deriveProjectPresentationState(journeys)), [journeys]);
   const retryPortfolioJob = useCallback(async (job) => {
     if (job?.taskType !== 'CONCEPT_PORTFOLIO_V2_RUN') return;
     await startNewConceptPortfolioRun(portfolioApi, projectId);
@@ -87,9 +89,8 @@ function ProjectLayoutContent() {
 
   return <div className="pipeline-shell">
     <header className="pipeline-shell__header">
-      <div className="pipeline-shell__project"><p>{project.industryCategory || '사업 분야 미입력'}</p><h1>{project.name}</h1></div>
-      <div className="pipeline-shell__module"><div><span>현재 업무</span><h2>{currentJourney.shortLabel}{currentJourney.id !== 'overview' && currentModule.shortLabel !== currentJourney.shortLabel ? ` · ${currentModule.shortLabel}` : ''}</h2></div><span className="pipeline-status" data-tone={currentStatus.tone}>{currentStatus.label}</span></div>
-      <div className="pipeline-shell__actions"><Link to={projectRoutes.settings(projectId)} state={{ backgroundLocation: location, returnTo: location.pathname }}>프로젝트 설정</Link></div>
+      <div className="pipeline-shell__project"><p>{project.industryCategory || '사업 분야 미입력'}</p><h1>{project.name}</h1><nav className="pipeline-shell__breadcrumb" aria-label="현재 위치"><Link to={projectRoutes.overview(projectId)}>프로젝트 개요</Link>{currentJourney.id !== 'overview' && <><span aria-hidden="true">/</span><span aria-current="page">{currentJourney.shortLabel}</span></>}</nav></div>
+      <div className="pipeline-shell__actions"><span className="pipeline-status" data-tone={projectPresentation.tone}>{projectPresentation.label}</span><Link to={projectRoutes.settings(projectId)} state={{ backgroundLocation: location, returnTo: location.pathname }}><AppIcon name="settings" size={16} />프로젝트 설정</Link></div>
     </header>
     <main className="pipeline-shell__main">
       <JourneySubsteps journey={currentJourney} currentModule={currentModule} />

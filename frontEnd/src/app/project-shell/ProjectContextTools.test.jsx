@@ -19,9 +19,9 @@ const model = {
   ],
 };
 
-function RegisteredTools() {
+function RegisteredTools({ value = model }) {
   const { register } = useProjectChrome();
-  useEffect(() => register(model), [register]);
+  useEffect(() => register(value), [register, value]);
   return <ProjectContextTools />;
 }
 
@@ -43,5 +43,20 @@ describe('project context tools', () => {
   it('Project Chrome 등록이 없으면 도구를 표시하지 않는다', () => {
     render(<MemoryRouter initialEntries={['/app']}><ProjectChromeProvider><ProjectContextTools /></ProjectChromeProvider></MemoryRouter>);
     expect(screen.queryByRole('button', { name: '도움말' })).not.toBeInTheDocument();
+  });
+
+  it('개요를 포함한 7개 탐색 순서를 사용하고 마지막 단계 문구를 노출하지 않는다', async () => {
+    const overviewModel = { ...model, currentJourney: { id: 'overview', shortLabel: '프로젝트 개요' }, journeys: [
+      ...model.journeys,
+      { id: 'interview', shortLabel: '가상 인터뷰', href: '/app/projects/41/twin-survey', status: 'NOT_STARTED' },
+      { id: 'marketingStrategy', shortLabel: '마케팅 전략', href: '/app/projects/41/marketing', status: 'NOT_STARTED' },
+      { id: 'finalReport', shortLabel: '최종 보고서', href: '/app/projects/41/final-report', status: 'NOT_STARTED' },
+    ] };
+    render(<MemoryRouter initialEntries={['/app/projects/41/overview']}><ProjectChromeProvider><RegisteredTools value={overviewModel} /></ProjectChromeProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: '단계' }));
+    expect(screen.getByText('1 / 7')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '이전 단계 없음' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '다음 단계: 사업 기획' })).toHaveAttribute('href', '/app/projects/41/idea');
+    expect(screen.queryByText('마지막 단계')).not.toBeInTheDocument();
   });
 });

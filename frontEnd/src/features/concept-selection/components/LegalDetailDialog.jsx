@@ -45,7 +45,7 @@ export default function LegalDetailDialog({ model, onClose }) {
       <ListSection title="개인정보 이용" values={factList(factPattern.personalDataUsage, model.candidate.personalDataUsage)} />
       <ListSection title="광고 주장" values={factList(factPattern.advertisingClaims, model.candidate.advertisingClaims)} />
       {SECTIONS.map(([key, label]) => <ListSection key={key} title={label} values={assessment[key]} />)}
-      <section><h3>공식 Evidence</h3><ul>{(model.legal.evidence ?? []).map((item) => <li key={`${item.title}-${item.officialSourceUri}`}><a href={item.officialSourceUri} target="_blank" rel="noreferrer">{item.title}</a></li>)}</ul></section>
+      <section><h3>공식 근거 자료</h3><ul>{(model.legal.evidence ?? []).map((item) => <li key={`${item.title}-${item.officialSourceUri}`}><a href={item.officialSourceUri} target="_blank" rel="noreferrer">{item.title}</a></li>)}</ul></section>
     </section>
   </div>;
 }

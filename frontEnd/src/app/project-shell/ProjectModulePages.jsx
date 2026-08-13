@@ -1,14 +1,15 @@
 import { Link, useOutletContext } from 'react-router-dom';
 
-import { getJourneyStatusView } from '../module-status/projectJourneyModel.js';
+import { AppIcon } from '../../shared/ui/index.js';
+import { getJourneyActionView, getJourneyStatusView, JOURNEY_STATUS } from '../module-status/projectJourneyModel.js';
 
 const JOURNEY_DESCRIPTIONS = Object.freeze({
-  planning: '아이디어를 정리하고 법률 검토가 포함된 사업안을 확정합니다.',
-  validation: '시장 근거를 수집하고 실행 가능한 사업 모델을 검증합니다.',
-  launch: '기술·운영 구성과 재무 전망을 확정해 출시를 준비합니다.',
-  interview: '가상 패널의 반응과 사용·구매 의향을 확인합니다.',
-  marketingStrategy: '확정된 근거를 기반으로 메시지와 콘텐츠를 제작합니다.',
-  finalReport: '각 단계의 정본 결과와 출처를 사업 타당성 문서로 정리합니다.',
+  planning: '아이디어를 정리하고 실행할 사업안을 확정합니다.',
+  validation: '시장과 수익 구조를 확인해 사업 가능성을 검토합니다.',
+  launch: '운영 방식과 비용·수익 계획을 구체화합니다.',
+  interview: '가상 고객에게 물어보고 반응과 개선점을 확인합니다.',
+  marketingStrategy: '핵심 메시지와 실제 마케팅 콘텐츠를 준비합니다.',
+  finalReport: '앞선 결과를 한 문서로 정리해 의사결정에 활용합니다.',
 });
 
 function JourneyStatusBadge({ status }) {
@@ -18,14 +19,16 @@ function JourneyStatusBadge({ status }) {
 
 export function ProjectOverviewPage() {
   const { journeys } = useOutletContext();
+  const currentIndex = journeys.findIndex(({ status }) => status !== JOURNEY_STATUS.COMPLETED);
   return <section className="pipeline-overview" aria-labelledby="project-overview-title">
-    <div className="pipeline-page-heading"><p>6단계 업무 흐름</p><h2 id="project-overview-title">프로젝트 개요</h2><span>사업 기획부터 최종 보고서까지 현재 업무 상태와 다음 단계를 확인하세요.</span></div>
-    <div className="pipeline-overview__grid">{journeys.map((journey) => (
-      <article key={journey.id}>
-        <div><h3>{journey.label}</h3><JourneyStatusBadge status={journey.status} /></div>
-        <p>{JOURNEY_DESCRIPTIONS[journey.id]}</p>
-        <Link to={journey.href}>{journey.shortLabel} 열기</Link>
-      </article>
-    ))}</div>
+    <div className="pipeline-page-heading"><p>6단계 사업 여정</p><h2 id="project-overview-title">프로젝트 개요</h2><span>현재 위치와 다음 할 일을 하나의 흐름에서 확인하세요.</span></div>
+    <div className="journey-map"><svg className="journey-map__path" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M90 90 C250 25 360 145 500 90 S750 25 910 90 C970 125 970 235 910 270 C760 335 650 215 500 270 S245 335 90 270" /></svg><ol>{journeys.map((journey, index) => {
+      const action = getJourneyActionView(journey.status);
+      return <li key={journey.id} className={`${index === currentIndex ? 'is-current' : ''} is-${journey.status.toLowerCase()}`}>
+        <span className="journey-map__station" aria-hidden="true">{journey.status === JOURNEY_STATUS.COMPLETED ? <AppIcon name="check" size={17} /> : index + 1}</span>
+        <div><span className="journey-map__step">{index + 1}단계</span><h3>{journey.shortLabel}</h3><p>{JOURNEY_DESCRIPTIONS[journey.id]}</p><JourneyStatusBadge status={journey.status} /></div>
+        <Link to={journey.href} aria-label={`${journey.shortLabel} ${action}`} title={action}><AppIcon name="arrowRight" size={18} /></Link>
+      </li>;
+    })}</ol></div>
   </section>;
 }
