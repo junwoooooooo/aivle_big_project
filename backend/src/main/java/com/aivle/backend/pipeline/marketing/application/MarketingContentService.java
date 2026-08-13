@@ -132,7 +132,7 @@ public class MarketingContentService {
         ObjectNode input = mapper.createObjectNode(); input.set("source", mapper.readTree(sourceJson));
         input.set("request", mapper.readTree(requestJson));
         String json = mapper.writeValueAsString(input);
-        String hash = inputHasher.hash(TaskType.MARKETING_CONTENT_GENERATION, "2.0", "ko-KR", json);
+        String hash = inputHasher.hash(TaskType.MARKETING_CONTENT_GENERATION, "1.0", "ko-KR", json);
         return taskRuns.create(ownerId, projectId, TaskType.MARKETING_CONTENT_GENERATION, "MARKETING_CONTENT",
             content.getId(), json, hash, key, correlation == null || correlation.isBlank()
                 ? UUID.randomUUID().toString() : correlation, 2).getId();

@@ -10,6 +10,8 @@ from typing import Any
 
 import httpx
 
+from app.providers.schema_compatibility import strict_schema_failures
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +106,15 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
                                     schema_name: str | None = None,
                                     task_type: str | None = None,
                                     timeout_seconds_override: float | None = None) -> dict[str, Any]:
+    if response_schema is not None:
+        schema_failures = strict_schema_failures(response_schema)
+        if schema_failures:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False,
+                schema_name=schema_name or "structured_result",
+                validation_fields=schema_failures,
+                safe_diagnostics={"stage": "OFFLINE_SCHEMA_PREFLIGHT"},
+            )
     api_key, model, base_url = _configuration(model_override)
     try:
         timeout_seconds = (float(timeout_seconds_override) if timeout_seconds_override is not None

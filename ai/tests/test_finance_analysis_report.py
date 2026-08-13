@@ -1,6 +1,11 @@
 import asyncio
 
+import pytest
+
+from app.providers import ProviderFailure
+from app.providers.schema_compatibility import strict_schema_failures
 from app.tasks.finance_analysis_report import service
+from app.tasks.finance_analysis_report.models import FinanceAnalysisReportResult
 
 
 def _input():
@@ -48,3 +53,23 @@ def test_report_input_does_not_require_techops(monkeypatch):
     monkeypatch.setattr(service, "execute_structured_prompt", prompt)
     result = asyncio.run(service.execute_finance_analysis_report(value))
     assert result["providerStatus"] == "SUCCEEDED"
+
+
+def test_finance_provider_schema_is_closed_fully_required_and_literal_bound() -> None:
+    schema = FinanceAnalysisReportResult.model_json_schema()
+    assert strict_schema_failures(schema) == []
+    assert set(schema["required"]) == set(schema["properties"])
+    assert schema["properties"]["source"]["const"] == "AI_GENERATED_REPORT"
+    assert schema["properties"]["providerStatus"]["const"] == "SUCCEEDED"
+    assert schema["properties"]["safeFailureReason"]["type"] == "null"
+    assert "default" not in schema["properties"]["safeFailureReason"]
+
+
+def test_report_rejects_malformed_provider_result(monkeypatch):
+    async def malformed(*_args, **_kwargs):
+        return {"headline": "필드가 부족합니다"}
+    monkeypatch.setattr(service, "execute_structured_prompt", malformed)
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_finance_analysis_report(_input()))
+    assert raised.value.code == "RESULT_SCHEMA_INVALID"
+    assert raised.value.reason == "AI_RESULT_INVALID"

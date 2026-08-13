@@ -2,7 +2,9 @@ import asyncio
 
 import pytest
 
+from app.progress.safe_task_progress import SafeTaskProgressSender
 from app.tasks.tech_ops_advisor import runtime_adapter
+from app.tasks.tech_ops_advisor import service as advisory_service
 from app.tasks.tech_ops_input_scaler import scale_tech_ops_input
 
 
@@ -124,7 +126,53 @@ def test_missing_legal_requires_open_legal_gate(monkeypatch):
 def test_progress_events_are_real_adapter_boundaries(monkeypatch):
     events = []
     async def engine(_payload): return result()
-    async def sink(stage, key, params): events.append((stage, key, params))
+    def sink(event): events.append(event)
     monkeypatch.setattr(runtime_adapter, "generate_tech_ops_advisory", engine)
     asyncio.run(runtime_adapter.execute_tech_ops_advisory(task_input(), sink))
-    assert [stage for stage, _, _ in events] == ["SCALING", "EVIDENCE", "GENERATING", "VALIDATING"]
+    assert [event["stage"] for event in events] == ["SCALING", "EVIDENCE", "GENERATING", "VALIDATING"]
+    assert all(event["status"] == "RUNNING" and event["safeSummary"] for event in events)
+
+
+def test_real_sender_and_main_engine_share_one_dict_sync_progress_contract(monkeypatch):
+    observed = []
+    provider_calls = []
+
+    async def post(payload):
+        observed.append(payload)
+
+    async def evidence(*_args, **_kwargs):
+        return [], {"queries": [], "status": "SKIPPED"}
+
+    async def advice(*_args, **_kwargs):
+        provider_calls.append("advice")
+        return result()
+
+    async def expansion(*_args, **_kwargs):
+        provider_calls.append("expansion")
+        return {
+            "operatingCosts": result()["operatingCosts"],
+            "readiness": result()["readiness"],
+            "gates": result()["gates"],
+        }
+
+    monkeypatch.setattr(advisory_service, "collect_external_evidence", evidence)
+    monkeypatch.setattr(advisory_service, "_request_advice", advice)
+    monkeypatch.setattr(advisory_service, "_request_operations_expansion", expansion)
+
+    async def run():
+        async with SafeTaskProgressSender(
+            task_run_id="run-1", task_attempt_id="attempt-1",
+            correlation_id="correlation-1", post=post,
+        ) as progress:
+            output = await runtime_adapter.execute_tech_ops_advisory(
+                task_input(), event_sink=progress.emit,
+            )
+        return output
+
+    output = asyncio.run(run())
+    assert output["decision"] == "CONDITIONAL_GO"
+    assert provider_calls and provider_calls[0] == "advice"
+    assert [event["stage"] for event in observed] == [
+        "SCALING", "EVIDENCE", "GENERATING", "VALIDATING",
+    ]
+    assert all(event["taskRunId"] == "run-1" for event in observed)

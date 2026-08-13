@@ -378,6 +378,16 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
                               body.taskRunId, body.taskAttemptId, failure.validation_fields,
                               failure.retry_after_ms)
+    except Exception:
+        logger.exception(
+            "Unexpected internal AI execution failure taskType=%s taskRunId=%s "
+            "taskAttemptId=%s correlationId=%s",
+            body.taskType, body.taskRunId, body.taskAttemptId, correlation,
+        )
+        return internal_error(
+            correlation, "INTERNAL_ERROR", "UNEXPECTED_INTERNAL_ERROR", 500, True,
+            body.taskRunId, body.taskAttemptId,
+        )
     return InternalExecutionSuccessResponseV1(contractVersion="1.0", taskType=body.taskType,
         taskSchemaVersion="1.0", taskRunId=body.taskRunId, taskAttemptId=body.taskAttemptId,
         correlationId=body.correlationId, canonicalInputHash=body.canonicalInputHash,

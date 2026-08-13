@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -20,6 +22,9 @@ class FinanceAnalysisReportResult(StrictModel):
     cautions: list[str] = Field(min_length=1, max_length=5)
     recommendedActions: list[str] = Field(min_length=1, max_length=5)
     disclaimer: str = Field(min_length=1, max_length=500)
-    source: str = Field(pattern="^AI_GENERATED_REPORT$")
-    providerStatus: str = Field(pattern="^SUCCEEDED$")
-    safeFailureReason: None = None
+    source: Literal["AI_GENERATED_REPORT"]
+    providerStatus: Literal["SUCCEEDED"]
+    # OpenAI strict structured output requires every property to be required.
+    # The success contract therefore carries an explicit JSON null instead of
+    # an optional/defaulted field that the provider may omit.
+    safeFailureReason: None

@@ -53,6 +53,9 @@ Research2가 사용하는 OpenAI Responses API와 `web_search` tool 계약을 �
 python scripts/check_local_env.py --compose
 ```
 
+Twin Bank의 Compose host mount 이름은 `TWIN_BANK_HOST_DIR` 하나뿐이다.
+`TWIN_BANK_PATH`는 alias가 아니며 precheck가 이름 변경 안내와 함께 실패시킨다.
+
 Backend의 AI HTTP client는 작업 규모별로 분리됩니다. 기본 짧은 작업은 30초, Marketing Content는
 7분, Concept Portfolio는 15분, Twin Survey는 14분이며, fresh Market collection은 20분 worker
 deadline과 22분 transport/lease envelope를 사용합니다.

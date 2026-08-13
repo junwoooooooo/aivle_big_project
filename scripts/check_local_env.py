@@ -71,9 +71,12 @@ def main() -> int:
     if twin_path is not None and not twin_path.is_absolute():
         twin_path = (ROOT / twin_path).resolve()
     twin_ok = twin_path is not None and twin_path.is_dir()
-    print(f"{'TWIN_BANK_PATH':<24} {'EXISTS' if twin_ok else 'MISSING'}")
+    print(f"{'TWIN_BANK_HOST_DIR':<24} {'EXISTS' if twin_ok else 'MISSING'}")
     if args.compose and not twin_ok:
-        missing.append("TWIN_BANK_PATH")
+        missing.append("TWIN_BANK_HOST_DIR")
+    alias_detected = _configured(values, "TWIN_BANK_PATH")
+    if alias_detected and not _configured(values, "TWIN_BANK_HOST_DIR"):
+        print("note: deprecated/unknown TWIN_BANK_PATH detected; rename to TWIN_BANK_HOST_DIR")
 
     _status("MOLEG_API_KEY", _configured(values, "MOLEG_API_KEY"), optional=True)
     return 1 if missing else 0
