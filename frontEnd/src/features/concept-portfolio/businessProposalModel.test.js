@@ -67,6 +67,7 @@ describe('proposal comparison and structured SOM', () => {
       expect.objectContaining({ label: '주요 고객', value: '매장' }),
       expect.objectContaining({ label: '수익 방식', value: '월 구독' }),
     ]));
+    expect(buildProposalPreview(concepts[0], concepts).highlights).toHaveLength(3);
     expect(buildProposalPreview({ summary: 'fallback', candidate: { coreValue: '가치' } }, []).highlights[0])
       .toMatchObject({ label: '핵심 가치', value: '가치' });
   });

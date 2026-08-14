@@ -27,13 +27,18 @@ export default function BusinessProposalWorkspace() {
   const [view, setView] = useState('BROWSE');
   const [compared, setCompared] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
+  const [selectingConceptId, setSelectingConceptId] = useState(null);
   const [drafts, setDrafts] = useState({});
   const [edits, setEdits] = useState({});
   const [recoveredNotice, setRecoveredNotice] = useState(false);
   const selectionBaseline = useRef({ selectionId: null, conceptIds: new Set() });
-  const previousSelectionId = useRef(null);
+  const previousSelectionKey = useRef(null);
+  const pendingDecisionFocusKey = useRef(null);
   const basisRef = useRef(null);
   const selectedId = selectedConceptId(portfolio.selection);
+  const selectionKey = portfolio.selection
+    ? `${portfolio.selection.selectionId}:${portfolio.selection.conceptId}`
+    : null;
   const selectedConcept = portfolio.concepts.find((concept) => concept.conceptId === selectedId);
   const comparedConcepts = portfolio.concepts.filter((concept) => compared.includes(concept.conceptId));
   const actionableInputs = candidateRequests(portfolio.inputRequests);
@@ -74,22 +79,34 @@ export default function BusinessProposalWorkspace() {
   }, [portfolio.concepts, portfolio.selection?.selectionId]);
 
   useEffect(() => {
-    const selectionId = portfolio.selection?.selectionId ?? null;
-    if (selectionId && selectionId !== previousSelectionId.current && basisRef.current) {
-      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      basisRef.current.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
-      basisRef.current.focus?.({ preventScroll: true });
+    if (selectionKey && selectionKey !== previousSelectionKey.current) {
+      pendingDecisionFocusKey.current = selectionKey;
+      // 서버 refresh로 확인된 선택 identity가 바뀔 때만 탐색 화면을 접는다.
       setShowGallery(false);
       setView('BROWSE');
     }
-    previousSelectionId.current = selectionId;
-  }, [portfolio.selection?.selectionId]);
+    previousSelectionKey.current = selectionKey;
+  }, [selectionKey]);
+
+  useEffect(() => {
+    if (!selectionKey || showGallery || view !== 'BROWSE'
+      || pendingDecisionFocusKey.current !== selectionKey || !basisRef.current) return;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    basisRef.current.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    basisRef.current.focus?.({ preventScroll: true });
+    pendingDecisionFocusKey.current = null;
+  }, [selectionKey, showGallery, view]);
 
   const draft = (request) => drafts[request.inputRequestId] ?? createCandidateDraft(request);
   const updateDraft = (request, next) => setDrafts((current) => ({ ...current, [request.inputRequestId]: { ...draft(request), ...next } }));
   const submitInput = (request) => {
     const payload = serializeCandidateFacts(request, draft(request));
     if (payload) portfolio.respond(request.inputRequestId, payload, request.question ?? '');
+  };
+  const selectConcept = async (conceptId) => {
+    setSelectingConceptId(conceptId);
+    try { await portfolio.select(conceptId); }
+    finally { setSelectingConceptId(null); }
   };
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
@@ -106,7 +123,7 @@ export default function BusinessProposalWorkspace() {
     {portfolio.run && !readyToReview && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={() => outlet.openWorkCenterJob?.(progressJobId)} />}
     {recoveredNotice && <p className="business-proposal__notice" role="status">추가 사업안이 준비되었습니다. 현재 선택은 유지됩니다.</p>}
 
-    {readyToReview && view === 'COMPARE' && <ComparisonFocus concepts={comparedConcepts} onBack={() => setView('BROWSE')} onSelect={portfolio.select} busy={portfolio.busy} />}
+    {readyToReview && view === 'COMPARE' && <ComparisonFocus concepts={comparedConcepts} onBack={() => setView('BROWSE')} onSelect={selectConcept} busy={portfolio.busy} selectingConceptId={selectingConceptId} />}
     {readyToReview && view === 'BROWSE' && <>
       {portfolio.selection && <DecisionProgress stage={decisionStage} />}
       {portfolio.selection && !showGallery && <SelectedSummary concept={selectedConcept}
@@ -115,7 +132,7 @@ export default function BusinessProposalWorkspace() {
         requests={portfolio.inputRequests} drafts={drafts} busy={portfolio.busy}
         onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start}
         onCompare={(conceptId) => setCompared((value) => toggleComparedConcept(value, conceptId))}
-        onOpenComparison={() => setView('COMPARE')} onSelect={portfolio.select} />}
+        onOpenComparison={() => setView('COMPARE')} onSelect={selectConcept} selectingConceptId={selectingConceptId} />}
       {galleryVisible && unmatchedInputs.length > 0 && <InputGroup title="추가 검토 중인 사업안" description="아래 정보는 검토 완료된 다른 사업안의 선택을 막지 않습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start} busy={portfolio.busy} />}
 
       {portfolio.selection && !showGallery && <section ref={basisRef} tabIndex="-1" className="business-decision__current">
@@ -132,7 +149,7 @@ export default function BusinessProposalWorkspace() {
 
 export function PreGeneration({ onStart, busy }) {
   const phases = [['사업안 생성', '서로 다른 사업 방향으로 후보를 만듭니다.'], ['법률·규제 검토', '각 사업안에서 확인해야 할 법률·규제 요소를 검토합니다.'], ['비교 및 선택', '검토를 거친 사업안을 같은 기준으로 비교하고 선택합니다.']];
-  return <section className="business-proposal__pre-generation"><div className="business-proposal__process" aria-label="사업안 생성 및 검토 과정">{phases.map(([title, description], index) => <article key={title}><span>{index + 1}</span><div><h2>{title}</h2><p>{description}</p></div></article>)}</div><button type="button" disabled={busy} onClick={onStart}>사업안 생성 및 법률 검토 시작</button></section>;
+  return <section className="business-proposal__pre-generation"><div className="business-proposal__process" aria-label="사업안 생성 및 검토 과정">{phases.map(([title, description], index) => <article key={title}><span>{index + 1}</span><div><h2>{title}</h2><p>{description}</p></div></article>)}</div><button type="button" className="bp-button bp-button--primary" disabled={busy} onClick={onStart}>사업안 생성 및 법률 검토 시작</button></section>;
 }
 
 export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = 0 }) {
@@ -149,29 +166,29 @@ export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], n
   return <ProjectExecutionExperience title={running ? '사업안을 생성하고 검토하고 있습니다' : presentation.title} {...businessProposalExecutionPresentation(run, events)} elapsedSeconds={running ? elapsed : undefined} latestUpdate={running && Number.isFinite(latest) ? `마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : undefined} metric={running && reviewed != null ? `${reviewed}개의 사업안 후보를 검토했습니다.` : outcome} failureMessage="사업안 생성을 완료하지 못했습니다." needsInputMessage="사업안을 계속 검토하려면 추가 정보가 필요합니다." onDetail={(failed || running || needsInput) ? onDetail : undefined}>{presentation.restart && <button type="button" disabled={busy} onClick={onRestart}>{presentation.action}</button>}</ProjectExecutionExperience>;
 }
 
-function ProposalGallery({ concepts, selectedId, compared, requests, drafts, busy, onDraft, onRespond, onRetry, onExplore, onCompare, onOpenComparison, onSelect }) {
+function ProposalGallery({ concepts, selectedId, compared, requests, drafts, busy, onDraft, onRespond, onRetry, onExplore, onCompare, onOpenComparison, onSelect, selectingConceptId }) {
   const comparedConcepts = concepts.filter((concept) => compared.includes(concept.conceptId));
   return <section className="proposal-gallery" aria-labelledby="proposal-gallery-title">
-    <header className="comparison-picker"><div><span>비교할 사업안</span><strong>{compared.length} / 2</strong><p>{compared.length === 0 ? '비슷한 사업안 두 개를 선택해 직접 비교할 수 있습니다.' : compared.length === 1 ? `${comparedConcepts[0]?.conceptName} · 한 개 더 선택하세요.` : `${comparedConcepts[0]?.conceptName} ↔ ${comparedConcepts[1]?.conceptName}`}</p></div>{canOpenComparison(compared) && <button type="button" onClick={onOpenComparison}>두 사업안 비교</button>}</header>
+    <header className="comparison-picker"><div><span>비교</span><strong>{compared.length}/2</strong><div className="comparison-picker__selection">{comparedConcepts.map((concept) => <em key={concept.conceptId}>{concept.conceptName}</em>)}<p>{compared.length === 0 ? '두 사업안을 골라 직접 비교할 수 있습니다.' : compared.length === 1 ? '한 개 더 선택하세요.' : '선택한 두 사업안이 준비됐습니다.'}</p></div></div>{canOpenComparison(compared) && <button type="button" className="bp-button bp-button--secondary" onClick={onOpenComparison}>두 사업안 비교<AppIcon name="arrowRight" size={15} /></button>}</header>
     <h2 id="proposal-gallery-title" className="sr-only">생성된 사업안</h2>
-    <div className="proposal-grid">{concepts.map((concept) => <ProposalCard key={concept.conceptId} concept={concept} allConcepts={concepts} selected={concept.conceptId === selectedId} compared={compared.includes(concept.conceptId)} compareDisabled={!compared.includes(concept.conceptId) && compared.length >= 2} requests={candidateRequests(requests, concept.candidateId)} drafts={drafts} onDraft={onDraft} onRespond={onRespond} onRetry={onRetry} onExplore={onExplore} onCompare={() => onCompare(concept.conceptId)} onSelect={() => onSelect(concept.conceptId)} busy={busy} />)}</div>
+    <div className="proposal-grid">{concepts.map((concept) => <ProposalCard key={concept.conceptId} concept={concept} allConcepts={concepts} selected={concept.conceptId === selectedId} selecting={concept.conceptId === selectingConceptId} compared={compared.includes(concept.conceptId)} compareDisabled={!compared.includes(concept.conceptId) && compared.length >= 2} requests={candidateRequests(requests, concept.candidateId)} drafts={drafts} onDraft={onDraft} onRespond={onRespond} onRetry={onRetry} onExplore={onExplore} onCompare={() => onCompare(concept.conceptId)} onSelect={() => onSelect(concept.conceptId)} busy={busy} />)}</div>
   </section>;
 }
 
-function ProposalCard({ concept, allConcepts, selected, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onExplore, onCompare, onSelect, busy }) {
+function ProposalCard({ concept, allConcepts, selected, selecting, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onExplore, onCompare, onSelect, busy }) {
   const preview = buildProposalPreview(concept, allConcepts);
-  return <article className="proposal-card" data-selected={selected}><header><div><h3>{concept.conceptName}</h3><span>{selected ? '현재 선택' : '선택 가능'}</span></div><label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 추가</label></header><p className="proposal-card__definition">{preview.definition}</p><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl><p className="proposal-card__legal"><AppIcon name="check" size={15} /> 법률·규제 사전 검토 완료</p>{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}<button type="button" className="proposal-card__select" disabled={busy || selected} onClick={onSelect}>{selected ? '선택됨' : '이 사업안 선택'}<AppIcon name="arrowRight" size={16} /></button></article>;
+  return <article className="proposal-card" data-selected={selected}><header><div><h3>{concept.conceptName}</h3><span>{selected && <AppIcon name="check" size={13} />}{selected ? '현재 선택' : '선택 가능'}</span></div><label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 추가</label></header><p className="proposal-card__definition">{preview.definition}</p><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl><p className="proposal-card__legal"><AppIcon name="check" size={15} /> 법률·규제 사전 검토 완료</p>{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}<button type="button" className="bp-button bp-button--primary proposal-card__select" disabled={busy || selected} onClick={onSelect}>{selecting ? <><span className="bp-button__spinner" aria-hidden="true" />선택 중...</> : selected ? <><AppIcon name="check" size={15} />선택됨</> : <>이 사업안 선택<AppIcon name="arrowRight" size={16} /></>}</button></article>;
 }
 
-function ComparisonFocus({ concepts, onBack, onSelect, busy }) {
-  if (!canOpenComparison(concepts.map((item) => item.conceptId))) return <section className="proposal-comparison"><button type="button" className="proposal-comparison__back" aria-label="사업안으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" /> 사업안으로 돌아가기</button><p>비교할 사업안 두 개를 먼저 선택해 주세요.</p></section>;
+function ComparisonFocus({ concepts, onBack, onSelect, busy, selectingConceptId }) {
+  if (!canOpenComparison(concepts.map((item) => item.conceptId))) return <section className="proposal-comparison"><button type="button" className="bp-button bp-button--tertiary proposal-comparison__back" aria-label="사업안으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" /> 사업안으로 돌아가기</button><p>비교할 사업안 두 개를 먼저 선택해 주세요.</p></section>;
   const rows = comparisonRows(concepts);
   const groups = detailedComparisonGroups(concepts);
-  return <section className="proposal-comparison"><button type="button" className="proposal-comparison__back" aria-label="사업안으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" /> 사업안으로 돌아가기</button><ComparisonMatrix concepts={concepts} rows={rows} onSelect={onSelect} busy={busy} /> <div className="proposal-comparison__details"><h3>세부 내용 보기</h3>{groups.map((group) => <Disclosure key={group.title} title={group.title}><ComparisonMatrix concepts={concepts} rows={group.rows} compact /></Disclosure>)}</div></section>;
+  return <section className="proposal-comparison"><button type="button" className="bp-button bp-button--tertiary proposal-comparison__back" aria-label="사업안으로 돌아가기" onClick={onBack}><AppIcon name="chevronLeft" /> 사업안으로 돌아가기</button><ComparisonMatrix concepts={concepts} rows={rows} onSelect={onSelect} busy={busy} selectingConceptId={selectingConceptId} /> <div className="proposal-comparison__details"><h3>세부 내용 보기</h3>{groups.map((group) => <Disclosure key={group.title} title={group.title}><ComparisonMatrix concepts={concepts} rows={group.rows} compact /></Disclosure>)}</div></section>;
 }
 
-function ComparisonMatrix({ concepts, rows, onSelect, busy, compact = false }) {
-  return <div className={`proposal-comparison__matrix${compact ? ' is-compact' : ''}`}><div className="proposal-comparison__corner">비교 항목</div>{concepts.map((concept) => <header key={concept.conceptId}><strong>{concept.conceptName}</strong>{!compact && <button type="button" disabled={busy} onClick={() => onSelect(concept.conceptId)}>이 사업안 선택</button>}</header>)}{rows.flatMap((row) => [<strong className="proposal-comparison__label" key={`${row.label}-label`}>{row.label}</strong>, ...row.values.map((value, index) => <p key={`${row.label}-${concepts[index].conceptId}`}><span>{concepts[index].conceptName}</span>{value}</p>)])}</div>;
+function ComparisonMatrix({ concepts, rows, onSelect, busy, selectingConceptId, compact = false }) {
+  return <div className={`proposal-comparison__matrix${compact ? ' is-compact' : ''}`}><div className="proposal-comparison__corner">비교 항목</div>{concepts.map((concept) => <header key={concept.conceptId}><strong>{concept.conceptName}</strong>{!compact && <button type="button" className="bp-button bp-button--primary" disabled={busy} onClick={() => onSelect(concept.conceptId)}>{selectingConceptId === concept.conceptId ? '선택 중...' : '이 사업안 선택'}</button>}</header>)}{rows.flatMap((row) => [<strong className="proposal-comparison__label" key={`${row.label}-label`}>{row.label}</strong>, ...row.values.map((value, index) => <p key={`${row.label}-${concepts[index].conceptId}`}><span>{concepts[index].conceptName}</span>{value}</p>)])}</div>;
 }
 
 function DecisionProgress({ stage }) {
@@ -182,25 +199,27 @@ function DecisionProgress({ stage }) {
 
 function SelectedSummary({ concept, canChange, onShow }) {
   const preview = buildProposalPreview(concept, [concept]);
-  return <section className="selected-proposal-summary"><div><span><AppIcon name="check" size={16} /> 사업안 선택 완료</span><h2>{concept?.conceptName ?? '선택한 사업안'}</h2><p>{preview.definition}</p></div><div><Disclosure title="선택한 사업안 보기"><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl></Disclosure>{canChange && <button type="button" onClick={onShow}>선택 변경</button>}</div></section>;
+  return <section className="selected-proposal-summary"><div><span><AppIcon name="check" size={16} /> 선택한 사업안</span><h2>{concept?.conceptName ?? '선택한 사업안'}</h2><p>{preview.definition}</p></div><div><Disclosure className="disclosure--tertiary" title="선택한 사업안 보기"><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl></Disclosure>{canChange && <button type="button" className="bp-button bp-button--secondary" onClick={onShow}>선택 변경</button>}</div></section>;
 }
 
 function BusinessBasis({ portfolio, hypothesisMap, edits, setEdits }) {
   const disabled = portfolio.busy || Boolean(portfolio.selection.activeTaskRunId);
   const field = (type) => <HypothesisField key={type} type={type} value={hypothesisMap[type]} edit={edits[type]} onEdit={(next) => setEdits((current) => ({ ...current, [type]: next }))} onAlternative={() => portfolio.alternative(type)} disabled={disabled} />;
-  return <section className="business-basis"><header><div><p>사업 기준 확인</p><h2>시장 분석에 사용할 기준값</h2><span>선택한 사업안을 바탕으로 다음 시장 분석에 사용할 기준을 정리했습니다. 실제 계획과 다른 값은 수정해 주세요.</span></div><strong>{portfolio.selection.activeTaskRunId ? '처리 중' : `${portfolio.selection.hypothesisConfirmedCount}/7 확인 완료`}</strong></header><section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p role="status">변경한 기준값의 법률·규제 영향을 확인하고 있습니다.</p>}<div className="business-basis__actions"><button type="button" disabled={disabled} onClick={() => portfolio.confirm(buildHypothesisChanges(portfolio.hypotheses, edits))}>기준값 확인 완료</button>{portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}</div></section>;
+  return <section className="business-basis"><header><div><p>사업 기준 확인</p><h2>시장 분석에 사용할 기준값</h2><span>선택한 사업안을 바탕으로 정리했습니다. 실제 계획과 다른 값만 수정해 주세요.</span></div><strong>{portfolio.selection.activeTaskRunId ? '처리 중' : `${portfolio.selection.hypothesisConfirmedCount}/7 확인 완료`}</strong></header><section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p role="status">변경한 기준값의 법률·규제 영향을 확인하고 있습니다.</p>}<div className="business-basis__actions"><button type="button" className="bp-button bp-button--primary" disabled={disabled} onClick={() => portfolio.confirm(buildHypothesisChanges(portfolio.hypotheses, edits))}>기준값 확인 완료</button>{portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}</div></section>;
 }
 
 export function HypothesisField({ type, value, edit, onEdit, onAlternative, disabled }) {
+  const [editing, setEditing] = useState(false);
   const locked = value?.locked;
   const source = value?.finalValue ?? value?.proposedValue;
   const current = edit ?? source;
   const updateObject = (field, next) => onEdit({ ...(typeof current === 'object' && current ? current : {}), [field]: next });
   let editor;
   if (type === 'PRE_MARKET_SOM_SHARE') editor = <div className="hypothesis-structured hypothesis-structured--share"><label><span>목표 점유율</span><span className="input-with-suffix"><input aria-label="목표 점유율" type="number" min="0.01" step="0.01" disabled={locked || disabled} value={current?.targetSharePercent ?? ''} onChange={(event) => updateObject('targetSharePercent', Number(event.target.value))} /><i>%</i></span></label><label><span>목표 기간</span><span className="input-with-suffix"><input aria-label="목표 기간" type="number" min="1" step="1" disabled={locked || disabled} value={current?.horizonYears ?? ''} onChange={(event) => updateObject('horizonYears', Number(event.target.value))} /><i>년</i></span></label><label className="is-wide"><span>가정 근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
-  else if (type === 'PRE_MARKET_SOM') editor = <div className="hypothesis-structured hypothesis-structured--som"><label><span>목표 규모</span><input aria-label="초기 목표 시장 규모" type="number" min="0" disabled={locked || disabled} value={current?.amount ?? ''} onChange={(event) => updateObject('amount', Number(event.target.value))} /></label><label><span>통화</span><input aria-label="통화" disabled={locked || disabled} value={current?.currency ?? ''} onChange={(event) => updateObject('currency', event.target.value)} /></label><label><span>기간</span><input aria-label="시장 규모 기간" disabled={locked || disabled} value={current?.period ?? ''} onChange={(event) => updateObject('period', event.target.value)} /></label><label className="is-wide"><span>계산 기준</span><textarea disabled={locked || disabled} value={current?.calculationBasis ?? ''} onChange={(event) => updateObject('calculationBasis', event.target.value)} /></label><label className="is-wide"><span>근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
+  else if (type === 'PRE_MARKET_SOM') editor = <div className="hypothesis-structured hypothesis-structured--som"><label><span>목표 규모</span><input aria-label="초기 목표 시장 규모" type="number" min="0" disabled={locked || disabled} value={current?.amount ?? ''} onChange={(event) => updateObject('amount', Number(event.target.value))} /></label><label><span>통화</span><select aria-label="통화" disabled={locked || disabled} value={current?.currency ?? 'KRW'} onChange={(event) => updateObject('currency', event.target.value)}>{!["KRW", "USD", "EUR", "JPY"].includes(current?.currency) && current?.currency && <option value={current.currency}>{current.currency}</option>}<option value="KRW">KRW</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option></select></label><label><span>기준 기간</span><input aria-label="시장 규모 기간" disabled={locked || disabled} value={current?.period ?? ''} onChange={(event) => updateObject('period', event.target.value)} /></label><label className="is-wide"><span>계산 기준</span><textarea disabled={locked || disabled} value={current?.calculationBasis ?? ''} onChange={(event) => updateObject('calculationBasis', event.target.value)} /></label><label className="is-wide"><span>근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
   else editor = <textarea aria-label={HYPOTHESIS_LABELS[type]} disabled={locked || disabled} value={edit ?? hypothesisValueText(source)} onChange={(event) => onEdit(event.target.value)} />;
-  return <article className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{hypothesisDecisionLabel(value)}</span></header>{MARKET_TARGET_TYPES.includes(type) && <p className="hypothesis-value-preview">{hypothesisDisplay(type, current)}</p>}{editor}{!locked && <button type="button" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</article>;
+  const display = hypothesisDisplay(type, current) || '값을 준비하고 있습니다.';
+  return <article className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`} data-editing={editing}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{hypothesisDecisionLabel(value)}</span></header><div className="hypothesis-field__read"><small>현재 기준값</small><strong>{display}</strong></div>{!locked && !editing && <button type="button" className="bp-button bp-button--tertiary" disabled={disabled || !value} onClick={() => setEditing(true)}>수정<AppIcon name="chevronRight" size={15} /></button>}{editing && <div className="hypothesis-field__editor">{editor}<div><button type="button" className="bp-button bp-button--tertiary" onClick={() => setEditing(false)}>편집 닫기</button>{!locked && <button type="button" className="bp-button bp-button--secondary" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</div></div>}</article>;
 }
 
 function BasisSummary({ hypotheses }) {
@@ -209,11 +228,11 @@ function BasisSummary({ hypotheses }) {
 }
 
 function LegalWorkspace({ portfolio }) {
-  return <section className="legal-workspace"><header><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>선택한 사업안과 확정한 기준값을 바탕으로 사업을 진행할 때 확인해야 할 법률·규제 사항을 정리했습니다.</span></header>{portfolio.report ? <LegalReport report={portfolio.report} /> : <p role="status">법률·규제 검토 결과를 준비하고 있습니다.</p>}<div className="legal-workspace__actions">{portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}{portfolio.selection.nextAction === 'REVIEW_LEGAL_REPORT' && <button type="button" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>법률·규제 결과 확인 완료</button>}{portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' && <button type="button" disabled={portfolio.busy} onClick={portfolio.finalizeMarketSeed}>시장 분석 준비 완료하기</button>}</div></section>;
+  return <section className="legal-workspace"><header><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>사업을 진행할 때 확인해야 할 법률·규제 사항을 정리했습니다.</span></header>{portfolio.report ? <LegalReport report={portfolio.report} /> : <p role="status">법률·규제 검토 결과를 준비하고 있습니다.</p>}<div className="legal-workspace__actions">{portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}{portfolio.selection.nextAction === 'REVIEW_LEGAL_REPORT' && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>법률·규제 결과 확인 완료</button>}{portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeMarketSeed}>시장 분석 준비 완료하기</button>}</div></section>;
 }
 
 function LegalSummaryCompleted() { return <section className="legal-summary-completed"><AppIcon name="check" size={16} /><div><strong>법률·규제 결과 확인 완료</strong><span>관련 법률·규제와 주의사항을 확인했습니다.</span></div></section>; }
-function MarketReady({ projectId }) { return <section className="business-proposal__ready"><div><strong>시장 분석을 시작할 준비가 되었습니다.</strong><span>선택한 사업안, 확인한 기준값, 법률·규제 결과를 시장 분석 입력으로 저장했습니다.</span></div><Link to={projectRoutes.market(projectId)}>시장 분석 시작하기 <AppIcon name="arrowRight" size={16} /></Link></section>; }
+function MarketReady({ projectId }) { return <section className="business-proposal__ready"><div><strong>시장 분석을 시작할 준비가 되었습니다.</strong><span>선택한 사업안과 확인한 기준값을 저장했습니다.</span></div><Link className="bp-button bp-button--primary" to={projectRoutes.market(projectId)}>시장 분석 시작하기 <AppIcon name="arrowRight" size={16} /></Link></section>; }
 
 export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, onExplore, busy }) {
   if (request.status === 'ANSWERED' && request.nextAction === 'RETRY_CONTINUATION') return <section className="candidate-input"><strong>제출한 정보의 반영을 완료하지 못했습니다.</strong><p>같은 정보를 다시 입력하지 않고 반영 작업만 다시 시도합니다.</p><button type="button" disabled={busy} onClick={onRetry}>추가 사업정보 반영 다시 시도</button></section>;
@@ -233,7 +252,7 @@ function Disclosure({ title, children, className = '' }) {
   const [open, setOpen] = useState(false);
   const reactId = useId();
   const id = `disclosure-${String(title).replace(/[^a-zA-Z0-9가-힣]+/g, '-')}-${reactId.replace(/[^a-zA-Z0-9]/g, '')}`;
-  return <section className={`disclosure ${className}`}><button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((value) => !value)}><span>{title}</span><AppIcon name={open ? 'chevronUp' : 'chevronDown'} size={17} /></button><div id={id} hidden={!open}>{children}</div></section>;
+  return <section className={`disclosure ${className}`}><button type="button" className="bp-button bp-button--tertiary" aria-expanded={open} aria-controls={id} onClick={() => setOpen((value) => !value)}><span>{title}</span><AppIcon name={open ? 'chevronUp' : 'chevronDown'} size={17} /></button><div id={id} hidden={!open}>{children}</div></section>;
 }
 
 function EvidenceSection({ values }) {

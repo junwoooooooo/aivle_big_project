@@ -158,7 +158,7 @@ export function buildProposalPreview(concept, allConcepts = []) {
   }
   return {
     definition: displayValue(candidate.conceptDefinition ?? concept?.summary),
-    highlights: chosen.slice(0, 4).map(([key, label]) => ({ key, label, value: displayValue(candidate[key]) })),
+    highlights: chosen.slice(0, 3).map(([key, label]) => ({ key, label, value: displayValue(candidate[key]) })),
   };
 }
 

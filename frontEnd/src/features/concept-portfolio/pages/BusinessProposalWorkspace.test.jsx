@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import BusinessProposalWorkspace, { CandidateInput, HypothesisField, LegalReport, PortfolioStatus } from './BusinessProposalWorkspace.jsx';
@@ -64,9 +64,11 @@ describe('CandidateInput', () => {
 describe('structured hypothesis fields', () => {
   it('renders SOM as typed controls rather than raw JSON', () => {
     const view = render(<HypothesisField type="PRE_MARKET_SOM" value={{ proposedValue: { amount: 240000000, currency: 'KRW', period: '3년', calculationBasis: '시장 × 점유율', assumptions: ['초기 지역'] }, decisionStatus: 'PROPOSED' }} onEdit={vi.fn()} onAlternative={vi.fn()} disabled={false} />);
+    expect(view.container.textContent).toContain('240,000,000 KRW · 3년');
+    expect(screen.queryByDisplayValue('240000000')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /수정/ }));
     expect(screen.getByDisplayValue('240000000')).toBeInTheDocument();
     expect(screen.getByDisplayValue('KRW')).toBeInTheDocument();
-    expect(view.container.textContent).toContain('240,000,000 KRW · 3년');
     expect(view.container.textContent).not.toContain('{"amount"');
   });
 });
@@ -128,7 +130,7 @@ describe('BusinessProposalWorkspace', () => {
       hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '서울', decisionStatus: 'PROPOSED' }],
     }));
     renderWorkspace();
-    expect(screen.getByText('사업안 선택 완료')).toBeInTheDocument();
+    expect(screen.getByText('선택한 사업안')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: '생성된 사업안' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '선택 변경' })).toBeInTheDocument();
@@ -147,9 +149,16 @@ describe('BusinessProposalWorkspace', () => {
     expect(document.body.textContent).not.toMatch(/7개 검증 가정|시장 점유 가정|초기 확보 시장 규모|제안값/);
     const css = readFileSync('src/features/concept-portfolio/styles/business-proposal.css', 'utf8');
     expect(css).toContain('grid-template-columns: minmax(9rem, 10rem) repeat(2, minmax(0, 1fr))');
+    expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 27.5rem))');
+    expect(css).toContain('width: min(100%, 80rem)');
+    expect(css).toContain('.hypothesis-field__editor');
+    expect(css).toContain('.bp-button--primary');
+    expect(css).toContain('min-height: 2.75rem');
+    expect(css).toContain('-webkit-line-clamp: 6');
     expect(css).toContain('@media (max-width: 25rem)');
     expect(css).toContain('max-width: 100%');
     expect(css).not.toContain('min-width: max-content');
+    expect(css).not.toContain('repeat(auto-fit');
   });
   it('시장 준비 상태에서는 이전 단계를 요약하고 실제 시장 분석 CTA를 표시한다', () => {
     useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'READY_FOR_MARKET', hypothesisConfirmedCount: 7 } }));
@@ -157,6 +166,78 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.getByText('사업 기준값 확인 완료')).toBeInTheDocument();
     expect(screen.getByText('법률·규제 결과 확인 완료')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /시장 분석 시작하기/ })).toBeInTheDocument();
+  });
+
+  it('같은 selectionId에서 conceptId가 바뀌어도 gallery를 접고 새 기준 단계로 전환한다', async () => {
+    const select = vi.fn(() => Promise.resolve());
+    let state = base({
+      select,
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A', summary: 'A 요약' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B', summary: 'B 요약' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '서울', decisionStatus: 'PROPOSED' }],
+    });
+    useConceptPortfolio.mockImplementation(() => state);
+    const view = renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '선택 변경' }));
+    fireEvent.click(screen.getByRole('button', { name: /이 사업안 선택/ }));
+    expect(select).toHaveBeenCalledWith('c2');
+    state = { ...state, selection: { ...state.selection, conceptId: 'c2' }, hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '부산', decisionStatus: 'PROPOSED' }] };
+    view.rerender(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
+    await waitFor(() => expect(screen.queryByRole('region', { name: '생성된 사업안' })).not.toBeInTheDocument());
+    expect(screen.getByRole('heading', { name: 'B' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
+    expect(document.activeElement).toHaveClass('business-decision__current');
+  });
+
+  it('새 selectionId 재선택도 동일하게 gallery를 접는다', async () => {
+    const select = vi.fn(() => Promise.resolve());
+    let state = base({
+      select,
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+    });
+    useConceptPortfolio.mockImplementation(() => state);
+    const view = renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '선택 변경' }));
+    fireEvent.click(screen.getByRole('button', { name: /이 사업안 선택/ }));
+    state = { ...state, selection: { ...state.selection, selectionId: 18, conceptId: 'c2' } };
+    view.rerender(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
+    await waitFor(() => expect(screen.queryByRole('region', { name: '생성된 사업안' })).not.toBeInTheDocument());
+    expect(screen.getByRole('heading', { name: 'B' })).toBeInTheDocument();
+  });
+
+  it('재선택 API 실패 시 gallery와 기존 선택 authority를 유지한다', async () => {
+    const select = vi.fn(() => Promise.resolve());
+    let state = base({
+      select,
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+    });
+    useConceptPortfolio.mockImplementation(() => state);
+    const view = renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '선택 변경' }));
+    fireEvent.click(screen.getByRole('button', { name: /이 사업안 선택/ }));
+    state = { ...state, error: new Error('selection rejected') };
+    view.rerender(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
+    await waitFor(() => expect(screen.getByRole('region', { name: '생성된 사업안' })).toBeInTheDocument());
+    expect(screen.getByText('A').closest('.proposal-card')).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByText('B').closest('.proposal-card')).toHaveAttribute('data-selected', 'false');
+  });
+
+  it('재선택 요청 중에는 대상 카드에만 즉시 진행 상태를 표시한다', async () => {
+    let resolveSelect;
+    const select = vi.fn(() => new Promise((resolve) => { resolveSelect = resolve; }));
+    useConceptPortfolio.mockReturnValue(base({
+      select,
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+    }));
+    renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '선택 변경' }));
+    fireEvent.click(screen.getByRole('button', { name: /이 사업안 선택/ }));
+    expect(screen.getByRole('button', { name: '선택 중...' })).toBeInTheDocument();
+    resolveSelect();
+    await waitFor(() => expect(screen.getByRole('button', { name: /이 사업안 선택/ })).toBeInTheDocument());
   });
 });
 
