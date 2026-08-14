@@ -60,7 +60,8 @@ public class FinancialService {
         Long businessModelRunId = source.getSourceRun().getId();
         var existing = preparations.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(projectId, businessModelRunId);
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.createStandalone();
+        var initial = preparationFactory.createFromBusinessModel(latestFullMarket(projectId), mapper.readTree(source.getResultJson()),
+            currentConceptHypotheses(projectId), businessModelRunId);
         String id = UUID.randomUUID().toString();
         var saved = preparations.save(FinancialInputPreparation.createFromBusinessModel(id, projectId, businessModelRunId,
             snapshotHasher.hash(mapper.createObjectNode()),
@@ -211,6 +212,7 @@ public class FinancialService {
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING,
                 "AI 추천 작업이 완료된 뒤 Snapshot을 확정해 주세요.");
         }
+        ensureMarketReferences(preparation, projectId, ownerId);
         JsonNode fields = mapper.readTree(preparation.getFinancialFieldsJson());
         List<String> missing = readiness.missing(fields);
         if (!missing.isEmpty()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY,
@@ -355,10 +357,20 @@ public class FinancialService {
             .orElseGet(mapper::createObjectNode);
     }
 
-    private JsonNode marketResult(MarketResearchVersion businessModel) {
-        return businessModel.getSourceRun().getSourceRun() == null ? mapper.createObjectNode()
-            : marketResearchVersions.findBySourceRunIdAndDeletedAtIsNull(businessModel.getSourceRun().getSourceRun().getId())
-                .map(value -> mapper.readTree(value.getResultJson())).orElseGet(mapper::createObjectNode);
+    private JsonNode latestFullMarket(Long projectId) {
+        return marketResearchVersions.findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(projectId, MarketResearchRun.Kind.FULL)
+            .map(value -> mapper.readTree(value.getResultJson())).orElseGet(mapper::createObjectNode);
+    }
+
+    /** Backfills market evidence for preparations created before market-fit analysis was available. */
+    private void ensureMarketReferences(FinancialInputPreparation preparation, Long projectId, Long ownerId) {
+        ObjectNode references = (ObjectNode) mapper.readTree(preparation.getUpstreamReferencesJson()).deepCopy();
+        JsonNode market = latestFullMarket(projectId).path("market");
+        ObjectNode analysis = references.putObject("marketAnalysis");
+        analysis.set("tam", market.path("tam").deepCopy()); analysis.set("sam", market.path("sam").deepCopy());
+        analysis.set("growth", market.path("growth").deepCopy()); analysis.set("price", market.path("price").deepCopy());
+        analysis.put("label", "시장 규모·성장률·가격·계산 근거"); analysis.put("provenance", "marketResearchVersion.result.market");
+        preparation.updateUpstreamReferences(mapper.writeValueAsString(references), ownerId);
     }
 
     private boolean applyUpstreamDefaults(ObjectNode fields, ObjectNode references, JsonNode conceptHypotheses,

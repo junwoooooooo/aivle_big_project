@@ -58,6 +58,21 @@ export default function useFinance(projectId) {
     ...state, estimateEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
     importDocument: (file) => act('import', () => api.importDocument(projectId, file)),
+    importAndAnalyze: (file) => act('import-analyze', async () => {
+      await api.importDocument(projectId, file);
+      await api.finalize(projectId);
+      const analysis = await api.analyze(projectId);
+      setState((value) => ({ ...value, analysis }));
+      return analysis;
+    }),
+    importAnalyzeAndDownload: (file) => act('import-analyze', async () => {
+      await api.importDocument(projectId, file);
+      await api.finalize(projectId);
+      const analysis = await api.analyze(projectId);
+      const document = await api.analysisDocument(projectId);
+      setState((value) => ({ ...value, analysis }));
+      return { analysis, document };
+    }),
     downloadTemplate: () => act('template', () => api.template(projectId)),
     generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
     generateEstimates: (fieldKeys) => act('estimate-group', async () => Promise.all(

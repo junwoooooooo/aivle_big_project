@@ -12,6 +12,7 @@ const statementRows = [
 ];
 
 const reportKo = (text) => ({
+  'Base scenario is profitable over the selected period.': '기준 시나리오에서 분석 기간 동안 누적 영업이익이 흑자입니다.',
   'Base scenario remains loss-making over the selected period.': '기준 시나리오에서는 선택한 분석 기간 동안 누적 손실이 지속될 것으로 예측됩니다.',
   'P10/P50/P90 profit should be reviewed before funding decisions.': '자금 조달 전에는 보수·기준·낙관 범위(P10/P50/P90)의 수익 가능성을 함께 검토하세요.',
   'Validate price, volume and variable-cost assumptions with observed data.': '가격·판매량·변동비 가정을 실제 고객·판매 데이터로 검증하세요.',
@@ -30,11 +31,33 @@ const compactKrw = (value) => {
   return `${sign}${fmt(amount)}`;
 };
 
-function FinancialPerformanceChart({ rows = [] }) {
+const scenarioLabel = (code, label) => ({
+  CONSERVATIVE: '보수적', BASE: '기준', OPTIMISTIC: '낙관적',
+}[code] ?? ({ Conservative: '보수적', Base: '기준', Optimistic: '낙관적' }[label] ?? label));
+
+function MonteCarloSummary({ analysis }) {
+  const simulation = analysis?.monteCarlo;
+  if (!simulation) return null;
+  return <section className="finance-monte-carlo-summary"><div><p className="finance-monte-carlo-summary__eyebrow">불확실성 범위</p><h3>몬테카를로 결과를 이렇게 읽으세요</h3><p>가격·판매량·비용을 바꾸어 <b>{fmt(simulation.simulations)}회</b> 계산한 결과입니다. 수익이 모두 음수라면, 현재 가정에서는 손실 가능성이 높다는 뜻입니다.</p></div><div className="finance-monte-carlo-summary__values"><article><span>보수적 결과</span><strong>P10</strong><b>{fmt(simulation.profitP10)} KRW</b><small>수익이 낮게 나오는 경우를 기준으로 본 값</small></article><article className="finance-monte-carlo-summary__median"><span>기준 결과</span><strong>P50</strong><b>{fmt(simulation.profitP50)} KRW</b><small>계산 결과의 가운데에 해당하는 대표값</small></article><article><span>낙관적 결과</span><strong>P90</strong><b>{fmt(simulation.profitP90)} KRW</b><small>수익이 높게 나오는 경우를 기준으로 본 값</small></article></div></section>;
+}
+
+function SeparateFinanceCharts({ revenue, monthlyCash, cumulative }) {
+  const width = 900; const height = 238; const left = 58; const right = 26; const top = 26; const bottom = 34;
+  const x = (index) => left + index * (width - left - right) / Math.max(revenue.length - 1, 1);
+  const scale = (values) => { const rawMin = Math.min(0, ...values); const rawMax = Math.max(0, ...values); const range = rawMax - rawMin || 1; const min = rawMin - range * .12; const max = rawMax + range * .12; return { min, max, y: (value) => top + (max - value) * (height - top - bottom) / (max - min), zero: top + max * (height - top - bottom) / (max - min) }; };
+  const revenueScale = scale(revenue); const cashScale = scale(cumulative); const points = (values, chart) => values.map((value, index) => `${x(index)},${chart.y(value)}`).join(' ');
+  const ticks = [...new Set([0, Math.floor((revenue.length - 1) / 3), Math.floor((revenue.length - 1) * 2 / 3), revenue.length - 1])];
+  const payback = cumulative.findIndex((value) => value >= 0); const monthlyBep = monthlyCash.findIndex((value) => value >= 0);
+  const axis = (chart) => <><line x1={left} x2={width - right} y1={chart.y(chart.max)} y2={chart.y(chart.max)} className="finance-performance-chart__grid" /><line x1={left} x2={width - right} y1={chart.zero} y2={chart.zero} className="finance-performance-chart__zero" /><line x1={left} x2={width - right} y1={chart.y(chart.min)} y2={chart.y(chart.min)} className="finance-performance-chart__grid" /><text x={left - 9} y={chart.y(chart.max) + 4} textAnchor="end" className="finance-performance-chart__tick">{compactKrw(chart.max)}</text><text x={left - 9} y={chart.zero + 4} textAnchor="end" className="finance-performance-chart__tick">0</text><text x={left - 9} y={chart.y(chart.min) + 4} textAnchor="end" className="finance-performance-chart__tick">{compactKrw(chart.min)}</text></>;
+  return <div className="finance-chart-stack"><figure className="finance-performance-chart"><figcaption><strong>월별 매출 예측</strong><span>매달 발생하는 매출 규모와 성장 추세를 확인합니다.</span></figcaption><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="월별 매출 예측">{axis(revenueScale)}<polyline points={points(revenue, revenueScale)} fill="none" stroke="#245fc0" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" /><circle cx={x(revenue.length - 1)} cy={revenueScale.y(revenue.at(-1))} r="4" fill="#245fc0" />{ticks.map((index) => <text key={index} x={x(index)} y={height - 12} textAnchor={index === 0 ? 'start' : index === revenue.length - 1 ? 'end' : 'middle'} className="finance-performance-chart__tick">{index + 1}개월</text>)}</svg><small className="finance-performance-chart__guide">마지막 달 예상 매출: <b>{fmt(revenue.at(-1))} KRW</b></small></figure><figure className="finance-performance-chart"><figcaption><strong>누적 현금흐름 예측</strong><span>월별 영업이익이 누적되어 초기 투자금을 회수하는 흐름을 확인합니다.</span></figcaption><div className="finance-line-chart__status"><span><b>월 손익분기점</b>{monthlyBep >= 0 ? `${monthlyBep + 1}개월 차` : `${revenue.length}개월 안에 도달하지 못함`}</span><span><b>초기 투자금 회수</b>{payback >= 0 ? `${payback + 1}개월 차` : `${revenue.length}개월 안에 회수하지 못함`}</span><span><b>{revenue.length}개월 말 누적 현금흐름</b>{fmt(cumulative.at(-1))} KRW</span></div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="누적 현금흐름 예측">{axis(cashScale)}<polyline points={points(cumulative, cashScale)} fill="none" stroke="#16826c" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" /><circle cx={x(cumulative.length - 1)} cy={cashScale.y(cumulative.at(-1))} r="4" fill="#16826c" />{payback >= 0 && <><line x1={x(payback)} x2={x(payback)} y1={top} y2={height - bottom} stroke="#087f6b" strokeWidth="2" strokeDasharray="5 4" /><text x={Math.min(x(payback) + 5, width - right - 80)} y={top + 14} className="finance-performance-chart__event" fill="#087f6b">투자금 회수</text></>}{ticks.map((index) => <text key={index} x={x(index)} y={height - 12} textAnchor={index === 0 ? 'start' : index === revenue.length - 1 ? 'end' : 'middle'} className="finance-performance-chart__tick">{index + 1}개월</text>)}</svg><small className="finance-performance-chart__guide">0선을 넘으면 누적 현금흐름이 양수로 전환되어 초기 투자금 회수 흐름에 진입했음을 뜻합니다.</small></figure></div>;
+}
+
+function FinancialPerformanceChart({ rows = [], mode }) {
   const revenue = rows.map((row) => Number(row.revenue ?? 0));
   const monthlyCash = rows.map((row) => Number(row.operatingProfit ?? 0));
   const cumulative = rows.map((row) => Number(row.cumulativeCashFlow ?? 0));
   if (!revenue.length) return null;
+  if (mode === 'separate') return <SeparateFinanceCharts revenue={revenue} monthlyCash={monthlyCash} cumulative={cumulative} />;
   const width = 900; const height = 438; const left = 64; const right = 26; const top = 28; const panel = 82; const gap = 42;
   const chartWidth = width - left - right;
   const x = (index) => left + index * chartWidth / Math.max(revenue.length - 1, 1);
@@ -51,7 +74,7 @@ function FinancialPerformanceChart({ rows = [] }) {
 }
 
 function LineChart({ title, subtitle, rows = [], field, color }) {
-  if (field === 'revenue') return <FinancialPerformanceChart rows={rows} />;
+  if (field === 'revenue') return <FinancialPerformanceChart rows={rows} mode="separate" />;
   if (field === 'revenue') {
     const revenue = rows.map((row) => Number(row.revenue ?? 0));
     const monthlyCash = rows.map((row) => Number(row.operatingProfit ?? 0));
@@ -90,9 +113,9 @@ function LineChart({ title, subtitle, rows = [], field, color }) {
   return <figure className="finance-line-chart"><figcaption><strong>{title}</strong><span>{subtitle}</span></figcaption><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}><line x1={left} x2={width - right} y1={y(0)} y2={y(0)} className="finance-line-chart__zero" /><polyline points={values.map((v, i) => `${x(i)},${y(v)}`).join(' ')} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />{values.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="3" fill={color} />)}<text x={left} y={height - 12} className="finance-line-chart__axis">1개월</text><text x={width - right} y={height - 12} textAnchor="end" className="finance-line-chart__axis">{values.length}개월</text></svg></figure>;
 }
 
-function ScenarioComparisonChart({ scenarios = [] }) {
+function ScenarioComparisonChartLegacy({ scenarios = [] }) {
   const colors = ['#e05a47', '#245fc0', '#16826c'];
-  const series = scenarios.map((scenario, index) => ({ label: scenario.label, color: colors[index % colors.length], values: (scenario.monthlyCashFlow ?? []).map((row) => Number(row.cumulativeCashFlow ?? 0)) }));
+  const series = scenarios.map((scenario, index) => ({ label: scenarioLabel(scenario.code, scenario.label), color: colors[index % colors.length], values: (scenario.monthlyCashFlow ?? []).map((row) => Number(row.cumulativeCashFlow ?? 0)) }));
   const allValues = series.flatMap((item) => item.values); if (!allValues.length) return null;
   const width = 900; const height = 270; const left = 58; const right = 18; const top = 22; const bottom = 40;
   const min = Math.min(0, ...allValues); const max = Math.max(0, ...allValues); const range = max - min || 1; const months = Math.max(...series.map((item) => item.values.length));
@@ -100,7 +123,25 @@ function ScenarioComparisonChart({ scenarios = [] }) {
   return <figure className="finance-line-chart"><figcaption><strong>시나리오별 누적 현금흐름 예측 비교</strong><span>동일한 기간에 보수·기준·낙관 시나리오의 입력 가정으로 계산한 누적 현금흐름 예측입니다.</span></figcaption><div className="finance-line-chart__legend">{series.map((item) => <span key={item.label}><i style={{ background: item.color }} />{item.label} 시나리오</span>)}</div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="시나리오별 누적 현금흐름 예측 비교"><line x1={left} x2={width - right} y1={y(0)} y2={y(0)} className="finance-line-chart__zero" />{series.map((item) => <polyline key={item.label} points={item.values.map((value, index) => `${x(index)},${y(value)}`).join(' ')} fill="none" stroke={item.color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />)}<text x={left} y={height - 12} className="finance-line-chart__axis">1개월</text><text x={width - right} y={height - 12} textAnchor="end" className="finance-line-chart__axis">{months}개월</text></svg></figure>;
 }
 
-function Report({ analysis }) {
+function ScenarioComparisonChart({ scenarios = [] }) {
+  const palette = ['#df604d', '#245fc0', '#16826c'];
+  const series = scenarios.map((scenario, index) => ({
+    label: scenarioLabel(scenario.code, scenario.label), color: palette[index % palette.length],
+    breakEvenMonth: scenario.breakEvenMonth,
+    values: (scenario.monthlyCashFlow ?? []).map((row) => Number(row.cumulativeCashFlow ?? 0)),
+  })).filter((item) => item.values.length);
+  const allValues = series.flatMap((item) => item.values); if (!allValues.length) return null;
+  const width = 900; const height = 290; const left = 72; const right = 24; const top = 28; const bottom = 42;
+  const rawMin = Math.min(0, ...allValues); const rawMax = Math.max(0, ...allValues); const padding = (rawMax - rawMin || 1) * .1;
+  const min = rawMin - padding; const max = rawMax + padding; const months = Math.max(...series.map((item) => item.values.length));
+  const x = (index) => left + index * (width - left - right) / Math.max(months - 1, 1); const y = (value) => top + (max - value) * (height - top - bottom) / (max - min);
+  const tickValues = [max, (max + min) / 2, 0, min].filter((value, index, values) => index === values.findIndex((item) => Math.abs(item - value) < .01));
+  const base = series.find((item) => item.label === '기준') ?? series[0]; const breakEven = base.breakEvenMonth ? base.breakEvenMonth - 1 : -1;
+  return <figure className="finance-line-chart"><figcaption><strong>시나리오별 누적 현금흐름 예측 비교</strong><span>보수·기준·낙관 시나리오의 월별 누적 현금흐름을 비교합니다.</span></figcaption><div className="finance-line-chart__legend">{series.map((item) => <span key={item.label}><i style={{ background: item.color }} />{item.label} 시나리오</span>)}</div><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="시나리오별 누적 현금흐름 예측 비교">{tickValues.map((value) => <g key={value}><line x1={left} x2={width - right} y1={y(value)} y2={y(value)} className={Math.abs(value) < .01 ? 'finance-line-chart__zero' : 'finance-performance-chart__grid'} /><text x={left - 10} y={y(value) + 4} textAnchor="end" className="finance-line-chart__axis">{compactKrw(value)} KRW</text></g>)}{series.map((item) => <polyline key={item.label} points={item.values.map((value, index) => `${x(index)},${y(value)}`).join(' ')} fill="none" stroke={item.color} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />)}{breakEven >= 0 && <><line x1={x(breakEven)} x2={x(breakEven)} y1={top} y2={height - bottom} stroke="#b46100" strokeWidth="2" strokeDasharray="5 4" /><text x={Math.min(x(breakEven) + 5, width - right - 86)} y={top + 14} fill="#9a5200" className="finance-performance-chart__event">월 손익분기점</text></>}<text x={left} y={height - 12} className="finance-line-chart__axis">1개월</text><text x={width - right} y={height - 12} textAnchor="end" className="finance-line-chart__axis">{months}개월</text></svg></figure>;
+}
+
+function ReportBody({ analysis: originalAnalysis }) {
+  const analysis = originalAnalysis ? { ...originalAnalysis, stressScenarios: (originalAnalysis.stressScenarios ?? []).map((scenario) => ({ ...scenario, label: scenarioLabel(scenario.code, scenario.label) })) } : originalAnalysis;
   if (!analysis) return null;
   const annual = analysis.annualProjections ?? []; const cash = analysis.cashFlowChart ?? [];
   const base = analysis.calculation?.scenarios?.find((item) => item.code === 'BASE') ?? analysis.calculation?.scenarios?.[0];
@@ -114,9 +155,32 @@ function Report({ analysis }) {
   </section>;
 }
 
+function MarketFitSummary({ analysis }) {
+  const findings = (analysis?.report?.findings ?? []).map(reportKo);
+  const market = findings.filter((item) => /TAM|SAM|시장 성장률|연평균 매출 성장률|목표 매출이 SAM/.test(item));
+  if (!market.length) return <section className="finance-section"><h3>시장 규모 기반 타당성 검토</h3><p className="finance-note">시장조사 결과가 아직 연결되지 않았습니다. 시장분석을 완료한 뒤 재무분석을 다시 실행해 주세요.</p></section>;
+  return <section className="finance-section finance-market-fit"><h3>시장 규모 기반 타당성 검토</h3><p className="finance-note">TAM은 전체 시장, SAM은 실제 공략 가능한 시장입니다. 3년 차 목표 매출이 각 시장에서 차지하는 비중과 시장 성장률을 재무 목표와 비교합니다.</p><ul>{market.map((item) => <li key={item}>{item}</li>)}</ul></section>;
+}
+
+function Report({ analysis }) {
+  return <><MarketFitSummary analysis={analysis} /><ReportBody analysis={analysis} /></>;
+}
+
+function FinanceWorkflow({ projectId, finance, input, file, setFile, download }) {
+  const running = finance.busy === 'import-analyze';
+  const run = async () => {
+    const { document: reportBlob } = await finance.importAnalyzeAndDownload(file);
+    const url = URL.createObjectURL(reportBlob);
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'financial-analysis-report.docx'; anchor.click();
+    URL.revokeObjectURL(url);
+  };
+  return <main className="finance-page"><header className="finance-heading"><div><p>6. 재무 분석 (선택)</p><h1>파일 기반 재무 분석</h1><span>업로드한 재무 입력값만 계산에 사용합니다.</span></div></header>{finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}<section className="finance-section finance-upload-flow"><div><p className="finance-upload-flow__step">재무 입력 파일</p><h2>템플릿 작성 후 한 번에 분석하기</h2><p>템플릿을 내려받아 필요한 값을 작성한 뒤, 작성본을 업로드하면 입력 반영·확정·분석이 한 번에 진행됩니다.</p></div><div className="finance-upload-flow__actions"><button className="finance-save" type="button" disabled={running} onClick={() => void download()}>템플릿 다운로드 (.docx)</button><label className="finance-upload-flow__file"><span>{file?.name ?? '작성한 DOCX 파일 선택'}</span><input ref={input} type="file" accept=".docx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label><button type="button" disabled={!file || running} onClick={() => void run()}>{running ? '입력값 반영 및 분석 중…' : '재무 분석 실행 및 결과 DOCX 다운로드'}</button></div></section><MonteCarloSummary analysis={finance.analysis} /><Report analysis={finance.analysis} /><Link className="finance-next-step" to={`/app/projects/${projectId}/panel-survey`}>다음 - 패널 조사</Link></main>;
+}
+
 export default function FinancePage() {
   const { projectId } = useParams(); const finance = useFinance(projectId); const input = useRef(null); const [file, setFile] = useState(null);
   const download = async () => { const blob = await finance.downloadTemplate(); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'financial-input-template.docx'; anchor.click(); URL.revokeObjectURL(url); };
+  if (!finance.loading) return <FinanceWorkflow projectId={projectId} finance={finance} input={input} file={file} setFile={setFile} download={download} />;
   if (finance.loading) return <section className="finance-state">재무 입력을 불러오는 중입니다.</section>;
   return <main className="finance-page"><header className="finance-heading"><div><p>6. 재무 분석 (선택)</p><h1>파일 기반 재무 분석</h1><span>업로드한 재무 입력값만 계산에 사용합니다.</span></div></header>{finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}<section className="finance-section"><h2>1. 입력 템플릿 작성</h2><p>DOCX의 재무 입력값 표에 필요한 값을 직접 작성하세요.</p><button className="finance-save" type="button" onClick={() => void download()}>재무 입력 템플릿 다운로드 (.docx)</button></section><section className="finance-section"><h2>2. 작성한 파일 업로드</h2><input ref={input} type="file" accept=".docx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />{file && <p>{file.name}</p>}<button type="button" disabled={!file || finance.busy === 'import'} onClick={() => void finance.importDocument(file)}>파일 업로드 및 입력값 반영</button></section><section className="finance-section"><h2>3. 재무 분석 실행</h2><p>{finance.preparation?.readyToFinalize ? '입력값이 준비되었습니다.' : '필수 입력값을 작성한 뒤 업로드해 주세요.'}</p>{!finance.snapshot ? <button type="button" disabled={!finance.preparation?.readyToFinalize || finance.busy === 'finalize'} onClick={() => void finance.finalize()}>입력 스냅샷 확정</button> : <button type="button" disabled={finance.busy === 'analysis'} onClick={() => void finance.analyze()}>재무 그래프 및 보고서 생성</button>}</section><Report analysis={finance.analysis} /><Link className="finance-next-step" to={`/app/projects/${projectId}/panel-survey`}>다음 - 패널 조사</Link></main>;
 }

@@ -58,4 +58,53 @@ describe('useFinance', () => {
     await waitFor(() => expect(client.get.mock.calls.filter(([path]) => path.endsWith('/finance/preparation')).length)
       .toBeGreaterThan(before));
   });
+
+  it('imports, finalizes, and runs analysis from one action', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, inputSnapshotId: null, assistance: {} };
+    const client = {
+      get: vi.fn(async (path) => {
+        if (path.endsWith('/finance/preparation')) return { data: preparation };
+        if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+        throw { status: 404 };
+      }),
+      upload: vi.fn(async () => ({ data: preparation })),
+      post: vi.fn(async (path) => path.endsWith('/analysis') ? { data: { cashFlowChart: [] } } : { data: {} }),
+      patch: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => { await result.current.importAndAnalyze(new File(['docx'], 'finance.docx')); });
+
+    expect(client.upload).toHaveBeenCalledWith('/api/v3/projects/7/finance/preparation/import', expect.any(FormData), undefined);
+    expect(client.post.mock.calls.map(([path]) => path)).toEqual([
+      '/api/v3/projects/7/finance/input-snapshots/finalize',
+      '/api/v3/projects/7/finance/analysis',
+    ]);
+    expect(result.current.analysis).toEqual({ cashFlowChart: [] });
+  });
+
+  it('downloads the generated report after the one-click analysis workflow', async () => {
+    const preparation = { preparationId: 'prep-1', revision: 1, inputSnapshotId: null, assistance: {} };
+    const report = new Blob(['report']);
+    const client = {
+      get: vi.fn(async (path) => {
+        if (path.endsWith('/finance/preparation')) return { data: preparation };
+        if (path.endsWith('/finance/analysis/document')) return report;
+        if (path.endsWith('/module-runs')) return { data: { runs: [] } };
+        throw { status: 404 };
+      }), upload: vi.fn(async () => ({ data: preparation })),
+      post: vi.fn(async (path) => path.endsWith('/analysis') ? { data: { cashFlowChart: [] } } : { data: {} }), patch: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useFinance('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let output;
+    await act(async () => { output = await result.current.importAnalyzeAndDownload(new File(['docx'], 'finance.docx')); });
+
+    expect(output.document).toBe(report);
+    expect(client.get).toHaveBeenCalledWith('/api/v3/projects/7/finance/analysis/document', { responseType: 'blob' });
+  });
 });

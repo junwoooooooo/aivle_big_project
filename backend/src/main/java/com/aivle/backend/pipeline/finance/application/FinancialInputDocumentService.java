@@ -48,7 +48,7 @@ public class FinancialInputDocumentService {
                 .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(projectId, MarketResearchRun.Kind.FULL)
                 .map(v -> mapper.readTree(v.getResultJson()).path("market")).orElse(mapper.createObjectNode());
             XWPFTable referenceTable = doc.createTable(4, 2);
-            String[][] references = {{"시장 참고값 (계산에 사용하지 않음)", "최신 시장 분석 값"}, {"TAM", display(market.path("tam"))},
+            String[][] references = {{"시장 분석 참고값", "시장 적합성 분석에 사용"}, {"TAM", display(market.path("tam"))},
                 {"SAM", display(market.path("sam"))}, {"시장 성장률", display(market.path("growth"))}};
             for (int row = 0; row < references.length; row++) for (int column = 0; column < 2; column++)
                 referenceTable.getRow(row).getCell(column).setText(references[row][column]);
