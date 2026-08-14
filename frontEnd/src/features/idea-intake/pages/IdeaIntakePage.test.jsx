@@ -27,7 +27,7 @@ describe('Idea confirmation journey', () => {
         <Route path="/app/projects/:projectId/idea" element={<IdeaIntakePage />} />
       </Route>
     </Routes></MemoryRouter>);
-    expect(screen.getByText('1단계 · 아이디어 정리')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '사업 아이디어의 출발점을 알려주세요' })).toBeInTheDocument();
     expect(screen.getByText('지역 상점을 위한 예약 서비스')).toBeInTheDocument();
     expect(screen.getByText('예약 누락을 줄이는 문제')).toBeInTheDocument();
     expect(screen.getByText('안전 확인을 통과했습니다.')).toBeInTheDocument();

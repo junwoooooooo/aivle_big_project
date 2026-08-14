@@ -5,6 +5,7 @@ import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { jobEventMessage, useJobEvents } from '../../../shared/async-events/index.js';
 import { formatLocalTime } from '../../../shared/async-events/formatLocalTime.js';
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
+import { ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_LABELS, HYPOTHESIS_TYPES, buildHypothesisChanges,
   canOpenComparison, candidateFieldOptions, candidateRequests, createCandidateDraft,
@@ -72,11 +73,10 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   };
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
-  return <main className="business-proposal">
-    <header className="business-proposal__hero">
-      <div><p>사업안 검토</p><h1>검토된 사업안</h1><span>법률·규제 검토를 통과한 사업안은 1개부터 5개까지 모두 정상 결과입니다.</span></div>
-      <div className="business-proposal__mode"><button type="button" aria-pressed={mode === 'list'} onClick={() => setMode('list')}>사업안 목록</button><button type="button" aria-pressed={mode === 'compare'} onClick={() => setMode('compare')}>비교</button></div>
-    </header>
+  return <ProjectWorkspace as="main" mode="decide" className="business-proposal">
+    <ProjectStageHeader step={2} eyebrow="사업안 검토" title="실행할 사업안을 비교하고 선택하세요"
+      description="검토를 통과한 후보의 고객, 가치 제안, 차별점을 같은 기준으로 살펴봅니다."
+      actions={<div className="business-proposal__mode"><button type="button" aria-pressed={mode === 'list'} onClick={() => setMode('list')}>사업안 목록</button><button type="button" aria-pressed={mode === 'compare'} onClick={() => setMode('compare')}>비교</button></div>} />
 
     {portfolio.error && <section className="business-proposal__error" role="alert"><span>{getUserErrorMessage(portfolio.error)}</span><button type="button" onClick={portfolio.refresh}>다시 시도</button></section>}
     {!portfolio.run && <section className="business-proposal__empty"><h2>사업안 검토를 시작할 수 있습니다.</h2><p>확정된 아이디어를 바탕으로 최대 5개의 사업안을 검토합니다.</p><button type="button" disabled={portfolio.busy} onClick={portfolio.start}>사업안 검토 시작</button></section>}
@@ -111,7 +111,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
     </section>}
     {portfolio.report && <LegalReport report={portfolio.report} />}
     {portfolio.selection?.status === 'READY_FOR_MARKET' && <section className="business-proposal__ready"><strong>다음 분석 준비 완료</strong><span>확정된 사업안과 검증 가정, 최종 법률 결과를 시장 분석 입력으로 저장했습니다.</span><Link to={projectRoutes.market(projectId)}>시장 분석으로 이동</Link></section>}
-  </main>;
+  </ProjectWorkspace>;
 }
 
 export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = 0 }) {

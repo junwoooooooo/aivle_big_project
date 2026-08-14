@@ -97,8 +97,8 @@
 .job-center__group small { grid-column:1 / -1; overflow:hidden; color:var(--color-text-secondary); font-size:.64rem; text-overflow:ellipsis; white-space:nowrap; }
 .job-center__group p,.job-center__more { margin:.25rem .4rem; color:var(--color-text-secondary); font-size:.68rem; }
 .job-center__detail-button { width:100%; margin-top:.55rem; }
-.project-work-popover > .job-center--compact { box-sizing:border-box; display:grid; justify-self:stretch; align-self:stretch; width:100%; min-width:0; max-width:none; padding:0; border:0; }
-.job-center--compact > header,.job-center--compact .job-center__summary,.job-center--compact .job-center__groups,.job-center--compact .job-center__group,.job-center--compact .job-center__detail-button { box-sizing:border-box; width:100%; min-width:0; }
+.job-center--compact { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr); justify-content:stretch; justify-items:stretch; align-content:start; align-items:stretch; width:100%; min-width:0; max-width:none; padding:0; border:0; }
+.job-center--compact > header,.job-center--compact .job-center__summary,.job-center--compact .job-center__groups,.job-center--compact .job-center__group,.job-center--compact .job-center__group li,.job-center--compact .job-center__group li > button,.job-center--compact .job-center__detail-button { box-sizing:border-box; width:100%; min-width:0; }
 .job-center--compact > header > button { display:none; }
 
 .work-center-sheet__backdrop { position:fixed; z-index:200; inset:0; background:rgb(20 32 34 / .32); opacity:1; transition:opacity 180ms ease-out; }

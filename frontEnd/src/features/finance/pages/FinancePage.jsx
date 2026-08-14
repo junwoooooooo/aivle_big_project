@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
-import { ProjectSplitWorkspace } from '../../../shared/ui/index.js';
+import { ProjectSplitWorkspace, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import useFinance from '../hooks/useFinance.js';
 import {
   CAC_FIELDS, CONDITIONAL_FIELDS, FIXED_COST_FIELDS, INITIAL_INVESTMENT_FIELDS, REVENUE_MODELS,
@@ -54,15 +54,15 @@ function FinanceWorkspace({ projectId, finance }) {
   }), [fields, preparation.assistance]);
   const refreshContainer = () => void finance.refresh({ preserveView: true });
 
-  return <FinanceRefreshContext.Provider value={refreshContainer}><main className="finance-page">
-    <header className="finance-heading"><div><p>6. 재무 분석</p><h1>{locked ? '재무 분석 입력값이 확정되었습니다' : '재무 분석 입력값을 준비하세요'}</h1>
-      <span>최신 시장 분석과 수익 구조 결과를 이어받고, 부족한 값만 입력해 재무 분석에 사용할 내용을 저장합니다.</span></div>
-      <div className="finance-statuses" aria-label="Finance 상태">
+  return <FinanceRefreshContext.Provider value={refreshContainer}><ProjectWorkspace as="main" mode="compose" className="finance-page">
+    <ProjectStageHeader step={6} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
+      description="최신 시장 분석과 수익 구조를 바탕으로 핵심 비용·가격·매출 목표와 세부 가정을 정리합니다."
+      status={<div className="finance-statuses" aria-label="재무 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
         <strong className="finance-heading__status">입력 · {finance.snapshot ? '저장 완료' : '입력 중'}</strong>
         <strong className="finance-heading__status">분석 · {analysisStatus(finance.analysis)}</strong>
         {finance.error && <strong className="finance-heading__status" data-error="true">오류</strong>}
-      </div></header>
+      </div>} />
     {finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}
 
     <section className="finance-source" aria-labelledby="finance-source-title"><div><p>시장 분석·BM에서 가져옴</p>
@@ -178,7 +178,7 @@ function FinanceWorkspace({ projectId, finance }) {
     {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 트윈 패널 조사</p>
       <h2>재무 판단 다음으로 고객 선택 방향을 패널에서 확인하세요.</h2><span>확정 Concept의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.</span></div>
       <Link to={`/app/projects/${projectId}/twin-survey`}>다음 - 트윈 패널 조사</Link></section>}
-  </main></FinanceRefreshContext.Provider>;
+  </ProjectWorkspace></FinanceRefreshContext.Provider>;
 }
 
 function analysisStatus(analysis) {

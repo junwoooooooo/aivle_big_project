@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ProjectOptionalField, ProjectOptionalFields, ProjectSplitWorkspace } from './projectWorkspace.jsx';
+import { ProjectOptionalField, ProjectOptionalFields, ProjectSplitWorkspace, ProjectStageHeader, ProjectWorkspace, ProjectWorkspaceActions } from './projectWorkspace.jsx';
 
 describe('ProjectSplitWorkspace', () => {
   it('핵심 입력과 보완 입력을 구분된 영역으로 구성한다', () => {
@@ -9,6 +9,20 @@ describe('ProjectSplitWorkspace', () => {
 
     expect(container.querySelector('.project-split-workspace__primary')).toHaveTextContent('핵심 입력');
     expect(container.querySelector('.project-split-workspace__secondary')).toHaveTextContent('보완 입력');
+  });
+
+  it('주요 행동을 workspace와 같은 폭의 하단 영역에 배치한다', () => {
+    const { container } = render(<ProjectWorkspaceActions><button type="button">계속</button></ProjectWorkspaceActions>);
+    expect(container.querySelector('.project-workspace-actions')).toHaveTextContent('계속');
+  });
+
+  it('workspace mode와 단계 heading을 의미 구조로 노출한다', () => {
+    const { container } = render(<ProjectWorkspace as="main" mode="document"><ProjectStageHeader
+      step={8} eyebrow="최종 보고서" title="사업의 전체 흐름을 확인하세요" description="확정된 결과를 읽습니다." />
+    </ProjectWorkspace>);
+    expect(container.querySelector('main')).toHaveClass('project-workspace--document');
+    expect(screen.getByRole('heading', { name: '사업의 전체 흐름을 확인하세요' })).toBeInTheDocument();
+    expect(screen.getByLabelText('8단계')).toBeInTheDocument();
   });
 });
 

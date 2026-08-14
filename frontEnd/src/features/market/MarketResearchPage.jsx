@@ -5,7 +5,7 @@ import { createMarketApi } from './marketApi.js';
 import { marketRunFailureMessage } from './marketRuntime.js';
 import { projectRoutes } from '../../app/routing/projectRoutes.js';
 import { traceDetailForDisplay, useJobEvents } from '../../shared/async-events/index.js';
-import { Accordion, Alert, Badge, Button, Card, LoadingState } from '../../shared/ui';
+import { Accordion, Alert, Badge, Button, Card, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../shared/ui';
 import { GradeBadge, SourceLink } from './BmCanvas.jsx';
 import AssumptionLedger from './AssumptionLedger.jsx';
 import Emphasis from './emphasis.jsx';
@@ -62,14 +62,9 @@ export default function MarketResearchPage() {
   if (loading) return <LoadingState label="시장조사 결과를 불러오는 중" />;
 
   return (
-    <section className="market-page">
-      <div className="pipeline-page-heading">
-        <p>3. 시장분석·기획 확정</p>
-        <h2>시장조사 결과</h2>
-        {!result ? (
-          <span>공개 통계·공시·언론에서 관측된 것만 모은다.</span>
-        ) : null}
-      </div>
+    <ProjectWorkspace as="section" mode="analyze" className="market-page">
+      <ProjectStageHeader step={3} eyebrow="사업 검증" title="시장 상황과 경쟁 환경을 확인하세요"
+        description="공개 통계, 공시, 언론에서 확인된 근거를 시장 규모·경쟁·고객 관점으로 정리합니다." />
 
       <div className="market-page__actions">
         <Button onClick={trigger} disabled={busy || active}>
@@ -141,7 +136,7 @@ export default function MarketResearchPage() {
         <ResultBody result={result} activeId={focus.active} onJump={focus.jump} onNext={() =>
           navigate(projectRoutes.businessModel(projectId))} />
       )}
-    </section>
+    </ProjectWorkspace>
   );
 }
 

@@ -85,6 +85,7 @@ class CurrentIdeaBriefAdapter:
             fields=[{"fieldKey": item.fieldKey, "value": item.value,
                      "decisionState": item.decisionState} for item in seed.fields],
             attachmentFileIds=[],
+            attachmentDocuments=[],
             fieldMetadata=[{"fieldKey": key, "requiredForConcept": key in REQUIRED_SEED,
                             "regulatorySensitive": key in {"targetRegion", "revenueModel", "price", "channels"}}
                            for key in FieldKey.__args__],

@@ -126,7 +126,8 @@ export default function JobCenter({ projectId, onTerminal, onRetryJob, refreshKe
     if (sheet?.mounted) sheetRef.current?.querySelector('button')?.focus();
   }, [sheet?.mounted]);
 
-  const quick = <section id="project-task-center" className={`pipeline-task-center job-center${compact ? ' job-center--compact' : ''}`} aria-labelledby="task-center-title">
+  const rootClass = compact ? 'job-center job-center--compact' : 'pipeline-task-center job-center';
+  const quick = <section id="project-task-center" className={rootClass} aria-labelledby="task-center-title">
       <header><div><p>작업 센터</p><h2 id="task-center-title">프로젝트 작업</h2></div><button type="button" onClick={jobs.refresh}>새로고침</button></header>
       {jobs.loading && <p>작업 목록을 불러오고 있습니다.</p>}
       {jobs.error && <div role="alert"><span>{getUserErrorMessage(jobs.error)}</span><button type="button" onClick={jobs.refresh}>다시 시도</button></div>}

@@ -68,7 +68,8 @@ describe('compact Work Center', () => {
       recent: Array.from({ length: 20 }, (_, index) => job(`done-${index}`, 'COMPLETED')),
       selectedJobId: null, selectJob: vi.fn(), refresh: vi.fn(),
       events: { transport: 'SSE', error: null, reconnect: vi.fn(), events: [] } });
-    render(<MemoryRouter><JobCenter projectId="41" compact onOpenList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><JobCenter projectId="41" compact onOpenList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+    expect(container.querySelector('.job-center--compact')).not.toHaveClass('pipeline-task-center');
     expect(screen.getByText('+ 외 2건')).toBeInTheDocument();
     expect(screen.getByText('+ 외 1건')).toBeInTheDocument();
     expect(screen.getByText('+ 외 17건')).toBeInTheDocument();

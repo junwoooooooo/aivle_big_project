@@ -7,6 +7,7 @@ import {
   draftFromIdeaBrief,
   ideaIntakeDraftReducer,
   validateIdeaIntake,
+  validateIdeaReferenceFiles,
 } from './ideaIntakeModel.js';
 
 describe('V2 Market Seed 모델', () => {
@@ -45,5 +46,12 @@ describe('V2 Market Seed 모델', () => {
       value: '월 9,900원', source: 'USER_INPUT', decisionState: 'LOCKED', provenance: 'USER_INPUT',
     });
     expect(draft.interpretation.interpretedProblem).toBe('문제 해석');
+  });
+  it('참고 문서는 DOCX·TXT·MD만 허용하고 실제 업로드 ID를 요청에 넣는다', () => {
+    const draft = createIdeaIntakeDraft();
+    expect(validateIdeaReferenceFiles([new File(['note'], 'note.txt', { type: 'text/plain' })])).toBe('');
+    expect(validateIdeaReferenceFiles([new File(['image'], 'screen.png', { type: 'image/png' })]))
+      .toBe('DOCX, TXT, MD 파일만 추가할 수 있습니다.');
+    expect(createDerivePayload(draft, [17, 23]).attachmentFileIds).toEqual([17, 23]);
   });
 });

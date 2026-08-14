@@ -12,6 +12,7 @@ import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, l
   marketingFailureMessage, sourceSummary, toCreateRequest } from '../model/marketingContentModel.js';
 import { copyMarketingContent, downloadMarketingContent } from '../render/marketingRenderer.js';
 import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
+import { ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import '../styles/marketing-content.css';
 
 const STEP_ITEMS = [
@@ -178,24 +179,10 @@ export default function MarketingContentPage() {
   );
 
   return (
-    <div className="mk-page">
-      <header className="mk-page__header">
-        <div>
-          <p>마케팅 콘텐츠</p>
-          <h1>확정된 Concept를 실제 콘텐츠로</h1>
-          <span>
-            컨셉 확인부터 콘텐츠 생성과 결과 편집까지
-            단계별로 진행합니다.
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void hook.refresh()}
-        >
-          새로고침
-        </button>
-      </header>
+    <ProjectWorkspace mode="review" className="mk-page">
+      <ProjectStageHeader step={8} eyebrow="마케팅 전략" title="확정한 사업안을 고객에게 보여줄 콘텐츠로 만드세요"
+        description="컨셉 확인, 생성 설정, 결과 확인의 세 단계로 문구와 시각 표현을 완성합니다."
+        actions={<button type="button" onClick={() => void hook.refresh()}>새로고침</button>} />
 
       {hook.error && (
         <div
@@ -224,7 +211,7 @@ export default function MarketingContentPage() {
               없습니다.
             </h2>
             <span>
-              Concept 선택과 가설 결정을 완료하면
+              사업안 선택과 검증 조건 확인을 완료하면
               마케팅에 사용할 기획 자료가 자동으로 준비됩니다.
               Market Result나 Finalized Planning은 필요하지 않습니다.
             </span>
@@ -233,7 +220,7 @@ export default function MarketingContentPage() {
           <Link
             to={`/app/projects/${projectId}/concepts/compare`}
           >
-            Concept 결정으로 이동
+            사업안 선택으로 이동
           </Link>
         </section>
       )}
@@ -551,6 +538,6 @@ export default function MarketingContentPage() {
           )}
         </section>
       )}
-    </div>
+    </ProjectWorkspace>
   );
 }

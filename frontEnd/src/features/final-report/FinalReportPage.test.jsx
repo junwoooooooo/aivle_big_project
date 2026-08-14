@@ -30,7 +30,7 @@ describe('final report page', () => {
       readiness: [{ journeyId: 'planning', label: '사업 기획', status: 'IN_PROGRESS' }], missingSources: ['MARKET'] };
     const client = { get: vi.fn(async () => ({ data: notReady })), post: vi.fn(async () => ({ data: report })) };
     renderPage(client);
-    fireEvent.click(await screen.findByRole('button', { name: '최종 보고서 생성' }));
+    fireEvent.click(await screen.findByRole('button', { name: '최종 보고서 만들기' }));
     expect(await screen.findByText('최신 보고서')).toBeInTheDocument();
     expect(client.post).toHaveBeenCalledWith('/api/v3/projects/41/final-report/generate', {}, undefined);
   });

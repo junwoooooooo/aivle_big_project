@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
-import { Button, ErrorState, LoadingState } from '../../shared/ui/index.js';
+import { Button, ErrorState, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../shared/ui/index.js';
 import { createFinalReportApi } from './finalReportApi.js';
 import './final-report.css';
 
@@ -80,11 +80,14 @@ export default function FinalReportPage() {
   if (state.status === 'error') return <ErrorState title="최종 보고서를 불러오지 못했습니다" description={getUserErrorMessage(state.error)} onRetry={load} />;
   const view = state.view;
   const statusView = STATE_VIEW[view.state] ?? STATE_VIEW.NOT_READY;
-  return <div className="final-report-page">
-    <header className="final-report-toolbar"><div><p>최종 결과</p><h2>최종 보고서</h2><span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span></div><div>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></div></header>
+  return <ProjectWorkspace mode="document" className="final-report-page">
+    <ProjectStageHeader step={9} eyebrow="최종 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
+      description="확정된 프로젝트 자료만 사용하며, 준비되지 않은 내용은 추정하지 않습니다."
+      status={<span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span>}
+      actions={<>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></>} />
     {state.error && <p className="final-report-error" role="alert">{getUserErrorMessage(state.error)}</p>}
     {view.state === 'NOT_READY' && <section className="final-report-readiness" aria-labelledby="report-readiness-title"><h2 id="report-readiness-title">보고서 준비 상태</h2><p>현재 저장된 자료로 초안을 표시합니다. 없는 자료는 추정하지 않습니다.</p><ul>{view.readiness.map((item) => <li key={item.journeyId}><span>{item.label}</span><strong>{({ COMPLETED: '완료', IN_PROGRESS: '진행 중', READY: '시작 가능', NEEDS_INPUT: '입력 필요', ATTENTION: '확인 필요', STALE: '업데이트 필요', NOT_STARTED: '시작 전' })[item.status] ?? '상태 확인 필요'}</strong></li>)}</ul>{view.missingSources.length > 0 && <p>아직 준비되지 않은 자료가 있습니다.</p>}</section>}
     {view.state === 'STALE' && <p className="final-report-stale" role="status">보고서를 만든 뒤 프로젝트 자료가 변경되었습니다. 최신 내용으로 업데이트해 주세요.</p>}
     <ReportDocument view={view} />
-  </div>;
+  </ProjectWorkspace>;
 }

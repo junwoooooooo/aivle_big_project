@@ -42,7 +42,7 @@ export default function AnalysisReport({ analysis }) {
       {(result.cashFlowChart ?? []).map((row) => <tr key={row.month}><td>{row.month}</td><td>{formatNumber(row.revenue)}</td><td>{formatNumber(row.operatingProfit)}</td><td>{formatNumber(row.cumulativeCashFlow)}</td></tr>)}</tbody></table></div></details>
 
     <h3>3. 스트레스 테스트 및 Monte Carlo</h3>
-    <p>시뮬레이션 {result.monteCarlo?.simulations?.toLocaleString()}회 · Seed {result.monteCarlo?.seed} · P10 {formatNumber(result.monteCarlo?.profitP10)} KRW · P50 {formatNumber(result.monteCarlo?.profitP50)} KRW · P90 {formatNumber(result.monteCarlo?.profitP90)} KRW</p>
+    <p>시뮬레이션 {result.monteCarlo?.simulations?.toLocaleString()}회 · 재현 기준 {result.monteCarlo?.seed} · P10 {formatNumber(result.monteCarlo?.profitP10)} KRW · P50 {formatNumber(result.monteCarlo?.profitP50)} KRW · P90 {formatNumber(result.monteCarlo?.profitP90)} KRW</p>
     <div className="finance-source__grid">{(result.stressScenarios ?? []).map((row) => <article key={row.code}><span>{row.label}</span><strong>BEP {row.breakEvenMonth ?? '미도달'}개월</strong><small>영업이익 {formatNumber(row.totalOperatingProfit)} KRW · 필요자금 {formatNumber(row.requiredWorkingCapital)} KRW</small></article>)}</div>
     <FinancialLineChart title="시나리오별 누적 현금흐름" subtitle="보수·기준·낙관 시나리오의 현금 여력과 회수 시점을 비교합니다."
       series={(result.stressScenarios ?? []).map((row, index) => ({ name: row.label, color: ['#e05a47', '#245fc0', '#16826c'][index % 3], values: (row.monthlyCashFlow ?? []).map((point) => point.cumulativeCashFlow) }))} />

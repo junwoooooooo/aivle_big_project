@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { createMarketApi } from './marketApi.js';
 import { projectRoutes } from '../../app/routing/projectRoutes.js';
-import { Alert, Badge, Button, Card, Dialog, LoadingState } from '../../shared/ui';
+import { Alert, Badge, Button, Card, Dialog, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../shared/ui';
 import BmCanvas, { BmCellDetails } from './BmCanvas.jsx';
 import BmPlanForm from './BmPlanForm.jsx';
 import BmPlanPreview from './BmPlanPreview.jsx';
@@ -60,14 +60,9 @@ export default function BmCanvasPage() {
   const decision = bm ? DECISION_VIEW[bm.decision] : null;
 
   return (
-    <section className="market-page">
-      <div className="pipeline-page-heading">
-        <p>4. BM 분석</p>
-        <h2>비즈니스 모델 캔버스</h2>
-        {!result ? (
-          <span>시장조사에서 관측된 근거로만 채운다. 근거가 없는 칸은 비워 두고 사유를 적는다.</span>
-        ) : null}
-      </div>
+    <ProjectWorkspace as="section" mode="analyze" className="market-page">
+      <ProjectStageHeader step={4} eyebrow="수익 구조" title="사업이 고객에게 가치를 전달하고 수익을 만드는 방식을 확인하세요"
+        description="시장조사에서 확인된 근거로 캔버스를 구성하며, 근거가 없는 항목은 비워 둡니다." />
 
       <div className="market-page__actions">
         <Button variant="ghost" onClick={() => navigate(projectRoutes.market(projectId))}>
@@ -132,7 +127,7 @@ export default function BmCanvasPage() {
           {result.canvas ? <BmCellDetails cells={result.canvas} active={focus.active} /> : null}
         </>
       )}
-    </section>
+    </ProjectWorkspace>
   );
 }
 

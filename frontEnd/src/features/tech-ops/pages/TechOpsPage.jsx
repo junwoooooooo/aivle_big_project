@@ -4,7 +4,7 @@ import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
 import { DECISION_FIELDS, createFactDraft, decisionComplete, displayValue, factsFromDraft, proposalDraft, proposalValue } from '../model/techOpsModel.js';
 import useTechOps from '../hooks/useTechOps.js';
-import { FileDropzone, ProjectSplitWorkspace } from '../../../shared/ui/index.js';
+import { FileDropzone, ProjectSplitWorkspace, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import '../styles/tech-ops.css';
 
 const EVIDENCE_TYPES = [['QUOTE', '견적서'], ['BOM', 'BOM'], ['SUPPLIER', '공급사 정보'], ['SPECIFICATION', '사양서'], ['PILOT', '파일럿 자료']];
@@ -30,9 +30,9 @@ function TechOpsWorkspace({ techOps }) {
   const hasMissingProposal = DECISION_FIELDS.some(([key]) => preparation.proposalDecisions?.[key]?.proposalValue == null);
   const safe = async (action) => { try { await action(); } catch { /* hook가 안전한 오류 상태를 제공한다. */ } };
 
-  return <main className="tech-ops-page">
-    <header className="tech-ops-heading"><p>5. 기술·운영 분석</p><h1>상용화 입력을 확정하고 실행 가능한 자문을 만듭니다</h1>
-      <span>상위 단계에서 확정된 값과 current Market·BM 계보를 보존하고, 사용자 입력을 상용화 자문에 연결합니다.</span></header>
+  return <ProjectWorkspace as="main" mode="compose" className="tech-ops-page">
+    <ProjectStageHeader step={5} eyebrow="출시 준비" title="출시를 위한 기술·운영 조건을 정리하세요"
+      description="서비스 운영에 필요한 핵심 사실과 보완 조건을 확인하고, 실제 근거 자료를 연결합니다." />
     {techOps.error && <p className="tech-ops-error" role="alert">{getUserErrorMessage(techOps.error)}</p>}
     {['QUEUED', 'RUNNING'].includes(preparation.proposalGenerationStatus) && <p role="status">
       {Object.values(preparation.proposalDecisions ?? {}).some((item) => item.pendingAlternativeTaskRunId)
@@ -41,7 +41,7 @@ function TechOpsWorkspace({ techOps }) {
     {preparation.proposalGenerationStatus === 'FAILED' && <p role="alert">AI 제안 생성 실패 — 직접 입력하거나 다시 시도할 수 있습니다.
       {hasMissingProposal && <button type="button" disabled={techOps.busy === 'proposal-retry'} onClick={() => void safe(techOps.retryProposals)}>AI 제안 다시 시도</button>}</p>}
 
-    <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>Concept 초안 · 사용자 확인 필요</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
+    <section className="tech-ops-source" aria-labelledby="tech-source-title"><div><p>선택한 사업안 · 사용자 확인 필요</p><h2 id="tech-source-title">제품·서비스 사양</h2></div>
       <strong>{displayValue(product?.value?.summary)}</strong>
       <span>{displayValue(product?.value?.features)}</span>
       <small>저장 전에는 수정할 수 있습니다.</small></section>
@@ -77,7 +77,7 @@ function TechOpsWorkspace({ techOps }) {
             <button type="button" disabled={pending || item.proposalValue == null} onClick={() => void safe(() => techOps.decide(key, { action: 'REJECT_AND_REQUEST_ALTERNATIVE', value: null }))}>다른 제안 요청</button></div>}
         </article>;
       })}</div>
-      <p className="tech-ops-note">다른 제안 요청은 직전 값과 다른 새 proposal version을 생성합니다.</p>
+      <p className="tech-ops-note">다른 제안을 요청하면 현재 값은 유지되고 새 제안이 별도로 준비됩니다.</p>
     </section>
 
     <section className="tech-ops-section" aria-labelledby="tech-evidence-title"><div className="tech-ops-section__heading"><div><p>선택 사항</p><h2 id="tech-evidence-title">실제 근거 자료</h2></div><span>직접 등록한 자료</span></div>
@@ -103,7 +103,7 @@ function TechOpsWorkspace({ techOps }) {
       {techOps.run && <small>분석 준비 상태: {({ NOT_CONNECTED: '준비 중', READY: '시작 가능', QUEUED: '대기 중', RUNNING: '분석 중', COMPLETED: '완료', FAILED: '확인 필요' })[techOps.run.status] ?? '상태 확인 필요'}{techOps.run.stale ? ' · 업데이트 필요' : ''}</small>}
     </section>
     {techOps.snapshot && <CommercializationAdvisory techOps={techOps} safe={safe} />}
-  </main>;
+  </ProjectWorkspace>;
 }
 
 function CommercializationAdvisory({ techOps, safe }) {
@@ -113,7 +113,7 @@ function CommercializationAdvisory({ techOps, safe }) {
   return <section className="tech-ops-advisory" aria-labelledby="tech-ops-advisory-title">
     <div className="tech-ops-section__heading"><div><p>출시 준비</p><h2 id="tech-ops-advisory-title">기술·운영 자문</h2></div><span>{advisory?.stale ? '업데이트 필요' : ({ QUEUED: '대기 중', RUNNING: '분석 중', COMPLETED: '완료', FAILED: '확인 필요' })[advisory?.status] ?? '시작 전'}</span></div>
     <p className="tech-ops-note">저장한 프로젝트 입력과 최신 시장·수익 구조 결과를 사용합니다. 직접 등록한 자료와 외부 참고 자료는 구분해 표시합니다.</p>
-    {advisory?.stale && <p className="tech-ops-error" role="status">상위 current 소스가 바뀌었습니다. 새 자문을 실행해 주세요.</p>}
+    {advisory?.stale && <p className="tech-ops-error" role="status">앞 단계의 최신 자료가 바뀌었습니다. 새 자문을 실행해 주세요.</p>}
     {advisory?.status === 'FAILED' && <div className="tech-ops-error" role="alert"><p>AI 분석을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>{advisory.errorCode && <details><summary>기술 정보</summary><p>{advisory.errorCode}</p></details>}</div>}
     {active && <JobTimeline events={techOps.advisoryEvents.events} title="상용화 자문 진행 상황" />}
     <button className="tech-ops-primary" type="button" disabled={active || techOps.busy === 'advisory'} onClick={() => void safe(techOps.startAdvisory)}>{result ? '상용화 자문 다시 실행' : '상용화 자문 실행'}</button>

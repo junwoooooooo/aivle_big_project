@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 
-import { Button, LoadingState } from '../../../shared/ui/index.js';
+import { Button, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
 import IdeaBriefReview from '../components/IdeaBriefReview.jsx';
 import IdeaIntakeForm from '../components/IdeaIntakeForm.jsx';
@@ -63,13 +63,16 @@ export default function IdeaIntakePage() {
     }
   }, [intake.screenState, outlet.moduleState]);
 
-  return <section className="idea-intake-page" aria-labelledby="idea-intake-title">
-    <header className="idea-page-heading"><p>1단계 · 아이디어 정리</p><h2 id="idea-intake-title">아이디어 입력</h2><span>핵심 조건을 입력하고 안전 확인과 AI 해석을 검토합니다.</span></header>
+  return <ProjectWorkspace as="section" mode="compose" className="idea-intake-page" aria-labelledby="idea-intake-title">
+    <ProjectStageHeader step={1} eyebrow="사업 기획" titleId="idea-intake-title" title="사업 아이디어의 출발점을 알려주세요"
+      description="해결하려는 문제와 예상 사용자를 입력하면, 다음 검토에 필요한 사업안으로 정리합니다." />
     <div className="visually-hidden" aria-live="polite">현재 화면 상태: {intake.screenState}</div>
 
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.LOADING && <LoadingState label="아이디어 Draft를 준비하고 있습니다." />}
     {[IDEA_INTAKE_SCREEN_STATE.EMPTY, IDEA_INTAKE_SCREEN_STATE.READY].includes(intake.screenState) && (
-      <IdeaIntakeForm draft={intake.draft} errors={intake.errors} onChange={intake.updateIntake} onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} />
+      <IdeaIntakeForm draft={intake.draft} errors={intake.errors} attachmentError={intake.attachmentError}
+        uploadingAttachments={intake.uploadingAttachments} onChange={intake.updateIntake}
+        onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <><StatePanel
       title={intake.isReanalyzing ? '변경 내용을 다시 해석하고 있습니다.' : '안전 확인과 AI 해석을 진행하고 있습니다'}
@@ -101,5 +104,5 @@ export default function IdeaIntakePage() {
       projectId={projectId} onEdit={intake.editConfirmed}
       hasDownstream={['QUEUED', 'RUNNING', 'NEEDS_INPUT', 'COMPLETED', 'FAILED', 'STALE']
         .includes(outlet.modules?.find((module) => module.id === 'concepts')?.status)} />}
-  </section>;
+  </ProjectWorkspace>;
 }

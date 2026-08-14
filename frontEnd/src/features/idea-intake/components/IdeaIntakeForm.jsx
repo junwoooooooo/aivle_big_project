@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
-import { Button, FileDropzone, ProjectFormRow, ProjectFormSection, ProjectOptionalField, ProjectOptionalFields, ProjectSplitWorkspace } from '../../../shared/ui/index.js';
+import { Button, FileDropzone, ProjectFormRow, ProjectFormSection, ProjectOptionalField, ProjectOptionalFields, ProjectSplitWorkspace, ProjectWorkspaceActions } from '../../../shared/ui/index.js';
 
 import ErrorSummary from './ErrorSummary.jsx';
+import { IDEA_REFERENCE_ACCEPT } from '../model/ideaIntakeModel.js';
 
 const REQUIRED_FIELDS = Object.freeze([
   ['ideaOverview', '아이디어 개요', '어떤 제품이나 서비스를 생각하고 있는지 자유롭게 적어 주세요.'],
@@ -23,7 +24,7 @@ const OPTIONAL_FIELDS = Object.freeze([
   ['otherConstraint', '기타 제약', '그 밖에 반드시 지켜야 할 조건'],
 ]);
 
-export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange, onSubmit }) {
+export default function IdeaIntakeForm({ draft, errors, attachmentError, uploadingAttachments, onChange, onFilesChange, onSubmit }) {
   const firstError = OPTIONAL_FIELDS.find(([field]) => errors[field])?.[0] ?? null;
   const [openOptional, setOpenOptional] = useState(firstError);
   const optionalCompleted = OPTIONAL_FIELDS.filter(([field]) => draft.intake[field]?.trim()).length;
@@ -33,7 +34,7 @@ export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange,
     {REQUIRED_FIELDS.map(([field, label, description]) => <ProjectFormRow key={field} id={field} label={label} description={description} required error={errors[field]}>
       {(fieldProps) => <textarea rows="4" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
     </ProjectFormRow>)}
-    <div className="idea-attachment-field"><div><strong>참고 자료</strong><span>아이디어를 설명하는 자료가 있다면 추가해 주세요.</span></div><FileDropzone id="referenceFiles" label="파일 선택" description="파일을 끌어 놓거나 선택하세요" acceptLabel="여러 개의 참고 파일을 선택할 수 있습니다." files={draft.referenceFiles} multiple onFilesChange={onFilesChange} /></div>
+    <div className="idea-attachment-field"><div><strong>참고 자료</strong><span>문서 내용은 사업안 분석의 참고 근거로 사용합니다.</span></div><FileDropzone id="referenceFiles" label="파일 선택" description="DOCX, TXT, MD 파일을 끌어 놓거나 선택하세요" acceptLabel="파일당 최대 20MB · 최대 20개" accept={IDEA_REFERENCE_ACCEPT} files={draft.referenceFiles} multiple onFilesChange={onFilesChange} uploading={uploadingAttachments} error={attachmentError} /></div>
   </ProjectFormSection>;
   const secondary = <ProjectOptionalFields completed={optionalCompleted} total={OPTIONAL_FIELDS.length} description="입력한 조건은 이후 분석에서도 그대로 사용합니다.">
     {OPTIONAL_FIELDS.map(([field, label, description]) => <ProjectOptionalField key={field} id={field} label={label}
@@ -49,9 +50,9 @@ export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange,
       <ErrorSummary errors={errors} />
       <ProjectSplitWorkspace primary={primary} secondary={secondary} />
 
-      <div className="idea-primary-action">
-        <Button type="submit">입력 내용으로 사업안 만들기</Button>
-      </div>
+      <ProjectWorkspaceActions className="idea-primary-action">
+        <Button type="submit" disabled={uploadingAttachments}>입력 내용으로 사업안 만들기</Button>
+      </ProjectWorkspaceActions>
     </form>
   );
 }
