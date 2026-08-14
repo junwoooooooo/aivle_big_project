@@ -5,6 +5,7 @@ import static com.aivle.backend.pipeline.techops.api.TechOpsApiModels.*;
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.pipeline.techops.application.TechOpsService;
+import com.aivle.backend.pipeline.techops.application.TechOpsAdvisoryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TechOpsController {
     private final TechOpsService service;
+    private final TechOpsAdvisoryService advisory;
     private final CurrentUserProvider user;
 
     @PostMapping("/preparation/initialize")
@@ -72,5 +74,19 @@ public class TechOpsController {
     @GetMapping("/input-snapshots/current")
     public ApiResponse<SnapshotView> currentSnapshot(@PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(service.currentSnapshot(user.currentUserId(), projectId), request.getHeader("X-Request-Id"));
+    }
+
+    @PostMapping("/advisory-runs")
+    public ResponseEntity<ApiResponse<AdvisoryActionResponse>> startAdvisory(@PathVariable Long projectId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey, HttpServletRequest request) {
+        return ResponseEntity.accepted().body(ApiResponse.success(advisory.start(
+            user.currentUserId(), projectId, idempotencyKey, request.getHeader("X-Request-Id")),
+            request.getHeader("X-Request-Id")));
+    }
+
+    @GetMapping("/advisory/current")
+    public ApiResponse<AdvisoryView> currentAdvisory(@PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(advisory.current(user.currentUserId(), projectId),
+            request.getHeader("X-Request-Id"));
     }
 }

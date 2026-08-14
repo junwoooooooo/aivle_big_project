@@ -34,7 +34,7 @@ public class MarketingContentWorker {
     }
 
     public boolean processOne() {
-        TaskRunService.Claim claim = taskRuns.claimNext(TYPE, workerId, Duration.ofMinutes(5), Duration.ofMinutes(3));
+        TaskRunService.Claim claim = taskRuns.claimNext(TYPE, workerId, Duration.ofMinutes(7), Duration.ofMinutes(5));
         if (claim == null) return false;
         TaskRunWorkerContext context = taskRuns.workerContext(claim.taskRunId());
         try {
@@ -43,7 +43,7 @@ public class MarketingContentWorker {
             completion.start(context.subjectId(),context.projectId());
             publish(context,"SOURCE_PREPARED","job.marketing.source_prepared",JobEvent.Status.RUNNING,null);
             publish(context,"COPY_GENERATING","job.marketing.copy_generating",JobEvent.Status.RUNNING,null);
-            ExecutionResponse response=ai.executeWorker(context,claim.taskAttemptId(),LocalDateTime.now().plusMinutes(3));
+            ExecutionResponse response=ai.executeWorker(context,claim.taskAttemptId(),LocalDateTime.now().plusMinutes(5));
             publish(context,"LEGAL_CHECKING","job.marketing.legal_checking",JobEvent.Status.RUNNING,null);
             completion.complete(claim,context,response);
             publish(context,"COMPLETED","job.marketing.completed",JobEvent.Status.COMPLETED,null);

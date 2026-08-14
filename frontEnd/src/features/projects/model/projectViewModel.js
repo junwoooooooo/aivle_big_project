@@ -1,5 +1,5 @@
-import { getProjectStatusView } from '../../../app/module-status/projectModuleModel.js';
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
+import { getProjectPresentationView, projectNextAction } from './projectPresentation.js';
 
 export function toProjectViewModel(project) {
   const viewModel = {
@@ -12,23 +12,23 @@ export function toProjectViewModel(project) {
     updatedAt: project.updatedAt ?? project.createdAt,
     version: project.version,
   };
-  const statusView = getProjectStatusView(viewModel.status);
-  const nextAction = {
-    type: 'READY',
-    label: '8단계 모듈 확인',
-    description: '프로젝트 개요에서 각 모듈의 독립 상태와 필요한 입력을 확인할 수 있습니다.',
-    route: projectRoutes.overview(viewModel.projectId),
-    priority: 'NORMAL',
-  };
-  return {
+  const presentationState = project.presentationState ?? (project.status === 'COMPLETED' ? 'COMPLETED' : 'NOT_STARTED');
+  const statusView = getProjectPresentationView(presentationState);
+  const result = {
     ...viewModel,
+    presentationState,
+    attentionCount: project.attentionCount ?? 0,
+    attentionReason: project.attentionReason ?? null,
     statusLabel: statusView.label,
     statusTone: statusView.tone,
-    stageLabel: '8단계 모듈',
+    stageLabel: project.currentJourneyLabel ?? (project.status === 'COMPLETED' ? '최종 보고서' : '사업 기획'),
+    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? 6 : 0),
+    journeyTotal: 6,
     area: 'PIPELINE',
-    nextAction,
+    nextAction: null,
     nextRoute: 'overview',
   };
+  return { ...result, nextAction: { ...projectNextAction(result), route: projectRoutes.overview(viewModel.projectId) } };
 }
 
 export function formatProjectDate(value) {

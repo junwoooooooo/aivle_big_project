@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { dedupeTimeline, slotNumberFromEvent } from '../model/conceptFactoryModel.js';
 
-export default function ConceptTimeline({ events, connectionState, transport, onReconnect }) {
+export default function ConceptTimeline({ events, connectionState, onReconnect }) {
   const [filter, setFilter] = useState('all');
   const debugEnabled = import.meta.env.VITE_ENABLE_PIPELINE_DEBUG === 'true';
   const ordered = useMemo(() => dedupeTimeline(events).filter((event) => {
@@ -12,7 +12,7 @@ export default function ConceptTimeline({ events, connectionState, transport, on
   return <details className="concept-timeline" open={debugEnabled}>
     <summary>실행 상세 보기</summary>
     <div className="concept-timeline__connection" aria-live="polite">
-      <span data-state={connectionState}>{connectionLabel(connectionState, transport)}</span>
+      <span data-state={connectionState}>{connectionLabel(connectionState)}</span>
       {['error', 'stopped'].includes(connectionState) && <button type="button" onClick={onReconnect}>다시 연결</button>}
     </div>
     <label>표시 Slot
@@ -33,9 +33,9 @@ export default function ConceptTimeline({ events, connectionState, transport, on
   </details>;
 }
 
-function connectionLabel(state, transport) {
+function connectionLabel(state) {
   if (state === 'terminal') return '작업 연결 종료';
-  if (state === 'live') return transport === 'POLLING' ? 'Polling fallback 연결' : 'SSE 실시간 연결';
+  if (state === 'live') return 'SSE 실시간 연결';
   if (state === 'connecting') return 'SSE 연결 중';
   if (state === 'error') return '연결 오류';
   return '연결 대기';

@@ -11,6 +11,7 @@ import {
   QUESTION_TYPE,
   questionsFromIdeaBrief,
   validateIdeaIntake,
+  validateIdeaReferenceFiles,
 } from '../model/ideaIntakeModel.js';
 
 export const IDEA_FAILURE_KIND = Object.freeze({
@@ -57,6 +58,10 @@ export default function useIdeaIntake(projectId) {
   const [activeJobId, setActiveJobId] = useState(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [questions, setQuestions] = useState([]);
+  const [attachmentError, setAttachmentError] = useState('');
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const uploadedAttachmentIds = useRef(new Map());
   const terminalJobId = useRef(null);
   const jobEvents = useJobEvents(activeJobId);
 
@@ -124,11 +129,25 @@ export default function useIdeaIntake(projectId) {
     if (Object.keys(nextErrors).length > 0) return;
     setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
     try {
+      setUploadingAttachments(draft.referenceFiles.length > 0);
+      const attachmentFileIds = [];
+      for (const file of draft.referenceFiles) {
+        const key = `${file.name}:${file.size}:${file.lastModified ?? ''}`;
+        let attachmentFileId = uploadedAttachmentIds.current.get(key);
+        if (attachmentFileId == null) {
+          const uploaded = await api.uploadAttachment(projectId, file);
+          attachmentFileId = uploaded.data.attachmentFileId;
+          uploadedAttachmentIds.current.set(key, attachmentFileId);
+        }
+        attachmentFileIds.push(attachmentFileId);
+      }
+      setUploadingAttachments(false);
       const payload = await api.derive(
-        projectId, createDerivePayload(draft), ideaCommandOptions('market-seed-interpret'),
+        projectId, createDerivePayload(draft, attachmentFileIds), ideaCommandOptions('market-seed-interpret'),
       );
       applyResponse(payload.data);
     } catch (error) {
+      setUploadingAttachments(false);
       setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
       setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
@@ -209,6 +228,8 @@ export default function useIdeaIntake(projectId) {
 
   const confirmBrief = async (event) => {
     event.preventDefault();
+    if (isConfirming) return;
+    setIsConfirming(true);
     try {
       if (draft.commitmentCandidates.length > 0) {
         const reviewed = await api.reviewCommitments(projectId, {
@@ -234,12 +255,19 @@ export default function useIdeaIntake(projectId) {
       setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
       setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    } finally {
+      setIsConfirming(false);
     }
   };
 
   return {
     draft, errors, failureMessage, failureKind, questions, screenState, activeJobId, jobEvents, isReanalyzing,
-    setFiles: (files) => dispatch({ type: 'SET_FILES', files }),
+    attachmentError, uploadingAttachments, isConfirming,
+    setFiles: (files) => {
+      const error = validateIdeaReferenceFiles(files);
+      setAttachmentError(error);
+      if (!error) dispatch({ type: 'SET_FILES', files });
+    },
     updateIntake,
     answerQuestion: (questionId, value) => {
       dispatch({ type: 'ANSWER_QUESTION', questionId, value });

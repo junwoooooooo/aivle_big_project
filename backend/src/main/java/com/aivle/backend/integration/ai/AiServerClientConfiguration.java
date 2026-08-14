@@ -18,9 +18,27 @@ public class AiServerClientConfiguration {
     }
 
     @Bean
+    @Qualifier("longRunningAiServerRestClient")
+    RestClient longRunningAiServerRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.longReadTimeout());
+    }
+
+    @Bean
+    @Qualifier("marketResearchAiServerRestClient")
+    RestClient marketResearchAiServerRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.marketResearchReadTimeout());
+    }
+
+    @Bean
     @Qualifier("conceptPortfolioAiServerRestClient")
     RestClient conceptPortfolioAiServerRestClient(AiServerProperties properties) {
         return createRestClient(properties, properties.conceptPortfolioReadTimeout());
+    }
+
+    @Bean
+    @Qualifier("twinSurveyAiServerRestClient")
+    RestClient twinSurveyAiServerRestClient(AiServerProperties properties) {
+        return createRestClient(properties, properties.twinSurveyReadTimeout());
     }
 
     RestClient createRestClient(AiServerProperties properties) {

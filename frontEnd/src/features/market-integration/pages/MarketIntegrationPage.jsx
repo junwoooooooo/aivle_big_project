@@ -4,8 +4,8 @@ import useMarketIntegration from '../hooks/useMarketIntegration.js';
 import '../styles/market-integration.css';
 
 const STATUS_LABELS = Object.freeze({
-  NOT_CONNECTED: '연결 준비', READY: '전달 가능', QUEUED: '대기 중', RUNNING: '분석 중',
-  NEEDS_INPUT: '추가 입력 필요', COMPLETED: '분석 완료', FAILED: '실패', STALE: '이전 Snapshot 기준',
+  NOT_CONNECTED: '준비 중', READY: '시작 가능', QUEUED: '대기 중', RUNNING: '분석 중',
+  NEEDS_INPUT: '입력 필요', COMPLETED: '분석 완료', FAILED: '확인 필요', STALE: '업데이트 필요',
 });
 
 export default function MarketIntegrationPage() {
@@ -17,34 +17,34 @@ export default function MarketIntegrationPage() {
   const latestRun = market.runs[0] ?? null;
   const result = market.result;
   return <main className="market-integration">
-    <header><div><p>외부 시장분석</p><h1>{result ? '시장분석 결과' : '시장분석 모듈 연결 준비'}</h1>
-      <span>{result ? '분석 사실은 확정 Concept이나 가설을 자동 변경하지 않습니다.' : '확정된 Market Analysis Seed Snapshot만 외부 모듈로 전달합니다.'}</span></div>
-      <span className="market-integration__status">{STATUS_LABELS[result?.status ?? latestRun?.status] ?? '연결 준비'}</span></header>
+    <header><div><p>시장 분석</p><h1>{result ? '시장 분석 결과' : '시장 분석 준비'}</h1>
+      <span>{result ? '분석 결과는 확정한 사업안이나 가설을 자동으로 바꾸지 않습니다.' : '확정한 시장 입력을 분석에 사용합니다.'}</span></div>
+      <span className="market-integration__status">{STATUS_LABELS[result?.status ?? latestRun?.status] ?? '준비 중'}</span></header>
     {market.error && <section role="alert" className="market-integration__error"><strong>요청을 처리하지 못했습니다.</strong><span>{market.error.message}</span><button type="button" onClick={market.refresh}>다시 시도</button></section>}
     {!result ? <NotConnected market={market} snapshot={snapshot} projectId={projectId} /> : <ResultView result={result} snapshot={snapshot} />}
   </main>;
 }
 
 function NotConnected({ market, snapshot, projectId }) {
-  return <><section className="market-integration__empty"><strong>Not Connected</strong><p>외부 시장분석 연결이 아직 준비되지 않았습니다.</p></section>
-    <section className="market-integration__actions"><div><strong>{snapshot ? '확정된 Market Analysis Seed Snapshot을 전달할 수 있습니다.' : '먼저 Concept 가설 결정과 Seed 확정을 완료해 주세요.'}</strong>
-      <span>{snapshot?.snapshotId ?? '분석 기준 Snapshot 없음'}</span></div>
-      {snapshot ? <button type="button" onClick={market.prepare} disabled={market.preparing}>{market.preparing ? 'Handoff 준비 중…' : '시장분석 Handoff 준비'}</button>
-        : <Link to={projectRoutes.conceptCompare(projectId)}>Concept 결정으로 이동</Link>}</section></>;
+  return <><section className="market-integration__empty"><strong>준비 중</strong><p>시장 분석 기능을 준비하고 있습니다.</p></section>
+    <section className="market-integration__actions"><div><strong>{snapshot ? '저장된 시장 입력으로 분석을 준비할 수 있습니다.' : '먼저 사업안 가설을 결정하고 시장 입력을 저장해 주세요.'}</strong>
+      <span>{snapshot ? '저장된 입력이 준비되었습니다.' : '분석에 사용할 입력 없음'}</span></div>
+      {snapshot ? <button type="button" onClick={market.prepare} disabled={market.preparing}>{market.preparing ? '분석 준비 중…' : '시장 분석 준비'}</button>
+        : <Link to={projectRoutes.conceptCompare(projectId)}>사업안 결정으로 이동</Link>}</section></>;
 }
 
 function ResultView({ result, snapshot }) {
   const summary = result.summary ?? {};
   return <>
-    {result.stale && <section className="market-integration__stale" role="status"><strong>이 결과는 이전 Snapshot 기준입니다.</strong><span>현재 확정 Snapshot과 분리된 과거 분석 결과로만 확인하세요.</span></section>}
+    {result.stale && <section className="market-integration__stale" role="status"><strong>업데이트가 필요한 결과입니다.</strong><span>현재 저장된 입력과 다른 과거 분석 결과입니다.</span></section>}
     <section className="market-result-section"><h2>시장분석 요약</h2><p>{summary.marketSummary}</p></section>
     <section className="market-result-section"><h2>대상 고객 시사점</h2><BulletList values={summary.targetCustomerImplications} /></section>
     <section className="market-result-section"><h2>가격·채널 시사점</h2><BulletList values={summary.pricingAndChannelImplications} /></section>
     <section className="market-result-section"><h2>경쟁제품</h2><div className="competitor-grid">{result.competitors.map((item) => <CompetitorCard key={`${item.companyName}-${item.productName}`} item={item} />)}</div></section>
-    <section className="market-result-section market-result-snapshot"><h2>분석 기준 Snapshot</h2><dl>
-      <div><dt>Snapshot ID</dt><dd>{result.inputSnapshotId}</dd></div><div><dt>현재 기준과 일치</dt><dd>{result.stale ? '아니요' : '예'}</dd></div>
-      <div><dt>분석 완료</dt><dd>{new Date(result.completedAt).toLocaleString('ko-KR')}</dd></div><div><dt>결과 참조</dt><dd>{result.resultReference}</dd></div>
-    </dl><small>현재 Snapshot: {snapshot?.snapshotId ?? '없음'}. 분석 결과는 이 입력 Snapshot을 수정하지 않습니다.</small></section>
+    <section className="market-result-section market-result-snapshot"><h2>분석 기준 입력</h2><dl>
+      <div><dt>현재 입력과 일치</dt><dd>{result.stale ? '아니요' : '예'}</dd></div>
+      <div><dt>분석 완료</dt><dd>{new Date(result.completedAt).toLocaleString('ko-KR')}</dd></div>
+    </dl><p>분석 결과는 저장된 입력을 수정하지 않습니다.</p><details><summary>기술 정보</summary><p>분석 입력 ID: {result.inputSnapshotId}</p><p>현재 입력 ID: {snapshot?.snapshotId ?? '없음'}</p><p>결과 참조: {result.resultReference}</p></details></section>
   </>;
 }
 

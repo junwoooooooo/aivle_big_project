@@ -8,6 +8,7 @@ import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
 import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
@@ -37,6 +38,7 @@ import tools.jackson.databind.node.ObjectNode;
 public class TechOpsService {
     private static final Set<String> EVIDENCE_TYPES = Set.of("QUOTE", "BOM", "SUPPLIER", "SPECIFICATION", "PILOT");
     private final ProjectRepository projects;
+    private final ConceptPortfolioSelectionRepository portfolioSelections;
     private final ConceptSelectionRepository selections;
     private final MarketAnalysisSeedSnapshotRepository marketSeeds;
     private final TechOpsInputPreparationRepository preparations;
@@ -316,6 +318,13 @@ public class TechOpsService {
         return preparations.findLocked(current.getId(), projectId).orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_PREPARATION_REQUIRED));
     }
     private MarketAnalysisSeedSnapshot currentMarketSeed(Long projectId) {
+        var portfolioSelection = portfolioSelections
+            .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
+        if (portfolioSelection != null) {
+            return marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(portfolioSelection.getId())
+                .filter(seed -> projectId.equals(seed.getProjectId()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        }
         var selection=selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
         return marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)

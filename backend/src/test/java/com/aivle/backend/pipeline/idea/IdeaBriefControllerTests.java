@@ -50,7 +50,8 @@ class IdeaBriefControllerTests {
                 .header("Idempotency-Key", "derive-1")
                 .header("X-Request-Id", "request-1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"overview\":\"local food waste service\",\"fields\":[],\"attachmentFileIds\":[]}"))
+                .content("{\"ideaOverview\":\"local food waste service\",\"problem\":\"food waste\","
+                    + "\"targetUsers\":\"local residents\",\"attachmentFileIds\":[]}"))
             .andExpect(status().isAccepted())
             .andExpect(jsonPath("$.data.briefId").value("brief-1"))
             .andExpect(jsonPath("$.data.status").value("DERIVING"))

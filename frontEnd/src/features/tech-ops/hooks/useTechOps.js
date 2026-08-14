@@ -12,8 +12,9 @@ const commandOptions = () => {
 export default function useTechOps(projectId) {
   const client = useApiClient();
   const api = useMemo(() => createTechOpsApi(client), [client]);
-  const [state, setState] = useState({ loading: true, busy: null, preparation: null, snapshot: null, run: null, error: null });
+  const [state, setState] = useState({ loading: true, busy: null, preparation: null, snapshot: null, run: null, advisory: null, error: null });
   const proposalEvents = useJobEvents(state.preparation?.activeProposalTaskRunId ?? null);
+  const advisoryEvents = useJobEvents(['QUEUED', 'RUNNING'].includes(state.advisory?.status) ? state.advisory?.taskRunId : null);
   const refresh = useCallback(async () => {
     setState((value) => ({ ...value, loading: true, error: null }));
     try {
@@ -23,10 +24,11 @@ export default function useTechOps(projectId) {
         if (![404, 409, 422].includes(error?.status)) throw error;
         preparation = await api.initialize(projectId, commandOptions());
       }
-      const [snapshotResult, runsResult] = await Promise.allSettled([api.currentSnapshot(projectId), api.runs(projectId)]);
+      const [snapshotResult, runsResult, advisoryResult] = await Promise.allSettled([api.currentSnapshot(projectId), api.runs(projectId), api.currentAdvisory(projectId)]);
       const snapshot = snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
       const runs = runsResult.status === 'fulfilled' ? runsResult.value.runs ?? [] : [];
-      setState({ loading: false, busy: null, preparation, snapshot,
+      const advisory = advisoryResult.status === 'fulfilled' ? advisoryResult.value : null;
+      setState({ loading: false, busy: null, preparation, snapshot, advisory,
         run: runs.find((item) => item.module === 'TECH_OPS') ?? null, error: null });
     } catch (error) { setState((value) => ({ ...value, loading: false, busy: null, error })); }
   }, [api, projectId]);
@@ -36,6 +38,11 @@ export default function useTechOps(projectId) {
     const timer = setTimeout(() => void refresh(), 0);
     return () => clearTimeout(timer);
   }, [proposalEvents.terminal, refresh]);
+  useEffect(() => {
+    if (!advisoryEvents.terminal) return undefined;
+    const timer = setTimeout(() => void refresh(), 0);
+    return () => clearTimeout(timer);
+  }, [advisoryEvents.terminal, refresh]);
 
   const act = async (busy, action) => {
     setState((value) => ({ ...value, busy, error: null }));
@@ -43,7 +50,7 @@ export default function useTechOps(projectId) {
     catch (error) { setState((value) => ({ ...value, busy: null, error })); throw error; }
   };
   return {
-    ...state, proposalEvents, refresh,
+    ...state, proposalEvents, advisoryEvents, refresh,
     saveFacts: (values) => act('facts', () => api.patchFacts(projectId, values)),
     decide: (fieldKey, body) => act(fieldKey, () => api.decide(projectId, fieldKey, body, commandOptions())),
     retryProposals: () => act('proposal-retry', () => api.retryProposals(projectId, commandOptions())),
@@ -53,6 +60,7 @@ export default function useTechOps(projectId) {
     }),
     removeEvidence: (id) => act(`evidence-${id}`, () => api.removeEvidence(projectId, id)),
     finalize: () => act('finalize', () => api.finalize(projectId)),
+    startAdvisory: () => act('advisory', () => api.startAdvisory(projectId, commandOptions())),
     handoff: () => act('handoff', () => api.handoff(projectId, state.snapshot?.snapshotId)),
   };
 }

@@ -1,0 +1,301 @@
+{
+ "_설명": "슬롯 하네스 산출 스냅샷 (p24-b2). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+ "_생성": {
+  "방식": "LLM 초안 + 기계 게이트",
+  "model": "gpt-4o",
+  "시도": 3,
+  "일자": "2026-08-09",
+  "게이트": "runs/harness/p24-b2/gate.json"
+ },
+ "_수정이력": [],
+ "concept": "개인용 가계부·구독 관리 앱",
+ "as_of": "2026-08-09",
+ "slots": [
+  {
+   "slot_id": "S1",
+   "var_id": "V1",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "개인 금융 관리",
+   "metric": "인구",
+   "period": "2024",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    500000,
+    10000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "인구",
+    "사유": "개인용 서비스 이용 가능성을 대신한다."
+   }
+  },
+  {
+   "slot_id": "S2",
+   "var_id": "V2",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "20~40대 인구",
+   "metric": "대상 연령대 인구 비중",
+   "period": "2024",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    30,
+    50
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "인구",
+    "사유": "해당 연령대의 잠재 고객 비중을 대신한다."
+   }
+  },
+  {
+   "slot_id": "S3",
+   "var_id": "V6",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "20~40대 직장인 인구",
+   "metric": "대상 연령대 인구 비중",
+   "period": "2024",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    10,
+    30
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "인구",
+    "사유": "해당 연령대의 직장인 비중을 대신한다."
+   }
+  },
+  {
+   "slot_id": "S4",
+   "var_id": "V7",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "개인 금융 관리",
+   "metric": "인구",
+   "period": "2023",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    450000,
+    9500000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "인구",
+    "사유": "..."
+   },
+   "_수정이력": [
+    "판 ㉘ 증분 — claim_type TAM → GROWTH. **하네스 재생성이 아니라 손 증분**을 고른 이유: B 는 판 ㉖·㉗ 에서 각각 3회씩 재생성해 **6회 연속 미통과**했고, 그 실패가 매번 다른 검사(고객 단위·통제 어휘)였다 — **분산**이다(백로그 57 계보). 분산에 재시도를 더하는 것은 규율 위반이라 **통과했던 스냅샷(p24-b2)에 정본 1칸만 증분**한다. 고친 것은 `claim_type` 하나이고, 그것이 없으면 `judge_growth` 가 성장률 축에서 세지 못한다(`ledger-02` 실측: 확인됨 2건이 원장에 있는데 성장률 0건)."
+   ]
+  },
+  {
+   "slot_id": "S5",
+   "var_id": "V8",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "개인 금융 관리",
+   "metric": "가입 매장 수",
+   "period": "2025",
+   "unit": "곳",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    10,
+    500
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "경쟁사 정보",
+    "사유": "개인 금융 관리 앱 경쟁사의 시장 위상을 파악하기 위함이다."
+   }
+  },
+  {
+   "slot_id": "S6",
+   "var_id": "V9",
+   "formula_id": "F_DIFF",
+   "claim_type": "COMPARABLE",
+   "subject": "개인 금융 관리",
+   "metric": "누적 가입자 수",
+   "period": "2025",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    500000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S7",
+   "var_id": "V10",
+   "formula_id": "F_CHANNEL",
+   "claim_type": "CHANNEL",
+   "subject": "개인 금융 관리",
+   "metric": "고객 획득 비용",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000,
+    50000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "채널",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S8",
+   "var_id": "V11",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "금융 관리",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    20,
+    60
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "지출",
+    "구독 해지"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S9",
+   "var_id": "V12",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "개인 금융 관리",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000,
+    30000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  }
+ ],
+ "_판㉘": "p24-b2(관문 통과분) + F_GROWTH claim_type 증분 1건. 수집 조건이 바뀌므로 새 원장이 필요하다."
+}

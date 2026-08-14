@@ -19,12 +19,19 @@ export const CONDITIONAL_FIELDS = Object.freeze([
   ['shippingCost', '배송비'],
   ['customerIncrementalInfraCost', '고객 증가분 인프라비'],
 ]);
+export const REVENUE_MODELS = Object.freeze([
+  ['ONE_TIME', '일회성 판매'], ['SUBSCRIPTION', '구독'], ['HYBRID', '혼합'],
+]);
+export const REVENUE_MONEY_FIELDS = Object.freeze([
+  ['unitPrice', '제품 단가'], ['monthlySubscriptionPrice', '월 구독 가격'],
+]);
 export const TARGET_METRICS = Object.freeze([
   ['salesVolume', '판매량'], ['customerCount', '고객 수'],
   ['subscriberCount', '구독자 수'], ['transactionCount', '거래 건수'],
 ]);
 
-const MONEY_FIELDS = [...FIXED_COST_FIELDS, ...INITIAL_INVESTMENT_FIELDS, ...CAC_FIELDS, ...CONDITIONAL_FIELDS].map(([key]) => key);
+const MONEY_FIELDS = [...FIXED_COST_FIELDS, ...INITIAL_INVESTMENT_FIELDS, ...CAC_FIELDS,
+  ...CONDITIONAL_FIELDS, ...REVENUE_MONEY_FIELDS].map(([key]) => key);
 
 export function createFinancialDraft(fields = {}) {
   const targets = fields.threeYearTargets?.value;
@@ -35,6 +42,8 @@ export function createFinancialDraft(fields = {}) {
     targetUnit: targets?.unit ?? '명',
     targetYears: [1, 2, 3].map((year) => targets?.years?.find?.((item) => item.year === year)?.value ?? ''),
     newCustomerCount: fields.newCustomerCount?.value ?? '',
+    revenueModel: fields.revenueModel?.value ?? 'ONE_TIME',
+    monthlyChurnRate: fields.monthlyChurnRate?.value ?? '',
   };
 }
 
@@ -45,6 +54,8 @@ export function financialValuesFromDraft(draft, fields = {}) {
   }
   if (!fields.threeYearTargets?.readOnly) values.threeYearTargets = targetsOrNull(draft);
   if (!fields.newCustomerCount?.readOnly) values.newCustomerCount = numberOrNull(draft.newCustomerCount);
+  if (!fields.revenueModel?.readOnly) values.revenueModel = String(draft.revenueModel ?? '').trim() || null;
+  if (!fields.monthlyChurnRate?.readOnly) values.monthlyChurnRate = numberOrNull(draft.monthlyChurnRate);
   return values;
 }
 

@@ -52,8 +52,9 @@ describe('project pages', () => {
       get: vi.fn(async () => ({ data: [project] })),
     });
     expect(await screen.findByRole('link', { name: '실제 프로젝트' })).toBeInTheDocument();
-    expect(screen.getByText('작성 중')).toBeInTheDocument();
-    expect(screen.getByText('8단계 모듈')).toBeInTheDocument();
+    expect(screen.getAllByText('시작 전').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('사업 기획')).toBeInTheDocument();
+    expect(screen.getByText('0 / 6')).toBeInTheDocument();
   });
 
   it('renders a retryable project load error', async () => {
@@ -68,7 +69,10 @@ describe('project pages', () => {
   it('validates project title before create', () => {
     const client = { post: vi.fn() };
     renderProject(<ProjectCreatePage />, client, '/app/projects/new');
-    fireEvent.submit(screen.getByRole('button', { name: '프로젝트 만들기' }).closest('form'));
+    const form = screen.getByRole('button', { name: '프로젝트 만들기' }).closest('form');
+    expect(form).toHaveAttribute('data-form-kind', 'admin');
+    expect(form).not.toHaveClass('project-form-layout');
+    fireEvent.submit(form);
     expect(screen.getByText('프로젝트 이름을 입력해 주세요.')).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });

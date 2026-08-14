@@ -1,0 +1,439 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (p20-d). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 3,
+    "일자": "2026-08-09",
+    "게이트": "runs/harness/p20-d/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "AI 네일아트 로봇 렌탈",
+  "as_of": "2026-08-09",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "두발 미용업",
+      "metric": "사업체 수",
+      "period": "2024",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "두발 미용업"
+      ],
+      "must_not_contain": [
+        "음식점"
+      ],
+      "value_range": [
+        1000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(미용기기 렌탈)",
+        "사유": "네일 로봇 렌탈 시장의 공개 통계가 없어 인접 렌탈 시장으로 규모를 대신 잰다"
+      },
+      "_경계_proxy": "⚠ **대리 관측(proxy)** — 이 값은 «사업체» 을 센 것이고 이 계열의 고객 단위(«신시장(기존 시장 없음)»)가 아니다. 사유: 네일 로봇 렌탈 시장의 공개 통계가 없어 인접 렌탈 시장으로 규모를 대신 잰다"
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "두발 미용업",
+      "metric": "종사자 1인 사업체 비율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "종사자"
+      ],
+      "must_not_contain": [
+        "대기업"
+      ],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(미용기기 렌탈)",
+        "사유": "네일 로봇 렌탈 시장의 공개 통계가 없어 인접 렌탈 시장으로 규모를 대신 잰다"
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V4",
+      "formula_id": "F_TAM",
+      "claim_type": "PRICE",
+      "subject": "네일 로봇",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "구독"
+      ],
+      "must_not_contain": [
+        "무료"
+      ],
+      "value_range": [
+        10000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(미용기기 렌탈)",
+        "사유": "네일 로봇 렌탈 시장의 공개 통계가 없어 인접 렌탈 시장으로 규모를 대신 잰다"
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V6",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "두발 미용업",
+      "metric": "연평균 성장률",
+      "period": "2024",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "성장"
+      ],
+      "must_not_contain": [
+        "감소"
+      ],
+      "value_range": [
+        -10,
+        30
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "두발 미용업 시장",
+        "사유": "네일 로봇 시장의 성장을 추정하기 위해 가까운 두발 미용업 데이터를 사용"
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V7",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "두발 미용업",
+      "metric": "연평균 성장률",
+      "period": "2023",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "성장"
+      ],
+      "must_not_contain": [
+        "감소"
+      ],
+      "value_range": [
+        -10,
+        30
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "두발 미용업 시장",
+        "사유": "네일 로봇 시장의 성장을 추정하기 위해 가까운 두발 미용업 데이터를 사용"
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "네일숍 관리 소프트웨어",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "소프트웨어"
+      ],
+      "must_not_contain": [
+        "네일 디자인"
+      ],
+      "value_range": [
+        0,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(네일숍 관리 소프트웨어)",
+        "사유": "네일 로봇과 관련된 시장을 분야의 소프트웨어로 대리하여 파악"
+      }
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V9",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "네일 디자인 서비스",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "디자인"
+      ],
+      "must_not_contain": [
+        "관리 소프트웨어"
+      ],
+      "value_range": [
+        0,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(네일 디자인 서비스)",
+        "사유": "네일 로봇과 관련된 시장을 디자인 서비스로 대리하여 파악"
+      }
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V10",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "네일숍 운영 장비",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "장비"
+      ],
+      "must_not_contain": [
+        "디자인 서비스"
+      ],
+      "value_range": [
+        0,
+        5000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(네일숍 운영 장비)",
+        "사유": "네일 로봇과 관련된 시장을 장비 제공자로 대리하여 파악"
+      }
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V11",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "네일 디자인 도구",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "도구"
+      ],
+      "must_not_contain": [
+        "장비"
+      ],
+      "value_range": [
+        0,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(네일 디자인 도구)",
+        "사유": "네일 로봇과의 차별성을 비교하기 위해 기존 도구 수를 사용"
+      }
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V12",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "네일 기술 렌탈 업체",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "렌탈"
+      ],
+      "must_not_contain": [
+        "도매"
+      ],
+      "value_range": [
+        1000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장(네일 기술 렌탈)",
+        "사유": "네일 로봇의 고객 획득 비용 벤치마크로 비슷한 미용 렌탈 업체를 사용"
+      }
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V13",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "네일숍",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "문제"
+      ],
+      "must_not_contain": [
+        "무문제"
+      ],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "단순 반복",
+        "예약을 받고도"
+      ],
+      "_proxy_선언": {
+        "대상": "네일숍 문제 경험",
+        "사유": "네일 로봇이 해결하려는 문제에 대한 근거 수집"
+      }
+    },
+    {
+      "slot_id": "S12",
+      "var_id": "V14",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "기존 네일 서비스",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "기존"
+      ],
+      "must_not_contain": [
+        "신규"
+      ],
+      "value_range": [
+        5000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "기존 네일 서비스 요금",
+        "사유": "네일 로봇의 요금 비교를 위해 기존 서비스 요금을 사용"
+      }
+    }
+  ]
+}

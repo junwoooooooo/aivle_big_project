@@ -1,0 +1,1011 @@
+{
+ "_설명": "pin-08 — 수요 표적을 「그 계량이 실제로 발행되는 자리」로 옮긴 것. 손 조립 스냅샷이다.",
+ "_생성": {
+  "방식": "LLM 초안 + 기계 게이트",
+  "model": "gpt-4o",
+  "시도": 1,
+  "일자": "2026-08-11",
+  "게이트": "runs/harness/paid31b-hmr/gate.json"
+ },
+ "_수정이력": [
+  {
+   "판": "판 ㉛ C — 고정 스냅샷 반복",
+   "왜": "pin-01 이 4/6(가격·수요 미확보)에서 재현됐다. 원인은 검색 요동이 아니라 **슬롯이 발행되지 않는 값을 물었기 때문**이다 — 회사를 지목한 슬롯(`프레시지 월 구독료`)은 빈손이고, 발행되는 대상을 지목한 슬롯(`배달 음식 이용 요금`)은 값을 냈다.",
+   "무엇": [
+    {
+     "슬롯": "S13",
+     "과목": "PAIN",
+     "가져온_곳": "paid31a-hmr S11",
+     "전": {
+      "subject": "냉동 간편식",
+      "metric": "문제 경험률",
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+       0,
+       100
+      ],
+      "_추출_힌트": [
+       "혼자 먹지만 제대로 먹고 싶다",
+       "한 끼 단가가 크게 오른다"
+      ]
+     },
+     "후": {
+      "subject": "1인 가구",
+      "metric": "문제 경험률",
+      "must_contain": [
+       "문제"
+      ],
+      "must_not_contain": [
+       "반려동물"
+      ],
+      "value_range": [
+       10,
+       50
+      ],
+      "_추출_힌트": [
+       "1인 가구",
+       "혼자 먹지만",
+       "재료를 사면 남긴다"
+      ]
+     }
+    },
+    {
+     "슬롯": "S14",
+     "과목": "PRICE",
+     "가져온_곳": "paid31a-hmr S12",
+     "전": {
+      "subject": "프레시지",
+      "metric": "월 구독료",
+      "must_contain": [],
+      "must_not_contain": [],
+      "value_range": [
+       10000,
+       50000
+      ],
+      "_추출_힌트": []
+     },
+     "후": {
+      "subject": "배달 음식",
+      "metric": "이용 요금",
+      "must_contain": [
+       "배달"
+      ],
+      "must_not_contain": [
+       "반려동물"
+      ],
+      "value_range": [
+       10000,
+       30000
+      ],
+      "_추출_힌트": []
+     }
+    }
+   ],
+   "안_바꾼_것": "slot_id · var_id · formula_id · claim_type · _canvas_cell · unit · period · region"
+  },
+  {
+   "판": "판 ㉛ C — 고정 스냅샷 반복 3회차",
+   "왜": "pin-02 실측: S14 가 값을 찾았는데(9.7%) must_not_contain 포함 [반려동물] 로 격리됐다. pin-02 를 만들 때 paid31a 슬롯에서 검색 표적을 옮기며 **그 컨셉과 무관한 가드까지 함께 옮겼다** — HMR 은 반려동물과 아무 상관이 없다. 통과 불가능한 벽을 **내가 만든 것**이다.",
+   "무엇": [
+    {
+     "슬롯": "S13",
+     "과목": "PAIN",
+     "전": [
+      "반려동물"
+     ],
+     "후": []
+    },
+    {
+     "슬롯": "S14",
+     "과목": "PRICE",
+     "전": [
+      "반려동물"
+     ],
+     "후": []
+    }
+   ],
+   "주의": "가드를 걷어도 그 값은 단위가 %라 단위가 원인 슬롯의 단위 겹에서 걸릴 것이다. 가드 제거는 그것과 별개로 옳다 — 이 회차가 가격 칸을 채운다는 뜻은 아니다."
+  },
+  {
+   "판": "판 ㉛ C — 고정 스냅샷 반복 5회차",
+   "왜": "pin-01~04 가 전부 4/6. 원인이 회차마다 달랐다 — 무관 가드(내 실수) · 가드가 옳게 막은 오답 · 검색이 상거래 도메인 미회수. **공통점은 칸마다 표적이 하나뿐이라 그 한 번의 검색이 빗나가면 칸이 통째로 빈다는 것**이다. paid31a 가 가격을 채운 것은 표적이 좋아서가 아니라 그 표적의 서식지(정부 보도자료)를 검색이 물어왔기 때문이다.",
+   "무엇": [
+    {
+     "슬롯": "S15",
+     "과목": "PRICE",
+     "표적": "냉동 간편식/판매가",
+     "가드": [
+      "간편식"
+     ],
+     "서식지_가설": "상거래 상품 페이지"
+    },
+    {
+     "슬롯": "S16",
+     "과목": "PRICE",
+     "표적": "가정간편식/판매가",
+     "가드": [
+      "간편식"
+     ],
+     "서식지_가설": "상거래·산업 리포트"
+    },
+    {
+     "슬롯": "S17",
+     "과목": "PAIN",
+     "표적": "1인 가구/문제 경험률",
+     "가드": [
+      "식재료"
+     ],
+     "서식지_가설": "식품 폐기 조사"
+    }
+   ],
+   "안_바꾼_것": "S13·S14 는 그대로 — paid31a 가 실제로 값을 낸 표적이다. 기존 var_id·formula_id 를 새 슬롯이 그대로 쓴다(식 조인 무변경).",
+   "⚠": "LLM 호출이 는다. 슬롯 3개 추가 = 검색 6회 + 발췌 최대 36회."
+  },
+  {
+   "판": "판 ㉛ C — 고정 스냅샷 반복 6회차",
+   "왜": "pin-05 가 5/6(가격 열림 · 수요만 남음). 가격을 연 것은 **서식지 분산**이었다 — S14(배달 음식/이용 요금)가 정부 보도자료에서 값을 냈고, 새로 넣은 상거래 표적 S15·S16 은 둘 다 빈손이었다(검색이 상품 페이지를 안 물어온다는 두 번째 확인). 그런데 **수요는 분산이 아니라 중복이었다** — S13·S17 이 subject 가 같아 `plan_query` 가 같은 검색어를 던졌다. 이번엔 subject 를 실제로 가른다.",
+   "무엇": [
+    {
+     "슬롯": "S17",
+     "바꿈": "1인 가구 → 1인 가구 식생활",
+     "가드": [
+      "식생활"
+     ]
+    },
+    {
+     "슬롯": "S18",
+     "표적": "혼밥/문제 경험률",
+     "가드": [
+      "혼밥"
+     ]
+    },
+    {
+     "슬롯": "S19",
+     "표적": "가구 음식물쓰레기/문제 경험률",
+     "가드": [
+      "음식물"
+     ]
+    }
+   ],
+   "안_바꾼_것": "S13 — paid31a 가 74.2% 를 낸 표적이다. 기준선으로 남긴다.",
+   "⚠": "성적표 5_수요 는 **정량 1건 or 정성 2건**이면 채워짐이다(fill.v2 항목). 값 없는 인용도 도움이 된다."
+  },
+  {
+   "판": "판 ㉛ C — 고정 스냅샷 반복 7회차",
+   "왜": "pin-06 이 6/6 을 냈으나 수요를 채운 것이 「70대 이상 1인 가구 우울증상유병률 8.9%」였다. 인구만 맞고 문제의 종류가 다르다 — **문턱을 넘긴 것이지 답을 찾은 것이 아니다.** 원인은 내가 회차를 거듭하며 가드를 느슨하게 만든 것이다(subject 가 인구만 지목 · must_contain 이 「문제」라는 아무 데나 있는 낱말 · value_range 를 [1,90] 으로 확장). 종류를 가르도록 되돌린다.",
+   "무엇": [
+    {
+     "슬롯": "S13",
+     "전": {
+      "subject": "1인 가구",
+      "must_contain": [
+       "문제"
+      ],
+      "value_range": [
+       10,
+       50
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 식생활",
+      "must_contain": [
+       "식생활"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     }
+    },
+    {
+     "슬롯": "S17",
+     "전": {
+      "subject": "1인 가구 식생활",
+      "must_contain": [
+       "식생활"
+      ],
+      "value_range": [
+       1,
+       90
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 결식",
+      "must_contain": [
+       "결식"
+      ],
+      "value_range": [
+       1,
+       70
+      ]
+     }
+    },
+    {
+     "슬롯": "S18",
+     "전": {
+      "subject": "혼밥",
+      "must_contain": [
+       "혼밥"
+      ],
+      "value_range": [
+       1,
+       90
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 식품 구매",
+      "must_contain": [
+       "식품"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     }
+    },
+    {
+     "슬롯": "S19",
+     "전": {
+      "subject": "가구 음식물쓰레기",
+      "must_contain": [
+       "음식물"
+      ],
+      "value_range": [
+       1,
+       90
+      ]
+     },
+     "후": {
+      "subject": "가구 음식물쓰레기",
+      "must_contain": [
+       "음식물"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     }
+    }
+   ],
+   "주의": "must_contain 은 any() 다 — 낱말을 늘리면 **조이는 게 아니라 느슨해진다.** 하나만 둔다."
+  },
+  {
+   "판": "판 ㉛ C — 8회차",
+   "왜": "pin-07 triage: S13·S19 는 (c) 계량 낱말은 있으나 조건 만족 값 없음 · S17 은 (b) 문서 불일치 · S18 은 (a) 인데 근거가 요인분석 문장이라 거짓 양성. 즉 「1인 가구 식생활/결식/식품구매」로는 「문제 경험률」 모양의 수치가 회수되지 않는다. 조사에서 실제로 비율로 보고되는 대상(배달 이용 부담 · 식재료 폐기 · 아침 결식 · 혼자 식사)으로 옮긴다.",
+   "무엇": [
+    {
+     "슬롯": "S13",
+     "전": {
+      "subject": "1인 가구 식생활",
+      "must_contain": [
+       "식생활"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     },
+     "후": {
+      "subject": "배달 음식 이용자",
+      "must_contain": [
+       "배달"
+      ],
+      "value_range": [
+       5,
+       95
+      ]
+     }
+    },
+    {
+     "슬롯": "S17",
+     "전": {
+      "subject": "1인 가구 결식",
+      "must_contain": [
+       "결식"
+      ],
+      "value_range": [
+       1,
+       70
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 식재료 폐기",
+      "must_contain": [
+       "폐기"
+      ],
+      "value_range": [
+       1,
+       90
+      ]
+     }
+    },
+    {
+     "슬롯": "S18",
+     "전": {
+      "subject": "1인 가구 식품 구매",
+      "must_contain": [
+       "식품"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 아침 결식",
+      "must_contain": [
+       "결식"
+      ],
+      "value_range": [
+       1,
+       80
+      ]
+     }
+    },
+    {
+     "슬롯": "S19",
+     "전": {
+      "subject": "가구 음식물쓰레기",
+      "must_contain": [
+       "음식물"
+      ],
+      "value_range": [
+       5,
+       90
+      ]
+     },
+     "후": {
+      "subject": "1인 가구 혼자 식사",
+      "must_contain": [
+       "혼자"
+      ],
+      "value_range": [
+       5,
+       95
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+ "as_of": "2026-08-11",
+ "slots": [
+  {
+   "slot_id": "S1",
+   "var_id": "V1",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000000000,
+    50000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S2",
+   "var_id": "V2",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S3",
+   "var_id": "V3",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000000000,
+    50000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "대상 시장",
+    "사유": "수도권을 중심으로 프리미엄 수요 시장을 대신 짐작함."
+   }
+  },
+  {
+   "slot_id": "S4",
+   "var_id": "V4",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S5",
+   "var_id": "V5",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2024",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000000000,
+    50000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S6",
+   "var_id": "V6",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2023",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000000000,
+    50000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S7",
+   "var_id": "V7",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "비비고",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "CJ제일제당",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S8",
+   "var_id": "V8",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "오뚜기 냉동식품",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "오뚜기",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S9",
+   "var_id": "V9",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "풀무원 간편식",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "풀무원식품",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S10",
+   "var_id": "V10",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "신세계푸드 간편식",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "신세계푸드",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S11",
+   "var_id": "V11",
+   "formula_id": "F_DIFF",
+   "claim_type": "COMPARABLE",
+   "subject": "프레시지",
+   "metric": "누적 가입자 수",
+   "period": "2025",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    5000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S12",
+   "var_id": "V12",
+   "formula_id": "F_CHANNEL",
+   "claim_type": "CHANNEL",
+   "subject": "신세계푸드 간편식",
+   "metric": "고객 획득 비용",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    50000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "채널",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S13",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "배달 음식 이용자",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "배달"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    5,
+    95
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "부담",
+    "남긴다",
+    "버린다",
+    "혼자"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S14",
+   "var_id": "V14",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "배달 음식",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "배달"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    30000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S15",
+   "var_id": "V14",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "냉동 간편식",
+   "metric": "판매가",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    2000,
+    30000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [
+    "1인분",
+    "냉동",
+    "간편식"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S16",
+   "var_id": "V14",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "가정간편식",
+   "metric": "판매가",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    2000,
+    30000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [
+    "가정간편식",
+    "HMR",
+    "1인분"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S17",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 식재료 폐기",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "폐기"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1,
+    90
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "부담",
+    "남긴다",
+    "버린다",
+    "혼자"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S18",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 아침 결식",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "결식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1,
+    80
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "부담",
+    "남긴다",
+    "버린다",
+    "혼자"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S19",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 혼자 식사",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "혼자"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    5,
+    95
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "부담",
+    "남긴다",
+    "버린다",
+    "혼자"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  }
+ ]
+}

@@ -1,0 +1,744 @@
+{
+ "_설명": "슬롯 하네스 산출 스냅샷 (p33-auto). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+ "_생성": {
+  "방식": "LLM 초안 + 기계 게이트",
+  "model": "gpt-4o",
+  "시도": 2,
+  "일자": "2026-08-12",
+  "게이트": "runs/harness/p33-auto/gate.json"
+ },
+ "_수정이력": [],
+ "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+ "as_of": "2026-08-12",
+ "slots": [
+  {
+   "slot_id": "S1",
+   "var_id": "V1",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000,
+    100000000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "일반 냉동식품 거래액을 기준으로 시장 규모를 추정한다."
+   },
+   "_value_range_원안": [
+    1000000000,
+    10000000000
+   ],
+   "_must_contain_원안": [
+    "냉동 간편식"
+   ]
+  },
+  {
+   "slot_id": "S2",
+   "var_id": "V2",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "일반 냉동식품 점유율을 기준으로 추정한다."
+   },
+   "_must_contain_원안": [
+    "냉동 간편식"
+   ]
+  },
+  {
+   "slot_id": "S3",
+   "var_id": "V3",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000,
+    100000000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "수도권을 중심으로 거래액을 추정하여 규모를 측정한다."
+   },
+   "_value_range_원안": [
+    100000000,
+    5000000000
+   ],
+   "_must_contain_원안": [
+    "냉동 간편식"
+   ]
+  },
+  {
+   "slot_id": "S4",
+   "var_id": "V4",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "간편식"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "수도권 내 냉동식품 점유율을 기준으로 추정한다."
+   },
+   "_must_contain_원안": [
+    "냉동 간편식"
+   ]
+  },
+  {
+   "slot_id": "S5",
+   "var_id": "V5",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2024",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000,
+    100000000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "과거 거래액을 바탕으로 성장 추이를 관측한다."
+   },
+   "_value_range_원안": [
+    500000000,
+    10000000000
+   ]
+  },
+  {
+   "slot_id": "S6",
+   "var_id": "V6",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2023",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000,
+    100000000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "1인 가구 냉동 간편식",
+    "사유": "과거 거래액을 바탕으로 성장 추이를 관측한다."
+   },
+   "_value_range_원안": [
+    500000000,
+    10000000000
+   ]
+  },
+  {
+   "slot_id": "S7",
+   "var_id": "V7",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "비비고",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "CJ제일제당",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10000000000,
+    50000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S8",
+   "var_id": "V8",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "오뚜기 냉동식품",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "오뚜기",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    5000000000,
+    30000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S9",
+   "var_id": "V9",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "풀무원 간편식",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "풀무원식품",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    7000000000,
+    35000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S10",
+   "var_id": "V10",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "프레시지",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "프레시지",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    3000000000,
+    20000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+  },
+  {
+   "slot_id": "S11",
+   "var_id": "V11",
+   "formula_id": "F_DIFF",
+   "claim_type": "COMPARABLE",
+   "subject": "비비고",
+   "metric": "누적 가입자 수",
+   "period": "2025",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    500000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S12",
+   "var_id": "V12",
+   "formula_id": "F_CHANNEL",
+   "claim_type": "CHANNEL",
+   "subject": "신세계푸드 간편식",
+   "metric": "고객 획득 비용",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000,
+    50000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "채널",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S13",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 혼자 식사",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "혼자"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10,
+    60
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "혼자",
+    "제대로 먹고 싶다"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S14",
+   "var_id": "V14",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "냉동 간편식 제한점",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10,
+    60
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "제한점",
+    "남기고 버린다"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S15",
+   "var_id": "V15",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "혼자 저녁 해결의 불편함",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국 수도권",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "저녁"
+   ],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10,
+    60
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_추출_힌트": [
+    "해결",
+    "높은 비용"
+   ],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S16",
+   "var_id": "V16",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "배달 음식",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    7000,
+    20000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S17",
+   "var_id": "V17",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "편의점 도시락",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    3500,
+    8000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  },
+  {
+   "slot_id": "S18",
+   "var_id": "V18",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "외식",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    30000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원",
+   "_추출_힌트": [],
+   "_proxy_선언": {
+    "대상": "",
+    "사유": ""
+   }
+  }
+ ],
+ "_교정": [
+  {
+   "slot_id": "S1",
+   "metric": "거래액",
+   "칸": "value_range",
+   "원안": [
+    1000000000,
+    10000000000
+   ],
+   "교정": [
+    100000000000,
+    100000000000000
+   ],
+   "근거": "guards.value_range.계량_전형_밴드",
+   "why": "「거래액」의 전형 크기는 [1e+11, 1e+14] 인데 기대가 [1e+09, 1e+10] 라 겹치지 않는다 — 이대로면 맞는 값이 격리된다"
+  },
+  {
+   "slot_id": "S3",
+   "metric": "거래액",
+   "칸": "value_range",
+   "원안": [
+    100000000,
+    5000000000
+   ],
+   "교정": [
+    100000000000,
+    100000000000000
+   ],
+   "근거": "guards.value_range.계량_전형_밴드",
+   "why": "「거래액」의 전형 크기는 [1e+11, 1e+14] 인데 기대가 [1e+08, 5e+09] 라 겹치지 않는다 — 이대로면 맞는 값이 격리된다"
+  },
+  {
+   "slot_id": "S5",
+   "metric": "거래액",
+   "칸": "value_range",
+   "원안": [
+    500000000,
+    10000000000
+   ],
+   "교정": [
+    100000000000,
+    100000000000000
+   ],
+   "근거": "guards.value_range.계량_전형_밴드",
+   "why": "「거래액」의 전형 크기는 [1e+11, 1e+14] 인데 기대가 [5e+08, 1e+10] 라 겹치지 않는다 — 이대로면 맞는 값이 격리된다"
+  },
+  {
+   "slot_id": "S6",
+   "metric": "거래액",
+   "칸": "value_range",
+   "원안": [
+    500000000,
+    10000000000
+   ],
+   "교정": [
+    100000000000,
+    100000000000000
+   ],
+   "근거": "guards.value_range.계량_전형_밴드",
+   "why": "「거래액」의 전형 크기는 [1e+11, 1e+14] 인데 기대가 [5e+08, 1e+10] 라 겹치지 않는다 — 이대로면 맞는 값이 격리된다"
+  },
+  {
+   "slot_id": "S1",
+   "metric": "거래액",
+   "칸": "must_contain",
+   "subject": "냉동 간편식",
+   "원안": [
+    "냉동 간편식"
+   ],
+   "교정": [
+    "간편식"
+   ],
+   "근거": "vocab.설계_교정.must_contain_낱말",
+   "why": "must_contain 은 any() 라 낱말이 여럿이면 느슨해지고 subject 밖의 말이면 종류가 다른 값이 문턱을 넘는다 — 「냉동 간편식」 안의 어절 「간편식」 하나로 줄였다"
+  },
+  {
+   "slot_id": "S2",
+   "metric": "시장 점유율",
+   "칸": "must_contain",
+   "subject": "냉동 간편식",
+   "원안": [
+    "냉동 간편식"
+   ],
+   "교정": [
+    "간편식"
+   ],
+   "근거": "vocab.설계_교정.must_contain_낱말",
+   "why": "must_contain 은 any() 라 낱말이 여럿이면 느슨해지고 subject 밖의 말이면 종류가 다른 값이 문턱을 넘는다 — 「냉동 간편식」 안의 어절 「간편식」 하나로 줄였다"
+  },
+  {
+   "slot_id": "S3",
+   "metric": "거래액",
+   "칸": "must_contain",
+   "subject": "냉동 간편식",
+   "원안": [
+    "냉동 간편식"
+   ],
+   "교정": [
+    "간편식"
+   ],
+   "근거": "vocab.설계_교정.must_contain_낱말",
+   "why": "must_contain 은 any() 라 낱말이 여럿이면 느슨해지고 subject 밖의 말이면 종류가 다른 값이 문턱을 넘는다 — 「냉동 간편식」 안의 어절 「간편식」 하나로 줄였다"
+  },
+  {
+   "slot_id": "S4",
+   "metric": "시장 점유율",
+   "칸": "must_contain",
+   "subject": "냉동 간편식",
+   "원안": [
+    "냉동 간편식"
+   ],
+   "교정": [
+    "간편식"
+   ],
+   "근거": "vocab.설계_교정.must_contain_낱말",
+   "why": "must_contain 은 any() 라 낱말이 여럿이면 느슨해지고 subject 밖의 말이면 종류가 다른 값이 문턱을 넘는다 — 「냉동 간편식」 안의 어절 「간편식」 하나로 줄였다"
+  }
+ ]
+}

@@ -45,7 +45,9 @@ class TechOpsHandoffTests {
         when(handoffs.findByIdempotencyKeyAndDeletedAtIsNull(any())).thenReturn(Optional.empty());
         when(handoffs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(runs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var service=new ModuleIntegrationService(projects,selections,marketSeeds,handoffs,runs,techSnapshots,financialSnapshots,new ObjectMapper());
+        var service=new ModuleIntegrationService(projects,selections,marketSeeds,handoffs,runs,techSnapshots,
+            financialSnapshots, mock(com.aivle.backend.pipeline.market.MarketResearchService.class),
+            new ObjectMapper());
 
         var response=service.create(7L,41L,new CreateHandoffRequest("TECH_OPS","tech-snapshot-1","START_TECH_OPS_ANALYSIS"));
 

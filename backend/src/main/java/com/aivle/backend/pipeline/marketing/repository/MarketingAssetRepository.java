@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MarketingAssetRepository extends JpaRepository<MarketingAsset, String> {
     List<MarketingAsset> findAllByContentIdAndDeletedAtIsNull(String contentId);
+    List<MarketingAsset> findAllByContentIdAndDeletedAtIsNullOrderByCreatedAtAsc(String contentId);
 }

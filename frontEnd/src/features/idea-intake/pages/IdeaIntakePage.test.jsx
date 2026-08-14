@@ -27,18 +27,18 @@ describe('Idea confirmation journey', () => {
         <Route path="/app/projects/:projectId/idea" element={<IdeaIntakePage />} />
       </Route>
     </Routes></MemoryRouter>);
-    expect(screen.getByText('1단계 · 아이디어 정리')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '사업 아이디어의 출발점을 알려주세요' })).toBeInTheDocument();
     expect(screen.getByText('지역 상점을 위한 예약 서비스')).toBeInTheDocument();
     expect(screen.getByText('예약 누락을 줄이는 문제')).toBeInTheDocument();
     expect(screen.getByText('안전 확인을 통과했습니다.')).toBeInTheDocument();
     expect(screen.getByText('아이디어 정리가 완료되었습니다.')).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: '다음 단계 · 사업안 검토' });
+    const link = screen.getByRole('link', { name: '사업안 생성 및 검토로 이동 →' });
     expect(link).toHaveAttribute('href', '/app/projects/41/concepts');
     expect(window.location.pathname).not.toBe('/app/projects/41/concepts');
     await waitFor(() => expect(retry).toHaveBeenCalledTimes(1));
     vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
     fireEvent.click(screen.getByRole('button', { name: '아이디어 수정' }));
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('기존 사업안과 후속 분석'));
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('기존 사업안과 분석 결과'));
     expect(editConfirmed).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { jobTaskLabel } from './jobPresentation.js';
 
 describe('Work Center task labels', () => {
-  it('never exposes raw V2 TaskType names', () => {
-    expect(jobTaskLabel('CONCEPT_PORTFOLIO_V2_RUN')).toBe('사업안 검토');
-    expect(jobTaskLabel('CONCEPT_PORTFOLIO_V2_CONTINUE')).toBe('추가 사업정보 반영');
-    expect(jobTaskLabel('CONCEPT_PORTFOLIO_V2_SELECTION_ACTION')).toBe('사업안 선택 후 검토');
+  it('uses human labels for the cutover modules', () => {
+    expect(jobTaskLabel('MARKET_RESEARCH', 'MARKET_RESEARCH_FULL')).toBe('시장 조사');
+    expect(jobTaskLabel('MARKET_RESEARCH', 'MARKET_RESEARCH_BM')).toBe('비즈니스 모델');
+    expect(jobTaskLabel('TECH_OPS_PROPOSAL')).toBe('기술·운영 분석');
+    expect(jobTaskLabel('MARKETING_VISUAL_GENERATION')).toBe('마케팅 이미지 생성');
   });
 });

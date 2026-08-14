@@ -1,0 +1,17 @@
+{
+  "_설명": "PAIN(예약 부도율, S16) 사용자 문서 적재 사양. 2026-01 중기부 노쇼 실태조사 보도. 입수만 사람이고 심사는 엔진이 원래 잣대로 한다(백로그 4).",
+  "_경계": "외식업 214곳 기준 — 미용실 직접 통계 아님, 인접 업종 근거",
+  "_daum_대체": "지시받은 https://v.daum.net/v/FF9XKlsAMe 는 적재하지 않았다. `rules/whitelist.v5.json` 의 rejected 에 v.daum.net 이 명시돼 있고(사유: 포털 재게시본 — URL 로 원 발행자를 알 수 없다), url_filter 의 portal_repost 패턴에도 걸린다. 지시대로 원본 경로를 찾아 korea.kr 정책브리핑 보도자료(official_page 등재)로 대체했다.",
+  "channel": "user_doc",
+  "by_slot": {
+    "S16": [
+      "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156737813",
+      "https://www.sedaily.com/NewsView/2K74UIRW8K",
+      "https://www.ajunews.com/view/20260101111542028",
+      "https://www.intn.co.kr/news/articleView.html?idxno=2048189",
+      "https://www.korea.kr/news/reporterView.do?newsId=148815794"
+    ]
+  },
+  "_경계_2차인용": "korea.kr 정책기자단 기고분에 한함 — ① 2015년 기준(신선도 감점 대상) ② 2차 인용(원문 미확보) ③ 원 출처: 현대경제연구원 ④ korea.kr 정책기자단 기고 — official_page 아님",
+  "_투데이신문_미적재": "같은 원 출처(현대경제연구원)의 2차 인용을 2건 넣으면 서로 교차확인돼 **독립 확인 착시**가 된다. 1건만 적재한다."
+}

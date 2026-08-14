@@ -19,11 +19,23 @@ import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepositor
 import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.market.MarketResearchRun;
+import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
+import com.aivle.backend.pipeline.market.MarketResearchVersion;
+import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
+import com.aivle.backend.pipeline.market.TwinSurveyRun;
+import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
+import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
+import com.aivle.backend.pipeline.techops.repository.TechOpsAdvisoryReportRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
+import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -41,12 +53,18 @@ public class ProjectModuleStatusService {
     private final ConceptSelectionRepository selectionRepository;
     private final MarketAnalysisSeedSnapshotRepository marketSeedSnapshotRepository;
     private final ModuleRunRepository moduleRunRepository;
+    private final MarketResearchRunRepository marketResearchRunRepository;
+    private final MarketResearchVersionRepository marketResearchVersionRepository;
+    private final TwinSurveyRunRepository twinSurveyRunRepository;
+    private final TwinSurveyVersionRepository twinSurveyVersionRepository;
     private final MarketingContentRepository marketingRepository;
     private final MarketingSourceSnapshotRepository marketingSourceRepository;
     private final TechOpsInputPreparationRepository techOpsPreparationRepository;
     private final TechOpsInputSnapshotRepository techOpsSnapshotRepository;
+    private final TechOpsAdvisoryReportRepository techOpsAdvisoryReportRepository;
     private final FinancialInputPreparationRepository financialPreparationRepository;
     private final FinancialInputSnapshotRepository financialSnapshotRepository;
+    private final TaskRunRepository taskRunRepository;
 
     public List<ProjectModuleStatusResponse> findAll(Long userId, Long projectId) {
         projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
@@ -66,11 +84,32 @@ public class ProjectModuleStatusService {
             : legacySelection == null ? null
                 : marketSeedSnapshotRepository.findBySelectionIdAndProjectIdAndDeletedAtIsNull(
                     legacySelection.getId(), projectId).orElse(null);
-        ModuleRun marketRun = latestRun(projectId, ModuleType.MARKET_ANALYSIS);
-        ModuleRun businessRun = latestRun(projectId, ModuleType.BUSINESS_MODEL);
+        MarketResearchRun marketRun = marketResearchRunRepository
+            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, MarketResearchRun.Kind.FULL).orElse(null);
+        MarketResearchRun businessRun = marketResearchRunRepository
+            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, MarketResearchRun.Kind.BM).orElse(null);
+        MarketResearchVersion latestMarketVersion = marketResearchVersionRepository
+            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(
+                projectId, MarketResearchRun.Kind.FULL).orElse(null);
+        MarketResearchVersion currentMarketVersion = latestMarketVersion != null && marketRun != null
+            && java.util.Objects.equals(latestMarketVersion.getSourceRun().getId(), marketRun.getId())
+            && selectedSnapshot != null
+            && selectedSnapshot.getId().equals(latestMarketVersion.getSourceRun().getSourceMarketSeedSnapshotId())
+                ? latestMarketVersion : null;
+        MarketResearchVersion currentBusinessVersion = businessRun == null || currentMarketVersion == null
+            || !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()) ? null
+            : marketResearchVersionRepository.findBySourceRunIdAndDeletedAtIsNull(businessRun.getId()).orElse(null);
+        TwinSurveyRun twinRun = twinSurveyRunRepository
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
+        TaskRun twinDraftTask = latestTask(projectId, "TWIN_STIMULUS_DRAFT",
+            String.valueOf(projectId), TaskType.TWIN_STIMULUS_DRAFT);
         ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
-        ModuleRun financialRun = latestRun(projectId, ModuleType.FINANCIAL_ANALYSIS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
+        TaskRun marketingVisualTask = marketing == null ? null : taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.MARKETING_VISUAL_GENERATION, "MARKETING_VISUAL", marketing.getId()).orElse(null);
         var marketingSource = selectedSnapshot == null ? null
             : marketingSourceRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
@@ -80,30 +119,71 @@ public class ProjectModuleStatusService {
         var techOpsSnapshot = selectedSnapshot == null ? null
             : techOpsSnapshotRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
-        var financialPreparation = techOpsSnapshot == null ? null
-            : financialPreparationRepository.findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(
-                projectId, techOpsSnapshot.getId()).orElse(null);
-        var financialSnapshot = techOpsSnapshot == null ? null
-            : financialSnapshotRepository.findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(
-                techOpsSnapshot.getId(), projectId).orElse(null);
+        var techOpsAdvisory = techOpsAdvisoryReportRepository
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
+        TaskRun techOpsAdvisoryTask = taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.TECH_OPS_ADVISORY).orElse(null);
+        var financialPreparation = currentMarketVersion == null || currentBusinessVersion == null
+            ? null : financialPreparationRepository
+                .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+                    projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .orElse(null);
+        var financialSnapshot = currentMarketVersion == null || currentBusinessVersion == null
+            ? null : financialSnapshotRepository
+                .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+                    projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
+                .orElse(null);
+        TaskRun financialTask = financialSnapshot == null ? null : taskRunRepository
+            .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, "FINANCIAL_ANALYSIS_REPORT", financialSnapshot.getId()).orElse(null);
+        TaskRun financialEstimateTask = financialPreparation == null || financialSnapshot != null ? null
+            : latestTask(projectId, "FINANCIAL_PREPARATION", financialPreparation.getId(),
+                TaskType.FINANCE_ESTIMATE);
 
         String confirmedBriefId = brief == null ? null : brief.getConfirmedSnapshotId();
         PipelineModuleStatus conceptStatus = conceptStatus(conceptRun, portfolioSelection, confirmedBriefId);
-        PipelineModuleStatus marketStatus = selectedSnapshot == null
+        PipelineModuleStatus marketStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : marketRun == null ? PipelineModuleStatus.READY
+            : analysisStatus(marketRun,
+                !selectedSnapshot.getId().equals(marketRun.getSourceMarketSeedSnapshotId()));
+        PipelineModuleStatus businessModelStatus = currentMarketVersion == null
             ? PipelineModuleStatus.NOT_READY
-            : externalStatus(marketRun, selectedSnapshot.getId());
-        PipelineModuleStatus businessModelStatus = selectedSnapshot == null
-            ? PipelineModuleStatus.NOT_READY
-            : externalStatus(businessRun, selectedSnapshot.getId());
-        PipelineModuleStatus marketingStatus = marketingStatus(marketing, marketingSource == null ? null : marketingSource.getId());
+            : businessRun == null ? PipelineModuleStatus.READY
+            : analysisStatus(businessRun,
+                !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()));
+        PipelineModuleStatus twinBaseStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : twinRun == null ? PipelineModuleStatus.READY
+            : twinStatus(twinRun, !selectedSnapshot.getId().equals(twinRun.getSourceMarketSeedSnapshotId()));
+        TaskRun activeTwinSurveyTask = twinRun == null ? null : activeTask(twinRun.getTaskRun());
+        TaskRun activeTwinTask = activeTwinSurveyTask != null ? activeTwinSurveyTask : activeTask(twinDraftTask);
+        PipelineModuleStatus twinStatus = activeTwinSurveyTask != null ? twinBaseStatus
+            : activeOverlay(twinBaseStatus, twinDraftTask);
+        PipelineModuleStatus marketingStatus = marketingStatus(marketing,
+            marketingSource == null ? null : marketingSource.getId(), marketingVisualTask);
+        boolean techOpsAdvisoryStale = techOpsAdvisory != null && (techOpsSnapshot == null
+            || currentMarketVersion == null || currentBusinessVersion == null || portfolioSelection == null
+            || !techOpsSnapshot.getId().equals(techOpsAdvisory.getTechOpsInputSnapshotId())
+            || !currentMarketVersion.getId().equals(techOpsAdvisory.getSourceMarketResearchVersionId())
+            || !currentBusinessVersion.getId().equals(techOpsAdvisory.getSourceBusinessModelVersionId())
+            || !portfolioSelection.getId().equals(techOpsAdvisory.getSourcePortfolioSelectionId()));
         PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
             : techOpsPreparation == null ? PipelineModuleStatus.READY
             : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : externalStatus(techOpsRun, techOpsSnapshot.getId());
-        PipelineModuleStatus financialStatus = techOpsSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : currentMarketVersion == null || currentBusinessVersion == null ? PipelineModuleStatus.NOT_READY
+            : techOpsAdvisoryStale ? PipelineModuleStatus.STALE
+            : techOpsAdvisoryTask == null ? PipelineModuleStatus.READY
+            : taskStatus(techOpsAdvisoryTask.getState());
+        PipelineModuleStatus financialBaseStatus = currentMarketVersion == null || currentBusinessVersion == null
+            ? PipelineModuleStatus.NOT_READY
             : financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : externalStatus(financialRun, financialSnapshot.getId());
+            : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
+        TaskRun activeFinancialReportTask = activeTask(financialTask);
+        TaskRun activeFinancialTask = activeFinancialReportTask != null
+            ? activeFinancialReportTask : activeTask(financialEstimateTask);
+        PipelineModuleStatus financialStatus = activeFinancialReportTask != null
+            ? financialBaseStatus : activeOverlay(financialBaseStatus, financialEstimateTask);
 
         return List.of(
             response(projectId, PipelineModuleType.IDEA, ideaStatus(brief),
@@ -121,41 +201,82 @@ public class ProjectModuleStatusService {
                 conceptRun == null ? null : conceptRun.getSourceIdeaBrief().getId(), confirmedBriefId, eligibleCount,
                 conceptRun == null ? null : conceptRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKET_ANALYSIS, marketStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of("marketAnalysisConnection"),
-                new NextAction("시장분석 상태 확인", "/market"), marketRun == null ? null : marketRun.getId(), null,
+                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
+                new NextAction("시장분석", "/market"), marketRun == null ? null : String.valueOf(marketRun.getId()),
+                marketRun == null ? null : marketRun.getTaskRun().getId(),
                 selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
                 marketRun == null ? null : marketRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.BUSINESS_MODEL, businessModelStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId")
-                    : businessRun == null ? List.of("businessModelModuleConnection") : List.of(),
-                new NextAction("BM 분석 상태 확인", "/business-model"),
-                businessRun == null ? null : businessRun.getId(), null,
-                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
+                currentMarketVersion == null ? List.of("marketResearchVersionId") : List.of(),
+                new NextAction("Business Model", "/business-model"),
+                businessRun == null ? null : String.valueOf(businessRun.getId()),
+                businessRun == null ? null : businessRun.getTaskRun().getId(),
+                currentMarketVersion == null ? null : String.valueOf(currentMarketVersion.getId()), null, null,
                 businessRun == null ? null : businessRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.TECH_OPS, techOpsStatus,
                 selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId")
                     : techOpsSnapshot == null ? List.of("techOpsRequiredFacts", "techOpsRequiredDecisions")
-                    : techOpsRun == null ? List.of("techOpsModuleConnection") : List.of(),
-                new NextAction("기술·운영 입력 준비", "/tech-ops"), techOpsRun == null ? null : techOpsRun.getId(), null,
+                    : techOpsAdvisory == null ? List.of("techOpsAdvisoryReport") : List.of(),
+                new NextAction("기술·운영 상용화 자문", "/tech-ops"),
+                techOpsAdvisory == null ? null : techOpsAdvisory.getId(),
+                activeTask(techOpsAdvisoryTask) == null ? null : techOpsAdvisoryTask.getId(),
                 techOpsSnapshot == null ? null : techOpsSnapshot.getId(), null, null,
-                techOpsRun == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt() : techOpsRun.getUpdatedAt()),
+                techOpsAdvisoryTask == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt()
+                    : techOpsAdvisoryTask.getUpdatedAt()),
             response(projectId, PipelineModuleType.FINANCE, financialStatus,
-                techOpsSnapshot == null ? List.of("techOpsInputSnapshotId")
+                currentMarketVersion == null ? List.of("marketResearchVersionId")
+                    : currentBusinessVersion == null ? List.of("businessModelVersionId")
                     : financialSnapshot == null ? List.of("financialRequiredInputs")
-                    : financialRun == null ? List.of("financialModuleConnection") : List.of(),
-                new NextAction("재무 입력 준비", "/finance"), financialRun == null ? null : financialRun.getId(), null,
+                    : financialTask == null ? List.of("financialAnalysisReport") : List.of(),
+                new NextAction("재무 입력 준비", "/finance"), activeFinancialTask == null
+                    ? financialTask == null ? null : financialTask.getId() : activeFinancialTask.getId(),
+                activeFinancialTask == null ? null : activeFinancialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
-                financialRun == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialRun.getUpdatedAt()),
+                financialTask == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialTask.getUpdatedAt()),
+            response(projectId, PipelineModuleType.TWIN_SURVEY, twinStatus,
+                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
+                new NextAction("트윈 패널 조사", "/twin-survey"),
+                twinRun == null ? null : String.valueOf(twinRun.getId()),
+                activeTwinTask == null ? null : activeTwinTask.getId(),
+                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
+                twinRun == null ? null : twinRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 marketingSource == null ? List.of("marketingSourceSnapshotId") : List.of(),
                 new NextAction("마케팅 콘텐츠", "/marketing"), marketing == null ? null : marketing.getId(),
-                marketing == null ? null : marketing.getTaskRunId(), marketingSource == null ? null : marketingSource.getId(),
-                null, null, marketing == null ? null : marketing.getUpdatedAt())
+                marketingVisualTask != null && !marketingVisualTask.terminal() ? marketingVisualTask.getId()
+                    : marketing == null ? null : marketing.getTaskRunId(),
+                marketingSource == null ? null : marketingSource.getId(), null, null,
+                marketingVisualTask == null ? marketing == null ? null : marketing.getUpdatedAt()
+                    : marketingVisualTask.getUpdatedAt())
         );
     }
 
     private ModuleRun latestRun(Long projectId, ModuleType type) {
         return moduleRunRepository.findFirstByProjectIdAndModuleAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, type).orElse(null);
+    }
+
+    private TaskRun latestTask(Long projectId, String subjectType, String subjectId,
+            TaskType... taskTypes) {
+        TaskRun task = taskRunRepository
+            .findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, List.of(taskTypes)).orElse(null);
+        return task != null && java.util.Objects.equals(subjectType, task.getSubjectType())
+            && java.util.Objects.equals(subjectId, task.getSubjectId()) ? task : null;
+    }
+
+    private TaskRun activeTask(TaskRun task) {
+        return task != null && (task.getState() == TaskRunState.QUEUED
+            || task.getState() == TaskRunState.READY
+            || task.getState() == TaskRunState.RUNNING) ? task : null;
+    }
+
+    private PipelineModuleStatus activeOverlay(PipelineModuleStatus base, TaskRun subordinate) {
+        if (base == PipelineModuleStatus.NOT_READY || subordinate == null) return base;
+        return switch (subordinate.getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case NEEDS_INPUT, SUCCEEDED, FAILED, CANCELLED, TIMED_OUT -> base;
+        };
     }
 
     private PipelineModuleStatus ideaStatus(IdeaBrief brief) {
@@ -205,15 +326,55 @@ public class ProjectModuleStatusService {
         return PipelineModuleStatus.valueOf(run.getStatus().name());
     }
 
-    private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId) {
+    private PipelineModuleStatus analysisStatus(MarketResearchRun run, boolean stale) {
+        if (stale) return PipelineModuleStatus.STALE;
+        return switch (run.getTaskRun().getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case NEEDS_INPUT -> PipelineModuleStatus.NEEDS_INPUT;
+            case SUCCEEDED -> PipelineModuleStatus.COMPLETED;
+            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+        };
+    }
+
+    private PipelineModuleStatus taskStatus(TaskRunState state) {
+        return switch (state) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case NEEDS_INPUT -> PipelineModuleStatus.NEEDS_INPUT;
+            case SUCCEEDED -> PipelineModuleStatus.COMPLETED;
+            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+        };
+    }
+
+    private PipelineModuleStatus twinStatus(TwinSurveyRun run, boolean stale) {
+        if (stale) return PipelineModuleStatus.STALE;
+        return switch (run.getTaskRun().getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case NEEDS_INPUT -> PipelineModuleStatus.NEEDS_INPUT;
+            case SUCCEEDED -> PipelineModuleStatus.COMPLETED;
+            case FAILED, CANCELLED, TIMED_OUT -> PipelineModuleStatus.FAILED;
+        };
+    }
+
+    private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId,
+            TaskRun visualTask) {
         if (marketingSourceSnapshotId == null) return PipelineModuleStatus.NOT_READY;
         if (content == null) return PipelineModuleStatus.READY;
         if (!marketingSourceSnapshotId.equals(content.getMarketingSourceSnapshotId())) return PipelineModuleStatus.STALE;
-        return switch (content.getStatus()) {
+        PipelineModuleStatus contentStatus = switch (content.getStatus()) {
             case QUEUED -> PipelineModuleStatus.QUEUED;
             case RUNNING -> PipelineModuleStatus.RUNNING;
             case COMPLETED, FINALIZED -> PipelineModuleStatus.COMPLETED;
             case FAILED -> PipelineModuleStatus.FAILED;
+        };
+        if (visualTask == null || contentStatus != PipelineModuleStatus.COMPLETED) return contentStatus;
+        return switch (visualTask.getState()) {
+            case QUEUED, READY -> PipelineModuleStatus.QUEUED;
+            case RUNNING -> PipelineModuleStatus.RUNNING;
+            case FAILED, CANCELLED, TIMED_OUT -> contentStatus;
+            case SUCCEEDED, NEEDS_INPUT -> contentStatus;
         };
     }
 

@@ -92,6 +92,29 @@ describe('api client', () => {
     expect(options.headers.has('Content-Type')).toBe(false);
   });
 
+  it('downloads an owned artifact through the authenticated backend boundary', async () => {
+    const fetchImpl = vi.fn(async () => new Response('image-bytes', {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/jpeg',
+        'Content-Disposition': 'attachment; filename="banner.jpg"',
+      },
+    }));
+    const client = createApiClient({
+      baseUrl: '/api/v1',
+      fetchImpl,
+      tokenProvider: { getAccessToken: () => 'artifact-token' },
+    });
+
+    const result = await client.download('/api/v3/projects/1/evidence-artifacts/art-1/download');
+
+    const [url, options] = fetchImpl.mock.calls[0];
+    expect(url).toBe('/api/v3/projects/1/evidence-artifacts/art-1/download');
+    expect(options.headers.get('Authorization')).toBe('Bearer artifact-token');
+    expect(result.contentType).toBe('image/jpeg');
+    expect(await result.blob.text()).toBe('image-bytes');
+  });
+
   it('forwards an external abort signal', async () => {
     const fetchImpl = vi.fn((url, options) => new Promise((resolve, reject) => {
       options.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));

@@ -28,6 +28,8 @@ public class FinancialInputSnapshotFactory {
         body.put("preparationId", preparation.getId());
         body.put("sourceTechOpsSnapshotId", preparation.getSourceTechOpsSnapshotId());
         body.put("sourceMarketSeedSnapshotId", preparation.getSourceMarketSeedSnapshotId());
+        body.put("sourceMarketResearchVersionId", preparation.getSourceMarketResearchVersionId());
+        body.put("sourceBusinessModelVersionId", preparation.getSourceBusinessModelVersionId());
         body.put("sourceSnapshotHash", preparation.getSourceSnapshotHash());
         body.put("createdAt", createdAt.toString());
         ObjectNode values = body.putObject("values");

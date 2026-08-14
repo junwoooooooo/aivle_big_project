@@ -16,6 +16,7 @@ describe('V2 job event message registry', () => {
     expect(jobEventMessage({ messageKey: 'job.concept-portfolio.completed' })).toBe('검토 가능한 사업안이 준비되었습니다.');
     expect(jobEventMessage({ messageKey: 'job.concept.run.completed' })).not.toContain('5개');
     expect(isUserVisibleJobEvent({ messageKey: 'job.claimed' })).toBe(false);
+    expect(jobEventMessage({ messageKey: 'job.marketing.visual.result_storing' })).toContain('프로젝트 저장소');
   });
   it('distinguishes safe Portfolio failure reasons', () => {
     expect(jobEventMessage({ status: 'FAILED', messageKey: 'job.concept-portfolio.failed',
@@ -33,6 +34,21 @@ describe('V2 job event message registry', () => {
       .toBe('거래·결제 구조를 확인했습니다.');
     expect(traceDetailForDisplay({ messageParams: { traceDetail: 'Candidate lineage hash checked' } }))
       .toBe('');
+  });
+  it('presents generic Market, BM and Twin trace summaries in user language', () => {
+    for (const key of ['job.market.trace', 'job.business-model.trace', 'job.twin.trace']) {
+      expect(ACTIVE_JOB_EVENT_KEYS).toContain(key);
+      expect(jobEventMessage({ messageKey: key, messageParams: { traceDetail: '실제 단계 완료' } }))
+        .toBe('실제 단계 완료');
+    }
+    expect(jobEventMessage({ messageKey: 'job.marketing.visual.generating' }))
+      .toBe('광고 문구와 이미지를 생성하고 있습니다.');
+  });
+  it('Finance 추천 진행 문구에 TechOps prerequisite를 노출하지 않는다', () => {
+    const message = jobEventMessage({ messageKey: 'job.finance.estimate.generating' });
+    expect(message).toContain('current Market·BM');
+    expect(message).not.toContain('TechOps');
+    expect(message).not.toContain('기술·운영');
   });
   it('groups only consecutive generic duplicates and preserves significant events', () => {
     const generic = (id) => ({ eventId: String(id), occurredAt: `2026-08-11T00:00:0${id}Z`,

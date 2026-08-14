@@ -10,6 +10,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
 import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
@@ -59,6 +60,7 @@ class TechOpsEvidenceArtifactTests {
     private static final class Harness {
         final ObjectMapper mapper = new ObjectMapper();
         final ProjectRepository projects = mock(ProjectRepository.class);
+        final ConceptPortfolioSelectionRepository portfolioSelections = mock(ConceptPortfolioSelectionRepository.class);
         final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
         final MarketAnalysisSeedSnapshotRepository marketSeeds = mock(MarketAnalysisSeedSnapshotRepository.class);
         final TechOpsInputPreparationRepository preparations = mock(TechOpsInputPreparationRepository.class);
@@ -71,7 +73,7 @@ class TechOpsEvidenceArtifactTests {
         final TaskRunService taskRuns = mock(TaskRunService.class);
         final CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
         final JobEventPublisher events = mock(JobEventPublisher.class);
-        final TechOpsService service = new TechOpsService(projects, selections, marketSeeds, preparations,
+        final TechOpsService service = new TechOpsService(projects, portfolioSelections, selections, marketSeeds, preparations,
             evidence, artifacts, snapshots, preparationFactory, snapshotFactory, readiness, mapper,
             taskRuns, hasher, events);
         final ProjectEvidenceArtifact artifact = ProjectEvidenceArtifact.create("artifact-1", 41L,

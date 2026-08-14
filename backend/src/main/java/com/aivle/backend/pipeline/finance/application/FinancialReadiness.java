@@ -14,6 +14,21 @@ public class FinancialReadiness {
             if (!FinancialPreparationFactory.present(item.path("value"))
                     || !List.of("LOCKED","ACCEPTED","USER_EDITED_ACCEPTED").contains(decision)) missing.add(key);
         }
+        String model = fields.path("revenueModel").path("value").asText();
+        if (!List.of("ONE_TIME", "SUBSCRIPTION", "HYBRID").contains(model)) missing.add("revenueModel");
+        if ("ONE_TIME".equals(model) || "HYBRID".equals(model)) required(missing, fields, "unitPrice");
+        if ("SUBSCRIPTION".equals(model) || "HYBRID".equals(model)) {
+            required(missing, fields, "monthlySubscriptionPrice");
+            required(missing, fields, "monthlyChurnRate");
+        }
         return List.copyOf(missing);
+    }
+
+    private void required(List<String> missing, JsonNode fields, String key) {
+        JsonNode item = fields.path(key);
+        if (!FinancialPreparationFactory.present(item.path("value"))
+                || !List.of("LOCKED", "ACCEPTED", "USER_EDITED_ACCEPTED").contains(item.path("decision").asText())) {
+            if (!missing.contains(key)) missing.add(key);
+        }
     }
 }

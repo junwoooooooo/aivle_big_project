@@ -1,7 +1,8 @@
-export default function MarketingCanvas({ result, style }) {
+export default function MarketingCanvas({ result, style, artifactUrl }) {
   if (!result) return <section className="mk-canvas mk-canvas--empty"><p>생성된 콘텐츠가 이곳에 표시됩니다.</p></section>;
-  return <section className="mk-canvas" aria-label="마케팅 콘텐츠 미리보기" style={{ '--mk-accent': style.accent, '--mk-scale': style.scale }}>
-    <article data-align={style.align} data-theme={style.theme}>
+  return <section className="mk-canvas" data-has-image={Boolean(artifactUrl)} aria-label="마케팅 콘텐츠 미리보기" style={{ '--mk-accent': style.accent, '--mk-scale': style.scale }}>
+    {artifactUrl && <figure className="mk-canvas__image"><img src={artifactUrl} alt={`${result.title} 마케팅 이미지`} /></figure>}
+    <article data-align={style.align} data-theme={artifactUrl ? 'COPY' : style.theme}>
       <span>{result.contentType.replaceAll('_',' ')}</span><h2>{result.title || 'Headline'}</h2><p>{result.body || '본문을 입력하세요.'}</p>
       {result.callToAction && <strong>{result.callToAction}</strong>}
       {result.hashtags?.length > 0 && <ul aria-label="해시태그">{result.hashtags.map((tag)=><li key={tag}>#{tag.replace(/^#/,'')}</li>)}</ul>}

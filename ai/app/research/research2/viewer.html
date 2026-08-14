@@ -1,0 +1,1330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>run viewer — 못 찾은 것부터 본다</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0}
+  :root{
+    --bg:#f4f6f7; --panel:#ffffff; --panel2:#eef1f3;
+    --ink:#14181c; --ink2:#3d4750; --muted:#6a7681; --line:#d9dfe4; --line2:#c3ccd3;
+    --acc:#1f6f6a; --acc-soft:#dceceb;
+    --ok:#1c7350; --weak:#9a6205; --unk:#5d6b78; --off:#6d4aa8; --unv:#a63a55;
+    --void:#94a3ad;
+    --mono:ui-monospace,"Cascadia Mono","Consolas","D2Coding",monospace;
+    --sans:"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
+    --r:3px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0e1114; --panel:#161a1f; --panel2:#1d2229;
+      --ink:#e7ecf0; --ink2:#c3ccd4; --muted:#8d99a4; --line:#262d35; --line2:#333c46;
+      --acc:#4fb5ac; --acc-soft:#16302f;
+      --ok:#48b98a; --weak:#d99b2a; --unk:#8b9aa8; --off:#a288e0; --unv:#e0778e;
+      --void:#5c6a75;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e1114; --panel:#161a1f; --panel2:#1d2229;
+    --ink:#e7ecf0; --ink2:#c3ccd4; --muted:#8d99a4; --line:#262d35; --line2:#333c46;
+    --acc:#4fb5ac; --acc-soft:#16302f;
+    --ok:#48b98a; --weak:#d99b2a; --unk:#8b9aa8; --off:#a288e0; --unv:#e0778e;
+    --void:#5c6a75;
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f6f7; --panel:#ffffff; --panel2:#eef1f3;
+    --ink:#14181c; --ink2:#3d4750; --muted:#6a7681; --line:#d9dfe4; --line2:#c3ccd3;
+    --acc:#1f6f6a; --acc-soft:#dceceb;
+    --ok:#1c7350; --weak:#9a6205; --unk:#5d6b78; --off:#6d4aa8; --unv:#a63a55;
+    --void:#94a3ad;
+  }
+
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 96px}
+  a{color:var(--acc)}
+  h1,h2,h3{text-wrap:balance;margin:0}
+  code,.mono{font-family:var(--mono);font-variant-ligatures:none}
+
+  /* ── top bar ─────────────────────────────────────────── */
+  .bar{position:sticky;top:0;z-index:20;background:var(--panel);
+       border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+  .bar-in{max-width:1180px;margin:0 auto;padding:10px 20px;
+          display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+         text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .brand b{color:var(--ink);font-weight:600}
+  .nav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+  .nav a{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted);
+         text-decoration:none;padding:4px 7px;border-radius:var(--r);white-space:nowrap}
+  .nav a:hover{color:var(--ink);background:var(--panel2)}
+
+  /* ── drop zone ───────────────────────────────────────── */
+  .drop{margin:28px 0;border:1.5px dashed var(--line2);border-radius:var(--r);
+        background:var(--panel);padding:34px 28px}
+  .drop.hot{border-color:var(--acc);background:var(--acc-soft)}
+  .drop h2{font-size:19px;margin-bottom:6px}
+  .drop p{color:var(--muted);font-size:13.5px;margin:0 0 4px}
+  .filelist{margin-top:16px;display:flex;flex-direction:column;gap:3px}
+  .filelist div{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .btn{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;
+       border:1px solid var(--line2);background:var(--panel2);color:var(--ink);
+       padding:6px 12px;border-radius:var(--r);cursor:pointer}
+  .btn:hover{border-color:var(--acc);color:var(--acc)}
+  .btn.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  .need{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:18px;
+        font-size:13.5px;align-items:baseline}
+  .need code{background:var(--panel2);padding:1px 6px;border-radius:var(--r);font-size:12.5px}
+  .need span{color:var(--muted)}
+
+  /* ── section shell ───────────────────────────────────── */
+  section{margin-top:44px}
+  .shead{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);
+         padding-bottom:8px;margin-bottom:18px}
+  .snum{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--acc);
+        border:1px solid var(--acc);padding:1px 5px;border-radius:var(--r)}
+  .shead h2{font-size:18px;letter-spacing:-.01em}
+  .shead .sub{font-size:12.5px;color:var(--muted);margin-left:auto;text-align:right}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+  .note{font-size:12.5px;color:var(--muted);font-style:normal}
+  .warn{border-left:3px solid var(--unv);background:var(--panel);padding:10px 14px;
+        border-radius:var(--r);font-size:13.5px;margin-bottom:14px;border:1px solid var(--line);
+        border-left-width:3px}
+  .na{color:var(--void);font-family:var(--mono);font-size:12.5px}
+
+  /* ── header axes ─────────────────────────────────────── */
+  .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;
+        background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .ax{background:var(--panel);padding:11px 14px}
+  .ax .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+         color:var(--muted);margin-bottom:3px}
+  .ax .v{font-family:var(--mono);font-size:14px;word-break:break-all}
+  .ax .v.diff{color:var(--unv)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 6px;
+        border-radius:9px;border:1px solid currentColor;margin-right:4px}
+  .pill.ok{color:var(--ok)} .pill.bad{color:var(--unv)} .pill.mid{color:var(--weak)}
+
+  .runtabs{display:flex;gap:6px;margin:14px 0 0;flex-wrap:wrap;align-items:center}
+  .runtabs .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+                text-transform:uppercase;color:var(--muted);margin-right:4px}
+
+  /* ── §1 not found ────────────────────────────────────── */
+  .nf{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px}
+  .nfc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+       padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+  .nfc.zero{border-style:dashed;color:var(--muted)}
+  .nfc .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
+          display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .nfc .k b{font-size:20px;font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+  .nfc.zero .k b{color:var(--void);font-weight:400}
+  .nfc .ko{font-size:12.5px;color:var(--muted)}
+  .nfc ul{margin:2px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink2)}
+  .nfc li{margin:1px 0;word-break:break-word}
+  .nfc .mono{font-size:12px}
+
+  /* ── §2 metrics ──────────────────────────────────────── */
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+  .mcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .mcard .name{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--muted)}
+  .mcard .val{font-size:34px;font-family:var(--mono);font-weight:600;letter-spacing:-.02em;
+              font-variant-numeric:tabular-nums;line-height:1.15;margin-top:4px}
+  .mcard .val.null{color:var(--void);font-size:26px;font-weight:400}
+  .mcard .den{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:2px}
+  .mcard .cav{font-size:12px;color:var(--weak);margin-top:8px;line-height:1.45}
+  .mcard .cav.void{color:var(--void)}
+
+  /* ── §3 funnel ───────────────────────────────────────── */
+  .fun{display:flex;flex-direction:column;gap:2px}
+  .frow{display:grid;grid-template-columns:34px 190px 1fr;gap:12px;align-items:center;
+        padding:7px 10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+  .frow .node{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--acc)}
+  .frow .lab{font-size:13px;color:var(--ink2)}
+  .fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .seg{height:16px;border-radius:1px;min-width:2px}
+  .fnum{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+  .drop-tag{font-family:var(--mono);font-size:11.5px;color:var(--unv);white-space:nowrap}
+
+  /* ── §4 slot table ───────────────────────────────────── */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+     color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);
+     white-space:nowrap;font-weight:500}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tr.clickable{cursor:pointer}
+  tr.clickable:hover td{background:var(--panel2)}
+  td.m{font-family:var(--mono);font-size:12px;white-space:nowrap}
+  .dist{display:flex;height:14px;min-width:120px;border-radius:1px;overflow:hidden;gap:1px}
+  .dist .s{height:14px}
+  .dist.empty{border:1px dashed var(--line2);background:transparent;box-sizing:border-box}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:1px;margin-right:5px;
+            vertical-align:baseline}
+  .legend i.void{background:transparent;border:1px dashed var(--void)}
+
+  /* ── §5 chain ────────────────────────────────────────── */
+  .chain{display:flex;flex-direction:column;gap:0}
+  .step{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:9px 0;
+        border-top:1px solid var(--line)}
+  .step:first-child{border-top:none}
+  .step .sk{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);
+            padding-top:2px}
+  .step .sv{min-width:0}
+  .step.brk .sk{color:var(--unv)}
+  .brkline{font-family:var(--mono);font-size:12px;color:var(--unv);
+           border-left:3px solid var(--unv);padding:4px 10px;margin:6px 0;background:var(--panel2)}
+  .tr{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  details.pay{margin-top:4px}
+  details.pay>summary{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+                      cursor:pointer;list-style:none;user-select:none}
+  details.pay>summary::before{content:"▸ ";color:var(--acc)}
+  details.pay[open]>summary::before{content:"▾ "}
+  details.pay>summary:hover{color:var(--acc)}
+  pre{font-family:var(--mono);font-size:11.5px;line-height:1.5;background:var(--panel2);
+      border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;overflow-x:auto;
+      margin:6px 0 0;white-space:pre-wrap;word-break:break-word;max-height:420px}
+  .slotdetail{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+              padding:14px 18px;margin-top:12px}
+  .slotdetail h3{font-family:var(--mono);font-size:13px;letter-spacing:.06em;margin-bottom:8px}
+  .tracehead{font-family:var(--mono);font-size:11.5px;color:var(--acc);margin:16px 0 2px;
+             border-top:1px solid var(--line);padding-top:12px}
+
+  /* ── §6 ledger ───────────────────────────────────────── */
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .lb{font-family:var(--mono);font-size:11.5px;padding:2px 8px;border-radius:9px;
+      border:1px solid currentColor;white-space:nowrap}
+  .lb.확인됨{color:var(--ok)} .lb.출처약함{color:var(--weak)} .lb.미확인{color:var(--unk)}
+  .lb.off_slot{color:var(--off)} .lb.미검증{color:var(--unv)} .lb.공백{color:var(--void)}
+
+  /* ── §7 report ───────────────────────────────────────── */
+  .rsec{margin-bottom:22px}
+  .rsec h3{font-size:15px;margin-bottom:6px;display:flex;gap:9px;align-items:baseline}
+  .rsec h3 .n{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.1em}
+  .rsec ul{margin:0;padding-left:18px}
+  .rsec li{margin:3px 0}
+  .md h1,.md h2,.md h3{margin:16px 0 6px}
+  .md p{margin:6px 0}
+  .md ul{padding-left:18px}
+
+  .foot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
+        font-size:12.5px;color:var(--muted)}
+  @media (max-width:720px){
+    .frow{grid-template-columns:30px 1fr;row-gap:4px}
+    .frow .fbar{grid-column:1/-1}
+    .step{grid-template-columns:1fr;gap:2px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>run viewer</b> · 못 찾은 것부터 본다</div>
+    <nav class="nav" id="nav" hidden>
+      <a href="#s1">§1 못 찾은 것</a><a href="#s2">§2 지표</a><a href="#s3">§3 깔때기</a>
+      <a href="#s4">§4 슬롯</a><a href="#s5">§5 상세</a><a href="#s6">§6 원장</a>
+      <a href="#s7">§7 보고서</a><a href="#s8">원본 JSON</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="drop" id="drop">
+    <h2>result.json · run.jsonl 을 여기에 놓는다</h2>
+    <p>서버 없이 브라우저 안에서만 읽는다. 파일은 어디로도 전송되지 않는다.</p>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn" id="pick">파일 선택</button>
+      <button class="btn" id="pickdir">폴더 선택 (runs/&lt;run_id&gt;/)</button>
+      <button class="btn" id="reset" hidden>비우기</button>
+      <input type="file" id="fi" multiple hidden>
+      <input type="file" id="fd" webkitdirectory directory multiple hidden>
+    </div>
+    <div class="need">
+      <code>run.jsonl</code><span>노드별 이벤트 — §3 깔때기 · §4 슬롯 · §5 체인 · §6 원장이 여기서 나온다</span>
+      <code>result.json</code><span>축(어댑터·규칙 버전) · 입력 슬롯 · §1 못 찾은 것 · §7 보고서</span>
+      <code>eval.json</code><span>§2 지표 — 뷰어는 지표를 계산하지 않는다. <b>python eval.py &lt;run_id&gt; --out runs/&lt;run_id&gt;/eval.json</b> 으로 만들어 함께 올린다</span>
+      <code>a3_bodies.json</code><span>(선택) 본문 전문 — §5 fetch 단계에서 펼쳐 본다</span>
+    </div>
+    <div class="filelist" id="filelist"></div>
+  </div>
+
+  <div id="app" hidden></div>
+
+  <div class="foot" id="foot" hidden>
+    뷰어는 <b>계산하지 않는다</b>. 지표는 <code>eval.py</code>, 판정·라벨·§7은 C블록이 낸 값을 그대로 그린다.
+    §3 깔때기와 §4 분포는 <code>run.jsonl</code> 행을 <i>세기만</i> 한다.
+    <span id="derivnote"></span>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════
+   상태
+   ═══════════════════════════════════════════════════════════ */
+var RUNS = {};        // run_id -> {id, result, events, evals, bodies, files:[]}
+var ORDER = [];       // 올린 순서
+var ACTIVE = null;
+var OPEN_SLOT = null;
+var LEDGER_FILTER = "ALL";
+
+var LABELS = ["확인됨","출처약함","미확인","off_slot","미검증"];
+var LABEL_COLOR = {"확인됨":"var(--ok)","출처약함":"var(--weak)","미확인":"var(--unk)",
+                   "off_slot":"var(--off)","미검증":"var(--unv)","공백":"var(--void)"};
+
+/* §7 키 — 사양이 정한 순서. 값이 비어도 키는 남긴다 (침묵 방지) */
+var NF_KEYS = [
+  ["empty_slots",       "공백 슬롯",              "수집 0건 — 라벨을 만들 수 없다"],
+  ["off_slot",          "off_slot (겹별 사유)",   "4겹 중 어디에 걸렸나 — 버리지 않고 격리 보관"],
+  ["unverified_quote",  "미검증",                 "인용문이 본문에 없음 — 애초에 근거가 아니다"],
+  ["unit_mismatch",     "unit_mismatch",          "변환하지 않고 멈춘 곳 (시끄러운 정지)"],
+  ["range_capped",      "range_capped",           "범위 상한에 부딪힘 — 가정 과다"],
+  ["suspect_var",       "suspect_var",            "B3 재조사 힌트 — 민감도 최대 가정 변수"],
+  ["no_guard_slots",    "no_guard_slots",         "가드 없는 슬롯 — off_slot 4겹 중 2겹이 무력"],
+  ["unknown_error_codes","unknown_error_codes",   "분류 못 한 외부 응답 코드 — 규칙 파일에 추가할 것"],
+  ["adapters",          "adapters (not_configured)","안 쓴 어댑터 — 커버리지 하한 고지"],
+  ["thin_slots",        "thin_slots",             "라벨은 붙었으나 min_facts 미달 — '충족'과 '충분'은 다르다"],
+  ["unfilled_vars",     "unfilled_vars",          "식에서 가정으로 채운 변수"],
+  ["retry_hints",       "retry_hints",            "A4·C2 가 낸 힌트 — 사람이 승인해 1회"],
+  ["skipped_checks",    "skipped_checks",         "blocker 가 깨져 검사하지 않은 규칙"]
+];
+
+/* ═══════════════════════════════════════════════════════════
+   유틸
+   ═══════════════════════════════════════════════════════════ */
+function el(t,c,txt){var e=document.createElement(t);if(c)e.className=c;
+  if(txt!==undefined&&txt!==null)e.textContent=String(txt);return e;}
+function esc(s){return String(s).replace(/[&<>"']/g,function(m){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];});}
+function has(o,k){return o&&Object.prototype.hasOwnProperty.call(o,k);}
+function naSpan(t){var s=el("span","na",t||"해당 없음");return s;}
+function num(n){return (n===null||n===undefined)?"–":String(n);}
+function isEmptyVal(v){
+  if(v===null||v===undefined)return true;
+  if(Array.isArray(v))return v.length===0;
+  if(typeof v==="object")return Object.keys(v).length===0;
+  if(typeof v==="string")return v==="";
+  return false;
+}
+function countOf(v){
+  if(v===null||v===undefined)return 0;
+  if(Array.isArray(v))return v.length;
+  if(typeof v==="number")return v;
+  if(typeof v==="object")return Object.keys(v).length;
+  return 1;
+}
+function short(s,n){s=String(s);return s.length>n?s.slice(0,n)+"…":s;}
+function dig(o,path){var c=o;for(var i=0;i<path.length;i++){
+  if(c===null||c===undefined||typeof c!=="object")return undefined;c=c[path[i]];}return c;}
+
+/* ═══════════════════════════════════════════════════════════
+   파일 읽기 · 분류
+   ═══════════════════════════════════════════════════════════ */
+function readFile(f){return new Promise(function(res){
+  var r=new FileReader();
+  r.onload=function(){res({name:f.name, path:(f.webkitRelativePath||f.name), text:r.result});};
+  r.onerror=function(){res({name:f.name, path:f.name, text:""});};
+  r.readAsText(f,"utf-8");
+});}
+
+/* eval.py 는 run 이 둘이면 JSON 객체 두 개를 연달아 찍는다 — 이어붙은 것도 읽는다 */
+function parseJsonMulti(text){
+  try{return [JSON.parse(text)];}catch(e){}
+  var out=[],depth=0,start=-1,inStr=false,escp=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(inStr){ if(escp)escp=false; else if(ch==="\\")escp=true; else if(ch==='"')inStr=false; continue; }
+    if(ch==='"'){inStr=true;continue;}
+    if(ch==="{"){ if(depth===0)start=i; depth++; }
+    else if(ch==="}"){ depth--; if(depth===0&&start>=0){
+      try{out.push(JSON.parse(text.slice(start,i+1)));}catch(e){} start=-1; } }
+  }
+  return out;
+}
+
+function parseJsonl(text){
+  var rows=[],lines=text.split(/\r?\n/);
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim(); if(!l)continue;
+    try{rows.push(JSON.parse(l));}catch(e){}
+  }
+  return rows;
+}
+
+function runIdFromPath(p,fallback){
+  var parts=String(p).split(/[\\/]/);
+  if(parts.length>=2)return parts[parts.length-2];
+  return fallback;
+}
+
+function ingest(file){
+  var name=file.name.toLowerCase(), text=file.text, note=null;
+  // 1) jsonl
+  if(/\.jsonl$/.test(name)||/^\s*\{[^\n]*"node"\s*:/.test(text)){
+    var rows=parseJsonl(text);
+    if(rows.length&&rows[0].node){
+      var id=(rows[0].run_id)||runIdFromPath(file.path,"unknown");
+      bucket(id).events=(bucket(id).events||[]).concat(rows);
+      return {id:id,kind:"run.jsonl",n:rows.length};
+    }
+  }
+  var objs=parseJsonMulti(text);
+  /* --out 은 실행이 둘이면 배열로 쓴다 */
+  if(objs.length===1&&Array.isArray(objs[0]))objs=objs[0];
+  if(!objs.length) return {id:null,kind:"읽지 못함 (JSON 아님)",n:0};
+
+  // 2) eval 출력 — 지표 키로 알아본다
+  if(objs.length&&(has(objs[0],"회수율")||has(objs[0],"축"))){
+    var k=0;
+    objs.forEach(function(o){
+      var id=o.run_id||runIdFromPath(file.path,"unknown");
+      bucket(id).evals=o; k++;
+    });
+    return {id:objs.map(function(o){return o.run_id;}).join(", "),kind:"eval.py 출력",n:k};
+  }
+  var o=objs[0];
+  // 3) result.json
+  if(has(o,"run_id")&&(has(o,"report")||has(o,"rules")||has(o,"input"))){
+    var rid=o.run_id||runIdFromPath(file.path,"unknown");
+    bucket(rid).result=o;
+    return {id:rid,kind:"result.json",n:1};
+  }
+  // 4) a3_bodies.json — trace_id -> 본문
+  if(/bodies/.test(name)){
+    var bid=runIdFromPath(file.path,"unknown");
+    bucket(bid).bodies=o;
+    return {id:bid,kind:"a3_bodies.json",n:Object.keys(o).length};
+  }
+  var uid=runIdFromPath(file.path,"unknown");
+  bucket(uid).extra=bucket(uid).extra||{}; bucket(uid).extra[file.name]=o;
+  return {id:uid,kind:"알 수 없는 JSON — 원본 트리에만 넣는다",n:1};
+}
+
+function bucket(id){
+  if(!RUNS[id]){RUNS[id]={id:id,result:null,events:null,evals:null,bodies:null,extra:null};
+                ORDER.push(id);}
+  return RUNS[id];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   run.jsonl 인덱싱 — 세기만 한다
+   ═══════════════════════════════════════════════════════════ */
+function index(run){
+  if(run._idx)return run._idx;
+  var ev=run.events||[];
+  var byNode={},bySlot={},byTrace={};
+  ev.forEach(function(r){
+    (byNode[r.node]=byNode[r.node]||[]).push(r);
+    if(r.slot_id)(bySlot[r.slot_id]=bySlot[r.slot_id]||[]).push(r);
+    if(r.trace_id)(byTrace[r.trace_id]=byTrace[r.trace_id]||[]).push(r);
+  });
+  run._idx={byNode:byNode,bySlot:bySlot,byTrace:byTrace,
+            node:function(n){return (byNode[n]||[]).map(function(r){return r.payload;});},
+            rows:function(n){return byNode[n]||[];}};
+  return run._idx;
+}
+
+function slotsOf(run){
+  var ix=index(run);
+  var fromLog=ix.node("a1_slot");
+  if(fromLog.length)return fromLog;
+  var fromRes=dig(run.result||{},["input","slots"]);
+  return Array.isArray(fromRes)?fromRes:[];
+}
+
+/* 축은 전부 result.json 에서 읽는다 — 뷰어가 만들어 내는 축은 하나도 없다.
+   뷰어가 계산하면 뷰어를 고칠 때 과거 실행의 축이 소급해서 달라 보인다. */
+function axesOf(run){
+  var res=run.result||{};
+  return {
+    adapters: has(res,"adapters")?res.adapters:undefined,
+    whitelist: dig(res,["rules","whitelist","version"]),
+    scoring: dig(res,["rules","scoring","version"]),
+    slothash: res.slot_set_hash,
+    source_run: res.source_run,
+    from_stage: res.from_stage,
+    as_of: res.reference_date
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   렌더 — 진입점
+   ═══════════════════════════════════════════════════════════ */
+function render(){
+  var app=document.getElementById("app");
+  app.innerHTML="";
+  app.hidden=false;
+  document.getElementById("foot").hidden=false;
+  document.getElementById("nav").hidden=false;
+  document.getElementById("reset").hidden=false;
+  if(!ACTIVE||!RUNS[ACTIVE])ACTIVE=ORDER[0];
+  var run=RUNS[ACTIVE];
+
+  app.appendChild(header(run));
+  app.appendChild(sec1(run));
+  app.appendChild(sec2(run));
+  app.appendChild(sec3(run));
+  app.appendChild(sec4(run));
+  app.appendChild(sec5(run));
+  app.appendChild(sec6(run));
+  app.appendChild(sec7(run));
+  app.appendChild(sec8(run));
+  document.getElementById("derivnote").textContent =
+    " 비교 축(어댑터·규칙 버전·슬롯 세트 해시·source_run)은 전부 result.json 에 값으로 박힌 것을 읽는다.";
+}
+
+function section(id,n,title,subtitle){
+  var s=el("section");s.id=id;
+  var h=el("div","shead");
+  h.appendChild(el("span","snum",n));
+  h.appendChild(el("h2",null,title));
+  if(subtitle)h.appendChild(el("div","sub",subtitle));
+  s.appendChild(h);
+  return s;
+}
+
+/* ── 헤더 : 비교 축 ─────────────────────────────────────── */
+function header(run){
+  var s=el("section");s.style.marginTop="26px";
+  var res=run.result||{};
+  var box=el("div");
+  var top=el("div");
+  top.style.cssText="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px";
+  var t=el("h1",null,run.id);
+  t.style.cssText="font-family:var(--mono);font-size:23px;letter-spacing:-.01em";
+  top.appendChild(t);
+  var meta=el("div","note");
+  var bits=[];
+  if(res.reference_date)bits.push("as_of "+res.reference_date);
+  if(res.finished_at)bits.push("finished "+res.finished_at);
+  if(res.wall_clock_sec!==undefined)bits.push(res.wall_clock_sec+"s");
+  if(run.events)bits.push(run.events.length+" events");
+  meta.textContent=bits.join("  ·  ")||"result.json 없음 — run.jsonl 만 올라왔다";
+  meta.style.fontFamily="var(--mono)";
+  top.appendChild(meta);
+  box.appendChild(top);
+
+  var other=ORDER.filter(function(x){return x!==run.id;})[0];
+  var oa=other?axesOf(RUNS[other]):null;
+  var a=axesOf(run);
+  var diffs=[];
+  function cmp(k){ if(!oa)return false;
+    var d=JSON.stringify(a[k])!==JSON.stringify(oa[k]); if(d)diffs.push(k); return d; }
+
+  var grid=el("div","axes");
+  grid.appendChild(axCell("adapters", adaptersView(a.adapters), cmp("adapters")));
+  grid.appendChild(axCell("whitelist.version", a.whitelist, cmp("whitelist")));
+  grid.appendChild(axCell("scoring.version", a.scoring, cmp("scoring")));
+  grid.appendChild(axCell("as_of / reference_date", a.as_of, cmp("as_of")));
+  grid.appendChild(axCell("슬롯 세트 해시", a.slothash, cmp("slothash")));
+  /* 파생 실행(--from a4)은 수집이 같은 실행끼리만 채점 비교가 유효하다 */
+  grid.appendChild(axCell("source_run", a.source_run, cmp("source_run")));
+  grid.appendChild(axCell("from_stage", a.from_stage, cmp("from_stage")));
+  box.appendChild(grid);
+
+  if(res.coverage_caveat){
+    var cc=el("div","warn");
+    cc.innerHTML="<b>coverage_caveat</b> — "+esc(res.coverage_caveat);
+    cc.style.marginTop="12px";cc.style.marginBottom="0";
+    box.appendChild(cc);
+  }
+  if(Array.isArray(res.notes)&&res.notes.length){
+    var nb=el("div","note");nb.style.marginTop="8px";
+    nb.textContent="notes: "+res.notes.join(" · ");
+    box.appendChild(nb);
+  }
+
+  if(ORDER.length>1){
+    var tabs=el("div","runtabs");
+    tabs.appendChild(el("span","lbl","실행"));
+    ORDER.forEach(function(id){
+      var b=el("button","btn"+(id===ACTIVE?" on":""),id);
+      b.onclick=function(){ACTIVE=id;OPEN_SLOT=null;render();window.scrollTo(0,0);};
+      tabs.appendChild(b);
+    });
+    box.appendChild(tabs);
+
+    var w=el("div", diffs.length?"warn":"panel");
+    w.style.marginTop="12px";
+    if(diffs.length){
+      w.innerHTML="<b>⚠ 같은 그래프에 올리면 안 된다.</b> 실행 조건이 다르다 — "+
+        esc(diffs.join(", "))+" 가 어긋난다. "+
+        "화이트리스트나 어댑터가 바뀌면 정확도·적합률이 <i>소급해서</i> 달라 보인다.";
+      var rows=el("div");rows.style.cssText="margin-top:8px;font-family:var(--mono);font-size:12.5px";
+      diffs.forEach(function(k){
+        var line=el("div");
+        line.textContent=k+":  "+JSON.stringify(oa[k])+"  →  "+JSON.stringify(a[k]);
+        rows.appendChild(line);
+      });
+      w.appendChild(rows);
+    }else{
+      w.innerHTML="<span class='pill ok'>축 동일</span> 두 실행의 어댑터 상태·규칙 버전·슬롯 세트가 같다. 나란히 비교해도 된다.";
+    }
+    box.appendChild(w);
+  }
+  s.appendChild(box);
+  return s;
+}
+function axCell(k,v,diff){
+  var c=el("div","ax");
+  c.appendChild(el("div","k",k));
+  var d=el("div","v"+(diff?" diff":""));
+  if(v===undefined||v===null||v===""){d.appendChild(naSpan());}
+  else if(v instanceof Node){d.appendChild(v);}
+  else d.textContent=v;
+  c.appendChild(d);
+  if(diff)c.appendChild(el("div","note","↕ 다른 실행과 어긋남"));
+  return c;
+}
+function adaptersView(ad){
+  if(!ad)return null;
+  var f=document.createDocumentFragment();
+  Object.keys(ad).forEach(function(k){
+    var st=ad[k];
+    var cls=st==="ok"?"ok":(st==="degraded"?"mid":"bad");
+    var p=el("span","pill "+cls,k+" "+st);
+    f.appendChild(p);
+  });
+  return f;
+}
+
+/* ── §1 못 찾은 것 ──────────────────────────────────────── */
+function sec1(run){
+  var s=section("s1","§1","못 찾은 것","이 도구의 정체성 — 값이 비어도 키는 남긴다");
+  var nf=dig(run.result||{},["report","not_found"]);
+  var ix=index(run);
+  var audit=ix.node("a1_audit")[0]||{};
+
+  if(!nf){
+    var w=el("div","warn");
+    w.innerHTML="<b>report.not_found 가 없다.</b> result.json 을 올리지 않았거나, C3 가 §7 을 내지 않았다. "+
+      "아래 키들은 값이 아니라 <i>비어 있음</i>을 보여주기 위해 남겨 둔다.";
+    s.appendChild(w);
+  }
+  nf=nf||{};
+
+  var g=el("div","nf");
+  NF_KEYS.forEach(function(spec){
+    var key=spec[0],ko=spec[1],why=spec[2];
+    var v, missing=false;
+    if(key==="unverified_quote"){
+      v = dig(nf,["off_slot","unverified_quote"]);
+      if(v===undefined){ missing=!has(nf,"off_slot"); }
+    }else if(key==="no_guard_slots"){
+      v = has(nf,"no_guard_slots")?nf.no_guard_slots:audit.no_guard_slots;
+      if(v===undefined)missing=true;
+    }else{
+      v = nf[key];
+      if(!has(nf,key))missing=true;
+    }
+    if(key==="adapters"&&v===undefined&&run.result&&has(run.result,"adapters")) v=run.result.adapters;
+    g.appendChild(nfCard(key,ko,why,v,missing));
+  });
+  s.appendChild(g);
+
+  /* 사양에 없는 키가 §7에 더 있으면 숨기지 않는다 */
+  var known={};NF_KEYS.forEach(function(x){known[x[0]]=1;});
+  var extra=Object.keys(nf).filter(function(k){return !known[k];});
+  if(extra.length){
+    var g2=el("div","nf");g2.style.marginTop="12px";
+    extra.forEach(function(k){g2.appendChild(nfCard(k,"",  "§7 에 있으나 사양 목록 밖 — 그대로 보여준다",nf[k],false));});
+    s.appendChild(g2);
+  }
+  return s;
+}
+
+function nfCard(key,ko,why,v,missing){
+  /* off_slot 은 {count, by_reason, unverified_quote} 묶음이다 — 키 개수가 아니라 count 를 센다 */
+  var n = missing?null:((key==="off_slot"&&v&&typeof v==="object"&&has(v,"count"))
+                        ? v.count : countOf(v));
+  var zero = missing || n===0;
+  var c=el("div","nfc"+(zero?" zero":""));
+  var k=el("div","k");
+  k.appendChild(el("span",null,key));
+  k.appendChild(el("b",null, missing?"—":String(n)));
+  c.appendChild(k);
+  if(ko)c.appendChild(el("div","ko",ko));
+  c.appendChild(el("div","note",why));
+
+  if(missing){ c.appendChild(naSpan("키 없음 — 해당 없음")); return c; }
+  if(n===0){ c.appendChild(naSpan("0건 — 비어 있음(키는 있다)")); return c; }
+
+  if(Array.isArray(v)){
+    var ul=el("ul");
+    v.slice(0,6).forEach(function(x){
+      var li=el("li");
+      li.textContent=(typeof x==="object")?JSON.stringify(x):String(x);
+      ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    if(v.length>6)c.appendChild(el("div","note","… 외 "+(v.length-6)+"건 (원본 JSON 트리 참조)"));
+  }else if(typeof v==="object"&&v){
+    var ul2=el("ul");
+    Object.keys(v).slice(0,8).forEach(function(kk){
+      var li=el("li");
+      var vv=v[kk];
+      li.innerHTML="<span class='mono'>"+esc(kk)+"</span> · "+
+        esc(typeof vv==="object"?JSON.stringify(vv):String(vv));
+      ul2.appendChild(li);
+    });
+    c.appendChild(ul2);
+  }else{
+    c.appendChild(el("div","mono",String(v)));
+  }
+  return c;
+}
+
+/* ── §2 지표 ────────────────────────────────────────────── */
+function sec2(run){
+  var s=section("s2","§2","지표","분모가 서로 다르다 — 같은 분모를 쓰면 판단이 불가능해진다");
+  var e=run.evals;
+  if(!e){
+    var w=el("div","panel");
+    w.innerHTML="<b>eval.py 출력이 없다 — 해당 없음.</b><br>"+
+      "<span class='note'>뷰어는 지표를 계산하지 않는다. 계산하면 파이프라인과 두 벌이 되고 어느 쪽이 맞는지 모르게 된다. "+
+      "아래를 실행해 나온 JSON 을 함께 올린다.</span>"+
+      "<pre>python eval.py "+esc(run.id)+" --out runs/"+esc(run.id)+"/eval.json</pre>";
+    s.appendChild(w);
+    return s;
+  }
+  var g=el("div","mgrid");
+  g.appendChild(mcard("회수율", e["회수율"], e["회수_분모"],
+    "golden 도메인 적중 ÷ golden 항목 수 · 고칠 곳 prompts.SEARCH", null));
+  g.appendChild(mcard("추출률", e["추출률"], e["추출_분모"],
+    "값을 뽑은 문서 ÷ 뽑을 만했던 문서 · 고칠 곳 prompts.EXTRACT",
+    e["_추출_주의"]||"분모는 상한 추정이다 — ‘뽑을 만했던’은 usable·키워드·숫자로 기계가 어림잡은 것이고, 실제로 그 수치가 있었는지는 보증하지 않는다"));
+  g.appendChild(mcard("정확도", e["정확도"], e["정확_분모"],
+    "quote_verified ÷ 인용 수 · 고칠 곳 prompts.EXTRACT", null));
+  g.appendChild(mcard("적합률", e["적합률"], e["적합_분모"],
+    "off_slot 아닌 사실 ÷ 사실 총수 · 고칠 곳 data/slots.json", null));
+  s.appendChild(g);
+
+  var side=el("div");
+  side.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px";
+  side.appendChild(kvPanel("확인됨 / 격리", (function(){
+    var f=document.createDocumentFragment();
+    f.appendChild(el("div","mono","확인됨  "+num(e["확인됨"])));
+    var q=e["격리"]||{};
+    f.appendChild(el("div","mono","off_slot  "+num(q.off_slot)));
+    f.appendChild(el("div","mono","미검증  "+num(q["미검증"])));
+    return f;})()));
+  if(e["놓친_정답"]) side.appendChild(listPanel("놓친 정답 (golden)", e["놓친_정답"]));
+  if(e["금지도메인_유입"]) side.appendChild(listPanel("금지 도메인 유입", e["금지도메인_유입"]));
+  if(e["not_found_사유"]) side.appendChild(listPanel("not_found 사유", e["not_found_사유"]));
+  if(e["stat_code"]) side.appendChild(listPanel("stat_code 결과 3단", e["stat_code"]["_요약"]||e["stat_code"]));
+  s.appendChild(side);
+
+  var note=el("div","note");note.style.marginTop="10px";
+  note.textContent="표본이 작으면 비율은 판단 근거가 아니다 — 분모가 10 미만이면 숫자보다 분모를 먼저 본다.";
+  s.appendChild(note);
+  return s;
+}
+function mcard(name,val,den,why,caveat){
+  var c=el("div","mcard");
+  c.appendChild(el("div","name",name));
+  var isNull = (val===null||val===undefined);
+  var v=el("div","val"+(isNull?" null":""), isNull?"null":String(val));
+  c.appendChild(v);
+  var d=el("div","den");
+  d.textContent = isNull ? ("분모 "+num(den)+" — 잴 수 없음") : ("분모 "+num(den));
+  c.appendChild(d);
+  c.appendChild(el("div","note",why));
+  if(isNull){
+    var z=el("div","cav void");
+    z.textContent="0 이 아니다. 0 은 ‘재봤더니 하나도 못 맞췄다’이고 null 은 ‘잴 근거가 없다’이다 — 섞으면 엉뚱한 프롬프트를 고친다.";
+    c.appendChild(z);
+  }
+  if(caveat){var cv=el("div","cav");cv.textContent="⚠ "+caveat;c.appendChild(cv);}
+  return c;
+}
+function kvPanel(title,frag){
+  var p=el("div","mcard");p.appendChild(el("div","name",title));
+  var b=el("div");b.style.marginTop="6px";b.appendChild(frag);p.appendChild(b);return p;
+}
+function listPanel(title,v){
+  var p=el("div","mcard");p.appendChild(el("div","name",title));
+  if(isEmptyVal(v)){p.appendChild(naSpan("0건"));return p;}
+  var ul=el("ul");ul.style.cssText="margin:6px 0 0;padding-left:16px;font-size:12.5px";
+  if(Array.isArray(v))v.forEach(function(x){ul.appendChild(el("li",null,typeof x==="object"?JSON.stringify(x):x));});
+  else Object.keys(v).forEach(function(k){ul.appendChild(el("li",null,k+" : "+
+      (typeof v[k]==="object"?JSON.stringify(v[k]):v[k])));});
+  p.appendChild(ul);return p;
+}
+
+/* ── §3 노드 깔때기 ─────────────────────────────────────── */
+function sec3(run){
+  var s=section("s3","§3","노드 깔때기","run.jsonl 행을 센 것 — 어디서 급감하는지");
+  var ix=index(run);
+  if(!run.events){
+    s.appendChild(panelNA("run.jsonl 이 없다 — 깔때기를 그릴 수 없다."));
+    return s;
+  }
+  var slots=slotsOf(run);
+  var hyp=dig(run.result||{},["input","concept","hypotheses"]);
+  var formulas=ix.node("a1_formula");
+  var routes=ix.node("a2_route");
+  var cands=ix.node("a3_candidate");
+  var docs=ix.node("a3_document");
+  var findings=ix.node("a3_finding");
+  var facts=ix.node("a4_facts");
+  var ledger=ix.node("a4_ledger");
+  var cover=ix.node("a4_coverage");
+  var est=ix.node("b2_estimate");
+  var vio=ix.node("c2_violations");
+  var nf=dig(run.result||{},["report","not_found"])||{};
+
+  var usable=docs.filter(function(d){return d.content_status==="usable";}).length;
+  var quotes=0;
+  findings.forEach(function(f){quotes+=countOf(f.findings);});
+  var routeMix={};
+  routes.forEach(function(r){routeMix[r.adapter]=(routeMix[r.adapter]||0)+1;});
+  var labelMix={};
+  ledger.forEach(function(r){labelMix[r.label]=(labelMix[r.label]||0)+1;});
+  var voidSlots=cover.filter(function(c){return c.status==="공백";}).length;
+
+  var rows=[];
+  rows.push(["A1","가설 "+countOf(hyp)+" → 식 "+formulas.length+" → 슬롯 "+slots.length,
+             [{n:countOf(hyp),c:"var(--unk)",l:"가설"},
+              {n:formulas.length,c:"var(--acc)",l:"식"},
+              {n:slots.length,c:"var(--ok)",l:"슬롯"}]]);
+  rows.push(["A2","슬롯 "+routes.length+" → 어댑터 분해",
+             Object.keys(routeMix).map(function(k,i){
+               return {n:routeMix[k],c:["var(--ok)","var(--acc)","var(--weak)","var(--off)"][i%4],l:k};})]);
+  rows.push(["A3","슬롯 "+slots.length+" → 후보 → usable → 인용",
+             [{n:slots.length,c:"var(--unk)",l:"슬롯"},
+              {n:cands.length,c:"var(--acc)",l:"후보"},
+              {n:usable,c:"var(--ok)",l:"usable"},
+              {n:docs.length-usable,c:"var(--unv)",l:"본문 못 씀"},
+              {n:quotes,c:"var(--weak)",l:"인용"}]]);
+  rows.push(["A4","인용 "+quotes+" → 사실 "+facts.length+" → 등급",
+             [{n:facts.length,c:"var(--unk)",l:"Fact"}].concat(
+               LABELS.map(function(L){return {n:labelMix[L]||0,c:LABEL_COLOR[L],l:L};}))
+             .concat([{n:voidSlots,c:"var(--void)",l:"공백 슬롯",dashed:true}])]);
+  rows.push(["B","추정 / unit_mismatch / range_capped",
+             [{n:est.length,c:"var(--ok)",l:"추정"},
+              {n:countOf(nf.unit_mismatch),c:"var(--unv)",l:"unit_mismatch"},
+              {n:countOf(nf.range_capped),c:"var(--weak)",l:"range_capped"}]]);
+  var violated=vio.filter(function(v){return v.status==="violated";}).length;
+  var skipped=vio.filter(function(v){return v.status==="skipped";}).length;
+  rows.push(["C","일관성 규칙 "+vio.length+"개",
+             [{n:violated,c:"var(--unv)",l:"위반"},
+              {n:skipped,c:"var(--void)",l:"skipped",dashed:true},
+              {n:vio.length-violated-skipped,c:"var(--ok)",l:"통과·해당없음"}]]);
+
+  var maxN=1;
+  rows.forEach(function(r){r[2].forEach(function(x){if(x.n>maxN)maxN=x.n;});});
+
+  var box=el("div","fun");
+  rows.forEach(function(r){
+    var row=el("div","frow");
+    row.appendChild(el("div","node",r[0]));
+    row.appendChild(el("div","lab",r[1]));
+    var bar=el("div","fbar");
+    var prev=null;
+    r[2].forEach(function(x){
+      var g=el("span");g.style.cssText="display:inline-flex;align-items:center;gap:5px";
+      var sg=el("span","seg");
+      sg.style.width=Math.max(2,Math.round(x.n/maxN*210))+"px";
+      if(x.dashed){sg.style.border="1px dashed "+x.c;sg.style.background="transparent";
+                   sg.style.boxSizing="border-box";}
+      else sg.style.background=x.c;
+      sg.title=x.l+" "+x.n;
+      g.appendChild(sg);
+      var t=el("span","fnum",x.n);t.style.color=x.dashed?"var(--void)":x.c;
+      g.appendChild(t);
+      g.appendChild(el("span","note",x.l));
+      bar.appendChild(g);
+      // 급감 표시
+      /* 분모 5 미만에서는 급감을 표시하지 않는다 — 작은 표본의 비율은 판단 근거가 아니다 */
+      if(prev!==null&&prev>=5&&x.n<prev*0.4&&!x.dashed){
+        bar.appendChild(el("span","drop-tag","↓ "+Math.round((1-x.n/prev)*100)+"% 급감"));
+      }
+      prev=x.n;
+    });
+    row.appendChild(bar);
+    box.appendChild(row);
+  });
+  s.appendChild(box);
+  var n=el("div","note");n.style.marginTop="10px";
+  n.textContent="막대는 같은 축(최대 "+maxN+")으로 그린다. ‘본문 못 씀’은 content_status ≠ usable — HTTP 200 과 쓸 만한 본문은 다른 얘기다.";
+  s.appendChild(n);
+  return s;
+}
+function panelNA(msg){
+  var p=el("div","panel");p.appendChild(naSpan(msg));return p;
+}
+
+/* ── §4 슬롯 표 ─────────────────────────────────────────── */
+function sec4(run){
+  var s=section("s4","§4","슬롯","한 줄에 하나 — 클릭하면 §5 체인이 열린다");
+  var slots=slotsOf(run);
+  if(!slots.length){s.appendChild(panelNA("슬롯이 없다 (a1_slot · input.slots 둘 다 비어 있음)."));return s;}
+  var ix=index(run);
+  var routes={};ix.node("a2_route").forEach(function(r){routes[r.slot_id]=r;});
+  var cover={};ix.node("a4_coverage").forEach(function(c){cover[c.slot_id]=c;});
+  var ledgerBySlot={};ix.node("a4_ledger").forEach(function(r){
+    (ledgerBySlot[r.slot_id]=ledgerBySlot[r.slot_id]||[]).push(r);});
+
+  var lg=el("div","legend");
+  LABELS.forEach(function(L){
+    var sp=el("span");sp.innerHTML="<i style='background:"+LABEL_COLOR[L]+"'></i>"+L;lg.appendChild(sp);});
+  var vd=el("span");vd.innerHTML="<i class='void'></i>공백 — 실패가 아니라 상태다 (빈 칸)";lg.appendChild(vd);
+  s.appendChild(lg);
+
+  var w=el("div","tblwrap");
+  var t=el("table");
+  var thead=el("thead");var tr=el("tr");
+  ["slot_id","claim_type","subject","metric","period","unit","라우팅","분포","coverage"].forEach(function(h){
+    tr.appendChild(el("th",null,h));});
+  thead.appendChild(tr);t.appendChild(thead);
+  var tb=el("tbody");
+  slots.forEach(function(sl){
+    var row=el("tr","clickable");
+    row.appendChild(el("td","m",sl.slot_id));
+    row.appendChild(el("td","m",sl.claim_type||"–"));
+    row.appendChild(el("td",null,sl.subject||"–"));
+    row.appendChild(el("td",null,sl.metric||"–"));
+    row.appendChild(el("td","m",sl.period||"–"));
+    row.appendChild(el("td","m",sl.unit||"–"));
+    var rt=routes[sl.slot_id];
+    var tdr=el("td","m");
+    if(rt){tdr.textContent=rt.adapter;tdr.title=rt.why||"";}
+    else tdr.appendChild(naSpan("–"));
+    row.appendChild(tdr);
+    row.appendChild(distCell(ledgerBySlot[sl.slot_id]||[],cover[sl.slot_id]));
+    var cv=cover[sl.slot_id];
+    var tdc=el("td","m");
+    if(cv){
+      var lb=el("span","lb "+(cv.status==="공백"?"공백":"확인됨"),cv.status);
+      if(cv.status!=="충족")lb.className="lb "+(cv.status==="공백"?"공백":"미확인");
+      tdc.appendChild(lb);
+      tdc.appendChild(document.createTextNode(" "+cv.confirmed+"/"+cv.total+
+        (cv.min_facts?" (min "+cv.min_facts+")":"")+(cv.thin?" · thin":"")));
+    }else tdc.appendChild(naSpan("–"));
+    row.appendChild(tdc);
+    row.onclick=function(){OPEN_SLOT=(OPEN_SLOT===sl.slot_id?null:sl.slot_id);render();
+      var d=document.getElementById("s5");if(d&&OPEN_SLOT)d.scrollIntoView({block:"start"});};
+    tb.appendChild(row);
+  });
+  t.appendChild(tb);w.appendChild(t);s.appendChild(w);
+  return s;
+}
+function distCell(rows,cv){
+  var td=el("td");
+  var counts={};rows.forEach(function(r){counts[r.label]=(counts[r.label]||0)+1;});
+  var tot=rows.length;
+  if(!tot){
+    var d=el("div","dist empty");d.style.minWidth="120px";
+    td.appendChild(d);
+    td.appendChild(el("div","note",(cv&&cv.status==="공백")?"공백 — 수집 0건":"원장 행 없음"));
+    return td;
+  }
+  var d2=el("div","dist");
+  LABELS.forEach(function(L){
+    var n=counts[L]||0;if(!n)return;
+    var sp=el("span","s");
+    sp.style.width=Math.max(3,Math.round(n/tot*140))+"px";
+    sp.style.background=LABEL_COLOR[L];
+    sp.title=L+" "+n;
+    d2.appendChild(sp);
+  });
+  td.appendChild(d2);
+  var lbl=LABELS.filter(function(L){return counts[L];})
+    .map(function(L){return L+" "+counts[L];}).join(" · ");
+  td.appendChild(el("div","note",lbl));
+  return td;
+}
+
+/* ── §5 슬롯 상세 : trace 체인 ──────────────────────────── */
+function sec5(run){
+  var s=section("s5","§5","슬롯 상세","슬롯 → 쿼리 → 후보 → fetch → 인용 → Fact → 등급 → 판정");
+  if(!OPEN_SLOT){
+    var p=el("div","panel");
+    p.innerHTML="<span class='note'>§4 에서 슬롯을 클릭하면 그 슬롯의 trace_id 체인이 순서대로 열린다. "+
+      "어느 단계에서 끊겼는지가 바로 보인다.</span>";
+    s.appendChild(p);
+    return s;
+  }
+  var ix=index(run);
+  var sid=OPEN_SLOT;
+  var slot=slotsOf(run).filter(function(x){return x.slot_id===sid;})[0];
+  var box=el("div","slotdetail");
+  var h=el("h3");h.textContent=sid+"  ·  "+(slot?(slot.claim_type+" / "+slot.subject+" / "+slot.metric):"");
+  box.appendChild(h);
+
+  var chain=el("div","chain");
+  chain.appendChild(step("슬롯", slot?(slot.subject+" · "+slot.metric+" · "+slot.period+" · "+slot.unit):null, slot));
+  var rt=ix.node("a2_route").filter(function(r){return r.slot_id===sid;})[0];
+  chain.appendChild(step("라우팅", rt?(rt.adapter+" — "+(rt.why||"")):null, rt));
+
+  var cands=ix.node("a3_candidate").filter(function(c){return c.slot_id===sid;});
+  var queries={};cands.forEach(function(c){if(c.from_query)queries[c.from_query]=(queries[c.from_query]||0)+1;});
+  var qtext=Object.keys(queries).map(function(q){return q+"  ("+queries[q]+"건)";}).join("\n");
+  chain.appendChild(step("쿼리", qtext||null, Object.keys(queries)));
+  box.appendChild(chain);
+
+  if(!cands.length){
+    box.appendChild(brk("여기서 끊겼다 — 후보 URL 0건. 검색이 아무것도 물어오지 않았다."));
+  }
+
+  var docs={};ix.node("a3_document").filter(function(d){return d.slot_id===sid;})
+    .forEach(function(d){docs[d.trace_id]=d;});
+  var findRows=ix.node("a3_finding").filter(function(f){return f.slot_id===sid;});
+  var factsByTrace={};ix.node("a4_facts").filter(function(f){return f.slot_id===sid;})
+    .forEach(function(f){(factsByTrace[f.trace_id]=factsByTrace[f.trace_id]||[]).push(f);});
+  var ledgerByFact={};ix.node("a4_ledger").filter(function(r){return r.slot_id===sid;})
+    .forEach(function(r){ledgerByFact[r.fact_id]=r;});
+
+  cands.forEach(function(c){
+    var th=el("div","tracehead");
+    th.textContent="trace "+(c.trace_id||"(없음)");
+    box.appendChild(th);
+    var ch=el("div","chain");
+    ch.appendChild(step("후보 URL",(c.title?c.title+"\n":"")+(c.url||""),c));
+    var d=docs[c.trace_id];
+    if(!d){ ch.appendChild(stepBrk("fetch","기록 없음 — 후보에서 멈췄다",null)); }
+    else{
+      var okDoc=d.content_status==="usable";
+      var line="content_status="+d.content_status+"  http="+(d.http_status||d.http_code)+
+               "  text_len="+d.text_len+"  digits="+d.digit_count+(d.error?("  error="+d.error):"");
+      var st=okDoc?step("fetch",line,d):stepBrk("fetch",line+"  → 본문을 쓸 수 없다 (점수 상한 2)",d);
+      if(run.bodies&&run.bodies[c.trace_id]){
+        var dd=el("details","pay");
+        dd.appendChild(el("summary",null,"본문 전문 (a3_bodies)"));
+        var pre=el("pre",null,run.bodies[c.trace_id]);
+        dd.appendChild(pre);
+        st.querySelector(".sv").appendChild(dd);
+      }
+      ch.appendChild(st);
+    }
+    var fs=factsByTrace[c.trace_id]||[];
+    if(!fs.length){
+      ch.appendChild(stepBrk("Fact","이 문서에서 나온 Fact 없음 — 인용이 안 만들어졌거나 격리 전에 걸렸다",null));
+    }
+    fs.forEach(function(f){
+      ch.appendChild(step("인용", (f.quote||"")+"\n→ "+f.value_num+" "+f.unit_norm+" ("+f.year+")"+
+        "  quote_verified="+f.quote_verified, f));
+      var lr=ledgerByFact[f.fact_id];
+      if(!lr)ch.appendChild(stepBrk("등급","원장 행 없음",null));
+      else{
+        var pill=el("span","lb "+lr.label,lr.label);
+        var wrapd=el("div");
+        wrapd.appendChild(pill);
+        wrapd.appendChild(document.createTextNode("  "+lr.kind+" · score "+lr.score+
+          " · cross "+lr.cross+(lr.off_slot_reason?("  · off_slot_reason: "+lr.off_slot_reason):"")));
+        var st2=step("등급",null,lr);
+        st2.querySelector(".sv").insertBefore(wrapd,st2.querySelector(".sv").firstChild);
+        ch.appendChild(st2);
+      }
+    });
+    box.appendChild(ch);
+  });
+
+  findRows.forEach(function(f){
+    var th=el("div","tracehead");th.textContent="a3_finding · status="+f.status;
+    box.appendChild(th);
+    var ch=el("div","chain");
+    var line=(f.note||"")+"  · findings "+countOf(f.findings);
+    ch.appendChild(f.status==="found"?step("추출",line,f):stepBrk("추출",line,f));
+    box.appendChild(ch);
+  });
+
+  var cv=ix.node("a4_coverage").filter(function(c){return c.slot_id===sid;})[0];
+  var ch2=el("div","chain");
+  if(cv){
+    var txt="status="+cv.status+"  confirmed="+cv.confirmed+"/"+cv.total+
+            "  min_facts="+cv.min_facts+"  thin="+cv.thin+
+            (cv.retry_hint?("\nretry_hint: "+cv.retry_hint):"");
+    ch2.appendChild(cv.status==="충족"?step("판정",txt,cv):stepBrk("판정",txt,cv));
+  }else ch2.appendChild(stepBrk("판정","a4_coverage 기록 없음",null));
+  box.appendChild(ch2);
+
+  s.appendChild(box);
+  return s;
+}
+function step(k,v,payload,broken){
+  var d=el("div","step"+(broken?" brk":""));
+  d.appendChild(el("div","sk",k));
+  var sv=el("div","sv");
+  if(v===null||v===undefined)sv.appendChild(naSpan("기록 없음"));
+  else{var p=el("div");p.style.whiteSpace="pre-wrap";p.style.wordBreak="break-word";
+       p.style.fontSize="13px";p.textContent=v;sv.appendChild(p);}
+  if(payload!==null&&payload!==undefined){
+    var det=el("details","pay");
+    det.appendChild(el("summary",null,"payload"));
+    det.appendChild(el("pre",null,JSON.stringify(payload,null,2)));
+    sv.appendChild(det);
+  }
+  d.appendChild(sv);
+  return d;
+}
+function stepBrk(k,v,payload){
+  var d=step(k,v,payload,true);
+  var b=el("div","brkline","⟂ 여기서 끊겼다");
+  d.querySelector(".sv").appendChild(b);
+  return d;
+}
+function brk(msg){var b=el("div","brkline",msg);return b;}
+
+/* ── §6 원장 ────────────────────────────────────────────── */
+function sec6(run){
+  var s=section("s6","§6","원장","Fact 행 — 등급이 붙는 곳은 여기뿐이다");
+  var ix=index(run);
+  var rows=ix.node("a4_ledger");
+  var facts={};ix.node("a4_facts").forEach(function(f){facts[f.fact_id]=f;});
+  if(!rows.length){
+    s.appendChild(panelNA("a4_ledger 행이 없다 — 근거 0건이면 라벨을 만들 수 없다(규칙 4)."));
+    return s;
+  }
+  var counts={};rows.forEach(function(r){counts[r.label]=(counts[r.label]||0)+1;});
+  var f=el("div","filters");
+  f.appendChild(el("span","note","label 필터"));
+  var mk=function(L,n){
+    var b=el("button","btn"+(LEDGER_FILTER===L?" on":""),L+" "+n);
+    b.onclick=function(){LEDGER_FILTER=L;render();
+      document.getElementById("s6").scrollIntoView({block:"start"});};
+    return b;};
+  f.appendChild(mk("ALL",rows.length));
+  LABELS.forEach(function(L){if(counts[L])f.appendChild(mk(L,counts[L]));});
+  s.appendChild(f);
+
+  var shown=rows.filter(function(r){return LEDGER_FILTER==="ALL"||r.label===LEDGER_FILTER;});
+  var w=el("div","tblwrap");var t=el("table");
+  var tr=el("tr");
+  ["label","slot_id","kind","score","cross","reason","url"].forEach(function(h){tr.appendChild(el("th",null,h));});
+  var th=el("thead");th.appendChild(tr);t.appendChild(th);
+  var tb=el("tbody");
+  shown.forEach(function(r){
+    var row=el("tr","clickable");
+    var td0=el("td");td0.appendChild(el("span","lb "+r.label,r.label));row.appendChild(td0);
+    row.appendChild(el("td","m",r.slot_id));
+    row.appendChild(el("td","m",r.kind+(r.kind_by?(" ("+r.kind_by+")"):"")));
+    row.appendChild(el("td","m",num(r.score)));
+    row.appendChild(el("td","m",String(r.cross)));
+    var reason=[].concat(r.reasons||[]).join(" · ")+(r.off_slot_reason?("  ⟂ "+r.off_slot_reason):"");
+    row.appendChild(el("td",null,reason||"–"));
+    var tdu=el("td");
+    if(r.url){var a=el("a",null,short(r.url,52));a.href=r.url;a.target="_blank";
+              a.rel="noopener noreferrer";a.className="mono";a.style.fontSize="11.5px";
+              a.onclick=function(e){e.stopPropagation();};tdu.appendChild(a);}
+    else tdu.appendChild(naSpan("–"));
+    row.appendChild(tdu);
+    row.onclick=function(){OPEN_SLOT=r.slot_id;render();
+      document.getElementById("s5").scrollIntoView({block:"start"});};
+    tb.appendChild(row);
+  });
+  t.appendChild(tb);w.appendChild(t);s.appendChild(w);
+  var n=el("div","note");n.style.marginTop="8px";
+  n.textContent="행을 클릭하면 §5 슬롯 상세로 간다. off_slot·미검증은 점수를 매기기 전에 격리된 행이다.";
+  s.appendChild(n);
+  return s;
+}
+
+/* ── §7 보고서 ──────────────────────────────────────────── */
+function sec7(run){
+  var s=section("s7","§7","보고서","C3 가 만든 7섹션 — 7번을 빼지 않는다");
+  var rep=dig(run.result||{},["report"]);
+  if(!rep){
+    var ixr=index(run).node("c3_report")[0];
+    rep=ixr||null;
+  }
+  if(!rep){s.appendChild(panelNA("보고서가 없다 (result.report · c3_report 둘 다 없음)."));return s;}
+
+  if(typeof rep==="string"){ var m=el("div","panel md");m.innerHTML=md(rep);s.appendChild(m);return s;}
+  var mdField=rep.markdown||rep.md||rep.text;
+  if(typeof mdField==="string"&&mdField.trim()){
+    var mm=el("div","panel md");mm.innerHTML=md(mdField);s.appendChild(mm);
+    return s;
+  }
+
+  var box=el("div","panel");
+  var secs=[
+    ["1","결론","conclusion"],["2","핵심 숫자","headline_numbers"],
+    ["3","어떻게 계산했나","how_computed"],["4","틀릴 수 있는 지점","falsifiers"],
+    ["5","두 경로 대조","reconciliations"],["6","근거 원장","ledger"],
+    ["7","못 찾은 것","not_found"]
+  ];
+  secs.forEach(function(sp){
+    var d=el("div","rsec");
+    var h=el("h3");
+    h.appendChild(el("span","n",sp[0]));
+    h.appendChild(el("span",null,sp[1]));
+    h.appendChild(el("span","note",sp[2]));
+    d.appendChild(h);
+    var v=rep[sp[2]];
+    if(!has(rep,sp[2])){d.appendChild(naSpan("키 없음 — 해당 없음"));}
+    else if(isEmptyVal(v)){
+      d.appendChild(naSpan(sp[2]==="not_found"?"비어 있음 — §1 에서 키 단위로 확인할 것":"비어 있음"));
+    }
+    else if(Array.isArray(v)){
+      var ul=el("ul");
+      v.forEach(function(x){
+        var li=el("li");
+        if(typeof x==="object"&&x){
+          li.innerHTML=Object.keys(x).map(function(k){
+            return "<span class='mono' style='color:var(--muted)'>"+esc(k)+"</span> "+
+              esc(typeof x[k]==="object"?JSON.stringify(x[k]):String(x[k]));}).join(" · ");
+        } else li.textContent=String(x);
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+    }
+    else if(typeof v==="object"){
+      var ul2=el("ul");
+      Object.keys(v).forEach(function(k){
+        var li=el("li");
+        li.innerHTML="<span class='mono'>"+esc(k)+"</span> — "+
+          esc(typeof v[k]==="object"?JSON.stringify(v[k]):String(v[k]));
+        ul2.appendChild(li);
+      });
+      d.appendChild(ul2);
+    }
+    else d.appendChild(el("div",null,String(v)));
+    box.appendChild(d);
+  });
+  s.appendChild(box);
+  var n=el("div","note");n.style.marginTop="8px";
+  n.textContent="C3 는 구조화된 7섹션을 낸다. 마크다운 문자열(report.markdown)이 들어 있으면 그대로 렌더한다.";
+  s.appendChild(n);
+  return s;
+}
+
+/* 아주 작은 마크다운 — 보고서가 문자열로 올 때만 쓴다 */
+function md(src){
+  var out=[],lines=String(src).split(/\r?\n/),inUl=false,inPre=false,buf=[];
+  function inline(t){
+    return esc(t)
+      .replace(/`([^`]+)`/g,"<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>")
+      .replace(/(^|[^*])\*([^*]+)\*/g,"$1<i>$2</i>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+  lines.forEach(function(l){
+    if(/^```/.test(l)){
+      if(inPre){out.push("<pre>"+esc(buf.join("\n"))+"</pre>");buf=[];inPre=false;}
+      else inPre=true;
+      return;
+    }
+    if(inPre){buf.push(l);return;}
+    var h=/^(#{1,6})\s+(.*)$/.exec(l);
+    if(h){if(inUl){out.push("</ul>");inUl=false;}
+      var lv=Math.min(h[1].length+1,4);out.push("<h"+lv+">"+inline(h[2])+"</h"+lv+">");return;}
+    var li=/^\s*[-*]\s+(.*)$/.exec(l);
+    if(li){if(!inUl){out.push("<ul>");inUl=true;}out.push("<li>"+inline(li[1])+"</li>");return;}
+    if(!l.trim()){if(inUl){out.push("</ul>");inUl=false;}return;}
+    if(inUl){out.push("</ul>");inUl=false;}
+    out.push("<p>"+inline(l)+"</p>");
+  });
+  if(inUl)out.push("</ul>");
+  if(inPre&&buf.length)out.push("<pre>"+esc(buf.join("\n"))+"</pre>");
+  return out.join("");
+}
+
+/* ── §8 원본 JSON 트리 ──────────────────────────────────── */
+function sec8(run){
+  var s=section("s8","원본","JSON 트리","화면을 비우지 않는다 — 못 그린 것은 여기 다 있다");
+  var box=el("div","panel");
+  if(run.result)box.appendChild(tree("result.json",run.result,1));
+  if(run.evals)box.appendChild(tree("eval.py 출력",run.evals,1));
+  if(run.extra)Object.keys(run.extra).forEach(function(k){box.appendChild(tree(k,run.extra[k],1));});
+  if(run.events){
+    var byNode={};run.events.forEach(function(r){(byNode[r.node]=byNode[r.node]||[]).push(r);});
+    var d=el("details","pay");
+    d.appendChild(el("summary",null,"run.jsonl  ("+run.events.length+" events, "+
+      Object.keys(byNode).length+" nodes)"));
+    Object.keys(byNode).forEach(function(n){
+      d.appendChild(tree(n+"  ×"+byNode[n].length,byNode[n],2));
+    });
+    box.appendChild(d);
+  }
+  if(!run.result&&!run.events)box.appendChild(naSpan("올라온 것이 없다."));
+  s.appendChild(box);
+  return s;
+}
+function tree(label,v,depth){
+  var d=el("details","pay");
+  d.style.marginLeft=(depth>1?12:0)+"px";
+  var isLeaf=(v===null||typeof v!=="object");
+  var sum=el("summary",null,label+(isLeaf?("  =  "+String(v)):
+    ("  {"+(Array.isArray(v)?v.length+" items":Object.keys(v).length+" keys")+"}")));
+  d.appendChild(sum);
+  if(isLeaf)return d;
+  if(depth>=3){ d.appendChild(el("pre",null,JSON.stringify(v,null,2))); return d; }
+  var keys=Array.isArray(v)?v.map(function(_,i){return i;}):Object.keys(v);
+  if(keys.length>60){ d.appendChild(el("pre",null,JSON.stringify(v,null,2))); return d; }
+  keys.forEach(function(k){
+    var val=v[k];
+    if(val===null||typeof val!=="object"){
+      var line=el("div","tr");line.style.marginLeft=((depth)*12)+"px";
+      line.textContent=k+" : "+String(val);
+      d.appendChild(line);
+    }else d.appendChild(tree(String(k),val,depth+1));
+  });
+  return d;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   입력 배선
+   ═══════════════════════════════════════════════════════════ */
+var drop=document.getElementById("drop"),
+    fl=document.getElementById("filelist");
+
+function handleFiles(files){
+  var arr=[].slice.call(files);
+  if(!arr.length)return;
+  Promise.all(arr.map(readFile)).then(function(read){
+    read.sort(function(a,b){ // result.json 을 먼저 넣어 run_id 를 확정한다
+      var ra=/result\.json$/i.test(a.name)?0:(/\.jsonl$/i.test(a.name)?1:2);
+      var rb=/result\.json$/i.test(b.name)?0:(/\.jsonl$/i.test(b.name)?1:2);
+      return ra-rb;});
+    read.forEach(function(f){
+      var r=ingest(f);
+      Object.keys(RUNS).forEach(function(k){delete RUNS[k]._idx;});
+      var line=el("div");
+      line.textContent="✓ "+f.path+"   →   "+r.kind+(r.n?("  ("+r.n+")"):"")+
+        (r.id?("   [run "+r.id+"]"):"");
+      fl.appendChild(line);
+    });
+    if(ORDER.length>2){
+      var w=el("div");w.style.color="var(--unv)";
+      w.textContent="※ 실행이 "+ORDER.length+"개다. 비교 축은 앞의 둘만 대조한다.";
+      fl.appendChild(w);
+    }
+    render();
+  });
+}
+
+drop.addEventListener("dragover",function(e){e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragleave",function(){drop.classList.remove("hot");});
+drop.addEventListener("drop",function(e){
+  e.preventDefault();drop.classList.remove("hot");
+  var dt=e.dataTransfer;
+  if(dt.files&&dt.files.length)handleFiles(dt.files);
+});
+document.addEventListener("dragover",function(e){e.preventDefault();});
+document.addEventListener("drop",function(e){e.preventDefault();});
+document.getElementById("pick").onclick=function(){document.getElementById("fi").click();};
+document.getElementById("pickdir").onclick=function(){document.getElementById("fd").click();};
+document.getElementById("fi").onchange=function(e){handleFiles(e.target.files);};
+document.getElementById("fd").onchange=function(e){handleFiles(e.target.files);};
+document.getElementById("reset").onclick=function(){
+  RUNS={};ORDER=[];ACTIVE=null;OPEN_SLOT=null;LEDGER_FILTER="ALL";
+  fl.innerHTML="";
+  document.getElementById("app").hidden=true;
+  document.getElementById("app").innerHTML="";
+  document.getElementById("foot").hidden=true;
+  document.getElementById("nav").hidden=true;
+  this.hidden=true;
+};
+</script>
+
+</body>
+</html>
