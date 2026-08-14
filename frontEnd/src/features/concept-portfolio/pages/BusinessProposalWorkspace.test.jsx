@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -80,14 +81,27 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.queryByRole('button', { name: '비교' })).not.toBeInTheDocument();
   });
 
-  it('사업안이 두 개 준비된 뒤에만 비교 tab을 표시한다', () => {
+  it('탭 없이 정확히 두 개를 고른 뒤 비교 Focus View로 이동하고 돌아온다', () => {
     useConceptPortfolio.mockReturnValue(base({ concepts: [
-      { conceptId: 'c1', candidateId: 'a', conceptName: 'A' },
-      { conceptId: 'c2', candidateId: 'b', conceptName: 'B' },
+      { conceptId: 'c1', candidateId: 'a', conceptName: 'A', candidate: { targetUsers: ['매장'], revenueModel: '구독' } },
+      { conceptId: 'c2', candidateId: 'b', conceptName: 'B', candidate: { targetUsers: ['고객'], revenueModel: '수수료' } },
+      { conceptId: 'c3', candidateId: 'c', conceptName: 'C', candidate: { targetUsers: ['파트너'], revenueModel: '광고' } },
     ] }));
     renderWorkspace();
-    expect(screen.getByRole('heading', { name: '사업안 검토' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '비교' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '생성된 사업안을 살펴보세요' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '사업안 목록' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '두 사업안 비교' })).not.toBeInTheDocument();
+    const checkboxes = screen.getAllByRole('checkbox', { name: '비교에 추가' });
+    fireEvent.click(checkboxes[0]);
+    expect(screen.getByText(/한 개 더 선택하세요/)).toBeInTheDocument();
+    fireEvent.click(checkboxes[1]);
+    expect(checkboxes[2]).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '두 사업안 비교' }));
+    expect(screen.getByRole('heading', { name: '두 사업안 비교' })).toBeInTheDocument();
+    expect(screen.getByText('주요 고객')).toBeInTheDocument();
+    expect(screen.queryByText('선택 전 법률·규제 요약')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '사업안으로 돌아가기' }));
+    expect(screen.getByRole('heading', { name: '생성된 사업안을 살펴보세요' })).toBeInTheDocument();
   });
 
   it('does not show a recovered notice for proposals already present at selection baseline', () => {
@@ -102,10 +116,47 @@ describe('BusinessProposalWorkspace', () => {
   });
   it('offers Delta retry without resubmitting confirmed hypotheses', () => {
     const retryDelta = vi.fn();
-    useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', nextAction: 'REVISE_OR_RETRY', hypothesisConfirmedCount: 7 }, retryDelta }));
+    useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'DELTA_LEGAL_FAILED', nextAction: 'REVISE_OR_RETRY', hypothesisConfirmedCount: 7 }, retryDelta }));
     renderWorkspace();
-    fireEvent.click(screen.getByText('변경사항 법률·규제 재검토 다시 시도'));
+    fireEvent.click(screen.getByText('법률·규제 재검토 다시 시도'));
     expect(retryDelta).toHaveBeenCalled();
+  });
+  it('선택 후 gallery를 접고 기준값만 펼친다', () => {
+    useConceptPortfolio.mockReturnValue(base({
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A', summary: '선택 요약' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '서울', decisionStatus: 'PROPOSED' }],
+    }));
+    renderWorkspace();
+    expect(screen.getByText('사업안 선택 완료')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '생성된 사업안' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '선택 변경' })).toBeInTheDocument();
+    expect(screen.queryByText('7개 검증 가정')).not.toBeInTheDocument();
+  });
+  it('기준값의 사용자 언어와 responsive overflow 계약을 유지한다', () => {
+    const hypotheses = [
+      ['TARGET_REGION', '서울'], ['REVENUE_MODEL', '월 구독'], ['PRICE', '월 39,000원'],
+      ['CHANNELS', ['웹']], ['DIFFERENTIATORS', ['자동화']],
+      ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 2.5, horizonYears: 3 }],
+      ['PRE_MARKET_SOM', { amount: 8000000000, currency: 'KRW', period: '연간' }],
+    ].map(([hypothesisType, proposedValue]) => ({ hypothesisType, proposedValue, decisionStatus: 'PROPOSED' }));
+    useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 }, hypotheses }));
+    renderWorkspace();
+    for (const label of ['사업 대상 지역', '수익을 만드는 방식', '가격·과금 방식', '고객에게 제공하는 경로', '핵심 차별점', '목표 시장 점유율', '초기 목표 시장 규모']) expect(screen.getByText(label)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/7개 검증 가정|시장 점유 가정|초기 확보 시장 규모|제안값/);
+    const css = readFileSync('src/features/concept-portfolio/styles/business-proposal.css', 'utf8');
+    expect(css).toContain('grid-template-columns: minmax(9rem, 10rem) repeat(2, minmax(0, 1fr))');
+    expect(css).toContain('@media (max-width: 25rem)');
+    expect(css).toContain('max-width: 100%');
+    expect(css).not.toContain('min-width: max-content');
+  });
+  it('시장 준비 상태에서는 이전 단계를 요약하고 실제 시장 분석 CTA를 표시한다', () => {
+    useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'READY_FOR_MARKET', hypothesisConfirmedCount: 7 } }));
+    renderWorkspace();
+    expect(screen.getByText('사업 기준값 확인 완료')).toBeInTheDocument();
+    expect(screen.getByText('법률·규제 결과 확인 완료')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /시장 분석 시작하기/ })).toBeInTheDocument();
   });
 });
 
@@ -140,8 +191,12 @@ describe('Final Legal Report actual contract', () => {
       expect(view.container.textContent).toContain(text);
     }
     expect(screen.getByRole('alert')).toHaveTextContent('조회 범위에는 제한');
+    const articleButton = screen.getByRole('button', { name: '제13조' });
+    expect(articleButton).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(articleButton);
+    expect(articleButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/example');
     expect(view.container.querySelector('pre')).toBeNull();
-    expect(screen.getByText('기술 정보').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByRole('button', { name: '기술 정보' })).toHaveAttribute('aria-expanded', 'false');
   });
 });
