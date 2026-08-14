@@ -96,4 +96,39 @@ describe('compact Work Center', () => {
     expect(last).toHaveFocus();
     expect(screen.getByText('아직 실행한 작업이 없습니다.')).toBeInTheDocument();
   });
+
+  it('종료 작업의 저장된 처리 이벤트를 동일한 상세 타임라인에 표시한다', () => {
+    const events = ['QUEUED', 'READY', 'RUNNING', 'RUNNING', 'COMPLETED'].map((status, index) => ({
+      eventId: `event-${index + 1}`,
+      sequence: index + 1,
+      occurredAt: `2026-08-11T00:0${index}:00Z`,
+      status,
+      messageKey: `job.test.event-${index + 1}`,
+    }));
+    useProjectJobs.mockReturnValue({ loading: false, error: null, notice: null,
+      active: [], recent: [{ jobId: 'done-job', taskType: 'MARKET_RESEARCH', status: 'COMPLETED', targetRoute: '/market' }],
+      selectedJobId: 'done-job', selectJob: vi.fn(), refresh: vi.fn(),
+      events: { transport: 'REST', loading: false, error: null, terminal: true, reconnect: vi.fn(), events } });
+
+    render(<MemoryRouter><JobCenter projectId="41" compact
+      sheet={{ mounted: true, phase: 'open', view: 'detail', focusJobId: 'done-job', direction: 'forward' }}
+      onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+
+    expect(document.body.querySelectorAll('.job-center__timeline ol > li')).toHaveLength(5);
+    expect(screen.queryByText('이 작업에는 저장된 처리 기록이 없습니다.')).not.toBeInTheDocument();
+  });
+
+  it('필터 결과가 0건이면 상태별 빈 문구만 바꾼다', () => {
+    useProjectJobs.mockReturnValue({ loading: false, error: null, active: [], recent: [], selectedJobId: null,
+      selectJob: vi.fn(), refresh: vi.fn(), history: { items: [{ jobId: 'done-job', status: 'COMPLETED', taskType: 'MARKET_RESEARCH' }], page: 0, hasMore: false, totalElements: 1, loading: false, error: null },
+      loadHistory: vi.fn(), events: { error: null, reconnect: vi.fn(), events: [] } });
+    render(<MemoryRouter><JobCenter projectId="41" compact
+      sheet={{ mounted: true, phase: 'open', view: 'list', direction: 'forward' }}
+      onOpenList={vi.fn()} onCloseSheet={vi.fn()} onShowList={vi.fn()} onOpenJob={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: '진행 중' }));
+    expect(screen.getByText('현재 진행 중인 작업이 없습니다.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '입력 필요' }));
+    expect(screen.getByText('지금 입력이 필요한 작업이 없습니다.')).toBeInTheDocument();
+  });
 });

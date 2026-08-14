@@ -88,4 +88,86 @@ describe('useProjectJobs', () => {
     await act(async () => result.current.refresh());
     expect(result.current.selectedJobId).toBe('history-1');
   });
+
+  it('loads all persisted events for a terminal job without opening SSE', async () => {
+    const terminalJob = { jobId: 'job-done', status: 'COMPLETED' };
+    const events = Array.from({ length: 5 }, (_, index) => ({ sequence: index + 1, status: index === 4 ? 'COMPLETED' : 'RUNNING' }));
+    const client = { get: vi.fn(async (path) => {
+      if (path.includes('/active-jobs')) return { data: [] };
+      if (path.includes('/recent-jobs')) return { data: [terminalJob] };
+      if (path.includes('after=0')) return { data: { events: events.slice(0, 3), nextSequence: 3, hasMore: true } };
+      if (path.includes('after=3')) return { data: { events: events.slice(3), nextSequence: 5, hasMore: false } };
+      throw new Error(`unexpected path: ${path}`);
+    }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockReturnValue({ terminal: false, events: [], reconnect: vi.fn() });
+
+    const { result } = renderHook(() => useProjectJobs('41'));
+
+    await waitFor(() => expect(result.current.events.events).toHaveLength(5));
+    expect(result.current.events.transport).toBe('REST');
+    expect(result.current.events.loading).toBe(false);
+    expect(useJobEvents).toHaveBeenLastCalledWith(null);
+    expect(client.get).toHaveBeenCalledWith('/api/v2/jobs/job-done/events?after=3', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+  });
+
+  it('loads a failed job history from persisted events', async () => {
+    const failedJob = { jobId: 'job-failed', status: 'FAILED' };
+    const client = { get: vi.fn(async (path) => {
+      if (path.includes('/active-jobs')) return { data: [] };
+      if (path.includes('/recent-jobs')) return { data: [failedJob] };
+      return { data: { events: [{ sequence: 1, status: 'RUNNING' }, { sequence: 2, status: 'FAILED' }], nextSequence: 2, hasMore: false } };
+    }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockReturnValue({ terminal: false, events: [], reconnect: vi.fn() });
+
+    const { result } = renderHook(() => useProjectJobs('41'));
+
+    await waitFor(() => expect(result.current.events.events).toHaveLength(2));
+    expect(result.current.events.events.at(-1).status).toBe('FAILED');
+    expect(result.current.events.transport).toBe('REST');
+  });
+
+  it('keeps an actually empty terminal event history empty after REST completes', async () => {
+    const terminalJob = { jobId: 'job-empty', status: 'CANCELLED' };
+    const client = { get: vi.fn(async (path) => path.includes('/active-jobs')
+      ? { data: [] }
+      : path.includes('/recent-jobs')
+        ? { data: [terminalJob] }
+        : { data: { events: [], nextSequence: 0, hasMore: false } }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockReturnValue({ terminal: false, events: [], reconnect: vi.fn() });
+
+    const { result } = renderHook(() => useProjectJobs('41'));
+
+    await waitFor(() => expect(client.get).toHaveBeenCalledWith('/api/v2/jobs/job-empty/events?after=0', expect.objectContaining({ signal: expect.any(AbortSignal) })));
+    await waitFor(() => expect(result.current.events.loading).toBe(false));
+    expect(result.current.events.transport).toBe('REST');
+    expect(result.current.events.events).toEqual([]);
+  });
+
+  it('does not let a previous historical request overwrite a newly selected job', async () => {
+    let releaseOld;
+    const oldEvents = new Promise((resolve) => { releaseOld = resolve; });
+    const jobs = [{ jobId: 'job-old', status: 'FAILED' }, { jobId: 'job-new', status: 'COMPLETED' }];
+    const client = { get: vi.fn(async (path) => {
+      if (path.includes('/active-jobs')) return { data: [] };
+      if (path.includes('/recent-jobs')) return { data: jobs };
+      if (path.includes('/job-old/')) return oldEvents;
+      if (path.includes('/job-new/')) return { data: { events: [{ sequence: 8, status: 'COMPLETED' }], nextSequence: 8, hasMore: false } };
+      throw new Error(`unexpected path: ${path}`);
+    }) };
+    useApiClient.mockReturnValue(client);
+    useJobEvents.mockReturnValue({ terminal: false, events: [], reconnect: vi.fn() });
+    const { result } = renderHook(() => useProjectJobs('41'));
+    await waitFor(() => expect(result.current.selectedJobId).toBe('job-old'));
+
+    act(() => result.current.selectJob('job-new'));
+    await waitFor(() => expect(result.current.events.events[0]?.sequence).toBe(8));
+    releaseOld({ data: { events: [{ sequence: 1, status: 'FAILED' }], nextSequence: 1, hasMore: false } });
+    await act(async () => Promise.resolve());
+
+    expect(result.current.selectedJobId).toBe('job-new');
+    expect(result.current.events.events[0]?.sequence).toBe(8);
+  });
 });

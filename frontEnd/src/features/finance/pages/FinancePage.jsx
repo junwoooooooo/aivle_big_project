@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
+import { ProjectSplitWorkspace } from '../../../shared/ui/index.js';
 import useFinance from '../hooks/useFinance.js';
 import {
   CAC_FIELDS, CONDITIONAL_FIELDS, FIXED_COST_FIELDS, INITIAL_INVESTMENT_FIELDS, REVENUE_MODELS,
@@ -80,6 +81,7 @@ function FinanceWorkspace({ projectId, finance }) {
           businessModel: references.businessModel, conceptHypotheses: references.conceptHypotheses }, null, 2)}</pre></details>
       <small>Market Version {preparation.sourceMarketResearchVersionId} · BM Version {preparation.sourceBusinessModelVersionId}</small></section>
 
+    <ProjectSplitWorkspace className="finance-input-workspace" primary={<>
     <FinancialSection eyebrow="고정운영비" title="연간 고정비 세부항목" fields={FIXED_COST_FIELDS}
       draft={draft} change={change} sourceFields={fields} missing={missing} locked={locked}
       assistance={preparation.assistance} finance={finance} safe={safe} editedValues={editedValues} />
@@ -115,6 +117,7 @@ function FinanceWorkspace({ projectId, finance }) {
           onChange={(event) => change('monthlyChurnRate', event.target.value)} /><SourceNote field={fields.monthlyChurnRate} /></label>}
       </div></section>
 
+    </>} secondary={<>
     <section className="finance-section" aria-labelledby="finance-cac-title"><SectionHeading eyebrow="CAC" title="고객 획득 비용 구성값" />
       <p className="finance-note">CAC를 직접 계산하지 마세요. 비용과 신규 고객 수를 입력하면 시스템이 계산합니다.</p>
       <div className="finance-form-grid project-form-layout">{CAC_FIELDS.map(([key, label]) => <MoneyInput key={key} fieldKey={key} label={label}
@@ -148,6 +151,8 @@ function FinanceWorkspace({ projectId, finance }) {
           locked={locked} busy={finance.busy === `estimate:${key}`} generate={finance.generateEstimate}
           decide={finance.decideEstimate} editedValue={editedValues()[key]} safe={safe} />}
       </article>)}</div></section>
+
+    </>} />
 
     {!locked && <button className="finance-save" type="button" disabled={finance.busy === 'save'}
       onClick={() => void safe(() => finance.save(financialValuesFromDraft(draft, fields)))}>재무 입력 저장</button>}

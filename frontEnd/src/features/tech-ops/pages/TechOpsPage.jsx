@@ -4,7 +4,7 @@ import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { JobTimeline } from '../../../shared/async-events/index.js';
 import { DECISION_FIELDS, createFactDraft, decisionComplete, displayValue, factsFromDraft, proposalDraft, proposalValue } from '../model/techOpsModel.js';
 import useTechOps from '../hooks/useTechOps.js';
-import { FileDropzone } from '../../../shared/ui/index.js';
+import { FileDropzone, ProjectSplitWorkspace } from '../../../shared/ui/index.js';
 import '../styles/tech-ops.css';
 
 const EVIDENCE_TYPES = [['QUOTE', '견적서'], ['BOM', 'BOM'], ['SUPPLIER', '공급사 정보'], ['SPECIFICATION', '사양서'], ['PILOT', '파일럿 자료']];
@@ -46,6 +46,7 @@ function TechOpsWorkspace({ techOps }) {
       <span>{displayValue(product?.value?.features)}</span>
       <small>저장 전에는 수정할 수 있습니다.</small></section>
 
+    <ProjectSplitWorkspace className="tech-ops-input-workspace" primary={<>
     <section className="tech-ops-section" aria-labelledby="tech-facts-title"><div className="tech-ops-section__heading"><div><p>프로젝트 정보</p><h2 id="tech-facts-title">분석 전 필수 입력</h2></div><span>{locked ? '입력 저장 완료' : '직접 입력'}</span></div>
       <div className="tech-ops-form-grid project-form-layout">
         <label className="wide"><span>제품·서비스 사양 요약</span><textarea disabled={locked} value={facts.productSummary} onChange={(event) => setFacts({ ...facts, productSummary: event.target.value })} /></label>
@@ -62,6 +63,7 @@ function TechOpsWorkspace({ techOps }) {
       {!locked && <button className="tech-ops-primary" type="button" disabled={techOps.busy === 'facts'} onClick={() => void safe(() => techOps.saveFacts(factsFromDraft(facts)))}>사용자 사실 저장</button>}
     </section>
 
+    </>} secondary={<>
     <section className="tech-ops-section" aria-labelledby="tech-decisions-title"><div className="tech-ops-section__heading"><div><p>제안과 결정</p><h2 id="tech-decisions-title">분석 전 확정할 운영 가설</h2></div><span>사용자 결정 필수</span></div>
       <div className="tech-ops-decisions">{DECISION_FIELDS.map(([key, label]) => {
         const item = preparation.proposalDecisions?.[key] ?? {};
@@ -91,6 +93,8 @@ function TechOpsWorkspace({ techOps }) {
         <span>{item.evidenceType} · {item.mediaType ?? '파일 메타데이터 없음'} · {formatBytes(item.sizeBytes)}</span>
         {item.sha256 && <details><summary>기술 정보</summary><small>{item.sha256}</small></details>}</div>{!locked && <button type="button" onClick={() => void safe(() => techOps.removeEvidence(item.evidenceId))}>삭제</button>}</li>)}</ul>
     </section>
+
+    </>} />
 
     <section className="tech-ops-finalize" aria-live="polite"><div><p>기술·운영 분석 입력</p><h2>{techOps.snapshot ? '분석 입력을 저장했습니다' : preparation.readyToFinalize ? '입력 내용을 저장할 수 있습니다' : `${preparation.missingRequiredInputs.length}개 입력 또는 결정이 남았습니다`}</h2>
       <span>{techOps.snapshot ? '저장된 입력을 다음 분석에 사용합니다.' : preparation.missingRequiredInputs.join(' · ')}</span>{techOps.snapshot && <details><summary>기술 정보</summary><p>{techOps.snapshot.snapshotId} · {techOps.snapshot.snapshotHash}</p></details>}</div>

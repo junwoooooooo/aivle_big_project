@@ -30,10 +30,12 @@ export function ProjectOverviewPage() {
     <div className="journey-map"><svg className="journey-map__path" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M80 180 C140 180 190 100 250 100 S360 187 420 187 S520 94 580 94 S690 180 750 180 S860 115 920 115" /></svg><ol>{journeys.map((journey, index) => {
       const action = getJourneyActionView(journey.status);
       const [x, y] = JOURNEY_POSITIONS[index] ?? JOURNEY_POSITIONS.at(-1);
-      return <li key={journey.id} style={{ '--journey-x': x, '--journey-y': y }} className={`${index === currentIndex ? 'is-current' : ''} is-${journey.status.toLowerCase()}`}>
-        <span className="journey-map__station" aria-hidden="true">{journey.status === JOURNEY_STATUS.COMPLETED ? <AppIcon name="check" size={17} /> : index + 1}</span>
-        <div><span className="journey-map__step">{index + 1}단계</span><h3>{journey.shortLabel}</h3><p>{JOURNEY_DESCRIPTIONS[journey.id]}</p><JourneyStatusBadge status={journey.status} /></div>
-        <Link to={journey.href} aria-label={`${journey.shortLabel} ${action}`} title={action}><AppIcon name="arrowUpRight" size={18} /></Link>
+      return <li key={journey.id} style={{ '--station-x': x, '--station-y': y }} className={`${index === currentIndex ? 'is-current' : ''} is-${journey.status.toLowerCase()}`}>
+        <Link className="journey-map__node-link" to={journey.href} aria-label={`${journey.shortLabel} ${action}`} title={action}>
+          <span className="journey-map__station" aria-hidden="true">{journey.status === JOURNEY_STATUS.COMPLETED ? <AppIcon name="check" size={17} /> : index + 1}</span>
+          <span className="journey-map__content"><span className="journey-map__step">{index + 1}단계</span><strong>{journey.shortLabel}</strong><span>{JOURNEY_DESCRIPTIONS[journey.id]}</span><JourneyStatusBadge status={journey.status} /></span>
+          <span className="journey-map__action" aria-hidden="true"><AppIcon name="arrowUpRight" size={18} /></span>
+        </Link>
       </li>;
     })}</ol></div>
   </section>;

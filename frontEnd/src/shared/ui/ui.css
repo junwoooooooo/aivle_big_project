@@ -132,6 +132,27 @@ html { scrollbar-gutter: stable; }
 .project-file-dropzone li strong { overflow:hidden; font-size:.8rem; text-overflow:ellipsis; white-space:nowrap; }
 .project-file-dropzone li small { color:var(--color-text-secondary); font-size:.7rem; }
 .project-file-dropzone li button { display:grid; place-items:center; width:2.25rem; height:2.25rem; padding:0; border:0; border-radius:.4rem; background:transparent; color:var(--color-text-secondary); cursor:pointer; }
+.project-split-workspace { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(20rem,.95fr); align-items:start; gap:1.25rem; width:100%; max-width:92rem; margin-inline:auto; }
+.project-split-workspace__primary,.project-split-workspace__secondary { display:grid; min-width:0; gap:1rem; }
+.project-optional-fields { overflow:hidden; border:1px solid var(--color-border-default); border-radius:var(--radius-card); background:var(--color-surface); }
+.project-optional-fields > header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1.15rem 1.2rem; border-bottom:1px solid var(--color-border-default); }
+.project-optional-fields > header p,.project-optional-fields > header h3 { margin:0; }
+.project-optional-fields > header p { color:var(--color-action-primary); font-size:.72rem; font-weight:800; }
+.project-optional-fields > header h3 { margin-top:.2rem; font-size:1rem; }
+.project-optional-fields > header span { display:block; margin-top:.3rem; color:var(--color-text-secondary); font-size:.75rem; line-height:1.5; }
+.project-optional-fields > header > strong { flex:0 0 auto; padding:.35rem .55rem; border-radius:999px; background:var(--color-bg-subtle); color:var(--color-text-secondary); font-size:.72rem; }
+.project-optional-field + .project-optional-field { border-top:1px solid var(--color-border-default); }
+.project-optional-field > button { display:flex; align-items:center; justify-content:space-between; gap:1rem; width:100%; min-height:4.1rem; padding:.7rem 1rem; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.project-optional-field > button:hover,.project-optional-field > button:focus-visible { background:var(--color-bg-subtle); outline:none; }
+.project-optional-field > button:focus-visible { box-shadow:inset 0 0 0 3px rgb(15 136 120 / 16%); }
+.project-optional-field > button > span { display:grid; min-width:0; gap:.18rem; }
+.project-optional-field > button strong { font-size:.82rem; }
+.project-optional-field > button small { overflow:hidden; color:var(--color-text-secondary); font-size:.72rem; text-overflow:ellipsis; white-space:nowrap; }
+.project-optional-field.has-error > button small { color:var(--color-status-danger); }
+.project-optional-field__panel { padding:0 1rem 1rem; }
+.project-optional-field__panel .project-form-row { grid-template-columns:1fr; gap:.45rem; padding:.65rem 0 0; border:0; }
+.project-optional-field__panel .project-form-row > label { padding-top:0; }
+@media(max-width:1199px){.project-split-workspace{grid-template-columns:1fr;max-width:84rem}.project-split-workspace__secondary{grid-row:2}}
 
 .ui-input,
 .ui-file-input {

@@ -4,12 +4,17 @@ import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { useJobEvents } from '../../shared/async-events/index.js';
 import { createJobCenterApi } from './jobCenterApi.js';
 
+const MAX_HISTORICAL_EVENT_PAGES = 50;
+const emptyHistoricalEvents = () => ({ loading: false, events: [], error: null, jobId: null });
+
 export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
   const client = useApiClient();
   const api = useMemo(() => createJobCenterApi(client), [client]);
   const [state, setState] = useState({ loading: true, active: [], recent: [], error: null });
   const [history, setHistory] = useState({ items: [], page: -1, hasMore: false, totalElements: 0, loading: false, error: null });
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [historicalEvents, setHistoricalEvents] = useState(emptyHistoricalEvents);
+  const [historicalReload, setHistoricalReload] = useState(0);
   const handledTerminal = useRef(null);
   const manualSelection = useRef(false);
 
@@ -52,6 +57,7 @@ export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
     setState({ loading: true, active: [], recent: [], error: null });
     setSelectedJobId(null);
     setHistory({ items: [], page: -1, hasMore: false, totalElements: 0, loading: false, error: null });
+    setHistoricalEvents(emptyHistoricalEvents());
     handledTerminal.current = null;
     manualSelection.current = false;
     const timer = setTimeout(refresh, 0);
@@ -62,13 +68,45 @@ export function useProjectJobs(projectId, { onTerminal, refreshKey = 0 } = {}) {
     .find((job) => job.jobId === selectedJobId);
   const liveJobId = state.active.some((job) => job.jobId === selectedJobId)
     ? selectedJobId : null;
-  const events = useJobEvents(liveJobId);
+  const liveEvents = useJobEvents(liveJobId);
   useEffect(() => {
-    if (!events.terminal || !selectedJobId || handledTerminal.current === selectedJobId) return;
+    const controller = new AbortController();
+    if (!selectedJobId || liveJobId || !selectedJob) {
+      setHistoricalEvents(emptyHistoricalEvents());
+      return () => controller.abort();
+    }
+    setHistoricalEvents({ loading: true, events: [], error: null, jobId: selectedJobId });
+    const load = async () => {
+      const collected = [];
+      let after = 0;
+      for (let page = 0; page < MAX_HISTORICAL_EVENT_PAGES; page += 1) {
+        const result = await api.events(selectedJobId, after, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        collected.push(...(result.events ?? []));
+        const next = Number(result.nextSequence ?? after);
+        if (!result.hasMore || next <= after) break;
+        after = next;
+      }
+      if (!controller.signal.aborted) setHistoricalEvents({ loading: false, events: collected, error: null, jobId: selectedJobId });
+    };
+    load().catch((error) => {
+      if (!controller.signal.aborted) setHistoricalEvents({ loading: false, events: [], error, jobId: selectedJobId });
+    });
+    return () => controller.abort();
+  }, [api, historicalReload, liveJobId, selectedJob, selectedJobId]);
+  const events = liveJobId ? liveEvents : {
+    ...historicalEvents,
+    transport: 'REST',
+    terminal: Boolean(selectedJob),
+    reconnect: () => setHistoricalReload((value) => value + 1),
+    stop: () => undefined,
+  };
+  useEffect(() => {
+    if (!liveJobId || !liveEvents.terminal || !selectedJobId || handledTerminal.current === selectedJobId) return;
     handledTerminal.current = selectedJobId;
     refresh();
     onTerminal?.();
-  }, [events.events, events.terminal, onTerminal, refresh, selectedJobId, state.active, state.recent]);
+  }, [liveEvents.events, liveEvents.terminal, liveJobId, onTerminal, refresh, selectedJobId, state.active, state.recent]);
 
   const selectJob = useCallback((jobId) => {
     manualSelection.current = true;

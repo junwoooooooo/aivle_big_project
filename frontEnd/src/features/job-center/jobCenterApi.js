@@ -12,5 +12,9 @@ export function createJobCenterApi(client) {
       const response = await client.get(`/api/v3/projects/${encodeURIComponent(projectId)}/jobs/history?page=${page}&size=${size}`, options);
       return response.data ?? { items: [], page, size, hasMore: false, totalElements: 0 };
     },
+    async events(jobId, after = 0, options = {}) {
+      const response = await client.get(`/api/v2/jobs/${encodeURIComponent(jobId)}/events?after=${after}`, options);
+      return response.data ?? { events: [], nextSequence: after, latestSequence: after, hasMore: false };
+    },
   };
 }

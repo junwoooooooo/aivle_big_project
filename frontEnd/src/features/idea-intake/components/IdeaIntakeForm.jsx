@@ -1,4 +1,6 @@
-import { Button, FileDropzone, ProjectFormRow, ProjectFormSection } from '../../../shared/ui/index.js';
+import { useState } from 'react';
+
+import { Button, FileDropzone, ProjectFormRow, ProjectFormSection, ProjectOptionalField, ProjectOptionalFields, ProjectSplitWorkspace } from '../../../shared/ui/index.js';
 
 import ErrorSummary from './ErrorSummary.jsx';
 
@@ -22,35 +24,33 @@ const OPTIONAL_FIELDS = Object.freeze([
 ]);
 
 export default function IdeaIntakeForm({ draft, errors, onChange, onFilesChange, onSubmit }) {
+  const firstError = OPTIONAL_FIELDS.find(([field]) => errors[field])?.[0] ?? null;
+  const [openOptional, setOpenOptional] = useState(firstError);
+  const optionalCompleted = OPTIONAL_FIELDS.filter(([field]) => draft.intake[field]?.trim()).length;
+  const requiredCompleted = REQUIRED_FIELDS.filter(([field]) => draft.intake[field]?.trim()).length;
+  const summarize = (value) => value?.trim().replace(/\s+/g, ' ') || '';
+  const primary = <ProjectFormSection className="idea-form-section idea-required-workspace" eyebrow={`필수 입력 · ${requiredCompleted} / ${REQUIRED_FIELDS.length} 완료`} title="아이디어의 출발점을 알려주세요" description="세 가지 핵심 정보와 참고 자료를 바탕으로 사업안을 탐색합니다.">
+    {REQUIRED_FIELDS.map(([field, label, description]) => <ProjectFormRow key={field} id={field} label={label} description={description} required error={errors[field]}>
+      {(fieldProps) => <textarea rows="4" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
+    </ProjectFormRow>)}
+    <div className="idea-attachment-field"><div><strong>참고 자료</strong><span>아이디어를 설명하는 자료가 있다면 추가해 주세요.</span></div><FileDropzone id="referenceFiles" label="파일 선택" description="파일을 끌어 놓거나 선택하세요" acceptLabel="여러 개의 참고 파일을 선택할 수 있습니다." files={draft.referenceFiles} multiple onFilesChange={onFilesChange} /></div>
+  </ProjectFormSection>;
+  const secondary = <ProjectOptionalFields completed={optionalCompleted} total={OPTIONAL_FIELDS.length} description="입력한 조건은 이후 분석에서도 그대로 사용합니다.">
+    {OPTIONAL_FIELDS.map(([field, label, description]) => <ProjectOptionalField key={field} id={field} label={label}
+      summary={errors[field] || summarize(draft.intake[field])} error={errors[field]} expanded={openOptional === field}
+      onToggle={() => setOpenOptional((current) => current === field ? null : field)}>
+      <ProjectFormRow id={`${field}-input`} label={label} description={description} error={errors[field]}>
+        {(fieldProps) => <textarea rows="3" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
+      </ProjectFormRow>
+    </ProjectOptionalField>)}
+  </ProjectOptionalFields>;
   return (
     <form className="idea-intake-form" onSubmit={onSubmit} noValidate>
       <ErrorSummary errors={errors} />
-      <ProjectFormSection className="idea-form-section" eyebrow="필수 입력 · 3개" title="아이디어의 출발점을 알려주세요" description="이 세 가지가 있으면 사업안 탐색을 시작할 수 있습니다.">
-        {REQUIRED_FIELDS.map(([field, label, description]) => <ProjectFormRow key={field} id={field} label={label} description={description} required error={errors[field]}>
-          {(fieldProps) => <textarea rows="4" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
-        </ProjectFormRow>)}
-      </ProjectFormSection>
+      <ProjectSplitWorkspace primary={primary} secondary={secondary} />
 
-      <details className="idea-optional-section">
-        <summary><strong>이미 정한 내용이 있다면 입력해 주세요</strong><span>선택 입력 · 비워 두어도 진행할 수 있습니다.</span></summary>
-        <section className="idea-form-section" aria-label="사용자가 확정한 선택 조건">
-          <p className="idea-locked-notice">입력한 값은 사용자 확정 조건으로 잠기며 AI가 임의로 변경하지 않습니다.</p>
-          <div className="project-form-layout">
-            {OPTIONAL_FIELDS.map(([field, label, description]) => (
-              <ProjectFormRow key={field} id={field} label={label} description={description}>
-                {(fieldProps) => <textarea rows="3" value={draft.intake[field]} onChange={(event) => onChange(field, event.target.value)} {...fieldProps} />}
-              </ProjectFormRow>
-            ))}
-          </div>
-        </section>
-      </details>
-
-      <ProjectFormSection className="idea-form-section" eyebrow="선택 입력" title="참고 파일" description="아이디어를 설명하는 자료가 있다면 선택해 주세요.">
-        <FileDropzone id="referenceFiles" label="파일 선택" description="파일을 끌어 놓거나 선택하세요" acceptLabel="여러 개의 참고 파일을 선택할 수 있습니다." files={draft.referenceFiles} multiple onFilesChange={onFilesChange} />
-      </ProjectFormSection>
-
-      <div className="idea-primary-action idea-primary-action--sticky">
-        <Button type="submit">안전 확인 및 AI 해석</Button>
+      <div className="idea-primary-action">
+        <Button type="submit">입력 내용으로 사업안 만들기</Button>
       </div>
     </form>
   );
