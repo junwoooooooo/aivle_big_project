@@ -10,12 +10,12 @@ const DETAILS = Object.freeze({
   key_partners: { why: '외부 협력 없이는 수행하기 어려운 역할과 자격을 정리할 때 사용합니다.', example: '예: 결제 대행사, 물류 파트너, 전문 자격 보유 업체' },
 });
 
-export default function BmPlanForm({ draft, suggestions = {}, onChange, onSubmit, busy, submitLabel = '저장하고 캔버스 만들기' }) {
+export default function BmPlanForm({ draft, suggestions = {}, onChange, onSubmit, busy, formId, showSubmit = true, submitLabel = '저장하고 캔버스 만들기' }) {
   const [editing, setEditing] = useState({});
   const set = (key) => (event) => onChange(key, event.target.value);
   const setEditor = (key, open) => setEditing((current) => ({ ...current, [key]: open }));
 
-  return <form className="bm-plan" onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>
+  return <form id={formId} className="bm-plan" onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>
     <p className="bm-plan__optional-all">모든 항목은 선택 입력입니다. 지금 알고 있는 내용만 준비해도 됩니다.</p>
     <div className="bm-plan__workspace">
       <section className="bm-plan__operations" aria-labelledby="bm-plan-operations-title">
@@ -28,7 +28,7 @@ export default function BmPlanForm({ draft, suggestions = {}, onChange, onSubmit
           return <article key={key} className="bm-plan__row" data-editing={open}>
             <header><div>{open ? <label htmlFor={`bm-plan-${key}`}>{question}</label> : <strong>{question}</strong>}<p>{details.why}</p><small>{details.example}</small></div><button type="button" className="bm-plan__text-action" disabled={busy} onClick={() => setEditor(key, !open)}>{open ? '입력 닫기' : current ? '수정' : '직접 입력'}</button></header>
             {current && !open && <div className="bm-plan__read"><span>현재값</span><p>{current}</p></div>}
-            {suggestion && !open && <div className="bm-plan__suggestion"><span>선택한 사업안에서 가져온 초안</span><p>{suggestion}</p><button type="button" disabled={busy} onClick={() => onChange(key, suggestion)}>이 내용 사용</button></div>}
+            {suggestion && !open && <div className="bm-plan__suggestion"><span>선택한 사업안에서 가져온 초안</span><ul>{suggestion.split(/\r?\n/).map((item) => item.trim()).filter(Boolean).map((item) => <li key={item}>{item}</li>)}</ul><button type="button" disabled={busy} onClick={() => onChange(key, suggestion)}>이 내용 사용</button></div>}
             {!current && !suggestion && !open && <p className="bm-plan__empty">아직 입력하지 않았습니다.</p>}
             {open && <div className="bm-plan__editor"><Textarea id={`bm-plan-${key}`} rows={LIST_FIELDS.includes(key) ? 4 : 3} value={draft[key]} onChange={set(key)} disabled={busy} /></div>}
           </article>;
@@ -37,10 +37,10 @@ export default function BmPlanForm({ draft, suggestions = {}, onChange, onSubmit
 
       <section className="bm-plan__resources" aria-labelledby="bm-plan-resources-title">
         <header><h3 id="bm-plan-resources-title">현재 사용할 수 있는 자원</h3></header>
-        <p>정해진 값만 입력해 주세요. 비어 있는 숫자는 자동으로 추정하지 않습니다.</p>
+        <p>정확히 정해진 값만 입력하세요.</p>
         <div className="bm-plan__nums">{CONSTRAINT_FIELDS.map(([key, label, unit]) => <TextInput key={key} label={`${label} (${unit})`} type="number" min="0" step="1" inputMode="numeric" value={draft[key]} onChange={set(key)} disabled={busy} />)}</div>
       </section>
     </div>
-    <div className="mr-actions"><Button type="submit" disabled={busy}>{busy ? '저장 중…' : submitLabel}</Button></div>
+    {showSubmit && <div className="mr-actions"><Button type="submit" disabled={busy}>{busy ? '저장 중…' : submitLabel}</Button></div>}
   </form>;
 }

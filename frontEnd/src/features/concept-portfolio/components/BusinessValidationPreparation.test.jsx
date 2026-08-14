@@ -10,7 +10,7 @@ vi.mock('../../market/marketApi.js', () => ({ createMarketApi: () => api }));
 vi.mock('../../../shared/api/ApiClientProvider.jsx', () => ({ useApiClient: () => ({}) }));
 
 const portfolio = (overrides = {}) => ({ busy: false, selection: { status: 'LEGAL_REPORT_READY' }, finalizeMarketSeed: vi.fn(() => Promise.resolve()), ...overrides });
-const renderPrep = (value = portfolio()) => render(<MemoryRouter><BusinessValidationPreparation projectId="41" portfolio={value} onBack={vi.fn()} /></MemoryRouter>);
+const renderPrep = (value = portfolio(), onBack = vi.fn()) => render(<MemoryRouter><BusinessValidationPreparation projectId="41" portfolio={value} onBack={onBack} /></MemoryRouter>);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -25,9 +25,21 @@ describe('사업 검증 준비', () => {
     renderPrep(value);
     expect(await screen.findByText('예약 알림')).toBeInTheDocument();
     expect(screen.getByText('저장된 준비 정보 · 수정 2')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: '저장하고 계속' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: '저장하고 계속' }));
     await waitFor(() => expect(api.saveBmPlan).toHaveBeenCalledWith({ customer_relationship: '예약 알림' }, { team: 3 }));
     expect(api.saveBmPlan).toHaveBeenCalledBefore(value.finalizeMarketSeed);
+  });
+
+  it('상단 action bar에서 법률 결과로 돌아가고 form id submit을 제공한다', async () => {
+    const onBack = vi.fn();
+    const view = renderPrep(portfolio(), onBack);
+    await screen.findByRole('button', { name: '저장하고 계속' });
+    const submit = screen.getByRole('button', { name: '저장하고 계속' });
+    expect(submit).toHaveAttribute('form', 'business-validation-prep-form');
+    expect(view.container.querySelectorAll('.mr-actions')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: /법률·규제 결과로 돌아가기/ }));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('저장 실패 시 handoff를 호출하지 않고 입력을 유지한다', async () => {
@@ -67,11 +79,12 @@ describe('사업 검증 준비', () => {
     expect(value.finalizeMarketSeed).toHaveBeenCalled();
   });
 
-  it('desktop split과 tablet 단일 열 overflow 계약을 고정한다', () => {
+  it('compact 자원 layout과 tablet/mobile overflow 계약을 고정한다', () => {
     const css = readFileSync('src/features/concept-portfolio/styles/business-validation-preparation.css', 'utf8');
-    expect(css).toContain('grid-template-columns: minmax(0, 1.6fr) minmax(18rem, .9fr)');
-    expect(css).toContain('@media (max-width: 62rem)');
-    expect(css).toContain('grid-template-columns: 1fr');
+    expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
+    expect(css).toContain('@media (max-width: 56.25rem)');
+    expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+    expect(css).toContain('@media (max-width: 48rem)');
     expect(css).toContain('min-width: 0');
     expect(css).toContain('.bm-plan__suggestion');
     expect(css).toContain('.bm-plan__editor .ui-input');

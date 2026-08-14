@@ -37,6 +37,72 @@ describe('useIdeaIntake async recovery', () => {
       expect.objectContaining({ attachmentFileIds: [17] }), expect.any(Object));
   });
 
+  it('확정된 아이디어를 수정해 다시 제출하면 새 DERIVING 작업을 연결하고 terminal 결과를 반영한다', async () => {
+    let terminal = false;
+    useJobEvents.mockImplementation(() => ({ terminal, events: [] }));
+    const confirmed = {
+      ...response('CONFIRMED', null, []),
+      fields: [
+        { fieldKey: 'ideaOverview', value: '기존 아이디어', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'problem', value: '기존 문제', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'targetUsers', value: '기존 사용자', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+      ],
+    };
+    const deriving = { ...confirmed, status: 'DERIVING', activeJobId: 'job-resubmit' };
+    const reviewed = { ...confirmed, status: 'READY_FOR_REVIEW', activeJobId: null };
+    const client = {
+      get: vi.fn().mockResolvedValueOnce({ data: confirmed }).mockResolvedValueOnce({ data: reviewed }),
+      post: vi.fn().mockResolvedValue({ data: deriving }), patch: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result, rerender } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.CONFIRMED));
+
+    act(() => {
+      result.current.editConfirmed();
+      result.current.updateIntake('ideaOverview', '수정한 아이디어');
+      result.current.updateIntake('problem', '수정한 문제');
+      result.current.updateIntake('targetUsers', '수정한 사용자');
+    });
+    await act(async () => result.current.organizeIdea({ preventDefault: vi.fn() }));
+
+    expect(client.post).toHaveBeenCalledTimes(1);
+    expect(client.post).toHaveBeenCalledWith(expect.stringContaining('/derive'), expect.objectContaining({
+      ideaOverview: '수정한 아이디어', problem: '수정한 문제', targetUsers: '수정한 사용자',
+    }), expect.any(Object));
+    expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RUNNING);
+    expect(result.current.activeJobId).toBe('job-resubmit');
+
+    terminal = true;
+    rerender();
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.REVIEW));
+    expect(client.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('재제출 요청이 실패하면 수정한 입력을 보존한 채 입력 화면으로 돌아온다', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const confirmed = {
+      ...response('CONFIRMED', null, []),
+      fields: [
+        { fieldKey: 'ideaOverview', value: '기존 아이디어', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'problem', value: '기존 문제', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'targetUsers', value: '기존 사용자', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+      ],
+    };
+    const client = { get: vi.fn().mockResolvedValue({ data: confirmed }), post: vi.fn().mockRejectedValue(new Error('network')), patch: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.CONFIRMED));
+    act(() => {
+      result.current.editConfirmed();
+      result.current.updateIntake('ideaOverview', '보존할 수정값');
+    });
+    await act(async () => result.current.organizeIdea({ preventDefault: vi.fn() }));
+    expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.READY);
+    expect(result.current.draft.intake.ideaOverview).toBe('보존할 수정값');
+    expect(result.current.failureMessage).toBe('network');
+  });
+
   it('restores an active job and re-queries the brief after a terminal replay event', async () => {
     let terminal = false;
     useJobEvents.mockImplementation(() => ({ terminal, events: [] }));

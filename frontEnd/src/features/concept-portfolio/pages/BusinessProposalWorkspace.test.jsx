@@ -44,10 +44,8 @@ describe('CandidateInput', () => {
     expect(onSubmit).toHaveBeenCalled();
   });
   it('does not offer a guessed eight-field selector when the target is unresolved', () => {
-    render(<CandidateInput request={{ status: 'OPEN', question: 'What specific types of providers are required?', reason: 'Concept의 사업 구조를 보완해야 합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
-    expect(screen.getByText('방문 돌봄 연결')).toBeInTheDocument();
-    expect(screen.getByText('돌봄 제공자를 연결합니다.')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('현재 입력 형식으로는 이 사업안의 검토를 이어가기 어렵습니다.');
+    const view = render(<CandidateInput request={{ status: 'OPEN', question: 'What specific types of providers are required?', reason: 'Concept의 사업 구조를 보완해야 합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
+    expect(view.container).toBeEmptyDOMElement();
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '정보 제출' })).not.toBeInTheDocument();
     expect(screen.queryByText(/What specific types/)).not.toBeInTheDocument();
@@ -209,6 +207,38 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.getByRole('button', { name: /시장 분석 준비하기/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '법률·규제 결과 확인 완료' })).not.toBeInTheDocument();
   });
+  it('법률 화면에서는 선택 변경을 숨기고 분석 기준과 인접하게 왕복하며 API를 호출하지 않는다', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const state = base({
+      selection: { selectionId: 17, conceptId: 'c1', status: 'LEGAL_REPORT_READY', hypothesisConfirmedCount: 7, nextAction: 'FINALIZE_MARKET_SEED' },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', finalValue: '서울', decisionStatus: 'ACCEPTED', locked: true }],
+      report: { basisDate: '2026-08-14', report: { finalLegalConclusion: { status: 'IMPLEMENTABLE' } } },
+    });
+    useConceptPortfolio.mockReturnValue(state);
+    renderWorkspace();
+    expect(screen.queryByRole('button', { name: '선택 변경' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /분석 기준 확정으로 돌아가기/ }));
+    expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '선택 변경' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /법률·규제 결과로 돌아가기/ }));
+    expect(screen.getByRole('heading', { name: '법률·규제 검토 결과를 확인하세요' })).toBeInTheDocument();
+    for (const action of [state.select, state.confirm, state.finalizeReport, state.finalizeMarketSeed]) expect(action).not.toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+    scrollTo.mockRestore();
+  });
+  it('지원 후보만 primary에 표시하고 미지원 후보는 compact disclosure로 분리한다', () => {
+    useConceptPortfolio.mockReturnValue(base({ inputRequests: [
+      { inputRequestId: 'supported', scope: 'CANDIDATE', status: 'OPEN', candidateId: 's', candidateDisplayName: '지원 후보', affectedFields: ['sellerRole'] },
+      { inputRequestId: 'unsupported', scope: 'CANDIDATE', status: 'OPEN', candidateId: 'u', candidateDisplayName: '미지원 후보', affectedFields: [], question: 'What provider type?' },
+    ] }));
+    renderWorkspace();
+    expect(screen.getByText('지원 후보')).toBeInTheDocument();
+    expect(screen.getByText('미지원 후보')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: '이번에 이어서 검토하지 못한 사업안 1개' })).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(screen.getByRole('button', { name: '이번에 이어서 검토하지 못한 사업안 1개' }));
+    expect(screen.getByText('미지원 후보')).toBeVisible();
+    expect(document.body.textContent).not.toContain('What provider type?');
+  });
   it('기준값의 사용자 언어와 responsive overflow 계약을 유지한다', () => {
     const hypotheses = [
       ['TARGET_REGION', '서울'], ['REVENUE_MODEL', '월 구독'], ['PRICE', '월 39,000원'],
@@ -367,6 +397,22 @@ describe('Final Legal Report actual contract', () => {
     expect(screen.queryByRole('button', { name: '기술 정보' })).not.toBeInTheDocument();
     expect(view.container.textContent).not.toContain('sha256:abc');
     expect(view.container.textContent).not.toContain('CONDITIONAL');
-    expect(screen.getByRole('heading', { name: '사업 진행 전 확인할 내용' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '사업 진행 전 확인할 내용' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '특히 확인할 사항' })).toBeInTheDocument();
+  });
+
+  it('여러 source의 동일 법률 문장을 한 번만 표시하고 광고 고지는 교차 중복을 제거한다', () => {
+    const view = render(<LegalReport report={{ basisDate: '2026-08-14', report: {
+      finalLegalConclusion: { status: 'IMPLEMENTABLE' },
+      requiredControls: ['개인정보 동의', '  개인정보   동의  '],
+      requiredDisclosures: ['판매 주체 표시'],
+      partnerRequirements: ['전문 파트너 필요'], qualificationRequirements: ['전문 파트너 필요'], requiredPartnersAndQualifications: ['전문  파트너 필요'],
+      advertisingExpressionCautions: { requiredDisclosures: ['판매 주체 표시', '광고 문구 조건 표시'] },
+    } }} />);
+    expect(screen.getAllByText('개인정보 동의')).toHaveLength(1);
+    expect(screen.getAllByText('전문 파트너 필요')).toHaveLength(1);
+    expect(screen.getAllByText('판매 주체 표시')).toHaveLength(1);
+    expect(screen.getByText('광고 문구 조건 표시')).toBeInTheDocument();
+    expect(view.container.textContent).not.toContain('사업 진행 전 확인할 내용');
   });
 });

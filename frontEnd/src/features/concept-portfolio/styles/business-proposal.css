@@ -312,14 +312,8 @@
 .legal-conclusion > p { margin: 0; line-height: 1.6; }
 .legal-conclusion > div[role="alert"] { margin-top: .75rem; padding: .7rem; border-radius: var(--radius-control); background: color-mix(in srgb, #b77800 10%, transparent); }
 .legal-conclusion > small { display: block; margin-top: .75rem; color: var(--color-text-secondary); }
-.legal-execution-guide,
 .legal-report__attention,
 .legal-report__advertising { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-.legal-execution-guide { padding: 1rem !important; border: 1px solid color-mix(in srgb, var(--color-action-primary) 14%, var(--color-border-default)) !important; border-radius: .7rem; background: color-mix(in srgb, var(--color-action-primary) 4%, var(--color-surface)); }
-.legal-execution-guide > article { min-width: 0; padding: .75rem; border-radius: .6rem; background: var(--color-surface); }
-.legal-execution-guide > article p,
-.legal-execution-guide > article ul { margin-bottom: 0; }
-.legal-execution-guide > h3,
 .legal-report__attention > h3,
 .legal-report__advertising > h3 { grid-column: 1 / -1; }
 .legal-report__roles dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin: 0; }
@@ -361,11 +355,15 @@
 .candidate-input__preview strong { font-size: .76rem; }
 .candidate-input__preview ul { margin: 0; padding-left: 1.15rem; color: var(--color-text-secondary); font-size: .8rem; line-height: 1.5; }
 .candidate-input__open { justify-self: start; }
-.candidate-input__unsupported { padding: .8rem; border-radius: .6rem; background: var(--color-surface); }
 .candidate-input__fields { display: grid; gap: .8rem; }
 .candidate-input__fields label { display: grid; gap: .3rem; min-width: 0; padding: .75rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 85%, transparent); border-radius: .6rem; background: var(--color-surface); }
 .candidate-input__fields label > span { color: var(--color-text-secondary); font-size: .75rem; }
 .candidate-input__fields textarea { border-color: color-mix(in srgb, var(--color-border-default) 92%, transparent); background: #fff; }
+.candidate-withheld { width: min(100%, 82rem); margin-inline: auto; padding-top: .25rem; border-top: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent); }
+.candidate-withheld .disclosure > div { display: grid; gap: .75rem; padding: .75rem .5rem; }
+.candidate-withheld article { padding: .75rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 78%, transparent); border-radius: .6rem; background: color-mix(in srgb, var(--color-bg-subtle) 58%, var(--color-surface)); }
+.candidate-withheld article p { margin: .35rem 0 0; color: var(--color-text-secondary); line-height: 1.55; }
+.legal-workspace__back { justify-self: start; }
 
 @media (max-width: 74.99rem) {
   .proposal-grid { grid-template-columns: repeat(2, minmax(0, 27.5rem)); }
@@ -407,7 +405,6 @@
   .hypothesis-structured { grid-template-columns: 1fr; }
   .hypothesis-structured > label.is-wide { grid-column: auto; }
   .basis-summary dl,
-  .legal-execution-guide,
   .legal-report__attention,
   .legal-report__advertising,
   .legal-report__roles dl,

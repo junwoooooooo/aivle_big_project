@@ -41,4 +41,20 @@ describe('Idea confirmation journey', () => {
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('기존 사업안과 분석 결과'));
     expect(editConfirmed).toHaveBeenCalledTimes(1);
   });
+
+  it('아이디어 정리 실행 화면으로 전환하면 stage top에서 시작한다', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    useIdeaIntake.mockReturnValue({
+      screenState: IDEA_INTAKE_SCREEN_STATE.RUNNING, draft: {}, jobEvents: { events: [] },
+      isReanalyzing: false, activeJobId: 'job-resubmit',
+    });
+    render(<MemoryRouter initialEntries={['/app/projects/41/idea']}><Routes>
+      <Route element={<Outlet context={{ modules: [] }} />}>
+        <Route path="/app/projects/:projectId/idea" element={<IdeaIntakePage />} />
+      </Route>
+    </Routes></MemoryRouter>);
+    await waitFor(() => expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 })));
+    expect(screen.getByText('아이디어를 정리하고 있습니다')).toBeInTheDocument();
+    scrollTo.mockRestore();
+  });
 });

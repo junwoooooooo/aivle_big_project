@@ -23,7 +23,8 @@ describe('법률·규제 전용 문서', () => {
     expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/law');
     expect(view.container.textContent).not.toMatch(/IMPLEMENTABLE_WITH_CONTROLS|secret-hash|sha256:secret/);
     expect(view.container.querySelector('button')).toBeNull();
-    for (const title of ['검토 개요', '종합 판단', '실행 체크사항', '선택 사업안 개요', '확정 사업 조건', '필요한 조치', '필수 고지사항', '파트너·자격·인허가', '사업 구조와 역할', '관련 법률·규제', '광고·표현 주의사항', '확인되지 않은 사항', '거래·결제·개인정보 등 상세 검토', '변경사항 재검토 이력', '검토 범위와 한계']) expect(view.container.textContent).toContain(title);
+    for (const title of ['검토 개요', '종합 판단', '주요 검토 결과 요약', '선택 사업안 개요', '확정 사업 조건', '필요한 조치', '필수 고지사항', '파트너·자격·인허가', '사업 구조와 역할', '관련 법률·규제', '광고·표현 주의사항', '확인되지 않은 사항', '거래·결제·개인정보 등 상세 검토', '변경사항 재검토 이력', '검토 범위와 한계']) expect(view.container.textContent).toContain(title);
+    expect(view.container.textContent).toContain('필요한 조치1건');
   });
 
   it('A4 print source에서 app chrome과 interactive UI를 숨긴다', () => {
@@ -51,5 +52,20 @@ describe('법률·규제 전용 문서', () => {
     window.dispatchEvent(new Event('afterprint'));
     expect(document.title).toBe(original);
     print.mockRestore();
+  });
+
+  it('PDF 요약은 건수만 표시하고 실제 법률 문장은 상세 section에서 한 번만 출력한다', () => {
+    const view = render(<LegalRegulatoryReportDocument project={{ name: '중복 검토' }} selection={{ conceptName: '테스트' }} report={{ basisDate: '2026-08-14', report: {
+      finalLegalConclusion: { status: 'IMPLEMENTABLE' },
+      requiredControls: ['개인정보 동의', ' 개인정보   동의 '],
+      requiredDisclosures: ['판매 주체 표시'],
+      partnerRequirements: ['전문 파트너'], qualificationRequirements: ['전문 파트너'], requiredPartnersAndQualifications: ['전문  파트너'],
+      advertisingExpressionCautions: { requiredDisclosures: ['판매 주체 표시', '광고 조건 표시'] },
+    } }} />);
+    expect(view.container.textContent).toContain('필요한 조치1건');
+    expect(screen.getAllByText('개인정보 동의')).toHaveLength(1);
+    expect(screen.getAllByText('전문 파트너')).toHaveLength(1);
+    expect(screen.getAllByText('판매 주체 표시')).toHaveLength(1);
+    expect(screen.getByText('광고 조건 표시')).toBeInTheDocument();
   });
 });

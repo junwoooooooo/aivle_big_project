@@ -14,7 +14,7 @@ import {
   toggleComparedConcept,
 } from '../businessProposalModel.js';
 import { businessProposalExecutionPresentation, businessProposalSummaryMetric } from '../businessProposalExecution.js';
-import { legalExecutionGuide } from '../legalReportPresentation.js';
+import { advertisingOnlyDisclosures, legalAttentionGroups, uniqueLegalItems } from '../legalReportPresentation.js';
 import BusinessValidationPreparation from '../components/BusinessValidationPreparation.jsx';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 import '../styles/business-proposal.css';
@@ -28,6 +28,7 @@ export default function BusinessProposalWorkspace() {
   const progressEvents = useJobEvents(progressJobId);
   const [clock, setClock] = useState(0);
   const [view, setView] = useState('BROWSE');
+  const [decisionView, setDecisionView] = useState(null);
   const [compared, setCompared] = useState([]);
   const [showGallery, setShowGallery] = useState(false);
   const [selectingConceptId, setSelectingConceptId] = useState(null);
@@ -45,8 +46,10 @@ export default function BusinessProposalWorkspace() {
     : null;
   const selectedConcept = portfolio.concepts.find((concept) => concept.conceptId === selectedId);
   const comparedConcepts = portfolio.concepts.filter((concept) => compared.includes(concept.conceptId));
-  const actionableInputs = candidateRequests(portfolio.inputRequests);
-  const unmatchedInputs = actionableInputs.filter((request) => !portfolio.concepts.some((concept) => concept.candidateId === request.candidateId));
+  const candidateInputs = candidateRequests(portfolio.inputRequests);
+  const supportedInputs = candidateInputs.filter((request) => candidateFieldOptions(request).length > 0);
+  const unsupportedInputs = candidateInputs.filter((request) => candidateFieldOptions(request).length === 0);
+  const unmatchedInputs = supportedInputs.filter((request) => !portfolio.concepts.some((concept) => concept.candidateId === request.candidateId));
   const hypothesisMap = useMemo(() => Object.fromEntries(portfolio.hypotheses.map((item) => [item.hypothesisType, item])), [portfolio.hypotheses]);
   const readyToReview = portfolio.concepts.length > 0;
   const preGeneration = !portfolio.run && !readyToReview;
@@ -54,6 +57,7 @@ export default function BusinessProposalWorkspace() {
   const validationPrep = searchParams.get('view') === 'validation-prep'
     || portfolio.selection?.status === 'MARKET_SEED_FINALIZING';
   const galleryVisible = !portfolio.selection || showGallery;
+  const activeDecisionView = decisionView ?? decisionStage;
 
   useEffect(() => {
     if (!progressJobId) return undefined;
@@ -90,6 +94,7 @@ export default function BusinessProposalWorkspace() {
       // 서버 refresh로 확인된 선택 identity가 바뀔 때만 탐색 화면을 접는다.
       setShowGallery(false);
       setView('BROWSE');
+      setDecisionView(null);
     }
     previousSelectionKey.current = selectionKey;
   }, [selectionKey]);
@@ -105,6 +110,10 @@ export default function BusinessProposalWorkspace() {
   useEffect(() => {
     const order = ['PROPOSAL_SELECTION', 'BUSINESS_BASIS', 'LEGAL_REVIEW', 'VALIDATION_PREP'];
     const previous = previousDecisionStage.current;
+    if (previous !== decisionStage) {
+      // 서버 단계가 바뀔 때만 로컬 탐색 위치를 새 authority에 맞춘다.
+      setDecisionView(decisionStage);
+    }
     if (previous && order.indexOf(decisionStage) > order.indexOf(previous)) scrollPageToTop();
     previousDecisionStage.current = decisionStage;
   }, [decisionStage]);
@@ -125,8 +134,9 @@ export default function BusinessProposalWorkspace() {
     setShowGallery(false);
     setView('BROWSE');
   };
-  const openValidationPrep = () => { setSearchParams({ view: 'validation-prep' }); scrollPageToTop(); };
-  const closeValidationPrep = () => setSearchParams({});
+  const showDecisionView = (nextView) => { setDecisionView(nextView); scrollPageToTop(); };
+  const openValidationPrep = () => { setDecisionView('VALIDATION_PREP'); setSearchParams({ view: 'validation-prep' }); scrollPageToTop(); };
+  const closeValidationPrep = () => { setSearchParams({}); showDecisionView('LEGAL_REVIEW'); };
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
   const header = readyToReview && view === 'COMPARE'
@@ -144,25 +154,28 @@ export default function BusinessProposalWorkspace() {
 
     {readyToReview && view === 'COMPARE' && <ComparisonFocus concepts={comparedConcepts} selectedId={selectedId} onBack={() => setView('BROWSE')} onSelect={selectConcept} onContinueCurrent={continueCurrentSelection} busy={portfolio.busy} selectingConceptId={selectingConceptId} />}
     {readyToReview && view === 'BROWSE' && <>
-      {portfolio.selection && <DecisionProgress stage={validationPrep ? 'VALIDATION_PREP' : decisionStage} />}
+      {portfolio.selection && <DecisionProgress stage={validationPrep ? 'VALIDATION_PREP' : activeDecisionView} />}
       {portfolio.selection && validationPrep
         ? <BusinessValidationPreparation projectId={projectId} portfolio={portfolio} onBack={closeValidationPrep} />
         : portfolio.selection && !showGallery && <><FlowRationale /><div className="business-decision-stack"><SelectedSummary concept={selectedConcept}
-          canChange={canChangeSelection(portfolio.selection)} onShow={() => setShowGallery(true)} /><section ref={basisRef} tabIndex="-1" className="business-decision__current">
-          {decisionStage === 'BUSINESS_BASIS' && <BusinessBasis portfolio={portfolio} hypothesisMap={hypothesisMap} edits={edits} setEdits={setEdits} />}
-          {decisionStage !== 'BUSINESS_BASIS' && <BasisSummary hypotheses={portfolio.hypotheses} />}
-          {decisionStage === 'LEGAL_REVIEW' && <LegalWorkspace portfolio={portfolio} projectId={projectId} onPrepare={openValidationPrep} />}
-          {decisionStage === 'VALIDATION_PREP' && <LegalSummaryCompleted />}
-          {decisionStage === 'VALIDATION_PREP' && portfolio.selection.status === 'READY_FOR_MARKET' && <MarketReady projectId={projectId} />}
+          canChange={activeDecisionView === 'BUSINESS_BASIS' && canChangeSelection(portfolio.selection)} onShow={() => setShowGallery(true)} /><section ref={basisRef} tabIndex="-1" className="business-decision__current">
+          {activeDecisionView === 'BUSINESS_BASIS' && <BusinessBasis portfolio={portfolio} hypothesisMap={hypothesisMap} edits={edits} setEdits={setEdits}
+            reviewMode={decisionStage !== 'BUSINESS_BASIS'} onForward={decisionStage === 'LEGAL_REVIEW' || decisionStage === 'VALIDATION_PREP' ? () => showDecisionView('LEGAL_REVIEW') : undefined} />}
+          {activeDecisionView !== 'BUSINESS_BASIS' && <BasisSummary hypotheses={portfolio.hypotheses} />}
+          {activeDecisionView === 'LEGAL_REVIEW' && <LegalWorkspace portfolio={portfolio} projectId={projectId} onBack={() => showDecisionView('BUSINESS_BASIS')} onPrepare={openValidationPrep} canReturnToPreparation={decisionStage === 'VALIDATION_PREP'} />}
+          {activeDecisionView === 'VALIDATION_PREP' && <LegalSummaryCompleted />}
+          {activeDecisionView === 'VALIDATION_PREP' && portfolio.selection.status === 'READY_FOR_MARKET' && <MarketReady projectId={projectId} />}
         </section></div></>}
       {!validationPrep && galleryVisible && <ProposalGallery concepts={portfolio.concepts} selectedId={selectedId} compared={compared}
-        requests={portfolio.inputRequests} drafts={drafts} busy={portfolio.busy}
+        requests={supportedInputs} drafts={drafts} busy={portfolio.busy}
         onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation}
         onCompare={(conceptId) => setCompared((value) => toggleComparedConcept(value, conceptId))}
         onOpenComparison={() => setView('COMPARE')} onSelect={selectConcept} onContinueCurrent={continueCurrentSelection} selectingConceptId={selectingConceptId} />}
       {!validationPrep && galleryVisible && unmatchedInputs.length > 0 && <InputGroup title="추가 정보가 있으면 검토를 이어갈 수 있는 사업안" description="아래 사업안을 확인하지 않아도 이미 준비된 사업안은 선택할 수 있습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
+      {!validationPrep && galleryVisible && unsupportedInputs.length > 0 && <WithheldCandidates requests={unsupportedInputs} />}
     </>}
-    {portfolio.concepts.length === 0 && actionableInputs.length > 0 && <InputGroup title="추가 정보가 있으면 검토를 이어갈 수 있는 사업안" description="확인 가능한 실제 사업정보만 입력해 주세요." requests={actionableInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
+    {portfolio.concepts.length === 0 && supportedInputs.length > 0 && <InputGroup title="추가 정보가 있으면 검토를 이어갈 수 있는 사업안" description="확인 가능한 실제 사업정보만 입력해 주세요." requests={supportedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
+    {portfolio.concepts.length === 0 && unsupportedInputs.length > 0 && <WithheldCandidates requests={unsupportedInputs} />}
   </ProjectWorkspace>;
 }
 
@@ -224,18 +237,18 @@ function SelectedSummary({ concept, canChange, onShow }) {
   return <section className="selected-proposal-summary"><div><span><AppIcon name="check" size={16} /> 선택한 사업안</span><h2>{concept?.conceptName ?? '선택한 사업안'}</h2><p>{preview.definition}</p></div><div><Disclosure className="disclosure--tertiary" title="선택한 사업안 보기"><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl></Disclosure>{canChange && <button type="button" className="bp-button bp-button--secondary" onClick={onShow}>선택 변경</button>}</div></section>;
 }
 
-function BusinessBasis({ portfolio, hypothesisMap, edits, setEdits }) {
+function BusinessBasis({ portfolio, hypothesisMap, edits, setEdits, reviewMode = false, onForward }) {
   const [confirming, setConfirming] = useState(false);
   const disabled = portfolio.busy || Boolean(portfolio.selection.activeTaskRunId);
-  const field = (type) => <HypothesisField key={type} type={type} value={hypothesisMap[type]} edit={edits[type]} resetKey={`${hypothesisMap[type]?.decisionStatus ?? ''}:${JSON.stringify(hypothesisMap[type]?.finalValue ?? null)}`} onEdit={(next) => setEdits((current) => ({ ...current, [type]: next }))} onAlternative={() => portfolio.alternative(type)} disabled={disabled} />;
+  const field = (type) => <HypothesisField key={type} type={type} value={hypothesisMap[type]} edit={edits[type]} resetKey={`${hypothesisMap[type]?.decisionStatus ?? ''}:${JSON.stringify(hypothesisMap[type]?.finalValue ?? null)}`} onEdit={(next) => setEdits((current) => ({ ...current, [type]: next }))} onAlternative={() => portfolio.alternative(type)} disabled={disabled || reviewMode} readOnly={reviewMode} />;
   const confirm = async () => { setConfirming(true); try { await portfolio.confirm(buildHypothesisChanges(portfolio.hypotheses, edits)); } finally { setConfirming(false); } };
   const readyForReport = portfolio.selection.status === 'READY_FOR_LEGAL_REPORT' && !portfolio.report;
-  return <section className="business-basis"><header><div><p>분석 기준 확정</p><h2>시장 분석에 사용할 기준값</h2><span>시장 규모와 경쟁 환경을 같은 기준으로 분석하기 위해 지역·가격·수익 방식·시장 목표를 먼저 확인합니다.</span></div><strong>{portfolio.selection.activeTaskRunId ? '처리 중' : `${portfolio.selection.hypothesisConfirmedCount}/7 확인 완료`}</strong></header><section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p className="business-basis__status" role="status"><AppIcon name="check" size={15} />기준값은 확정되었습니다. 변경한 기준이 법률·규제에 미치는 영향을 확인하고 있습니다.</p>}{readyForReport && <p className="business-basis__status">확정한 기준을 바탕으로 최종 법률·규제 검토 결과를 준비합니다.</p>}<div className="business-basis__actions">{portfolio.selection.status === 'PENDING_HYPOTHESIS_CONFIRMATION' && <button type="button" className="bp-button bp-button--primary" disabled={disabled || confirming} onClick={confirm}>{confirming ? '기준값을 확인하고 있습니다...' : '기준값 확정'}</button>}{readyForReport && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>현재 값으로 진행<AppIcon name="arrowRight" size={16} /></button>}{portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}</div></section>;
+  return <section className="business-basis" data-review-mode={reviewMode}><header><div><p>{reviewMode ? '분석 기준 확인' : '분석 기준 확정'}</p><h2>시장 분석에 사용할 기준값</h2><span>{reviewMode ? '확정한 분석 기준을 확인하고 법률·규제 결과로 돌아갈 수 있습니다.' : '시장 규모와 경쟁 환경을 같은 기준으로 분석하기 위해 지역·가격·수익 방식·시장 목표를 먼저 확인합니다.'}</span></div><strong>{portfolio.selection.activeTaskRunId ? '처리 중' : `${portfolio.selection.hypothesisConfirmedCount}/7 확인 완료`}</strong></header><section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{!reviewMode && portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p className="business-basis__status" role="status"><AppIcon name="check" size={15} />기준값은 확정되었습니다. 변경한 기준이 법률·규제에 미치는 영향을 확인하고 있습니다.</p>}{!reviewMode && readyForReport && <p className="business-basis__status">확정한 기준을 바탕으로 최종 법률·규제 검토 결과를 준비합니다.</p>}<div className="business-basis__actions">{!reviewMode && portfolio.selection.status === 'PENDING_HYPOTHESIS_CONFIRMATION' && <button type="button" className="bp-button bp-button--primary" disabled={disabled || confirming} onClick={confirm}>{confirming ? '기준값을 확인하고 있습니다...' : '기준값 확정'}</button>}{!reviewMode && readyForReport && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>현재 값으로 진행<AppIcon name="arrowRight" size={16} /></button>}{!reviewMode && portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}{reviewMode && onForward && <button type="button" className="bp-button bp-button--primary" onClick={onForward}>법률·규제 결과로 돌아가기<AppIcon name="arrowRight" size={16} /></button>}</div></section>;
 }
 
-export function HypothesisField({ type, value, edit, resetKey, onEdit, onAlternative, disabled }) {
+export function HypothesisField({ type, value, edit, resetKey, onEdit, onAlternative, disabled, readOnly = false }) {
   const [editSession, setEditSession] = useState({ open: false, resetKey });
-  const editing = editSession.open && editSession.resetKey === resetKey;
+  const editing = !readOnly && editSession.open && editSession.resetKey === resetKey;
   const locked = value?.locked;
   const source = value?.finalValue ?? value?.proposedValue;
   const current = edit ?? source;
@@ -244,7 +257,7 @@ export function HypothesisField({ type, value, edit, resetKey, onEdit, onAlterna
   if (type === 'PRE_MARKET_SOM_SHARE') editor = <div className="hypothesis-structured hypothesis-structured--share"><label><span>목표 점유율</span><span className="input-with-suffix"><input aria-label="목표 점유율" type="number" min="0.01" step="0.01" disabled={locked || disabled} value={current?.targetSharePercent ?? ''} onChange={(event) => updateObject('targetSharePercent', Number(event.target.value))} /><i>%</i></span></label><label><span>목표 기간</span><span className="input-with-suffix"><input aria-label="목표 기간" type="number" min="1" step="1" disabled={locked || disabled} value={current?.horizonYears ?? ''} onChange={(event) => updateObject('horizonYears', Number(event.target.value))} /><i>년</i></span></label><label className="is-wide"><span>가정 근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
   else if (type === 'PRE_MARKET_SOM') editor = <div className="hypothesis-structured hypothesis-structured--som"><label><span>목표 규모</span><input aria-label="초기 목표 시장 규모" type="number" min="0" disabled={locked || disabled} value={current?.amount ?? ''} onChange={(event) => updateObject('amount', Number(event.target.value))} /></label><label><span>통화</span><select aria-label="통화" disabled={locked || disabled} value={current?.currency ?? 'KRW'} onChange={(event) => updateObject('currency', event.target.value)}>{!["KRW", "USD", "EUR", "JPY"].includes(current?.currency) && current?.currency && <option value={current.currency}>{current.currency}</option>}<option value="KRW">KRW</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option></select></label><label><span>기준 기간</span><input aria-label="시장 규모 기간" disabled={locked || disabled} value={current?.period ?? ''} onChange={(event) => updateObject('period', event.target.value)} /></label><label className="is-wide"><span>계산 기준</span><textarea disabled={locked || disabled} value={current?.calculationBasis ?? ''} onChange={(event) => updateObject('calculationBasis', event.target.value)} /></label><label className="is-wide"><span>근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
   else editor = <textarea aria-label={HYPOTHESIS_LABELS[type]} disabled={locked || disabled} value={edit ?? hypothesisValueText(source)} onChange={(event) => onEdit(event.target.value)} />;
-  return <article className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`} data-editing={editing}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{editing ? '수정 중' : hypothesisDecisionLabel(value)}</span></header><HypothesisReadValue type={type} value={current} />{!locked && !editing && <button type="button" className="bp-button bp-button--tertiary" disabled={disabled || !value} onClick={() => setEditSession({ open: true, resetKey })}>수정<AppIcon name="chevronRight" size={15} /></button>}{editing && <div className="hypothesis-field__editor">{editor}<div><button type="button" className="bp-button bp-button--tertiary" onClick={() => setEditSession({ open: false, resetKey })}>편집 닫기</button>{!locked && <button type="button" className="bp-button bp-button--secondary" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</div></div>}</article>;
+  return <article className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`} data-editing={editing}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{editing ? '수정 중' : hypothesisDecisionLabel(value)}</span></header><HypothesisReadValue type={type} value={current} />{!readOnly && !locked && !editing && <button type="button" className="bp-button bp-button--tertiary" disabled={disabled || !value} onClick={() => setEditSession({ open: true, resetKey })}>수정<AppIcon name="chevronRight" size={15} /></button>}{editing && <div className="hypothesis-field__editor">{editor}<div><button type="button" className="bp-button bp-button--tertiary" onClick={() => setEditSession({ open: false, resetKey })}>편집 닫기</button>{!locked && <button type="button" className="bp-button bp-button--secondary" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</div></div>}</article>;
 }
 
 function HypothesisReadValue({ type, value }) {
@@ -262,8 +275,8 @@ function BasisSummary({ hypotheses }) {
   return <section className="basis-summary"><div><span><AppIcon name="check" size={16} /> 사업 기준값 확인 완료</span><h2>시장 분석 기준값</h2></div><dl><div><dt>사업 대상 지역</dt><dd>{hypothesisDisplay('TARGET_REGION', values.TARGET_REGION) || '확인 완료'}</dd></div><div><dt>수익 방식</dt><dd>{hypothesisDisplay('REVENUE_MODEL', values.REVENUE_MODEL) || '확인 완료'}</dd></div><div><dt>시장 목표</dt><dd>{hypothesisDisplay('PRE_MARKET_SOM_SHARE', values.PRE_MARKET_SOM_SHARE) || '확인 완료'}</dd></div></dl></section>;
 }
 
-function LegalWorkspace({ portfolio, projectId, onPrepare }) {
-  return <section className="legal-workspace"><header><div><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>앞에서 확정한 가격, 제공 방식, 대상 지역 등의 조건이 법률·규제상 어떤 영향을 주는지 최종 확인합니다.</span></div><div className="legal-workspace__header-actions"><Link className="bp-button bp-button--secondary" to={projectRoutes.legalReport(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>법률·규제 보고서 PDF<AppIcon name="arrowUpRight" size={15} /></Link>{portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={onPrepare}>시장 분석 준비하기<AppIcon name="arrowRight" size={16} /></button>}</div></header>{portfolio.report && <LegalReport report={portfolio.report} />}</section>;
+function LegalWorkspace({ portfolio, projectId, onBack, onPrepare, canReturnToPreparation }) {
+  return <section className="legal-workspace"><button type="button" className="bp-button bp-button--tertiary legal-workspace__back" onClick={onBack}><AppIcon name="chevronLeft" size={16} />분석 기준 확정으로 돌아가기</button><header><div><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>앞에서 확정한 가격, 제공 방식, 대상 지역 등의 조건이 법률·규제상 어떤 영향을 주는지 최종 확인합니다.</span></div><div className="legal-workspace__header-actions"><Link className="bp-button bp-button--secondary" to={projectRoutes.legalReport(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>법률·규제 보고서 PDF<AppIcon name="arrowUpRight" size={15} /></Link>{(portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' || canReturnToPreparation) && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={onPrepare}>{canReturnToPreparation ? '사업 검증 준비로 돌아가기' : '시장 분석 준비하기'}<AppIcon name="arrowRight" size={16} /></button>}</div></header>{portfolio.report && <LegalReport report={portfolio.report} />}</section>;
 }
 
 function LegalSummaryCompleted() { return <section className="legal-summary-completed"><AppIcon name="check" size={16} /><div><strong>법률·규제 결과 확인 완료</strong><span>관련 법률·규제와 주의사항을 확인했습니다.</span></div></section>; }
@@ -275,10 +288,15 @@ export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, bus
   const options = candidateFieldOptions(request);
   const payload = serializeCandidateFacts(request, draft);
   const unresolved = request.nextAction === 'INPUT_TARGET_UNRESOLVED' || options.length === 0;
-  return <section className="candidate-input" data-editor-open={open}><header><div><small>추가 확인 필요</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header>{unresolved ? <div className="candidate-input__unsupported" role="alert"><strong>추가로 확인해야 할 정보가 있지만 현재 입력 형식으로는 이 사업안의 검토를 이어가기 어렵습니다.</strong><p>다른 준비된 사업안을 선택하거나 이 사업안을 보류할 수 있습니다.</p></div> : <><div className="candidate-input__preview"><strong>무엇을 확인하나요?</strong><ul>{options.map((field) => <li key={field}>{CANDIDATE_FACT_FIELDS[field].question}</li>)}</ul><strong>왜 필요한가요?</strong><p>이 정보에 따라 적용되는 계약·자격·규제 조건이 달라질 수 있어 확인이 필요합니다.</p></div>{!open && <button type="button" className="bp-button bp-button--secondary candidate-input__open" onClick={() => setOpen(true)}>정보 입력해서 검토 계속<AppIcon name="chevronDown" size={16} /></button>}{open && <><div className="candidate-input__fields">{options.map((field) => { const contract = CANDIDATE_FACT_FIELDS[field]; return <label key={field}><strong>{contract.label}</strong><span>{contract.help}</span><textarea aria-label={contract.label} value={draft.values?.[field] ?? ''} onChange={(event) => onDraft({ values: { ...(draft.values ?? {}), [field]: event.target.value } })} /></label>; })}</div><div className="candidate-input__actions"><button type="button" className="bp-button bp-button--tertiary" onClick={() => setOpen(false)}>입력 닫기</button><button type="button" className="bp-button bp-button--primary" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button></div></>}</>}</section>;
+  if (unresolved) return null;
+  return <section className="candidate-input" data-editor-open={open}><header><div><small>추가 확인 필요</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header><div className="candidate-input__preview"><strong>무엇을 확인하나요?</strong><ul>{options.map((field) => <li key={field}>{CANDIDATE_FACT_FIELDS[field].question}</li>)}</ul><strong>왜 필요한가요?</strong><p>이 정보에 따라 적용되는 계약·자격·규제 조건이 달라질 수 있어 확인이 필요합니다.</p></div>{!open && <button type="button" className="bp-button bp-button--secondary candidate-input__open" onClick={() => setOpen(true)}>정보 입력해서 검토 계속<AppIcon name="chevronDown" size={16} /></button>}{open && <><div className="candidate-input__fields">{options.map((field) => { const contract = CANDIDATE_FACT_FIELDS[field]; return <label key={field}><strong>{contract.label}</strong><span>{contract.help}</span><textarea aria-label={contract.label} value={draft.values?.[field] ?? ''} onChange={(event) => onDraft({ values: { ...(draft.values ?? {}), [field]: event.target.value } })} /></label>; })}</div><div className="candidate-input__actions"><button type="button" className="bp-button bp-button--tertiary" onClick={() => setOpen(false)}>입력 닫기</button><button type="button" className="bp-button bp-button--primary" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button></div></>}</section>;
 }
 
 function InputGroup({ title, description, requests, drafts, onDraft, onSubmit, onRetry, busy }) { return <section className="business-proposal__input-first"><h2>{title}</h2>{description && <p>{description}</p>}{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onSubmit(request)} onRetry={() => onRetry(request.inputRequestId)} busy={busy} />)}</section>; }
+
+function WithheldCandidates({ requests }) {
+  return <section className="candidate-withheld"><Disclosure title={`이번에 이어서 검토하지 못한 사업안 ${requests.length}개`}>{requests.map((request) => <article key={request.inputRequestId ?? request.candidateId}><strong>{request.candidateDisplayName ?? '추가 확인이 필요한 사업안'}</strong><p>법률·규제 검토 중 추가 사실 확인이 필요했지만, 현재 서비스가 받을 수 있는 정보 항목으로 연결되지 않아 이번 선택 후보에는 포함하지 않았습니다.</p></article>)}</Disclosure></section>;
+}
 
 const asList = (value) => Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
 function BulletSection({ title, values, empty = '해당 사항이 없습니다.' }) { const items = asList(values); return <article><h3>{title}</h3>{items.length === 0 ? <p>{empty}</p> : <ul>{items.map((item, index) => <li key={`${title}-${index}`}>{typeof item === 'string' ? item : item.safeSummary ?? item.title ?? String(item)}</li>)}</ul>}</article>; }
@@ -304,8 +322,11 @@ export function LegalReport({ report }) {
   const roles = body.businessRoles ?? {};
   const roleRows = [['플랫폼 역할', roles.platformRole], ['판매 주체', roles.sellerRole], ['서비스 제공 주체', roles.providerRole], ['중개 주체', roles.intermediaryRole]].filter(([, value]) => value);
   const advertising = body.advertisingExpressionCautions ?? {};
+  const attentionGroups = legalAttentionGroups(body);
+  const advertisingDisclosures = advertisingOnlyDisclosures(body);
   const delta = asList(body.deltaLegalHistory);
   const status = conclusion.status ?? conclusion.legalStatus ?? conclusion.productionStatus ?? conclusion.route;
-  const executionGuide = legalExecutionGuide(body);
-  return <section className="final-legal-report"><article className="legal-conclusion"><h3>한눈에 보는 검토 결과</h3><strong>{legalStatusLabel(status)}</strong><p>{conclusion.safeSummary ?? '법률·규제 검토 결과가 준비되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}<small>검토 기준일 {report.basisDate}</small></article><section className="legal-execution-guide"><h3>사업 진행 전 확인할 내용</h3>{executionGuide.map((group) => <BulletSection key={group.title} title={group.title} values={group.values} />)}</section><section className="legal-report__attention"><h3>특히 확인할 사항</h3><BulletSection title="반드시 해야 할 조치" values={body.requiredControls} /><BulletSection title="필수 고지" values={body.requiredDisclosures} /><BulletSection title="파트너·자격·인허가" values={[...asList(body.partnerRequirements), ...asList(body.qualificationRequirements), ...asList(body.requiredPartnersAndQualifications)]} /><BulletSection title="아직 확인되지 않은 사항" values={body.unknownFacts} /></section><article className="legal-report__roles"><h3>사업 구조에서의 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article><EvidenceSection values={body.officialEvidenceReferences} /><section className="legal-report__advertising"><h3>광고·표현 주의사항</h3><BulletSection title="허용 가능한 표현" values={advertising.allowedClaims} /><BulletSection title="반드시 함께 표시할 내용" values={advertising.requiredDisclosures} /><BulletSection title="피해야 할 표현" values={body.prohibitedVariants} /></section><Disclosure title="상세 근거"><div className="legal-report__details"><BulletSection title="개인정보 이용" values={body.personalDataUsage} /><BulletSection title="물리 활동" values={body.physicalActivities} /><FlowSection title="거래 흐름" values={body.transactionFlow} /><FlowSection title="결제·수취 흐름" values={body.paymentFlow} /><article><h3>변경사항 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? (item.status ? legalStatusLabel(item.status) : `재검토 ${index + 1}`)}</li>)}</ol>}</article></div></Disclosure></section>;
+  return <section className="final-legal-report"><article className="legal-conclusion"><h3>한눈에 보는 검토 결과</h3><strong>{legalStatusLabel(status)}</strong><p>{conclusion.safeSummary ?? '법률·규제 검토 결과가 준비되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}<small>검토 기준일 {report.basisDate}</small></article><section className="legal-report__attention"><h3>특히 확인할 사항</h3>{attentionGroups.map((group) => group.values.length > 0
+    ? <BulletSection key={group.title} title={group.title} values={group.values} />
+    : group.meaningfulWhenEmpty ? <BulletSection key={group.title} title={group.title} values={[]} empty="현재 확인되지 않은 사항은 없습니다." /> : null)}</section><article className="legal-report__roles"><h3>사업 구조에서의 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article><EvidenceSection values={body.officialEvidenceReferences} /><section className="legal-report__advertising"><h3>광고·표현 주의사항</h3>{uniqueLegalItems(advertising.allowedClaims).length > 0 && <BulletSection title="허용 가능한 표현" values={uniqueLegalItems(advertising.allowedClaims)} />}{advertisingDisclosures.length > 0 && <BulletSection title="광고에서 함께 표시할 내용" values={advertisingDisclosures} />}{uniqueLegalItems(body.prohibitedVariants).length > 0 && <BulletSection title="피해야 할 표현" values={uniqueLegalItems(body.prohibitedVariants)} />}</section><Disclosure title="상세 근거"><div className="legal-report__details"><BulletSection title="개인정보 이용" values={body.personalDataUsage} /><BulletSection title="물리 활동" values={body.physicalActivities} /><FlowSection title="거래 흐름" values={body.transactionFlow} /><FlowSection title="결제·수취 흐름" values={body.paymentFlow} /><article><h3>변경사항 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? (item.status ? legalStatusLabel(item.status) : `재검토 ${index + 1}`)}</li>)}</ol>}</article></div></Disclosure></section>;
 }

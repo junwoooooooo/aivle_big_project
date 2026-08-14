@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 
-import { Button, LoadingState, ProjectExecutionExperience, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
+import { Button, LoadingState, ProjectExecutionExperience, ProjectStageHeader, ProjectWorkspace, scrollPageToTop } from '../../../shared/ui/index.js';
 import IdeaBriefReview from '../components/IdeaBriefReview.jsx';
 import IdeaIntakeForm from '../components/IdeaIntakeForm.jsx';
 import MissingRequiredFieldsForm from '../components/MissingRequiredFieldsForm.jsx';
@@ -30,6 +30,9 @@ export default function IdeaIntakePage() {
       outlet.moduleState?.retry?.();
     }
   }, [intake.screenState, outlet.moduleState]);
+  useEffect(() => {
+    if (intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING) scrollPageToTop();
+  }, [intake.screenState]);
 
   const execution = ideaExecutionPresentation(intake.jobEvents?.events ?? []);
   const conceptsStatus = outlet.modules?.find((module) => module.id === 'concepts')?.status;
@@ -42,7 +45,7 @@ export default function IdeaIntakePage() {
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.LOADING && <LoadingState label="아이디어 Draft를 준비하고 있습니다." />}
     {[IDEA_INTAKE_SCREEN_STATE.EMPTY, IDEA_INTAKE_SCREEN_STATE.READY].includes(intake.screenState) && (
       <IdeaIntakeForm draft={intake.draft} errors={intake.errors} attachmentError={intake.attachmentError}
-        uploadingAttachments={intake.uploadingAttachments} onChange={intake.updateIntake}
+        submissionError={intake.failureMessage} uploadingAttachments={intake.uploadingAttachments} organizing={intake.isOrganizing} onChange={intake.updateIntake}
         onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} />
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <ProjectExecutionExperience

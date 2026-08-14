@@ -1,14 +1,43 @@
 const asList = (value) => Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
 
-export function legalExecutionGuide(reportBody = {}) {
-  const advertising = reportBody.advertisingExpressionCautions ?? {};
+const legalItemText = (value) => (typeof value === 'string'
+  ? value
+  : value?.safeSummary ?? value?.title ?? '');
+
+const normalizedLegalText = (value) => String(legalItemText(value) ?? '').trim().replace(/\s+/g, ' ');
+
+export function uniqueLegalItems(...sources) {
+  const unique = new Map();
+  for (const item of sources.flatMap(asList)) {
+    const key = normalizedLegalText(item);
+    if (key && !unique.has(key)) unique.set(key, item);
+  }
+  return [...unique.values()];
+}
+
+export function legalAttentionGroups(reportBody = {}) {
   return [
-    { title: '필요한 조치', values: asList(reportBody.requiredControls) },
-    { title: '고객에게 안내할 내용', values: [...asList(reportBody.requiredDisclosures), ...asList(advertising.requiredDisclosures)] },
-    { title: '외부 협의·자격', values: [...asList(reportBody.partnerRequirements), ...asList(reportBody.qualificationRequirements), ...asList(reportBody.requiredPartnersAndQualifications)] },
-    { title: '피해야 할 표현', values: asList(reportBody.prohibitedVariants) },
-    { title: '추가 확인사항', values: asList(reportBody.unknownFacts) },
+    { title: '반드시 해야 할 조치', values: uniqueLegalItems(reportBody.requiredControls) },
+    { title: '필수 고지', values: uniqueLegalItems(reportBody.requiredDisclosures) },
+    { title: '파트너·자격·인허가', values: uniqueLegalItems(reportBody.partnerRequirements, reportBody.qualificationRequirements, reportBody.requiredPartnersAndQualifications) },
+    { title: '아직 확인되지 않은 사항', values: uniqueLegalItems(reportBody.unknownFacts), meaningfulWhenEmpty: true },
   ];
+}
+
+export function advertisingOnlyDisclosures(reportBody = {}) {
+  const generalKeys = new Set(uniqueLegalItems(reportBody.requiredDisclosures).map(normalizedLegalText));
+  return uniqueLegalItems(reportBody.advertisingExpressionCautions?.requiredDisclosures)
+    .filter((item) => !generalKeys.has(normalizedLegalText(item)));
+}
+
+export function legalReportSummaryCounts(reportBody = {}) {
+  const groups = legalAttentionGroups(reportBody);
+  return {
+    controls: groups[0].values.length,
+    disclosures: groups[1].values.length,
+    partners: groups[2].values.length,
+    unknownFacts: groups[3].values.length,
+  };
 }
 
 function compactTimestamp(value) {

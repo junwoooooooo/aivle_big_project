@@ -163,6 +163,39 @@ class IdeaBriefCanonicalizationIntegrationTests {
     }
 
     @Test
+    void deriveAfterConfirmedForksMutableBriefAndUsesEditedSeedValues() {
+        Fixture fixture = fixture();
+        for (var definition : IdeaBriefFieldCatalog.fields()) {
+            if (!definition.requiredForConcept()) continue;
+            fields.save(IdeaBriefField.userValue(fixture.brief(), definition.key(),
+                "confirmed " + definition.key(), definition.defaultDecisionState()));
+        }
+        fixture.brief().applyAssessment("Ready summary", "[]", "[]", "READY_FOR_REVIEW", 100,
+            assessmentHasher.hash(fixture.brief(), fields.findAllByBriefIdOrderById(fixture.brief().getId())));
+        fixture.brief().readyForReview();
+        service.confirm(fixture.user().getId(), fixture.project().getId(),
+            new ConfirmRequest(null), "confirm-before-resubmit-" + UUID.randomUUID());
+        String confirmedBriefId = fixture.brief().getId();
+
+        var response = service.derive(fixture.user().getId(), fixture.project().getId(),
+            new DeriveRequest("edited overview", "edited problem", "edited users", null, java.util.Set.of()),
+            "derive-after-confirmed-" + UUID.randomUUID(), "resubmit-correlation");
+
+        assertThat(response.briefId()).isNotEqualTo(confirmedBriefId);
+        assertThat(response.status()).isEqualTo(IdeaBriefStatus.DERIVING);
+        assertThat(response.activeJobId()).isNotBlank();
+        assertThat(response.overview()).isEqualTo("edited overview");
+        assertThat(response.fields()).filteredOn(value -> value.fieldKey().equals("problem"))
+            .singleElement().satisfies(value -> {
+                assertThat(value.value()).isEqualTo("edited problem");
+                assertThat(value.provenance()).isEqualTo(IdeaFieldProvenance.USER_INPUT);
+            });
+        assertThat(briefs.findById(confirmedBriefId)).get()
+            .extracting(IdeaBrief::getStatus).isEqualTo(IdeaBriefStatus.CONFIRMED);
+        assertThat(taskRuns.findById(response.activeJobId())).isPresent();
+    }
+
+    @Test
     void editedInterpretationIsConfirmedWithoutChangingOriginalUserFieldProvenance() {
         Fixture fixture = fixture();
         for (var definition : IdeaBriefFieldCatalog.fields()) {

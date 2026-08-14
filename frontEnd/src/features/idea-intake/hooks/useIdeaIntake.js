@@ -60,12 +60,14 @@ export default function useIdeaIntake(projectId) {
   const [questions, setQuestions] = useState([]);
   const [attachmentError, setAttachmentError] = useState('');
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [isOrganizing, setIsOrganizing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const uploadedAttachmentIds = useRef(new Map());
   const terminalJobId = useRef(null);
   const jobEvents = useJobEvents(activeJobId);
 
   const applyResponse = useCallback((response) => {
+    setFailureMessage('');
     dispatch({ type: 'LOAD_SERVER_BRIEF', response });
     const unansweredIds = new Set((response.questions ?? [])
       .filter((question) => !question.answered).map((question) => question.questionId));
@@ -127,6 +129,8 @@ export default function useIdeaIntake(projectId) {
     const nextErrors = validateIdeaIntake(draft);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+    setFailureMessage('');
+    setIsOrganizing(true);
     setScreenState(IDEA_INTAKE_SCREEN_STATE.RUNNING);
     try {
       setUploadingAttachments(draft.referenceFiles.length > 0);
@@ -150,7 +154,9 @@ export default function useIdeaIntake(projectId) {
       setUploadingAttachments(false);
       setFailureMessage(error?.message ?? '아이디어 정리를 시작하지 못했습니다.');
       setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
-      setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.READY);
+    } finally {
+      setIsOrganizing(false);
     }
   };
 
@@ -262,7 +268,7 @@ export default function useIdeaIntake(projectId) {
 
   return {
     draft, errors, failureMessage, failureKind, questions, screenState, activeJobId, jobEvents, isReanalyzing,
-    attachmentError, uploadingAttachments, isConfirming,
+    attachmentError, uploadingAttachments, isOrganizing, isConfirming,
     setFiles: (files) => {
       const error = validateIdeaReferenceFiles(files);
       setAttachmentError(error);
@@ -280,6 +286,9 @@ export default function useIdeaIntake(projectId) {
     organizeIdea, submitAnswers, submitMissingFields, confirmBrief,
     refresh, reanalyze,
     restart: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
-    editConfirmed: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
+    editConfirmed: () => {
+      setFailureMessage('');
+      setScreenState(IDEA_INTAKE_SCREEN_STATE.READY);
+    },
   };
 }

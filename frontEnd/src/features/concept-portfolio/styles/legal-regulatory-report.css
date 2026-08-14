@@ -26,8 +26,10 @@
 .legal-document__laws article > section { padding: .85rem 0; border-bottom: 1px solid #dfe3ea; break-inside: avoid-page; }
 .legal-document__laws h4 { margin: 0 0 .55rem; }
 .legal-document__laws a { color: #2446aa; text-decoration: underline; }
-.legal-document__execution > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
-.legal-document__execution article { min-width: 0; padding: .8rem; background: #f6f8fb; break-inside: avoid-page; }
+.legal-document__execution dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; margin: 0; }
+.legal-document__execution dl > div { min-width: 0; padding: .8rem; background: #f6f8fb; break-inside: avoid-page; }
+.legal-document__execution dt { color: #52616b; font-size: .78rem; }
+.legal-document__execution dd { margin: .25rem 0 0; font-size: 1.1rem; font-weight: 800; }
 
 @page { size: A4; margin: 18mm 16mm 20mm; }
 
@@ -54,5 +56,5 @@
 @media (max-width: 40rem) {
   .legal-regulatory-document dl > div { grid-template-columns: 1fr; gap: .2rem; }
   .legal-report-print-actions { align-items: stretch; flex-direction: column; }
-  .legal-document__execution > div { grid-template-columns: 1fr; }
+  .legal-document__execution dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
