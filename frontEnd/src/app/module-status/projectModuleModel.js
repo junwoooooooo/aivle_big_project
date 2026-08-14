@@ -52,6 +52,6 @@ export function getProjectModules(projectId, statuses = {}) {
 export function getProjectModuleByPath(projectId, pathname, statuses = {}) {
   const modules = getProjectModules(projectId, statuses);
   const normalized = pathname.replace(/\/+$/, '');
-  if (normalized === projectRoutes.conceptCompare(projectId)) return modules.find((item) => item.id === 'concepts');
+  if ([projectRoutes.conceptCompare(projectId), projectRoutes.legalReport(projectId)].includes(normalized)) return modules.find((item) => item.id === 'concepts');
   return modules.find((module) => module.href === normalized) ?? modules[0];
 }

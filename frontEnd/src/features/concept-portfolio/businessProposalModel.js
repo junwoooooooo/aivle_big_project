@@ -127,6 +127,53 @@ export function hypothesisDisplay(type, value) {
   return hypothesisValueText(value);
 }
 
+const CURRENCY_LABELS = Object.freeze({ KRW: '원', USD: '달러', JPY: '엔', EUR: '유로' });
+
+function formatKoreanNumberGroup(value) {
+  const number = Math.trunc(value);
+  if (number === 0) return '';
+  const units = [[1000, '천'], [100, '백'], [10, '십']];
+  let remainder = number;
+  let output = '';
+  for (const [unit, label] of units) {
+    const digit = Math.floor(remainder / unit);
+    if (digit > 0) output += `${digit}${label}`;
+    remainder %= unit;
+  }
+  if (remainder > 0) output += String(remainder);
+  return output;
+}
+
+export function formatKoreanCurrencyAmount(amount, currency = '') {
+  const number = Number(amount);
+  if (!Number.isFinite(number)) return '';
+  const sign = number < 0 ? '-' : '';
+  let remainder = Math.floor(Math.abs(number));
+  const groups = [[1_000_000_000_000, '조'], [100_000_000, '억'], [10_000, '만']];
+  const parts = [];
+  for (const [unit, label] of groups) {
+    const group = Math.floor(remainder / unit);
+    if (group > 0) parts.push(`${formatKoreanNumberGroup(group)}${label}`);
+    remainder %= unit;
+  }
+  if (remainder > 0 || parts.length === 0) parts.push(formatKoreanNumberGroup(remainder) || '0');
+  return `${sign}${parts.join(' ')} ${CURRENCY_LABELS[currency] ?? currency}`.trim();
+}
+
+const LEGAL_STATUS_LABELS = Object.freeze({
+  IMPLEMENTABLE: '현재 조건으로 진행 가능',
+  IMPLEMENTABLE_WITH_CONTROLS: '필요한 조치를 반영하면 진행 가능',
+  NEEDS_FACTS: '추가 정보 확인 필요',
+  REDESIGNABLE: '일부 구조 조정 후 진행 가능',
+  REJECTED: '현재 형태로 진행하기 어려움',
+  CONDITIONAL: '필요한 조치를 반영하면 진행 가능',
+  ACCEPT: '검토 결과 확인 완료',
+});
+
+export function legalStatusLabel(status) {
+  return LEGAL_STATUS_LABELS[status] ?? '검토 결과 확인 필요';
+}
+
 export function displayValue(value) {
   if (Array.isArray(value)) return value.filter(Boolean).join(' · ');
   if (value && typeof value === 'object') return Object.values(value).filter((item) => typeof item !== 'object' && item != null).join(' · ');
@@ -196,8 +243,9 @@ export function hypothesisDecisionLabel(hypothesis) {
 
 export function businessDecisionStage(selection) {
   if (!selection) return 'PROPOSAL_SELECTION';
-  if (['HYPOTHESES_PREPARING', 'PENDING_HYPOTHESIS_CONFIRMATION'].includes(selection.status)) return 'BUSINESS_BASIS';
-  if (selection.status === 'READY_FOR_MARKET') return 'MARKET_READY';
+  if (['HYPOTHESES_PREPARING', 'PENDING_HYPOTHESIS_CONFIRMATION', 'DELTA_LEGAL_PENDING',
+    'DELTA_LEGAL_FAILED', 'READY_FOR_LEGAL_REPORT'].includes(selection.status)) return 'BUSINESS_BASIS';
+  if (['MARKET_SEED_FINALIZING', 'READY_FOR_MARKET'].includes(selection.status)) return 'VALIDATION_PREP';
   return 'LEGAL_REVIEW';
 }
 

@@ -60,7 +60,7 @@ function ProjectLayoutContent() {
   const currentModule = useMemo(() => {
     if (currentJourney.id === 'finalReport') return { id: 'finalReport', label: '최종 보고서', shortLabel: '최종 보고서', href: projectRoutes.finalReport(projectId), status: MODULE_STATUS.NOT_READY };
     const normalized = location.pathname.replace(/\/+$/, '');
-    if (normalized.endsWith('/concepts/compare')) return modules.find(({ id }) => id === 'concepts');
+    if (normalized.endsWith('/concepts/compare') || normalized.endsWith('/concepts/legal-report')) return modules.find(({ id }) => id === 'concepts');
     return modules.find(({ href }) => href === normalized) ?? modules[0];
   }, [currentJourney.id, location.pathname, modules, projectId]);
   const currentStatus = useMemo(() => moduleState.status === 'error' ? { label: '상태 확인 필요', tone: 'danger' }

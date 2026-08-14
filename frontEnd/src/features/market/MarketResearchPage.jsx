@@ -201,7 +201,7 @@ function ResultBody({ result, activeId, onJump, onNext }) {
       {section(7, '못 찾은 것', 'NOT_FOUND', <NotFoundBody blocks={market.notFound} />)}
 
       <div className="mr-actions">
-        <Button onClick={onNext}>다음 — BM 분석</Button>
+        <Button onClick={onNext}>다음 — 사업 모델 검토</Button>
       </div>
     </>
   );

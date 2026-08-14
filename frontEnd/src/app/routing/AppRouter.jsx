@@ -10,6 +10,7 @@ import PublicOnlyRoute from '../../features/auth/PublicOnlyRoute.jsx';
 import { ProjectCreatePage, ProjectListPage } from '../../features/projects/ProjectPages.jsx';
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { BusinessProposalWorkspace } from '../../features/concept-portfolio/index.js';
+import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
 import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
 import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
 import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
@@ -75,6 +76,7 @@ export default function AppRouter() {
             <Route path="idea" element={<IdeaIntakePage />} />
             <Route path="concepts" element={<BusinessProposalWorkspace />} />
             <Route path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />} />
+            <Route path="concepts/legal-report" element={<LegalRegulatoryReportPage />} />
             <Route path="market" element={<MarketResearchPage />} />
             <Route path="business-model" element={<BmCanvasPage />} />
             <Route path="twin-survey" element={<TwinSurveyPage />} />

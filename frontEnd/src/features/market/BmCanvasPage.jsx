@@ -40,7 +40,7 @@ export default function BmCanvasPage() {
   const [editingPlan, setEditingPlan] = useState(false);
   const plan = useBmPlan(api, trigger, () => setEditingPlan(false));
 
-  if (loading || plan.loading) return <LoadingState label="BM 캔버스를 불러오는 중" />;
+  if (loading || plan.loading) return <LoadingState label="사업 모델을 불러오는 중" />;
 
   // 결과가 없고 아직 돌지도 않았으면 **먼저 물어본다.** 「캔버스 만들기」 버튼 하나로
   // 시작하면 계획 칸이 빈 채로 나오고, 그 빈 칸이 조사 실패처럼 읽힌다.
@@ -48,12 +48,17 @@ export default function BmCanvasPage() {
   // ⚠ **이미 캔버스가 있어도 들어올 수 있어야 한다.** 처음엔 `!result` 로만 갈랐는데,
   //    그러면 한 번 돌린 프로젝트는 계획 화면에 **영영 못 들어간다** — 계획을 고칠 길이
   //    없으니 빈 칸도 영영 빈 채다(실측: 사용자가 그 상태를 봤다).
-  if (editingPlan || (!result && !active)) {
+  if (editingPlan || (!result && !active && plan.revision === 0)) {
     return (
       <PlanPhase projectId={projectId} navigate={navigate} plan={plan}
         error={error} run={run}
         onBack={result ? () => setEditingPlan(false) : null} />
     );
+  }
+
+  if (!result && !active && plan.revision > 0) {
+    return <PreparedPlanPhase projectId={projectId} navigate={navigate} plan={plan} error={error}
+      onEdit={() => setEditingPlan(true)} onCreate={trigger} busy={busy} />;
   }
 
   const bm = result?.bm ?? null;
@@ -70,7 +75,7 @@ export default function BmCanvasPage() {
         </Button>
         {/* 계획 칸이 비었으면 고칠 길이 있어야 한다. 없으면 그 칸은 영영 빈 채다. */}
         <Button variant="outline" onClick={() => setEditingPlan(true)} disabled={busy || active}>
-          실행 계획 고치기
+          운영 정보 수정
         </Button>
         <Button onClick={trigger} disabled={busy || active}>
           {active ? '생성 중…' : result ? '다시 생성' : '캔버스 만들기'}
@@ -161,13 +166,14 @@ function useBmPlan(api, trigger, onStarted) {
   const [draft, setDraft] = useState(emptyDraft);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [revision, setRevision] = useState(0);
   const [pendingEmpty, setPendingEmpty] = useState(null);
   const [failure, setFailure] = useState(null);
 
   useEffect(() => {
     let alive = true;
     api.currentBmPlan()
-      .then((payload) => { if (alive) setDraft(draftFrom(payload)); })
+      .then((payload) => { if (alive) { setDraft(draftFrom(payload)); setRevision(payload?.revision ?? 0); } })
       // 초안을 못 읽는 것은 실행을 막을 일이 아니다 — 빈 폼으로 연다.
       .catch(() => {})
       .finally(() => { if (alive) setLoading(false); });
@@ -183,7 +189,8 @@ function useBmPlan(api, trigger, onStarted) {
     setFailure(null);
     try {
       const { plan, constraints } = toPayload(draft);
-      await api.saveBmPlan(plan, constraints);
+      const saved = await api.saveBmPlan(plan, constraints);
+      setRevision((current) => saved?.revision ?? current);
       await trigger();
       onStarted?.();
     } catch (problem) {
@@ -202,22 +209,18 @@ function useBmPlan(api, trigger, onStarted) {
   }, [draft, run]);
 
   return {
-    draft, loading, saving, failure, pendingEmpty,
+    draft, revision, loading, saving, failure, pendingEmpty,
     change, submit, confirm: run, cancel: () => setPendingEmpty(null),
   };
 }
 
-/** 1국면 — 「BM 분석에 이것만 더 필요합니다」. */
 function PlanPhase({ projectId, navigate, plan, error, run, onBack }) {
   return (
     <section className="market-page">
       <div className="pipeline-page-heading">
-        <p>4. BM 분석</p>
-        <h2>실행 계획 확인</h2>
-        <span>
-          BM 분석에 <strong>이것만 더 필요하다.</strong> 수익모델·채널·차별점·가격은
-          앞 단계에서 이미 확정했으므로 다시 묻지 않는다.
-        </span>
+        <p>4. 사업 모델 검토</p>
+        <h2>운영 정보 확인</h2>
+        <span>사업 모델을 검토할 때 사용할 운영 정보를 정리합니다. 모든 항목은 선택 입력이며 정확히 정해지지 않았다면 비워 두어도 됩니다.</span>
       </div>
 
       <div className="market-page__actions">
@@ -236,7 +239,7 @@ function PlanPhase({ projectId, navigate, plan, error, run, onBack }) {
       ) : null}
 
       <div className="bm-plan__split">
-        <Card title="추가로 필요한 것">
+        <Card title="사업 운영 정보">
           <BmPlanForm draft={plan.draft} onChange={plan.change}
             onSubmit={plan.submit} busy={plan.saving} />
         </Card>
@@ -252,8 +255,7 @@ function PlanPhase({ projectId, navigate, plan, error, run, onBack }) {
           <strong>{(plan.pendingEmpty ?? []).join(', ')}</strong> 칸이 비어 있습니다.
         </p>
         <p className="market-note">
-          그 칸은 컨셉 서술에 내용이 있으면 그것으로 채워지고, 없으면 <strong>빈 채로</strong>
-          나옵니다 — 모델이 지어내서 메우지 않습니다.
+          입력하지 않은 항목은 빈 채로 진행합니다. 사업 모델 검토 중 나중에 다시 추가할 수 있습니다.
         </p>
         <div className="mr-actions">
           <Button variant="ghost" onClick={plan.cancel}>돌아가서 채우기</Button>
@@ -262,6 +264,17 @@ function PlanPhase({ projectId, navigate, plan, error, run, onBack }) {
       </Dialog>
     </section>
   );
+}
+
+function PreparedPlanPhase({ projectId, navigate, plan, error, onEdit, onCreate, busy }) {
+  return <ProjectWorkspace as="section" mode="analyze" className="market-page">
+    <ProjectStageHeader step={4} eyebrow="사업 모델 검토" title="저장한 운영 정보로 사업 모델을 검토할 수 있습니다"
+      description="사업 검증 준비에서 저장한 운영 정보를 사용합니다. 필요한 경우 시작 전에 수정할 수 있습니다." />
+    <div className="market-page__actions"><Button variant="ghost" onClick={() => navigate(projectRoutes.market(projectId))}>시장조사로</Button><Button variant="outline" onClick={onEdit}>준비 정보 보기·수정</Button><Button onClick={onCreate} disabled={busy}>{busy ? '준비 중…' : '캔버스 만들기'}</Button></div>
+    {error ? <Alert tone="danger">{error}</Alert> : null}
+    {plan.failure ? <Alert tone="danger">{plan.failure}</Alert> : null}
+    <section className="bm-plan-prepared"><strong>운영 정보 준비 완료</strong><span>저장 수정 {plan.revision} · 사업 모델을 만들 때 이 정보를 사용합니다.</span></section>
+  </ProjectWorkspace>;
 }
 
 function SwrBox({ title, items, tone }) {

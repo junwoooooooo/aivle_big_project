@@ -43,13 +43,13 @@ beforeEach(() => {
 describe('실행 계획 국면', () => {
   it('캔버스가 없으면 먼저 물어본다 — 버튼 하나로 시작하지 않는다', async () => {
     renderPage();
-    expect(await screen.findByText('실행 계획 확인')).toBeInTheDocument();
-    expect(screen.getByLabelText(/고객과 계속 이어지는 방식/)).toBeInTheDocument();
+    expect(await screen.findByText('운영 정보 확인')).toBeInTheDocument();
+    expect(screen.getByLabelText(/고객 관계 유지 방식/)).toBeInTheDocument();
   });
 
   it('앞 단계가 정한 것은 다시 묻지 않는다', async () => {
     const { container } = renderPage();
-    await screen.findByText('실행 계획 확인');
+    await screen.findByText('운영 정보 확인');
     const labels = [...container.querySelectorAll('label')].map((n) => n.textContent).join(' ');
     expect(labels).not.toMatch(/수익\s*모델/);
     expect(labels).not.toMatch(/차별점/);
@@ -57,7 +57,7 @@ describe('실행 계획 국면', () => {
 
   it('⭐ 빈 칸이 있으면 확인 없이 실행하지 않는다', async () => {
     renderPage();
-    await screen.findByText('실행 계획 확인');
+    await screen.findByText('운영 정보 확인');
 
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
 
@@ -68,7 +68,7 @@ describe('실행 계획 국면', () => {
 
   it('⭐ 「돌아가서 채우기」를 누르면 실행이 안 간다', async () => {
     renderPage();
-    await screen.findByText('실행 계획 확인');
+    await screen.findByText('운영 정보 확인');
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
     await screen.findByText('비어 있는 칸이 있습니다');
 
@@ -81,8 +81,8 @@ describe('실행 계획 국면', () => {
 
   it('확인 문구가 어느 칸이 빌지 이름으로 말한다', async () => {
     renderPage();
-    await screen.findByText('실행 계획 확인');
-    fireEvent.change(screen.getByLabelText(/고객과 계속 이어지는 방식/),
+    await screen.findByText('운영 정보 확인');
+    fireEvent.change(screen.getByLabelText(/고객 관계 유지 방식/),
       { target: { value: '자동 알림' } });
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
 
@@ -93,7 +93,7 @@ describe('실행 계획 국면', () => {
 
   it('「이대로 진행」이면 저장한 뒤 실행한다 — 저장 없이 돌지 않는다', async () => {
     renderPage();
-    await screen.findByText('실행 계획 확인');
+    await screen.findByText('운영 정보 확인');
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
     await screen.findByText('비어 있는 칸이 있습니다');
 
@@ -112,10 +112,10 @@ describe('실행 계획 국면', () => {
         key_partners: ['PG'],
       },
       constraints: { budget_krw: 5000000 },
-      revision: 3,
+      revision: 0,
     });
     renderPage();
-    await screen.findByText('실행 계획 확인');
+    await screen.findByText('운영 정보 확인');
 
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
 
@@ -125,10 +125,10 @@ describe('실행 계획 국면', () => {
 
   it('⭐ 저장한 값이 실제로 실려 간다 — 빈 칸은 빠진 채로', async () => {
     renderPage();
-    await screen.findByText('실행 계획 확인');
-    fireEvent.change(screen.getByLabelText(/혼자 못 하는 부분/),
+    await screen.findByText('운영 정보 확인');
+    fireEvent.change(screen.getByLabelText(/필요한 파트너/),
       { target: { value: 'PG\n예약 플랫폼' } });
-    fireEvent.change(screen.getByLabelText(/쓸 수 있는 예산/), { target: { value: '5000000' } });
+    fireEvent.change(screen.getByLabelText(/사용 가능한 예산/), { target: { value: '5000000' } });
 
     fireEvent.click(screen.getByRole('button', { name: '저장하고 캔버스 만들기' }));
     fireEvent.click(await screen.findByRole('button', { name: '이대로 진행' }));
@@ -148,11 +148,11 @@ describe('실행 계획 국면', () => {
     });
     renderPage();
 
-    const edit = await screen.findByRole('button', { name: '실행 계획 고치기' });
+    const edit = await screen.findByRole('button', { name: '운영 정보 수정' });
     fireEvent.click(edit);
 
-    expect(await screen.findByText('실행 계획 확인')).toBeInTheDocument();
-    expect(screen.getByLabelText(/고객과 계속 이어지는 방식/)).toBeInTheDocument();
+    expect(await screen.findByText('운영 정보 확인')).toBeInTheDocument();
+    expect(screen.getByLabelText(/고객 관계 유지 방식/)).toBeInTheDocument();
     // 고치러 들어왔다가 그냥 돌아갈 수도 있어야 한다.
     expect(screen.getByRole('button', { name: '지금 캔버스 보기' })).toBeInTheDocument();
   });
@@ -164,9 +164,12 @@ describe('실행 계획 국면', () => {
       revision: 2,
     });
     renderPage();
-    await screen.findByText('실행 계획 확인');
+    expect(await screen.findByText('운영 정보 준비 완료')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/사업 운영에서 반복적으로 해야 하는 일/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '준비 정보 보기·수정' }));
+    await screen.findByText('운영 정보 확인');
 
-    expect(screen.getByLabelText(/반복해서 해야 하는 일/).value)
+    expect(screen.getByLabelText(/사업 운영에서 반복적으로 해야 하는 일/).value)
       .toBe('예약 통합\n보증금 청구');
     expect(screen.getByLabelText(/기간/).value).toBe('10');
   });

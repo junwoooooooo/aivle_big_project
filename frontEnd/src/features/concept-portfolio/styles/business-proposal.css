@@ -219,6 +219,10 @@
 .decision-progress li[data-state="current"] { color: var(--color-text-primary); }
 .decision-progress li[data-state="current"] > span { border: 1px solid var(--color-action-primary); color: var(--color-action-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-action-primary) 8%, transparent); }
 
+.business-decision-rationale { display: grid; width: min(100%, 82rem); gap: .35rem; margin-inline: auto; padding: .85rem 1rem; border-left: 3px solid color-mix(in srgb, var(--color-action-primary) 48%, transparent); background: color-mix(in srgb, var(--color-action-primary) 4%, var(--color-surface)); }
+.business-decision-rationale p { max-width: 78ch; margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.55; }
+.business-decision-stack { display: grid; width: 100%; gap: 1.75rem; }
+
 .selected-proposal-summary,
 .basis-summary,
 .legal-summary-completed { display: flex; width: min(100%, 82rem); gap: 1rem; align-items: center; justify-content: space-between; min-width: 0; margin-inline: auto; padding: .85rem 1rem; border-radius: .7rem; background: color-mix(in srgb, var(--color-action-primary) 5%, var(--color-surface)); }
@@ -235,7 +239,7 @@
 .selected-proposal-summary .disclosure dl > div { display: grid; gap: .15rem; }
 .selected-proposal-summary .disclosure dt { color: var(--color-text-secondary); font-size: .72rem; }
 .selected-proposal-summary .disclosure dd { margin: 0; }
-.business-decision__current { display: grid; width: 100%; gap: 1rem; outline: none; scroll-margin-top: 2rem; }
+.business-decision__current { display: grid; width: 100%; gap: 1.75rem; outline: none; scroll-margin-top: 2rem; }
 
 .business-basis,
 .legal-workspace { display: grid; width: min(100%, 80rem); gap: 1.25rem; min-width: 0; margin-inline: auto; padding: clamp(1rem, 2.5vw, 1.6rem); border-radius: .9rem; background: var(--color-surface); box-shadow: 0 8px 28px rgb(24 39 75 / 5%); }
@@ -261,9 +265,16 @@
 .hypothesis-field__read small { color: var(--color-text-secondary); font-size: .7rem; }
 .hypothesis-field__read strong { overflow: hidden; max-width: 72ch; font-size: .9rem; font-weight: 650; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 .hypothesis-field > button { align-self: center; white-space: nowrap; }
-.hypothesis-field__editor { display: grid; grid-column: 2 / -1; gap: .65rem; min-width: 0; padding: .8rem; border-radius: .65rem; background: color-mix(in srgb, var(--color-bg-subtle) 82%, transparent); }
+.hypothesis-field__editor { display: grid; grid-column: 2 / -1; gap: .65rem; min-width: 0; padding: .8rem; border: 1px solid color-mix(in srgb, var(--color-action-primary) 24%, transparent); border-radius: .65rem; background: var(--color-surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-action-primary) 7%, transparent); }
 .hypothesis-field__editor > div:last-child { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
 .hypothesis-field[data-editing="true"] .hypothesis-field__read { display: none; }
+.hypothesis-field__read--structured { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1rem; }
+.hypothesis-field__read--structured > div { display: grid; gap: .15rem; min-width: 0; }
+.hypothesis-field__read--structured > div.is-wide { grid-column: 1 / -1; }
+.hypothesis-field__read--structured dt { color: var(--color-text-secondary); font-size: .7rem; }
+.hypothesis-field__read--structured dd { margin: 0; font-size: .86rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.hypothesis-field__read--structured dd[data-empty="true"] { color: var(--color-text-secondary); font-weight: 500; }
+.hypothesis-field__read--structured dd small { display: block; margin-top: .15rem; color: var(--color-action-primary); font-size: .76rem; font-weight: 650; }
 .business-basis__targets { margin-top: .5rem; padding: 1rem 1.1rem; border-radius: .75rem; background: color-mix(in srgb, var(--color-bg-subtle) 72%, var(--color-surface)); }
 .business-basis__targets > h3 { margin-bottom: .35rem; }
 .business-basis__targets .hypothesis-field { grid-template-columns: minmax(10rem, 11.5rem) minmax(0, 1fr) auto; padding-inline: 0; }
@@ -278,6 +289,9 @@
 .business-basis__actions,
 .legal-workspace__actions,
 .candidate-input__actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: flex-end; }
+.business-basis__status { display: flex; gap: .45rem; align-items: center; margin: 0; padding: .75rem .85rem; border-radius: .6rem; background: color-mix(in srgb, var(--color-action-primary) 6%, var(--color-surface)); color: var(--color-text-secondary); font-size: .82rem; }
+.business-basis__status svg { flex: none; color: var(--color-action-primary); }
+.legal-workspace__header-actions { display: flex; flex: none; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
 
 .basis-summary { align-items: start; }
 .basis-summary dl { display: grid; grid-template-columns: repeat(3, minmax(8rem, 1fr)); gap: .75rem; margin: 0; }
@@ -319,9 +333,6 @@
 .legal-flow { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
 .legal-flow li { display: flex; gap: .5rem; align-items: start; }
 .legal-flow li > span { display: grid; flex: none; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 50%; background: var(--color-action-primary); color: #fff; font-size: .68rem; }
-.legal-technical dl { display: grid; gap: .5rem; margin: 0; }
-.legal-technical dl > div { display: grid; grid-template-columns: minmax(7rem, auto) minmax(0, 1fr); gap: .7rem; }
-.legal-technical dd { margin: 0; overflow-wrap: anywhere; }
 .legal-summary-completed { justify-content: start; }
 .legal-summary-completed > svg { color: var(--color-action-primary); }
 .legal-summary-completed > div { display: grid; gap: .2rem; }
@@ -373,6 +384,8 @@
   .hypothesis-field > button { justify-self: start; }
   .hypothesis-field__editor { grid-column: 1; }
   .hypothesis-field__read strong { white-space: normal; }
+  .hypothesis-field__read--structured { grid-template-columns: 1fr; }
+  .hypothesis-field__read--structured > div.is-wide { grid-column: auto; }
   .hypothesis-structured { grid-template-columns: 1fr; }
   .hypothesis-structured > label.is-wide { grid-column: auto; }
   .basis-summary dl,
@@ -382,6 +395,8 @@
   .legal-report__details { grid-template-columns: 1fr; }
   .business-proposal__ready a { justify-self: stretch; justify-content: center; }
   .comparison-picker__selection { flex-wrap: wrap; }
+  .legal-workspace__header-actions { justify-content: start; }
+  .legal-workspace__header-actions > * { width: 100%; }
 }
 
 @media (max-width: 25rem) {

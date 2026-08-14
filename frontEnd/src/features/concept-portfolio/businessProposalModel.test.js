@@ -4,7 +4,7 @@ import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
   buildProposalPreview, businessDecisionStage, canOpenComparison, candidateFieldOptions,
   candidateRequests, comparisonRows, hypothesisDecisionLabel, createCandidateDraft,
-  groupLegalEvidence, hypothesisDisplay, portfolioRunPresentation, serializeCandidateFact,
+  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
   serializeCandidateFacts, toggleComparedConcept,
 } from './businessProposalModel.js';
 
@@ -74,6 +74,9 @@ describe('proposal comparison and structured SOM', () => {
   it('formats structured SOM without exposing JSON', () => {
     expect(hypothesisDisplay('PRE_MARKET_SOM_SHARE', { targetSharePercent: 2.5, horizonYears: 3 })).toBe('2.5% · 3년');
     expect(hypothesisDisplay('PRE_MARKET_SOM', { amount: 240000000, currency: 'KRW', period: '3년' })).toBe('240,000,000 KRW · 3년');
+    expect(formatKoreanCurrencyAmount(50000000, 'KRW')).toBe('5천만 원');
+    expect(formatKoreanCurrencyAmount(125000000, 'USD')).toBe('1억 2천5백만 달러');
+    expect(formatKoreanCurrencyAmount(1_000_020_000_000, 'EUR')).toBe('1조 2천만 유로');
   });
 });
 
@@ -101,8 +104,14 @@ describe('decision flow and legal grouping', () => {
   it('derives the presentation stage only from backend selection state', () => {
     expect(businessDecisionStage(null)).toBe('PROPOSAL_SELECTION');
     expect(businessDecisionStage({ status: 'PENDING_HYPOTHESIS_CONFIRMATION' })).toBe('BUSINESS_BASIS');
-    expect(businessDecisionStage({ status: 'READY_FOR_LEGAL_REPORT' })).toBe('LEGAL_REVIEW');
-    expect(businessDecisionStage({ status: 'READY_FOR_MARKET' })).toBe('MARKET_READY');
+    expect(businessDecisionStage({ status: 'READY_FOR_LEGAL_REPORT' })).toBe('BUSINESS_BASIS');
+    expect(businessDecisionStage({ status: 'LEGAL_REPORT_READY' })).toBe('LEGAL_REVIEW');
+    expect(businessDecisionStage({ status: 'READY_FOR_MARKET' })).toBe('VALIDATION_PREP');
+  });
+  it('maps every legal status without exposing raw enums', () => {
+    expect(['IMPLEMENTABLE', 'IMPLEMENTABLE_WITH_CONTROLS', 'NEEDS_FACTS', 'REDESIGNABLE', 'REJECTED'].map(legalStatusLabel)).toEqual([
+      '현재 조건으로 진행 가능', '필요한 조치를 반영하면 진행 가능', '추가 정보 확인 필요', '일부 구조 조정 후 진행 가능', '현재 형태로 진행하기 어려움',
+    ]);
   });
   it('groups by normalized law name, deduplicates articles, and preserves source fields', () => {
     const evidence = [

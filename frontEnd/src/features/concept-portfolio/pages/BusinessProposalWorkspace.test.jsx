@@ -18,7 +18,7 @@ const base = (overrides = {}) => ({ loading: false, error: null, busy: false,
   confirm: vi.fn(), alternative: vi.fn(), retryDelta: vi.fn(), finalizeReport: vi.fn(), finalizeMarketSeed: vi.fn(),
   ...overrides,
 });
-const renderWorkspace = () => render(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
+const renderWorkspace = (entry = '/app/projects/41/concepts') => render(<MemoryRouter initialEntries={[entry]}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
 
 describe('CandidateInput', () => {
   it('uses the one allowed string field without guessing', () => {
@@ -64,12 +64,24 @@ describe('CandidateInput', () => {
 describe('structured hypothesis fields', () => {
   it('renders SOM as typed controls rather than raw JSON', () => {
     const view = render(<HypothesisField type="PRE_MARKET_SOM" value={{ proposedValue: { amount: 240000000, currency: 'KRW', period: '3년', calculationBasis: '시장 × 점유율', assumptions: ['초기 지역'] }, decisionStatus: 'PROPOSED' }} onEdit={vi.fn()} onAlternative={vi.fn()} disabled={false} />);
-    expect(view.container.textContent).toContain('240,000,000 KRW · 3년');
+    expect(view.container.textContent).toContain('240,000,000 KRW');
+    expect(view.container.textContent).toContain('2억 4천만 원');
+    expect(view.container.textContent).toContain('시장 × 점유율');
+    expect(view.container.textContent).toContain('초기 지역');
     expect(screen.queryByDisplayValue('240000000')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /수정/ }));
     expect(screen.getByDisplayValue('240000000')).toBeInTheDocument();
     expect(screen.getByDisplayValue('KRW')).toBeInTheDocument();
     expect(view.container.textContent).not.toContain('{"amount"');
+  });
+  it('확정 identity가 바뀌면 draft를 지우지 않고 editor만 닫는다', () => {
+    const onEdit = vi.fn();
+    const view = render(<HypothesisField type="TARGET_REGION" value={{ proposedValue: '서울', decisionStatus: 'PROPOSED' }} resetKey="PROPOSED:null" onEdit={onEdit} onAlternative={vi.fn()} disabled={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /수정/ }));
+    expect(screen.getByRole('textbox', { name: '사업 대상 지역' })).toBeInTheDocument();
+    view.rerender(<HypothesisField type="TARGET_REGION" value={{ proposedValue: '서울', finalValue: '부산', decisionStatus: 'ACCEPTED', locked: true }} edit="부산" resetKey={'ACCEPTED:"부산"'} onEdit={onEdit} onAlternative={vi.fn()} disabled={false} />);
+    expect(screen.queryByRole('textbox', { name: '사업 대상 지역' })).not.toBeInTheDocument();
+    expect(screen.getByText('부산')).toBeInTheDocument();
   });
 });
 
@@ -136,6 +148,58 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.getByRole('button', { name: '선택 변경' })).toBeInTheDocument();
     expect(screen.queryByText('7개 검증 가정')).not.toBeInTheDocument();
   });
+  it('현재 선택 카드로 돌아갈 때 selection API를 다시 호출하지 않는다', () => {
+    const select = vi.fn();
+    useConceptPortfolio.mockReturnValue(base({ select,
+      concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }],
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+    }));
+    renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '선택 변경' }));
+    fireEvent.click(screen.getByRole('button', { name: /현재 선택으로 계속/ }));
+    expect(select).not.toHaveBeenCalled();
+    expect(screen.queryByRole('region', { name: '생성된 사업안' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
+  });
+  it('기준값 확정과 법률 보고서 준비를 서로 다른 action으로 제공한다', () => {
+    const confirm = vi.fn(() => Promise.resolve());
+    const finalizeReport = vi.fn();
+    let state = base({ confirm, finalizeReport,
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '서울', decisionStatus: 'PROPOSED' }],
+    });
+    useConceptPortfolio.mockImplementation(() => state);
+    const view = renderWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '기준값 확정' }));
+    expect(confirm).toHaveBeenCalled();
+    state = { ...state, selection: { ...state.selection, status: 'READY_FOR_LEGAL_REPORT', hypothesisConfirmedCount: 7, nextAction: 'REVIEW_LEGAL_REPORT' }, hypotheses: state.hypotheses.map((item) => ({ ...item, finalValue: '서울', decisionStatus: 'ACCEPTED', locked: true })) };
+    view.rerender(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
+    expect(screen.getByText('7/7 확인 완료')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /현재 값으로 진행/ }));
+    expect(finalizeReport).toHaveBeenCalled();
+  });
+  it('Delta Legal 진행 중에는 기준값 화면을 유지하고 다음 action을 숨긴다', () => {
+    useConceptPortfolio.mockReturnValue(base({
+      selection: { selectionId: 17, conceptId: 'c1', status: 'DELTA_LEGAL_PENDING', hypothesisConfirmedCount: 7, activeTaskRunId: 'task-delta', nextAction: 'WAIT' },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', finalValue: '부산', decisionStatus: 'USER_EDITED_ACCEPTED', locked: true }],
+    }));
+    renderWorkspace();
+    expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
+    expect(screen.getByText(/변경한 기준이 법률·규제에 미치는 영향/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /현재 값으로 진행/ })).not.toBeInTheDocument();
+  });
+  it('LEGAL_REPORT_READY에서는 보고서를 즉시 표시하고 준비 action을 header에 둔다', () => {
+    useConceptPortfolio.mockReturnValue(base({
+      selection: { selectionId: 17, conceptId: 'c1', status: 'LEGAL_REPORT_READY', hypothesisConfirmedCount: 7, nextAction: 'FINALIZE_MARKET_SEED' },
+      hypotheses: [{ hypothesisType: 'TARGET_REGION', finalValue: '서울', decisionStatus: 'ACCEPTED', locked: true }],
+      report: { basisDate: '2026-08-14', report: { finalLegalConclusion: { status: 'IMPLEMENTABLE', safeSummary: '공식 근거 범위에서 검토했습니다.' } } },
+    }));
+    renderWorkspace();
+    expect(screen.getByText('현재 조건으로 진행 가능')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /법률·규제 보고서 PDF/ })).toHaveAttribute('href', '/app/projects/41/concepts/legal-report');
+    expect(screen.getByRole('button', { name: /시장 분석 준비하기/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '법률·규제 결과 확인 완료' })).not.toBeInTheDocument();
+  });
   it('기준값의 사용자 언어와 responsive overflow 계약을 유지한다', () => {
     const hypotheses = [
       ['TARGET_REGION', '서울'], ['REVENUE_MODEL', '월 구독'], ['PRICE', '월 39,000원'],
@@ -152,6 +216,10 @@ describe('BusinessProposalWorkspace', () => {
     expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 27.5rem))');
     expect(css).toContain('width: min(100%, 80rem)');
     expect(css).toContain('.hypothesis-field__editor');
+    expect(css).toContain('.business-decision-stack');
+    expect(css).toContain('gap: 1.75rem');
+    expect(css).toContain('.hypothesis-field__read--structured');
+    expect(css).toContain('box-shadow: 0 0 0 3px');
     expect(css).toContain('.bp-button--primary');
     expect(css).toContain('min-height: 2.75rem');
     expect(css).toContain('-webkit-line-clamp: 6');
@@ -278,6 +346,8 @@ describe('Final Legal Report actual contract', () => {
     expect(articleButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/example');
     expect(view.container.querySelector('pre')).toBeNull();
-    expect(screen.getByRole('button', { name: '기술 정보' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: '기술 정보' })).not.toBeInTheDocument();
+    expect(view.container.textContent).not.toContain('sha256:abc');
+    expect(view.container.textContent).not.toContain('CONDITIONAL');
   });
 });

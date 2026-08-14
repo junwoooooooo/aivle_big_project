@@ -9,6 +9,7 @@ describe('project module model', () => {
     ]);
     expect(getProjectModules('41').filter((item) => item.id === 'concepts')).toHaveLength(1);
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/compare').id).toBe('concepts');
+    expect(getProjectModuleByPath('41', '/app/projects/41/concepts/legal-report').id).toBe('concepts');
   });
 
   it('maps canonical module status identifiers', () => {

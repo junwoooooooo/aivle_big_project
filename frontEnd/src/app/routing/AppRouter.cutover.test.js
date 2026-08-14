@@ -7,6 +7,7 @@ describe('project route cutover', () => {
   it('uses one canonical Business Proposal Workspace for both compatible routes', () => {
     expect(routerSource).toContain('path="concepts" element={<BusinessProposalWorkspace />}');
     expect(routerSource).toContain('path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />}');
+    expect(routerSource).toContain('path="concepts/legal-report" element={<LegalRegulatoryReportPage />}');
     expect(routerSource).not.toContain('ConceptFactoryPage');
     expect(routerSource).not.toContain('ConceptComparisonPage');
   });
