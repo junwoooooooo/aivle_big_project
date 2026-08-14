@@ -20,7 +20,7 @@ function nextDisabledReason(next) {
   if (!next || ![MODULE_STATUS.NOT_READY, MODULE_STATUS.NOT_CONNECTED].includes(next.status)) return '';
   if (next.id === 'concepts') return '사업안 검토는 아이디어를 확정한 후 시작할 수 있습니다.';
   if (next.id === 'market') return '시장 분석은 사업안을 선택하고 검증 가정을 확정한 후 시작할 수 있습니다.';
-  return `${next.label} 단계의 시작 조건을 먼저 완료해 주세요.`;
+  return '';
 }
 
 export function DesktopStepNavigation({ previous, current, next }) {

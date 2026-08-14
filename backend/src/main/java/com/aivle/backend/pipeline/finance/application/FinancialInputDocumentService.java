@@ -1,7 +1,5 @@
 package com.aivle.backend.pipeline.finance.application;
 
-import com.aivle.backend.journey.MarketResearchRun;
-import com.aivle.backend.journey.MarketResearchVersionRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -24,19 +22,19 @@ import tools.jackson.databind.node.ObjectNode;
 /** DOCX is the user-facing import contract; every table's first two cells are parsed as key/value pairs. */
 @Service
 public class FinancialInputDocumentService {
-    private static final String INK = "1F302A";
-    private static final String MUTED = "596761";
-    private static final String MINT_DARK = "27654F";
-    private static final String MINT = "BCEFDC";
-    private static final String MINT_LIGHT = "EEF9F5";
-    private static final String MINT_PALE = "F7FBF9";
-    private static final String BORDER = "9FD7C4";
+    /** Matches the navy and slate visual system used by the integrated report. */
+    private static final String INK = "1F2937";
+    private static final String MUTED = "667085";
+    private static final String MINT_DARK = "1F4E79";
+    private static final String MINT = "D9E2F3";
+    private static final String MINT_LIGHT = "EAF2F8";
+    private static final String MINT_PALE = "F5F7FA";
+    private static final String INPUT_PALE = "F8FBFF";
+    private static final String BORDER = "C8D4E3";
     private final ObjectMapper mapper;
-    private final MarketResearchVersionRepository marketVersions;
 
-    public FinancialInputDocumentService(ObjectMapper mapper, MarketResearchVersionRepository marketVersions) {
+    public FinancialInputDocumentService(ObjectMapper mapper) {
         this.mapper = mapper;
-        this.marketVersions = marketVersions;
     }
 
     public byte[] template(Long projectId) {
@@ -44,16 +42,6 @@ public class FinancialInputDocumentService {
             title(doc, "재무 분석 입력 템플릿");
             subtitle(doc, "필수값을 빠짐없이 입력하면, 재무 분석에서 손익·현금흐름·핵심 지표를 계산할 수 있습니다.");
             callout(doc, "각 카드의 ‘입력값’ 칸에만 값을 작성해 주세요. 금액은 원(KRW) 단위의 숫자로 입력합니다.");
-            var market = marketVersions
-                .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(projectId, MarketResearchRun.Kind.FULL)
-                .map(v -> mapper.readTree(v.getResultJson()).path("market")).orElse(mapper.createObjectNode());
-            XWPFTable referenceTable = doc.createTable(4, 2);
-            String[][] references = {{"시장 분석 참고값", "시장 적합성 분석에 사용"}, {"TAM", display(market.path("tam"))},
-                {"SAM", display(market.path("sam"))}, {"시장 성장률", display(market.path("growth"))}};
-            for (int row = 0; row < references.length; row++) for (int column = 0; column < 2; column++)
-                referenceTable.getRow(row).getCell(column).setText(references[row][column]);
-            styleReferenceTable(referenceTable);
-
             heading(doc, "작성 방법", 2);
             body(doc, "각 항목은 독립된 입력 카드입니다. fieldKey는 수정하지 말고, ‘입력값’ 칸만 채워 주세요.");
             body(doc, "필수 항목은 반드시 입력하고, 해당하지 않는 선택 항목은 비워 둘 수 있습니다.");
@@ -95,11 +83,10 @@ public class FinancialInputDocumentService {
             fieldLabel(doc, field.label());
             body(doc, field.description());
             example(doc, "입력 예시  " + field.example());
-            XWPFTable table = doc.createTable(2, 2);
-            table.getRow(0).getCell(0).setText("fieldKey");
-            table.getRow(0).getCell(1).setText("입력값");
-            table.getRow(1).getCell(0).setText(field.key());
-            table.getRow(1).getCell(1).setText("");
+            XWPFTable table = doc.createTable(3, 1);
+            table.getRow(0).getCell(0).setText("fieldKey: " + field.key());
+            table.getRow(1).getCell(0).setText("입력값 (아래 칸에 직접 작성)");
+            table.getRow(2).getCell(0).setText("\n\n\n");
             styleInputTable(table);
         }
     }
@@ -149,10 +136,11 @@ public class FinancialInputDocumentService {
         table.setBottomBorder(org.apache.poi.xwpf.usermodel.XWPFTable.XWPFBorderType.SINGLE, 8, 0, BORDER);
         table.getRow(0).setHeightRule(TableRowHeightRule.AUTO);
         for (int row = 0; row < table.getRows().size(); row++) for (XWPFTableCell cell : table.getRow(row).getTableCells()) {
-            cell.setVerticalAlignment(XWPFVertAlign.CENTER); cell.setColor(row == 0 ? MINT : row == 1 && cell == table.getRow(1).getCell(1) ? MINT_PALE : "FFFFFF");
-            styleCell(cell, row == 0, row == 0 ? MINT_DARK : INK, row == 0 ? 9 : 10);
+            cell.setVerticalAlignment(XWPFVertAlign.CENTER);
+            cell.setColor(row == 0 ? MINT_PALE : row == 1 ? MINT : INPUT_PALE);
+            styleCell(cell, row == 1, row == 1 ? MINT_DARK : INK, row == 1 ? 9 : 10);
         }
-        table.getRow(1).getCell(1).getParagraphArray(0).setSpacingAfter(100);
+        table.getRow(2).getCell(0).getParagraphArray(0).setSpacingAfter(420);
     }
     private void styleCell(XWPFTableCell cell, boolean bold, String color, int size) {
         for (XWPFParagraph paragraph : cell.getParagraphs()) {
@@ -189,33 +177,42 @@ public class FinancialInputDocumentService {
             throw new IllegalArgumentException("DOCX 파일만 업로드할 수 있습니다.");
         ObjectNode values = mapper.createObjectNode();
         try (XWPFDocument doc = new XWPFDocument(file.getInputStream())) {
-            for (XWPFTable table : doc.getTables()) for (XWPFTableRow row : table.getRows()) {
+            for (XWPFTable table : doc.getTables()) {
+                if (table.getRows().size() >= 3 && table.getRow(0).getTableCells().size() == 1) {
+                    String key = table.getRow(0).getCell(0).getText().trim().replaceFirst("^fieldKey:\\s*", "");
+                    String raw = table.getRow(2).getCell(0).getText().trim();
+                    if (FinancialPreparationFactory.ALL_KEYS.contains(key) && !raw.isBlank()) putParsedValue(values, key, raw);
+                    continue;
+                }
+                for (XWPFTableRow row : table.getRows()) {
                 if (row.getTableCells().size() < 2) continue;
                 String key = row.getCell(0).getText().trim();
                 String raw = row.getCell(1).getText().trim();
                 if (!FinancialPreparationFactory.ALL_KEYS.contains(key) || raw.isBlank()) continue;
-                if ("revenueModel".equals(key)) values.put(key, raw.toUpperCase());
-                else if ("newCustomerCount".equals(key)) values.put(key, Long.parseLong(raw.replace(",", "")));
-                else if ("monthlyChurnRate".equals(key)) values.put(key, Double.parseDouble(raw.replace("%", "").replace(",", "")));
-                else if ("threeYearTargets".equals(key)) {
-                    String[] parts = raw.split(",");
-                    if (parts.length != 3) throw new IllegalArgumentException("threeYearTargets는 숫자 3개를 쉼표로 구분해야 합니다.");
-                    ObjectNode target = values.putObject(key);
-                    target.put("metric", "customerCount");
-                    target.put("unit", "명");
-                    var years = target.putArray("years");
-                    for (int index = 0; index < 3; index++)
-                        years.addObject().put("year", index + 1).put("value", Double.parseDouble(parts[index].trim().replace(",", "")));
-                } else {
-                    ObjectNode money = values.putObject(key);
-                    money.put("amount", Double.parseDouble(raw.replaceAll("[^0-9.]", "")));
-                    money.put("currency", "KRW");
+                putParsedValue(values, key, raw);
                 }
             }
         } catch (IOException | NumberFormatException e) {
             throw new IllegalArgumentException("템플릿의 값 형식을 확인해 주세요.", e);
         }
         return values;
+    }
+
+    private void putParsedValue(ObjectNode values, String key, String raw) {
+        if ("revenueModel".equals(key)) values.put(key, raw.toUpperCase());
+        else if ("newCustomerCount".equals(key)) values.put(key, Long.parseLong(raw.replace(",", "")));
+        else if ("monthlyChurnRate".equals(key)) values.put(key, Double.parseDouble(raw.replace("%", "").replace(",", "")));
+        else if ("threeYearTargets".equals(key)) {
+            String[] parts = raw.split(",");
+            if (parts.length != 3) throw new IllegalArgumentException("threeYearTargets는 숫자 3개를 쉼표로 구분해야 합니다.");
+            ObjectNode target = values.putObject(key);
+            target.put("metric", "customerCount"); target.put("unit", "명");
+            var years = target.putArray("years");
+            for (int index = 0; index < 3; index++) years.addObject().put("year", index + 1).put("value", Double.parseDouble(parts[index].trim().replace(",", "")));
+        } else {
+            ObjectNode money = values.putObject(key);
+            money.put("amount", Double.parseDouble(raw.replaceAll("[^0-9.]", ""))); money.put("currency", "KRW");
+        }
     }
 
     private record InputField(String key, String label, String description, String example) { }

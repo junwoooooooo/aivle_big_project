@@ -48,8 +48,8 @@ public class FinancialSnapshotAnalysisService {
             BigDecimal.ZERO,
             money(values, "initialPatentAndLicensingCost"),
             money(values, "monthlySubscriptionPrice"),
-            model == RevenueModel.SUBSCRIPTION ? trajectory.firstMonthTarget() : BigDecimal.ZERO,
-            model == RevenueModel.SUBSCRIPTION ? trajectory.firstMonthTarget() : BigDecimal.ZERO,
+            model == RevenueModel.SUBSCRIPTION ? decimal(values.path("newCustomerCount")).divide(BigDecimal.valueOf(12), 4, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO,
+            model == RevenueModel.SUBSCRIPTION ? decimal(values.path("newCustomerCount")).divide(BigDecimal.valueOf(12), 4, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO,
             decimal(values.path("monthlyChurnRate"))
         );
         return withMarketFeasibility(module.preview(new FinancialModuleRequest(assumptions, 36,

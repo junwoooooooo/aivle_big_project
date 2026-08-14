@@ -3,6 +3,8 @@ package com.aivle.backend.pipeline.module;
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.finance.repository.FinancialAnalysisReportRepository;
+import com.aivle.backend.launchreadiness.domain.ProfessionalAnalysisReport.ModuleType;
+import com.aivle.backend.launchreadiness.repository.ProfessionalAnalysisReportRepository;
 import com.aivle.backend.journey.MarketResearchRun;
 import com.aivle.backend.journey.MarketResearchRunRepository;
 import com.aivle.backend.journey.TwinSurveyRun;
@@ -14,9 +16,6 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptP
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
-import com.aivle.backend.pipeline.integration.domain.ModuleRun;
-import com.aivle.backend.pipeline.integration.domain.ModuleType;
-import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputPreparationRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.marketing.domain.MarketingContent;
@@ -26,8 +25,6 @@ import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
-import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
-import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,11 +43,9 @@ public class ProjectModuleStatusService {
     private final ConceptPortfolioSelectionRepository conceptPortfolioSelectionRepository;
     private final ConceptSelectionRepository selectionRepository;
     private final MarketAnalysisSeedSnapshotRepository marketSeedSnapshotRepository;
-    private final ModuleRunRepository moduleRunRepository;
     private final MarketingContentRepository marketingRepository;
     private final MarketingSourceSnapshotRepository marketingSourceRepository;
-    private final TechOpsInputPreparationRepository techOpsPreparationRepository;
-    private final TechOpsInputSnapshotRepository techOpsSnapshotRepository;
+    private final ProfessionalAnalysisReportRepository professionalAnalysisReportRepository;
     private final FinancialInputPreparationRepository financialPreparationRepository;
     private final FinancialInputSnapshotRepository financialSnapshotRepository;
     private final FinancialAnalysisReportRepository financialAnalysisReportRepository;
@@ -79,24 +74,15 @@ public class ProjectModuleStatusService {
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         MarketResearchRun marketRun = latestResearchRun(projectId, MarketResearchRun.Kind.FULL);
         MarketResearchRun businessRun = latestResearchRun(projectId, MarketResearchRun.Kind.BM);
-        ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
-        ModuleRun financialRun = latestRun(projectId, ModuleType.FINANCIAL_ANALYSIS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
         var marketingSource = selectedSnapshot == null ? null
             : marketingSourceRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
-        var techOpsPreparation = selectedSnapshot == null ? null
-            : techOpsPreparationRepository.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(
-                projectId, selectedSnapshot.getId()).orElse(null);
-        var techOpsSnapshot = selectedSnapshot == null ? null
-            : techOpsSnapshotRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
-                selectedSnapshot.getId(), projectId).orElse(null);
-        var financialPreparation = businessRun == null ? null
-            : financialPreparationRepository.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(
-                projectId, businessRun.getId()).orElse(null);
-        var financialSnapshot = businessRun == null ? null
-            : financialSnapshotRepository.findBySourceMarketResearchRunIdAndProjectIdAndDeletedAtIsNull(
-                businessRun.getId(), projectId).orElse(null);
+        var financialPreparation = financialPreparationRepository
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId).orElse(null);
+        var financialSnapshot = financialPreparation == null ? null
+            : financialSnapshotRepository.findByPreparationIdAndProjectIdAndDeletedAtIsNull(
+                financialPreparation.getId(), projectId).orElse(null);
 
         String confirmedBriefId = brief == null ? null : brief.getConfirmedSnapshotId();
         PipelineModuleStatus conceptStatus = conceptStatus(conceptRun, portfolioSelection, confirmedBriefId);
@@ -106,16 +92,14 @@ public class ProjectModuleStatusService {
         PipelineModuleStatus marketStatus = researchOrGate(marketRun, selectedSnapshot);
         PipelineModuleStatus businessModelStatus = researchOrGate(businessRun, selectedSnapshot);
         PipelineModuleStatus marketingStatus = marketingStatus(marketing, marketingSource == null ? null : marketingSource.getId());
-        PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
-            : techOpsPreparation == null ? PipelineModuleStatus.READY
-            : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : externalStatus(techOpsRun, techOpsSnapshot.getId());
-        boolean financialReportCompleted = financialSnapshot != null && financialAnalysisReportRepository
-            .findFirstByProjectIdAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, financialSnapshot.getId()).isPresent();
-        PipelineModuleStatus financialStatus = businessRun == null || businessRun.getState() != MarketResearchRun.State.SUCCEEDED ? PipelineModuleStatus.NOT_READY
-            : financialPreparation == null ? PipelineModuleStatus.READY
-            : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : financialReportCompleted ? PipelineModuleStatus.COMPLETED : externalStatus(financialRun, financialSnapshot.getId());
+        boolean professionalReportCompleted = professionalAnalysisReportRepository
+            .findFirstByProjectIdAndModuleTypeAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, ModuleType.TECHNOLOGY).isPresent()
+            || professionalAnalysisReportRepository
+                .findFirstByProjectIdAndModuleTypeAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, ModuleType.OPERATIONS).isPresent();
+        boolean financialReportCompleted = financialAnalysisReportRepository
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByCompletedAtDesc(projectId).isPresent();
+        PipelineModuleStatus launchReadinessStatus = professionalReportCompleted || financialReportCompleted
+            ? PipelineModuleStatus.COMPLETED : PipelineModuleStatus.READY;
 
         return List.of(
             response(projectId, PipelineModuleType.IDEA, ideaStatus(brief),
@@ -146,20 +130,11 @@ public class ProjectModuleStatusService {
                 businessRun == null ? null : businessRun.getTaskRun().getId(),
                 selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
                 businessRun == null ? null : businessRun.getUpdatedAt()),
-            response(projectId, PipelineModuleType.TECH_OPS, techOpsStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId")
-                    : techOpsSnapshot == null ? List.of("techOpsRequiredFacts", "techOpsRequiredDecisions")
-                    : techOpsRun == null ? List.of("techOpsModuleConnection") : List.of(),
-                new NextAction("기술·운영 입력 준비", "/tech-ops"), techOpsRun == null ? null : techOpsRun.getId(), null,
-                techOpsSnapshot == null ? null : techOpsSnapshot.getId(), null, null,
-                techOpsRun == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt() : techOpsRun.getUpdatedAt()),
-            response(projectId, PipelineModuleType.FINANCE, financialStatus,
-                businessRun == null || businessRun.getState() != MarketResearchRun.State.SUCCEEDED ? List.of("businessModelResult")
-                    : financialSnapshot == null ? List.of("financialRequiredInputs")
-                    : financialRun == null ? List.of("financialModuleConnection") : List.of(),
-                new NextAction("재무 입력 준비", "/finance"), financialRun == null ? null : financialRun.getId(), null,
-                financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
-                financialRun == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialRun.getUpdatedAt()),
+            response(projectId, PipelineModuleType.TECH_OPS, launchReadinessStatus, List.of(),
+                new NextAction("출시 준비 분석", "/tech-ops"), null, null, null, null, null, null),
+            response(projectId, PipelineModuleType.FINANCE, launchReadinessStatus, List.of(),
+                new NextAction("출시 준비 분석", "/tech-ops"), null, null,
+                financialSnapshot == null ? null : financialSnapshot.getId(), null, null, null),
             // ⚠ 이 게이트는 **새로 만든 것**이다. 재무와 마케팅은 원래 데이터로 이어져 있지 않았다
             //   (마케팅 게이트는 selectedSnapshot 기반). 트윈 조사는 재무 다음에 서므로
             //   앞 단계의 확정물인 financialSnapshotId 를 요구한다.
@@ -169,12 +144,12 @@ public class ProjectModuleStatusService {
             //   시장조사와 같은 규칙으로, **실행이 있으면 게이트와 무관하게 그 상태를 보여준다** —
             //   막아 두면 다 끝난 모듈이 「준비 전」으로 보이는 거짓말이 된다.
             response(projectId, PipelineModuleType.PANEL_SURVEY,
-                twinOrGate(twinRun, selectedSnapshot != null && financialSnapshot != null),
-                twinRequiredInputs(selectedSnapshot != null, financialSnapshot != null),
+                twinOrGate(twinRun, selectedSnapshot != null),
+                twinRequiredInputs(selectedSnapshot != null),
                 new NextAction("패널 트윈 조사", "/panel-survey"),
                 twinRun == null ? null : String.valueOf(twinRun.getId()),
                 twinRun == null ? null : twinRun.getTaskRun().getId(),
-                financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
+                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
                 twinRun == null ? null : twinRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 marketingSource == null ? List.of("marketingSourceSnapshotId") : List.of(),
@@ -182,10 +157,6 @@ public class ProjectModuleStatusService {
                 marketing == null ? null : marketing.getTaskRunId(), marketingSource == null ? null : marketingSource.getId(),
                 null, null, marketing == null ? null : marketing.getUpdatedAt())
         );
-    }
-
-    private ModuleRun latestRun(Long projectId, ModuleType type) {
-        return moduleRunRepository.findFirstByProjectIdAndModuleAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, type).orElse(null);
     }
 
     private MarketResearchRun latestResearchRun(Long projectId, MarketResearchRun.Kind kind) {
@@ -209,10 +180,9 @@ public class ProjectModuleStatusService {
     }
 
     /** 빠진 것을 여정 순서대로 센다 — 컨셉이 재무보다 앞이라 먼저 나온다. */
-    private List<String> twinRequiredInputs(boolean conceptReady, boolean financialReady) {
+    private List<String> twinRequiredInputs(boolean conceptReady) {
         List<String> missing = new ArrayList<>();
         if (!conceptReady) missing.add("marketAnalysisSeedSnapshotId");
-        if (!financialReady) missing.add("financialSnapshotId");
         return missing;
     }
 
@@ -264,12 +234,6 @@ public class ProjectModuleStatusService {
             case FAILED -> PipelineModuleStatus.FAILED;
             case STALE -> PipelineModuleStatus.STALE;
         };
-    }
-
-    private PipelineModuleStatus externalStatus(ModuleRun run, String currentSnapshotId) {
-        if (run == null) return PipelineModuleStatus.NOT_CONNECTED;
-        if (currentSnapshotId != null && !currentSnapshotId.equals(run.getInputSnapshotId())) return PipelineModuleStatus.STALE;
-        return PipelineModuleStatus.valueOf(run.getStatus().name());
     }
 
     private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId) {

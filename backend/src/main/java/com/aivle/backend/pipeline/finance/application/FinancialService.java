@@ -56,14 +56,11 @@ public class FinancialService {
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        MarketResearchVersion source = currentBusinessModel(projectId);
-        Long businessModelRunId = source.getSourceRun().getId();
-        var existing = preparations.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(projectId, businessModelRunId);
+        var existing = preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId);
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.createFromBusinessModel(latestFullMarket(projectId), mapper.readTree(source.getResultJson()),
-            currentConceptHypotheses(projectId), businessModelRunId);
+        var initial = preparationFactory.createStandalone();
         String id = UUID.randomUUID().toString();
-        var saved = preparations.save(FinancialInputPreparation.createFromBusinessModel(id, projectId, businessModelRunId,
+        var saved = preparations.save(FinancialInputPreparation.createStandalone(id, projectId,
             snapshotHasher.hash(mapper.createObjectNode()),
             mapper.writeValueAsString(initial.financialFields()), mapper.writeValueAsString(initial.upstreamReferences()),
             mapper.writeValueAsString(initial.assistance()), ownerId));
@@ -212,7 +209,6 @@ public class FinancialService {
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING,
                 "AI 추천 작업이 완료된 뒤 Snapshot을 확정해 주세요.");
         }
-        ensureMarketReferences(preparation, projectId, ownerId);
         JsonNode fields = mapper.readTree(preparation.getFinancialFieldsJson());
         List<String> missing = readiness.missing(fields);
         if (!missing.isEmpty()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY,
@@ -333,8 +329,7 @@ public class FinancialService {
     }
 
     private FinancialInputPreparation requireCurrent(Long projectId) {
-        MarketResearchVersion source = currentBusinessModel(projectId);
-        return preparations.findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(projectId, source.getSourceRun().getId())
+        return preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 

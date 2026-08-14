@@ -25,13 +25,17 @@ class FinancialInputDocumentServiceTests {
 
         byte[] template = service.template(1L);
         try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(template))) {
+            assertThat(document.getParagraphs().get(0).getRuns().get(0).getColor()).isEqualTo("1F4E79");
             assertThat(document.getTables()).hasSize(1 + FinancialPreparationFactory.ALL_KEYS.size());
+            assertThat(document.getTables().get(0).getRow(0).getCell(0).getColor()).isEqualTo("D9E2F3");
             for (String key : FinancialPreparationFactory.ALL_KEYS) {
                 var table = document.getTables().stream()
                     .filter(value -> value.getRows().size() == 2 && key.equals(value.getRow(1).getCell(0).getText().trim()))
                     .findFirst().orElseThrow();
                 assertThat(table.getRow(0).getCell(0).getText().trim()).isEqualTo("fieldKey");
                 assertThat(table.getRow(0).getCell(1).getText().trim()).isEqualTo("입력값");
+                assertThat(table.getRow(1).getCell(0).getColor()).isEqualTo("F5F7FA");
+                assertThat(table.getRow(1).getCell(1).getColor()).isEqualTo("F8FBFF");
             }
             find(document, "annualFixedLaborCost").getRow(1).getCell(1).setText("120000000");
             find(document, "newCustomerCount").getRow(1).getCell(1).setText("1500");

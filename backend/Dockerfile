@@ -17,8 +17,10 @@ RUN --mount=type=cache,target=/root/.gradle/caches \
 
 FROM eclipse-temurin:17-jre-jammy
 
+ENV JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
+
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl \
+    && apt-get install --no-install-recommends -y curl fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app \
     && useradd --system --gid app --home-dir /app app

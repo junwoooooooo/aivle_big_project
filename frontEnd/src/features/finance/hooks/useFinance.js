@@ -33,7 +33,7 @@ export default function useFinance(projectId) {
       const snapshot = snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
       const runs = runsResult.status === 'fulfilled' ? runsResult.value.runs ?? [] : [];
       const analysisResult = snapshot ? await api.currentAnalysis(projectId).catch(() => null) : null;
-      setState((value) => ({ ...value, loading: false, busy: null, preparation, snapshot, analysis: analysisResult,
+      setState((value) => ({ ...value, loading: false, busy: null, preparation, snapshot, analysis: analysisResult ?? (preserveView ? value.analysis : null),
         run: runs.find((item) => item.module === 'FINANCIAL_ANALYSIS') ?? null, error: null }));
     } catch (error) { setState((value) => ({ ...value, loading: false, busy: null, error })); }
   }, [api, projectId]);
@@ -54,26 +54,32 @@ export default function useFinance(projectId) {
     try { const result = await action(); await refresh({ preserveView: true }); return result; }
     catch (error) { setState((value) => ({ ...value, busy: null, error })); throw error; }
   };
+  const reopenFinalizedSnapshot = async () => {
+    if (state.snapshot || state.preparation?.inputSnapshotId) await api.reopen(projectId, commandOptions());
+  };
+  const importAndRunAnalysis = async (file) => {
+    await reopenFinalizedSnapshot();
+    await api.importDocument(projectId, file);
+    await api.finalize(projectId);
+    return api.analyze(projectId);
+  };
   return {
     ...state, estimateEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
     importDocument: (file) => act('import', () => api.importDocument(projectId, file)),
     importAndAnalyze: (file) => act('import-analyze', async () => {
-      await api.importDocument(projectId, file);
-      await api.finalize(projectId);
-      const analysis = await api.analyze(projectId);
+      const analysis = await importAndRunAnalysis(file);
       setState((value) => ({ ...value, analysis }));
       return analysis;
     }),
     importAnalyzeAndDownload: (file) => act('import-analyze', async () => {
-      await api.importDocument(projectId, file);
-      await api.finalize(projectId);
-      const analysis = await api.analyze(projectId);
+      const analysis = await importAndRunAnalysis(file);
       const document = await api.analysisDocument(projectId);
       setState((value) => ({ ...value, analysis }));
       return { analysis, document };
     }),
     downloadTemplate: () => act('template', () => api.template(projectId)),
+    downloadFinancialAnalysisDocument: () => act('financial-analysis-document', () => api.analysisDocument(projectId)),
     generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
     generateEstimates: (fieldKeys) => act('estimate-group', async () => Promise.all(
       fieldKeys.map((fieldKey) => api.generateEstimate(projectId, fieldKey, commandOptions())))),

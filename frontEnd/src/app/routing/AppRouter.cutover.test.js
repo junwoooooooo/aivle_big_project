@@ -9,8 +9,8 @@ describe('project route cutover', () => {
     ['concepts', 'BusinessProposalWorkspace'],
     ['market', 'MarketResearchPage'],
     ['business-model', 'BmCanvasPage'],
-    ['tech-ops', 'TechOpsPage'],
-    ['finance', 'FinancePage'],
+    ['tech-ops', 'LaunchReadinessPage'],
+    ['finance', 'LaunchReadinessPage'],
     ['panel-survey', 'TwinSurveyPage'],
     ['marketing', 'MarketingContentPage'],
   ])('renders the active %s module screen', (path, component) => {

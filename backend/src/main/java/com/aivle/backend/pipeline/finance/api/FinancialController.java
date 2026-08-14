@@ -9,7 +9,7 @@ import com.aivle.backend.finance.dto.FinancialModuleRequest;
 import com.aivle.backend.finance.service.FinancialDemoService;
 import com.aivle.backend.finance.service.FinancialSnapshotAnalysisService;
 import com.aivle.backend.finance.service.FinancialAnalysisReportService;
-import com.aivle.backend.finance.service.FinancialAnalysisDocumentService;
+import com.aivle.backend.finance.service.FinancialAnalysisPdfService;
 import com.aivle.backend.pipeline.finance.application.FinancialService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -28,7 +28,7 @@ public class FinancialController {
     private final FinancialService service;
     private final FinancialSnapshotAnalysisService analysisService;
     private final FinancialAnalysisReportService reportService;
-    private final FinancialAnalysisDocumentService documentReportService;
+    private final FinancialAnalysisPdfService documentReportService;
     private final FinancialDemoService demoService;
     private final com.aivle.backend.pipeline.finance.application.FinancialInputDocumentService documentService;
     private final CurrentUserProvider user;
@@ -115,15 +115,15 @@ public class FinancialController {
         return ApiResponse.success(reportService.current(projectId, snapshot.snapshotId()), request.getHeader("X-Request-Id"));
     }
 
-    @GetMapping(value="/analysis/document", produces="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    @GetMapping(value="/analysis/document", produces=MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<ByteArrayResource> analysisDocument(@PathVariable Long projectId) {
         SnapshotView snapshot = service.currentSnapshot(user.currentUserId(), projectId);
         FinancialModuleResponse result = reportService.current(projectId, snapshot.snapshotId());
         if (result == null) throw new com.aivle.backend.common.exception.BusinessException(
             com.aivle.backend.common.exception.ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY, "재무 분석을 먼저 실행해 주세요.");
         byte[] body = documentReportService.create(result);
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-            .header("Content-Disposition", "attachment; filename=financial-analysis-report.docx").body(new ByteArrayResource(body));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+            .header("Content-Disposition", "attachment; filename=financial-analysis-report.pdf").body(new ByteArrayResource(body));
     }
 
     /** Development-only test route: runs supplied local assumptions without requiring TechOps or writing snapshots. */
