@@ -69,7 +69,10 @@ describe('project pages', () => {
   it('validates project title before create', () => {
     const client = { post: vi.fn() };
     renderProject(<ProjectCreatePage />, client, '/app/projects/new');
-    fireEvent.submit(screen.getByRole('button', { name: '프로젝트 만들기' }).closest('form'));
+    const form = screen.getByRole('button', { name: '프로젝트 만들기' }).closest('form');
+    expect(form).toHaveAttribute('data-form-kind', 'admin');
+    expect(form).not.toHaveClass('project-form-layout');
+    fireEvent.submit(form);
     expect(screen.getByText('프로젝트 이름을 입력해 주세요.')).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });

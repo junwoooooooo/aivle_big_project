@@ -16,7 +16,7 @@ export default function MissingRequiredFieldsForm({
   return <form className="idea-question-flow" onSubmit={onSubmit} noValidate>
     <div className="idea-section-heading">
       <p>필수 정보 확인</p>
-      <h3>컨셉 탐색에 필요한 최소 Seed를 확인해 주세요.</h3>
+      <h3>사업안 탐색에 필요한 최소 정보를 확인해 주세요.</h3>
       <span>법률·운영 상세가 아니라 문제와 사용자 의도만 확인합니다.</span>
     </div>
     <ErrorSummary errors={errors} title="입력이 필요한 항목이 있습니다." />

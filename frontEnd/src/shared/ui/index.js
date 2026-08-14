@@ -5,3 +5,4 @@ export * from './icons.jsx';
 export * from './useBodyScrollLock.js';
 export * from './projectForms.jsx';
 export * from './projectWorkspace.jsx';
+export * from './ProjectExecutionExperience.jsx';

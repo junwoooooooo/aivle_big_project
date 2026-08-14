@@ -60,6 +60,7 @@ export default function useIdeaIntake(projectId) {
   const [questions, setQuestions] = useState([]);
   const [attachmentError, setAttachmentError] = useState('');
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const uploadedAttachmentIds = useRef(new Map());
   const terminalJobId = useRef(null);
   const jobEvents = useJobEvents(activeJobId);
@@ -227,6 +228,8 @@ export default function useIdeaIntake(projectId) {
 
   const confirmBrief = async (event) => {
     event.preventDefault();
+    if (isConfirming) return;
+    setIsConfirming(true);
     try {
       if (draft.commitmentCandidates.length > 0) {
         const reviewed = await api.reviewCommitments(projectId, {
@@ -252,12 +255,14 @@ export default function useIdeaIntake(projectId) {
       setFailureMessage(error?.message ?? 'Idea Brief를 확정하지 못했습니다.');
       setFailureKind(IDEA_FAILURE_KIND.INTERACTION_FAILURE);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.FAILED);
+    } finally {
+      setIsConfirming(false);
     }
   };
 
   return {
     draft, errors, failureMessage, failureKind, questions, screenState, activeJobId, jobEvents, isReanalyzing,
-    attachmentError, uploadingAttachments,
+    attachmentError, uploadingAttachments, isConfirming,
     setFiles: (files) => {
       const error = validateIdeaReferenceFiles(files);
       setAttachmentError(error);
