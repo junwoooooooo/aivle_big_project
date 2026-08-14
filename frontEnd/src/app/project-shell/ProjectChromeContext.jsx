@@ -5,11 +5,16 @@ const ProjectChromeContext = createContext(null);
 
 export function ProjectChromeProvider({ children }) {
   const [model, setModel] = useState(null);
+  const [toolActions, setToolActions] = useState({});
   const register = useCallback((nextModel) => {
     setModel(nextModel);
     return () => setModel((current) => current === nextModel ? null : current);
   }, []);
-  const value = useMemo(() => ({ model, register }), [model, register]);
+  const registerToolActions = useCallback((nextActions) => {
+    setToolActions(nextActions);
+    return () => setToolActions((current) => current === nextActions ? {} : current);
+  }, []);
+  const value = useMemo(() => ({ model, register, toolActions, registerToolActions }), [model, register, toolActions, registerToolActions]);
   return <ProjectChromeContext.Provider value={value}>{children}</ProjectChromeContext.Provider>;
 }
 

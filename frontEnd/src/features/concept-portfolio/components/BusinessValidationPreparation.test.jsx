@@ -23,7 +23,7 @@ describe('사업 검증 준비', () => {
     api.currentBmPlan.mockResolvedValue({ plan: { customer_relationship: '예약 알림' }, constraints: { team: 3 }, revision: 2 });
     const value = portfolio();
     renderPrep(value);
-    expect(await screen.findByDisplayValue('예약 알림')).toBeInTheDocument();
+    expect(await screen.findByText('예약 알림')).toBeInTheDocument();
     expect(screen.getByText('저장된 준비 정보 · 수정 2')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '저장하고 계속' }));
     await waitFor(() => expect(api.saveBmPlan).toHaveBeenCalledWith({ customer_relationship: '예약 알림' }, { team: 3 }));
@@ -34,12 +34,26 @@ describe('사업 검증 준비', () => {
     api.saveBmPlan.mockRejectedValue(new Error('save failed'));
     const value = portfolio();
     renderPrep(value);
-    const input = await screen.findByLabelText('고객 관계 유지 방식');
+    await screen.findByRole('button', { name: '저장하고 계속' });
+    fireEvent.click(screen.getAllByRole('button', { name: '직접 입력' })[0]);
+    const input = screen.getByLabelText('고객 관계 유지 방식');
     fireEvent.change(input, { target: { value: '고객 지원' } });
     fireEvent.click(screen.getByRole('button', { name: '저장하고 계속' }));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(value.finalizeMarketSeed).not.toHaveBeenCalled();
     expect(input).toHaveValue('고객 지원');
+  });
+
+  it('선택 사업안 초안을 사용한 뒤 사용자 수정값을 최종 저장 authority로 보낸다', async () => {
+    const value = portfolio({ concepts: [{ conceptId: 'c1', candidate: { operatingModel: '예약 운영', transactionFlow: ['고객 신청'] } }], selection: { status: 'LEGAL_REPORT_READY', conceptId: 'c1' } });
+    renderPrep(value);
+    expect(await screen.findByText('선택한 사업안에서 가져온 초안')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '이 내용 사용' }));
+    fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    const editor = screen.getByLabelText('사업 운영에서 반복적으로 해야 하는 일');
+    fireEvent.change(editor, { target: { value: '사용자가 수정한 운영' } });
+    fireEvent.click(screen.getByRole('button', { name: '저장하고 계속' }));
+    await waitFor(() => expect(api.saveBmPlan).toHaveBeenCalledWith({ key_activities: ['사용자가 수정한 운영'] }, {}));
   });
 
   it('모든 선택 입력이 비어 있어도 확인 후 빈 plan으로 진행한다', async () => {
@@ -59,5 +73,8 @@ describe('사업 검증 준비', () => {
     expect(css).toContain('@media (max-width: 62rem)');
     expect(css).toContain('grid-template-columns: 1fr');
     expect(css).toContain('min-width: 0');
+    expect(css).toContain('.bm-plan__suggestion');
+    expect(css).toContain('.bm-plan__editor .ui-input');
+    expect(css).toContain('background: #fff');
   });
 });

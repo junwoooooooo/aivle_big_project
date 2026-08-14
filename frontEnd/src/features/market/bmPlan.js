@@ -32,6 +32,19 @@ export const CONSTRAINT_FIELDS = Object.freeze([
   ['team', '투입 가능한 인원', '명', '인원'],
 ]);
 
+const conceptCandidate = (concept) => concept?.candidate?.candidate ?? concept?.candidate ?? {};
+const suggestionLines = (...values) => [...new Set(values.flatMap((value) => Array.isArray(value) ? value : value == null || value === '' ? [] : [value])
+  .map((value) => String(value).trim()).filter(Boolean))].join('\n');
+
+export function buildConceptPlanSuggestions(concept) {
+  const candidate = conceptCandidate(concept);
+  return Object.fromEntries([
+    ['key_activities', suggestionLines(candidate.operatingModel, candidate.transactionFlow)],
+    ['key_resources', suggestionLines(candidate.platformRole, candidate.featureSet)],
+    ['key_partners', suggestionLines(candidate.partnerModel, candidate.partnerRequirements)],
+  ].filter(([, value]) => value));
+}
+
 /** 계획 키 → 캔버스 칸. 미리보기와 확인 문구가 같은 표를 본다. */
 export const PLAN_CELL = Object.freeze({
   customer_relationship: 'CUSTOMER_RELATIONSHIPS',

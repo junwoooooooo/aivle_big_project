@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 
-import { AppIcon, ErrorState, LoadingState } from '../../shared/ui/index.js';
+import { AppIcon, ErrorState, LoadingState, ScrollToTopButton } from '../../shared/ui/index.js';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { useProjectEvents } from '../../shared/async-events/index.js';
@@ -34,7 +34,7 @@ function ProjectLayoutContent() {
   const apiClient = useApiClient();
   const portfolioApi = useMemo(() => createConceptPortfolioApi(apiClient), [apiClient]);
   const finalReportApi = useMemo(() => createFinalReportApi(apiClient), [apiClient]);
-  const { register } = useProjectChrome();
+  const { register, toolActions } = useProjectChrome();
   const { status, project, retry } = useProjectContext();
   const live = useProjectEvents(projectId);
   const moduleState = useProjectModuleStatuses(projectId, live.revision);
@@ -95,7 +95,8 @@ function ProjectLayoutContent() {
     <main className="pipeline-shell__main">
       <JourneySubsteps journey={currentJourney} currentModule={currentModule} />
       {moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>업무 상태를 불러오지 못했습니다.</strong><span>{getUserErrorMessage(moduleState.error)} 작업 화면은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}
-      <Outlet context={{ modules, journeys, moduleState, finalReportState, liveRevision: live.revision, projectEventTransport: live.transport }} />
+      <Outlet context={{ modules, journeys, moduleState, finalReportState, liveRevision: live.revision, projectEventTransport: live.transport, openWorkCenterJob: toolActions.openWorkCenterJob }} />
+      <ScrollToTopButton />
     </main>
   </div>;
 }

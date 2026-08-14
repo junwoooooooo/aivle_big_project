@@ -6,3 +6,5 @@ export * from './useBodyScrollLock.js';
 export * from './projectForms.jsx';
 export * from './projectWorkspace.jsx';
 export * from './ProjectExecutionExperience.jsx';
+export * from './ScrollToTopButton.jsx';
+export * from './scroll.js';

@@ -1,6 +1,8 @@
 .business-proposal {
   --proposal-motion: 220ms cubic-bezier(.2, 0, 0, 1);
+  display: grid;
   width: min(100%, 92rem);
+  gap: 1.75rem;
   margin-inline: auto;
 }
 
@@ -219,13 +221,14 @@
 .decision-progress li[data-state="current"] { color: var(--color-text-primary); }
 .decision-progress li[data-state="current"] > span { border: 1px solid var(--color-action-primary); color: var(--color-action-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-action-primary) 8%, transparent); }
 
-.business-decision-rationale { display: grid; width: min(100%, 82rem); gap: .35rem; margin-inline: auto; padding: .85rem 1rem; border-left: 3px solid color-mix(in srgb, var(--color-action-primary) 48%, transparent); background: color-mix(in srgb, var(--color-action-primary) 4%, var(--color-surface)); }
+.business-decision-rationale { display: grid; width: min(100%, 82rem); gap: .3rem; margin-inline: auto; padding: .85rem 1rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent); border-left: 3px solid color-mix(in srgb, var(--color-action-primary) 48%, transparent); border-radius: .65rem; background: color-mix(in srgb, var(--color-action-primary) 4%, var(--color-surface)); }
+.business-decision-rationale > strong { color: var(--color-text-primary); font-size: .76rem; }
 .business-decision-rationale p { max-width: 78ch; margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.55; }
 .business-decision-stack { display: grid; width: 100%; gap: 1.75rem; }
 
 .selected-proposal-summary,
 .basis-summary,
-.legal-summary-completed { display: flex; width: min(100%, 82rem); gap: 1rem; align-items: center; justify-content: space-between; min-width: 0; margin-inline: auto; padding: .85rem 1rem; border-radius: .7rem; background: color-mix(in srgb, var(--color-action-primary) 5%, var(--color-surface)); }
+.legal-summary-completed { display: flex; width: min(100%, 82rem); gap: 1rem; align-items: center; justify-content: space-between; min-width: 0; margin-inline: auto; padding: .85rem 1rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent); border-radius: .7rem; background: color-mix(in srgb, var(--color-action-primary) 5%, var(--color-surface)); }
 .selected-proposal-summary > div:first-child { min-width: 0; }
 .selected-proposal-summary span,
 .basis-summary span { display: flex; gap: .35rem; align-items: center; color: var(--color-action-primary); font-size: .78rem; font-weight: 750; }
@@ -309,8 +312,14 @@
 .legal-conclusion > p { margin: 0; line-height: 1.6; }
 .legal-conclusion > div[role="alert"] { margin-top: .75rem; padding: .7rem; border-radius: var(--radius-control); background: color-mix(in srgb, #b77800 10%, transparent); }
 .legal-conclusion > small { display: block; margin-top: .75rem; color: var(--color-text-secondary); }
+.legal-execution-guide,
 .legal-report__attention,
 .legal-report__advertising { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.legal-execution-guide { padding: 1rem !important; border: 1px solid color-mix(in srgb, var(--color-action-primary) 14%, var(--color-border-default)) !important; border-radius: .7rem; background: color-mix(in srgb, var(--color-action-primary) 4%, var(--color-surface)); }
+.legal-execution-guide > article { min-width: 0; padding: .75rem; border-radius: .6rem; background: var(--color-surface); }
+.legal-execution-guide > article p,
+.legal-execution-guide > article ul { margin-bottom: 0; }
+.legal-execution-guide > h3,
 .legal-report__attention > h3,
 .legal-report__advertising > h3 { grid-column: 1 / -1; }
 .legal-report__roles dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin: 0; }
@@ -343,11 +352,20 @@
 .business-proposal__ready a { flex: none; }
 
 .candidate-input,
-.business-proposal__input-first { display: grid; gap: .75rem; min-width: 0; padding: 1rem; border-radius: .7rem; background: color-mix(in srgb, var(--color-bg-subtle) 72%, var(--color-surface)); }
+.business-proposal__input-first { display: grid; gap: .75rem; min-width: 0; padding: 1rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent); border-radius: .7rem; background: color-mix(in srgb, var(--color-bg-subtle) 68%, var(--color-surface)); }
 .candidate-input p { margin: .2rem 0 0; color: var(--color-text-secondary); }
+.candidate-input > header { display: grid; gap: .25rem; }
+.candidate-input > header > div { display: grid; gap: .15rem; }
+.candidate-input > header small { color: var(--color-action-primary); font-size: .7rem; font-weight: 750; }
+.candidate-input__preview { display: grid; gap: .35rem; padding-top: .25rem; }
+.candidate-input__preview strong { font-size: .76rem; }
+.candidate-input__preview ul { margin: 0; padding-left: 1.15rem; color: var(--color-text-secondary); font-size: .8rem; line-height: 1.5; }
+.candidate-input__open { justify-self: start; }
+.candidate-input__unsupported { padding: .8rem; border-radius: .6rem; background: var(--color-surface); }
 .candidate-input__fields { display: grid; gap: .8rem; }
-.candidate-input__fields label { display: grid; gap: .3rem; min-width: 0; }
+.candidate-input__fields label { display: grid; gap: .3rem; min-width: 0; padding: .75rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 85%, transparent); border-radius: .6rem; background: var(--color-surface); }
 .candidate-input__fields label > span { color: var(--color-text-secondary); font-size: .75rem; }
+.candidate-input__fields textarea { border-color: color-mix(in srgb, var(--color-border-default) 92%, transparent); background: #fff; }
 
 @media (max-width: 74.99rem) {
   .proposal-grid { grid-template-columns: repeat(2, minmax(0, 27.5rem)); }
@@ -389,6 +407,7 @@
   .hypothesis-structured { grid-template-columns: 1fr; }
   .hypothesis-structured > label.is-wide { grid-column: auto; }
   .basis-summary dl,
+  .legal-execution-guide,
   .legal-report__attention,
   .legal-report__advertising,
   .legal-report__roles dl,

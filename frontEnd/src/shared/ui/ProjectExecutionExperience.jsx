@@ -42,6 +42,6 @@ export function ProjectExecutionExperience({
       {metric && <span>{metric}</span>}
       {latestUpdate && <small>{latestUpdate}</small>}
     </div>
-    {(children || onDetail) && <footer>{children}{onDetail && <button type="button" onClick={onDetail}>전체 처리 기록 보기</button>}</footer>}
+    {(children || onDetail) && <footer>{children}{onDetail && <button type="button" onClick={onDetail}>작업센터에서 상세 기록 보기<AppIcon name="arrowUpRight" size={15} /></button>}</footer>}
   </section>;
 }

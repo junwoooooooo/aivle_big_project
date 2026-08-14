@@ -34,7 +34,7 @@ function initialSheet() {
 }
 
 export default function ProjectContextTools() {
-  const { model } = useProjectChrome();
+  const { model, registerToolActions } = useProjectChrome();
   const location = useLocation();
   const [openState, setOpenState] = useState({ id: null, path: location.pathname });
   const openTool = openState.path === location.pathname ? openState.id : null;
@@ -66,6 +66,8 @@ export default function ProjectContextTools() {
       : { mounted: true, phase: 'opening', view: jobId ? 'detail' : 'list', focusJobId: jobId, direction: 'forward' });
     requestAnimationFrame(() => setSheet((current) => ({ ...current, phase: 'open' })));
   }, []);
+
+  useEffect(() => registerToolActions({ openWorkCenterJob: openSheet }), [openSheet, registerToolActions]);
 
   const closeSheetImmediately = useCallback(() => {
     window.clearTimeout(closeTimer.current);

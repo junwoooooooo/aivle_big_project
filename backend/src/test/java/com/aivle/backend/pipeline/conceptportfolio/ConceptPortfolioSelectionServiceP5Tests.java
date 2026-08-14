@@ -172,12 +172,14 @@ class ConceptPortfolioSelectionServiceP5Tests {
         when(hypotheses.findAllBySelectionIdAndDeletedAtIsNullOrderByHypothesisTypeAscProposalVersionDesc(17L))
             .thenReturn(readyHypotheses(selection));
         when(deltas.findAllBySelectionIdAndDeletedAtIsNullOrderByCreatedAtAsc(17L)).thenReturn(List.of());
-        when(reports.save(any())).thenAnswer(invocation->invocation.getArgument(0));
+        when(reports.save(any())).thenAnswer(invocation->{ConceptLegalRegulatoryReport report=invocation.getArgument(0);
+            ReflectionTestUtils.setField(report,"createdAt",LocalDateTime.ofInstant(clock.instant(),ZoneOffset.UTC));return report;});
 
         LegalReportView view=service.finalizeReport(7L,42L,17L);
         assertThat(view.report().path("physicalActivities")).hasSize(1);
         assertThat(view.report().path("physicalActivities").get(0).asText()).isEqualTo("방문 설치 없음");
         assertThat(view.report().path("personalDataUsage").get(0).asText()).isEqualTo("예약 연락처만 사용");
+        assertThat(view.generatedAt()).isEqualTo(LocalDateTime.of(2026,8,11,0,0));
         assertThat(view.report().toString()).doesNotContain("배송", "다른 후보");
     }
 

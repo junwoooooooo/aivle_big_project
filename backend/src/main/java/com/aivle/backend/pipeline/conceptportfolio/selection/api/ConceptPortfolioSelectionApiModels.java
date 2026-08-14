@@ -26,7 +26,8 @@ public final class ConceptPortfolioSelectionApiModels {
         String legalReviewStatus, boolean deltaLegalRequired, Instant decidedAt) { }
     public record ActionAccepted(Long selectionId, String action, String taskRunId, String status) { }
     public record LegalReportView(String reportId, Long selectionId, String conceptId, String status,
-        String schemaVersion, String reportHash, java.time.LocalDate basisDate, JsonNode report) { }
+        String schemaVersion, String reportHash, java.time.LocalDate basisDate, java.time.LocalDateTime generatedAt,
+        JsonNode report) { }
     public record MarketSeedView(String contract, String snapshotId, String schemaVersion,
         Long projectId, Long portfolioSelectionId, String portfolioConceptId, String legalReportId,
         String sourceSnapshotHash, String snapshotHash, Instant createdAt, JsonNode snapshot) { }

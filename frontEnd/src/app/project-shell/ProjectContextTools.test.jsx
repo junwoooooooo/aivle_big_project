@@ -10,7 +10,7 @@ vi.mock('../../features/job-center/JobCenter.jsx', async () => {
   const { Link } = await import('react-router-dom');
   return { default: ({ quickOpen, sheet, onOpenList, onCloseSheet, onNavigate }) => <>
     {quickOpen && <div className="project-work-popover"><span>프로젝트 작업</span><button type="button" onClick={onOpenList}>전체 작업 보기</button></div>}
-    {sheet?.mounted && <div role="presentation" data-testid="work-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}><section role="dialog" aria-label="전체 작업"><button type="button" onClick={onCloseSheet}>작업 센터 닫기</button><Link to="/app/projects/41/idea" onClick={onNavigate}>업무 화면 열기</Link></section></div>}
+    {sheet?.mounted && <div role="presentation" data-testid="work-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseSheet(); }}><section role="dialog" aria-label="전체 작업" data-view={sheet.view} data-focus-job-id={sheet.focusJobId}><button type="button" onClick={onCloseSheet}>작업 센터 닫기</button><Link to="/app/projects/41/idea" onClick={onNavigate}>업무 화면 열기</Link></section></div>}
   </> };
 });
 
@@ -31,7 +31,19 @@ function RegisteredTools({ value = model }) {
   return <ProjectContextTools />;
 }
 
+function OpenJobCommand() {
+  const { toolActions } = useProjectChrome();
+  return <button type="button" onClick={() => toolActions.openWorkCenterJob?.('job-123')}>실행 상세 열기</button>;
+}
+
 describe('project context tools', () => {
+  it('페이지 command로 기존 Work Center를 job detail 상태로 직접 연다', async () => {
+    render(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><ProjectChromeProvider><RegisteredTools /><OpenJobCommand /></ProjectChromeProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: '실행 상세 열기' }));
+    const dialog = await screen.findByRole('dialog', { name: '전체 작업' });
+    expect(dialog).toHaveAttribute('data-view', 'detail');
+    expect(dialog).toHaveAttribute('data-focus-job-id', 'job-123');
+  });
   it('도움말·단계·작업 중 하나만 열고 Escape 후 trigger로 초점을 돌린다', async () => {
     render(<MemoryRouter initialEntries={['/app/projects/41/market']}><ProjectChromeProvider><RegisteredTools /></ProjectChromeProvider></MemoryRouter>);
     const helper = await screen.findByRole('button', { name: '도움말' });

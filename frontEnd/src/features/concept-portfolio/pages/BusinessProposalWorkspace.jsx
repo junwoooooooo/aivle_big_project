@@ -4,7 +4,7 @@ import { Link, useOutletContext, useParams, useSearchParams } from 'react-router
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { useJobEvents } from '../../../shared/async-events/index.js';
-import { AppIcon, ProjectExecutionExperience, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
+import { AppIcon, ProjectExecutionExperience, ProjectStageHeader, ProjectWorkspace, scrollPageToTop } from '../../../shared/ui/index.js';
 import {
   BUSINESS_BASIS_TYPES, CANDIDATE_FACT_FIELDS, HYPOTHESIS_LABELS, MARKET_TARGET_TYPES,
   buildHypothesisChanges, buildProposalPreview, businessDecisionStage, canChangeSelection,
@@ -13,7 +13,8 @@ import {
   formatKoreanCurrencyAmount, hypothesisValueText, legalStatusLabel, portfolioRunPresentation, selectedConceptId, serializeCandidateFacts,
   toggleComparedConcept,
 } from '../businessProposalModel.js';
-import { businessProposalExecutionPresentation } from '../businessProposalExecution.js';
+import { businessProposalExecutionPresentation, businessProposalSummaryMetric } from '../businessProposalExecution.js';
+import { legalExecutionGuide } from '../legalReportPresentation.js';
 import BusinessValidationPreparation from '../components/BusinessValidationPreparation.jsx';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 import '../styles/business-proposal.css';
@@ -35,6 +36,7 @@ export default function BusinessProposalWorkspace() {
   const [recoveredNotice, setRecoveredNotice] = useState(false);
   const selectionBaseline = useRef({ selectionId: null, conceptIds: new Set() });
   const previousSelectionKey = useRef(null);
+  const previousDecisionStage = useRef(null);
   const pendingDecisionFocusKey = useRef(null);
   const basisRef = useRef(null);
   const selectedId = selectedConceptId(portfolio.selection);
@@ -95,11 +97,17 @@ export default function BusinessProposalWorkspace() {
   useEffect(() => {
     if (!selectionKey || showGallery || view !== 'BROWSE'
       || pendingDecisionFocusKey.current !== selectionKey || !basisRef.current) return;
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    basisRef.current.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    scrollPageToTop();
     basisRef.current.focus?.({ preventScroll: true });
     pendingDecisionFocusKey.current = null;
   }, [selectionKey, showGallery, view]);
+
+  useEffect(() => {
+    const order = ['PROPOSAL_SELECTION', 'BUSINESS_BASIS', 'LEGAL_REVIEW', 'VALIDATION_PREP'];
+    const previous = previousDecisionStage.current;
+    if (previous && order.indexOf(decisionStage) > order.indexOf(previous)) scrollPageToTop();
+    previousDecisionStage.current = decisionStage;
+  }, [decisionStage]);
 
   const draft = (request) => drafts[request.inputRequestId] ?? createCandidateDraft(request);
   const updateDraft = (request, next) => setDrafts((current) => ({ ...current, [request.inputRequestId]: { ...draft(request), ...next } }));
@@ -117,7 +125,7 @@ export default function BusinessProposalWorkspace() {
     setShowGallery(false);
     setView('BROWSE');
   };
-  const openValidationPrep = () => setSearchParams({ view: 'validation-prep' });
+  const openValidationPrep = () => { setSearchParams({ view: 'validation-prep' }); scrollPageToTop(); };
   const closeValidationPrep = () => setSearchParams({});
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
@@ -131,7 +139,7 @@ export default function BusinessProposalWorkspace() {
     <ProjectStageHeader step={2} {...header} />
     {portfolio.error && <section className="business-proposal__error" role="alert"><span>{getUserErrorMessage(portfolio.error)}</span><button type="button" onClick={portfolio.refresh}>다시 시도</button></section>}
     {preGeneration && <PreGeneration onStart={portfolio.start} busy={portfolio.busy} />}
-    {portfolio.run && !readyToReview && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={() => outlet.openWorkCenterJob?.(progressJobId)} />}
+    {portfolio.run && !readyToReview && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={progressJobId && outlet.openWorkCenterJob ? () => outlet.openWorkCenterJob(progressJobId) : undefined} />}
     {recoveredNotice && <p className="business-proposal__notice" role="status">추가 사업안이 준비되었습니다. 현재 선택은 유지됩니다.</p>}
 
     {readyToReview && view === 'COMPARE' && <ComparisonFocus concepts={comparedConcepts} selectedId={selectedId} onBack={() => setView('BROWSE')} onSelect={selectConcept} onContinueCurrent={continueCurrentSelection} busy={portfolio.busy} selectingConceptId={selectingConceptId} />}
@@ -149,12 +157,12 @@ export default function BusinessProposalWorkspace() {
         </section></div></>}
       {!validationPrep && galleryVisible && <ProposalGallery concepts={portfolio.concepts} selectedId={selectedId} compared={compared}
         requests={portfolio.inputRequests} drafts={drafts} busy={portfolio.busy}
-        onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start}
+        onDraft={updateDraft} onRespond={submitInput} onRetry={portfolio.retryContinuation}
         onCompare={(conceptId) => setCompared((value) => toggleComparedConcept(value, conceptId))}
         onOpenComparison={() => setView('COMPARE')} onSelect={selectConcept} onContinueCurrent={continueCurrentSelection} selectingConceptId={selectingConceptId} />}
-      {!validationPrep && galleryVisible && unmatchedInputs.length > 0 && <InputGroup title="추가 검토 중인 사업안" description="아래 정보는 검토 완료된 다른 사업안의 선택을 막지 않습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start} busy={portfolio.busy} />}
+      {!validationPrep && galleryVisible && unmatchedInputs.length > 0 && <InputGroup title="추가 정보가 있으면 검토를 이어갈 수 있는 사업안" description="아래 사업안을 확인하지 않아도 이미 준비된 사업안은 선택할 수 있습니다." requests={unmatchedInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
     </>}
-    {portfolio.concepts.length === 0 && actionableInputs.length > 0 && <InputGroup title="사업안을 완성하려면 실제 사업정보가 필요합니다." requests={actionableInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} onExplore={portfolio.start} busy={portfolio.busy} />}
+    {portfolio.concepts.length === 0 && actionableInputs.length > 0 && <InputGroup title="추가 정보가 있으면 검토를 이어갈 수 있는 사업안" description="확인 가능한 실제 사업정보만 입력해 주세요." requests={actionableInputs} drafts={drafts} onDraft={updateDraft} onSubmit={submitInput} onRetry={portfolio.retryContinuation} busy={portfolio.busy} />}
   </ProjectWorkspace>;
 }
 
@@ -169,26 +177,25 @@ export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], n
   const started = Date.parse(events[0]?.occurredAt ?? run.updatedAt ?? '');
   const elapsed = Number.isFinite(started) ? Math.max(0, Math.floor((now - started) / 1000)) : 0;
   const latest = Date.parse(events.at(-1)?.occurredAt ?? '');
-  const summary = [...events].reverse().find((event) => event.stage === 'SUMMARY')?.messageParams ?? {};
-  const reviewed = summary.reviewed ?? run.runSummary?.candidateGenerated;
   const failed = run.productStatus === 'FAILED';
   const needsInput = run.productStatus === 'NEEDS_INPUT';
-  const outcome = needsInput && reviewed != null ? `${reviewed}개의 사업안 후보를 검토했습니다. 현재 바로 선택 가능한 사업안은 없으며, ${run.openInputCount ?? summary.needsInput ?? 0}개의 사업안은 실제 운영정보 확인 후 검토를 계속할 수 있습니다.` : failed && reviewed != null ? `${reviewed}개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.` : `${run.producedConceptCount ?? 0}개 사업안 · 추가 검토 ${run.openInputCount ?? 0}건`;
-  return <ProjectExecutionExperience title={running ? '사업안을 생성하고 검토하고 있습니다' : presentation.title} {...businessProposalExecutionPresentation(run, events)} elapsedSeconds={running ? elapsed : undefined} latestUpdate={running && Number.isFinite(latest) ? `마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : undefined} metric={running && reviewed != null ? `${reviewed}개의 사업안 후보를 검토했습니다.` : outcome} failureMessage="사업안 생성을 완료하지 못했습니다." needsInputMessage="사업안을 계속 검토하려면 추가 정보가 필요합니다." onDetail={(failed || running || needsInput) ? onDetail : undefined}>{presentation.restart && <button type="button" disabled={busy} onClick={onRestart}>{presentation.action}</button>}</ProjectExecutionExperience>;
+  const metric = businessProposalSummaryMetric(run, events);
+  return <ProjectExecutionExperience title={running ? '사업안을 생성하고 검토하고 있습니다' : presentation.title} {...businessProposalExecutionPresentation(run, events)} elapsedSeconds={running ? elapsed : undefined} latestUpdate={running && Number.isFinite(latest) ? `마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : undefined} metric={metric} failureMessage="사업안 생성을 완료하지 못했습니다." needsInputMessage="사업안을 계속 검토하려면 추가 정보가 필요합니다." onDetail={(failed || running || needsInput) ? onDetail : undefined}>{presentation.restart && <button type="button" disabled={busy} onClick={onRestart}>{presentation.action}</button>}</ProjectExecutionExperience>;
 }
 
-function ProposalGallery({ concepts, selectedId, compared, requests, drafts, busy, onDraft, onRespond, onRetry, onExplore, onCompare, onOpenComparison, onSelect, onContinueCurrent, selectingConceptId }) {
+function ProposalGallery({ concepts, selectedId, compared, requests, drafts, busy, onDraft, onRespond, onRetry, onCompare, onOpenComparison, onSelect, onContinueCurrent, selectingConceptId }) {
   const comparedConcepts = concepts.filter((concept) => compared.includes(concept.conceptId));
+  const comparisonAvailable = concepts.length >= 2;
   return <section className="proposal-gallery" aria-labelledby="proposal-gallery-title">
-    <header className="comparison-picker"><div><span>비교</span><strong>{compared.length}/2</strong><div className="comparison-picker__selection">{comparedConcepts.map((concept) => <em key={concept.conceptId}>{concept.conceptName}</em>)}<p>{compared.length === 0 ? '두 사업안을 골라 직접 비교할 수 있습니다.' : compared.length === 1 ? '한 개 더 선택하세요.' : '선택한 두 사업안이 준비됐습니다.'}</p></div></div>{canOpenComparison(compared) && <button type="button" className="bp-button bp-button--secondary" onClick={onOpenComparison}>두 사업안 비교<AppIcon name="arrowRight" size={15} /></button>}</header>
+    {comparisonAvailable && <header className="comparison-picker"><div><span>비교</span><strong>{compared.length}/2</strong><div className="comparison-picker__selection">{comparedConcepts.map((concept) => <em key={concept.conceptId}>{concept.conceptName}</em>)}<p>{compared.length === 0 ? '두 사업안을 골라 직접 비교할 수 있습니다.' : compared.length === 1 ? '한 개 더 선택하세요.' : '선택한 두 사업안이 준비됐습니다.'}</p></div></div>{canOpenComparison(compared) && <button type="button" className="bp-button bp-button--secondary" onClick={onOpenComparison}>두 사업안 비교<AppIcon name="arrowRight" size={15} /></button>}</header>}
     <h2 id="proposal-gallery-title" className="sr-only">생성된 사업안</h2>
-    <div className="proposal-grid">{concepts.map((concept) => <ProposalCard key={concept.conceptId} concept={concept} allConcepts={concepts} selected={concept.conceptId === selectedId} selecting={concept.conceptId === selectingConceptId} compared={compared.includes(concept.conceptId)} compareDisabled={!compared.includes(concept.conceptId) && compared.length >= 2} requests={candidateRequests(requests, concept.candidateId)} drafts={drafts} onDraft={onDraft} onRespond={onRespond} onRetry={onRetry} onExplore={onExplore} onCompare={() => onCompare(concept.conceptId)} onSelect={() => onSelect(concept.conceptId)} onContinueCurrent={onContinueCurrent} busy={busy} />)}</div>
+    <div className="proposal-grid">{concepts.map((concept) => <ProposalCard key={concept.conceptId} concept={concept} allConcepts={concepts} selected={concept.conceptId === selectedId} selecting={concept.conceptId === selectingConceptId} compared={compared.includes(concept.conceptId)} compareDisabled={!compared.includes(concept.conceptId) && compared.length >= 2} comparisonAvailable={comparisonAvailable} requests={candidateRequests(requests, concept.candidateId)} drafts={drafts} onDraft={onDraft} onRespond={onRespond} onRetry={onRetry} onCompare={() => onCompare(concept.conceptId)} onSelect={() => onSelect(concept.conceptId)} onContinueCurrent={onContinueCurrent} busy={busy} />)}</div>
   </section>;
 }
 
-function ProposalCard({ concept, allConcepts, selected, selecting, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onExplore, onCompare, onSelect, onContinueCurrent, busy }) {
+function ProposalCard({ concept, allConcepts, selected, selecting, compared, compareDisabled, comparisonAvailable, requests, drafts, onDraft, onRespond, onRetry, onCompare, onSelect, onContinueCurrent, busy }) {
   const preview = buildProposalPreview(concept, allConcepts);
-  return <article className="proposal-card" data-selected={selected}><header><div><h3>{concept.conceptName}</h3><span>{selected && <AppIcon name="check" size={13} />}{selected ? '현재 선택' : '선택 가능'}</span></div><label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 추가</label></header><p className="proposal-card__definition">{preview.definition}</p><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl><p className="proposal-card__legal"><AppIcon name="check" size={15} /> 법률·규제 사전 검토 완료</p>{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}<button type="button" className="bp-button bp-button--primary proposal-card__select" disabled={busy} onClick={selected ? onContinueCurrent : onSelect}>{selecting ? <><span className="bp-button__spinner" aria-hidden="true" />선택 중...</> : selected ? <>현재 선택으로 계속<AppIcon name="arrowRight" size={16} /></> : <>이 사업안 선택<AppIcon name="arrowRight" size={16} /></>}</button></article>;
+  return <article className="proposal-card" data-selected={selected}><header><div><h3>{concept.conceptName}</h3><span>{selected && <AppIcon name="check" size={13} />}{selected ? '현재 선택' : '선택 가능'}</span></div>{comparisonAvailable && <label><input type="checkbox" checked={compared} disabled={compareDisabled} onChange={onCompare} /> 비교에 추가</label>}</header><p className="proposal-card__definition">{preview.definition}</p><dl>{preview.highlights.map((item) => <div key={item.key}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl><p className="proposal-card__legal"><AppIcon name="check" size={15} /> 법률·규제 사전 검토 완료</p>{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onRespond(request)} onRetry={() => onRetry(request.inputRequestId)} busy={busy} />)}<button type="button" className="bp-button bp-button--primary proposal-card__select" disabled={busy} onClick={selected ? onContinueCurrent : onSelect}>{selecting ? <><span className="bp-button__spinner" aria-hidden="true" />선택 중...</> : selected ? <>현재 선택으로 계속<AppIcon name="arrowRight" size={16} /></> : <>이 사업안 선택<AppIcon name="arrowRight" size={16} /></>}</button></article>;
 }
 
 function ComparisonFocus({ concepts, selectedId, onBack, onSelect, onContinueCurrent, busy, selectingConceptId }) {
@@ -209,7 +216,7 @@ function DecisionProgress({ stage }) {
 }
 
 function FlowRationale() {
-  return <aside className="business-decision-rationale"><p>선택한 사업안을 다음 사업 검증 단계에서 일관된 기준으로 분석하기 위해 먼저 핵심 사업 조건을 확인합니다.</p><p>가격·지역·수익 방식이 바뀌면 적용되는 법률·규제도 달라질 수 있어, 확정한 기준을 바탕으로 마지막 법률·규제 검토를 진행합니다.</p></aside>;
+  return <aside className="business-decision-rationale"><strong>왜 이 과정을 거치나요?</strong><p>선택한 사업안을 같은 기준으로 검증하기 위해 지역·가격·수익 방식·시장 목표를 먼저 확정하고, 이 조건에 따라 달라질 수 있는 법률·규제를 마지막으로 확인합니다.</p></aside>;
 }
 
 function SelectedSummary({ concept, canChange, onShow }) {
@@ -256,21 +263,22 @@ function BasisSummary({ hypotheses }) {
 }
 
 function LegalWorkspace({ portfolio, projectId, onPrepare }) {
-  return <section className="legal-workspace"><header><div><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>앞에서 확정한 가격, 제공 방식, 대상 지역 등의 조건이 법률·규제상 어떤 영향을 주는지 최종 확인합니다.</span></div><div className="legal-workspace__header-actions"><Link className="bp-button bp-button--secondary" to={projectRoutes.legalReport(projectId)}>법률·규제 보고서 PDF<AppIcon name="arrowUpRight" size={15} /></Link>{portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={onPrepare}>시장 분석 준비하기<AppIcon name="arrowRight" size={16} /></button>}</div></header>{portfolio.report && <LegalReport report={portfolio.report} />}</section>;
+  return <section className="legal-workspace"><header><div><p>법률·규제 확인</p><h2>법률·규제 검토 결과를 확인하세요</h2><span>앞에서 확정한 가격, 제공 방식, 대상 지역 등의 조건이 법률·규제상 어떤 영향을 주는지 최종 확인합니다.</span></div><div className="legal-workspace__header-actions"><Link className="bp-button bp-button--secondary" to={projectRoutes.legalReport(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>법률·규제 보고서 PDF<AppIcon name="arrowUpRight" size={15} /></Link>{portfolio.selection.nextAction === 'FINALIZE_MARKET_SEED' && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={onPrepare}>시장 분석 준비하기<AppIcon name="arrowRight" size={16} /></button>}</div></header>{portfolio.report && <LegalReport report={portfolio.report} />}</section>;
 }
 
 function LegalSummaryCompleted() { return <section className="legal-summary-completed"><AppIcon name="check" size={16} /><div><strong>법률·규제 결과 확인 완료</strong><span>관련 법률·규제와 주의사항을 확인했습니다.</span></div></section>; }
-function MarketReady({ projectId }) { return <section className="business-proposal__ready"><div><strong>시장 분석을 시작할 준비가 되었습니다.</strong><span>✓ 사업안 선택 · ✓ 분석 기준 확정 · ✓ 법률·규제 검토 · ✓ 사업 검증 준비</span></div><Link className="bp-button bp-button--primary" to={projectRoutes.market(projectId)}>시장 분석 시작하기 <AppIcon name="arrowRight" size={16} /></Link></section>; }
+function MarketReady({ projectId }) { return <section className="business-proposal__ready"><div><strong>시장 분석을 시작할 준비가 되었습니다.</strong><span>✓ 사업안 선택 · ✓ 분석 기준 확정 · ✓ 법률·규제 검토 · ✓ 사업 검증 준비</span></div><Link className="bp-button bp-button--primary" to={projectRoutes.market(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>시장 분석 시작하기 <AppIcon name="arrowRight" size={16} /></Link></section>; }
 
-export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, onExplore, busy }) {
+export function CandidateInput({ request, draft, onDraft, onSubmit, onRetry, busy }) {
+  const [open, setOpen] = useState(false);
   if (request.status === 'ANSWERED' && request.nextAction === 'RETRY_CONTINUATION') return <section className="candidate-input"><strong>제출한 정보의 반영을 완료하지 못했습니다.</strong><p>같은 정보를 다시 입력하지 않고 반영 작업만 다시 시도합니다.</p><button type="button" disabled={busy} onClick={onRetry}>추가 사업정보 반영 다시 시도</button></section>;
   const options = candidateFieldOptions(request);
   const payload = serializeCandidateFacts(request, draft);
   const unresolved = request.nextAction === 'INPUT_TARGET_UNRESOLVED' || options.length === 0;
-  return <section className="candidate-input"><header><div><small>추가 검토 중인 사업안</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header><div><strong>확인이 필요한 내용</strong><p>{request.question ?? request.safeSummary ?? '실제 사업정보를 확인해 주세요.'}</p></div>{request.reason && <div><strong>왜 필요한가</strong><p>{request.reason}</p></div>}{unresolved ? <div role="alert"><strong>필요한 사업정보 항목을 자동으로 특정하지 못했습니다.</strong><p>{(request.unknownFacts ?? []).join(' ') || '질문 내용을 다시 확인해야 합니다.'}</p><button type="button" disabled={busy} onClick={onExplore}>다른 방향 다시 탐색</button></div> : <><div className="candidate-input__fields">{options.map((field) => { const contract = CANDIDATE_FACT_FIELDS[field]; return <label key={field}><strong>{contract.label}</strong><span>{contract.type === 'list' ? '한 줄에 한 항목씩 입력해 주세요. 해당 사항이 없으면 ‘해당 없음’을 입력할 수 있습니다.' : '실제 사업 사실을 입력해 주세요.'}</span><textarea aria-label={contract.label} value={draft.values?.[field] ?? ''} onChange={(event) => onDraft({ values: { ...(draft.values ?? {}), [field]: event.target.value } })} /></label>; })}</div><div className="candidate-input__actions"><button type="button" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button><button type="button" disabled={busy} onClick={onExplore}>다른 방향 다시 탐색</button></div></>}</section>;
+  return <section className="candidate-input" data-editor-open={open}><header><div><small>추가 확인 필요</small><strong>{request.candidateDisplayName ?? '사업안 세부 검토'}</strong></div>{request.candidateOneLineSummary && <p>{request.candidateOneLineSummary}</p>}</header>{unresolved ? <div className="candidate-input__unsupported" role="alert"><strong>추가로 확인해야 할 정보가 있지만 현재 입력 형식으로는 이 사업안의 검토를 이어가기 어렵습니다.</strong><p>다른 준비된 사업안을 선택하거나 이 사업안을 보류할 수 있습니다.</p></div> : <><div className="candidate-input__preview"><strong>무엇을 확인하나요?</strong><ul>{options.map((field) => <li key={field}>{CANDIDATE_FACT_FIELDS[field].question}</li>)}</ul><strong>왜 필요한가요?</strong><p>이 정보에 따라 적용되는 계약·자격·규제 조건이 달라질 수 있어 확인이 필요합니다.</p></div>{!open && <button type="button" className="bp-button bp-button--secondary candidate-input__open" onClick={() => setOpen(true)}>정보 입력해서 검토 계속<AppIcon name="chevronDown" size={16} /></button>}{open && <><div className="candidate-input__fields">{options.map((field) => { const contract = CANDIDATE_FACT_FIELDS[field]; return <label key={field}><strong>{contract.label}</strong><span>{contract.help}</span><textarea aria-label={contract.label} value={draft.values?.[field] ?? ''} onChange={(event) => onDraft({ values: { ...(draft.values ?? {}), [field]: event.target.value } })} /></label>; })}</div><div className="candidate-input__actions"><button type="button" className="bp-button bp-button--tertiary" onClick={() => setOpen(false)}>입력 닫기</button><button type="button" className="bp-button bp-button--primary" disabled={busy || !payload} onClick={onSubmit}>정보 제출</button></div></>}</>}</section>;
 }
 
-function InputGroup({ title, description, requests, drafts, onDraft, onSubmit, onRetry, onExplore, busy }) { return <section className="business-proposal__input-first"><h2>{title}</h2>{description && <p>{description}</p>}{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onSubmit(request)} onRetry={() => onRetry(request.inputRequestId)} onExplore={onExplore} busy={busy} />)}</section>; }
+function InputGroup({ title, description, requests, drafts, onDraft, onSubmit, onRetry, busy }) { return <section className="business-proposal__input-first"><h2>{title}</h2>{description && <p>{description}</p>}{requests.map((request) => <CandidateInput key={request.inputRequestId} request={request} draft={drafts[request.inputRequestId] ?? createCandidateDraft(request)} onDraft={(next) => onDraft(request, next)} onSubmit={() => onSubmit(request)} onRetry={() => onRetry(request.inputRequestId)} busy={busy} />)}</section>; }
 
 const asList = (value) => Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
 function BulletSection({ title, values, empty = '해당 사항이 없습니다.' }) { const items = asList(values); return <article><h3>{title}</h3>{items.length === 0 ? <p>{empty}</p> : <ul>{items.map((item, index) => <li key={`${title}-${index}`}>{typeof item === 'string' ? item : item.safeSummary ?? item.title ?? String(item)}</li>)}</ul>}</article>; }
@@ -298,5 +306,6 @@ export function LegalReport({ report }) {
   const advertising = body.advertisingExpressionCautions ?? {};
   const delta = asList(body.deltaLegalHistory);
   const status = conclusion.status ?? conclusion.legalStatus ?? conclusion.productionStatus ?? conclusion.route;
-  return <section className="final-legal-report"><article className="legal-conclusion"><h3>한눈에 보는 검토 결과</h3><strong>{legalStatusLabel(status)}</strong><p>{conclusion.safeSummary ?? '법률·규제 검토 결과가 준비되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}<small>검토 기준일 {report.basisDate}</small></article><section className="legal-report__attention"><h3>특히 확인할 사항</h3><BulletSection title="반드시 해야 할 조치" values={body.requiredControls} /><BulletSection title="필수 고지" values={body.requiredDisclosures} /><BulletSection title="파트너·자격·인허가" values={[...asList(body.partnerRequirements), ...asList(body.qualificationRequirements), ...asList(body.requiredPartnersAndQualifications)]} /><BulletSection title="아직 확인되지 않은 사항" values={body.unknownFacts} /></section><article className="legal-report__roles"><h3>사업 구조에서의 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article><EvidenceSection values={body.officialEvidenceReferences} /><section className="legal-report__advertising"><h3>광고·표현 주의사항</h3><BulletSection title="허용 가능한 표현" values={advertising.allowedClaims} /><BulletSection title="반드시 함께 표시할 내용" values={advertising.requiredDisclosures} /><BulletSection title="피해야 할 표현" values={body.prohibitedVariants} /></section><Disclosure title="상세 근거"><div className="legal-report__details"><BulletSection title="개인정보 이용" values={body.personalDataUsage} /><BulletSection title="물리 활동" values={body.physicalActivities} /><FlowSection title="거래 흐름" values={body.transactionFlow} /><FlowSection title="결제·수취 흐름" values={body.paymentFlow} /><article><h3>변경사항 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? (item.status ? legalStatusLabel(item.status) : `재검토 ${index + 1}`)}</li>)}</ol>}</article></div></Disclosure></section>;
+  const executionGuide = legalExecutionGuide(body);
+  return <section className="final-legal-report"><article className="legal-conclusion"><h3>한눈에 보는 검토 결과</h3><strong>{legalStatusLabel(status)}</strong><p>{conclusion.safeSummary ?? '법률·규제 검토 결과가 준비되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}<small>검토 기준일 {report.basisDate}</small></article><section className="legal-execution-guide"><h3>사업 진행 전 확인할 내용</h3>{executionGuide.map((group) => <BulletSection key={group.title} title={group.title} values={group.values} />)}</section><section className="legal-report__attention"><h3>특히 확인할 사항</h3><BulletSection title="반드시 해야 할 조치" values={body.requiredControls} /><BulletSection title="필수 고지" values={body.requiredDisclosures} /><BulletSection title="파트너·자격·인허가" values={[...asList(body.partnerRequirements), ...asList(body.qualificationRequirements), ...asList(body.requiredPartnersAndQualifications)]} /><BulletSection title="아직 확인되지 않은 사항" values={body.unknownFacts} /></section><article className="legal-report__roles"><h3>사업 구조에서의 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article><EvidenceSection values={body.officialEvidenceReferences} /><section className="legal-report__advertising"><h3>광고·표현 주의사항</h3><BulletSection title="허용 가능한 표현" values={advertising.allowedClaims} /><BulletSection title="반드시 함께 표시할 내용" values={advertising.requiredDisclosures} /><BulletSection title="피해야 할 표현" values={body.prohibitedVariants} /></section><Disclosure title="상세 근거"><div className="legal-report__details"><BulletSection title="개인정보 이용" values={body.personalDataUsage} /><BulletSection title="물리 활동" values={body.physicalActivities} /><FlowSection title="거래 흐름" values={body.transactionFlow} /><FlowSection title="결제·수취 흐름" values={body.paymentFlow} /><article><h3>변경사항 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? (item.status ? legalStatusLabel(item.status) : `재검토 ${index + 1}`)}</li>)}</ol>}</article></div></Disclosure></section>;
 }

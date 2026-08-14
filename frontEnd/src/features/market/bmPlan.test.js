@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CONSTRAINT_FIELDS, PLAN_FIELDS, draftFrom, emptyCellNames, emptyDraft, toPayload,
+  CONSTRAINT_FIELDS, PLAN_FIELDS, buildConceptPlanSuggestions, draftFrom, emptyCellNames, emptyDraft, toPayload,
 } from './bmPlan.js';
 
 /**
@@ -45,6 +45,21 @@ describe('실행 계획 초안 → 보낼 값', () => {
   it('0 은 값이다 — 인원 0명은 안 쓴 것과 다르다', () => {
     const { constraints } = toPayload({ ...emptyDraft(), team: '0' });
     expect(constraints).toEqual({ team: 0 });
+  });
+});
+
+describe('선택 사업안에서 가져온 운영 초안', () => {
+  it('활동·자원·파트너 세 항목만 기존 사업안 재료로 구성한다', () => {
+    const suggestions = buildConceptPlanSuggestions({ candidate: { candidate: {
+      operatingModel: '예약 운영', transactionFlow: ['고객 신청', '매장 확정'],
+      platformRole: '예약 연결', featureSet: ['알림', '대시보드'],
+      partnerModel: '지역 매장', partnerRequirements: ['PG'],
+    } } });
+    expect(suggestions.key_activities).toContain('예약 운영\n고객 신청\n매장 확정');
+    expect(suggestions.key_resources).toContain('예약 연결\n알림\n대시보드');
+    expect(suggestions.key_partners).toBe('지역 매장\nPG');
+    expect(suggestions).not.toHaveProperty('customer_relationship');
+    expect(suggestions).not.toHaveProperty('budget_krw');
   });
 });
 

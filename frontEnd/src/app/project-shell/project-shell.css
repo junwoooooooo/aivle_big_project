@@ -25,6 +25,9 @@
 .journey-substeps i { width:clamp(2rem,7vw,7rem); height:1px; background:var(--color-border-default); }
 
 .project-context-tools { position:relative; flex:0 0 auto; }
+.scroll-to-top { position: fixed; z-index: 24; right: clamp(1.25rem, 2.5vw, 2rem); bottom: max(1.5rem, env(safe-area-inset-bottom)); display: grid; width: 2.75rem; height: 2.75rem; place-items: center; padding: 0; border: 1px solid color-mix(in srgb, var(--color-action-primary) 20%, var(--color-border-default)); border-radius: 50%; background: color-mix(in srgb, var(--color-action-primary) 8%, var(--color-surface)); color: var(--color-action-primary); box-shadow: 0 8px 24px rgb(24 39 75 / 12%); cursor: pointer; }
+.scroll-to-top:hover { background: color-mix(in srgb, var(--color-action-primary) 14%, var(--color-surface)); }
+.scroll-to-top:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-action-primary) 25%, transparent); outline-offset: 2px; }
 .project-context-tools__triggers { display:flex; align-items:center; gap:.12rem; }
 .project-context-tools__triggers button { display:inline-flex; align-items:center; gap:.28rem; min-height:2.15rem; padding:.3rem .45rem; border:1px solid transparent; border-radius:.38rem; background:transparent; color:#526a6d; font:inherit; font-size:.73rem; font-weight:750; cursor:pointer; }
 .project-context-tools__triggers button:hover,.project-context-tools__triggers button[aria-expanded="true"] { border-color:#b9ceca; background:#f0f6f5; color:#087465; }

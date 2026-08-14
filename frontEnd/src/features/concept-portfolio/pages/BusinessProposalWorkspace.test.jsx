@@ -24,7 +24,9 @@ describe('CandidateInput', () => {
   it('uses the one allowed string field without guessing', () => {
     const onDraft = vi.fn();
     render(<CandidateInput request={{ status: 'OPEN', question: '판매 주체는?', affectedFields: ['sellerRole'] }} draft={{ values: { sellerRole: '' } }} onDraft={onDraft} onSubmit={vi.fn()} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
-    expect(screen.getByLabelText('실제 판매 주체')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /정보 입력해서 검토 계속/ }));
+    expect(screen.getByLabelText('실제로 상품·서비스를 판매하는 주체')).toBeInTheDocument();
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
   });
   it('renders and submits multiple affected fields together', () => {
@@ -33,24 +35,24 @@ describe('CandidateInput', () => {
     const request = { status: 'OPEN', question: '무엇인가요?', affectedFields: ['personalDataUsage', 'paymentFlow'] };
     const view = render(<CandidateInput request={request} draft={{ values: { personalDataUsage: '', paymentFlow: '' } }} onDraft={onDraft} onSubmit={onSubmit} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('개인정보 이용')).toBeInTheDocument();
-    expect(screen.getByLabelText('결제·수취 흐름')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /정보 입력해서 검토 계속/ }));
+    expect(screen.getByLabelText('수집·이용할 개인정보')).toBeInTheDocument();
+    expect(screen.getByLabelText('결제와 정산이 이루어지는 흐름')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '정보 제출' })).toBeDisabled();
-    view.rerender(<CandidateInput request={request} draft={{ values: { personalDataUsage: '이름', paymentFlow: '카드' } }} onDraft={onDraft} onSubmit={onSubmit} onRetry={vi.fn()} onExplore={vi.fn()} busy={false} />);
+    view.rerender(<CandidateInput request={request} draft={{ values: { personalDataUsage: '이름', paymentFlow: '카드' } }} onDraft={onDraft} onSubmit={onSubmit} onRetry={vi.fn()} busy={false} />);
     fireEvent.click(screen.getByRole('button', { name: '정보 제출' }));
     expect(onSubmit).toHaveBeenCalled();
   });
   it('does not offer a guessed eight-field selector when the target is unresolved', () => {
-    const onExplore = vi.fn();
-    render(<CandidateInput request={{ status: 'OPEN', question: '실제 운영 정보를 확인해 주세요.', reason: '법률 판단에 필요합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} onExplore={onExplore} busy={false} />);
+    render(<CandidateInput request={{ status: 'OPEN', question: 'What specific types of providers are required?', reason: 'Concept의 사업 구조를 보완해야 합니다.', affectedFields: [], nextAction: 'INPUT_TARGET_UNRESOLVED', candidateDisplayName: '방문 돌봄 연결', candidateOneLineSummary: '돌봄 제공자를 연결합니다.' }} draft={{ values: {} }} onDraft={vi.fn()} onSubmit={vi.fn()} onRetry={vi.fn()} busy={false} />);
     expect(screen.getByText('방문 돌봄 연결')).toBeInTheDocument();
     expect(screen.getByText('돌봄 제공자를 연결합니다.')).toBeInTheDocument();
-    expect(screen.getByText('법률 판단에 필요합니다.')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('필요한 사업정보 항목을 자동으로 특정하지 못했습니다.');
+    expect(screen.getByRole('alert')).toHaveTextContent('현재 입력 형식으로는 이 사업안의 검토를 이어가기 어렵습니다.');
     expect(screen.queryByLabelText('답변할 사업정보')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '정보 제출' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '다른 방향 다시 탐색' }));
-    expect(onExplore).toHaveBeenCalled();
+    expect(screen.queryByText(/What specific types/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Concept의 사업 구조/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '다른 방향 다시 탐색' })).not.toBeInTheDocument();
   });
   it('retries an answered continuation without asking for the same fact', () => {
     const onRetry = vi.fn();
@@ -116,6 +118,13 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.queryByText('선택 전 법률·규제 요약')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '사업안으로 돌아가기' }));
     expect(screen.getByRole('heading', { name: '생성된 사업안을 살펴보세요' })).toBeInTheDocument();
+  });
+
+  it('사업안이 하나뿐이면 비교 picker와 checkbox를 표시하지 않는다', () => {
+    useConceptPortfolio.mockReturnValue(base());
+    renderWorkspace();
+    expect(screen.queryByText(/^비교$/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: '비교에 추가' })).not.toBeInTheDocument();
   });
 
   it('does not show a recovered notice for proposals already present at selection baseline', () => {
@@ -218,6 +227,8 @@ describe('BusinessProposalWorkspace', () => {
     expect(css).toContain('.hypothesis-field__editor');
     expect(css).toContain('.business-decision-stack');
     expect(css).toContain('gap: 1.75rem');
+    expect(css).toContain('.candidate-input__fields textarea');
+    expect(css).toContain('background: #fff');
     expect(css).toContain('.hypothesis-field__read--structured');
     expect(css).toContain('box-shadow: 0 0 0 3px');
     expect(css).toContain('.bp-button--primary');
@@ -237,6 +248,7 @@ describe('BusinessProposalWorkspace', () => {
   });
 
   it('같은 selectionId에서 conceptId가 바뀌어도 gallery를 접고 새 기준 단계로 전환한다', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     const select = vi.fn(() => Promise.resolve());
     let state = base({
       select,
@@ -255,6 +267,8 @@ describe('BusinessProposalWorkspace', () => {
     expect(screen.getByRole('heading', { name: 'B' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '시장 분석에 사용할 기준값' })).toBeInTheDocument();
     expect(document.activeElement).toHaveClass('business-decision__current');
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+    scrollTo.mockRestore();
   });
 
   it('새 selectionId 재선택도 동일하게 gallery를 접는다', async () => {
@@ -312,16 +326,20 @@ describe('BusinessProposalWorkspace', () => {
 describe('Portfolio status summary', () => {
   it('uses actual review counts and keeps technical failure distinct', () => {
     render(<PortfolioStatus run={{ productStatus: 'FAILED', producedConceptCount: 0, openInputCount: 0 }}
-      events={[{ stage: 'SUMMARY', messageParams: { reviewed: 5, prepared: 0, needsInput: 0 } }]}
+      events={[{ stage: 'SUMMARY', messageKey: 'job.concept-portfolio.summary', messageParams: { reviewed: 5, prepared: 0, needsInput: 0 } }]}
       onRestart={vi.fn()} onDetail={vi.fn()} />);
-    expect(screen.getByText('5개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('5개 검토 · 0개 준비 · 0개 추가 확인')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '전체 처리 기록 보기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /작업센터에서 상세 기록 보기/ })).toBeInTheDocument();
   });
   it('explains actionable zero-accepted NEEDS_INPUT', () => {
     render(<PortfolioStatus run={{ productStatus: 'NEEDS_INPUT', producedConceptCount: 0, openInputCount: 1 }}
-      events={[{ stage: 'SUMMARY', messageParams: { reviewed: 5, needsInput: 1 } }]} />);
-    expect(screen.getByText(/5개의 사업안 후보를 검토했습니다/)).toHaveTextContent('1개의 사업안은 실제 운영정보 확인 후');
+      events={[{ stage: 'SUMMARY', messageKey: 'job.concept-portfolio.summary', messageParams: { reviewed: 5, prepared: 0, needsInput: 1 } }]} />);
+    expect(screen.getByText('5개 검토 · 0개 준비 · 1개 추가 확인')).toBeInTheDocument();
+  });
+  it('running 초기에 0개·0건 metric을 표시하지 않는다', () => {
+    const view = render(<PortfolioStatus run={{ productStatus: 'RUNNING', producedConceptCount: 0, openInputCount: 0 }} events={[]} />);
+    expect(view.container.textContent).not.toMatch(/0개 사업안|추가 검토 0건/);
   });
 });
 
@@ -349,5 +367,6 @@ describe('Final Legal Report actual contract', () => {
     expect(screen.queryByRole('button', { name: '기술 정보' })).not.toBeInTheDocument();
     expect(view.container.textContent).not.toContain('sha256:abc');
     expect(view.container.textContent).not.toContain('CONDITIONAL');
+    expect(screen.getByRole('heading', { name: '사업 진행 전 확인할 내용' })).toBeInTheDocument();
   });
 });

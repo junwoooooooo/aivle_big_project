@@ -26,6 +26,8 @@
 .legal-document__laws article > section { padding: .85rem 0; border-bottom: 1px solid #dfe3ea; break-inside: avoid-page; }
 .legal-document__laws h4 { margin: 0 0 .55rem; }
 .legal-document__laws a { color: #2446aa; text-decoration: underline; }
+.legal-document__execution > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.legal-document__execution article { min-width: 0; padding: .8rem; background: #f6f8fb; break-inside: avoid-page; }
 
 @page { size: A4; margin: 18mm 16mm 20mm; }
 
@@ -35,6 +37,8 @@
   .app-shell:has(.legal-report-print-page) .pipeline-shell__header,
   .app-shell:has(.legal-report-print-page) .journey-substeps,
   .app-shell:has(.legal-report-print-page) .pipeline-module-status-error,
+  .app-shell:has(.legal-report-print-page) .skip-link,
+  .app-shell:has(.legal-report-print-page) .scroll-to-top,
   .app-shell:has(.legal-report-print-page) .legal-report-print-actions { display: none !important; }
   .app-shell:has(.legal-report-print-page) .app-main,
   .app-shell:has(.legal-report-print-page) .pipeline-shell__main,
@@ -50,4 +54,5 @@
 @media (max-width: 40rem) {
   .legal-regulatory-document dl > div { grid-template-columns: 1fr; gap: .2rem; }
   .legal-report-print-actions { align-items: stretch; flex-direction: column; }
+  .legal-document__execution > div { grid-template-columns: 1fr; }
 }

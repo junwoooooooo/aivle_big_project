@@ -17,14 +17,14 @@ export const HYPOTHESIS_LABELS = Object.freeze({
 });
 
 export const CANDIDATE_FACT_FIELDS = Object.freeze({
-  sellerRole: { label: '실제 판매 주체', type: 'string' },
-  providerRole: { label: '실제 서비스 제공 주체', type: 'string' },
-  intermediaryRole: { label: '실제 중개 주체', type: 'string' },
-  transactionFlow: { label: '거래 흐름', type: 'list' },
-  paymentFlow: { label: '결제·수취 흐름', type: 'list' },
-  partnerRequirements: { label: '파트너·자격 요건', type: 'list' },
-  personalDataUsage: { label: '개인정보 이용', type: 'list' },
-  physicalActivities: { label: '실제 물리 활동', type: 'list' },
+  sellerRole: { label: '실제로 상품·서비스를 판매하는 주체', type: 'string', question: '누가 고객에게 상품이나 서비스를 판매하나요?', help: '사업자나 매장처럼 실제 계약의 판매자 역할을 적어 주세요.' },
+  providerRole: { label: '실제로 서비스를 제공하는 주체', type: 'string', question: '누가 고객에게 실제 서비스를 제공하나요?', help: '직접 제공하는 조직이나 협력 업체의 역할을 적어 주세요.' },
+  intermediaryRole: { label: '거래를 연결·중개하는 주체', type: 'string', question: '거래를 연결하거나 중개하는 주체가 있나요?', help: '플랫폼 등 거래 당사자를 연결하는 역할이 있다면 적어 주세요.' },
+  transactionFlow: { label: '고객이 신청·구매하고 서비스가 제공되는 과정', type: 'list', question: '고객의 신청부터 서비스 제공까지 어떤 순서로 진행되나요?', help: '주요 단계를 한 줄에 하나씩 적어 주세요.' },
+  paymentFlow: { label: '결제와 정산이 이루어지는 흐름', type: 'list', question: '고객 결제와 판매자·파트너 정산은 어떻게 이루어지나요?', help: '돈이 이동하는 주요 단계를 한 줄에 하나씩 적어 주세요.' },
+  partnerRequirements: { label: '필요한 외부 파트너·자격', type: 'list', question: '이 사업을 운영하려면 어떤 외부 파트너나 자격이 필요한가요?', help: '회사명이 정해지지 않았다면 역할이나 자격 유형만 적어도 됩니다.' },
+  personalDataUsage: { label: '수집·이용할 개인정보', type: 'list', question: '서비스에서 어떤 개인정보를 수집하거나 이용하나요?', help: '이름, 연락처, 위치처럼 실제로 필요한 정보만 한 줄에 하나씩 적어 주세요.' },
+  physicalActivities: { label: '오프라인에서 실제로 이루어지는 활동', type: 'list', question: '현장 방문·배송·시술처럼 오프라인에서 이루어지는 활동이 있나요?', help: '사람이나 물품이 실제로 움직이는 활동을 한 줄에 하나씩 적어 주세요.' },
 });
 
 const candidateOf = (concept) => concept?.candidate?.candidate ?? concept?.candidate ?? {};

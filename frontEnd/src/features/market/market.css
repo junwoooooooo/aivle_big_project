@@ -161,16 +161,25 @@
 @media (max-width: 1100px) { .bm-plan__split { grid-template-columns: 1fr; } }
 
 .bm-plan { display: grid; gap: 1.5rem; }
+.bm-plan__optional-all { margin: 0; color: var(--color-text-secondary); font-size: .82rem; }
 .bm-plan__workspace { display: grid; gap: 1.25rem; min-width: 0; }
 .bm-plan__operations, .bm-plan__resources { display: grid; gap: .85rem; min-width: 0; }
 .bm-plan__operations > header, .bm-plan__resources > header { display: flex; gap: .75rem; align-items: center; justify-content: space-between; }
 .bm-plan__operations h3, .bm-plan__resources h3 { margin: 0; font-size: 1rem; }
-.bm-plan__operations header span, .bm-plan__resources header span, .bm-plan__optional { color: var(--color-text-secondary); font-size: .7rem; }
 .bm-plan__resources { padding: 1rem; border-radius: var(--radius-control); background: var(--color-bg-subtle); }
 .bm-plan__resources > p { margin: 0; color: var(--color-text-secondary); font-size: .78rem; }
-.bm-plan__row { display: grid; gap: .5rem; }
-.bm-plan__q { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.bm-plan__q label, .bm-plan__label { font-size: .88rem; font-weight: 700; }
+.bm-plan__row { display: grid; gap: .65rem; padding: .9rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: color-mix(in srgb, var(--color-bg-subtle) 60%, var(--color-surface)); }
+.bm-plan__row > header { display: flex; gap: .75rem; align-items: start; justify-content: space-between; }
+.bm-plan__row > header > div { display: grid; gap: .2rem; }
+.bm-plan__row label, .bm-plan__row header strong, .bm-plan__label { font-size: .88rem; font-weight: 700; }
+.bm-plan__row header p, .bm-plan__row header small { margin: 0; color: var(--color-text-secondary); font-size: .76rem; line-height: 1.5; }
+.bm-plan__text-action { flex: none; padding: .3rem .5rem; border: 0; border-radius: .35rem; background: transparent; color: var(--color-action-primary); font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.bm-plan__read, .bm-plan__suggestion { display: grid; gap: .3rem; padding: .75rem; border-radius: .5rem; background: var(--color-surface); }
+.bm-plan__read span, .bm-plan__suggestion span { color: var(--color-action-primary); font-size: .72rem; font-weight: 700; }
+.bm-plan__read p, .bm-plan__suggestion p { margin: 0; white-space: pre-line; }
+.bm-plan__suggestion button { justify-self: start; }
+.bm-plan__empty { margin: 0; color: var(--color-text-secondary); font-size: .8rem; }
+.bm-plan__editor .ui-input { border-color: var(--color-border-default); background: var(--color-surface); }
 /* 어느 칸을 채우는지 — 시스템 어휘로 묻지 않으면서 결과와 이어 보게 한다. */
 .bm-plan__cell { margin-left: auto; padding: .1rem .45rem; border-radius: 999px; background: var(--color-bg-subtle); color: var(--color-text-secondary); font-size: .7rem; font-weight: 700; }
 .bm-plan__hint { margin: 0; color: var(--color-text-secondary); font-size: .78rem; line-height: 1.7; }

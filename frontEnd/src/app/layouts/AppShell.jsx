@@ -5,7 +5,7 @@ import { useAuth } from '../../features/auth/AuthProvider.jsx';
 import { useAuthTransition } from '../transitions/AuthTransitionProvider.jsx';
 import { appRoutes, projectRoutes } from '../routing/projectRoutes.js';
 import { useProjects } from '../../features/projects/hooks/useProjects.js';
-import { AppIcon, Button, Drawer, ToastRegion } from '../../shared/ui/index.js';
+import { AppIcon, Button, Drawer, ToastRegion, scrollPageToTop, shouldResetRouteScroll } from '../../shared/ui/index.js';
 import { useServicePolicy } from '../../features/service-policy/useServicePolicy.js';
 import { getWriteRestriction } from '../../features/service-policy/servicePolicyRestrictions.js';
 import { ProjectChromeProvider } from '../project-shell/ProjectChromeContext.jsx';
@@ -73,6 +73,7 @@ function AppShellContent() {
   const accountExitTimer = useRef(null);
   const accountExitAction = useRef(null);
   const previousPathRef = useRef(null);
+  const previousLocationRef = useRef(null);
   const { user, logout } = useAuth();
   const servicePolicy = useServicePolicy();
   const writeRestriction = getWriteRestriction(servicePolicy);
@@ -80,6 +81,12 @@ function AppShellContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const pageKey = location.state?.backgroundLocation?.pathname ?? location.pathname;
+
+  useEffect(() => {
+    const previous = previousLocationRef.current;
+    if (shouldResetRouteScroll(previous, location)) scrollPageToTop({ smooth: false });
+    previousLocationRef.current = location;
+  }, [location]);
 
   const accountOpen = accountPhase !== 'unmounted';
   const finishAccountExit = useCallback(() => {
