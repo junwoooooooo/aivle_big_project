@@ -1,0 +1,89 @@
+{
+  "_comment": "판매 경계 게이트의 공유 사례표. ai/app/twin/task_type.py 와 frontEnd/src/features/twin-survey/taskTypeGate.js 가 둘 다 이 파일을 읽고 같은 답을 내야 한다. 거울이 갈리면 화면은 실행을 열어주고 서버가 422 로 막는다 — 그 상황을 여기서 먼저 잡는다.",
+  "cases": [
+    {
+      "name": "가격 동일, 비가격 속성 하나만 다름",
+      "expected": "DOMINANCE",
+      "X": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "형태": "냉동" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "가격만 다름 — 명백한 가격차",
+      "expected": "DOMINANCE",
+      "X": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 3000 },
+      "Y": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 6000 }
+    },
+    {
+      "name": "가격 없는 대비",
+      "expected": "DOMINANCE",
+      "X": { "attrs": { "배송": "당일" }, "priceKrw": null },
+      "Y": { "attrs": { "배송": "3일" }, "priceKrw": null }
+    },
+    {
+      "name": "윤리 속성이 양쪽 같으면 축이 아니다",
+      "expected": "DOMINANCE",
+      "X": { "attrs": { "인증": "있음", "형태": "신선(냉장)" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "인증": "있음", "형태": "냉동" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "프리미엄 vs 가격 핸디캡",
+      "expected": "PRICE",
+      "X": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 5000 },
+      "Y": { "attrs": { "형태": "냉동" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "용량 프리미엄 vs 가격",
+      "expected": "PRICE",
+      "X": { "attrs": { "용량": "500ml" }, "priceKrw": 3200 },
+      "Y": { "attrs": { "용량": "300ml" }, "priceKrw": 2500 }
+    },
+    {
+      "name": "인증만 다름, 가격 동일 — 원본은 우열형이지만 여기서는 막는다",
+      "expected": "ETHICAL_VALUE",
+      "X": { "attrs": { "지속가능 양식 인증": "있음" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "지속가능 양식 인증": "없음" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "인증 프리미엄 vs 가격",
+      "expected": "ETHICAL_VALUE",
+      "X": { "attrs": { "인증": "있음" }, "priceKrw": 5200 },
+      "Y": { "attrs": { "인증": "없음" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "친환경 포장",
+      "expected": "ETHICAL_VALUE",
+      "X": { "attrs": { "포장": "친환경 재활용 소재" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "포장": "일반" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "ESG 등급",
+      "expected": "ETHICAL_VALUE",
+      "X": { "attrs": { "ESG 등급": "A" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "ESG 등급": "C" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "비건 표기",
+      "expected": "ETHICAL_VALUE",
+      "X": { "attrs": { "원료": "비건 대체육" }, "priceKrw": 6000 },
+      "Y": { "attrs": { "원료": "일반 우육" }, "priceKrw": 6000 }
+    },
+    {
+      "name": "비가격 속성 두 개가 동시에 다름",
+      "expected": "UNMEASURABLE",
+      "X": { "attrs": { "형태": "신선(냉장)", "원산지": "칠레산" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "형태": "냉동", "원산지": "노르웨이산" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "세 속성 경합 + 가격 차이",
+      "expected": "UNMEASURABLE",
+      "X": { "attrs": { "형태": "신선(냉장)", "원산지": "칠레산", "용도": "횟감" }, "priceKrw": 5000 },
+      "Y": { "attrs": { "형태": "냉동", "원산지": "노르웨이산", "용도": "구이" }, "priceKrw": 4500 }
+    },
+    {
+      "name": "두 안이 완전히 동일 — 음성대조 자극",
+      "expected": "IDENTICAL",
+      "X": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 4500 },
+      "Y": { "attrs": { "형태": "신선(냉장)" }, "priceKrw": 4500 }
+    }
+  ]
+}

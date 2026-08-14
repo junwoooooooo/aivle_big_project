@@ -15,7 +15,7 @@ export const ASYNC_MESSAGES = Object.freeze({
   QUEUED: '선택한 컨셉과 확정 가설을 불러오고 있습니다.',
   STARTED: '핵심 메시지를 구성하고 있습니다.',
   SOURCE_PREPARED: '핵심 메시지를 구성하고 있습니다.',
-  COPY_GENERATING: '채널에 맞게 문구를 조정하고 있습니다.',
+  COPY_GENERATING: '채널 문구와 이미지를 생성하고 있습니다.',
   LEGAL_CHECKING: '법률상 주의 표현을 확인하고 있습니다.',
   RUNNING: '콘텐츠를 완성하고 있습니다.',
   COMPLETED: '콘텐츠를 완성했습니다.',
@@ -37,7 +37,7 @@ export function marketingFailureMessage(error, technicalCode) {
 export function createSetupModel(marketingSourceSnapshotId = '') {
   return {
     marketingSourceSnapshotId, contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
-    length: 'MEDIUM', callToAction: '', requiredPhrases: '', excludedPhrases: '', additionalInstruction: '',
+    length: 'MEDIUM', callToAction: '', requiredPhrases: '', excludedPhrases: '', additionalInstruction: '', referenceImage: null,
   };
 }
 
@@ -45,7 +45,7 @@ export function parsePhrases(value) {
   return [...new Set(String(value || '').split(/[\n,]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
 }
 
-export function toCreateRequest(setup) {
+export function toCreateRequest(setup, referenceArtifactId = null) {
   const required = parsePhrases(setup.requiredPhrases);
   if (setup.callToAction?.trim()) required.unshift(setup.callToAction.trim());
   const instruction = [setup.additionalInstruction?.trim(), setup.callToAction?.trim() && `CTA는 '${setup.callToAction.trim()}'로 작성합니다.`]
@@ -55,6 +55,7 @@ export function toCreateRequest(setup) {
     contentType: setup.contentType, channel: setup.channel.trim(), purpose: setup.purpose.trim(),
     tone: setup.tone.trim(), length: setup.length, requiredPhrases: [...new Set(required)].slice(0, 20),
     excludedPhrases: parsePhrases(setup.excludedPhrases), additionalInstruction: instruction || null,
+    referenceArtifactId,
   };
 }
 

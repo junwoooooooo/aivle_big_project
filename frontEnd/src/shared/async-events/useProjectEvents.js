@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useApiClient } from '../api/ApiClientProvider.jsx';
 import { consumeAuthenticatedSse } from './authenticatedSseClient.js';
-import { createProjectEventsApi } from './projectEventsApi.js';
 
 const RECONNECT_MS = 1500;
-const POLL_MS = 5000;
 const INVALIDATION_WINDOW_MS = 180;
 
 export function useProjectEvents(projectId) {
   const client = useApiClient();
-  const api = useMemo(() => createProjectEventsApi(client), [client]);
   const cursor = useRef(0);
   const pendingCursor = useRef(0);
   const invalidationTimer = useRef(null);
@@ -31,18 +28,6 @@ export function useProjectEvents(projectId) {
     if (!projectId) return undefined;
     const controller = new AbortController();
     let reconnectTimer;
-    let pollTimer;
-    const poll = async () => {
-      try {
-        const page = await api.poll(projectId, cursor.current, { signal: controller.signal });
-        for (const event of page.events ?? []) invalidate(event);
-        if (Number.isSafeInteger(page.nextEventId)) invalidate({ eventId: page.nextEventId });
-        setState((value) => ({ ...value, transport: 'polling', error: null }));
-      } catch (error) {
-        if (!controller.signal.aborted) setState((value) => ({ ...value, transport: 'offline', error }));
-      }
-      if (!controller.signal.aborted) pollTimer = setTimeout(poll, POLL_MS);
-    };
     const connect = async () => {
       try {
         await consumeAuthenticatedSse({
@@ -56,8 +41,8 @@ export function useProjectEvents(projectId) {
         if (!controller.signal.aborted) reconnectTimer = setTimeout(connect, RECONNECT_MS);
       } catch (error) {
         if (controller.signal.aborted) return;
-        setState((value) => ({ ...value, transport: 'polling', error }));
-        poll();
+        setState((value) => ({ ...value, transport: 'reconnecting', error }));
+        reconnectTimer = setTimeout(connect, RECONNECT_MS);
       }
     };
     cursor.current = 0;
@@ -67,10 +52,9 @@ export function useProjectEvents(projectId) {
     return () => {
       controller.abort();
       clearTimeout(reconnectTimer);
-      clearTimeout(pollTimer);
       clearTimeout(invalidationTimer.current);
     };
-  }, [api, client, invalidate, projectId]);
+  }, [client, invalidate, projectId]);
 
   return state;
 }

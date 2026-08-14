@@ -15,6 +15,8 @@ export const createTechOpsApi = (client) => Object.freeze({
   removeEvidence: async (projectId, evidenceId, options) => (await client.delete(`${tech(projectId)}/preparation/evidence/${encodeURIComponent(evidenceId)}`, options)).data,
   finalize: async (projectId, options) => (await client.post(`${tech(projectId)}/input-snapshots/finalize`, {}, options)).data,
   currentSnapshot: async (projectId, options) => (await client.get(`${tech(projectId)}/input-snapshots/current`, options)).data,
+  startAdvisory: async (projectId, options) => (await client.post(`${tech(projectId)}/advisory-runs`, {}, options)).data,
+  currentAdvisory: async (projectId, options) => (await client.get(`${tech(projectId)}/advisory/current`, options)).data,
   handoff: async (projectId, snapshotId, options) => (await client.post(`${root(projectId)}/module-handoffs`,
     { module: 'TECH_OPS', inputSnapshotId: snapshotId, requestedOperation: 'START_TECH_OPS_ANALYSIS' }, options)).data,
   runs: async (projectId, options) => (await client.get(`${root(projectId)}/module-runs`, options)).data,

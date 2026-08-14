@@ -1,0 +1,434 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (hmr-01). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 2,
+    "일자": "2026-08-11",
+    "게이트": "runs/harness/hmr-01/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+  "as_of": "2026-08-11",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        50000000000,
+        500000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "냉동 간편식의 거래액과 수요가 긴밀히 연관되어 있다"
+      }
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "프리미엄 간편식 브랜드",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1,
+        10
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "특정 브랜드의 시장 점유율은 거래 활동에 따라 결정된다"
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "냉동 간편식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "집에서 혼자 저녁"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1,
+        10
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "특정 시장 내 점유율은 해당 고객의 거래 활동에 의해 결정된다"
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2024",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        10000000000,
+        500000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "성장률은 전년도 및 해당 년도 거래액 비교로 추정할 수 있다"
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V5",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2023",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        8000000000,
+        400000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "전년도 거래액과 비교하여 증가 추이를 확인한다"
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V6",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "비비고",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "CJ제일제당",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        100000000000,
+        1000000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "비비고의 매출과 시장 위치는 거래액과 연관이 크다"
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V7",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "오뚜기 냉동식품",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "오뚜기",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        50000000000,
+        200000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "오뚜기의 매출액은 대량 유통과 시장 점유에 기반한다"
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "풀무원 간편식",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "풀무원식품",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        70000000000,
+        300000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "풀무원의 매출액은 프리미엄 및 건강축 브랜드로서의 지위를 반영한다"
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V9",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "신세계푸드 간편식",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "신세계푸드",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        60000000000,
+        250000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "거래",
+        "사유": "신세계푸드의 매출은 PB 및 유통 계열 전략과 관련있다"
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V10",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "프리미엄 간편식 브랜드",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        100000,
+        1000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "가입자 수",
+        "사유": "가입자 수는 브랜드 충성도 및 시장 점유와 직접적으로 연관된다"
+      }
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V11",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "이커머스 플랫폼",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "정기구독"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "오프라인"
+      ],
+      "value_range": [
+        5000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "고객 획득 비용",
+        "사유": "채널 효율성은 고객 획득 비용 분석을 통해 평가된다"
+      }
+    },
+    {
+      "slot_id": "S12",
+      "var_id": "V12",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "1인 가구",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "혼자 먹지만 제대로"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        10,
+        50
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "혼자 먹지만 제대로",
+        "재료 남김",
+        "1인분 식단"
+      ],
+      "_proxy_선언": {
+        "대상": "문제 경험률",
+        "사유": "문제 경험률은 해당 문제의 확산을 나타낸다"
+      }
+    },
+    {
+      "slot_id": "S13",
+      "var_id": "V13",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "배달 음식",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        10000,
+        25000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "이용 요금",
+        "사유": "배달 음식의 이용 요금은 간편식의 대체재로서 가격 비중을 판단하는 지표이다"
+      }
+    }
+  ]
+}

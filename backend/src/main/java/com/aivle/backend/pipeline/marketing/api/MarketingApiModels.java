@@ -15,7 +15,9 @@ public final class MarketingApiModels {
         @NotBlank @Size(max=500) String purpose, @NotBlank @Size(max=100) String tone,
         @NotNull Length length, @Size(max=20) List<@Size(max=200) String> requiredPhrases,
         @Size(max=20) List<@Size(max=200) String> excludedPhrases,
-        @Size(max=2000) String additionalInstruction) {}
+        @Size(max=2000) String additionalInstruction,
+        @Pattern(regexp="[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
+        String referenceArtifactId) {}
     public enum Length { SHORT, MEDIUM, LONG }
     public record EditRequest(@NotNull MarketingRevisionType revisionType, @NotNull JsonNode result) {}
     public record ContentSummary(String contentId, String marketingSourceSnapshotId, String sourceSnapshotHash,

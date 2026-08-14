@@ -6,6 +6,8 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.file.object.ObjectStoragePort;
+import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -27,6 +29,8 @@ import tools.jackson.databind.node.ObjectNode;
 public class MarketingContentService {
     public static final String REQUEST_CONTRACT = "marketing-content-request-v1";
     private final ProjectRepository projects;
+    private final ProjectEvidenceArtifactService evidenceArtifacts;
+    private final ObjectStoragePort objectStorage;
     private final MarketingSourceSnapshotService sourceSnapshots;
     private final MarketingContentRepository contents;
     private final MarketingContentRevisionRepository revisions;
@@ -41,6 +45,13 @@ public class MarketingContentService {
     @Transactional
     public ContentView create(Long ownerId, Long projectId, CreateRequest request, String idempotencyKey, String correlationId) {
         requireOwned(ownerId, projectId); validateRequest(request);
+        if (request.referenceArtifactId() != null && !request.referenceArtifactId().isBlank()) {
+            var artifact = evidenceArtifacts.requireReferenceable(ownerId, projectId, request.referenceArtifactId());
+            if (!("image/png".equals(artifact.getMediaType()) || "image/jpeg".equals(artifact.getMediaType()))
+                    || artifact.getSizeBytes() <= 0 || artifact.getSizeBytes() > 20L * 1024 * 1024) {
+                throw new BusinessException(ErrorCode.MARKETING_ASSET_INVALID);
+            }
+        }
         MarketingSourceSnapshot source = sourceSnapshots.requireCurrent(projectId);
         if (!source.getId().equals(request.marketingSourceSnapshotId())) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
         String sourceJson = source.getSnapshotJson(); String requestJson = mapper.writeValueAsString(request);
@@ -121,7 +132,7 @@ public class MarketingContentService {
         ObjectNode input = mapper.createObjectNode(); input.set("source", mapper.readTree(sourceJson));
         input.set("request", mapper.readTree(requestJson));
         String json = mapper.writeValueAsString(input);
-        String hash = inputHasher.hash(TaskType.MARKETING_CONTENT_GENERATION, "2.0", "ko-KR", json);
+        String hash = inputHasher.hash(TaskType.MARKETING_CONTENT_GENERATION, "1.0", "ko-KR", json);
         return taskRuns.create(ownerId, projectId, TaskType.MARKETING_CONTENT_GENERATION, "MARKETING_CONTENT",
             content.getId(), json, hash, key, correlation == null || correlation.isBlank()
                 ? UUID.randomUUID().toString() : correlation, 2).getId();
@@ -131,7 +142,8 @@ public class MarketingContentService {
             mapper.readTree(content.getRequestJson()), revisions.findAllByContentIdAndDeletedAtIsNullOrderByRevisionNumberAsc(content.getId())
                 .stream().map(revision -> new RevisionView(revision.getId(), revision.getRevisionNumber(),
                     revision.getRevisionType(), revision.getOrigin(), mapper.readTree(revision.getResultJson()))).toList(),
-            assets.findAllByContentIdAndDeletedAtIsNull(content.getId()).stream().map(MarketingAsset::getArtifactRef).toList());
+            assets.findAllByContentIdAndDeletedAtIsNullOrderByCreatedAtAsc(content.getId()).stream()
+                .map(MarketingAsset::getArtifactRef).map(this::browserArtifactUrl).toList());
     }
     private ContentSummary summary(MarketingContent content, MarketingSourceSnapshot current) {
         String status = stale(content, current) ? "STALE" : content.getStatus().name();
@@ -146,6 +158,10 @@ public class MarketingContentService {
     }
     private void validateRequest(CreateRequest request) {
         if (!REQUEST_CONTRACT.equals(request.contract())) throw new BusinessException(ErrorCode.INVALID_REQUEST);
+    }
+    private String browserArtifactUrl(String artifactRef) {
+        try { return objectStorage.createPresignedGet(artifactRef).toString(); }
+        catch (UnsupportedOperationException ignored) { return artifactRef; }
     }
     private MarketingContent find(Long projectId, String id) {
         return contents.findByIdAndProjectIdAndDeletedAtIsNull(id, projectId)

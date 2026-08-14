@@ -1,0 +1,757 @@
+{
+ "version": "v8-2026-08-09",
+ "_규칙": "출처 유형(kind)은 도메인으로만 정한다. 모델의 어떤 출력도 쓰지 않는다(절대규칙 2). **등재 심사 질문은 둘이다** (증거 기준 선언, CLAUDE.md §0, 2026-08-09 사용자 확정): ① **실무 시장조사에서 인용되는 종류인가** ② **발행 주체가 확인되는가**. '결과가 나빠서'는 여전히 사유가 아니다. ⚠ **옛 문구는 「'누가 발행했는가' 하나뿐」이었다** — 그 문구가 ①을 배제해 상업 리서치사를 「통계기관이 아니다」로 거절하게 만들었다. 선언이 그것을 바로잡았다.",
+ "kinds": {
+  "gov_stat": [
+   "kosis.kr",
+   "kostat.go.kr",
+   "data.go.kr",
+   "index.go.kr",
+   "mdis.kostat.go.kr",
+   "mods.go.kr",
+   "sri.kostat.go.kr",
+   "sbiz.or.kr",
+   "mss.go.kr",
+   "dataseoul.s3.ap-northeast-2.amazonaws.com"
+  ],
+  "public_filing": [
+   "dart.fss.or.kr",
+   "opendart.fss.or.kr",
+   "alio.go.kr",
+   "kind.krx.co.kr"
+  ],
+  "panel_data": [
+   "wiseapp.co.kr",
+   "mobileindex.com",
+   "igaworks.com",
+   "nielsen.com"
+  ],
+  "survey_firm": [
+   "opensurvey.co.kr",
+   "trendmonitor.co.kr",
+   "gallup.co.kr",
+   "kantar.com",
+   "kbiz.or.kr",
+   "kisdi.re.kr"
+  ],
+  "official_page": [
+   "apps.apple.com",
+   "play.google.com",
+   "loyverse.com",
+   "orderlist.co.kr",
+   "cafepost.kr",
+   "kcd.co.kr",
+   "cashnote.kr",
+   "korea.kr",
+   "bizinfo.go.kr",
+   "coupangpos.com",
+   "hpos.co.kr",
+   "centumpos.com",
+   "kopays.net",
+   "needs.team",
+   "mirimate.co.kr",
+   "cafe-note.foundry.ai.kr",
+   "foodlogic.co.kr",
+   "about.cafe24wms.com",
+   "m.ktv.go.kr",
+   "dl.nanet.go.kr",
+   "manual.daouoffice.co.kr",
+   "product.kt.com",
+   "m.corp.kt.com",
+   "kakaocorp.com",
+   "partner.kakaopay.com",
+   "shopify.com",
+   "cafe24.com",
+   "help.cafe24.com",
+   "support.cafe24.com",
+   "shopnotice.cafe24.com",
+   "news.cafe24.com",
+   "developers.cafe24.com",
+   "biz.koke.kr",
+   "kokebizinsight.stibee.com",
+   "tossplace.com",
+   "bworld.co.kr",
+   "skpos.co.kr",
+   "wowpos.kr",
+   "nwpos.co.kr",
+   "posmos.net",
+   "kcp.kpos.store",
+   "kpn.co.kr",
+   "misik.io",
+   "aftercompany.co.kr",
+   "spoqa.co.kr",
+   "sosomarket.co.kr",
+   "hanwha.co.kr",
+   "hanwhavision.com",
+   "gongbiz.kr",
+   "crm.gongbiz.kr",
+   "handsos.com",
+   "help.naver.com",
+   "smartplace.naver.com",
+   "noshowhair.com"
+  ],
+  "press": [
+   "yna.co.kr",
+   "hankyung.com",
+   "mk.co.kr",
+   "chosun.com",
+   "donga.com",
+   "joongang.co.kr",
+   "hani.co.kr",
+   "khan.co.kr",
+   "sedaily.com",
+   "edaily.co.kr",
+   "mt.co.kr",
+   "fnnews.com",
+   "etnews.com",
+   "zdnet.co.kr",
+   "imbc.com",
+   "kbs.co.kr",
+   "sbs.co.kr",
+   "ytn.co.kr",
+   "news1.kr",
+   "newsis.com",
+   "asiae.co.kr",
+   "platum.kr",
+   "venturesquare.net",
+   "sentv.co.kr",
+   "asiatoday.co.kr",
+   "ajunews.com",
+   "intn.co.kr",
+   "cstimes.com"
+  ],
+  "legal_source": [
+   "law.go.kr",
+   "moleg.go.kr",
+   "easylaw.go.kr"
+  ],
+  "community": [
+   "cafe.naver.com",
+   "blog.naver.com",
+   "reddit.com",
+   "clien.net",
+   "dcinside.com",
+   "ppomppu.co.kr"
+  ],
+  "press_release": [
+   "newswire.co.kr"
+  ],
+  "research_firm": [
+   "statista.com",
+   "euromonitor.com",
+   "mordorintelligence.com"
+  ]
+ },
+ "suffix_downgrade": {
+  "_why": "위 목록에 없는 *.go.kr / *.or.kr 은 공공기관 일반 페이지다. 지자체 보도자료가 섞이므로 통계 생산물로 올려주지 않는다. 반대로 진짜 통계 채널(mods.go.kr 등)은 위에 개별 등재한다.",
+  "go.kr": "aggregate",
+  "or.kr": "aggregate"
+ },
+ "default_kind": "aggregate",
+ "registry": [
+  {
+   "domain": "mods.go.kr",
+   "kind": "gov_stat",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "국가데이터처 공표자료 채널 — 통계 생산 주체가 직접 발행"
+  },
+  {
+   "domain": "loyverse.com",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 제품의 가격·기능을 자기가 밝힌 1차 출처"
+  },
+  {
+   "domain": "orderlist.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 제품 공식 페이지 (1차 출처)"
+  },
+  {
+   "domain": "cafepost.kr",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 가격 페이지 (1차 출처)"
+  },
+  {
+   "domain": "mss.go.kr",
+   "kind": "gov_stat",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "중소벤처기업부 — 「소상공인 실태조사」의 **발행 부처**. 시행기관 sbiz.or.kr 은 이미 등재돼 있었는데 부처만 빠져 있던 비대칭을 메운다"
+  },
+  {
+   "domain": "korea.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "대한민국 정책브리핑 — 정부 발표를 **재유통하는 포털**이고 통계 생산 주체가 아니다. 그래서 gov_stat 이 아니라 official_page 급. 원출처(소관 부처)를 따로 찾는 것이 옳다"
+  },
+  {
+   "domain": "bizinfo.go.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "기업마당 — 중기부가 운영하는 **정책 재유통 포털**. 위와 같은 이유로 gov_stat 아님"
+  },
+  {
+   "domain": "coupangpos.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "쿠팡포스 — 자사 서비스의 가격·기능을 자기가 밝힌 1차 출처"
+  },
+  {
+   "domain": "hpos.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "H포스 — 같음"
+  },
+  {
+   "domain": "centumpos.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "센텀포스 — 같음"
+  },
+  {
+   "domain": "kopays.net",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한국지급결제 — 같음"
+  },
+  {
+   "domain": "needs.team",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "MIRI(재고관리) 운영사 — 같음"
+  },
+  {
+   "domain": "mirimate.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "MIRI 서비스 도메인 — 같음"
+  },
+  {
+   "domain": "cafe-note.foundry.ai.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페노트 — 같음"
+  },
+  {
+   "domain": "foodlogic.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "푸드로직 — 같음"
+  },
+  {
+   "domain": "about.cafe24wms.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "스마트재고(카페24 WMS) 서비스 소개 — 그 서비스 운영 주체의 1차 출처"
+  },
+  {
+   "domain": "newswire.co.kr",
+   "kind": "press_release",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "뉴스와이어 — **보도자료 배포 대행**이지 매체가 아니다. 발행자는 의뢰 기업 자신이므로 press(3, 언론)로 올리면 자기 홍보가 언론 등급을 받는다. 별도 kind 로 두고 자기발표로 취급한다"
+  },
+  {
+   "domain": "kind.krx.co.kr",
+   "kind": "public_filing",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한국거래소 전자공시(KIND) — 법정 공시 원본",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "dataseoul.s3.ap-northeast-2.amazonaws.com",
+   "kind": "gov_stat",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "서울 열린데이터광장이 배포하는 「소상공인 실태조사(승인번호 제142021호)」 원본. 호스트가 S3 버킷이라 소유자 확인이 도메인만으로는 약하다 — dataseoul 접두사가 서울시 것임을 확인하고 등재",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "kbiz.or.kr",
+   "kind": "survey_firm",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "중소기업중앙회 — 자체 실태조사를 발행하는 조사 주체. *.or.kr 접미 강등의 예외로 개별 등재(sbiz.or.kr 전례)",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "sentv.co.kr",
+   "kind": "press",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "서울경제TV — 방송 매체",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "m.ktv.go.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "KTV 국민방송 — 정부 발표를 재유통하는 채널. korea.kr 과 같은 급(통계 생산 주체 아님)",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "dl.nanet.go.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "국회도서관 — 공공기관이 발행하는 소장정보. **v4 에서 \"값이 없다\"는 내용 판단으로 반대했던 것을 통일 기준(발행자만)으로 재분류**",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "manual.daouoffice.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "다우기술 — 자사 서비스 매뉴얼. **v4 에서 \"무관\"이라는 내용 판단으로 반대했던 것을 재분류**",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "product.kt.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "㈜케이티 — S4 조사 대상 서비스(사장이지) 운영사 자신",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "m.corp.kt.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "㈜케이티",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "kakaocorp.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카카오 뉴스룸 — 자사 발표",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "partner.kakaopay.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카카오페이 — 자사 서비스",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "shopify.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "Shopify Inc. — 자사 가격표. 지역 부적합은 off_slot 이 잡는다",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24 — 자사 공식",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "help.cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "support.cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "shopnotice.cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "news.cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "developers.cafe24.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페24",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "biz.koke.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "코케비즈 — 자사 채널",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "kokebizinsight.stibee.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "코케비즈 뉴스레터",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "tossplace.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "토스플레이스",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "bworld.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "SK브로드밴드 B world",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "skpos.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "SKPOS",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "wowpos.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "WOWPOS",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "nwpos.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "누리네트웍스",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "posmos.net",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "포스모스",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "kcp.kpos.store",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "KCP",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "kpn.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한국결제네트웍스",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "misik.io",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "미식",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "aftercompany.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "애프티",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "spoqa.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "스포카",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "sosomarket.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "소소상점",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "hanwha.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한화그룹 뉴스룸",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "hanwhavision.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한화비전",
+   "audit": "v5 블라인드 감사(runs/audit-v5.md)"
+  },
+  {
+   "domain": "asiatoday.co.kr",
+   "kind": "press",
+   "on": "2026-08-08",
+   "by": "②-b-A 등재 심사",
+   "why": "아시아투데이 — 종합 일간지. 본문에 기사 형식·발행 주체 확인"
+  },
+  {
+   "domain": "ajunews.com",
+   "kind": "press",
+   "on": "2026-08-08",
+   "by": "②-b-A 등재 심사",
+   "why": "아주경제 — 경제 일간지. 중기부 실태조사를 인용 보도한 기사 본문 확인"
+  },
+  {
+   "domain": "intn.co.kr",
+   "kind": "press",
+   "on": "2026-08-08",
+   "by": "②-b-A 등재 심사",
+   "why": "일간NTN — 조세·경제 전문 언론. 부처 보도자료 인용 기사 확인"
+  },
+  {
+   "domain": "cstimes.com",
+   "kind": "press",
+   "on": "2026-08-08",
+   "by": "②-b-A 등재 심사",
+   "why": "컨슈머타임스 — 소비자 전문 언론. 기자 실명(진보현) 바이라인 확인"
+  },
+  {
+   "domain": "kisdi.re.kr",
+   "kind": "survey_firm",
+   "on": "2026-08-08",
+   "by": "②-b-A 등재 심사",
+   "why": "정보통신정책연구원(KISDI) — 정부출연 연구기관. 통계 생산 주체는 아니므로 gov_stat 이 아니라 조사·연구 발행자 등급"
+  },
+  {
+   "domain": "gongbiz.kr",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "공비서 운영사 공식 — 요금제 페이지에서 자기 식별 확인(「공비서 원장님+ / 요금제 안내」). 관측 대상 경쟁사(S10·S14)"
+  },
+  {
+   "domain": "crm.gongbiz.kr",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "공비서 운영사 하위 도메인(고객관리). 개발 서버가 아니다"
+  },
+  {
+   "domain": "handsos.com",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "핸드SOS 운영사 공식 — 본문에서 자사 서비스(이지폰 부가서비스) 설명 확인. 관측 대상 경쟁사(S11)"
+  },
+  {
+   "domain": "help.naver.com",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "네이버 공식 고객센터 — 네이버 예약 이용 안내의 1차 발행자. 관측 대상(S12·S17)"
+  },
+  {
+   "domain": "smartplace.naver.com",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "네이버 스마트플레이스 공식 — 같은 발행자, 사업자용 채널(S11·S12)"
+  },
+  {
+   "domain": "noshowhair.com",
+   "kind": "official_page",
+   "on": "2026-08-08",
+   "by": "②-b-A 검수 답신",
+   "why": "미용실 노쇼 관리 SaaS 운영사 공식. 관측 대상 대체재(S8). ⚠ **경계: 본문이 「현재 개발 중인 서비스입니다 · 실제 서비스 제공은 아직 불가능합니다」라고 밝힌다 — 게시된 요금은 예정 가격이다.** 발행자 등급은 「누가 발행했는가」로 정하므로 official_page 가 맞지만, 이 값을 대체재 밴드에 쓸 때는 미출시임을 함께 읽어야 한다"
+  },
+  {
+   "domain": "mordorintelligence.com",
+   "kind": "research_firm",
+   "on": "2026-08-09",
+   "by": "junwoo",
+   "why": "상업 시장조사 리서치사 — 산업별 시장규모·CAGR 리포트를 유료로 발행한다. §0 증거 기준 선언의 `research_firm`(방법론 비공개·유료벽) 정의에 정확히 해당하고, 심사 질문 둘을 통과한다: ①실무 시장조사가 인용하는 종류인가 — 그렇다(컨설팅·VC 실사) ②발행 주체가 확인되는가 — 그렇다. Statista·Euromonitor 와 같은 칸(3점).",
+   "⚠_등재는_검증_면제가_아니다": "**이 도메인에서 온 사실 3건은 전부 `미검증`(인용문이 본문에 없음)으로 죽었다**(`pet-treat-03` F001~F003). 등재해도 그 3건은 **그대로 죽는다** — 등급 상한이 아니라 **인용 대조**에서 죽었기 때문이다. **등재는 입장 허가지 검증 면제가 아니다** — `quote_verified` 는 그대로 탄다(2026-08-09 사용자 명시).",
+   "⚠_재게시_특례": "백로그 47·48 이 그대로 걸린다 — 리서치사 문서가 **원출처를 재게시**한 것이면 원출처 등급으로 내려야 하고, 그 판정은 **아직 코드로 강제되지 않는다**(문서 단위 판정인데 `kind_of()` 는 도메인 단위)."
+  }
+ ],
+ "rejected": [
+  {
+   "domain": "cashpop.io",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "미국 POS·결제 서비스. 1차 출처인 것은 맞으나 조사 대상 범위 밖"
+  },
+  {
+   "domain": "v.daum.net",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "포털 재게시본 — URL 로 원 발행자를 알 수 없다. **발행자 불명**은 등재 사유가 없다",
+   "audit": "v5"
+  },
+  {
+   "domain": "saaskorea.com",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "제3자가 편집한 디렉터리 — 어느 수치의 1차 발행자가 아니다",
+   "audit": "v5"
+  },
+  {
+   "domain": "gjcouncil.go.kr",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "광주광역시의회 — suffix_downgrade(*.go.kr → aggregate)의 원래 취지에 정확히 해당. 지자체 자체 문서를 통계 생산물로 올려주지 않는다",
+   "audit": "v5"
+  },
+  {
+   "domain": "updog.kr",
+   "on": "2026-08-09",
+   "by": "junwoo",
+   "why": "**발행 주체가 확인되지 않는다** — 페이지가 `index.html` 한 장이고 운영 주체·조사 방법 표기가 없다. 심사 질문 ②에서 탈락. `pet-treat-03` F004 가 이 도메인이었고 `off_slot` 으로 죽었다.",
+   "⚠_실효": "백로그 30 — `kind_of()` 는 `rejected` 를 보지 않는다. 이 등재는 **문서 효력만** 갖는다(「거부했다」와 「아직 안 봤다」가 동작상 같다)."
+  }
+ ],
+ "_kinds_주석": "",
+ "_press_release": "press_release 는 **자기발표**다. scoring.cross.self_published_kinds 에 들어 있어 official_page 와 교차확인을 주고받지 못한다. 두 곳을 같이 본다.",
+ "_v5": "v5 는 **두 팔의 미등재 도메인 전수**를 팔 표시를 가린 채 한 목록으로 감사한 결과다(runs/audit-v5.md, seed=20260806). v4 는 대조군 문서만 감사해 만들어져 **자가 한쪽 팔에 맞춰져 있었다** — 그 편향을 걷어낸 것이 v5 다. 기준은 여전히 「누가 발행했는가」 하나뿐이고, 내용 적합성은 off_slot 몫이다.",
+ "_이력": [
+  {
+   "version": "v7-2026-08-08",
+   "판": "②-b-A (검수 답신 — 운영사 공식 페이지 등재)",
+   "원칙": "**official_page 는 언론 등재 원칙과 별개 종류다**(사용자 판정 2026-08-08). 선례 loyverse·cafepost. 조건 3개를 **전부** 만족할 때만: ① 본문에서 발행 주체 자기 식별 확인 ② **관측 대상 서비스**의 운영사(경쟁사·대체재) ③ 개발 서버 제외.",
+   "무엇": "official_page 6곳 등재. 보류 13곳 중 7곳은 조건 미달로 **보류 유지**.",
+   "불변": "자기발표 버킷(`cross.self_published_kinds`)은 그대로다 — official_page 끼리는 여전히 한 화자로 접힌다. 등재가 교차 가점을 만들어내지 않는다.",
+   "기대": "확인됨 델타 0. **수익원 칸 요금 사실 3건이 aggregate 1점 → official_page 4점 = 실무 신뢰 진입.** beauty-06d 로 분리 측정."
+  },
+  {
+   "version": "v6-2026-08-08",
+   "판": "②-b-A (등재 심사)",
+   "원칙": "사용자 위임 (2026-08-08): **언론사·연구기관·공공기관만.** 커뮤니티·개인블로그·콘텐츠마케팅 도메인 불가. 사유는 「누가 발행했는가」 하나뿐이며 「결과가 나빠서」는 사유가 아니다.",
+   "무엇": "press 4곳 · survey_firm 1곳 신규 등재. 후보 26곳 중 21곳은 **보류**했다(사유는 registry 의 _보류 참조).",
+   "근거": "전부 beauty-05 원장의 본문에서 발행자 자기 식별을 확인했다 — 추측 0건.",
+   "기대": "확인됨 델타 0. asiatoday(F006) 2→3 · ajunews(F009) 2→3 뿐이고 둘 다 임계 5 미달."
+  },
+  {
+   "version": "v8-2026-08-09",
+   "판": "⑥ 마감",
+   "무엇": "① `_규칙` 개정 — 등재 심사 질문을 **둘**로(실무 인용 종류 + 발행 주체 확인) ② `research_firm` kind 신설(statista.com·euromonitor.com, 3점)",
+   "왜": "**증거 기준 선언**(CLAUDE.md §0, 2026-08-09 사용자 확정) — 「이 서비스의 증거 채택 기준은 시장조사 실무다. 학술 감사 기준이 아니다. 정직성은 채택 여부가 아니라 등급 표기로 지킨다」. 옛 문구 「'누가 발행했는가' 하나뿐」이 상업 리서치사를 구조적으로 배제하고 있었다.",
+   "기대": "기존 원장 영향 **0** — statista·euromonitor 는 기존 원장에 등장하지 않는다(등재는 새 문서부터 적용된다)."
+  }
+ ],
+ "_보류": {
+  "_규칙": "등재하지 않은 후보. **거부(rejected)가 아니라 보류다** — 원칙에 안 맞거나 발행자를 특정 못 했다는 뜻이고, 근거가 생기면 다시 심사한다. ⚠ 엔진은 `rejected` 도 `_보류` 도 읽지 않는다 — `kind_of()` 는 `kinds` → `suffix_downgrade` → `default_kind` 만 본다. 둘 다 **문서 효력만** 있다(백로그: 실효를 주려면 kind_of 에 분기가 필요).",
+  "서비스_운영사_자기페이지": {
+   "도메인": [
+    "shiftee.io",
+    "cutly.kr",
+    "yo-b.com",
+    "stripe.com",
+    "mieum.kr",
+    "ailyhm.com"
+   ],
+   "왜": "official_page 조건 3개 중 하나 이상 미달. ② **관측 대상 서비스가 아니다** — shiftee(근태관리)·cutly(URL 단축)·yo-b(브랜드 디자인)·stripe(결제, CAC 콘텐츠)는 검색이 잘못 물어온 무관 서비스다. 이들을 넣으면 화이트리스트가 「검색이 물어온 것」으로 오염된다. ① **자기 식별 확인 불가** — mieum(js_shell 46자)·ailyhm(empty)은 본문이 없어 발행 주체를 확인할 수 없다"
+  },
+  "발행자_불명_또는_콘텐츠마케팅": {
+   "도메인": [
+    "unbuiltlab.com",
+    "categoryofbusiness.com",
+    "keyzard.cc",
+    "gongbizguide.oopy.io",
+    "bakertilly.com"
+   ],
+   "왜": "자기 식별이 없거나(unbuiltlab — 본문에 발행 주체 표기 0, mojibake 흔적) 자사 마케팅 자산 성격이 강하다(bakertilly — 벤치마크 리포트이되 회계법인 자산). 경계선은 **보수적으로** 둔다"
+  },
+  "플랫폼_커뮤니티": {
+   "도메인": [
+    "kmong.com",
+    "pf.kakao.com"
+   ],
+   "왜": "플랫폼이 발행자다 — 수치의 1차 발행자가 아니다"
+  },
+  "영구_불가": {
+   "도메인": [
+    "crm-dev5.gongbiz.kr"
+   ],
+   "왜": "**개발 서버.** 발행물이 아니라 작업 중인 화면이다. 어떤 원칙에서도 등재하지 않는다(사용자 판정 2026-08-08, 영구)."
+  }
+ },
+ "_research_firm": {
+  "_규칙": "**상업 리서치사** — 자체 조사·리포트를 직접 발행하는 곳. 실무(컨설팅·VC 실사)가 표준 재료로 쓰는 종류다.",
+  "등급": "실무 신뢰 계열(3점). **gov_stat 5점(확정)과 섞지 않는다.**",
+  "_왜_3점인가": "`cross_bonus=+1` · `확인됨` 임계 5. 3점으로 두면 **서로 다른 리서치사 2곳이 유사 값을 낼 때 4점(실무 신뢰 상단)**이 되고 **확정(5)에는 닿지 않는다** — 「해외 세분류에서 실질적 최고 등급」과 「gov 와 안 섞는다」가 점수 조작 없이 **기존 규칙만으로** 동시에 성립한다.",
+  "경계": [
+   "상업 리서치사 추정치다 — 관측이 아니다.",
+   "방법론이 비공개이거나 유료벽 뒤에 있고, 회사 간 편차가 존재한다."
+  ],
+  "_실무_근거": "해외 세분류 시장(동남아 K-뷰티 등)은 국가 통계에 항목이 없어 리서치사 추정이 사실상 유일 출처다. 실제 시장조사·IR 관행과 일치한다.",
+  "접기": "같은 리서치사 리포트를 받아쓴 기사들은 **1겹**으로 접는다(`rules/source_signature`). 서로 **다른** 리서치사 2곳은 **독립 교차**로 인정한다 — 다겹 규칙 그대로.",
+  "⚠_Statista_특례": {
+   "규칙": "Statista 는 **자체 조사분과 타 출처 재게시분이 섞인다.** 문서 단위에서 **원출처 표기가 확인되는 것만 유효**하고, 재게시분은 **그 원출처의 등급을 따른다.** 원출처 불명이면 **aggregator 처리**(2점).",
+   "⚠_미구현": "이 특례는 **문서 단위 판정**이라 `kind_of()`(도메인 단위)로는 실행되지 않는다. **지금은 문서 효력만 있다** — 백로그 30(rejected·_보류 무실효)과 같은 뿌리이고, 실효를 주려면 발췌 층에 분기가 필요하다(백로그 47).",
+   "당장의_방어": "재게시분이 그대로 3점을 받을 수 있다. 그래서 Statista 문서는 **개별 심사 목록**(백로그 48)에 올려 사람이 원출처를 확인한다."
+  },
+  "_심사_대기": {
+   "도메인": [
+    "nielseniq.com",
+    "kantar.com",
+    "mintel.com",
+    "grandviewresearch.com",
+    "mordorintelligence.com"
+   ],
+   "왜": "선언의 심사 질문 둘을 만족할 가능성이 높으나 **이번 판정에서 사용자가 지목한 것은 Statista·유로모니터급**이다. 개별 등재는 별도 심사 — 추측으로 넣지 않는다"
+  }
+ }
+}

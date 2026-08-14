@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://kosis.kr/civilComplaint/qnaDetail.do?boardIdx=22834",
+    "status": "ok",
+    "content": "usable",
+    "len": 1500,
+    "digits": 84,
+    "커피": true,
+    "개수표현": true,
+    "숫자+단위": []
+  },
+  {
+    "url": "https://mods.go.kr/boardDownload.es?bid=233&list_no=432931&seq=4",
+    "status": "not_html",
+    "content": "empty",
+    "len": 0,
+    "digits": 0,
+    "커피": false,
+    "개수표현": false,
+    "숫자+단위": []
+  },
+  {
+    "url": "https://mods.go.kr/board.es?act=view&bid=233&list_no=432931&mid=a10301090100&ref_bid=232%2C233%2C234%2C12029%2C10920%2C11469%2C11470%2C11817&tag=",
+    "status": "ok",
+    "content": "usable",
+    "len": 989,
+    "digits": 181,
+    "커피": false,
+    "개수표현": true,
+    "숫자+단위": [
+      "8,580개",
+      "9,899개",
+      "8,681개"
+    ]
+  },
+  {
+    "url": "https://stat.kosis.kr/nsieu/view/tree.do?hOrg=692&id=692_A4%2AMT_OTITLE&task=branchView",
+    "status": "ok",
+    "content": "js_shell",
+    "len": 190,
+    "digits": 0,
+    "커피": false,
+    "개수표현": true,
+    "숫자+단위": []
+  },
+  {
+    "url": "https://kosis.kr/civilComplaint/qnaDetail.do?boardIdx=22834&utm_source=openai",
+    "status": "ok",
+    "content": "usable",
+    "len": 1500,
+    "digits": 84,
+    "커피": true,
+    "개수표현": true,
+    "숫자+단위": []
+  }
+]

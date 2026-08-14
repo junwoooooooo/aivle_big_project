@@ -1,0 +1,35 @@
+{
+  "version": "rule_pins-v1",
+  "_왜_있나": [
+    "규칙 파일명(핀)의 **단일 원천**. 판 ㉙ S0 전까지 핀은 runlog.RULE_FILES 코드에만 있었고,",
+    "harness/tavily_intake.py 가 whitelist.v5.json 을 **리터럴로** 따로 적어 두어 엔진(v8)과 갈라져 있었다.",
+    "적재기는 유리벽 밖이라 runlog 를 import 할 수 없다(엔진 import 0). 그래서 핀은 코드가 아니라 **데이터**여야 한다.",
+    "판 ⑫ 키 분열 · ⑬ 라우팅 · ⑯ 별칭 · ㉒ 프롬프트-게이트 · ㉕ 표_계열 에 이은 「같은 물음을 두 곳이 각자 푼다」 여섯 번째."
+  ],
+  "_규율": [
+    "핀을 올릴 때는 **이 파일만** 고친다. 코드나 다른 파일에 파일명을 다시 적으면 그 순간 사본이 생긴다.",
+    "옛 버전 파일은 지우지 않는다 — 과거 실행이 '그때 무슨 목록이었나'를 열 수 있어야 한다."
+  ],
+  "pins": {
+    "whitelist": "whitelist.v8.json",
+    "scoring": "scoring.v1.json",
+    "units": "units.v1.json",
+    "consistency": "consistency.v1.json",
+    "assumptions": "assumptions.v1.json",
+    "adapters": "adapters.v1.json",
+    "guards": "guards.v1.json",
+    "slotcheck": "slotcheck.v1.json",
+    "source_signature": "source_signature.v1.json",
+    "fill": "fill.v2.json"
+  },
+  "_이력": [
+    {
+      "판": "㉙ S0",
+      "무엇": "핀 표를 runlog.RULE_FILES 코드에서 이 파일로 이관. runlog 는 읽기만 한다.",
+      "왜": "적재기가 리터럴 사본을 들고 v5 에 멈춰 있었다 — 엔진은 v8.",
+      "왜_안전한가": "값은 이관 전과 **동일**(fill 추가분 제외). load_rules 결과가 안 바뀌므로 기존 원장 델타 0.",
+      "안_바꾼_것": "규칙 파일 내용 · 화이트리스트 버전 · scoring · 기존 원장",
+      "기대": "테스트 861 green 유지 · 적재기가 v8 을 읽는다"
+    }
+  ]
+}

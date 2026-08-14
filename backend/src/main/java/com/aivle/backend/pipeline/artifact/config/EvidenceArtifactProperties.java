@@ -9,7 +9,7 @@ public record EvidenceArtifactProperties(DataSize maxSize, List<String> allowedE
     public EvidenceArtifactProperties {
         maxSize = maxSize == null ? DataSize.ofMegabytes(20) : maxSize;
         allowedExtensions = allowedExtensions == null
-            ? List.of("pdf", "csv", "xlsx", "xls", "docx", "txt", "png", "jpg", "jpeg")
+            ? List.of("pdf", "csv", "xlsx", "xls", "docx", "txt", "png", "jpg", "jpeg", "webp")
             : allowedExtensions.stream().map(String::toLowerCase).toList();
     }
 

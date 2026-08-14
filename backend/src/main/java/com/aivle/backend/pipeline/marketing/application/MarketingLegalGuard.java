@@ -32,4 +32,28 @@ public class MarketingLegalGuard {
                     "필수 고지 문구를 적용한 뒤 저장해 주세요: " + required);
         }
     }
+
+    public void validateVisual(String sourceJson, JsonNode result) {
+        JsonNode source = mapper.readTree(sourceJson);
+        String rendered = (result.path("generatedCopy").path("badge").asText() + "\n"
+            + result.path("generatedCopy").path("headline").asText() + "\n"
+            + result.path("generatedCopy").path("subheadline").asText()).toLowerCase(Locale.ROOT);
+        for (JsonNode claim : source.path("prohibitedClaims")) {
+            String phrase = claim.asText("").strip();
+            if (!phrase.isBlank() && rendered.contains(phrase.toLowerCase(Locale.ROOT))) {
+                throw new BusinessException(ErrorCode.MARKETING_PROHIBITED_CLAIM);
+            }
+        }
+        Set<String> applied = new HashSet<>();
+        for (JsonNode value : result.path("legalReview").path("requiredDisclosuresApplied")) {
+            applied.add(value.asText().strip());
+        }
+        for (JsonNode notice : source.path("requiredDisclosures")) {
+            String required = notice.asText("").strip();
+            if (!required.isBlank() && !applied.contains(required)) {
+                throw new BusinessException(ErrorCode.MARKETING_PROHIBITED_CLAIM,
+                    "필수 고지를 Visual 결과와 함께 표시해야 합니다: " + required);
+            }
+        }
+    }
 }

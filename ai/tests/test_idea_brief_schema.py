@@ -53,6 +53,7 @@ def task_input(mode="INITIAL"):
             {"fieldKey": "targetUsers", "value": "지역 식당", "decisionState": "LOCKED"},
         ],
         "attachmentFileIds": [],
+        "attachmentDocuments": [],
         "fieldMetadata": FIELD_METADATA,
     }
 

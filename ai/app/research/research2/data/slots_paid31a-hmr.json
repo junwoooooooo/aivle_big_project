@@ -1,0 +1,442 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (paid31a-hmr). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 1,
+    "일자": "2026-08-11",
+    "게이트": "runs/harness/paid31a-hmr/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+  "as_of": "2026-08-11",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "냉동"
+      ],
+      "subject_aliases": [
+        "냉동 간편식 시장"
+      ],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        500000000000,
+        2000000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "냉동 간편식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "점유율"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        5,
+        50
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2024",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "성장"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        600000000000,
+        2500000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2023",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "성장"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        400000000000,
+        2000000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V5",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "비비고",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "비비고"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        100,
+        1000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V6",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "오뚜기 냉동식품",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "오뚜기"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        100,
+        800
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V7",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "풀무원 간편식",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "풀무원"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        100,
+        600
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "비비고",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "CJ제일제당",
+      "must_contain": [
+        "비비고"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        100000000000,
+        500000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V9",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "프레시지",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "프레시지"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        1000,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V10",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "신세계푸드 간편식",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "신세계푸드"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        10000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V11",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "1인 가구",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "문제"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        10,
+        50
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "1인 가구",
+        "혼자 먹지만",
+        "재료를 사면 남긴다"
+      ],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S12",
+      "var_id": "V12",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "배달 음식",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "배달"
+      ],
+      "subject_aliases": [],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        10000,
+        30000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    }
+  ]
+}

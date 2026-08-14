@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --requirement requirements.txt \
 
 COPY --chown=app:app main.py ./
 COPY --chown=app:app app ./app
-COPY --chown=app:app prompts ./prompts
+COPY --chown=app:app assets ./assets
 RUN mkdir -p /app/outputs && chown app:app /app/outputs
 USER app
 

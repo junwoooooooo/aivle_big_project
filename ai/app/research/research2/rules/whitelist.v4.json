@@ -1,0 +1,256 @@
+{
+ "version": "v4-2026-08-06",
+ "_규칙": "출처 유형(kind)은 도메인으로만 정한다. 모델의 어떤 출력도 쓰지 않는다(절대규칙 2). 등재 사유는 '누가 발행했는가' 하나뿐이다 — '결과가 나빠서'는 사유가 아니다.",
+ "kinds": {
+  "gov_stat": [
+   "kosis.kr",
+   "kostat.go.kr",
+   "data.go.kr",
+   "index.go.kr",
+   "mdis.kostat.go.kr",
+   "mods.go.kr",
+   "sri.kostat.go.kr",
+   "sbiz.or.kr",
+   "mss.go.kr"
+  ],
+  "public_filing": [
+   "dart.fss.or.kr",
+   "opendart.fss.or.kr",
+   "alio.go.kr"
+  ],
+  "panel_data": [
+   "wiseapp.co.kr",
+   "mobileindex.com",
+   "igaworks.com",
+   "nielsen.com"
+  ],
+  "survey_firm": [
+   "opensurvey.co.kr",
+   "trendmonitor.co.kr",
+   "gallup.co.kr",
+   "kantar.com"
+  ],
+  "official_page": [
+   "apps.apple.com",
+   "play.google.com",
+   "loyverse.com",
+   "orderlist.co.kr",
+   "cafepost.kr",
+   "kcd.co.kr",
+   "cashnote.kr",
+   "korea.kr",
+   "bizinfo.go.kr",
+   "coupangpos.com",
+   "hpos.co.kr",
+   "centumpos.com",
+   "kopays.net",
+   "needs.team",
+   "mirimate.co.kr",
+   "cafe-note.foundry.ai.kr",
+   "foodlogic.co.kr",
+   "about.cafe24wms.com"
+  ],
+  "press": [
+   "yna.co.kr",
+   "hankyung.com",
+   "mk.co.kr",
+   "chosun.com",
+   "donga.com",
+   "joongang.co.kr",
+   "hani.co.kr",
+   "khan.co.kr",
+   "sedaily.com",
+   "edaily.co.kr",
+   "mt.co.kr",
+   "fnnews.com",
+   "etnews.com",
+   "zdnet.co.kr",
+   "imbc.com",
+   "kbs.co.kr",
+   "sbs.co.kr",
+   "ytn.co.kr",
+   "news1.kr",
+   "newsis.com",
+   "asiae.co.kr",
+   "platum.kr",
+   "venturesquare.net"
+  ],
+  "legal_source": [
+   "law.go.kr",
+   "moleg.go.kr",
+   "easylaw.go.kr"
+  ],
+  "community": [
+   "cafe.naver.com",
+   "blog.naver.com",
+   "reddit.com",
+   "clien.net",
+   "dcinside.com",
+   "ppomppu.co.kr"
+  ],
+  "press_release": [
+   "newswire.co.kr"
+  ]
+ },
+ "suffix_downgrade": {
+  "_why": "위 목록에 없는 *.go.kr / *.or.kr 은 공공기관 일반 페이지다. 지자체 보도자료가 섞이므로 통계 생산물로 올려주지 않는다. 반대로 진짜 통계 채널(mods.go.kr 등)은 위에 개별 등재한다.",
+  "go.kr": "aggregate",
+  "or.kr": "aggregate"
+ },
+ "default_kind": "aggregate",
+ "registry": [
+  {
+   "domain": "mods.go.kr",
+   "kind": "gov_stat",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "국가데이터처 공표자료 채널 — 통계 생산 주체가 직접 발행"
+  },
+  {
+   "domain": "loyverse.com",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 제품의 가격·기능을 자기가 밝힌 1차 출처"
+  },
+  {
+   "domain": "orderlist.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 제품 공식 페이지 (1차 출처)"
+  },
+  {
+   "domain": "cafepost.kr",
+   "kind": "official_page",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "자사 가격 페이지 (1차 출처)"
+  },
+  {
+   "domain": "mss.go.kr",
+   "kind": "gov_stat",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "중소벤처기업부 — 「소상공인 실태조사」의 **발행 부처**. 시행기관 sbiz.or.kr 은 이미 등재돼 있었는데 부처만 빠져 있던 비대칭을 메운다"
+  },
+  {
+   "domain": "korea.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "대한민국 정책브리핑 — 정부 발표를 **재유통하는 포털**이고 통계 생산 주체가 아니다. 그래서 gov_stat 이 아니라 official_page 급. 원출처(소관 부처)를 따로 찾는 것이 옳다"
+  },
+  {
+   "domain": "bizinfo.go.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "기업마당 — 중기부가 운영하는 **정책 재유통 포털**. 위와 같은 이유로 gov_stat 아님"
+  },
+  {
+   "domain": "coupangpos.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "쿠팡포스 — 자사 서비스의 가격·기능을 자기가 밝힌 1차 출처"
+  },
+  {
+   "domain": "hpos.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "H포스 — 같음"
+  },
+  {
+   "domain": "centumpos.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "센텀포스 — 같음"
+  },
+  {
+   "domain": "kopays.net",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "한국지급결제 — 같음"
+  },
+  {
+   "domain": "needs.team",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "MIRI(재고관리) 운영사 — 같음"
+  },
+  {
+   "domain": "mirimate.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "MIRI 서비스 도메인 — 같음"
+  },
+  {
+   "domain": "cafe-note.foundry.ai.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "카페노트 — 같음"
+  },
+  {
+   "domain": "foodlogic.co.kr",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "푸드로직 — 같음"
+  },
+  {
+   "domain": "about.cafe24wms.com",
+   "kind": "official_page",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "스마트재고(카페24 WMS) 서비스 소개 — 그 서비스 운영 주체의 1차 출처"
+  },
+  {
+   "domain": "newswire.co.kr",
+   "kind": "press_release",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "뉴스와이어 — **보도자료 배포 대행**이지 매체가 아니다. 발행자는 의뢰 기업 자신이므로 press(3, 언론)로 올리면 자기 홍보가 언론 등급을 받는다. 별도 kind 로 두고 자기발표로 취급한다"
+  }
+ ],
+ "rejected": [
+  {
+   "domain": "cashpop.io",
+   "on": "2026-08-05",
+   "by": "junwoo",
+   "why": "미국 POS·결제 서비스. 1차 출처인 것은 맞으나 조사 대상 범위 밖"
+  },
+  {
+   "domain": "v.daum.net",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "포털 재게시본. URL 로 원 발행자를 알 수 없다 — 발행자 불명은 등재 사유가 없다"
+  },
+  {
+   "domain": "dl.nanet.go.kr",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "국회도서관 서지정보. 원자료 발행자는 중기부이고 이 페이지에는 값이 없다"
+  },
+  {
+   "domain": "gjcouncil.go.kr",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "광주광역시의회 행정사무감사계획. 공공기관이지만 **통계 발행처가 아니다**"
+  },
+  {
+   "domain": "manual.daouoffice.co.kr",
+   "on": "2026-08-06",
+   "by": "junwoo",
+   "why": "그룹웨어 매뉴얼. 조사 대상과 무관"
+  }
+ ],
+ "_kinds_주석": "",
+ "_press_release": "press_release 는 **자기발표**다. scoring.cross.self_published_kinds 에 들어 있어 official_page 와 교차확인을 주고받지 못한다. 두 곳을 같이 본다."
+}

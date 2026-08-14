@@ -1,0 +1,371 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (p12-gate3). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 2,
+    "일자": "2026-08-09",
+    "게이트": "runs/harness/p12-gate3/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "반려동물 수제 간식 브랜드",
+  "as_of": "2026-08-09",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "반려동물 용품 시장",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "반려동물",
+        "시장"
+      ],
+      "must_not_contain": [
+        "의료"
+      ],
+      "value_range": [
+        1000000000,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장",
+        "사유": "반려동물 전체 시장을 대신하여 정확한 통계가 없어 유사 시장으로 잰다"
+      }
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "국내산 수제 간식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "수제 간식"
+      ],
+      "must_not_contain": [
+        "완제품"
+      ],
+      "value_range": [
+        5,
+        90
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "반려동물 수제 간식",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "수제",
+        "간식"
+      ],
+      "must_not_contain": [
+        "가공식품"
+      ],
+      "value_range": [
+        500000000,
+        50000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "유사 시장",
+        "사유": "정확한 통계가 없어 유사 시장으로 잰다"
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "반려견 소포장 간식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "소포장"
+      ],
+      "must_not_contain": [
+        "대용량"
+      ],
+      "value_range": [
+        1,
+        50
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V5",
+      "formula_id": "F_GROWTH",
+      "claim_type": "TAM",
+      "subject": "반려동물 용품 시장",
+      "metric": "연평균 성장률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "성장"
+      ],
+      "must_not_contain": [
+        "하락"
+      ],
+      "value_range": [
+        2,
+        20
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V6",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "반려동물 간식 시장",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "대형"
+      ],
+      "must_not_contain": [
+        "소규모"
+      ],
+      "value_range": [
+        10,
+        200
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V7",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "수제 간식 차별성",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "차별화"
+      ],
+      "must_not_contain": [
+        "일반"
+      ],
+      "value_range": [
+        1000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V8",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "온라인 간식 구매",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "온라인"
+      ],
+      "must_not_contain": [
+        "오프라인"
+      ],
+      "value_range": [
+        1000,
+        30000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V9",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "반려견 간식 신뢰성",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "신뢰"
+      ],
+      "must_not_contain": [
+        "의심"
+      ],
+      "value_range": [
+        10,
+        70
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "원료",
+        "신뢰도",
+        "반려견 보호자가 시판 간식의 원료·첨가물을 신뢰하지 못해 성분을 일일이 확인"
+      ],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V10",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "반려동물 간식 가격",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "대체재"
+      ],
+      "must_not_contain": [
+        "주식"
+      ],
+      "value_range": [
+        2000,
+        25000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_sources": 2,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    }
+  ]
+}

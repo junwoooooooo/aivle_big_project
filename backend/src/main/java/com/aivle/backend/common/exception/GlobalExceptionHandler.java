@@ -1,9 +1,11 @@
 package com.aivle.backend.common.exception;
 
 import com.aivle.backend.common.response.ApiResponse;
+import com.aivle.backend.common.web.RequestIds;
 import com.aivle.backend.auth.LoginRateLimitExceededException;
 import com.aivle.backend.auth.LoginCredentialsFailedException;
 import com.aivle.backend.auth.LoginAttemptRateLimiter.LoginAttemptStatus;
+import com.aivle.backend.taskrun.service.TaskRunFailure;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -75,6 +77,23 @@ public class GlobalExceptionHandler {
                 code.name(), exception.getSafeMessage(), List.of(), code.isRetryable(), requestId(request)));
     }
 
+    @ExceptionHandler(TaskRunFailure.class)
+    public ResponseEntity<ApiResponse<Void>> handleTaskRunFailure(
+        TaskRunFailure exception,
+        HttpServletRequest request
+    ) {
+        String requestId = requestId(request);
+        return ResponseEntity.status(exception.getStatus())
+            .header(RequestIds.HEADER, requestId)
+            .body(ApiResponse.failure(
+                exception.getCode(),
+                "Task request could not be accepted.",
+                List.of(new ApiResponse.FieldError("taskRun", exception.getReason())),
+                exception.isRetryable(),
+                requestId
+            ));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception,
                                                                HttpServletRequest request) {
@@ -128,7 +147,7 @@ public class GlobalExceptionHandler {
     }
 
     private String requestId(HttpServletRequest request) {
-        return request.getHeader("X-Request-Id");
+        return RequestIds.resolve(request);
     }
 
     private ApiResponse.LoginAttempt loginAttempt(LoginAttemptStatus status) {

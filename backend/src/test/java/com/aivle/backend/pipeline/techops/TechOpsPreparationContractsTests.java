@@ -38,6 +38,30 @@ class TechOpsPreparationContractsTests {
     }
 
     @Test
+    void preparationFactoryPreservesPortfolioSolutionOperationAndLegalSources() {
+        var source = MarketAnalysisSeedSnapshot.createPortfolio("seed-v2", 1L, 22L, "concept-v2", "legal-v2", "2.0",
+            "sha256:" + "a".repeat(64), "sha256:" + "b".repeat(64), """
+            {"originalSeed":{"fields":{}},
+             "selectedConcept":{"identity":{"conceptDefinition":"재료 기반 요리 서비스"},
+             "solution":{"solutionMechanism":"보유 재료로 요리법 추천","featureSet":["재료 검색","요리법 공유"]},
+             "operation":{"operatingModel":"온라인 커뮤니티 운영","partnerModel":"식품사 제휴",
+               "partnerRequirements":["제휴 데이터 계약"],"qualificationRequirements":["콘텐츠 검수"]}},
+             "legalResult":{"requiredControls":["광고성 표시"]}}
+            """, 7L, Instant.EPOCH);
+
+        var initial = new TechOpsPreparationFactory(mapper).create(source);
+
+        assertThat(initial.requiredFacts().path("productServiceSpecification").path("value").path("summary").asText())
+            .isEqualTo("보유 재료로 요리법 추천");
+        assertThat(initial.requiredFacts().path("productServiceSpecification").path("value").path("features"))
+            .hasSize(2);
+        assertThat(initial.proposalDecisions().path("deliveryOrProductionMethod").path("proposalValue").toString())
+            .contains("온라인 커뮤니티 운영", "식품사 제휴");
+        assertThat(initial.proposalDecisions().path("technicalSupplyOperationalConstraints").path("proposalValue").toString())
+            .contains("광고성 표시", "제휴 데이터 계약", "콘텐츠 검수");
+    }
+
+    @Test
     void readinessRequiresAllFactsAndAcceptedDecisions() {
         var facts=mapper.createObjectNode();
         TechOpsPreparationFactory.REQUIRED_FACT_KEYS.forEach(key -> facts.putObject(key).put("value", key).put("decision", "LOCKED"));

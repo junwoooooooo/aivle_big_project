@@ -6,7 +6,6 @@ import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 
 vi.mock('../hooks/useConceptPortfolio.js', () => ({ useConceptPortfolio: vi.fn() }));
 vi.mock('../../../shared/async-events/index.js', () => ({
-  jobEventMessage: (event) => event.message ?? event.messageKey,
   useJobEvents: () => ({ events: [], transport: 'idle' }),
 }));
 
@@ -72,6 +71,25 @@ describe('structured hypothesis fields', () => {
 });
 
 describe('BusinessProposalWorkspace', () => {
+  it('run 전에는 생성·법률검토·비교 과정을 보여주고 비교 tab을 숨긴다', () => {
+    useConceptPortfolio.mockReturnValue(base({ run: null, concepts: [] }));
+    renderWorkspace();
+    expect(screen.getByRole('heading', { name: '사업안 생성 및 검토' })).toBeInTheDocument();
+    expect(screen.getByText('법률·규제 검토')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '사업안 생성 및 법률 검토 시작' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '비교' })).not.toBeInTheDocument();
+  });
+
+  it('사업안이 두 개 준비된 뒤에만 비교 tab을 표시한다', () => {
+    useConceptPortfolio.mockReturnValue(base({ concepts: [
+      { conceptId: 'c1', candidateId: 'a', conceptName: 'A' },
+      { conceptId: 'c2', candidateId: 'b', conceptName: 'B' },
+    ] }));
+    renderWorkspace();
+    expect(screen.getByRole('heading', { name: '사업안 검토' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '비교' })).toBeInTheDocument();
+  });
+
   it('does not show a recovered notice for proposals already present at selection baseline', () => {
     let state = base({ selection: { selectionId: 17, conceptId: 'c1', hypothesisConfirmedCount: 0 },
       concepts: [{ conceptId: 'c1', candidateId: 'a', conceptName: 'A' }, { conceptId: 'c2', candidateId: 'b', conceptName: 'B' }] });
@@ -98,7 +116,7 @@ describe('Portfolio status summary', () => {
       onRestart={vi.fn()} onDetail={vi.fn()} />);
     expect(screen.getByText('5개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '작업 상세 보기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '전체 처리 기록 보기' })).toBeInTheDocument();
   });
   it('explains actionable zero-accepted NEEDS_INPUT', () => {
     render(<PortfolioStatus run={{ productStatus: 'NEEDS_INPUT', producedConceptCount: 0, openInputCount: 1 }}
@@ -124,6 +142,6 @@ describe('Final Legal Report actual contract', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('조회 범위에는 제한');
     expect(screen.getByRole('link', { name: '법령 원문 보기' })).toHaveAttribute('href', 'https://law.go.kr/example');
     expect(view.container.querySelector('pre')).toBeNull();
-    expect(screen.getByText('정본 검증 정보').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByText('기술 정보').closest('details')).not.toHaveAttribute('open');
   });
 });

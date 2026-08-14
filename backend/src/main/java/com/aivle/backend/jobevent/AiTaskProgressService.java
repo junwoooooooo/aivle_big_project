@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiTaskProgressService {
+    private static final java.util.Set<TaskType> ALLOWED_TASK_TYPES = java.util.Set.of(
+        TaskType.CONCEPT_PORTFOLIO_V2_RUN, TaskType.MARKET_RESEARCH, TaskType.TWIN_SURVEY,
+        TaskType.TECH_OPS_ADVISORY);
     public enum Outcome { ACCEPTED, IGNORED, NOT_FOUND, INVALID }
 
     private final TaskRunRepository runs;
@@ -29,7 +32,7 @@ public class AiTaskProgressService {
     public Outcome accept(AiTaskProgressController.ProgressRequest request) {
         TaskRun run = runs.findById(request.taskRunId()).orElse(null);
         if (run == null) return Outcome.NOT_FOUND;
-        if (run.getTaskType() != TaskType.CONCEPT_PORTFOLIO_V2_RUN
+        if (!ALLOWED_TASK_TYPES.contains(run.getTaskType())
                 || !run.getCorrelationId().equals(request.correlationId())) return Outcome.INVALID;
         if (run.getState() != TaskRunState.RUNNING || run.terminal()
                 || !request.taskAttemptId().equals(run.getCurrentAttemptId())) return Outcome.IGNORED;
@@ -45,15 +48,36 @@ public class AiTaskProgressService {
             params.put("traceDetail", bounded(request.safeSummary(), 256));
             if (request.reasonCode() != null) params.put("reasonCode", request.reasonCode());
             if (request.decision() != null) params.put("decision", request.decision());
-            String key = messageKey(request.stage(), request.action(), request.reasonCode());
+            String key = messageKey(run, request.stage(), request.action(), request.reasonCode());
+            String eventType = eventType(run);
             events.publish(new JobEventPublisher.Command(
                 run.getProject().getId(), run.getId(), run.getId(),
-                "TRACE_" + request.stage(), "job.concept-portfolio.trace",
+                "TRACE_" + request.stage(), eventType,
                 JobEvent.Status.RUNNING, key, params, null));
             return Outcome.ACCEPTED;
         } catch (IllegalStateException lateTerminal) {
             return Outcome.IGNORED;
         }
+    }
+
+    static String messageKey(TaskRun run, String stage, String action, String reasonCode) {
+        if (run.getTaskType() == TaskType.MARKET_RESEARCH) {
+            return "MARKET_RESEARCH_BM".equals(run.getSubjectType())
+                ? "job.business-model.trace" : "job.market.trace";
+        }
+        if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
+        if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
+        return messageKey(stage, action, reasonCode);
+    }
+
+    private static String eventType(TaskRun run) {
+        if (run.getTaskType() == TaskType.MARKET_RESEARCH) {
+            return "MARKET_RESEARCH_BM".equals(run.getSubjectType())
+                ? "job.business-model.trace" : "job.market.trace";
+        }
+        if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
+        if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
+        return "job.concept-portfolio.trace";
     }
 
     static String messageKey(String stage, String action, String reasonCode) {

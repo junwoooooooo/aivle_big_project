@@ -1,0 +1,882 @@
+{
+ "_설명": "슬롯 하네스 산출 스냅샷 (beauty-noshow). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+ "_생성": {
+  "방식": "LLM 초안 + 기계 게이트",
+  "model": "gpt-4o",
+  "시도": 1,
+  "일자": "2026-08-08",
+  "게이트": "runs/harness/beauty-noshow/gate.json"
+ },
+ "_수정이력": [
+  {
+   "시점": "2026-08-08",
+   "이전_생성": {
+    "방식": "LLM 초안 1회 + 기계 게이트",
+    "model": "gpt-4o",
+    "일자": "2026-08-08",
+    "게이트": "runs/harness/beauty-noshow/gate.json"
+   },
+   "사유": "게이트 16항목·경쟁 씨앗·구조적 enum·가격 칸 배선 반영 후 재생성. 2026-08-08 사람 승인 — 1차 초안(결함 6개)을 대체."
+  },
+  {
+   "시점": "2026-08-08",
+   "이전_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 1,
+    "일자": "2026-08-08",
+    "게이트": "runs/harness/beauty-noshow/gate.json"
+   },
+   "사유": "게이트 19항목(1:1 결속·value_range 폭·역방향 corp·DART 검증 슬롯) 반영 후 재생성. 2026-08-08 사람 승인 — 침투율 자리 오염·[0,0] 밴드·web계량+corp 라우팅 오류를 고친다."
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "사람 칸 1회 수정 (재생성 아님)",
+   "사유": "value_range 자릿수가 실제값을 벗어나 정답이 off_slot 으로 격리될 위험 3건, 가격·CAC 슬롯의 subject 가 업종이라 찾을 것이 없던 3건. must_contain·value_range·subject 는 원래 사람 칸이다(F6).",
+   "변경": [
+    {
+     "slot_id": "S1",
+     "before": {
+      "value_range": [
+       10000,
+       50000
+      ]
+     },
+     "after": {
+      "value_range": [
+       50000,
+       300000
+      ]
+     }
+    },
+    {
+     "slot_id": "S4",
+     "before": {
+      "subject": "두발 미용업"
+     },
+     "after": {
+      "subject": "미용실 예약 관리 SaaS"
+     }
+    },
+    {
+     "slot_id": "S5",
+     "before": {
+      "value_range": [
+       1000,
+       5000
+      ]
+     },
+     "after": {
+      "value_range": [
+       5000,
+       60000
+      ]
+     }
+    },
+    {
+     "slot_id": "S8",
+     "before": {
+      "subject": "두발 미용업"
+     },
+     "after": {
+      "subject": "미용실 예약 관리 SaaS"
+     }
+    },
+    {
+     "slot_id": "S13",
+     "before": {
+      "value_range": [
+       100000000,
+       900000000
+      ]
+     },
+     "after": {
+      "value_range": [
+       100000000000,
+       10000000000000
+      ]
+     }
+    },
+    {
+     "slot_id": "S15",
+     "before": {
+      "subject": "두발 미용업"
+     },
+     "after": {
+      "subject": "소상공인 SaaS"
+     }
+    }
+   ]
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "엔진 로드 호환 — 키 이름만, 내용 무변경",
+   "사유": "run.py:243 이 `_` 로 시작하지 않는 키를 전부 Slot(**s) 에 넘긴다. `canvas_cell` 은 Slot 계약 밖이라 beauty-01 이 A1 이전에 TypeError 로 죽었다. 하네스 부가 정보는 `_` 로 시작해야 한다(게이트 G18 신설).",
+   "변경": [
+    {
+     "key": "canvas_cell → _canvas_cell",
+     "슬롯수": 17,
+     "값_변경": "없음"
+    }
+   ]
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "가드 보정 — beauty-02 실측 근거 (승인된 수정)",
+   "사유": "beauty-02 에서 찾은 사실 5건이 전부 값은 맞는데 가드에서 격리됐다. KOSIS 통계표 본문에 「시장·국내」가 없고, 요금 페이지에는 「무료」 플랜이 거의 항상 적힌다. must_contain 은 **비우지 않고 주제어로 교체**한다 — 빈 가드는 F9 방어선을 약화시킨다. S13 상한은 실제값(12.03조)이 넘겨서 올린다.",
+   "변경": [
+    {
+     "slot_id": "S1",
+     "before": {
+      "must_contain": [
+       "시장",
+       "국내"
+      ]
+     },
+     "after": {
+      "must_contain": [
+       "미용",
+       "사업체"
+      ]
+     }
+    },
+    {
+     "slot_id": "S4",
+     "before": {
+      "must_not_contain": [
+       "무료"
+      ]
+     },
+     "after": {
+      "must_not_contain": []
+     }
+    },
+    {
+     "slot_id": "S8",
+     "before": {
+      "must_not_contain": [
+       "무료"
+      ]
+     },
+     "after": {
+      "must_not_contain": []
+     }
+    },
+    {
+     "slot_id": "S13",
+     "before": {
+      "value_range": [
+       100000000000,
+       10000000000000
+      ]
+     },
+     "after": {
+      "value_range": [
+       100000000000,
+       100000000000000
+      ]
+     }
+    },
+    {
+     "slot_id": "S16",
+     "before": {
+      "must_contain": [
+       "문제",
+       "방해"
+      ]
+     },
+     "after": {
+      "must_contain": [
+       "노쇼",
+       "예약"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "승인된 1회 수정 (재생성 아님)",
+   "사유": "백로그 11/17 결정 반영 — CHANNEL 신설. 잠정 태그는 1판 실측 근거(beauty-02 S15 coverage=공백)로 해소. 이 스냅샷은 판 ②의 수집부터 적용된다 — beauty-02/03 원장은 COMPARABLE 조건 수집이라 소급하지 않는다",
+   "변경": [
+    {
+     "slot_id": "S15",
+     "before": {
+      "claim_type": "COMPARABLE",
+      "_잠정": "백로그 11 미결 — CHANNEL claim_type 흡수 vs 신설은 2단계에서 정한다. 그때의 스냅샷 수정은 재생성이 아니라 승인된 1회 수정으로 기록한다."
+     },
+     "after": {
+      "claim_type": "CHANNEL",
+      "_잠정": null
+     }
+    }
+   ]
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "승인된 개정 (판 ②, 재생성 아님)",
+   "사유": "백로그 20 — PAIN 슬롯 계량 교체. **근거는 실측이다**: beauty-02 에서 사용자 문서 5/5 가 usable 로 적재됐는데 채택 0 이었고, off_slot 사유는 `must_contain 없음: ['문제','방해']` 였다. 자료(중기부·공정위 「소상공인 노쇼 피해 실태조사」, 외식업 214곳, 조사 2025-11-24~12-10, 발표 2026-01-01)가 보고하는 계량은 「예약 부도율」이 아니라 「최근 3년 이내 노쇼 피해 경험률 65%」다. 어댑터가 아니라 슬롯 정의가 어긋나 있었다. subject 를 자료의 실제 모집단(외식업)으로 바꾸고 `_경계` 를 붙인다 — 미용업 통계가 아니라는 표시를 지우지 않는다(백로그 15 와 같은 종류의 교정). value_range 상한 50 은 실제값 65 를 격리한다(백로그 14 와 같은 종류의 결함) — 비율 계량의 자연 범위 [0,100] 으로 연다. must_contain 은 5건 본문 대조로 정했다.",
+   "변경": [
+    {
+     "slot_id": "S16",
+     "before": {
+      "subject": "두발 미용업",
+      "metric": "예약 부도율",
+      "must_contain": [
+       "노쇼",
+       "예약"
+      ],
+      "value_range": [
+       5,
+       50
+      ]
+     },
+     "after": {
+      "subject": "외식업 소상공인",
+      "metric": "노쇼 피해 경험률",
+      "must_contain": [
+       "노쇼",
+       "피해"
+      ],
+      "value_range": [
+       0,
+       100
+      ],
+      "_경계": "외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 **인접 업종 근거**로만 읽고, 미용실 노쇼율로 옮겨 적지 않는다."
+     }
+    }
+   ],
+   "_안_바꾼_것": "must_not_contain ['원활'] 은 유지했다 — 사용자 문서 5건 본문에 0회라 새 계량에 무해함을 대조로 확인했다. period·unit·claim_type·accept·_canvas_cell 무변경. 다른 16개 슬롯 diff 0."
+  },
+  {
+   "시점": "2026-08-08",
+   "종류": "승인된 개정 (판 ④ 진로 C, 재생성 아님)",
+   "사유": "① S5 에 `stat_code=101/DT_1K52F03` 기입 — beauty-05 의 not_found 는 자료 부재가 아니라 stat_code 미기재였음이 0단계 실측으로 확정됐다(runs/kosis-probe-04). ② S20·S21 신설 — 연도별 사업체 수(2023·2024) **성장률 전용 축**. **S18·S19(1인 사업체 수)는 만들지 않았다** — 「1인」 구간이 국가통계에 없음이 표 6개 전수 확인으로 확정됐다(최소 구간 「1~4명」). 추측으로 채우지 않는다.",
+   "바꾼_칸": {
+    "S5": {
+     "before": {
+      "stat_code": null,
+      "region": "서울특별시",
+      "must_contain": [
+       "서울",
+       "소규모"
+      ]
+     },
+     "after": {
+      "stat_code": "101/DT_1K52F03",
+      "region": "서울",
+      "must_contain": [
+       "미용",
+       "사업체"
+      ]
+     }
+    },
+    "신설": [
+     "S20",
+     "S21"
+    ]
+   },
+   "안_바꾼_것": "식(`F_TAM`·`F_SAM`) **무수정** · 기존 17슬롯의 사람 칸 무수정 · 세그먼트비중 항 유지(가정의 **출신만** 교체 — rules/assumptions.v1.json v2)",
+   "실측_근거": "runs/kosis-probe-04/kosis_probe.md",
+   "드라이런_발견": "stat_code 기입만으로는 S5 가 열리지 않았다. 축 폴백(전국)과 통과 불가능한 must_contain 두 겹이 더 있었고 **유료 실행 전에** 잡았다."
+  }
+ ],
+ "concept": "1인 미용실 예약·노쇼 관리 구독 SaaS",
+ "as_of": "2026-08-08",
+ "slots": [
+  {
+   "slot_id": "S1",
+   "var_id": "V1",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "두발 미용업",
+   "metric": "사업체 수",
+   "period": "2024",
+   "unit": "개",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "미용",
+    "사업체"
+   ],
+   "must_not_contain": [
+    "제조업"
+   ],
+   "value_range": [
+    50000,
+    300000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S2",
+   "var_id": "V2",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "두발 미용업",
+   "metric": "종사자 1인 사업체 비율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "1인",
+    "세그먼트"
+   ],
+   "must_not_contain": [
+    "법인"
+   ],
+   "value_range": [
+    30,
+    70
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S3",
+   "var_id": "V3",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "두발 미용업",
+   "metric": "도입률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "침투",
+    "도입"
+   ],
+   "must_not_contain": [
+    "과점"
+   ],
+   "value_range": [
+    1,
+    20
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S4",
+   "var_id": "V4",
+   "formula_id": "F_TAM",
+   "claim_type": "PRICE",
+   "subject": "미용실 예약 관리 SaaS",
+   "metric": "월 구독료",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "구독",
+    "가격"
+   ],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    100000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원"
+  },
+  {
+   "slot_id": "S5",
+   "var_id": "V6",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "두발 미용업",
+   "metric": "사업체 수",
+   "period": "2024",
+   "unit": "개",
+   "region": "서울",
+   "subject_code": null,
+   "stat_code": "101/DT_1K52F03",
+   "corp_name": null,
+   "must_contain": [
+    "미용",
+    "사업체"
+   ],
+   "must_not_contain": [
+    "대규모"
+   ],
+   "value_range": [
+    5000,
+    60000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_stat_code_사유": "판 ④ 0단계 실측. beauty-05 의 실패는 자료 부재가 아니라 `stat_code` 미기재였다(원장: bad_stat_code — 후보 5개가 전부 «지역불일치»). 표 `101/DT_1K52F03` 에 행정구역 축(전국+17시도, 「서 울」)이 있고 산업 축에 「두발 미용업」(S96112)이 완전일치로 있다. 실측 2024 서울 = 19,026개.",
+   "_판④_추가수정": "드라이런이 잡은 2건 — **stat_code 만으로는 열리지 않았다.**\n① region 「서울특별시」→「서울」: KOSIS 행정구역 항목명이 「서  울」이라 「서울특별시」로는 축이 안 맞고 **조용히 전국(기본값)으로 폴백**했다(값 115,310). 「서울」로 두면 `행정구역별=11(이름 일치)` 로 붙어 **19,026** 이 온다.\n② must_contain 「서울·소규모」→「미용·사업체」: KOSIS 응답의 지역 표기가 「서  울」(공백 포함)이라 「서울」 문자열이 **원문에 존재하지 않는다** — 그 가드는 통과 불가능한 벽이었고 실제로 `off_slot: must_contain 없음` 을 만들었다. S1 과 같은 주제어 가드로 맞춘다. **심사 완화가 아니다**: 지역 판별은 `value_range [5000,60000]` 이 맡는다 — 전국 115,310 은 걸리고 서울 19,026 은 통과한다. must_contain 은 «무엇에 대한 값인가»(두발 미용업), value_range 는 «어느 범위인가»(서울)를 본다."
+  },
+  {
+   "slot_id": "S6",
+   "var_id": "V7",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "두발 미용업",
+   "metric": "종사자 1인 사업체 비율",
+   "period": "2025",
+   "unit": "%",
+   "region": "서울특별시",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "서울",
+    "세그먼트비중"
+   ],
+   "must_not_contain": [
+    "상업"
+   ],
+   "value_range": [
+    30,
+    80
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S7",
+   "var_id": "V8",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "두발 미용업",
+   "metric": "도입률",
+   "period": "2025",
+   "unit": "%",
+   "region": "서울특별시",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "도입",
+    "서울"
+   ],
+   "must_not_contain": [
+    "신규"
+   ],
+   "value_range": [
+    1,
+    20
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S8",
+   "var_id": "V9",
+   "formula_id": "F_SAM",
+   "claim_type": "PRICE",
+   "subject": "미용실 예약 관리 SaaS",
+   "metric": "월 구독료",
+   "period": "2025",
+   "unit": "원",
+   "region": "서울특별시",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "구독",
+    "월간"
+   ],
+   "must_not_contain": [],
+   "value_range": [
+    10000,
+    150000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원"
+  },
+  {
+   "slot_id": "S9",
+   "var_id": "V11",
+   "formula_id": "F_GROWTH",
+   "claim_type": "TAM",
+   "subject": "두발 미용업",
+   "metric": "연평균 성장률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "성장",
+    "추이"
+   ],
+   "must_not_contain": [
+    "감소"
+   ],
+   "value_range": [
+    1,
+    20
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "고객 세그먼트"
+  },
+  {
+   "slot_id": "S10",
+   "var_id": "V12",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "공비서",
+   "metric": "가입 매장 수",
+   "period": "2025",
+   "unit": "곳",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "경쟁상황",
+    "비교"
+   ],
+   "must_not_contain": [
+    "비교불가"
+   ],
+   "value_range": [
+    100,
+    5000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안"
+  },
+  {
+   "slot_id": "S11",
+   "var_id": "V13",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "핸드SOS",
+   "metric": "가입 매장 수",
+   "period": "2025",
+   "unit": "곳",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "경쟁사",
+    "시장"
+   ],
+   "must_not_contain": [
+    "독점"
+   ],
+   "value_range": [
+    100,
+    3000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안"
+  },
+  {
+   "slot_id": "S12",
+   "var_id": "V14",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "네이버 예약",
+   "metric": "가입 매장 수",
+   "period": "2025",
+   "unit": "곳",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "대체재",
+    "시장"
+   ],
+   "must_not_contain": [
+    "수직적 결합"
+   ],
+   "value_range": [
+    500,
+    20000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안"
+  },
+  {
+   "slot_id": "S13",
+   "var_id": "V15",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "네이버 예약",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "NAVER",
+   "must_contain": [
+    "수익",
+    "비교"
+   ],
+   "must_not_contain": [
+    "적자"
+   ],
+   "value_range": [
+    100000000000,
+    100000000000000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다.",
+   "_canvas_cell": "가치 제안"
+  },
+  {
+   "slot_id": "S14",
+   "var_id": "V16",
+   "formula_id": "F_DIFF",
+   "claim_type": "COMPARABLE",
+   "subject": "공비서",
+   "metric": "누적 가입자 수",
+   "period": "2025",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "차별",
+    "가치"
+   ],
+   "must_not_contain": [
+    "동일"
+   ],
+   "value_range": [
+    1000,
+    500000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안"
+  },
+  {
+   "slot_id": "S15",
+   "var_id": "V17",
+   "formula_id": "F_CHANNEL",
+   "claim_type": "CHANNEL",
+   "subject": "소상공인 SaaS",
+   "metric": "고객 획득 비용",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "획득",
+    "비용"
+   ],
+   "must_not_contain": [
+    "무분별한"
+   ],
+   "value_range": [
+    5000,
+    100000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "채널"
+  },
+  {
+   "slot_id": "S16",
+   "var_id": "V18",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "외식업 소상공인",
+   "metric": "노쇼 피해 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "노쇼",
+    "피해"
+   ],
+   "must_not_contain": [
+    "원활"
+   ],
+   "value_range": [
+    0,
+    100
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "가치 제안",
+   "_경계": "외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 **인접 업종 근거**로만 읽고, 미용실 노쇼율로 옮겨 적지 않는다."
+  },
+  {
+   "slot_id": "S17",
+   "var_id": "V19",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "네이버 예약",
+   "metric": "이용 요금",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [
+    "비용",
+    "가격"
+   ],
+   "must_not_contain": [
+    "할인"
+   ],
+   "value_range": [
+    0,
+    100000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 2,
+    "min_facts": 2
+   },
+   "_canvas_cell": "수익원"
+  },
+  {
+   "slot_id": "S20",
+   "var_id": "V20",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "두발 미용업",
+   "metric": "사업체 수",
+   "period": "2023",
+   "unit": "개",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": "101/DT_1K52F03",
+   "corp_name": null,
+   "must_contain": [
+    "미용",
+    "사업체"
+   ],
+   "must_not_contain": [
+    "제조업"
+   ],
+   "value_range": [
+    50000,
+    300000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 1,
+    "min_facts": 1
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_용도": "성장률 계산 **전용**. 판정 층이 S20·S21 두 관측으로 단순 증감률을 낸다. claim_type 을 TAM 이 아니라 GROWTH 로 둔 것은 **TAM 기준값 선택에 섞이지 않게 하기 위해서**다 — verdict._pick_base 수리와 이중 방어.",
+   "_기대값": "0단계 실측: 전국 2023 = 112,737개"
+  },
+  {
+   "slot_id": "S21",
+   "var_id": "V21",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "두발 미용업",
+   "metric": "사업체 수",
+   "period": "2024",
+   "unit": "개",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": "101/DT_1K52F03",
+   "corp_name": null,
+   "must_contain": [
+    "미용",
+    "사업체"
+   ],
+   "must_not_contain": [
+    "제조업"
+   ],
+   "value_range": [
+    50000,
+    300000
+   ],
+   "accept": {
+    "min_score": 5,
+    "min_sources": 1,
+    "min_facts": 1
+   },
+   "_canvas_cell": "고객 세그먼트",
+   "_용도": "성장률 계산 **전용**. 판정 층이 S20·S21 두 관측으로 단순 증감률을 낸다. claim_type 을 TAM 이 아니라 GROWTH 로 둔 것은 **TAM 기준값 선택에 섞이지 않게 하기 위해서**다 — verdict._pick_base 수리와 이중 방어.",
+   "_기대값": "0단계 실측: 전국 2024 = 115,310개 (S1 과 같은 값·다른 용도)"
+  }
+ ],
+ "_동결": "2026-08-08 **재동결** (판 ④ 승인된 개정 후). 개정 범위는 S5 stat_code 1칸 + S20·S21 신설 2개이고 전부 `_수정이력` 마지막 엔트리에 값째로 있다. 이후 재생성·재수정 금지. 고쳐야 할 것이 생기면 고치지 말고 백로그에 적는다. ⚠ `_동결` 은 **코드가 강제하지 않는다**(백로그 21). `harness/slot_harness.py` 의 `write()` 는 확인 없이 덮어쓰며 `_수정이력`·`_동결`·사람 칸을 통째로 날린다 — 이 판도 `write()` 를 돌리지 않고 **손편집**했다."
+}

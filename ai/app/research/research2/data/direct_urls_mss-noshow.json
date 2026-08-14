@@ -1,0 +1,10 @@
+{
+  "_설명": "mss-noshow 적재분. 입수만 사람이고 심사는 엔진이 원래 잣대로 한다.",
+  "_경계": "정부 보도자료 원문(중소벤처기업부). 입수만 사람이 했고 심사는 엔진이 원래 잣대로 한다 — quote_verified·off_slot·값 일치·화자 가드 전부 동일.",
+  "channel": "gov_doc",
+  "by_slot": {
+    "S16": [
+      "https://www.mss.go.kr/common/board/Download.do?bcIdx=1064466&cbIdx=86&streFileNm=b40f3336-2e66-46dd-826e-88c9a4e2189d.pdf"
+    ]
+  }
+}

@@ -6,6 +6,7 @@ import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.ConfirmRequ
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.DeriveRequest;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.FieldCommand;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.PatchFieldsRequest;
+import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.PatchInterpretationRequest;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.CommitmentDecisionCommand;
 import static com.aivle.backend.pipeline.idea.api.IdeaBriefApiModels.ReviewCommitmentsRequest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -159,6 +160,40 @@ class IdeaBriefCanonicalizationIntegrationTests {
         assertThat(response.confirmedSnapshotId()).isEqualTo(fixture.brief().getId());
         assertThat(fixture.brief().getSnapshotHash()).startsWith("sha256:");
         assertThat(response.overview()).isEqualTo("Canonical overview only");
+    }
+
+    @Test
+    void editedInterpretationIsConfirmedWithoutChangingOriginalUserFieldProvenance() {
+        Fixture fixture = fixture();
+        for (var definition : IdeaBriefFieldCatalog.fields()) {
+            if (!definition.requiredForConcept()) continue;
+            fields.save(IdeaBriefField.userValue(fixture.brief(), definition.key(),
+                "original " + definition.key(), definition.defaultDecisionState()));
+        }
+        fixture.brief().applyAssessment("Ready summary", "[]", "[]", "READY_FOR_REVIEW", 100,
+            assessmentHasher.hash(fixture.brief(), fields.findAllByBriefIdOrderById(fixture.brief().getId())));
+        fixture.brief().applySafetyAndInterpretation("ALLOW", "[]", "[]", "진행할 수 있습니다.", """
+            {"interpretedProblem":"old","interpretedTargetUsers":"users","usageContext":"context",
+             "industryCategory":"industry","researchScope":"scope","conciseIdeaDefinition":"definition",
+             "targetRegionInterpretation":"region","relevantKnownCompetitorContext":"competition",
+             "commitmentCandidates":[]}
+            """);
+        fixture.brief().readyForReview();
+
+        service.patchInterpretation(fixture.user().getId(), fixture.project().getId(),
+            new PatchInterpretationRequest("사용자가 수정한 문제", "users", "context", "industry",
+                "scope", "definition", "region", "competition"),
+            "patch-interpretation-" + UUID.randomUUID());
+
+        IdeaBriefField original = fields.findByBriefIdAndFieldKey(fixture.brief().getId(), "problem").orElseThrow();
+        assertThat(fixture.brief().getInterpretationJson()).contains("사용자가 수정한 문제", "\"userEdited\":true");
+        assertThat(original.getFieldValue()).isEqualTo("original problem");
+        assertThat(original.getProvenance()).isEqualTo(IdeaFieldProvenance.USER_INPUT);
+
+        var confirmed = service.confirm(fixture.user().getId(), fixture.project().getId(),
+            new ConfirmRequest(null), "confirm-edited-interpretation-" + UUID.randomUUID());
+        assertThat(confirmed.status()).isEqualTo(IdeaBriefStatus.CONFIRMED);
+        assertThat(fixture.brief().getInterpretationJson()).contains("사용자가 수정한 문제");
     }
 
     @Test

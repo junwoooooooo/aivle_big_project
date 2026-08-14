@@ -1,0 +1,599 @@
+{
+ "slots": [
+  {
+   "slot_id": "S1",
+   "var_id": "V1",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000.0,
+    100000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S2",
+   "var_id": "V2",
+   "formula_id": "F_TAM",
+   "claim_type": "TAM",
+   "subject": "냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S3",
+   "var_id": "V3",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "프리미엄 냉동 간편식",
+   "metric": "거래액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000.0,
+    10000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S4",
+   "var_id": "V4",
+   "formula_id": "F_SAM",
+   "claim_type": "SAM",
+   "subject": "프리미엄 냉동 간편식",
+   "metric": "시장 점유율",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S5",
+   "var_id": "V5",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2024",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000.0,
+    100000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2026,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S6",
+   "var_id": "V6",
+   "formula_id": "F_GROWTH",
+   "claim_type": "GROWTH",
+   "subject": "냉동 간편식",
+   "metric": "거래액",
+   "period": "2023",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000000.0,
+    100000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2025,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S7",
+   "var_id": "V7",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "CJ제일제당",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "CJ제일제당",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000.0,
+    500000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다.",
+   "경계_출처": "사람",
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S8",
+   "var_id": "V8",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "오뚜기 냉동식품",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "오뚜기",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000.0,
+    500000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다.",
+   "경계_출처": "사람",
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S9",
+   "var_id": "V9",
+   "formula_id": "F_COMP",
+   "claim_type": "COMP",
+   "subject": "풀무원 간편식",
+   "metric": "매출액",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": "풀무원식품",
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100000000.0,
+    500000000000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다.",
+   "경계_출처": "사람",
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S10",
+   "var_id": "V10",
+   "formula_id": "F_DIFF",
+   "claim_type": "COMPARABLE",
+   "subject": "프리미엄 냉동 간편식",
+   "metric": "누적 가입자 수",
+   "period": "2025",
+   "unit": "명",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1,
+    100000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S11",
+   "var_id": "V11",
+   "formula_id": "F_CHANNEL",
+   "claim_type": "CHANNEL",
+   "subject": "신세계푸드 간편식",
+   "metric": "고객 획득 비용",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    1000,
+    10000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S12",
+   "var_id": "V12",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 냉동 간편식 소비",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S13",
+   "var_id": "V13",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 외식 소비",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S14",
+   "var_id": "V14",
+   "formula_id": "F_PAIN",
+   "claim_type": "PAIN",
+   "subject": "1인 가구 배달비 부담",
+   "metric": "문제 경험률",
+   "period": "2025",
+   "unit": "%",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    0,
+    100
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S15",
+   "var_id": "V15",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "비비고 냉동식품",
+   "metric": "판매가",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100,
+    100000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S16",
+   "var_id": "V16",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "오뚜기 냉동식품",
+   "metric": "판매가",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100,
+    100000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  },
+  {
+   "slot_id": "S17",
+   "var_id": "V17",
+   "formula_id": "F_PRICE",
+   "claim_type": "PRICE",
+   "subject": "풀무원 간편식",
+   "metric": "판매가",
+   "period": "2025",
+   "unit": "원",
+   "region": "대한민국",
+   "subject_code": null,
+   "stat_code": null,
+   "corp_name": null,
+   "must_contain": [],
+   "subject_aliases": [],
+   "must_not_contain": [],
+   "value_range": [
+    100,
+    100000000.0
+   ],
+   "period_min": 2023,
+   "period_max": 2027,
+   "accept": {
+    "min_score": 5,
+    "min_facts": 2
+   },
+   "경계": null,
+   "경계_출처": null,
+   "proxy_선언": {
+    "대상": "",
+    "사유": ""
+   },
+   "proxy_사유": null,
+   "경계_proxy": null
+  }
+ ]
+}

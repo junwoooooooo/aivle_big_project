@@ -14,6 +14,8 @@ import com.aivle.backend.pipeline.integration.repository.ModuleHandoffRepository
 import com.aivle.backend.pipeline.integration.repository.ModuleRunRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.market.MarketResearchRun;
+import com.aivle.backend.pipeline.market.MarketResearchService;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputSnapshot;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
@@ -40,6 +42,7 @@ public class ModuleIntegrationService {
     private final ModuleRunRepository runs;
     private final TechOpsInputSnapshotRepository techOpsSnapshots;
     private final FinancialInputSnapshotRepository financialSnapshots;
+    private final MarketResearchService marketResearch;
     private final ObjectMapper mapper;
 
     @Transactional
@@ -64,7 +67,7 @@ public class ModuleIntegrationService {
             inputContract = TECH_OPS_INPUT_CONTRACT;
             inputJson = snapshot.getSnapshotJson();
         } else if (module == ModuleType.FINANCIAL_ANALYSIS) {
-            FinancialInputSnapshot snapshot = currentFinancialSnapshot(projectId);
+            FinancialInputSnapshot snapshot = currentFinancialSnapshot(ownerId, projectId);
             inputId = snapshot.getId();
             inputHash = snapshot.getSnapshotHash();
             inputContract = FINANCIAL_INPUT_CONTRACT;
@@ -85,7 +88,7 @@ public class ModuleIntegrationService {
         var existing = handoffs.findByIdempotencyKeyAndDeletedAtIsNull(key);
         if (existing.isPresent()) {
             return response(existing.get(), runs.findByHandoffIdAndProjectIdAndDeletedAtIsNull(
-                existing.get().getId(), projectId).orElseThrow());
+                existing.get().getId(), projectId).orElseThrow(), ownerId);
         }
 
         Instant requestedAt = Instant.now();
@@ -95,14 +98,14 @@ public class ModuleIntegrationService {
             handoffId, projectId, module, inputContract, inputId, inputHash, inputJson, operation, key,
             "/api/v3/projects/" + projectId + "/module-runs/" + runId, ownerId, requestedAt));
         ModuleRun run = runs.save(ModuleRun.notConnected(runId, handoff));
-        return response(handoff, run);
+        return response(handoff, run, ownerId);
     }
 
     @Transactional(readOnly = true)
     public ModuleRunListResponse list(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
         return new ModuleRunListResponse(runs.findAllByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId)
-            .stream().map(run -> response(run, currentSnapshotId(projectId, run.getModule()))).toList());
+            .stream().map(run -> response(run, currentSnapshotId(ownerId, projectId, run.getModule()))).toList());
     }
 
     @Transactional(readOnly = true)
@@ -111,10 +114,10 @@ public class ModuleIntegrationService {
         ModuleRun run = runs.findByIdAndProjectIdAndDeletedAtIsNull(runId, projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                 "Module Run을 찾을 수 없습니다."));
-        return response(run, currentSnapshotId(projectId, run.getModule()));
+        return response(run, currentSnapshotId(ownerId, projectId, run.getModule()));
     }
 
-    private HandoffResponse response(ModuleHandoff handoff, ModuleRun run) {
+    private HandoffResponse response(ModuleHandoff handoff, ModuleRun run, Long ownerId) {
         boolean marketSeed = handoff.getModule() == ModuleType.MARKET_ANALYSIS
             || handoff.getModule() == ModuleType.BUSINESS_MODEL;
         boolean techOps = handoff.getModule() == ModuleType.TECH_OPS;
@@ -127,7 +130,7 @@ public class ModuleIntegrationService {
             handoff.getInputSnapshotId(), handoff.getInputSnapshotHash(), inputType, "2.0",
             handoff.getRequestedAt(), new CallbackView(handoff.getCallbackMode(), handoff.getCallbackReference()),
             handoff.getRequestedOperation(), handoff.getStatus(), mapper.readTree(handoff.getInputSnapshotJson()),
-            response(run, currentSnapshotId(handoff.getProjectId(), run.getModule())));
+            response(run, currentSnapshotId(ownerId, handoff.getProjectId(), run.getModule())));
     }
 
     private ModuleRunResponse response(ModuleRun run, String currentSnapshotId) {
@@ -163,7 +166,7 @@ public class ModuleIntegrationService {
             .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
     }
 
-    private String currentSnapshotId(Long projectId, ModuleType module) {
+    private String currentSnapshotId(Long ownerId, Long projectId, ModuleType module) {
         if (module == ModuleType.MARKET_ANALYSIS || module == ModuleType.BUSINESS_MODEL) {
             return currentMarketSeedId(projectId);
         }
@@ -174,9 +177,10 @@ public class ModuleIntegrationService {
                 .map(TechOpsInputSnapshot::getId).orElse(null);
         }
         if (module == ModuleType.FINANCIAL_ANALYSIS) {
-            TechOpsInputSnapshot techOps = currentTechOpsSnapshotOrNull(projectId);
-            return techOps == null ? null : financialSnapshots
-                .findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(techOps.getId(), projectId)
+            CurrentFinanceSources sources = currentFinanceSourcesOrNull(ownerId, projectId);
+            return sources == null ? null : financialSnapshots
+                .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+                    projectId, sources.marketVersionId(), sources.businessModelVersionId())
                 .map(FinancialInputSnapshot::getId).orElse(null);
         }
         return null;
@@ -191,17 +195,25 @@ public class ModuleIntegrationService {
             marketSeedId, projectId).orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY));
     }
 
-    private TechOpsInputSnapshot currentTechOpsSnapshotOrNull(Long projectId) {
-        String marketSeedId = currentMarketSeedId(projectId);
-        return marketSeedId == null ? null : techOpsSnapshots
-            .findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(marketSeedId, projectId).orElse(null);
+    private FinancialInputSnapshot currentFinancialSnapshot(Long ownerId, Long projectId) {
+        CurrentFinanceSources sources = currentFinanceSourcesOrNull(ownerId, projectId);
+        if (sources == null) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY);
+        return financialSnapshots
+            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
+                projectId, sources.marketVersionId(), sources.businessModelVersionId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY));
     }
 
-    private FinancialInputSnapshot currentFinancialSnapshot(Long projectId) {
-        TechOpsInputSnapshot techOps = currentTechOpsSnapshot(projectId);
-        return financialSnapshots.findBySourceTechOpsSnapshotIdAndProjectIdAndDeletedAtIsNull(
-            techOps.getId(), projectId).orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY));
+    private CurrentFinanceSources currentFinanceSourcesOrNull(Long ownerId, Long projectId) {
+        var market = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.FULL);
+        var businessModel = marketResearch.current(ownerId, projectId, MarketResearchRun.Kind.BM);
+        if (market.version() == null || market.stale() || businessModel.version() == null || businessModel.stale()) {
+            return null;
+        }
+        return new CurrentFinanceSources(market.version().id(), businessModel.version().id());
     }
+
+    private record CurrentFinanceSources(Long marketVersionId, Long businessModelVersionId) {}
 
     private ModuleType parseModule(String value) {
         try {

@@ -1,0 +1,309 @@
+{
+ "_규칙": "정답이 통과하고 오답이 막혀야 그 층이 제 일을 하는 것이다. 정답이 막히면 **그 층이 남은 문**이고, 오답이 통과하면 **가드가 뚫린 것**이다.",
+ "run": "pet-treat-15",
+ "slot": "S1",
+ "v2_반례": {
+  "poison_quote": {
+   "무엇": "인용이 본문에 없다",
+   "기대": {
+    "채택": false,
+    "label": "미검증",
+    "사유_포함": "인용 대조 실패"
+   },
+   "실측": {
+    "채택": false,
+    "등급": "확정",
+    "등급_근거": "등급표:gov_stat",
+    "사유": [
+     "인용 대조 실패"
+    ],
+    "label": "미검증",
+    "score": 0,
+    "kind": "gov_stat",
+    "kind_by": "whitelist:kosis.kr",
+    "cross": 0
+   }
+  },
+  "poison_quote_soft": {
+   "무엇": "본문과 **거의 같은** 인용(공백·조사·숫자 표기) — 대조기가 관대해지면 여기서 뚫린다",
+   "기대": {
+    "채택": false,
+    "label": "미검증",
+    "사유_포함": "인용 대조 실패"
+   },
+   "실측": {
+    "채택": false,
+    "등급": "확정",
+    "등급_근거": "등급표:gov_stat",
+    "사유": [
+     "인용 대조 실패"
+    ],
+    "label": "미검증",
+    "score": 0,
+    "kind": "gov_stat",
+    "kind_by": "whitelist:kosis.kr",
+    "cross": 0
+   }
+  },
+  "poison_no_retrieved": {
+   "무엇": "4요건 중 **조회일만** 없다. 백필 금지이므로 채택 불가로 남아야 한다",
+   "기대": {
+    "채택": false,
+    "사유_포함": "retrieved_at 없음"
+   },
+   "실측": {
+    "채택": false,
+    "등급": "확정",
+    "등급_근거": "등급표:gov_stat",
+    "사유": [
+     "retrieved_at 없음"
+    ],
+    "label": "출처약함",
+    "score": 4,
+    "kind": "gov_stat",
+    "kind_by": "whitelist:kosis.kr",
+    "cross": 1
+   }
+  },
+  "poison_grade_up": {
+   "무엇": "미등재 2건이 **같은 도메인** — 도메인 수는 화자 수가 아니다",
+   "기대": {
+    "채택": true,
+    "등급": "추정"
+   },
+   "실측": {
+    "채택": true,
+    "등급": "추정",
+    "등급_근거": "등급표:aggregate",
+    "사유": [],
+    "label": "미확인",
+    "score": 1,
+    "kind": "aggregate",
+    "kind_by": "default:unlisted",
+    "cross": 1
+   }
+  },
+  "golden_downgrade": {
+   "무엇": "suffix 강등(`*.or.kr` 협회·공공 일반 페이지) — **발행 주체가 확인되므로 채택된다.** 판 ㉙ ⓓ 실측이 반증한 자리: 처음엔 `aggregate` 를 통째로 막았다가 `foodtoday.or.kr`(조사 주체·조사명 명시)이 「추적 불가」로 죽는 것을 보고 정정했다",
+   "기대": {
+    "채택": true,
+    "등급": "추정"
+   },
+   "실측": {
+    "채택": true,
+    "등급": "추정",
+    "등급_근거": "등급표:aggregate",
+    "사유": [],
+    "label": "미확인",
+    "score": 1,
+    "kind": "aggregate",
+    "kind_by": "downgrade:*.or.kr",
+    "cross": 1
+   }
+  },
+  "poison_republish": {
+   "무엇": "원출처 불명 재게시(등재 거부 도메인) — **등급 문제가 아니라 채택 요건 미달**(결정 ②)",
+   "기대": {
+    "채택": false,
+    "사유_포함": "추적 불가"
+   },
+   "실측": {
+    "채택": false,
+    "등급": "추정",
+    "등급_근거": "등급표:aggregate",
+    "사유": [
+     "추적 불가 — 등재 거부 도메인 — 포털 재게시본 — URL 로 원 발행자를 알 수 없다. **발행자 불명**은 등재 사유가 없다"
+    ],
+    "label": "미확인",
+    "score": 1,
+    "kind": "aggregate",
+    "kind_by": "default:unlisted",
+    "cross": 1
+   }
+  },
+  "poison_community": {
+   "무엇": "비관측(커뮤니티 추측) — v2 대전제 「관측 존재」에서 이미 탈락한다",
+   "기대": {
+    "채택": false,
+    "사유_포함": "비관측"
+   },
+   "실측": {
+    "채택": false,
+    "등급": "추정",
+    "등급_근거": "등급표:community",
+    "사유": [
+     "비관측 — 커뮤니티 추측"
+    ],
+    "label": "미확인",
+    "score": 0,
+    "kind": "community",
+    "kind_by": "whitelist:cafe.naver.com",
+    "cross": 1
+   }
+  },
+  "golden_unlisted": {
+   "무엇": "미등재 도메인 + 4요건 충족 — **이 뒤집힘이 개방의 회귀 증명**",
+   "기대": {
+    "채택": true,
+    "등급": "추정"
+   },
+   "실측": {
+    "채택": true,
+    "등급": "추정",
+    "등급_근거": "등급표:aggregate",
+    "사유": [],
+    "label": "미확인",
+    "score": 1,
+    "kind": "aggregate",
+    "kind_by": "default:unlisted",
+    "cross": 1
+   }
+  },
+  "golden_cross_up": {
+   "무엇": "미등재 **두 도메인**이 같은 값 — 상향 1단계(추정 → 실무 신뢰)가 살아 있는가",
+   "기대": {
+    "채택": true,
+    "등급": "실무 신뢰"
+   },
+   "실측": {
+    "채택": true,
+    "등급": "실무 신뢰",
+    "등급_근거": "상향:독립화자 2 (등급표:aggregate)",
+    "사유": [],
+    "label": "미확인",
+    "score": 2,
+    "kind": "aggregate",
+    "kind_by": "default:unlisted",
+    "cross": 2
+   }
+  },
+  "golden_gov": {
+   "무엇": "정답 — 정부 통계 + 4요건 충족",
+   "기대": {
+    "채택": true,
+    "등급": "확정"
+   },
+   "실측": {
+    "채택": true,
+    "등급": "확정",
+    "등급_근거": "등급표:gov_stat",
+    "사유": [],
+    "label": "출처약함",
+    "score": 4,
+    "kind": "gov_stat",
+    "kind_by": "whitelist:kosis.kr",
+    "cross": 1
+   }
+  }
+ },
+ "v2_불일치": [],
+ "slot_조건": {
+  "must_contain": [
+   "애완용품"
+  ],
+  "value_range": [
+   1000000000,
+   500000000000
+  ],
+  "unit": "원",
+  "period": "2025",
+  "period_min": 2023,
+  "period_max": 2027
+ },
+ "사례": {
+  "golden(017·백만원·정표기)": {
+   "막힌_층": null,
+   "단계": [
+    {
+     "층": "off_slot(4겹)",
+     "통과": true,
+     "사유": null,
+     "표기_다리": []
+    },
+    {
+     "층": "등급",
+     "통과": true,
+     "사유": "label=확인됨 score=5 kind=gov_stat",
+     "reasons": []
+    }
+   ]
+  },
+  "bad_axis(합계 274조)": {
+   "막힌_층": "off_slot(4겹)",
+   "단계": [
+    {
+     "층": "off_slot(4겹)",
+     "통과": false,
+     "사유": "must_contain 없음: ['애완용품']",
+     "표기_다리": []
+    }
+   ]
+  },
+  "bad_unit(원시 「백만원」 — 단위층부터)": {
+   "막힌_층": null,
+   "단계": [
+    {
+     "층": "단위(parse_number)",
+     "통과": true,
+     "사유": "2792575 + 백만원 → value=2792575000000.0 unit=원"
+    },
+    {
+     "층": "off_slot(4겹)",
+     "통과": true,
+     "사유": null,
+     "표기_다리": []
+    },
+    {
+     "층": "등급",
+     "통과": true,
+     "사유": "label=확인됨 score=5 kind=gov_stat",
+     "reasons": []
+    }
+   ]
+  },
+  "bad_unit2(모르는 배수 「경원」)": {
+   "막힌_층": "단위(parse_number)",
+   "단계": [
+    {
+     "층": "단위(parse_number)",
+     "통과": false,
+     "사유": "2792575 + 십경원 → value=None unit=원"
+    }
+   ]
+  },
+  "golden(우회: value_range 무시 — 진단용)": {
+   "막힌_층": null,
+   "단계": [
+    {
+     "층": "off_slot(4겹)",
+     "통과": true,
+     "사유": null,
+     "표기_다리": []
+    },
+    {
+     "층": "등급",
+     "통과": true,
+     "사유": "label=확인됨 score=5 kind=gov_stat",
+     "reasons": []
+    }
+   ]
+  },
+  "golden 2023(우회 · 성장률 2년차)": {
+   "막힌_층": null,
+   "단계": [
+    {
+     "층": "off_slot(4겹)",
+     "통과": true,
+     "사유": null,
+     "표기_다리": []
+    },
+    {
+     "층": "등급",
+     "통과": true,
+     "사유": "label=확인됨 score=5 kind=gov_stat",
+     "reasons": []
+    }
+   ]
+  }
+ }
+}

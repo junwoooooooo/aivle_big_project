@@ -3,6 +3,10 @@ __pycache__
 *.pyc
 .pytest_cache
 outputs
+app/twin/bank
+app/research/research2/runs
+app/research/research2/runs-generated
+app/research/research2/outputs
 .env
 .env.*
 .git

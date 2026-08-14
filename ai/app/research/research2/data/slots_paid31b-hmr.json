@@ -1,0 +1,456 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (paid31b-hmr). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 1,
+    "일자": "2026-08-11",
+    "게이트": "runs/harness/paid31b-hmr/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+  "as_of": "2026-08-11",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1000000000,
+        50000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "냉동 간편식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V3",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국 수도권",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1000000000,
+        50000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "대상 시장",
+        "사유": "수도권을 중심으로 프리미엄 수요 시장을 대신 짐작함."
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V4",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "냉동 간편식",
+      "metric": "시장 점유율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국 수도권",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V5",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2024",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1000000000,
+        50000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V6",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "냉동 간편식",
+      "metric": "거래액",
+      "period": "2023",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        1000000000,
+        50000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V7",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "비비고",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "CJ제일제당",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V8",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "오뚜기 냉동식품",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "오뚜기",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V9",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "풀무원 간편식",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "풀무원식품",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V10",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "신세계푸드 간편식",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "신세계푸드",
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V11",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "프레시지",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        5000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S12",
+      "var_id": "V12",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "신세계푸드 간편식",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S13",
+      "var_id": "V13",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "냉동 간편식",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "혼자 먹지만 제대로 먹고 싶다",
+        "한 끼 단가가 크게 오른다"
+      ],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S14",
+      "var_id": "V14",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "프레시지",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [],
+      "subject_aliases": [],
+      "must_not_contain": [],
+      "value_range": [
+        10000,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    }
+  ]
+}
