@@ -136,8 +136,8 @@ def _wrap_text(
         current_line = word_fragment
 
     if current_line:
-        lines.append(current_line)    
-        
+        lines.append(current_line)
+
     return lines
 
 
@@ -328,7 +328,7 @@ def add_text_to_banner(
         height=height,
         banner_format=banner_format,
     )
-     
+
     (
         primary_color,
         secondary_color,

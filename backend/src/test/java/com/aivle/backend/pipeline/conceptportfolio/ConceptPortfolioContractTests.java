@@ -69,7 +69,7 @@ class ConceptPortfolioContractTests {
         ConceptPortfolioExecutionProperties defaults = new ConceptPortfolioExecutionProperties(
             null, null, null, null, null, null);
         AiServerProperties ai = new AiServerProperties("http://localhost", Duration.ofSeconds(3),
-            Duration.ofSeconds(30), Duration.ofMinutes(15), "token");
+            Duration.ofSeconds(30), Duration.ofMinutes(15), Duration.ofMinutes(14), "token");
 
         assertThat(defaults.aiDeadline()).isEqualTo(Duration.ofMinutes(14));
         assertThatCode(() -> new ConceptPortfolioTimingValidator(defaults, ai))

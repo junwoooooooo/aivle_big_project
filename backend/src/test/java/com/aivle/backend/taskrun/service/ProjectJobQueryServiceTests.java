@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 class ProjectJobQueryServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
@@ -94,6 +96,36 @@ class ProjectJobQueryServiceTests {
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 3L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.active(3L, 9L)).isInstanceOf(BusinessException.class);
         verify(projects).findByIdAndOwnerIdAndDeletedAtIsNull(9L, 3L);
+    }
+
+    @Test
+    void ownerCanPageThroughCompleteProjectHistory() {
+        Project project = mock(Project.class);
+        TaskRun run = mock(TaskRun.class);
+        when(project.getId()).thenReturn(9L);
+        when(run.getProject()).thenReturn(project);
+        when(run.getId()).thenReturn("history-1");
+        when(run.getTaskType()).thenReturn(TaskType.MARKET_RESEARCH);
+        when(run.getSubjectType()).thenReturn("MARKET_RESEARCH_FULL");
+        when(run.getSubjectId()).thenReturn("market-1");
+        when(run.getState()).thenReturn(TaskRunState.SUCCEEDED);
+        when(run.terminal()).thenReturn(true);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
+        when(taskRuns.findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(9L, PageRequest.of(1, 20)))
+            .thenReturn(new PageImpl<>(List.of(run), PageRequest.of(1, 20), 41));
+
+        var history = service.history(2L, 9L, 1, 20);
+
+        assertThat(history.items()).extracting(job -> job.jobId()).containsExactly("history-1");
+        assertThat(history.page()).isEqualTo(1);
+        assertThat(history.hasMore()).isTrue();
+        assertThat(history.totalElements()).isEqualTo(41);
+    }
+
+    @Test
+    void nonOwnerCannotQueryProjectHistory() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 3L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.history(3L, 9L, 0, 20)).isInstanceOf(BusinessException.class);
     }
 
     @Test

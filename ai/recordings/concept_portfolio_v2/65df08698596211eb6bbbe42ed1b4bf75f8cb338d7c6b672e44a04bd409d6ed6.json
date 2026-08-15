@@ -1,0 +1,350 @@
+{
+  "taskType": "PLAN_POOL",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-plan-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:9ed9e2cd0fd2a155fbe3ae6f472c135cbf43360c59b875466b0b3414c47b5e6f",
+  "canonicalRequestHash": "65df08698596211eb6bbbe42ed1b4bf75f8cb338d7c6b672e44a04bd409d6ed6",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "interpretedTargetUsers": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "usageContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "industryCategory": "여행 및 관광",
+        "researchScope": "주말 여행 계획 서비스",
+        "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityKernel": {
+        "problemCore": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "targetCore": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "useContexts": [
+          "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스."
+        ],
+        "intentComponents": [
+          "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스."
+        ],
+        "mustPreserve": [
+          "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+          "주말에 짧은 여행을 자주 계획하는 직장인들.",
+          "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스."
+        ],
+        "maySpecialize": [
+          "핵심 대상의 의미 있는 하위 세그먼트",
+          "핵심 사용 맥락의 구체화",
+          "가치 제안 또는 offer의 구체화"
+        ],
+        "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+      },
+      "semanticAnchors": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "sourceLocks": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "poolSize": 7
+  },
+  "providerResponse": [
+    {
+      "title": "주말 여행 자동 계획 서비스 A",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 일정을 계획하고, 더 많은 시간을 여가에 사용할 수 있다.",
+      "offerThesis": "자동화된 여행 일정 구성으로 사용자의 시간을 절약한다.",
+      "solutionThesis": "사용자의 입력을 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "AI 기반의 일정 생성 알고리즘.",
+      "customerInteraction": "사용자는 앱을 통해 자신의 이동 가능 시간과 관심사를 입력하고, 결과를 확인한다.",
+      "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공한다.",
+      "operatingApproach": "온라인 플랫폼을 통해 서비스 제공.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자는 앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 수수료를 받는 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 이메일 발송.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 일정 생성",
+        "다양한 여행 옵션 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행 계획의 효율성을 높이고, 사용자 경험을 개선하기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 B",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 번거로움을 줄이고, 더 많은 여가 시간을 확보할 수 있다.",
+      "offerThesis": "사용자의 요구에 맞춘 맞춤형 여행 일정을 제공한다.",
+      "solutionThesis": "입력된 정보를 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "사용자 맞춤형 일정 생성 알고리즘.",
+      "customerInteraction": "앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 일정과 예약 링크를 사용자에게 제공한다.",
+      "operatingApproach": "디지털 플랫폼을 통해 서비스 운영.",
+      "partnerApproach": "여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 발생하는 수익 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 메시지 발송.",
+      "differentiatingMechanics": [
+        "개인화된 여행 일정 제공",
+        "다양한 여행지 선택 가능"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "사용자의 여행 계획을 간소화하고, 만족도를 높이기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 C",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 복잡성을 줄이고, 더 많은 시간을 여가에 사용할 수 있다.",
+      "offerThesis": "자동화된 일정 생성으로 사용자의 시간을 절약한다.",
+      "solutionThesis": "사용자의 입력을 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "AI 기반의 여행 일정 생성 시스템.",
+      "customerInteraction": "사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 여행 일정과 예약 링크를 제공한다.",
+      "operatingApproach": "온라인 플랫폼을 통해 서비스 제공.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 수수료를 받는 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 이메일 발송.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 일정 생성",
+        "다양한 여행 옵션 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행 계획의 효율성을 높이고, 사용자 경험을 개선하기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 D",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 번거로움을 줄이고, 더 많은 여가 시간을 확보할 수 있다.",
+      "offerThesis": "사용자의 요구에 맞춘 맞춤형 여행 일정을 제공한다.",
+      "solutionThesis": "입력된 정보를 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "사용자 맞춤형 일정 생성 알고리즘.",
+      "customerInteraction": "앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 일정과 예약 링크를 사용자에게 제공한다.",
+      "operatingApproach": "디지털 플랫폼을 통해 서비스 운영.",
+      "partnerApproach": "여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 발생하는 수익 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 메시지 발송.",
+      "differentiatingMechanics": [
+        "개인화된 여행 일정 제공",
+        "다양한 여행지 선택 가능"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "사용자의 여행 계획을 간소화하고, 만족도를 높이기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 E",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 복잡성을 줄이고, 더 많은 시간을 여가에 사용할 수 있다.",
+      "offerThesis": "자동화된 일정 생성으로 사용자의 시간을 절약한다.",
+      "solutionThesis": "사용자의 입력을 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "AI 기반의 여행 일정 생성 시스템.",
+      "customerInteraction": "사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 여행 일정과 예약 링크를 제공한다.",
+      "operatingApproach": "온라인 플랫폼을 통해 서비스 제공.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 수수료를 받는 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 이메일 발송.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 일정 생성",
+        "다양한 여행 옵션 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행 계획의 효율성을 높이고, 사용자 경험을 개선하기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 F",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 번거로움을 줄이고, 더 많은 여가 시간을 확보할 수 있다.",
+      "offerThesis": "사용자의 요구에 맞춘 맞춤형 여행 일정을 제공한다.",
+      "solutionThesis": "입력된 정보를 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "사용자 맞춤형 일정 생성 알고리즘.",
+      "customerInteraction": "앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 일정과 예약 링크를 사용자에게 제공한다.",
+      "operatingApproach": "디지털 플랫폼을 통해 서비스 운영.",
+      "partnerApproach": "여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 발생하는 수익 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 메시지 발송.",
+      "differentiatingMechanics": [
+        "개인화된 여행 일정 제공",
+        "다양한 여행지 선택 가능"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "사용자의 여행 계획을 간소화하고, 만족도를 높이기 위해."
+    },
+    {
+      "title": "주말 여행 자동 계획 서비스 G",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 한 자동 여행 일정 구성 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "여행 계획의 복잡성을 줄이고, 더 많은 시간을 여가에 사용할 수 있다.",
+      "offerThesis": "자동화된 일정 생성으로 사용자의 시간을 절약한다.",
+      "solutionThesis": "사용자의 입력을 바탕으로 최적의 여행 일정을 자동으로 생성한다.",
+      "coreMechanism": "AI 기반의 여행 일정 생성 시스템.",
+      "customerInteraction": "사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동 생성된 여행 일정과 예약 링크를 제공한다.",
+      "operatingApproach": "온라인 플랫폼을 통해 서비스 제공.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "앱 내에서 직접 예약을 진행한다.",
+      "commercialApproach": "제휴 업체로부터 수수료를 받는 모델.",
+      "fulfillmentApproach": "예약 완료 후 사용자에게 확인 이메일 발송.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 일정 생성",
+        "다양한 여행 옵션 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행 계획의 효율성을 높이고, 사용자 경험을 개선하기 위해."
+    }
+  ],
+  "durationMs": 27307,
+  "timestamp": "2026-08-10T05:14:13.559194+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

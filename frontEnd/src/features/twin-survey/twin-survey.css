@@ -66,6 +66,7 @@
 /* ── 자극 초안 ─────────────────────────────────────────────────────── */
 .twin-page__draft-start { display: grid; gap: .875rem; }
 .twin-page__draft-start p { margin: 0; font-size: .9rem; color: var(--color-text-secondary); }
+.twin-page__samples { display: flex; flex-wrap: wrap; gap: .5rem; }
 .twin-page__draft-actions { display: flex; align-items: center; gap: .75rem; }
 /* 「직접 만들기」는 곁길이라 버튼처럼 세우지 않는다 — 기본 길은 초안이다. */
 .twin-page__manual {

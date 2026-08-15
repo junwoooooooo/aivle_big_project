@@ -26,11 +26,19 @@ class MarketingSourceV2ContractTests {
             "sha256:" + "a".repeat(64), "{}", 7L, Instant.EPOCH);
         assertThat(source.getSourceMarketSeedSnapshotId()).isEqualTo("market-seed-1");
         assertThat(source.getFinalizedAt()).isEqualTo(Instant.EPOCH);
-        var portfolioSource = MarketingSourceSnapshot.createPortfolio("source-v2", 1L, "portfolio-market-seed",
-            17L, "portfolio-concept", "2.0", "sha256:" + "b".repeat(64), "{}", 7L, Instant.EPOCH);
-        assertThat(portfolioSource.getSourceType()).isEqualTo("CONCEPT_PORTFOLIO_V2");
-        assertThat(portfolioSource.getSelectionId()).isNull();
-        assertThat(portfolioSource.getPortfolioSelectionId()).isEqualTo(17L);
+        var portfolio = MarketingSourceSnapshot.createPortfolio("source-v2", 1L, "market-seed-v2", 3L,
+            "portfolio-concept-1", "2.0", "sha256:" + "b".repeat(64), "{}", 7L, Instant.EPOCH);
+        assertThat(portfolio.getSourceType()).isEqualTo("CONCEPT_PORTFOLIO_V2");
+        assertThat(portfolio.getSelectionId()).isNull();
+        assertThat(portfolio.getPortfolioSelectionId()).isEqualTo(3L);
+    }
+
+    @Test
+    void additiveMigrationEnforcesExclusiveMarketingAuthority() throws Exception {
+        String sql = Files.readString(Path.of("src", "main", "resources", "db", "migration",
+            "V21__bind_marketing_source_to_concept_portfolio_v2.sql")).toLowerCase(Locale.ROOT);
+        assertThat(sql).contains("source_type", "concept_portfolio_v2", "ck_marketing_source_authority",
+            "portfolio_selection_id", "portfolio_concept_id");
     }
 
     @Test

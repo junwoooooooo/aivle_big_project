@@ -1,0 +1,137 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:b50e00ad25f652b8f0965365a293e28fe68b42a13b67f9718d6bbda5a99b83dc",
+  "canonicalRequestHash": "42696510b70dc96825ed61a640cbd7ce2f0ddddca92561733d964f45dc48254e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P7",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 데이터 분석의 정확성을 높입니다. 데이터 분석 및 시각화 도구 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 성과 분석 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 성과 분석 결과를 자동으로 보고합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P8",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 피드백 분석의 정확성을 높입니다. 고객 피드백 수집 도구 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 고객 피드백 분석 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 피드백 분석 결과를 자동으로 보고합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P9",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 자동화의 정확성을 높입니다. 업무 자동화 도구 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 영업 자동화 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P7",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "API",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 데이터 분석 및 시각화 도구 제공업체와 협력하여 클라우드 기반 플랫폼에서 구독 모델로 서비스를 제공합니다."
+    },
+    {
+      "entityId": "P8",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "API",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 고객 피드백 분석 도구 제공업체와 협력하여 클라우드 기반 플랫폼에서 구독 모델로 서비스를 제공합니다."
+    },
+    {
+      "entityId": "P9",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "API",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 업무 자동화 도구 제공업체와 협력하여 클라우드 기반 플랫폼에서 구독 모델로 서비스를 제공합니다."
+    }
+  ],
+  "durationMs": 5794,
+  "timestamp": "2026-08-10T07:54:20.822119+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

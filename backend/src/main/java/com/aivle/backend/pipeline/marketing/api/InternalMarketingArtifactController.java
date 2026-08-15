@@ -16,85 +16,36 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/internal/v1/ai")
 @RequiredArgsConstructor
 public class InternalMarketingArtifactController {
-
-    public static final String INTERNAL_TOKEN_HEADER =
-        "X-AI-Internal-Token";
-
+    public static final String INTERNAL_TOKEN_HEADER = "X-AI-Internal-Token";
     private final AiServerProperties properties;
     private final MarketingArtifactStorageService marketingArtifacts;
     private final ProjectEvidenceArtifactService evidenceArtifacts;
 
-    @PostMapping(
-        value = "/marketing-artifacts",
-        consumes = MediaType.IMAGE_JPEG_VALUE
-    )
+    @PostMapping(value = "/marketing-artifacts", consumes = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<Map<String, String>> upload(
-        @RequestHeader(
-            value = INTERNAL_TOKEN_HEADER,
-            required = false
-        ) String token,
-        @RequestBody byte[] content
-    ) {
-        if (!authorized(token)) {
-            return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("status", "REJECTED"));
-        }
-
-        String artifactRef =
-            marketingArtifacts.storeGeneratedJpeg(content);
-
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(Map.of("artifactRef", artifactRef));
+            @RequestHeader(value = INTERNAL_TOKEN_HEADER, required = false) String token,
+            @RequestBody byte[] content) {
+        if (!authorized(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("status", "REJECTED"));
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(Map.of("artifactRef", marketingArtifacts.storeGeneratedJpeg(content)));
     }
 
-    @GetMapping(
-        "/projects/{projectId}/evidence-artifacts/{artifactId}"
-    )
+    @GetMapping("/projects/{projectId}/evidence-artifacts/{artifactId}")
     public ResponseEntity<InputStreamResource> reference(
-        @RequestHeader(
-            value = INTERNAL_TOKEN_HEADER,
-            required = false
-        ) String token,
-        @PathVariable Long projectId,
-        @PathVariable String artifactId
-    ) {
-        if (!authorized(token)) {
-            return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .build();
-        }
-
-        var download = evidenceArtifacts.downloadForAi(
-            projectId,
-            artifactId
-        );
-
+            @RequestHeader(value = INTERNAL_TOKEN_HEADER, required = false) String token,
+            @PathVariable Long projectId, @PathVariable String artifactId) {
+        if (!authorized(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        var download = evidenceArtifacts.downloadForAi(projectId, artifactId);
         return ResponseEntity.ok()
-            .contentType(
-                MediaType.parseMediaType(
-                    download.artifact().mediaType()
-                )
-            )
-            .contentLength(
-                download.artifact().sizeBytes()
-            )
-            .header(
-                HttpHeaders.CONTENT_DISPOSITION,
-                "inline"
-            )
-            .header(
-                "X-Content-Type-Options",
-                "nosniff"
-            )
-            .body(
-                new InputStreamResource(download.content())
-            );
+            .contentType(MediaType.parseMediaType(download.artifact().mediaType()))
+            .contentLength(download.artifact().sizeBytes())
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+            .header("X-Content-Type-Options", "nosniff")
+            .body(new InputStreamResource(download.content()));
     }
 
     private boolean authorized(String token) {
-        return properties.hasInternalApiKey()
-            && properties.internalApiKey().equals(token);
+        return properties.hasInternalApiKey() && properties.internalApiKey().equals(token);
     }
 }

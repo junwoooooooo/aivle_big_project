@@ -2,7 +2,6 @@ import base64
 import logging
 import os
 import tempfile
-import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,9 +16,6 @@ from app.services.banner_text_service import (
 
 # ai 프로젝트 최상위 폴더
 AI_ROOT_DIR = Path(__file__).resolve().parents[2]
-
-# 생성 결과가 저장될 폴더
-OUTPUT_DIR = AI_ROOT_DIR / "outputs"
 
 # ai/.env 파일을 명시적으로 불러온다.
 load_dotenv(AI_ROOT_DIR / ".env")
@@ -59,7 +55,7 @@ def generate_banner_with_openai(
     업로드 이미지를 참고하여 gpt-image-2로
     새로운 광고 배너 이미지를 생성한다.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("AI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
     if not api_key:
         raise OpenAIBannerGenerationError(
@@ -68,10 +64,8 @@ def generate_banner_with_openai(
 
     # 복잡한 이미지 생성은 시간이 걸릴 수 있으므로
     # 요청 제한 시간을 180초로 설정한다.
-    client = OpenAI(
-        api_key=api_key,
-        timeout=180.0,
-    )
+    base_url = os.getenv("AI_BASE_URL", "").strip() or None
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=180.0)
 
     output_size = get_banner_size(banner_format)
 
@@ -96,7 +90,7 @@ def generate_banner_with_openai(
 
         with temporary_image_path.open("rb") as input_image:
             result = client.images.edit(
-                model="gpt-image-2",
+                model=os.getenv("MARKETING_IMAGE_MODEL", "gpt-image-2"),
                 image=input_image,
                 prompt=prompt,
                 size=output_size,
@@ -131,22 +125,12 @@ def generate_banner_with_openai(
             banner_format=banner_format,
         )
 
-        # 생성된 배너를 outputs 폴더에 저장한다.
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-        banner_id = uuid.uuid4().hex
-        output_filename = f"banner_{banner_id}.jpg"
-        output_path = OUTPUT_DIR / output_filename
-
-        output_path.write_bytes(final_banner_bytes)
-
         return {
-            "banner_id": banner_id,
-            "preview_path": f"/outputs/{output_filename}",
+            "image_bytes": final_banner_bytes,
             "mock": False,
-            "model": "gpt-image-2",
+            "model": os.getenv("MARKETING_IMAGE_MODEL", "gpt-image-2"),
             "size": output_size,
-            "quality": "low",
+            "quality": "high",
             "generated_copy": marketing_copy.model_dump(
                 mode="json"
             )

@@ -1,0 +1,47 @@
+.final-report-page { display:grid; gap:1.5rem; background:#eef1f0; margin:-.5rem; padding:1.5rem; }
+.final-report-toolbar { display:flex; align-items:end; justify-content:space-between; gap:1rem; max-width:210mm; width:100%; margin:0 auto; }
+.final-report-toolbar > div { display:flex; align-items:center; gap:.65rem; }
+.final-report-toolbar > div:first-child { display:grid; grid-template-columns:auto auto; }
+.final-report-toolbar p { grid-column:1 / -1; margin:0; color:var(--color-action-primary); font-size:.72rem; font-weight:800; }
+.final-report-toolbar h2 { margin:0; }
+.final-report-readiness,.final-report-stale,.final-report-error { width:min(100%,210mm); margin:0 auto; padding:1rem; border:1px solid #cdd8d6; background:#fff; }
+.final-report-readiness h2,.final-report-readiness p { margin:.15rem 0 .65rem; }
+.final-report-readiness ul { display:grid; margin:.8rem 0; padding:0; list-style:none; border-top:1px solid #d9e1df; }
+.final-report-readiness li { display:flex; justify-content:space-between; gap:1rem; padding:.55rem 0; border-bottom:1px solid #d9e1df; font-size:.82rem; }
+.final-report-stale { border-color:#d9a441; background:#fff9e8; color:#6d530d; }
+.final-report-error { border-color:#d99189; color:#8b3028; }
+.final-report-document { width:min(100%,210mm); margin:0 auto; padding:20mm; background:#fff; color:#202928; box-shadow:0 8px 30px rgb(25 45 43 / 10%); font-family:"Noto Sans KR",Arial,sans-serif; font-size:10.5pt; line-height:1.62; }
+.final-report-document__cover { min-height:160mm; padding-top:32mm; border-bottom:2px solid #253c39; break-after:page; }
+.final-report-document__cover > p { color:#087465; font-size:9pt; font-weight:800; letter-spacing:.14em; }
+.final-report-document__cover h1 { margin:18mm 0 22mm; font-size:25pt; font-weight:650; letter-spacing:-.04em; }
+.final-report-document__cover dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; border-top:1px solid #aeb9b7; }
+.final-report-document__cover dl div { display:grid; grid-template-columns:36mm 1fr; padding:3mm 0; border-bottom:1px solid #d4dcda; }
+.final-report-document dt { color:#5c6d6a; font-size:9pt; font-weight:650; }
+.final-report-document dd { margin:0; }
+.final-report-section { padding:10mm 0 5mm; break-inside:avoid-page; }
+.final-report-section > h2,.final-report-document__appendix > h2 { margin:0 0 6mm; padding-bottom:3mm; border-bottom:1px solid #263d39; color:#1d302d; font-size:16pt; }
+.final-report-source { padding:4mm 0; border-bottom:1px solid #d7dfdd; }
+.final-report-source h3 { margin:0 0 2mm; color:#315a54; font-size:11pt; }
+.final-report-source dl { display:grid; gap:2mm; margin:0; }
+.final-report-source dl div { display:grid; grid-template-columns:minmax(35mm,.38fr) minmax(0,1fr); gap:4mm; }
+.final-report-source dl.is-nested div { grid-template-columns:minmax(28mm,.3fr) minmax(0,1fr); }
+.final-report-source ul { margin:1mm 0; padding-left:5mm; }
+.final-report-source footer { margin-top:3mm; color:#73817f; font-size:8pt; }
+.final-report__missing { color:#7a8583; font-style:italic; }
+.final-report-document__appendix { padding-top:10mm; break-before:page; }
+.final-report-document__appendix table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:8pt; }
+.final-report-document__appendix th,.final-report-document__appendix td { padding:2mm; border:1px solid #cbd4d2; overflow-wrap:anywhere; text-align:left; vertical-align:top; }
+.final-report-document__appendix th { background:#f0f3f2; }
+@media (max-width:700px) { .final-report-page { margin:-.5rem -1rem; padding:1rem; }.final-report-toolbar { align-items:flex-start; flex-direction:column; }.final-report-document { padding:8vw 6vw; }.final-report-document__cover dl { grid-template-columns:1fr; }.final-report-source dl div { grid-template-columns:1fr; } }
+@media print {
+  @page { size:A4; margin:14mm; }
+  body { background:#fff!important; }
+  .app-topbar,.app-maintenance-banner,.pipeline-shell__header,.journey-substeps,.final-report-toolbar,.final-report-readiness,.final-report-stale,.final-report-error,.project-context-tools { display:none!important; }
+  .app-main,.app-main--project,.final-report-page { width:100%!important; max-width:none!important; margin:0!important; padding:0!important; background:#fff!important; }
+  .pipeline-shell,.pipeline-shell__main { display:block!important; }
+  .final-report-document { width:100%; margin:0; padding:0; box-shadow:none; font-size:9.5pt; }
+  .final-report-document__cover { min-height:245mm; }
+  .final-report-section { break-inside:auto; }
+  .final-report-source,.final-report-document table { break-inside:avoid; }
+  .final-report-section > h2,.final-report-source h3 { break-after:avoid; }
+}

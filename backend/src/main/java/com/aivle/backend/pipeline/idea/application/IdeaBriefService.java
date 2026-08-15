@@ -58,6 +58,7 @@ public class IdeaBriefService {
     private final JobEventPublisher jobEvents;
     private final IdeaBriefReadinessCalculator readinessCalculator;
     private final IdeaBriefAssessmentHasher assessmentHasher;
+    private final IdeaAttachmentService attachmentService;
 
     @Transactional(readOnly = true)
     public IdeaBriefResponse get(Long ownerId, Long projectId) {
@@ -74,11 +75,15 @@ public class IdeaBriefService {
     ) {
         String idempotencyKey = idempotencyKeys.require(rawIdempotencyKey);
         List<FieldCommand> seedFields = seedCommands(request);
+        Set<Long> attachmentFileIds = request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds();
+        List<Map<String, Object>> attachmentDocuments = attachmentService.resolveDocuments(
+            ownerId, projectId, attachmentFileIds);
         String inputJson = objectMapper.writeValueAsString(Map.of(
             "mode", IdeaBriefDerivationMode.INITIAL.name(),
             "ideaOverview", request.ideaOverview(),
             "fields", seedFields,
-            "attachmentFileIds", request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds(),
+            "attachmentFileIds", attachmentFileIds.stream().sorted().toList(),
+            "attachmentDocuments", attachmentDocuments,
             "fieldMetadata", fieldMetadata()
         ));
         String requestHash = sha256(inputJson);
@@ -88,7 +93,7 @@ public class IdeaBriefService {
 
         brief.updateOverview(request.ideaOverview());
         upsertUserFields(brief, seedFields);
-        brief.replaceAttachments(request.attachmentFileIds() == null ? Set.of() : request.attachmentFileIds());
+        brief.replaceAttachments(attachmentFileIds);
         briefs.save(brief);
 
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);
@@ -492,6 +497,8 @@ public class IdeaBriefService {
 
     private void queueDerivation(Long ownerId, Long projectId, IdeaBrief brief, String rawCommandIdempotencyKey,
             IdeaBriefDerivationMode mode) {
+        List<Map<String, Object>> attachmentDocuments = attachmentService.resolveDocuments(
+            ownerId, projectId, brief.getAttachmentFileIds());
         String inputJson = objectMapper.writeValueAsString(Map.of(
             "mode", mode.name(),
             "ideaOverview", brief.getOverviewText(),
@@ -501,6 +508,7 @@ public class IdeaBriefService {
                 "decisionState", field.getDecisionState().name()
             )).toList(),
             "attachmentFileIds", brief.getAttachmentFileIds().stream().sorted().toList(),
+            "attachmentDocuments", attachmentDocuments,
             "fieldMetadata", fieldMetadata()
         ));
         String inputHash = canonicalInputHasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR", inputJson);

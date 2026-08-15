@@ -268,7 +268,8 @@ public final class MarketResearchContract {
     private static void bm(JsonNode bm) {
         if (bm == null || bm.isNull()) return;      // BM 이 죽어도 시장조사 결과는 살린다
         exact(bm, Set.of("decision", "confidence", "summary", "marketFitStatus", "marketFitSummary",
-            "consistencyStatus", "consistencySummary", "strengths", "weaknesses", "risks", "legal"));
+            "consistencyStatus", "consistencySummary", "strengths", "weaknesses", "risks", "legal",
+            "financialHandoff"));
         if (!DECISIONS.contains(text(bm, "decision"))
             || !CONFIDENCES.contains(text(bm, "confidence"))
             || !FIT_STATES.contains(text(bm, "marketFitStatus"))
@@ -282,6 +283,17 @@ public final class MarketResearchContract {
         nullableText(legal.get("summary"));
         stringArray(legal.get("risks"));
         stringArray(legal.get("requiredActions"));
+        JsonNode handoff = bm.get("financialHandoff");
+        exact(handoff, Set.of("conceptId", "revenueModel", "priceMin", "priceBase", "priceMax",
+            "tam", "sam", "som", "marketGrowthRate", "expectedRevenue", "unitCost",
+            "fixedCostItems", "variableCostItems", "missingFinancialInputs", "handoffStatus"));
+        text(handoff, "conceptId");
+        nullableText(handoff.get("revenueModel"));
+        for (String field : List.of("priceMin", "priceBase", "priceMax", "tam", "sam", "som",
+                "marketGrowthRate", "expectedRevenue", "unitCost")) nullableNumber(handoff.get(field));
+        if (!handoff.get("fixedCostItems").isArray() || !handoff.get("variableCostItems").isArray()) invalid();
+        stringArray(handoff.get("missingFinancialInputs"));
+        if (!Set.of("READY", "PARTIAL", "BLOCKED").contains(text(handoff, "handoffStatus"))) invalid();
     }
 
     private static void summary(JsonNode summary, Set<String> evidenceIds) {

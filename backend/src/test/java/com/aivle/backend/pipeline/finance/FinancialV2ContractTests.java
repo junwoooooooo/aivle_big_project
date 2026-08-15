@@ -34,6 +34,11 @@ class FinancialV2ContractTests {
         assertThat(sql).contains("create table financial_input_preparations", "create table financial_input_snapshots", "'financial_analysis'");
         var schema = new ObjectMapper().readTree(Files.readString(Path.of("..", "docs", "rebuild", "contracts", "financial-input-snapshot-v1.schema.json")));
         assertThat(schema.path("properties").path("contract").path("const").asText()).isEqualTo("financial-input-snapshot-v1");
-        assertThat(schema.path("required").toString()).contains("sourceTechOpsSnapshotId", "values", "valueProvenance", "calculatedCac", "hash");
+        assertThat(schema.path("required").toString()).contains(
+            "sourceMarketResearchVersionId", "sourceBusinessModelVersionId",
+            "values", "valueProvenance", "calculatedCac", "hash");
+        assertThat(schema.path("required").toString()).doesNotContain("sourceTechOpsSnapshotId");
+        assertThat(schema.path("properties").path("sourceTechOpsSnapshotId").path("type").toString())
+            .contains("null");
     }
 }

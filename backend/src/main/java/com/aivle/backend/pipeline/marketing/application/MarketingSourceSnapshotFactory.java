@@ -23,60 +23,28 @@ public class MarketingSourceSnapshotFactory {
     private final ObjectMapper mapper;
     private final SnapshotHasher hasher;
 
-    public BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed, Concept concept){
-        return create(
-            snapshotId,
-            createdAt,
-            marketSeed,
-            concept.getTitle(),
-            concept.getSummary(),
-            mapper.readTree(concept.getCandidateJson())
-        );
+    public BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed, Concept concept) {
+        return create(snapshotId, createdAt, marketSeed, concept.getTitle(), concept.getSummary(),
+            mapper.readTree(concept.getCandidateJson()));
     }
 
-    public BuiltSnapshot create(
-            String snapshotId,
-            Instant createdAt,
-            MarketAnalysisSeedSnapshot marketSeed,
-            ConceptPortfolioConcept concept
-    ) {
-        JsonNode candidateEnvelope =
-            mapper.readTree(concept.getCandidateSnapshotJson());
-
-        return create(
-            snapshotId,
-            createdAt,
-            marketSeed,
-            concept.getConceptName(),
-            concept.getSummary(),
-            candidateEnvelope.path("candidate")
-        );
+    public BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed,
+            ConceptPortfolioConcept concept) {
+        JsonNode envelope = mapper.readTree(concept.getCandidateSnapshotJson());
+        return create(snapshotId, createdAt, marketSeed, concept.getConceptName(), concept.getSummary(),
+            envelope.path("candidate"));
     }
 
-    private BuiltSnapshot create(
-            String snapshotId,
-            Instant createdAt,
-            MarketAnalysisSeedSnapshot marketSeed,
-            String fallbackName,
-            String fallbackSummary,
-            JsonNode candidate
-    ) {
+    private BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed,
+            String fallbackName, String fallbackSummary, JsonNode candidate) {
         JsonNode seed = mapper.readTree(marketSeed.getSnapshotJson());
         JsonNode identity = seed.path("selectedConcept").path("identity");
         JsonNode solution = seed.path("selectedConcept").path("solution");
         JsonNode hypotheses = seed.path("finalHypotheses");
         JsonNode legal = seed.path("legalResult");
-
-        boolean portfolio =
-            "CONCEPT_PORTFOLIO_V2".equals(marketSeed.getSourceType());
-
-        Long selectionId = portfolio
-            ? marketSeed.getPortfolioSelectionId()
-            : marketSeed.getSelectionId();
-
-        String conceptId = portfolio
-            ? marketSeed.getPortfolioConceptId()
-            : marketSeed.getConceptId();
+        boolean portfolio = "CONCEPT_PORTFOLIO_V2".equals(marketSeed.getSourceType());
+        Long selectionId = portfolio ? marketSeed.getPortfolioSelectionId() : marketSeed.getSelectionId();
+        String conceptId = portfolio ? marketSeed.getPortfolioConceptId() : marketSeed.getConceptId();
 
         ObjectNode body = mapper.createObjectNode();
         body.put("contract", CONTRACT); body.put("schemaVersion", SCHEMA_VERSION);

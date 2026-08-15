@@ -14,9 +14,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class ConceptPortfolioSelectionP5P6ContractTests {
     private static final Path MIGRATION = Path.of(
-        "src/main/resources/db/migration/V15__add_concept_portfolio_selection_and_legal_handoff.sql");
+        "src/main/resources/db/migration/V12__add_concept_portfolio_selection_and_legal_handoff.sql");
     private static final Path REVISION_MIGRATION = Path.of(
-        "src/main/resources/db/migration/V16__bind_concept_portfolio_delta_legal_revision.sql");
+        "src/main/resources/db/migration/V13__bind_concept_portfolio_delta_legal_revision.sql");
 
     @Test
     void migrationCreatesDedicatedPortfolioAuthoritiesAndSevenHypotheses() throws Exception {

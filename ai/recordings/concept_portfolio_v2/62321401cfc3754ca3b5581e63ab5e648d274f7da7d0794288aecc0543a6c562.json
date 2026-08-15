@@ -1,0 +1,145 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:cc32815fc3cc452a38fbd936a98d6ab15adc520be681c32445fdb646038aa307",
+  "canonicalRequestHash": "62321401cfc3754ca3b5581e63ab5e648d274f7da7d0794288aecc0543a6c562",
+  "redactedRequest": {
+    "kind": "PLAN",
+    "left": {
+      "thesis": {
+        "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구로 사용될 수 있습니다.",
+        "valuePropositionThesis": "영업팀의 업무를 간소화하여 고객 대응에 집중할 수 있도록 합니다.",
+        "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하고 CRM에 통합합니다.",
+        "solutionThesis": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 crm에 자동으로 업데이트합니다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    },
+    "right": {
+      "thesis": {
+        "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구로 사용될 수 있습니다.",
+        "valuePropositionThesis": "영업팀의 업무를 종합적으로 지원하여 고객 대응에 집중할 수 있도록 합니다.",
+        "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하고 CRM에 통합합니다.",
+        "solutionThesis": "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 crm에 자동으로 업데이트합니다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "DUPLICATE",
+    "overlappingMechanics": [
+      "AI 도구가 영업팀의 회의 및 이메일을 분석하여 후속 조치를 제안하고 CRM에 자동으로 업데이트합니다."
+    ],
+    "materiallyDifferentMechanics": [],
+    "safeSummary": "두 개의 아키텍처는 동일한 메커니즘을 가지고 있으며, 제안된 가치와 솔루션이 거의 동일하여 중복으로 판단됩니다."
+  },
+  "durationMs": 2947,
+  "timestamp": "2026-08-10T06:43:26.517596+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

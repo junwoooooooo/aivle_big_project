@@ -11,6 +11,9 @@
 하므로 별도 단계로 미뤄져 있다 — 이 모듈은 등록 없이도 import·테스트된다.
 """
 
+import logging
+from collections.abc import Callable
+
 from pydantic import ValidationError
 
 from app.providers import ProviderFailure
@@ -23,6 +26,20 @@ from app.twin.runner import run_survey
 from app.twin.task_type import SERVICEABLE, classify
 
 __all__ = ["execute_twin_survey"]
+
+logger = logging.getLogger(__name__)
+EventSink = Callable[[dict], None]
+
+
+def _observe(event_sink: EventSink | None, stage: str, action: str, summary: str,
+             status: str = "RUNNING", **optional) -> None:
+    if event_sink is None:
+        return
+    try:
+        event_sink({"stage": stage, "action": action, "status": status,
+                    "safeSummary": summary, **optional})
+    except Exception as failure:
+        logger.warning("twin progress observer failed exceptionType=%s", failure.__class__.__name__)
 
 INTERVIEWS_PER_PAIR = 5        # 응답 봉투 2 MiB 상한 — 셀 원장은 절대 싣지 않는다
 EXCERPT_MAX_CHARS = 300
@@ -143,7 +160,8 @@ def _refuse(blocked: list[tuple[str, object]]) -> ProviderFailure:
                         for pair_id, v in blocked]})
 
 
-async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0) -> dict:
+async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0,
+                              event_sink: EventSink | None = None) -> dict:
     try:
         request = TwinSurveyInput.model_validate(payload)
     except ValidationError as failure:
@@ -151,6 +169,7 @@ async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0) -> d
             "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
             validation_fields=[{"field": ".".join(str(p) for p in e["loc"]),
                                 "reason": e["type"]} for e in failure.errors()[:12]])
+    _observe(event_sink, "TWIN_VALIDATING", "COMPLETED", "요청 계약 검증 완료")
 
     stimuli = [pair.as_stimulus() for pair in request.pairs]
 
@@ -158,18 +177,28 @@ async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0) -> d
     verdicts = {s["pairId"]: classify(s) for s in stimuli}
     blocked = [(pid, v) for pid, v in verdicts.items() if v.task_type not in SERVICEABLE]
     if blocked:
+        _observe(event_sink, "TWIN_GATE", "BLOCKED", f"허용되지 않은 비교 {len(blocked)}개",
+                 status="FAILED", reasonCode="TWIN_TASK_TYPE_NOT_SERVICEABLE")
         raise _refuse(blocked)
+    _observe(event_sink, "TWIN_GATE", "COMPLETED", f"허용된 비교 {len(stimuli)}개")
 
+    _observe(event_sink, "TWIN_BANK_LOADING", "STARTED", "Twin Bank를 확인하고 있습니다.")
     cards_all, frame = load()
+    _observe(event_sink, "TWIN_BANK_READY", "COMPLETED",
+             f"카드 {len(cards_all)}개, 프레임 {len(frame)}개")
     drawn, sampling = stratified_sample(frame, request.sampleSize)
+    _observe(event_sink, "TWIN_SAMPLING", "COMPLETED",
+             f"요청 {request.sampleSize}명, 추출 {len(drawn)}명, 층 {len(sampling['strata'])}개, 부족 층 {len(sampling['shortCells'])}개")
     cards = {row["pid_hash"]: cards_all[row["pid_hash"]] for row in drawn}
     # 인터뷰 대표를 고를 때 층이 겹치지 않게 쓰는 성×연령 셀. 표집에 쓴 것과 같은 축이다.
     cells = {row["pid_hash"]: f"{row['gender']}{row['band']}" for row in drawn}
 
-    rows, telemetry = await run_survey(cards, stimuli, request.situation, budget_seconds)
+    rows, telemetry = await run_survey(cards, stimuli, request.situation, budget_seconds,
+                                       event_sink=event_sink)
     usable = [r for r in rows if r.get("ok")]
 
     pairs_out = []
+    _observe(event_sink, "TWIN_AGGREGATING", "STARTED", f"집계 대상 비교 {len(stimuli)}개")
     for stimulus in stimuli:
         pair_id = stimulus["pairId"]
         stats = analyze(usable, pair_id)
@@ -205,8 +234,10 @@ async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0) -> d
             "interviews": interviews,
             "caveats": notes,
         })
+        _observe(event_sink, "TWIN_AGGREGATING", "PROGRESS",
+                 f"집계 완료 {len(pairs_out)}/{len(stimuli)}")
 
-    return {
+    result = {
         "situation": request.situation,
         "sampleSize": request.sampleSize,
         "sampling": sampling,
@@ -214,3 +245,6 @@ async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0) -> d
         "telemetry": telemetry,
         "notes": list(NOTES),
     }
+    _observe(event_sink, "TWIN_COMPLETED", "COMPLETED", "Twin 조사 결과 정리 완료",
+             status="COMPLETED")
+    return result

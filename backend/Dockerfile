@@ -1,19 +1,11 @@
-# syntax=docker/dockerfile:1.7
-
 FROM eclipse-temurin:17-jdk-jammy AS build
 
 WORKDIR /workspace
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.http.connectionTimeout=120000 -Dorg.gradle.internal.http.socketTimeout=120000"
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 RUN chmod +x gradlew
-RUN --mount=type=cache,target=/root/.gradle/caches \
-    --mount=type=cache,target=/root/.gradle/wrapper \
-    ./gradlew --no-daemon dependencies --configuration runtimeClasspath
 COPY src ./src
-RUN --mount=type=cache,target=/root/.gradle/caches \
-    --mount=type=cache,target=/root/.gradle/wrapper \
-    ./gradlew --no-daemon bootJar -x test
+RUN ./gradlew --no-daemon bootJar -x test
 
 FROM eclipse-temurin:17-jre-jammy
 

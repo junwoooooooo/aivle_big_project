@@ -199,7 +199,7 @@ public class TaskRunService {
     public void fail(String runId, String attemptId, String claimToken, String code, String reason, boolean retryable) {
         TaskRun run = runs.findLocked(runId).orElseThrow(this::notFound); TaskAttempt attempt = attempts.findByIdAndTaskRunId(attemptId, runId).orElseThrow(this::notFound);
         if (run.terminal()) return;
-        LocalDateTime now = LocalDateTime.now(clock); attempt.fail(claimToken, code, reason, retryable, now); run.fail(mapPublic(code, reason), reason, retryable, now);
+        LocalDateTime now = LocalDateTime.now(clock); attempt.fail(claimToken, code, reason, retryable, now); run.fail(mapPublic(code, reason), retryable, now);
     }
 
     @Transactional
@@ -224,7 +224,7 @@ public class TaskRunService {
         results.save(TaskResult.rejected(run, attempt, payload, sha256(payload), schemaVersion,
             reason, now));
         attempt.fail(claimToken, "RESULT_SCHEMA_INVALID", reason, false, now);
-        run.fail("AI_RESULT_INVALID", reason, false, now);
+        run.fail("AI_RESULT_INVALID", false, now);
     }
 
     @Transactional
@@ -261,13 +261,13 @@ public class TaskRunService {
     }
 
     private String mapPublic(String internal, String reason) { if ("AI_CONFIGURATION_INVALID".equals(reason)) return "AI_CONFIGURATION_INVALID";
+        if (java.util.Set.of("INPUT_INVALID", "SOURCE_IMAGE_INVALID", "COPY_GENERATION_FAILED",
+            "IMAGE_GENERATION_FAILED", "IMAGE_COMPOSITION_FAILED", "ARTIFACT_STORAGE_FAILED")
+            .contains(reason)) return reason;
         if (java.util.Set.of("INSUFFICIENT_DISTINCT_CONCEPTS", "LOCKED_CONSTRAINT_INVALID",
             "ORIGIN_INVALID", "LEGAL_REJECTED", "LEGAL_EXTERNAL_FACT_UNRESOLVED",
             "LEGAL_REDESIGN_EXHAUSTED", "REPLACEMENT_EXHAUSTED", "DISTINCTNESS_EXHAUSTED",
-            "SCHEMA_REPAIR_EXHAUSTED", "INTERNAL_STATE_FAILURE", "REQUEST_CONTRACT_INVALID",
-            // 트윈 조사의 두 이유는 「AI 응답을 해석 못 했다」가 아니다. 접으면 화면이
-            // 「성적이 없는 유형이라 거절」과 「뱅크가 안 붙었다」를 말할 수 없다.
-            "TWIN_TASK_TYPE_NOT_SERVICEABLE", "TWIN_BANK_UNAVAILABLE").contains(reason)) return reason;
+            "SCHEMA_REPAIR_EXHAUSTED", "INTERNAL_STATE_FAILURE", "REQUEST_CONTRACT_INVALID").contains(reason)) return reason;
         return switch (internal) {
         case "PAYLOAD_TOO_LARGE" -> "PAYLOAD_TOO_LARGE";
         case "DEADLINE_EXCEEDED" -> "TASK_TIMEOUT";

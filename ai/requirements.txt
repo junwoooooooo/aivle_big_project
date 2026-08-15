@@ -2,22 +2,9 @@ fastapi==0.116.1
 httpx==0.28.1
 uvicorn[standard]==0.35.0
 python-multipart==0.0.30
-python-dotenv==1.1.1
-Pillow==11.3.0
-
-# 시장조사(research2) 파이프라인이 서브프로세스로 필요로 하는 것들.
-# ai-server 자체는 안 쓴다 — MARKET_RESEARCH 실험이 끝나면 같이 빠진다.
-# 로컬에서 검증한 버전으로 고정했다.
 openai==2.38.0
+Pillow==11.3.0
+python-dotenv==1.1.1
 requests==2.32.4
 trafilatura==2.2.0
-# ⚠ **이 줄이 없어서 컨테이너가 PDF 48건을 통째로 버렸다**(판 ㉞, 유료 4판 ≈252회를
-# 그 결함 위에서 쟀다). `pdf_text.extract` 는 import 실패를 예외가 아니라 값
-# (`pdfplumber 없음: ModuleNotFoundError`)으로 접기 때문에 **아무것도 안 터진다** —
-# 실태조사·설문 PDF 가 조용히 사라질 뿐이다. 로컬엔 깔려 있어 더 안 보였다.
-# 새 서드파티를 엔진에 들이면 **여기에도 적는다**: `tools/preflight.py --need modules` 가
-# 컨테이너 안에서 이 목록을 검사한다.
-# ⚠ **0.11.10 이 아니다.** 그 버전은 `Pillow>=12.2.0` 을 요구하는데 마케팅 모듈이
-# `Pillow==11.3.0` 으로 고정하고 있어 pip 이 해를 못 찾는다(2026-08-12 병합에서 실측).
-# 0.11.9 가 Pillow 11.3 과 맞는 마지막 버전이다 — **남의 핀을 움직이는 대신 이쪽을 내렸다.**
 pdfplumber==0.11.9

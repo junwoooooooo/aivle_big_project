@@ -19,7 +19,8 @@ import { useProjectContext } from './ProjectContext.jsx';
 import { useProjects } from './hooks/useProjects.js';
 import ProjectRow from './components/ProjectRow.jsx';
 import ProjectDeleteDialog from './components/ProjectDeleteDialog.jsx';
-import { PROJECT_MODULES, PROJECT_STATUS_VIEW } from '../../app/module-status/projectModuleModel.js';
+import { PROJECT_JOURNEYS } from '../../app/module-status/projectJourneyModel.js';
+import { PROJECT_PRESENTATION_VIEW } from './model/projectPresentation.js';
 import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { getProjectNameError } from './projectNameError.js';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
@@ -28,7 +29,7 @@ import './projects.css';
 
 function filterMatches(project, filter) {
   if (filter === 'all') return true;
-  return project.status === filter;
+  return project.presentationState === filter;
 }
 
 function PolicyNotice({ restriction, onRetry }) {
@@ -71,7 +72,7 @@ export function ProjectStatusHelpRail() {
   }, [open]);
   return <aside ref={railRef} className={`project-status-help ${open ? 'is-open' : ''}`} aria-label="프로젝트 상태 안내">
     <button type="button" className="project-status-help__trigger" aria-expanded={open} aria-controls="project-status-help-content" onClick={() => setOpen((value) => !value)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}><span aria-hidden="true">?</span><span>상태 안내</span></button>
-    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>모듈</h2><p>새 프로젝트 파이프라인의 독립 작업 영역입니다.</p><dl>{PROJECT_MODULES.map((module) => <div key={module.id}><dt>{module.label}</dt><dd>프로젝트 안에서 상태와 필요한 입력을 확인합니다.</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>프로젝트 전체의 보관 및 운영 상태입니다.</p><dl>{Object.entries(PROJECT_STATUS_VIEW).map(([status, view]) => <div key={status}><dt>{view.label}</dt><dd>{({ DRAFT: '작성 중인 프로젝트', ACTIVE: '사용 중인 프로젝트', PAUSED: '확인이 필요한 프로젝트', COMPLETED: '완료된 프로젝트', ARCHIVED: '보관된 프로젝트' })[status]}</dd></div>)}</dl></div></div>}
+    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>업무 단계</h2><p>프로젝트는 사업 기획부터 최종 보고서까지 여섯 단계로 진행됩니다.</p><dl>{PROJECT_JOURNEYS.map((journey) => <div key={journey.id}><dt>{journey.label}</dt><dd>프로젝트 화면에서 현재 상태와 다음 할 일을 확인할 수 있습니다.</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>실제 진행 결과와 확인할 항목을 기준으로 표시합니다.</p><dl>{Object.entries(PROJECT_PRESENTATION_VIEW).map(([state, view]) => <div key={state}><dt>{view.label}</dt><dd>{({ NOT_STARTED: '아직 첫 업무를 시작하지 않은 프로젝트', IN_PROGRESS: '업무를 진행하고 있는 프로젝트', NEEDS_ATTENTION: '입력이나 확인이 필요한 프로젝트', COMPLETED: '모든 단계를 마친 프로젝트' })[state]}</dd></div>)}</dl></div></div>}
   </aside>;
 }
 
@@ -104,7 +105,7 @@ export function ProjectListPage() {
       <PageHeader
         eyebrow="내 워크스페이스"
         title="프로젝트"
-        description="새 8단계 파이프라인의 모듈 상태와 필요한 입력을 확인하세요."
+        description="사업 기획부터 최종 보고서까지 프로젝트 진행 상태를 확인하세요."
         actions={<PolicyLink restriction={restriction} className="primary-link" to={appRoutes.newProject} state={{ backgroundLocation: location, returnTo: `${location.pathname}${location.search}` }}>새 프로젝트</PolicyLink>}
       />
       <div className="project-hub__body"><div className="project-hub__content">{!projects.length ? (
@@ -121,7 +122,7 @@ export function ProjectListPage() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="프로젝트 또는 사업 분야 검색" />
             </label>
             <div role="group" aria-label="프로젝트 상태 필터">
-              {[['all', '전체'], ['ACTIVE', '진행 중'], ['DRAFT', '초안'], ['PAUSED', '일시 중지'], ['COMPLETED', '완료']].map(([value, label]) => (
+              {[['all', '전체'], ['NOT_STARTED', '시작 전'], ['IN_PROGRESS', '진행 중'], ['NEEDS_ATTENTION', '확인 필요'], ['COMPLETED', '완료']].map(([value, label]) => (
                 <button key={value} type="button" className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>
               ))}
             </div>
@@ -131,7 +132,7 @@ export function ProjectListPage() {
               <option value="name">이름순</option>
             </select>
           </div>
-          <div className="project-row-list project-card-grid" role="list" aria-label="프로젝트 목록">
+          <div className="project-row-list" role="list" aria-label="프로젝트 목록">
             {visible.map((project) => <ProjectRow key={project.projectId} project={project} menuOpen={menuOpenProjectId === project.projectId} onMenuOpenChange={(open) => setMenuOpenProjectId(open ? project.projectId : null)} onDelete={() => setDeleteTarget(project)} />)}
           </div>
           {!visible.length && <p className="project-search-empty">조건에 맞는 프로젝트가 없습니다.</p>}
@@ -216,7 +217,7 @@ export function ProjectCreatePage() {
       <PageHeader eyebrow="새 프로젝트" title="검증할 사업 아이디어를 만드세요" description="지금은 최소 정보만 필요합니다. 세부 자료와 분석 실행은 프로젝트 안에서 직접 시작합니다." />
       {globalError && <div ref={errorRef} tabIndex="-1"><Alert tone="danger" title="프로젝트를 만들지 못했습니다">{globalError}</Alert></div>}
       <PolicyNotice restriction={restriction} onRetry={() => void servicePolicy.refresh().catch(() => undefined)} />
-      <form className="project-form" onSubmit={handleSubmit} noValidate>
+      <form className="project-form" data-form-kind="admin" onSubmit={handleSubmit} noValidate>
         <TextInput ref={titleInputRef} id="project-title" label="프로젝트 이름" value={values.title} error={errors.title} maxLength="150" onChange={update('title')} disabled={restriction.blocked} required />
         <TextInput id="project-category" label="사업 분야" description="선택 입력입니다." value={values.industryCategory} error={errors.industryCategory} maxLength="100" onChange={update('industryCategory')} disabled={restriction.blocked} />
         <Textarea id="project-description" label="간단한 설명" description="선택 입력입니다." value={values.description} error={errors.description} maxLength="10000" onChange={update('description')} disabled={restriction.blocked} />
@@ -279,7 +280,7 @@ export function ProjectBriefInputPage() {
       />
       {error && <Alert tone="danger" title="사업 개요를 저장하지 못했습니다">{error}</Alert>}
       <PolicyNotice restriction={restriction} onRetry={() => void servicePolicy.refresh().catch(() => undefined)} />
-      <form className="project-form" onSubmit={handleSubmit} noValidate>
+      <form className="project-form project-form-layout" onSubmit={handleSubmit} noValidate>
         <TextInput id="project-brief-title" label="프로젝트 이름" value={values.title} maxLength="150" onChange={update('title')} disabled={restriction.blocked} required />
         <TextInput id="project-brief-category" label="사업 분야" value={values.industryCategory} maxLength="100" onChange={update('industryCategory')} disabled={restriction.blocked} />
         <Textarea id="project-brief-description" label="사업 개요" description="누구의 어떤 문제를 어떻게 해결하는지 자유롭게 작성해 주세요." value={values.description} maxLength="10000" onChange={update('description')} disabled={restriction.blocked} />

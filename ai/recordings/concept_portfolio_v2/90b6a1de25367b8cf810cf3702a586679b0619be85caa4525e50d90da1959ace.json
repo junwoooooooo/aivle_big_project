@@ -1,0 +1,172 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8e0dbdfd3a86cab098cc97e496919cf7870dee8e5a1855808cfe4752fabe4046",
+  "canonicalRequestHash": "90b6a1de25367b8cf810cf3702a586679b0619be85caa4525e50d90da1959ace",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 구독 모델을 통한 판매 CRM 시스템과의 연동 지원 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 사용자가 회의 내용을 입력한다. AI 도구가 내용을 분석한다. CRM에 자동으로 업데이트된다. 사용자가 구독료를 결제한다. AI 도구 제공자가 서비스를 제공한다. 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅 및 파트너십을 통한 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 AI 도구의 판매 및 고객 지원 CRM 시스템과의 연동을 통한 데이터 관리 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 사용자가 회의 및 이메일 내용을 입력 AI 도구가 내용을 분석 CRM에 자동으로 업데이트 사용자가 구독료를 결제 AI 도구 제공자가 서비스 제공 고객 지원 및 업데이트 제공 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅 및 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 AI 도구의 판매 및 고객 지원 CRM 시스템 제공자와의 협력 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 사용자가 회의 및 이메일 내용을 입력한다. AI 도구가 내용을 분석한다. CRM에 자동으로 업데이트된다. 사용자가 구독료를 결제한다. AI 도구 제공자가 서비스를 제공한다. 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 AI 도구의 판매 및 고객 지원 CRM 시스템과의 통합 지원 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 사용자가 회의 및 이메일 내용을 입력 AI 도구가 내용을 분석 CRM에 자동으로 업데이트 후속 조치 제안 고객이 구독료를 결제 AI 도구 제공자가 서비스 제공 고객 지원 및 업데이트 제공 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구 제공자로서 구독 모델을 통한 판매와 CRM 시스템과의 통합을 통해 파트너십을 구축하는 비즈니스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구 제공자로서 구독 모델을 통한 판매와 CRM 시스템과의 데이터 관리 통합을 지원하는 비즈니스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구 제공자로서 구독 모델을 통한 판매와 CRM 시스템과의 협력을 통한 비즈니스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구 제공자로서 구독 모델을 통한 판매와 CRM 시스템과의 통합 지원을 하는 비즈니스."
+    }
+  ],
+  "durationMs": 7154,
+  "timestamp": "2026-08-10T06:42:23.610884+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

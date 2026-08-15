@@ -72,8 +72,8 @@ async def execute_market_research(task_input: dict[str, Any], run_id: str,
     if not _SAFE_RUN_ID.fullmatch(run_id):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "runId 형식 불량")
 
-    # 원장 위치는 `runpath` 하나로 본다 — 씨앗 `runs/` 와 수집이 만든 `runs-generated/`.
-    import runpath                                                 # noqa: PLC0415
+    from app.research.research2 import runpath
+
     if not runpath.exists(source_run):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "sourceRun 원장 없음")
 
@@ -107,7 +107,7 @@ async def execute_market_research(task_input: dict[str, Any], run_id: str,
                     f"엔진 종료코드 {process.returncode}: "
                     f"{detail[-1] if detail else 'no stderr'}"[:400])
 
-    result_path = os.path.join(runpath.write_dir(run_id), "result.json")
+    result_path = os.path.join(runpath.read_dir(run_id), "result.json")
     try:
         with io.open(result_path, encoding="utf-8") as handle:
             payload = json.load(handle)

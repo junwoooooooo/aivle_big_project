@@ -1,0 +1,225 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:d7e9c7ecf5a992a6d3332cb2445f5a5923b5d600eab15d958746c9fddcbc5384",
+  "canonicalRequestHash": "8e7279ad3c1010a9c5d3f14521fdc8aac748f6e7199c3161c343fea2f6d491f4",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "sellerRole",
+        "value": "고객과의 거래 및 서비스 제공",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문 및 배송을 관리한다.",
+          "providerRole": "식재료 공급 및 배송 관리",
+          "sellerRole": "고객과의 거래 및 서비스 제공",
+          "intermediaryRole": "물류 및 배송 관리"
+        },
+        "actorRoles": [
+          "고객",
+          "농가",
+          "식품 제조업체",
+          "물류 업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱을 통해 식재료와 레시피를 선택하고 주문한다.",
+          "주문이 접수되면 식재료가 준비된다.",
+          "식재료가 고객에게 배송된다."
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제한다.",
+          "결제 확인 후 식재료가 배송된다."
+        ],
+        "operatingModel": "고객의 피드백을 반영하여 지속적으로 서비스 개선 및 마케팅 전략을 조정한다.",
+        "partnerModel": "지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 공급받는다.",
+        "solutionMechanism": "소량의 식재료와 레시피를 통해 요리의 번거로움을 줄인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "MEDIUM",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C1",
+        "field": "intermediaryRole",
+        "value": "물류 및 배송 관리",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문 및 배송을 관리한다.",
+          "providerRole": "식재료 공급 및 배송 관리",
+          "sellerRole": "고객과의 거래 및 서비스 제공",
+          "intermediaryRole": "물류 및 배송 관리"
+        },
+        "actorRoles": [
+          "고객",
+          "농가",
+          "식품 제조업체",
+          "물류 업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱을 통해 식재료와 레시피를 선택하고 주문한다.",
+          "주문이 접수되면 식재료가 준비된다.",
+          "식재료가 고객에게 배송된다."
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제한다.",
+          "결제 확인 후 식재료가 배송된다."
+        ],
+        "operatingModel": "고객의 피드백을 반영하여 지속적으로 서비스 개선 및 마케팅 전략을 조정한다.",
+        "partnerModel": "지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 공급받는다.",
+        "solutionMechanism": "소량의 식재료와 레시피를 통해 요리의 번거로움을 줄인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "MEDIUM",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "intermediaryRole",
+        "value": "배송 서비스 제공",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문 및 배송을 관리한다.",
+          "providerRole": "식재료 및 조리법 제공",
+          "sellerRole": "고객에게 요리 키트를 판매",
+          "intermediaryRole": "배송 서비스 제공"
+        },
+        "actorRoles": [
+          "고객",
+          "주문 처리 시스템",
+          "배송 파트너",
+          "농가 공급자"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 키트 선택 및 주문",
+          "주문 정보가 시스템에 전달",
+          "주문 처리 및 식재료 준비",
+          "배송 파트너가 키트 배송",
+          "고객이 키트 수령 후 조리"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 정보가 시스템에 전달",
+          "결제 확인 후 주문 처리 시작",
+          "배송 완료 후 정산"
+        ],
+        "operatingModel": "주문 접수, 식재료 준비, 배송, 고객 피드백 수집의 순환 구조로 운영된다.",
+        "partnerModel": "신선한 재료를 공급하기 위해 지역 농가와 협력한다.",
+        "solutionMechanism": "소량의 식재료와 간단한 조리법으로 요리를 쉽게 만든다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "MEDIUM",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C5",
+        "field": "intermediaryRole",
+        "value": "배송 및 물류 관리를 담당하는 역할을 수행한다.",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문 및 배송을 관리한다.",
+          "providerRole": "신선한 재료를 공급하는 역할을 수행한다.",
+          "sellerRole": "고객에게 서비스를 판매하는 역할을 수행한다.",
+          "intermediaryRole": "배송 및 물류 관리를 담당하는 역할을 수행한다."
+        },
+        "actorRoles": [
+          "고객",
+          "배송업체",
+          "농가"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 주문",
+          "주문 정보가 배송업체에 전달",
+          "배송업체가 재료를 준비 및 배송",
+          "고객이 재료 수령 후 피드백 제공"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 정보가 처리됨",
+          "배송업체에 수익 분배"
+        ],
+        "operatingModel": "고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다.",
+        "partnerModel": "신선한 재료를 공급하기 위해 지역 농가와 협력한다.",
+        "solutionMechanism": "고객의 요리 스타일에 맞춘 신선한 재료를 제공한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "MEDIUM",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value가 고객과의 거래 및 서비스 제공으로 sellerRole의 역할을 잘 설명하고 있다."
+    },
+    {
+      "candidateId": "C1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value가 물류 및 배송 관리로 intermediaryRole의 역할을 잘 설명하고 있다."
+    },
+    {
+      "candidateId": "C4",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value가 배송 서비스 제공으로 intermediaryRole의 역할을 잘 설명하고 있다."
+    },
+    {
+      "candidateId": "C5",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value가 배송 및 물류 관리를 담당하는 역할을 수행한다로 intermediaryRole의 역할을 잘 설명하고 있다."
+    }
+  ],
+  "durationMs": 2604,
+  "timestamp": "2026-08-10T05:24:23.921065+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

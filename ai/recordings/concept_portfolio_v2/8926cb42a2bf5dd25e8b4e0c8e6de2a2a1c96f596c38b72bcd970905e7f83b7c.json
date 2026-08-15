@@ -1,0 +1,324 @@
+{
+  "taskType": "PLAN_POOL",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-plan-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:7a45b25797e2054c2ec959c70c1d035c17029df3f9a78ebf7d546bfd0e0df639",
+  "canonicalRequestHash": "8926cb42a2bf5dd25e8b4e0c8e6de2a2a1c96f596c38b72bcd970905e7f83b7c",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+      "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "10~50인 규모의 소형 사무실 운영자",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "interpretedTargetUsers": "10~50인 규모의 소형 사무실 운영자",
+        "usageContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+        "industryCategory": "서비스업",
+        "researchScope": "소형 사무실의 화상회의 장비 대여 시장",
+        "conciseIdeaDefinition": "소형 사무실을 위한 화상회의 장비 정기 대여 서비스",
+        "targetRegionInterpretation": "대여 서비스가 제공될 지역은 명시되지 않음",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음"
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityKernel": {
+        "problemCore": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "targetCore": "10~50인 규모의 소형 사무실 운영자",
+        "useContexts": [
+          "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황"
+        ],
+        "intentComponents": [
+          "소형 사무실을 위한 화상회의 장비 정기 대여 서비스"
+        ],
+        "mustPreserve": [
+          "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+          "10~50인 규모의 소형 사무실 운영자",
+          "소형 사무실을 위한 화상회의 장비 정기 대여 서비스"
+        ],
+        "maySpecialize": [
+          "핵심 대상의 의미 있는 하위 세그먼트",
+          "핵심 사용 맥락의 구체화",
+          "가치 제안 또는 offer의 구체화"
+        ],
+        "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+      },
+      "semanticAnchors": {
+        "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+        "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "targetUsers": "10~50인 규모의 소형 사무실 운영자"
+      },
+      "sourceLocks": {
+        "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+        "problem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+        "targetUsers": "10~50인 규모의 소형 사무실 운영자"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "poolSize": 7
+  },
+  "providerResponse": [
+    {
+      "title": "소형 사무실 화상회의 장비 대여 서비스",
+      "oneLineConcept": "소형 사무실을 위한 화상회의 장비를 정기적으로 대여하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "정기 대여를 통해 소형 사무실이 부담 없이 최신 화상회의 장비를 이용할 수 있도록 지원한다.",
+      "offerThesis": "소형 사무실 운영자는 고가의 장비를 구매하지 않고도 필요한 장비를 정기적으로 대여하여 비용을 절감할 수 있다.",
+      "solutionThesis": "정기 대여 서비스와 고장 시 즉각적인 교체 및 회수 서비스를 통해 소형 사무실의 운영 부담을 최소화한다.",
+      "coreMechanism": "정기 구독 모델을 통해 지속적인 수익을 창출하고 고객의 필요에 맞춘 장비를 제공한다.",
+      "customerInteraction": "고객은 온라인 플랫폼을 통해 장비를 대여하고, 필요 시 고객센터를 통해 지원을 받을 수 있다.",
+      "valueDelivery": "정기적으로 고객의 사무실에 장비를 배송하고, 고장 시 신속하게 교체하여 고객의 불편을 최소화한다.",
+      "operatingApproach": "고객의 요구에 맞춘 맞춤형 서비스 제공을 위해 고객 관리팀을 운영한다.",
+      "partnerApproach": "장비 공급업체와의 협력을 통해 최신 장비를 확보하고, 유지보수 서비스를 제공한다.",
+      "transactionApproach": "온라인 결제를 통해 간편하게 대여 계약을 체결할 수 있도록 한다.",
+      "commercialApproach": "구독 모델을 통해 고객의 장기적인 관계를 유지하고, 추가 서비스 제공을 통해 수익을 증대시킨다.",
+      "fulfillmentApproach": "정기적인 장비 점검 및 유지보수를 통해 고객에게 안정적인 서비스를 제공한다.",
+      "differentiatingMechanics": [
+        "고장 시 즉각적인 교체 서비스 제공",
+        "정기적인 장비 점검 및 유지보수 포함"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 운영 부담을 덜어주기 위한 서비스로, 시장의 수요에 부합한다."
+    },
+    {
+      "title": "소형 사무실을 위한 화상회의 장비 관리 서비스",
+      "oneLineConcept": "소형 사무실의 화상회의 장비를 관리하고 유지보수하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "장비 관리와 유지보수를 통해 소형 사무실이 안정적으로 화상회의를 진행할 수 있도록 지원한다.",
+      "offerThesis": "소형 사무실 운영자는 장비 관리에 대한 부담을 덜고, 본업에 집중할 수 있다.",
+      "solutionThesis": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화한다.",
+      "coreMechanism": "정기적인 유지보수와 관리 서비스를 통해 고객의 만족도를 높인다.",
+      "customerInteraction": "고객은 전담 관리자를 통해 장비 상태를 확인하고, 필요한 서비스를 요청할 수 있다.",
+      "valueDelivery": "정기적인 점검과 유지보수를 통해 고객의 장비를 항상 최상의 상태로 유지한다.",
+      "operatingApproach": "전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축한다.",
+      "partnerApproach": "장비 제조사와 협력하여 최신 기술과 정보를 공유한다.",
+      "transactionApproach": "고객과의 계약을 통해 정기적인 관리 서비스를 제공한다.",
+      "commercialApproach": "서비스 패키지를 통해 고객에게 다양한 옵션을 제공하고, 추가 서비스로 수익을 증대시킨다.",
+      "fulfillmentApproach": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리한다.",
+      "differentiatingMechanics": [
+        "전문 기술 인력에 의한 맞춤형 관리 서비스 제공",
+        "고객 맞춤형 유지보수 계획 수립"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 운영을 지원하여 고객의 비즈니스 효율성을 높이는 서비스이다."
+    },
+    {
+      "title": "소형 사무실 화상회의 장비 대여 및 교육 서비스",
+      "oneLineConcept": "소형 사무실을 위한 화상회의 장비 대여와 사용 교육을 제공하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "장비 대여와 함께 사용 교육을 제공하여 고객이 장비를 효과적으로 활용할 수 있도록 지원한다.",
+      "offerThesis": "소형 사무실 운영자는 장비 사용에 대한 교육을 통해 화상회의의 효율성을 극대화할 수 있다.",
+      "solutionThesis": "장비 대여와 교육 서비스를 결합하여 고객의 화상회의 경험을 향상시킨다.",
+      "coreMechanism": "대여와 교육을 패키지로 제공하여 고객의 만족도를 높인다.",
+      "customerInteraction": "고객은 대여 시 교육을 신청하고, 필요 시 추가 교육을 요청할 수 있다.",
+      "valueDelivery": "장비 대여와 함께 제공되는 교육을 통해 고객이 장비를 쉽게 사용할 수 있도록 돕는다.",
+      "operatingApproach": "전문 강사를 통해 고객에게 장비 사용법을 교육하고, 지속적인 지원을 제공한다.",
+      "partnerApproach": "교육 전문 업체와 협력하여 효과적인 교육 프로그램을 개발한다.",
+      "transactionApproach": "대여 계약 시 교육 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다.",
+      "commercialApproach": "패키지 상품을 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다.",
+      "fulfillmentApproach": "정기적인 교육 세션을 통해 고객의 장비 사용 능력을 향상시킨다.",
+      "differentiatingMechanics": [
+        "장비 대여와 교육을 결합한 패키지 제공",
+        "전문 강사에 의한 맞춤형 교육"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 사용을 최적화하여 고객의 비즈니스 성과를 높이는 서비스이다."
+    },
+    {
+      "title": "소형 사무실 화상회의 장비 대여 및 기술 지원 서비스",
+      "oneLineConcept": "소형 사무실을 위한 화상회의 장비 대여와 기술 지원을 제공하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "장비 대여와 함께 기술 지원을 제공하여 고객이 문제를 신속하게 해결할 수 있도록 지원한다.",
+      "offerThesis": "소형 사무실 운영자는 기술 지원을 통해 장비 사용 중 발생하는 문제를 즉시 해결할 수 있다.",
+      "solutionThesis": "대여 서비스와 기술 지원을 결합하여 고객의 화상회의 환경을 안정적으로 유지한다.",
+      "coreMechanism": "정기적인 기술 지원 서비스를 통해 고객의 만족도를 높인다.",
+      "customerInteraction": "고객은 기술 지원 요청을 통해 신속한 문제 해결을 받을 수 있다.",
+      "valueDelivery": "장비 대여와 함께 제공되는 기술 지원을 통해 고객의 불편을 최소화한다.",
+      "operatingApproach": "전문 기술 지원 팀을 운영하여 고객의 문제를 신속하게 해결한다.",
+      "partnerApproach": "장비 제조사와 협력하여 최신 기술 정보를 공유하고, 기술 지원을 강화한다.",
+      "transactionApproach": "대여 계약 시 기술 지원 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다.",
+      "commercialApproach": "기술 지원 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다.",
+      "fulfillmentApproach": "정기적인 기술 지원을 통해 고객의 장비를 안정적으로 운영한다.",
+      "differentiatingMechanics": [
+        "신속한 기술 지원 서비스 제공",
+        "고객 맞춤형 기술 상담"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 운영을 지원하여 고객의 비즈니스 효율성을 높이는 서비스이다."
+    },
+    {
+      "title": "소형 사무실 화상회의 장비 대여 및 맞춤형 솔루션 제공 서비스",
+      "oneLineConcept": "소형 사무실을 위한 화상회의 장비 대여와 맞춤형 솔루션을 제공하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "고객의 요구에 맞춘 맞춤형 솔루션을 제공하여 화상회의의 효율성을 극대화한다.",
+      "offerThesis": "소형 사무실 운영자는 맞춤형 솔루션을 통해 화상회의 환경을 최적화할 수 있다.",
+      "solutionThesis": "대여 서비스와 맞춤형 솔루션을 결합하여 고객의 화상회의 경험을 향상시킨다.",
+      "coreMechanism": "고객의 요구에 맞춘 솔루션을 제공하여 고객의 만족도를 높인다.",
+      "customerInteraction": "고객은 상담을 통해 자신의 요구를 전달하고, 맞춤형 솔루션을 제안받을 수 있다.",
+      "valueDelivery": "고객의 요구에 맞춘 장비와 솔루션을 제공하여 화상회의의 효율성을 높인다.",
+      "operatingApproach": "고객 맞춤형 솔루션을 제공하기 위해 전문 상담팀을 운영한다.",
+      "partnerApproach": "장비 공급업체와 협력하여 고객의 요구에 맞는 솔루션을 개발한다.",
+      "transactionApproach": "대여 계약 시 맞춤형 솔루션을 함께 제공하여 고객의 선택 폭을 넓힌다.",
+      "commercialApproach": "맞춤형 솔루션 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다.",
+      "fulfillmentApproach": "고객의 요구에 맞춘 솔루션을 제공하여 화상회의 환경을 최적화한다.",
+      "differentiatingMechanics": [
+        "고객 맞춤형 솔루션 제공",
+        "전문 상담팀에 의한 맞춤형 서비스"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 운영을 지원하여 고객의 비즈니스 성과를 높이는 서비스이다."
+    },
+    {
+      "title": "소형 사무실 화상회의 장비 대여 및 데이터 분석 서비스",
+      "oneLineConcept": "소형 사무실을 위한 화상회의 장비 대여와 데이터 분석 서비스를 제공하는 서비스",
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "장비 대여와 함께 화상회의 데이터를 분석하여 고객의 회의 효율성을 높인다.",
+      "offerThesis": "소형 사무실 운영자는 데이터 분석을 통해 회의의 질을 향상시킬 수 있다.",
+      "solutionThesis": "대여 서비스와 데이터 분석 서비스를 결합하여 고객의 화상회의 경험을 향상시킨다.",
+      "coreMechanism": "데이터 분석을 통해 고객의 회의 패턴을 이해하고, 개선점을 제안한다.",
+      "customerInteraction": "고객은 데이터 분석 결과를 통해 회의의 효율성을 높일 수 있는 인사이트를 얻는다.",
+      "valueDelivery": "장비 대여와 함께 제공되는 데이터 분석을 통해 고객의 회의 운영을 최적화한다.",
+      "operatingApproach": "전문 데이터 분석 팀을 운영하여 고객의 회의 데이터를 분석하고, 인사이트를 제공한다.",
+      "partnerApproach": "데이터 분석 전문 업체와 협력하여 효과적인 분석 서비스를 제공한다.",
+      "transactionApproach": "대여 계약 시 데이터 분석 서비스를 함께 제공하여 고객의 선택 폭을 넓힌다.",
+      "commercialApproach": "데이터 분석 패키지를 통해 고객에게 가치를 제공하고, 추가 수익을 창출한다.",
+      "fulfillmentApproach": "정기적인 데이터 분석을 통해 고객의 회의 운영을 지원한다.",
+      "differentiatingMechanics": [
+        "회의 데이터 분석 서비스 제공",
+        "고객 맞춤형 인사이트 제공"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "소형 사무실의 화상회의 장비 운영을 지원하여 고객의 비즈니스 성과를 높이는 서비스이다."
+    }
+  ],
+  "durationMs": 41949,
+  "timestamp": "2026-08-10T08:45:13.027759+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

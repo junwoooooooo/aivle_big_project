@@ -106,6 +106,14 @@
       "used": false, "status": "UNVERIFIED",
       "summary": "법률 결과를 입력하지 않았다 — BM 판정에 반영되지 않았다.",
       "risks": [], "requiredActions": []
+    },
+    "financialHandoff": {
+      "conceptId": "beauty-noshow", "revenueModel": "월 구독",
+      "priceMin": 9900.0, "priceBase": 14900.0, "priceMax": 19900.0,
+      "tam": 190260000.0, "sam": 95130000.0, "som": null,
+      "marketGrowthRate": 3.2, "expectedRevenue": null, "unitCost": null,
+      "fixedCostItems": [], "variableCostItems": [],
+      "missingFinancialInputs": [], "handoffStatus": "READY"
     }
   },
 

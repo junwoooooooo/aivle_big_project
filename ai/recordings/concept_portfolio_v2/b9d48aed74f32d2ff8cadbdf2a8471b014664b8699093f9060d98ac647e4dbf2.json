@@ -1,0 +1,370 @@
+{
+  "taskType": "CLASSIFY_LEGAL_FACT_DEPENDENCIES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-dependency-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:cb7e4769966d22ea597c6680f18fec95ba3af1c93115da72047d0bc35355e01a",
+  "canonicalRequestHash": "b9d48aed74f32d2ff8cadbdf2a8471b014664b8699093f9060d98ac647e4dbf2",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C3-FC1",
+        "dependencyType": "PERSONAL_DATA",
+        "candidate": {
+          "conceptName": "소형 사무실을 위한 화상회의 장비 관리 서비스",
+          "conceptDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+          "introduction": "소형 사무실 운영자는 장비 관리에 대한 부담을 덜고 본업에 집중할 수 있도록 지원하는 서비스입니다.",
+          "coreValue": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화합니다.",
+          "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+          "industryCategory": "서비스업",
+          "researchScope": "소형 사무실의 화상회의 장비 대여 시장",
+          "targetRegion": "서울특별시 및 수도권",
+          "revenueModel": "구독 기반 모델로, 월정액 요금제를 통해 수익을 창출합니다.",
+          "price": "월 10만원~20만원 (장비 종류 및 서비스 수준에 따라 상이)",
+          "channels": "온라인 플랫폼 및 직접 영업을 통해 고객에게 접근합니다.",
+          "differentiators": "전문 기술 인력에 의한 맞춤형 관리 서비스 제공, 고객 맞춤형 유지보수 계획 수립",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "소형 사무실의 화상회의 장비 대여 수요 증가에 따라 시장 점유율 확대 가능성.",
+            "assumptions": [
+              "소형 사무실의 화상회의 수요 증가",
+              "경쟁사 대비 차별화된 서비스 제공"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 50000000.0,
+            "currency": "KRW",
+            "period": "1년",
+            "calculationBasis": "소형 사무실의 화상회의 장비 대여 시장 규모 추정",
+            "assumptions": [
+              "소형 사무실의 화상회의 장비 대여 수요 증가",
+              "정기적인 유지보수 서비스에 대한 수요 증가"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵습니다.",
+          "solutionMechanism": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리합니다.",
+          "featureSet": [
+            "정기 점검 서비스",
+            "고장 시 신속한 교체 서비스",
+            "전담 관리자 배정"
+          ],
+          "actorRoles": [
+            "고객",
+            "서비스 제공자",
+            "장비 제조사"
+          ],
+          "platformRole": "온라인 플랫폼을 통해 고객과의 계약 및 서비스 관리",
+          "operatingModel": "전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축합니다.",
+          "partnerModel": "장비 제조사와 협력하여 최신 기술과 정보를 공유합니다.",
+          "providerRole": "서비스 제공자로서 고객의 장비 관리 및 유지보수 책임을 집니다.",
+          "sellerRole": "고객과의 계약을 통해 서비스를 판매합니다.",
+          "intermediaryRole": "부재",
+          "transactionFlow": [
+            "고객과의 계약 체결",
+            "정기 점검 일정 조율",
+            "장비 점검 및 유지보수 수행"
+          ],
+          "paymentFlow": [
+            "고객이 월정액 요금 지불",
+            "서비스 제공 후 정산"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "장비 배송",
+            "장비 설치",
+            "정기 점검"
+          ],
+          "partnerRequirements": [
+            "장비 제조사와의 협력 계약 체결"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "전문적인 장비 관리 서비스 제공",
+            "소형 사무실의 화상회의 환경 최적화"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 3,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "10~50인 규모의 소형 사무실 운영자",
+            "useCaseThesis": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵습니다.",
+            "valuePropositionThesis": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화합니다.",
+            "offerThesis": "정기 점검 서비스 고장 시 신속한 교체 서비스 전담 관리자 배정",
+            "solutionThesis": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리합니다."
+          },
+          "architecture": {
+            "businessRole": "PLATFORM_INFRASTRUCTURE",
+            "operatingModel": "HYBRID",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "OMNICHANNEL",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리합니다",
+          "familyId": "PLATFORM_INFRASTRUCTURE:HYBRID",
+          "familyLabelKo": "플랫폼 인프라 · 혼합 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "PLATFORM_INFRASTRUCTURE",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "HYBRID",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OMNICHANNEL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C3-FC1",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "사업 사실에 개인 데이터 사용이 명시되어 있지 않음."
+    },
+    {
+      "candidateId": "C3-FC1",
+      "dependencyType": "PHYSICAL_ACTIVITY",
+      "decision": "REQUIRED",
+      "safeReason": "장비 배송, 설치 및 정기 점검과 같은 물리적 활동이 포함됨."
+    },
+    {
+      "candidateId": "C3-FC1",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "REQUIRED",
+      "safeReason": "장비 제조사와의 협력 계약 체결이 필요함."
+    }
+  ],
+  "durationMs": 2952,
+  "timestamp": "2026-08-10T08:47:04.907291+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

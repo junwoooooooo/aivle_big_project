@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:98c2b48acb67715268b6f11dc8acd5a7b30d59335bae959f2fe52806ade84049",
+  "canonicalRequestHash": "544f20e2bc30a6a6ad9cd6777fa32e2fa5b18d480cdcecacba13e03e41188789",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 신선한 재료를 공급하는 역할을 수행한다. 고객에게 서비스를 판매하는 역할을 수행한다. 배송 및 물류 관리를 담당하는 역할을 수행한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 신선한 재료를 공급하기 위해 지역 농가와 협력한다. 고객이 앱에서 주문 주문 정보가 배송업체에 전달 배송업체가 재료를 준비 및 배송 고객이 재료 수령 후 피드백 제공 고객이 앱에서 결제 결제 정보가 처리됨 배송업체에 수익 분배 구독 모델을 통해 지속적인 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "LOW",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An online platform managing orders and deliveries, supplying fresh ingredients, and selling services through a subscription model."
+    }
+  ],
+  "durationMs": 2299,
+  "timestamp": "2026-08-10T05:24:55.510652+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -12,6 +12,7 @@ import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, l
   marketingFailureMessage, sourceSummary, toCreateRequest } from '../model/marketingContentModel.js';
 import { copyMarketingContent, downloadMarketingContent } from '../render/marketingRenderer.js';
 import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
+import { ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import '../styles/marketing-content.css';
 
 const STEP_ITEMS = [
@@ -114,7 +115,7 @@ export default function MarketingContentPage() {
   async function save() {
     if (!draft) {return;} setNotice('');
     try { await hook.save(draft, revisionType);
-      setNotice('편집 내용을 새 revision으로 저장했습니다.'); }
+      setNotice('편집 내용을 새 수정 이력으로 저장했습니다.'); }
     catch (error) { setNotice(error.message); }
   }
   async function finalize() {
@@ -178,24 +179,10 @@ export default function MarketingContentPage() {
   );
 
   return (
-    <div className="mk-page">
-      <header className="mk-page__header">
-        <div>
-          <p>Marketing Content</p>
-          <h1>확정된 Concept를 실제 콘텐츠로</h1>
-          <span>
-            컨셉 확인부터 콘텐츠 생성과 결과 편집까지
-            단계별로 진행합니다.
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void hook.refresh()}
-        >
-          새로고침
-        </button>
-      </header>
+    <ProjectWorkspace mode="review" className="mk-page">
+      <ProjectStageHeader step={8} eyebrow="마케팅 전략" title="확정한 사업안을 고객에게 보여줄 콘텐츠로 만드세요"
+        description="컨셉 확인, 생성 설정, 결과 확인의 세 단계로 문구와 시각 표현을 완성합니다."
+        actions={<button type="button" onClick={() => void hook.refresh()}>새로고침</button>} />
 
       {hook.error && (
         <div
@@ -218,21 +205,22 @@ export default function MarketingContentPage() {
       {!hook.loading && !hook.source && (
         <section className="mk-not-ready">
           <div>
-            <p>Marketing Source 준비가 필요합니다.</p>
+            <p>마케팅에 사용할 기획 자료가 필요합니다.</p>
             <h2>
-              확정된 Market Analysis Seed Snapshot이
+              확정된 시장 분석 입력이
               없습니다.
             </h2>
             <span>
-              Concept 선택과 가설 결정을 완료하면
-              Marketing Source가 자동으로 확정됩니다.
+              사업안 선택과 검증 조건 확인을 완료하면
+              마케팅에 사용할 기획 자료가 자동으로 준비됩니다.
+              Market Result나 Finalized Planning은 필요하지 않습니다.
             </span>
           </div>
 
           <Link
             to={`/app/projects/${projectId}/concepts/compare`}
           >
-            Concept 결정으로 이동
+            사업안 선택으로 이동
           </Link>
         </section>
       )}
@@ -327,7 +315,7 @@ export default function MarketingContentPage() {
               disabled={!hook.source}
               onClick={() => moveToStep(2)}
             >
-              이 컨셉으로 콘텐츠 만들기 →
+              이 사업안으로 콘텐츠 만들기
             </button>
           </div>
         </section>
@@ -355,7 +343,7 @@ export default function MarketingContentPage() {
               disabled={generationBusy}
               onClick={() => moveToStep(1)}
             >
-              ← 컨셉 다시 보기
+              사업안 다시 보기
             </button>
           </header>
 
@@ -393,7 +381,7 @@ export default function MarketingContentPage() {
               disabled={generationBusy}
               onClick={() => moveToStep(2)}
             >
-              ← 입력 수정하기
+              입력 수정하기
             </button>
           </header>
 
@@ -550,6 +538,6 @@ export default function MarketingContentPage() {
           )}
         </section>
       )}
-    </div>
+    </ProjectWorkspace>
   );
 }

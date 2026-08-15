@@ -488,5 +488,3 @@ print(f"\n===== {ok} 통과 / {len(fail)} 실패")
 for f in fail:
     print("  X ", f)
 sys.exit(1 if fail else 0)
-
-

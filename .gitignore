@@ -10,24 +10,16 @@
 .idea
 !AGENTS.md
 
-# 시장조사 엔진의 측정 원장·산출물 (판 ㉝ 이식). 232MB 이고 재생성 가능하다.
-# ⚠ 디렉터리 자체가 아니라 «내용»을 뺀다(`/*`). `runs/` 로 막으면 git 이 안으로 들어가지
-#    않아서 아래 되살리기(!)가 먹지 않는다.
-ai/app/research/research2/runs/*
-ai/app/research/research2/outputs/
-# 수집이 만드는 새 원장. 씨앗과 달리 **예외 없이 전부 뺀다** — 여기 있는 것은
-# 사용자 사업안의 관측이라 재생성 가능하고, 개인 원자료가 섞일 수 있다.
-ai/app/research/research2/runs-generated/
-
-# 예외 — 견본 컨셉 3개의 원장은 커밋한다. 재생성 가능한 파생 데이터지만,
-# 시장조사 FULL 은 `--from a4`(저장된 수집 재채점) 위에 서 있어서(pipeline.py:9)
-# 이 세 폴더가 없으면 pipeline.py:157 이 「sourceRun 원장 없음」으로 죽는다
-# → Spring 에서 AI_RESULT_INVALID. 즉 **이건 산출물이 아니라 실행 입력이다.**
-# 표는 pipeline.py:57 CONCEPTS 이고, 늘리려면 그 표와 여기를 같이 고친다.
-!ai/app/research/research2/runs/beauty-13/
-!ai/app/research/research2/runs/ledger-05/
-!ai/app/research/research2/runs/pet-treat-15/
-
-# 트윈 카드 뱅크(KISDI 파생 마이크로데이터). **재배포 금지 자산이라 커밋하지 않는다.**
-# 만드는 쪽은 저장소 밖 combine_csv/_build/twin/twin_export.py 이고, 배치는 :ro 바인드다.
+# KISDI 파생 Twin Bank는 재배포 금지 자산이며 외부 read-only mount로만 제공한다.
 ai/app/twin/bank/
+
+# Research2 검증 실행이 만드는 로컬 run 산출물은 canonical 결과가 아니다.
+ai/app/research/research2/runs-generated/
+ai/app/research/research2/outputs/
+ai/app/research/research2/runs/*
+!ai/app/research/research2/runs/beauty-13/
+!ai/app/research/research2/runs/beauty-13/**
+!ai/app/research/research2/runs/ledger-05/
+!ai/app/research/research2/runs/ledger-05/**
+!ai/app/research/research2/runs/pet-treat-15/
+!ai/app/research/research2/runs/pet-treat-15/**

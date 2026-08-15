@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:65ec891eb3fa47633f7622ce1fbbdb382f7fe9fc140eb20a6f9937ab98ca9c78",
+  "canonicalRequestHash": "fbc136e13fb657108495084e2923277714ab8e37a24bf764aea66f0873185353",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1-R1",
+        "businessText": "중고 거래 플랫폼 운영 플랫폼 운영자 물품 판매자 플랫폼 운영자 플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자가 물품 등록 사용자가 구매자와 매칭 사용자가 직접 거래 진행 구매자가 물품 대금 지불 판매자가 물품 인도 플랫폼이 수수료 수취 거래 수수료 기반의 수익 모델 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "MATCHING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1-R1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "MATCHING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "중고 거래 플랫폼으로, 사용자 간의 거래를 중개하고, 대학가 상점과 제휴하여 혜택을 제공하는 모델입니다."
+    }
+  ],
+  "durationMs": 3561,
+  "timestamp": "2026-08-10T07:57:25.738166+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

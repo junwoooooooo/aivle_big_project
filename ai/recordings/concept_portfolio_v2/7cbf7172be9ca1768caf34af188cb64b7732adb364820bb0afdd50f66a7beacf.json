@@ -1,0 +1,71 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f168a67dfe93fb0ac609de15baa4e3285c01038cadf49c12035cbd30cd567efc",
+  "canonicalRequestHash": "7cbf7172be9ca1768caf34af188cb64b7732adb364820bb0afdd50f66a7beacf",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C2",
+        "field": "intermediaryRole",
+        "value": "고객과 레시피 개발자 간의 연결 역할",
+        "roleFields": {
+          "platformRole": "레시피 추천 및 고객 피드백 수집을 위한 온라인 플랫폼 운영",
+          "providerRole": "레시피 및 식재료 제공",
+          "sellerRole": "구독 서비스 판매",
+          "intermediaryRole": "고객과 레시피 개발자 간의 연결 역할"
+        },
+        "actorRoles": [
+          "고객",
+          "레시피 개발자",
+          "플랫폼 운영자"
+        ],
+        "transactionFlow": [
+          "고객이 앱에 재료 입력",
+          "시스템이 맞춤형 레시피 추천",
+          "고객이 레시피를 선택",
+          "구독 결제 진행"
+        ],
+        "paymentFlow": [
+          "고객이 구독료 결제",
+          "결제 확인 후 서비스 제공",
+          "정기 결제 및 정산"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 레시피를 추천하고, 고객의 피드백을 반영하여 지속적으로 개선한다.",
+        "partnerModel": "레시피 개발자와 협력하여 다양한 레시피를 확보하고, 식재료 공급업체와 제휴하여 소량 식재료를 제공한다.",
+        "solutionMechanism": "고객의 취향과 재료를 기반으로 한 레시피 추천 시스템을 통해 소량의 식재료를 활용한 요리를 제안한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C2",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "사업 역할이 고객과 레시피 개발자 간의 연결 역할을 명확히 설명하고 있어 일치함."
+    }
+  ],
+  "durationMs": 2053,
+  "timestamp": "2026-08-10T07:56:00.038404+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

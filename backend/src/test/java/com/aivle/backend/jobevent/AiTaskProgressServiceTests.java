@@ -89,6 +89,41 @@ class AiTaskProgressServiceTests {
             .containsExactly(1, 2, 3);
     }
 
+    @Test
+    void routesAllowlistedMarketAndTwinProgressWithoutChangingCpv2Mapping() {
+        TaskAttempt attempt = mock(TaskAttempt.class);
+        when(attempt.getState()).thenReturn(TaskAttemptState.RUNNING);
+        when(attempts.findByIdAndTaskRunId("attempt", "run")).thenReturn(Optional.of(attempt));
+
+        TaskRun market = run(TaskRunState.RUNNING, "attempt", TaskType.MARKET_RESEARCH,
+            "MARKET_RESEARCH_FULL");
+        when(runs.findById("run")).thenReturn(Optional.of(market));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
+        verify(events).publish(argThat(command -> command.messageKey().equals("job.market.trace")
+            && command.eventType().equals("job.market.trace")));
+
+        reset(events);
+        TaskRun businessModel = run(TaskRunState.RUNNING, "attempt", TaskType.MARKET_RESEARCH,
+            "MARKET_RESEARCH_BM");
+        when(runs.findById("run")).thenReturn(Optional.of(businessModel));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
+        verify(events).publish(argThat(command -> command.messageKey().equals("job.business-model.trace")));
+
+        reset(events);
+        TaskRun twin = run(TaskRunState.RUNNING, "attempt", TaskType.TWIN_SURVEY, "TWIN_SURVEY");
+        when(runs.findById("run")).thenReturn(Optional.of(twin));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.ACCEPTED);
+        verify(events).publish(argThat(command -> command.messageKey().equals("job.twin.trace")));
+    }
+
+    @Test
+    void rejectsTaskTypesOutsideProgressAllowlist() {
+        TaskRun run = run(TaskRunState.RUNNING, "attempt", TaskType.FINANCE_ESTIMATE, "FINANCE_ESTIMATE");
+        when(runs.findById("run")).thenReturn(Optional.of(run));
+        assertThat(service.accept(request("attempt"))).isEqualTo(AiTaskProgressService.Outcome.INVALID);
+        verifyNoInteractions(events);
+    }
+
     private AiTaskProgressController.ProgressRequest request(String attemptId) {
         return request(attemptId, 1);
     }
@@ -99,11 +134,16 @@ class AiTaskProgressServiceTests {
     }
 
     private TaskRun run(TaskRunState state, String attemptId) {
+        return run(state, attemptId, TaskType.CONCEPT_PORTFOLIO_V2_RUN, "CONCEPT_PORTFOLIO_RUN");
+    }
+
+    private TaskRun run(TaskRunState state, String attemptId, TaskType taskType, String subjectType) {
         TaskRun run = mock(TaskRun.class);
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(42L);
         when(run.getId()).thenReturn("run"); when(run.getProject()).thenReturn(project);
-        when(run.getTaskType()).thenReturn(TaskType.CONCEPT_PORTFOLIO_V2_RUN);
+        when(run.getTaskType()).thenReturn(taskType);
+        when(run.getSubjectType()).thenReturn(subjectType);
         when(run.getCorrelationId()).thenReturn("correlation");
         when(run.getState()).thenReturn(state); when(run.getCurrentAttemptId()).thenReturn(attemptId);
         when(run.terminal()).thenReturn(state == TaskRunState.SUCCEEDED || state == TaskRunState.FAILED

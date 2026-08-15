@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-/** Public module contract. Monetary values are converted to KRW before calculation. */
+/** Public calculation contract. Monetary values are converted to KRW before calculation. */
 public record FinancialModuleRequest(
     @Valid @NotNull Assumptions assumptions,
     @NotNull @Min(12) @Max(60) Integer periodMonths,

@@ -1,0 +1,113 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4c7a038a14e20a98696169d6be6a44a6208730031e8ff458326efc2fe9360478",
+  "canonicalRequestHash": "5795709e2a3cb425ac630dea1fed98c1916bc78cbf9ef2dce9b37c624b2cefa4",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "10~50인 규모의 소형 사무실 운영자",
+      "problemFocus": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "useContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "valueProposition": "장비 관리와 유지보수를 통해 소형 사무실이 안정적으로 화상회의를 진행할 수 있도록 지원한다.",
+      "offerThesis": "소형 사무실 운영자는 장비 관리에 대한 부담을 덜고, 본업에 집중할 수 있다.",
+      "solutionThesis": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화한다.",
+      "differentiatingMechanics": [
+        "전문 기술 인력에 의한 맞춤형 관리 서비스 제공",
+        "고객 맞춤형 유지보수 계획 수립"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "10~50인 규모의 소형 사무실 운영자",
+      "problemScenario": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵습니다.",
+      "coreValue": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화합니다.",
+      "conceptDefinition": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+      "solutionMechanism": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리합니다.",
+      "featureSet": [
+        "정기 점검 서비스",
+        "고장 시 신속한 교체 서비스",
+        "전담 관리자 배정"
+      ],
+      "operatingModel": "전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축합니다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "10~50인 규모의 소형 사무실 운영자",
+        "useCaseThesis": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+        "valuePropositionThesis": "장비 관리와 유지보수를 통해 소형 사무실이 안정적으로 화상회의를 진행할 수 있도록 지원한다.",
+        "offerThesis": "소형 사무실 운영자는 장비 관리에 대한 부담을 덜고, 본업에 집중할 수 있다.",
+        "solutionThesis": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화한다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화한다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "전문 기술 인력에 의한 맞춤형 관리 서비스 제공",
+      "고객 맞춤형 유지보수 계획 수립",
+      "정기 점검 서비스",
+      "고장 시 신속한 교체 서비스",
+      "전담 관리자 배정"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스로, 전문적인 장비 관리 서비스를 통해 소형 사무실의 화상회의 환경을 최적화합니다."
+  },
+  "durationMs": 3029,
+  "timestamp": "2026-08-10T08:46:59.471994+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

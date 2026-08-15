@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:d5ba519d11962043cac748d34e4713a733d095767daee83d2c9e303bc81b310c",
+  "canonicalRequestHash": "72e3b2cf544d89c747312fa58765a69d1e26d589193c5b9254b1b01d1cc134e2",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "AI 이메일 관리 도구 제공자 AI 도구 제공자 구독 서비스 판매자 파트너십을 통한 판매 지원 클라우드 기반 서비스로 제공하여 언제 어디서나 접근 가능 CRM 시스템과의 통합을 통해 원활한 데이터 전송 지원 사용자가 이메일을 수신한다. AI 도구가 이메일 내용을 분석한다. AI 도구가 정리된 내용을 CRM에 입력한다. 사용자가 후속 조치를 확인한다. 사용자가 구독료를 결제한다. 결제 정보가 시스템에 기록된다. 서비스 제공자가 수익을 정산한다. 구독 기반 모델 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OWN_OPERATED",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 이메일 관리 도구로서 구독 기반의 SaaS 모델을 운영하며, 클라우드 기반으로 제공되고 CRM 시스템과 통합되어 사용자와의 상호작용이 이루어짐."
+    }
+  ],
+  "durationMs": 2041,
+  "timestamp": "2026-08-10T03:41:24.538592+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

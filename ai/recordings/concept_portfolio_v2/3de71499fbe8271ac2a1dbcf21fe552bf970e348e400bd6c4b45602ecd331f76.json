@@ -1,0 +1,120 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:6b14a64c947786d56594e2ae5c28d64eaef7b60e93e622de6e4db7a8d3ca2064",
+  "canonicalRequestHash": "3de71499fbe8271ac2a1dbcf21fe552bf970e348e400bd6c4b45602ecd331f76",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C5-F1",
+        "field": "sellerRole",
+        "value": "여행사 및 숙박업체",
+        "roleFields": {
+          "platformRole": "여행 추천 및 예약 플랫폼 제공",
+          "providerRole": "여행 추천 서비스 제공자",
+          "sellerRole": "여행사 및 숙박업체",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행사",
+          "숙박업체"
+        ],
+        "transactionFlow": [
+          "사용자가 앱에서 여행지 검색",
+          "추천된 여행지 확인 후 예약 진행",
+          "예약 완료 후 확인 메시지 발송"
+        ],
+        "paymentFlow": [
+          "사용자가 앱 내에서 결제 진행",
+          "여행사 및 숙박업체에 결제 수취",
+          "정산 후 수익 배분"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 서비스 제공.",
+        "partnerModel": "여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 취향과 이동 가능 시간을 바탕으로 최적의 여행지를 추천하고 예약 페이지로 연결한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "HIGH",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C5-F1",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "여행 추천 및 예약 플랫폼 제공",
+          "providerRole": "여행 추천 서비스 제공자",
+          "sellerRole": "여행사 및 숙박업체",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행사",
+          "숙박업체"
+        ],
+        "transactionFlow": [
+          "사용자가 앱에서 여행지 검색",
+          "추천된 여행지 확인 후 예약 진행",
+          "예약 완료 후 확인 메시지 발송"
+        ],
+        "paymentFlow": [
+          "사용자가 앱 내에서 결제 진행",
+          "여행사 및 숙박업체에 결제 수취",
+          "정산 후 수익 배분"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 서비스 제공.",
+        "partnerModel": "여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 취향과 이동 가능 시간을 바탕으로 최적의 여행지를 추천하고 예약 페이지로 연결한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "HIGH",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C5-F1",
+      "field": "sellerRole",
+      "decision": "MISMATCH",
+      "safeReason": "The role described as 'sellerRole' does not align with the business role of 'INTERMEDIARY' as it refers to travel agencies and accommodation providers."
+    },
+    {
+      "candidateId": "C5-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "The role described as 'intermediaryRole' aligns with the business role of 'INTERMEDIARY' as it refers to the platform operator."
+    }
+  ],
+  "durationMs": 2638,
+  "timestamp": "2026-08-10T05:15:57.674216+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

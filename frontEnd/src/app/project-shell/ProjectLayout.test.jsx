@@ -1,56 +1,24 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { readFileSync } from 'node:fs';
-import { DesktopStepNavigation, ProjectHelpControl } from './ProjectLayout.jsx';
-import { workCenterViewState } from './workCenterViewState.js';
+import { JourneySubsteps } from './ProjectLayout.jsx';
 
-describe('Project helper control', () => {
-  it('opens useful canonical stage guidance instead of remaining dead', () => {
-    render(<ProjectHelpControl current={{ label: '2. 사업안', nextAction: { label: '검증 가정 확인' } }} currentStatus={{ label: '입력 필요' }} />);
-    fireEvent.click(screen.getByLabelText('도움말과 가이드 열기'));
-    expect(screen.getByRole('dialog', { name: '현재 단계 도움말' })).toBeInTheDocument();
-    expect(screen.getByText('현재 상태: 입력 필요')).toBeInTheDocument();
-    expect(screen.getByText('다음에 할 일: 검증 가정 확인')).toBeInTheDocument();
-    expect(screen.getByText(/오른쪽 작업 센터/)).toBeInTheDocument();
-  });
-});
-
-describe('desktop project navigation and Work Center state', () => {
-  it('keeps the sheet open while switching from list to detail', () => {
-    const open = { mounted: true, phase: 'open', view: 'list', focusJobId: null, direction: 'forward' };
-    expect(workCenterViewState(open, 'job-1')).toEqual({
-      mounted: true, phase: 'open', view: 'detail', focusJobId: 'job-1', direction: 'forward',
-    });
-    expect(workCenterViewState(workCenterViewState(open, 'job-1'), null)).toMatchObject({
-      mounted: true, phase: 'open', view: 'list', focusJobId: null, direction: 'backward',
-    });
+describe('V9 project layout', () => {
+  it('통합 Journey 안에서 작은 substep 탐색만 제공한다', () => {
+    const journey = { shortLabel: '사업 검증', children: [
+      { id: 'market', href: '/app/projects/41/market', shortLabel: '시장 분석', status: 'COMPLETED' },
+      { id: 'businessModel', href: '/app/projects/41/business-model', shortLabel: '사업 모델', status: 'READY' },
+    ] };
+    render(<MemoryRouter><JourneySubsteps journey={journey} currentModule={journey.children[1]} /></MemoryRouter>);
+    expect(screen.getByRole('navigation', { name: '사업 검증 세부 업무' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /사업 모델/ })).toHaveAttribute('aria-current', 'step');
   });
 
-  it('shows previous and gated next navigation', () => {
-    render(<MemoryRouter><DesktopStepNavigation
-      previous={{ href: '/app/projects/41/idea', shortLabel: '아이디어' }}
-      current={{ shortLabel: '사업안' }}
-      next={{ id: 'market', href: '/app/projects/41/market', shortLabel: '시장 분석', status: 'NOT_READY' }}
-    /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '← 아이디어' })).toHaveAttribute('href', '/app/projects/41/idea');
-    expect(screen.getByText(/현재 단계 · 사업안/)).toBeInTheDocument();
-    expect(screen.getByText(/시장 분석 →/)).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText(/사업안을 선택하고 검증 가정을 확정한 후/)).toBeInTheDocument();
-  });
-
-  it('links the confirmed Idea step to Business Proposal without auto redirect', () => {
-    render(<MemoryRouter><DesktopStepNavigation previous={null}
-      next={{ id: 'concepts', href: '/app/projects/41/concepts', shortLabel: '사업안', status: 'READY' }}
-    /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: '사업안 →' }))
-      .toHaveAttribute('href', '/app/projects/41/concepts');
-  });
-
-  it('places one desktop navigator before the routed main content', () => {
+  it('상시 sidebar, Work Center, floating helper를 렌더링하지 않는다', () => {
     const source = readFileSync('src/app/project-shell/ProjectLayout.jsx', 'utf8');
-    const layout = source.slice(source.indexOf('return <div className="pipeline-shell">'));
-    expect(layout.match(/<DesktopStepNavigation/g)).toHaveLength(1);
-    expect(layout.indexOf('<DesktopStepNavigation')).toBeLessThan(layout.indexOf('<Outlet'));
+    expect(source).not.toContain('pipeline-shell__sidebar');
+    expect(source).not.toContain('pipeline-shell__work-center');
+    expect(source).not.toContain('pipeline-shell__help');
   });
 });

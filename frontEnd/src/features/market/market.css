@@ -12,10 +12,12 @@
 .market-page { display: grid; align-content: start; gap: 1.75rem; min-width: 0; }
 .market-page > .pipeline-page-heading { margin-bottom: -1.25rem; }  /* 머리글은 바로 아래와 한 덩이 */
 .market-page__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.market-page__live-progress { display: block; margin-top: .35rem; }
 .market-note { color: var(--color-text-secondary); font-size: .85rem; margin: 0 0 .75rem; }
 .mr-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 
 /* 견본 컨셉 고르기 — 임시 다리. 컨셉이 DB 에서 오면 이 규칙도 같이 사라진다. */
+.market-concept-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
 
 .market-summary { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; font-size: .88rem; }
 .market-summary__cell { margin-right: .4rem; padding: .05rem .4rem; border-radius: 3px; background: var(--color-bg-subtle); font-size: .75rem; }
@@ -254,32 +256,7 @@
 .bm-det__t { margin-top: .6rem; }
 .bm-det__m { margin-top: 1rem; color: var(--color-text-primary); font-size: .81rem; line-height: 1.7; }
 .bm-det__m b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }
-
-
-/* 경쟁 씨앗 — 사용자가 조사 전에 적는 칸. 한 줄이 씨앗 하나다. */
-.competitor-seeds__why,
-.competitor-seeds__hint {
-  margin: 0 0 var(--space-3);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-small);
-  line-height: 1.6;
-}
-
-.competitor-seeds__row {
-  display: grid;
-  /* 「왜 경쟁인가」가 가장 넓다 — 프롬프트에서 슬롯의 뜻을 정하는 칸이라 짧게 쓰면
-     조사가 엉뚱한 것을 잰다. 칸 너비로 그 사실을 말한다. */
-  grid-template-columns: minmax(8rem, 1fr) minmax(14rem, 2fr) minmax(8rem, 1fr);
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-@media (max-width: 48rem) {
-  .competitor-seeds__row { grid-template-columns: 1fr; }
-}
-
-.competitor-seeds__actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
+.competitor-seeds__row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 12px; margin: 12px 0; }
+.competitor-seeds__actions { display: flex; gap: 8px; margin-top: 12px; }
+.competitor-seeds__hint { color: var(--color-text-muted, #596579); font-size: .9rem; }
+@media (max-width: 760px) { .competitor-seeds__row { grid-template-columns: 1fr; } }

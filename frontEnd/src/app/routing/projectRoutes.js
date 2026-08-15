@@ -16,12 +16,11 @@ export const projectRoutes = Object.freeze({
   conceptCompare: (projectId) => `${projectBase(projectId)}/concepts/compare`,
   market: (projectId) => `${projectBase(projectId)}/market`,
   businessModel: (projectId) => `${projectBase(projectId)}/business-model`,
-  technology: (projectId) => `${projectBase(projectId)}/technology`,
-  operations: (projectId) => `${projectBase(projectId)}/operations`,
+  twinSurvey: (projectId) => `${projectBase(projectId)}/twin-survey`,
   techOps: (projectId) => `${projectBase(projectId)}/tech-ops`,
   finance: (projectId) => `${projectBase(projectId)}/finance`,
-  panelSurvey: (projectId) => `${projectBase(projectId)}/panel-survey`,
   marketing: (projectId) => `${projectBase(projectId)}/marketing`,
+  finalReport: (projectId) => `${projectBase(projectId)}/final-report`,
   settings: (projectId) => `${projectBase(projectId)}/settings`,
 });
 

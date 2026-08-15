@@ -22,13 +22,13 @@ services:
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-aivle-e2e}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
     volumes:
       - minio-data:/data
-    ports:
-      - "${MINIO_API_PORT:-9000}:9000"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -63,7 +63,9 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:?AI_PROVIDER is required}
       AI_API_KEY: ${AI_API_KEY:?AI_API_KEY is required}
       AI_MODEL: ${AI_MODEL:?AI_MODEL is required}
-      AI_IMAGE_MODEL: ${AI_IMAGE_MODEL:-gpt-image-2}
+      MARKETING_COPY_MODEL: ${MARKETING_COPY_MODEL:-gpt-4o-mini}
+      MARKETING_IMAGE_MODEL: ${MARKETING_IMAGE_MODEL:-gpt-image-2}
+      AI_IMAGE_MODEL: ${MARKETING_IMAGE_MODEL:-gpt-image-2}
       AI_MODEL_CONCEPT_VALIDATION: ${AI_MODEL_CONCEPT_VALIDATION:-}
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_INTERNAL_SERVICE_TOKEN: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
@@ -85,54 +87,22 @@ services:
       AI_E2E_FAULTS_ENABLED: ${AI_E2E_FAULTS_ENABLED:-false}
       AI_E2E_FAULT_MODE: ${AI_E2E_FAULT_MODE:-}
       AI_E2E_FAULT_DELAY_SECONDS: ${AI_E2E_FAULT_DELAY_SECONDS:-5}
-      # 시장조사 엔진은 **이미지 안에** 있다 (판 ㉝ 이식: ai/app/research/research2).
-      # 예전에는 ./시장조사/research2 를 볼륨으로 붙였는데 그건 **로컬에서만** 되는 방법이었다 —
-      # ai-server 빌드 컨텍스트가 ./ai 라 이미지가 자립하지 못했다.
-      RESEARCH2_HOME: /app/app/research/research2
-      # 원장(runs/)만 컨테이너 밖에 남긴다. 이미지 안에 두면 재기동마다 증발하고,
-      # 측정 원장은 232MB 라 이미지에 넣을 것도 아니다.
-      # ⚠ **엔진이 보는 자리와 같아야 한다.** 예전에는 이 변수를 읽는 코드가 `runlog.py`
-      #   하나뿐이고 `run.py`·`bm_layer`·`bm_scorer`·하네스는 `<RESEARCH2_HOME>/runs` 를
-      #   직접 만들어서, 다른 자리에 붙이면 **쓰는 곳과 읽는 곳이 갈렸다**
-      #   (판 ㉝ 스모크 실측: `/research2-runs` 는 비어 있고 `<HOME>/runs` 는 아예 없었다).
-      #   지금은 `research2/runpath.py` **한 곳**이 두 변수를 다 읽고 나머지는 거기 묻는다.
-      RESEARCH2_RUNS_DIR: /app/app/research/research2/runs
-      # 수집이 만드는 새 원장. **쓰기는 전부 여기다** — 씨앗은 `:ro` 로 남는다.
-      RESEARCH2_GENERATED_RUNS_DIR: /app/app/research/research2/runs-generated
-      # 수집이 외부를 친다 — 키가 없으면 어댑터가 조용히 not_configured 로 떨어진다.
-      # ⚠ AI_API_KEY 를 흘려 넣지 않는다. 판 ⑫ 가 「엔진 지갑 ≠ 제품 지갑」을 값으로 갈랐고,
-      #   합치면 시장조사 지출이 제품 예산에 섞여 되짚을 수 없게 된다(그때 실제로 그랬다).
-      #   한 지갑으로 쓰려면 .env 에 같은 값을 **적어서** 합친다 — 조용히 합치지 않는다.
-      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY is required (market research engine wallet)}
-      # ⚠ chat-only 게이트웨이를 여기 물리면 하네스·발췌·요약이 전멸한다
-      #   (research2 는 /v1/responses 를 직접 쓴다). 지원 여부를 확인하고 넣을 것.
+      OPENAI_API_KEY: ${MARKET_RESEARCH_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-${AI_BASE_URL:-}}
       KOSIS_API_KEY: ${KOSIS_API_KEY:-}
       DART_API_KEY: ${DART_API_KEY:-}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      TECH_OPS_ENABLE_DART_CORP_LOOKUP: ${TECH_OPS_ENABLE_DART_CORP_LOOKUP:-false}
+      TECH_OPS_ADVISOR_MODEL: ${TECH_OPS_ADVISOR_MODEL:-}
       BM_MODEL: ${BM_MODEL:-${AI_MODEL}}
-      # 트윈 카드 뱅크도 이미지 밖이다 — 이유는 크기가 아니라 **재배포 금지**다
-      # (KISDI 한국미디어패널조사 파생 마이크로데이터). 가림(pid 해시)만으로 부족하다:
-      # 카드 본문에 만나이·성별·지역·가구형태·소득대가 문장으로 들어 있다.
-      # 없으면 조용히 빈 표본으로 도는 대신 TWIN_BANK_UNAVAILABLE 로 시끄럽게 죽는다.
       TWIN_BANK_DIR: /app/app/twin/bank
+      TWIN_CONCURRENCY: ${TWIN_CONCURRENCY:-32}
     volumes:
-      # 씨앗 원장을 **읽기 전용**으로 붙인다. named volume 은 빈 채로 덮어써서
-      # 컨테이너 안 원장이 0개였다 — `.dockerignore` 가 runs/ 를 빼기 때문이다
-      # (232MB 를 빌드 컨텍스트에 넣지 않는다는 결정은 그대로 옳다).
-      #
-      # `:ro` 가 안전한 근거 — FULL·BM 경로는 runs/ 에 **쓰지 않는다**.
-      #   `service/summary.py` 의 `summarize()` 는 CLI `--out` 일 때만 디스크에 쓰고,
-      #   `pipeline._summary` 는 반환값만 받는다. 쓰기가 필요해지면 조용히가 아니라
-      #   시끄럽게 터진다 — 그게 낫다.
-      # 덤으로 §1 동시 세션 규칙을 지킨다: 컨테이너가 측정 원장을 덮어쓸 수 없다.
       - ./ai/app/research/research2/runs:/app/app/research/research2/runs:ro
-      # **수집이 만드는 새 원장.** 씨앗의 `:ro` 보호를 유지한 채 쓸 자리를 따로 준다.
-      # 읽기는 `runpath.SEARCH_ORDER` 가 둘 다 보고, 쓰기는 여기만 간다.
-      # 바인드여야 한다 — named volume 은 빈 채로 덮어쓴다(원장 때와 같은 함정).
-      - ./ai/app/research/research2/runs-generated:/app/app/research/research2/runs-generated
-      # named volume 을 쓰면 빈 채로 덮어쓴다 — 원장 때와 같은 함정이다. 바인드여야 한다.
-      - ./ai/app/twin/bank:/app/app/twin/bank:ro
+      - type: bind
+        source: ${TWIN_BANK_HOST_DIR}
+        target: /app/app/twin/bank
+        read_only: true
     depends_on:
       minio:
         condition: service_healthy
@@ -161,20 +131,20 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       APP_ENVIRONMENT: ${APP_ENVIRONMENT:-LOCAL}
-      AI_API_KEY: ${AI_API_KEY:?AI_API_KEY is required}
-      AI_MODEL: ${AI_MODEL:?AI_MODEL is required}
-      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com/v1}
       AI_SERVER_BASE_URL: http://ai-server:8000
       AI_SERVER_INTERNAL_API_KEY: ${AI_INTERNAL_SERVICE_TOKEN:?AI_INTERNAL_SERVICE_TOKEN is required}
       MARKET_MODULE_INTERNAL_API_KEY: ${MARKET_MODULE_INTERNAL_API_KEY:-}
       AI_SERVER_CONNECT_TIMEOUT: ${AI_SERVER_CONNECT_TIMEOUT:-3s}
-      AI_SERVER_READ_TIMEOUT: ${AI_SERVER_READ_TIMEOUT:-75s}
-      AI_SERVER_LONG_READ_TIMEOUT: ${AI_SERVER_LONG_READ_TIMEOUT:-420s}
+      AI_SERVER_READ_TIMEOUT: ${AI_SERVER_READ_TIMEOUT:-30s}
+      AI_SERVER_LONG_READ_TIMEOUT: ${AI_SERVER_LONG_READ_TIMEOUT:-7m}
+      AI_SERVER_MARKET_RESEARCH_READ_TIMEOUT: ${AI_SERVER_MARKET_RESEARCH_READ_TIMEOUT:-22m}
+      AI_SERVER_CONCEPT_PORTFOLIO_READ_TIMEOUT: ${AI_SERVER_CONCEPT_PORTFOLIO_READ_TIMEOUT:-15m}
+      AI_SERVER_TWIN_SURVEY_READ_TIMEOUT: ${AI_SERVER_TWIN_SURVEY_READ_TIMEOUT:-14m}
       APP_LEGAL_REGISTRY_VERSION: ${LEGAL_REGISTRY_VERSION:-legal-registry-v1}
       APP_E2E_DEFER_ARTIFACT_WAKE: ${APP_E2E_DEFER_ARTIFACT_WAKE:-false}
       OBJECT_STORAGE_PROVIDER: s3
       OBJECT_STORAGE_ENDPOINT: http://minio:9000
-      OBJECT_STORAGE_PUBLIC_ENDPOINT: http://localhost:${MINIO_API_PORT:-9000}
+      OBJECT_STORAGE_PUBLIC_ENDPOINT: ${OBJECT_STORAGE_PUBLIC_ENDPOINT:-http://localhost:9000}
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-aivle-ai-artifacts}
       OBJECT_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-aivle-e2e}
       OBJECT_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}

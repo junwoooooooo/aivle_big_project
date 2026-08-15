@@ -4,6 +4,11 @@ export function createIdeaBriefApiAdapter(client) {
   return Object.freeze({
     get: (projectId, options) => client.get(ideaBriefBase(projectId), options),
     derive: (projectId, payload, options) => client.post(`${ideaBriefBase(projectId)}/derive`, payload, options),
+    uploadAttachment: (projectId, file, options) => {
+      const form = new FormData();
+      form.append('file', file);
+      return client.upload(`${ideaBriefBase(projectId)}/attachments`, form, options);
+    },
     patchFields: (projectId, payload, options) => client.patch(`${ideaBriefBase(projectId)}/fields`, payload, options),
     patchInterpretation: (projectId, payload, options) => client.patch(`${ideaBriefBase(projectId)}/interpretation`, payload, options),
     reviewCommitments: (projectId, payload, options) => client.patch(`${ideaBriefBase(projectId)}/commitments`, payload, options),

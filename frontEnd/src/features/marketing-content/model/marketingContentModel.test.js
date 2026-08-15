@@ -12,4 +12,10 @@ describe('marketing setup model', () => {
     expect(request.additionalInstruction).toContain("CTA는 '자세히 보기'");
     expect(request).not.toHaveProperty('callToAction');
   });
+
+  it('serializes the uploaded reference artifact id without dropping it', () => {
+    const request = toCreateRequest({ ...createSetupModel('source-1'), channel: 'Instagram', purpose: 'launch' },
+      '00000000-0000-4000-8000-000000000001');
+    expect(request.referenceArtifactId).toBe('00000000-0000-4000-8000-000000000001');
+  });
 });

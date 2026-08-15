@@ -34,7 +34,6 @@ public class FinancialMonteCarloService {
             percent(losses, count), percent(paybacks, count), seed);
     }
     private BigDecimal shock(SplittableRandom random, int volatility) {
-        // Box-Muller normal variate; capped at +/- 3 standard deviations to avoid implausible tail cases.
         double gaussian = Math.max(-3, Math.min(3, Math.sqrt(-2 * Math.log(Math.max(random.nextDouble(), 1e-12))) * Math.cos(2 * Math.PI * random.nextDouble())));
         return BigDecimal.valueOf(gaussian * volatility).setScale(4, RoundingMode.HALF_UP);
     }

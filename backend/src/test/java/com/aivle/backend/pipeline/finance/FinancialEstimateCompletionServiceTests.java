@@ -99,12 +99,13 @@ class FinancialEstimateCompletionServiceTests {
             proposal.put("proposalVersion", Math.max(0, version - 1));
             proposal.put("decision", "PROPOSED"); proposal.put("estimateStatus", "RUNNING");
             proposal.put("activeTaskRunId", "task-1");
-            preparation = FinancialInputPreparation.create("prep-1", 41L, "tech-1", "seed-1", HASH,
+            preparation = FinancialInputPreparation.create("prep-1", 41L, "tech-1", "seed-1", 101L, 201L, HASH,
                 mapper.writeValueAsString(fields), "{}", mapper.writeValueAsString(assistance), 7L);
             String rejected = oldProposal == null ? "" : mapper.writeValueAsString(oldProposal);
             JsonNode input = mapper.readTree("""
                 {"preparationId":"prep-1","fieldKey":"annualFixedRentAndManagementCost",
                  "proposalVersion":%d,"rejectedProposalJson":%s,"sourceTechOpsSnapshotId":"tech-1",
+                 "sourceMarketResearchVersionId":101,"sourceBusinessModelVersionId":201,
                  "sourceSnapshotHash":"%s","expectedPreparationRevision":1}
                 """.formatted(version, mapper.writeValueAsString(rejected), HASH));
             context = new TaskRunWorkerContext("task-1", 41L, 7L, TaskType.FINANCE_ESTIMATE,

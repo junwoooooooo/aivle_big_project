@@ -140,7 +140,7 @@ function ProjectSettingsContent({ project, retry, onFinalClose }) {
 
   return <><SideSheet open title="프로젝트 설정" label="프로젝트 설정" phase={closing ? 'exiting' : 'entered'} onExited={finishClose} onClose={requestClose} footer={<><Button variant="outline" size="small" disabled={saving || closing} onClick={requestClose}>취소</Button><Button type="submit" size="small" form="project-settings-form" loading={saving} disabled={saving || closing || restriction.blocked}>변경사항 저장</Button></>}>
     <div className="project-sheet__heading"><span><AppIcon name="settings" size={20} /></span><div><h2>프로젝트 설정</h2><p>프로젝트 기본 정보와 삭제를 관리합니다.</p></div></div>
-    <form id="project-settings-form" className="project-sheet__form" onSubmit={save}>
+    <form id="project-settings-form" className="project-sheet__form" data-form-kind="admin" onSubmit={save}>
       {error && <Alert tone="danger" title="저장하지 못했습니다.">{error}</Alert>}
       {message && <Alert tone="success" title="저장됨">{message}</Alert>}
       {restriction.blocked && <Alert tone={restriction.code === 'POLICY_UNAVAILABLE' ? 'danger' : 'warning'} title="프로젝트를 변경할 수 없습니다"><p>{restriction.message}</p>{restriction.code === 'POLICY_UNAVAILABLE' && <Button type="button" variant="outline" size="small" onClick={() => void servicePolicy.refresh().catch(() => undefined)}>다시 시도</Button>}</Alert>}

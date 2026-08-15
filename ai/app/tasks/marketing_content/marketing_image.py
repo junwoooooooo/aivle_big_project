@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from urllib.parse import quote
@@ -62,10 +63,8 @@ async def _download_reference(project_id: int, artifact_id: str) -> tuple[bytes,
     token = os.getenv("AI_INTERNAL_SERVICE_TOKEN", "").strip()
     if not base_url or not token:
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", 503, False)
-    url = (
-        f"{base_url}/internal/v1/ai/projects/{project_id}/evidence-artifacts/"
-        f"{quote(artifact_id, safe='')}"
-    )
+    url = (f"{base_url}/internal/v1/ai/projects/{project_id}/evidence-artifacts/"
+           f"{quote(artifact_id, safe='')}")
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, headers={"X-AI-Internal-Token": token})
@@ -79,11 +78,7 @@ async def _download_reference(project_id: int, artifact_id: str) -> tuple[bytes,
     return response.content, content_type
 
 
-def _generate_image_sync(
-    prompt: str,
-    size: str,
-    reference: tuple[bytes, str] | None,
-) -> bytes:
+def _generate_image_sync(prompt: str, size: str, reference: tuple[bytes, str] | None) -> bytes:
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     model = os.getenv("AI_IMAGE_MODEL", "gpt-image-2").strip() or "gpt-image-2"
     if not api_key:
@@ -92,16 +87,8 @@ def _generate_image_sync(
     temporary_path: Path | None = None
     try:
         if reference is None:
-            response = client.images.generate(
-                model=model,
-                prompt=prompt,
-                size=size,
-                quality="high",
-                output_format="jpeg",
-                output_compression=88,
-                background="opaque",
-                n=1,
-            )
+            response = client.images.generate(model=model, prompt=prompt, size=size, quality="high",
+                output_format="jpeg", output_compression=88, background="opaque", n=1)
         else:
             image_bytes, content_type = reference
             suffix = ".png" if content_type == "image/png" else ".jpg"
@@ -109,23 +96,13 @@ def _generate_image_sync(
                 temporary.write(image_bytes)
                 temporary_path = Path(temporary.name)
             with temporary_path.open("rb") as image_file:
-                response = client.images.edit(
-                    model=model,
-                    image=image_file,
-                    prompt=prompt,
-                    size=size,
-                    quality="high",
-                    output_format="jpeg",
-                    output_compression=88,
-                    background="opaque",
-                    n=1,
-                )
+                response = client.images.edit(model=model, image=image_file, prompt=prompt, size=size,
+                    quality="high", output_format="jpeg", output_compression=88,
+                    background="opaque", n=1)
         if not response.data or not response.data[0].b64_json:
             raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
         generated = base64.b64decode(response.data[0].b64_json, validate=True)
-        if not 0 < len(generated) <= MAX_IMAGE_BYTES or not generated.startswith(b"\xff\xd8\xff"):
-            raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
-        return generated
+        return _validate_generated_jpeg(generated)
     except ProviderFailure:
         raise
     except (AuthenticationError, PermissionDeniedError) as failure:
@@ -141,6 +118,12 @@ def _generate_image_sync(
             temporary_path.unlink(missing_ok=True)
 
 
+def _validate_generated_jpeg(content: bytes) -> bytes:
+    if not 0 < len(content) <= MAX_IMAGE_BYTES or not content.startswith(b"\xff\xd8\xff"):
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
+    return content
+
+
 async def _upload_image(content: bytes) -> str:
     base_url = os.getenv("BACKEND_INTERNAL_BASE_URL", "").strip().rstrip("/")
     token = os.getenv("AI_INTERNAL_SERVICE_TOKEN", "").strip()
@@ -148,11 +131,8 @@ async def _upload_image(content: bytes) -> str:
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", 503, False)
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{base_url}/internal/v1/ai/marketing-artifacts",
-                content=content,
-                headers={"X-AI-Internal-Token": token, "Content-Type": "image/jpeg"},
-            )
+            response = await client.post(f"{base_url}/internal/v1/ai/marketing-artifacts", content=content,
+                headers={"X-AI-Internal-Token": token, "Content-Type": "image/jpeg"})
     except (httpx.TimeoutException, httpx.NetworkError) as failure:
         raise ProviderFailure("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", 503, True) from failure
     if response.status_code != 201:
@@ -161,22 +141,18 @@ async def _upload_image(content: bytes) -> str:
         artifact_ref = response.json()["artifactRef"]
     except (ValueError, KeyError, TypeError) as failure:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
-    if not isinstance(artifact_ref, str) or not artifact_ref.startswith("ai-artifacts/"):
+    if not isinstance(artifact_ref, str) or not re.fullmatch(
+            r"ai-artifacts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.jpg",
+            artifact_ref):
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
     return artifact_ref
 
 
-async def generate_and_store_marketing_image(
-    value: MarketingContentInput,
-    result: MarketingContentResult,
-) -> str:
+async def generate_and_store_marketing_image(value: MarketingContentInput,
+                                             result: MarketingContentResult) -> str:
     reference = None
     if value.request.referenceArtifactId:
         reference = await _download_reference(value.source.projectId, value.request.referenceArtifactId)
-    content = await asyncio.to_thread(
-        _generate_image_sync,
-        _image_prompt(value, result),
-        _image_size(value.request.contentType),
-        reference,
-    )
+    content = await asyncio.to_thread(_generate_image_sync, _image_prompt(value, result),
+                                      _image_size(value.request.contentType), reference)
     return await _upload_image(content)

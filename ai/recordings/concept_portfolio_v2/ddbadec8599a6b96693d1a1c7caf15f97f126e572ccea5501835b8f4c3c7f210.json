@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:65649e12f1a4852c37e2c827c9b66f724b40ecb33fb799dff670f951a2b589a4",
+  "canonicalRequestHash": "ddbadec8599a6b96693d1a1c7caf15f97f126e572ccea5501835b8f4c3c7f210",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "고객의 피드백을 반영하여 지속적으로 서비스 품질을 개선한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 식재료를 공급받는다. 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치한다. 고객의 주문에 따라 맞춤형으로 식재료를 포장하여 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "고객의 요리 데이터를 분석하여 레시피 추천 알고리즘을 개선한다. 요리 전문가와 협력하여 다양한 레시피를 개발한다. 프리미엄 레시피 구독 모델을 도입하여 수익을 창출한다. 소셜 미디어와 블로그를 통해 레시피를 홍보한다. 고객이 요청한 레시피를 즉시 제공하여 만족도를 높인다. 앱 또는 웹사이트에서 남은 재료를 입력하면 맞춤형 레시피를 제공한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "고객의 피드백을 반영하여 배송 주기와 품질을 개선한다. 신선한 식재료를 공급할 수 있는 지역 농가와 협력한다. 구독 모델을 통해 안정적인 수익을 창출한다. 온라인 광고와 프로모션을 통해 신규 고객을 유치한다. 고객의 주문에 따라 맞춤형으로 식재료를 포장하여 배송한다. 고객이 원하는 배송 주기를 설정하고 관리할 수 있는 플랫폼 제공.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "ADVERTISING",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "고객의 요리 데이터를 분석하여 서비스 품질을 지속적으로 개선한다. 요리 전문가와 협력하여 간편 레시피를 개발한다. 프리미엄 구독 모델을 통해 수익을 창출한다. 소셜 미디어와 블로그를 통해 서비스 홍보. 고객의 요청에 따라 즉시 맞춤형 서비스를 제공한다. 고객이 원하는 요리 스타일을 입력하면 맞춤형 식재료와 레시피를 제공한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "고객의 피드백을 반영하여 캠페인 내용을 지속적으로 개선한다. 환경 단체와 협력하여 캠페인을 진행한다. 캠페인 참여를 통해 브랜드 인지도를 높인다. 소셜 미디어와 블로그를 통해 캠페인을 홍보한다. 고객의 요청에 따라 즉시 교육 자료를 제공한다. 온라인 플랫폼을 통해 음식물 쓰레기 감소 관련 정보를 제공하고 참여를 유도한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "고객의 피드백을 반영하여 추천 알고리즘을 지속적으로 개선한다. 지역 농가와 협력하여 신선한 식재료를 공급받는다. 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치한다. 고객의 요청에 따라 맞춤형으로 식재료를 추천한다. 고객이 원하는 요리 스타일을 입력하면 맞춤형 식재료를 추천한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service that collaborates with local farmers to provide fresh ingredients and uses a subscription model for revenue."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A digital service that analyzes cooking data to improve recipe recommendations and offers a subscription model."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "ADVERTISING",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service that collaborates with local farmers and uses a subscription model while improving delivery quality."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service that continuously improves based on customer feedback and offers personalized recipes."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A campaign service that collaborates with environmental organizations and promotes through social media."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A digital service that recommends ingredients based on customer preferences and uses a subscription model."
+    }
+  ],
+  "durationMs": 6348,
+  "timestamp": "2026-08-10T03:30:48.814175+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

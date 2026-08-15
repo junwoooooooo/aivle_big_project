@@ -59,6 +59,7 @@ const completedDetail = {
   },
   revisions: [
     {
+      revisionId: 'revision-1',
       revisionNumber: 1,
       revisionType: 'GENERATED',
       result: generatedResult,
@@ -143,7 +144,7 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 컨셉으로 콘텐츠 만들기 →',
+        name: '이 사업안으로 콘텐츠 만들기',
       }),
     );
 
@@ -216,7 +217,7 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 컨셉으로 콘텐츠 만들기 →',
+        name: '이 사업안으로 콘텐츠 만들기',
       }),
     );
 

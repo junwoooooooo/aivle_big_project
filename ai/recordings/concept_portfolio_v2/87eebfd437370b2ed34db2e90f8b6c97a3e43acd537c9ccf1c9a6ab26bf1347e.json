@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:0b8f219df21467dfb193dd44593272fe3692223f40e2cd6e40915e15fe2a32b9",
+  "canonicalRequestHash": "87eebfd437370b2ed34db2e90f8b6c97a3e43acd537c9ccf1c9a6ab26bf1347e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-R1",
+        "businessText": "중고 거래 플랫폼 운영 및 사용자 매칭 지원 플랫폼 운영 및 서비스 제공 중고 물품 판매자 거래 중개 및 지원 지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다. 대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자가 물품 등록 구매자가 물품 조회 및 거래 요청 판매자와 구매자 간의 직접 거래 진행 거래 완료 후 피드백 제공 구매자가 거래 금액을 결제 플랫폼이 수수료를 차감한 후 판매자에게 지급 프리미엄 서비스와 광고를 통해 수익을 창출한다. 모바일 앱과 웹사이트를 통해 사용자에게 접근한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "중고 거래 플랫폼으로, 사용자 매칭 및 거래 중개를 통해 수익을 창출하는 모델."
+    }
+  ],
+  "durationMs": 4325,
+  "timestamp": "2026-08-10T05:04:06.259121+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

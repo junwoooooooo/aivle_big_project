@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:39ee34cd9952d75f3bb8cf4c599aae80b5df68899dc0cde404020889da87ab08",
+  "canonicalRequestHash": "13ea5402449ac8a99ff68e7a5d9795adb02c5eb70e159e9ed053f80630bfe0a0",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "장비 통합 관리 플랫폼 제공 장비 대여 및 관리 서비스 제공 장비 판매 및 서비스 계약 체결 고객과 공급자 간의 계약 중개 통합 관리 시스템을 통한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, 통합 관리 시스템 개발 업체와 협력합니다. 고객이 온라인 플랫폼을 통해 장비를 선택하고 주문 장비 제조사로부터 장비를 수령 고객에게 장비를 배송 및 설치 고객의 요청에 따라 장비 유지보수 및 교체 고객이 월간 요금을 온라인으로 결제 결제 확인 후 장비 배송 및 설치 진행 정기적으로 요금 청구 및 결제 수취 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "장비 통합 관리 플랫폼으로, 고객과 공급자 간의 계약 중개 및 장비 대여, 판매, 유지보수 서비스를 제공하는 비즈니스."
+    }
+  ],
+  "durationMs": 2547,
+  "timestamp": "2026-08-10T05:09:57.456788+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

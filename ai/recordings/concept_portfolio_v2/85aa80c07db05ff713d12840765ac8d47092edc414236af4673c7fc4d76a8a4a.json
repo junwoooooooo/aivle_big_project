@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:30dc00f1c7098c3a1390013801760d928e1b2fdda378d21c21c3d379c5d97c0d",
+  "canonicalRequestHash": "85aa80c07db05ff713d12840765ac8d47092edc414236af4673c7fc4d76a8a4a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-CR2-R1",
+        "businessText": "중고 거래 플랫폼으로서 사용자 간의 거래를 중개합니다. 플랫폼 운영자 물품 판매자 플랫폼 운영자 플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다. 사용자가 물품을 등록한다. 구매자가 물품을 선택하고 판매자와 채팅한다. 판매자와 구매자가 거래를 성사시킨다. 물품 인수인계가 이루어진다. 구매자가 물품 대금을 결제한다. 결제가 완료되면 판매자에게 대금이 지급된다. 거래 수수료 기반 모델로, 사용자 간의 직접 거래를 통해 수익을 창출합니다. 모바일 앱과 웹사이트를 통해 사용자에게 접근합니다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C4-CR2-R1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "OMNICHANNEL",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "중고 거래 플랫폼으로서 사용자 간의 거래를 중개하며, 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공하는 모델입니다."
+    }
+  ],
+  "durationMs": 2984,
+  "timestamp": "2026-08-10T07:59:24.383120+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

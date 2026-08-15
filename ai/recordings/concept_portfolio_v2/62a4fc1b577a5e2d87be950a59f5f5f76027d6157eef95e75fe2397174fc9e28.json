@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5c97e61bfda1097470224b92f9bf2c326a9aa9709e0f496f7aeec4cf4559787e",
+  "canonicalRequestHash": "62a4fc1b577a5e2d87be950a59f5f5f76027d6157eef95e75fe2397174fc9e28",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "AI 기술을 활용하여 자동화된 분석 및 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램을 제공하여 수익 창출 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 연습 계획 수립 사용자는 웹 플랫폼을 통해 자신의 면접 답변을 입력하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "AI 분석 시스템을 통한 자동화된 피드백 제공 취업 관련 기관과 협력하여 서비스 확장 구독 기반의 서비스 모델 운영 프리미엄 피드백 서비스 및 추가 연습 프로그램 판매 온라인 플랫폼을 통해 즉각적인 피드백 제공 사용자는 플랫폼에 접속하여 모의면접을 진행하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "AI 기술을 활용하여 자동화된 분석 및 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램을 제공하여 수익 창출 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 연습 계획 수립 사용자는 웹 플랫폼을 통해 자신의 면접 답변을 입력하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "AI 기반의 자동화된 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램 제공 온라인 플랫폼을 통해 즉각적인 피드백 제공 사용자는 플랫폼에 접속하여 면접 답변을 입력하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "AI 기술을 활용하여 자동화된 분석 및 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램을 제공하여 수익 창출 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 연습 계획 수립 사용자는 웹 플랫폼을 통해 자신의 면접 답변을 입력하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "AI 기술을 활용하여 자동화된 분석 및 피드백 시스템 운영 교육 기관 및 취업 지원 센터와 협력하여 서비스 제공 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 프리미엄 피드백 서비스 및 맞춤형 연습 프로그램을 제공하여 수익 창출 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 연습 계획 수립 사용자는 웹 플랫폼을 통해 자신의 면접 답변을 입력하고 피드백을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 자동화된 분석 및 피드백 시스템으로, 교육 기관과 협력하여 구독 모델로 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 시스템을 통한 자동화된 피드백 제공, 취업 관련 기관과 협력하여 서비스 확장."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 자동화된 분석 및 피드백 시스템으로, 교육 기관과 협력하여 구독 모델로 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 자동화된 피드백 시스템으로, 교육 기관과 협력하여 구독 모델로 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 자동화된 분석 및 피드백 시스템으로, 교육 기관과 협력하여 구독 모델로 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "AI 기반 자동화된 분석 및 피드백 시스템으로, 교육 기관과 협력하여 구독 모델로 서비스 제공."
+    }
+  ],
+  "durationMs": 7929,
+  "timestamp": "2026-08-10T03:55:05.609668+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

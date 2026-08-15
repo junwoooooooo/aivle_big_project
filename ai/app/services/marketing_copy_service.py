@@ -60,12 +60,13 @@ SYSTEM_PROMPT = """
 
 def generate_marketing_copy(
     request_data: MarketingBannerRequest,
+    legal_context: dict[str, list[str]] | None = None,
 ) -> GeneratedMarketingCopy:
     """
     사용자 입력을 바탕으로 gpt-4o-mini가
     구조화된 광고 카피를 생성한다.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("AI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
     if not api_key:
         raise MarketingCopyGenerationError(
@@ -77,10 +78,8 @@ def generate_marketing_copy(
         "gpt-4o-mini",
     )
 
-    client = OpenAI(
-        api_key=api_key,
-        timeout=60.0,
-    )
+    base_url = os.getenv("AI_BASE_URL", "").strip() or None
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=60.0)
 
     request_json = json.dumps(
         request_data.model_dump(mode="json"),
@@ -88,14 +87,19 @@ def generate_marketing_copy(
         indent=2,
     )
 
+    legal_json = json.dumps(legal_context or {}, ensure_ascii=False, indent=2)
     user_prompt = f"""
 다음 프로모션 정보를 바탕으로 광고 배너 카피를 작성하세요.
 
 [프로모션 입력 데이터]
 {request_json}
 
+[Marketing Source 법률 권위]
+{legal_json}
+
 사용자의 입력을 광고처럼 확장하되,
 입력에 없는 구체적인 혜택이나 사실은 만들지 마세요.
+금지 표현은 사용하지 말고, 허용된 주장과 필수 통제 범위 안에서만 작성하세요.
 """.strip()
 
     try:

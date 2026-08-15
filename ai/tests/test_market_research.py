@@ -173,13 +173,37 @@ def test_concept_id_is_required(client):
     assert _reason(response) == "FIELD_CONSTRAINT_VIOLATION"
 
 
-def test_text_contents_are_required_even_though_rescore_ignores_them(client):
-    # validate_text_contents 는 taskType 과 무관하게 돈다. 이 테스트가 그 사실을 고정한다.
+def test_market_rescore_does_not_require_unrelated_document_text_contents(client):
+    # Target Product boundary는 MARKET_RESEARCH 입력을 immutable snapshot/sourceRun 계약으로 받는다.
+    # 문서 처리용 textContents를 강제하면 공식 CPV2 Market 입력이 실행될 수 없다.
     body = _request({"mode": "RESCORE", "sourceRun": SEED_RUN, "conceptId": "x"},
                     "test-no-contents")
     response = _post(client, body)
-    assert response.status_code == 400
-    assert _reason(response) == "FIELD_CONSTRAINT_VIOLATION"
+    assert response.status_code == 200
+
+
+def test_market_execution_passes_request_identity_to_bm_diagnostics(client, monkeypatch):
+    from app.research import product_pipeline as pipeline
+
+    captured = {}
+
+    async def fake_run(_input, _run_id, _timeout, event_sink=None,
+                       diagnostic_context=None):
+        captured.update(diagnostic_context or {})
+        return {"mode": "BM"}
+
+    monkeypatch.setattr(pipeline, "run_market_research", fake_run)
+    body = _request({"mode": "BM"}, "attempt-bm-diagnostics")
+
+    response = _post(client, body)
+
+    assert response.status_code == 200, response.text
+    assert captured == {
+        "taskRunId": "run-market-research",
+        "taskAttemptId": "attempt-bm-diagnostics",
+        "correlationId": "corr-market-research",
+        "canonicalInputHash": body["canonicalInputHash"],
+    }
 
 
 # ══════════════════════════════════════════════════════════════

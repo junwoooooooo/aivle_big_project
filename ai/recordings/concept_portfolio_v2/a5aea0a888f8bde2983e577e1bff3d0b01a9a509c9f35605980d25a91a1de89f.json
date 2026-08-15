@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4dd06ce3f2c46de5e39bb0b875a34a5a3e4dc84ebf23917f10fb16eae0fe2d09",
+  "canonicalRequestHash": "a5aea0a888f8bde2983e577e1bff3d0b01a9a509c9f35605980d25a91a1de89f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 및 레시피 제공자 구독 서비스 판매자 배송 서비스 제공자 고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 시스템에 저장 주문 처리 및 식재료 준비 배송 서비스가 고객에게 식재료 배송 고객이 구독료 결제 결제 정보가 시스템에 저장 정기 배송 시 자동 결제 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 공급 및 서비스 운영 고객에게 식재료 판매 배송 및 고객 서비스 지원 고객의 선호도에 따라 식재료를 조합하여 제공하는 운영 방식. 지역 농가 및 식재료 공급업체와 협력하여 신선한 재료를 확보한다. 고객 주문 주문 확인 및 식재료 조합 배송 준비 고객에게 배송 고객 결제 결제 확인 배송업체에 지급 정산 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 및 레시피 제공 구독 서비스 판매 물류 및 배송 관리 고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 농가 및 물류 업체에 전달 신선한 식재료와 레시피가 고객에게 배송 고객이 구독료 결제 결제 정보가 플랫폼에 전달 정기 배송에 대한 결제 처리 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 및 레시피 제공 구독 서비스 판매 물류 및 배송 관리 고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 농가 및 물류 업체에 전달 신선한 식재료와 레시피가 고객에게 배송 고객이 구독료 결제 결제 정보가 플랫폼에 전달 정기 배송에 대한 결제 확인 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 신선한 재료 및 레시피 제공 고객에게 서비스 판매 물류 및 배송 관리 고객의 선호도에 따라 신선한 재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객 주문 주문 확인 및 재료 준비 배송 고객 수령 고객 결제 정기 결제 처리 수익 정산 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 구독 서비스로 식재료와 레시피를 제공하며, 고객의 선호에 따라 조합하여 배송하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 식재료를 판매하고, 지역 농가와 협력하여 고객 맞춤형 서비스를 제공하는 구독 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "구독 모델을 통해 식재료와 레시피를 제공하며, 고객의 주문에 따라 배송하는 온라인 플랫폼 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "정기 배송을 위한 구독 모델을 통해 식재료와 레시피를 제공하는 온라인 플랫폼 운영."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "고객의 선호에 따라 신선한 재료와 레시피를 조합하여 제공하는 구독 서비스 운영."
+    }
+  ],
+  "durationMs": 6166,
+  "timestamp": "2026-08-10T03:29:10.199829+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

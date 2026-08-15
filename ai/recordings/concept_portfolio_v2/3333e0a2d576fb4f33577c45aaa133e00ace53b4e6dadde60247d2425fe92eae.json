@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:9158edafb3c53e6d61d725743fdc2ccdb817e060131ecd5bd9d7849e32fe283e",
+  "canonicalRequestHash": "3333e0a2d576fb4f33577c45aaa133e00ace53b4e6dadde60247d2425fe92eae",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-FC1",
+        "businessText": "AI 기반 영업 자동화 플랫폼 제공자 AI 플랫폼 제공자 영업팀 부재 AI 알고리즘을 지속적으로 개선하여 자동화의 정확성을 높입니다. 업무 자동화 도구 제공업체와 협력하여 통합 솔루션을 제공합니다. 고객이 플랫폼에 가입 고객이 구독료를 결제 AI 시스템이 고객의 데이터를 수집 및 분석 AI가 후속 조치를 자동으로 생성 고객이 구독료를 결제 결제 시스템이 수수료를 처리 정산 후 수익이 플랫폼 운영자에게 전달 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C3-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 기반 영업 자동화 플랫폼으로, 고객에게 구독 모델을 통해 서비스를 제공하며, 자동화된 디지털 운영 모델을 사용하고 있습니다."
+    }
+  ],
+  "durationMs": 2963,
+  "timestamp": "2026-08-10T07:55:47.378533+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

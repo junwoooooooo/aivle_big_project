@@ -1,0 +1,112 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:2abdd2cc48895c618860b9dd1089784c86b3b8d07e619c4a5f6becf0436cc406",
+  "canonicalRequestHash": "521d328c9a52272aa2d2533d87a4ff686fc6aee8b6d6622a6c247ae897480589",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 부족한 1~2인 가구",
+      "problemFocus": "요리의 번거로움을 줄이고 요리 기술을 향상시키는 문제",
+      "useContext": "요리 교육과 레시피 공유를 위한 플랫폼 서비스",
+      "valueProposition": "요리 기술을 향상시키고 다양한 레시피를 공유할 수 있는 플랫폼 제공.",
+      "offerThesis": "요리 교육과 레시피 공유를 위한 플랫폼 제공",
+      "solutionThesis": "고객이 요리 기술을 배우고 레시피를 공유할 수 있는 공간을 제공한다.",
+      "differentiatingMechanics": [
+        "요리 교육 콘텐츠 제공",
+        "레시피 공유 기능",
+        "사용자 피드백 기반 개선"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "coreValue": "요리 기술을 향상시키고 다양한 레시피를 공유할 수 있는 플랫폼 제공.",
+      "conceptDefinition": "고객이 요리 기술을 배우고 레시피를 공유할 수 있는 공간을 제공하는 플랫폼.",
+      "solutionMechanism": "고객의 요리 수준에 맞춘 교육 콘텐츠를 제공하고, 남은 재료를 활용한 레시피를 안내하여 음식물 쓰레기를 줄인다.",
+      "featureSet": [
+        "개인 맞춤형 요리 교육 콘텐츠",
+        "레시피 공유 기능",
+        "사용자 피드백 기반 서비스 개선"
+      ],
+      "operatingModel": "온라인 플랫폼을 통해 교육 및 레시피 공유를 관리한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 부족한 1~2인 가구",
+        "useCaseThesis": "요리 교육과 레시피 공유를 위한 플랫폼 서비스",
+        "valuePropositionThesis": "요리 기술을 향상시키고 다양한 레시피를 공유할 수 있는 플랫폼 제공.",
+        "offerThesis": "요리 교육과 레시피 공유를 위한 플랫폼 제공",
+        "solutionThesis": "고객이 요리 기술을 배우고 레시피를 공유할 수 있는 공간을 제공한다."
+      },
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "고객이 요리 기술을 배우고 레시피를 공유할 수 있는 공간을 제공한다",
+      "familyId": "PLATFORM_INFRASTRUCTURE:OTHER",
+      "familyLabelKo": "플랫폼 인프라 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "PLATFORM_INFRASTRUCTURE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "요리 교육 콘텐츠 제공",
+      "레시피 공유 기능",
+      "사용자 피드백 기반 개선"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "고객이 요리 기술을 배우고 레시피를 공유할 수 있는 공간을 제공하는 플랫폼으로, 요리 기술 향상과 레시피 공유를 통해 1~2인 가구의 음식물 쓰레기를 줄이는 데 중점을 두고 있다."
+  },
+  "durationMs": 5222,
+  "timestamp": "2026-08-10T05:24:17.911380+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

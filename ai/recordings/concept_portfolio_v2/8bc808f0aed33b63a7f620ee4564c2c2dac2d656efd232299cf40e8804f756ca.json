@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:060c23685acc5ec8228d383e04ab93d972411591df36c02e8c7db9d91b81a923",
+  "canonicalRequestHash": "8bc808f0aed33b63a7f620ee4564c2c2dac2d656efd232299cf40e8804f756ca",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "여행 계획 및 예약 플랫폼 운영 여행 계획 서비스 제공자 여행 관련 업체 예약 플랫폼 운영자 AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다. 여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다. 사용자가 여행지 추천 요청 AI 알고리즘이 추천 결과 제공 사용자가 예약 진행 여행 관련 업체에 예약 요청 사용자가 예약 시 결제 진행 예약 업체가 수수료 지급 서비스 제공자가 수익 수취 사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다. 웹사이트 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C4-F1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "여행 계획 및 예약 플랫폼으로, 여행 관련 업체와 제휴하여 예약 서비스를 제공하며, AI 알고리즘을 통해 사용자에게 여행지를 추천하고 수수료로 수익을 창출하는 모델입니다."
+    }
+  ],
+  "durationMs": 6168,
+  "timestamp": "2026-08-10T09:39:06.189978+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -63,8 +63,8 @@ public class FinancialEstimateWorker {
         } catch (ExecutionFailure failure) {
             terminalFailure(claim, context, failure.code(), failure.reason(), failure.retryable());
         } catch (RuntimeException failure) {
-            log.warn("Finance estimate worker rejected result taskRunId={} type={} message={}",
-                claim.taskRunId(), failure.getClass().getSimpleName(), failure.getMessage());
+            log.warn("Finance estimate worker failed taskRunId={} type={}",
+                claim.taskRunId(), failure.getClass().getSimpleName());
             terminalFailure(claim, context, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
         }
         return true;
@@ -81,9 +81,6 @@ public class FinancialEstimateWorker {
         if ("STALE_ACTION_RESULT".equals(reason)) return reason;
         if ("DEADLINE_EXCEEDED".equals(code)) return "TASK_TIMEOUT";
         if ("RATE_LIMITED".equals(code)) return "RATE_LIMITED";
-        if ("RESULT_SCHEMA_INVALID".equals(code) || "AI_RESULT_INVALID".equals(reason)) {
-            return "AI_RESULT_INVALID";
-        }
         return "AI_SERVICE_UNAVAILABLE";
     }
 

@@ -1,7 +1,7 @@
 {
   "owner": "frontend-maintainers",
   "expiresOn": "2026-09-30",
-  "policy": "New failures and stale allowlist entries fail CI. The allowlist may only shrink from here.",
+  "policy": "New failures and stale allowlist entries fail CI. The allowlist may only shrink.",
   "allowedFailures": [
     {
       "file": "src/features/auth/AuthPages.test.jsx",
@@ -26,79 +26,6 @@
     {
       "file": "src/features/auth/AuthPages.test.jsx",
       "name": "auth pages maps a duplicate signup username to its field"
-    },
-    {
-      "file": "src/features/auth/authTokenStorage.test.js",
-      "name": "browser token storage policy stores only the refresh token in sessionStorage"
-    },
-    {
-      "file": "src/shared/async-events/formatLocalTime.test.js",
-      "name": "formatLocalTime converts a UTC API timestamp to Asia/Seoul local time"
-    },
-    {
-      "file": "src/shared/async-events/jobEventMessages.test.js",
-      "name": "active job event message registry contains only events emitted by the current Idea, Concept, and Marketing workers"
-    },
-    {
-      "file": "src/shared/async-events/JobTimeline.test.jsx",
-      "name": "JobTimeline hides internal claimed and started events from the user timeline"
-    },
-    {
-      "file": "src/shared/async-events/JobTimeline.test.jsx",
-      "name": "JobTimeline shows safe user messages in sequence order without fake percent or technical codes"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing keeps a protected route pending while auth is unknown"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing logs out from the current user menu and returns to login"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing provides a mobile navigation trigger and drawer"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing provides skip navigation"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing provides the main landmark"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing redirects unauthenticated users to the canonical login route"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing renders project context navigation"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing renders protected content for authenticated users"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing renders the application header and main navigation"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing retains the project route parameter after rendering again"
-    },
-    {
-      "file": "src/test/App.test.jsx",
-      "name": "application routing uses a single level-one heading in a protected page"
     }
-  ],
-  "grownAt": {
-    "commit": "Merge origin/Integration-Local into market-research-v2",
-    "date": "2026-08-10",
-    "why": "Integration-Local 은 다른 제품 베이스라인이었고 이 실패들을 갖고 왔다. 해당 테스트 파일들이 Integration-Local 과 바이트 동일함을 확인했다 — 병합이 만든 실패가 아니다. 원인은 로케일(PM vs 오후)과 구 라우트(/projects) 기대. 「only shrink」 정책의 일회성 예외이며, 여기서부터 다시 줄이기만 한다.",
-    "measuredWith": "vite.config.js testTimeout 30000 (기본 10초에서는 부하에 따라 결과가 바뀌었다)",
-    "addedEntries": 18,
-    "knownQuirk": "LandingPage «requires approvals…» 는 그 파일만 단독으로 돌리면 18/18 통과한다. 전체 스위트에서만 실패하므로 테스트 오염으로 보인다(원인 미확인). 전체 실행 기준으로는 결정적이라 여기 넣었다 — 고치면 allowlist 에서 빼야 한다.",
-    "flaky": "일부 항목은 전체 스위트에서만 실패하고 단독 실행에서는 통과한다(LandingPage 18/18). 즉 결과가 흔들리는(flaky) 항목이 섞여 있다. 전체 실행 기준으로는 2회 연속 동일해 그대로 기록했다. 원인 조사는 별도 작업으로 뺀다."
-  }
+  ]
 }

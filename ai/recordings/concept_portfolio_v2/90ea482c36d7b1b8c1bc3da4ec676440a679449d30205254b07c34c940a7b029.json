@@ -1,0 +1,112 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:35175d478f5856945468e9033b35910d6603fb81c75119676574fa6daac9fcbb",
+  "canonicalRequestHash": "90ea482c36d7b1b8c1bc3da4ec676440a679449d30205254b07c34c940a7b029",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "problemFocus": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "useContext": "반려동물 돌봄 서비스",
+      "valueProposition": "신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+      "offerThesis": "사용자 리뷰를 기반으로 한 펫시터 추천 시스템 제공",
+      "solutionThesis": "신뢰할 수 있는 펫시터를 찾는 과정을 간소화",
+      "differentiatingMechanics": [
+        "사용자 리뷰 기반 추천 시스템",
+        "신뢰성 높은 펫시터 매칭",
+        "간편한 예약 시스템"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "problemScenario": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "coreValue": "신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+      "conceptDefinition": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+      "solutionMechanism": "리뷰와 평점을 기반으로 한 펫시터 추천 시스템을 통해 보호자가 쉽게 펫시터를 찾을 수 있도록 지원합니다.",
+      "featureSet": [
+        "리뷰 기반 펫시터 추천",
+        "실시간 예약 시스템",
+        "안전한 결제 시스템"
+      ],
+      "operatingModel": "지역 펫시터와의 파트너십을 통해 서비스 운영"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+        "useCaseThesis": "반려동물 돌봄 서비스",
+        "valuePropositionThesis": "신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+        "offerThesis": "사용자 리뷰를 기반으로 한 펫시터 추천 시스템 제공",
+        "solutionThesis": "신뢰할 수 있는 펫시터를 찾는 과정을 간소화"
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "신뢰할 수 있는 펫시터를 찾는 과정을 간소화",
+      "familyId": "OTHER:PARTNER_NETWORK",
+      "familyLabelKo": "기타 역할 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "ON_SITE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "COMMISSION",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "리뷰 기반 펫시터 추천",
+      "신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+      "간편한 예약 시스템"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "서비스는 반려동물 보호자와 검증된 지역 펫시터를 연결하며, 리뷰 기반 추천 시스템을 통해 신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함을 제공합니다."
+  },
+  "durationMs": 2708,
+  "timestamp": "2026-08-10T03:48:54.952782+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,564 @@
+{
+  "taskType": "LEGAL_FACT_COMPLETION",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-completion-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:524ba83cf9856ab0b972cd4002edd5138b99246f5f9604f993fe8e477eebea23",
+  "canonicalRequestHash": "d4a59f1014e5b6af611764996a8c65f038e5f467232be90827b1026ff8aed96b",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+      "problem": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+        "interpretedTargetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+        "usageContext": "반려동물 돌봄 서비스 제공",
+        "industryCategory": "반려동물 서비스",
+        "researchScope": "지역 기반 펫시터 서비스",
+        "conciseIdeaDefinition": "반려동물 보호자와 검증된 지역 펫시터를 연결하는 플랫폼",
+        "targetRegionInterpretation": "구체적인 지역 정보는 제공되지 않음",
+        "relevantKnownCompetitorContext": "경쟁자 정보는 제공되지 않음"
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "지역 기반 펫시터 매칭 서비스",
+      "oneLineConcept": "신뢰할 수 있는 지역 펫시터와 보호자를 매칭하는 서비스",
+      "targetSegment": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "problemFocus": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "useContext": "반려동물 돌봄 서비스 제공",
+      "valueProposition": "지역 기반의 신뢰할 수 있는 펫시터를 쉽게 찾을 수 있는 서비스 제공",
+      "offerThesis": "지역 내 검증된 펫시터와 보호자를 연결하여 신뢰성을 높인다.",
+      "solutionThesis": "사용자가 쉽게 펫시터를 검색하고 예약할 수 있는 플랫폼 제공",
+      "coreMechanism": "지역 기반 펫시터 검색 및 매칭 시스템",
+      "customerInteraction": "앱을 통해 펫시터와 직접 소통하고 예약 진행",
+      "valueDelivery": "온라인 플랫폼을 통해 실시간 예약 및 결제 시스템 제공",
+      "operatingApproach": "지역 펫시터와의 파트너십을 통해 서비스 운영",
+      "partnerApproach": "검증된 펫시터와의 협력으로 서비스 품질 보장",
+      "transactionApproach": "앱 내 결제 시스템을 통해 안전한 거래 보장",
+      "commercialApproach": "서비스 이용 수수료를 통한 수익 모델",
+      "fulfillmentApproach": "예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공",
+      "differentiatingMechanics": [
+        "지역 기반 매칭 시스템",
+        "사용자 리뷰 기반의 신뢰도 평가",
+        "실시간 예약 및 결제 시스템"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "지역 내 신뢰할 수 있는 펫시터를 통해 보호자의 불안 해소.",
+      "planId": "P3",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+          "useCaseThesis": "반려동물 돌봄 서비스 제공",
+          "valuePropositionThesis": "지역 기반의 신뢰할 수 있는 펫시터를 쉽게 찾을 수 있는 서비스 제공",
+          "offerThesis": "지역 내 검증된 펫시터와 보호자를 연결하여 신뢰성을 높인다.",
+          "solutionThesis": "사용자가 쉽게 펫시터를 검색하고 예약할 수 있는 플랫폼 제공"
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "사용자가 쉽게 펫시터를 검색하고 예약할 수 있는 플랫폼 제공",
+        "familyId": "OTHER:PARTNER_NETWORK",
+        "familyLabelKo": "기타 역할 · 파트너 네트워크",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "ON_SITE",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "COMMISSION",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "APP",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+        "problem": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+        "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "UNSELECTED",
+      "selectionScore": 0.0,
+      "selectionReason": "선택 평가 전",
+      "relationToPortfolio": "NOT_EVALUATED"
+    },
+    "candidate": {
+      "conceptName": "지역 기반 펫시터 매칭 서비스",
+      "conceptDefinition": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+      "introduction": "신뢰할 수 있는 지역 펫시터와 보호자를 매칭하는 서비스입니다.",
+      "coreValue": "지역 기반의 신뢰할 수 있는 펫시터를 쉽게 찾을 수 있는 서비스 제공",
+      "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "industryCategory": "반려동물 서비스",
+      "researchScope": "지역 기반 펫시터 서비스",
+      "targetRegion": "서울특별시",
+      "revenueModel": "서비스 이용 수수료를 통한 수익 모델",
+      "price": "서비스 이용 시 10% 수수료",
+      "channels": "모바일 앱 및 웹사이트",
+      "differentiators": "지역 기반 매칭 시스템, 사용자 리뷰 기반의 신뢰도 평가, 실시간 예약 및 결제 시스템",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "서울 내 반려동물 보호자 수 증가에 따른 시장 점유율 확대 가능성",
+        "assumptions": [
+          "서울 내 반려동물 보호자 수 증가",
+          "지역 기반 서비스에 대한 수요 증가"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 500000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "서울 내 반려동물 보호자 수 및 평균 이용 횟수",
+        "assumptions": [
+          "서울 내 반려동물 보호자 수 100만명",
+          "평균 이용 횟수 5회/년"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "solutionMechanism": "사용자가 쉽게 펫시터를 검색하고 예약할 수 있는 플랫폼 제공",
+      "featureSet": [
+        "지역 기반 펫시터 검색",
+        "실시간 예약 시스템",
+        "사용자 리뷰 시스템"
+      ],
+      "actorRoles": [
+        "펫시터",
+        "반려동물 보호자",
+        "플랫폼 운영자"
+      ],
+      "platformRole": "펫시터와 보호자를 연결하는 플랫폼 제공",
+      "operatingModel": "지역 펫시터와의 파트너십을 통해 서비스 운영",
+      "partnerModel": "검증된 펫시터와의 협력으로 서비스 품질 보장",
+      "providerRole": "서비스 제공 및 운영 관리",
+      "sellerRole": "펫시터",
+      "intermediaryRole": "플랫폼 운영자",
+      "transactionFlow": [
+        "사용자가 앱에서 펫시터 검색",
+        "펫시터 선택 후 예약 진행",
+        "결제 진행",
+        "펫시터가 고객의 집으로 방문하여 서비스 제공"
+      ],
+      "paymentFlow": [
+        "사용자가 앱에서 결제 진행",
+        "결제 수취 후 펫시터에게 서비스 비용 지급",
+        "서비스 완료 후 정산"
+      ],
+      "personalDataUsage": [
+        "사용자의 위치 정보 수집 및 활용",
+        "예약 시 사용자 정보 저장 및 관리"
+      ],
+      "physicalActivities": [
+        "펫시터가 고객의 집으로 방문하여 서비스 제공"
+      ],
+      "partnerRequirements": [
+        "검증된 펫시터 등록 및 인증"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "신뢰할 수 있는 펫시터와의 연결 보장"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 3,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "requirements": [
+      "sellerRole의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다.",
+      "intermediaryRole의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다."
+    ],
+    "index": 3
+  },
+  "providerResponse": {
+    "conceptName": "지역 기반 펫시터 매칭 서비스",
+    "conceptDefinition": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+    "introduction": "신뢰할 수 있는 지역 펫시터와 보호자를 매칭하는 서비스입니다.",
+    "coreValue": "지역 기반의 신뢰할 수 있는 펫시터를 쉽게 찾을 수 있는 서비스 제공",
+    "targetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+    "industryCategory": "반려동물 서비스",
+    "researchScope": "지역 기반 펫시터 서비스",
+    "targetRegion": "서울특별시",
+    "revenueModel": "서비스 이용 수수료를 통한 수익 모델",
+    "price": "서비스 이용 시 10% 수수료",
+    "channels": "모바일 앱 및 웹사이트",
+    "differentiators": "지역 기반 매칭 시스템, 사용자 리뷰 기반의 신뢰도 평가, 실시간 예약 및 결제 시스템",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "서울 내 반려동물 보호자 수 증가에 따른 시장 점유율 확대 가능성",
+      "assumptions": [
+        "서울 내 반려동물 보호자 수 증가",
+        "지역 기반 서비스에 대한 수요 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "서울 내 반려동물 보호자 수 및 평균 이용 횟수",
+      "assumptions": [
+        "서울 내 반려동물 보호자 수 100만명",
+        "평균 이용 횟수 5회/년"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+    "solutionMechanism": "사용자가 쉽게 펫시터를 검색하고 예약할 수 있는 플랫폼 제공",
+    "featureSet": [
+      "지역 기반 펫시터 검색",
+      "실시간 예약 시스템",
+      "사용자 리뷰 시스템"
+    ],
+    "actorRoles": [
+      "펫시터",
+      "반려동물 보호자",
+      "플랫폼 운영자"
+    ],
+    "platformRole": "펫시터와 보호자를 연결하는 플랫폼 제공",
+    "operatingModel": "지역 펫시터와의 파트너십을 통해 서비스 운영",
+    "partnerModel": "검증된 펫시터와의 협력으로 서비스 품질 보장",
+    "providerRole": "서비스 제공 및 운영 관리",
+    "sellerRole": "펫시터",
+    "intermediaryRole": "플랫폼 운영자",
+    "transactionFlow": [
+      "사용자가 앱에서 펫시터 검색",
+      "펫시터 선택 후 예약 진행",
+      "결제 진행",
+      "펫시터가 고객의 집으로 방문하여 서비스 제공"
+    ],
+    "paymentFlow": [
+      "사용자가 앱에서 결제 진행",
+      "결제 수취 후 펫시터에게 서비스 비용 지급",
+      "서비스 완료 후 정산"
+    ],
+    "personalDataUsage": [
+      "사용자의 위치 정보 수집 및 활용",
+      "예약 시 사용자 정보 저장 및 관리"
+    ],
+    "physicalActivities": [
+      "펫시터가 고객의 집으로 방문하여 서비스 제공"
+    ],
+    "partnerRequirements": [
+      "검증된 펫시터 등록 및 인증"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "신뢰할 수 있는 펫시터와의 연결 보장"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 8973,
+  "timestamp": "2026-08-10T03:46:14.661769+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

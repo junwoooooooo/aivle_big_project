@@ -1,0 +1,11 @@
+pid_hash,gender,band
+synthetic-20-m,남,20대
+synthetic-20-f,여,20대
+synthetic-30-m,남,30대
+synthetic-30-f,여,30대
+synthetic-40-m,남,40대
+synthetic-40-f,여,40대
+synthetic-50-m,남,50대
+synthetic-50-f,여,50대
+synthetic-60-m,남,60+
+synthetic-60-f,여,60+

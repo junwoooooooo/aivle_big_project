@@ -5,6 +5,12 @@ import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import java.nio.charset.StandardCharsets;
+import java.net.SocketTimeoutException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.UnknownHostException;
+import java.net.http.HttpTimeoutException;
+import javax.net.ssl.SSLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -18,8 +24,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.ResourceAccessException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -29,6 +35,7 @@ import org.slf4j.LoggerFactory;
 public class InternalAiExecutionClient {
     private static final Logger log = LoggerFactory.getLogger(InternalAiExecutionClient.class);
     public static final int MAX_JSON_BYTES = 2 * 1024 * 1024;
+    public static final int MAX_VISUAL_JSON_BYTES = 16 * 1024 * 1024;
     private static final Set<String> SUCCESS_FIELDS = Set.of(
         "contractVersion", "taskType", "taskSchemaVersion", "taskRunId", "taskAttemptId",
         "correlationId", "canonicalInputHash", "resultSchemaVersion", "result", "warnings",
@@ -47,10 +54,9 @@ public class InternalAiExecutionClient {
             "LEGAL_RERUN_CATEGORIES_INVALID", "LEGAL_CONFIRMED_FACTS_INVALID",
             "LEGAL_REGISTRY_VERSION_MISMATCH", "CONCEPT_LEGAL_VALIDATION_MODE_INVALID",
             "BOUNDARY_INPUT_CONTRACT_INCOMPLETE", "CONCEPT_EXPLORATION_INPUT_INVALID",
-            "CONCEPT_FAILURE_INJECTION_DISABLED",
-            // 트윈 조사의 판매 경계. 여기 없으면 이유가 AI_RESULT_INVALID 로 뭉개져
-            // 「성적이 없는 유형이라 거절했다」가 화면까지 오지 못한다(실스택 스모크 실측).
-            "TWIN_TASK_TYPE_NOT_SERVICEABLE")),
+            "CONCEPT_FAILURE_INJECTION_DISABLED", "TWIN_TASK_TYPE_NOT_SERVICEABLE",
+            "TWIN_SAMPLE_TOO_LARGE", "TWIN_STIMULUS_CONCEPT_UNKNOWN",
+            "TWIN_STIMULUS_NO_SERVICEABLE_PAIR")),
         Map.entry("UNAUTHORIZED_INTERNAL_CALL", Set.of("SERVICE_TOKEN_MISSING", "SERVICE_TOKEN_INVALID",
             "INTERNAL_PRINCIPAL_FORBIDDEN")),
         Map.entry("UNSUPPORTED_CONTRACT_VERSION", Set.of("CONTRACT_VERSION_UNSUPPORTED")),
@@ -63,12 +69,11 @@ public class InternalAiExecutionClient {
         Map.entry("DEPENDENCY_UNAVAILABLE", Set.of("MODEL_DEPENDENCY_UNAVAILABLE", "MCP_DEPENDENCY_UNAVAILABLE",
             "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID", "LEGAL_CONFIGURATION_INVALID",
             "MOLEG_AUTHENTICATION_FAILED", "MOLEG_REQUEST_REJECTED", "MOLEG_RESPONSE_INVALID",
-            "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED",
-            // 카드 뱅크가 안 붙었다. 「AI 가 불안정하다」와 운영이 할 일이 다르다.
-            "TWIN_BANK_UNAVAILABLE")),
+            "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED", "TWIN_BANK_UNAVAILABLE")),
         Map.entry("RATE_LIMITED", Set.of("DEPENDENCY_RATE_LIMITED")),
         Map.entry("EXECUTION_FAILED", Set.of("TRANSIENT_EXECUTION_FAILURE", "PERMANENT_EXECUTION_FAILURE",
-            "SAFETY_POLICY_BLOCKED")),
+            "SAFETY_POLICY_BLOCKED", "SOURCE_IMAGE_INVALID", "COPY_GENERATION_FAILED",
+            "IMAGE_GENERATION_FAILED", "IMAGE_COMPOSITION_FAILED")),
         Map.entry("RESULT_SCHEMA_INVALID", Set.of("RESULT_UNKNOWN_FIELD", "RESULT_FIELD_CONSTRAINT_VIOLATION",
             "RESULT_REFERENCE_INVALID", "RESULT_DOMAIN_INVARIANT_VIOLATION", "AI_RESULT_INVALID",
             "PROVIDER_RESPONSE_SCHEMA_REJECTED", "PROVIDER_JSON_INVALID",
@@ -91,54 +96,68 @@ public class InternalAiExecutionClient {
     private static final Set<String> RETRYABLE_REASONS = Set.of(
         "REQUEST_DEADLINE_EXCEEDED", "MODEL_DEPENDENCY_UNAVAILABLE", "MCP_DEPENDENCY_UNAVAILABLE",
         "LEGAL_SOURCE_DEPENDENCY_UNAVAILABLE", "MOLEG_DEPENDENCY_UNAVAILABLE", "MOLEG_RATE_LIMITED",
-        "DEPENDENCY_RATE_LIMITED", "TRANSIENT_EXECUTION_FAILURE", "UNEXPECTED_INTERNAL_ERROR"
+        "DEPENDENCY_RATE_LIMITED", "TRANSIENT_EXECUTION_FAILURE", "UNEXPECTED_INTERNAL_ERROR",
+        "COPY_GENERATION_FAILED", "IMAGE_GENERATION_FAILED"
     );
 
     private final RestClient client;
-    /** 오래 걸리는 작업 전용. read timeout 만 다르다. */
-    private final RestClient longClient;
-    /** 패널 트윈 조사 전용. 12분 예산이라 longClient(420s)로도 모자란다. */
-    private final RestClient surveyClient;
-    /** 컨셉 포트폴리오 전용. 15분 예산이다. */
+    private final RestClient longRunningClient;
+    private final RestClient marketResearchClient;
     private final RestClient conceptPortfolioClient;
+    private final RestClient twinSurveyClient;
     private final AiServerProperties properties;
     private final ObjectMapper mapper;
 
-    /** 짧은 클라이언트 하나만 주는 형태 — 테스트용. 긴 호출도 같은 것을 쓴다. */
-    public InternalAiExecutionClient(RestClient client, AiServerProperties properties,
-                                     ObjectMapper mapper) {
-        this(client, client, client, client, properties, mapper);
-    }
-
     @Autowired
     public InternalAiExecutionClient(@Qualifier("aiServerRestClient") RestClient client,
-                                     @Qualifier("aiServerLongRestClient") RestClient longClient,
-                                     @Qualifier("aiServerSurveyRestClient") RestClient surveyClient,
-                                     @Qualifier("conceptPortfolioAiServerRestClient") RestClient conceptPortfolioClient,
-                                     AiServerProperties properties, ObjectMapper mapper) {
+            @Qualifier("longRunningAiServerRestClient") RestClient longRunningClient,
+            @Qualifier("marketResearchAiServerRestClient") RestClient marketResearchClient,
+            @Qualifier("conceptPortfolioAiServerRestClient") RestClient conceptPortfolioClient,
+            @Qualifier("twinSurveyAiServerRestClient") RestClient twinSurveyClient,
+            AiServerProperties properties, ObjectMapper mapper) {
         this.client = client;
-        this.longClient = longClient;
-        this.surveyClient = surveyClient;
+        this.longRunningClient = longRunningClient;
+        this.marketResearchClient = marketResearchClient;
         this.conceptPortfolioClient = conceptPortfolioClient;
+        this.twinSurveyClient = twinSurveyClient;
         this.properties = properties;
         this.mapper = mapper;
     }
 
+    public InternalAiExecutionClient(RestClient client, AiServerProperties properties, ObjectMapper mapper) {
+        this(client, client, client, client, client, properties, mapper);
+    }
+
+    public InternalAiExecutionClient(RestClient client, RestClient conceptPortfolioClient,
+            RestClient twinSurveyClient, AiServerProperties properties, ObjectMapper mapper) {
+        this(client, client, client, conceptPortfolioClient, twinSurveyClient, properties, mapper);
+    }
+
     public ExecutionResponse execute(TaskRun run, String attemptId, LocalDateTime deadline) {
-        return execute(ExecutionRequest.from(run), attemptId, deadline);
+        return execute(ExecutionRequest.from(run), attemptId, deadline, MAX_JSON_BYTES);
     }
 
     public ExecutionResponse executeWorker(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {
         return execute(new ExecutionRequest(run.taskRunId(), run.taskType(), run.inputSnapshot(),
             run.inputHash(), run.correlationId(), run.contractVersion(), run.taskSchemaVersion(),
-            run.locale()), attemptId, deadline);
+            run.locale()), attemptId, deadline, MAX_JSON_BYTES);
     }
 
-    private ExecutionResponse execute(ExecutionRequest run, String attemptId, LocalDateTime deadline) {
+    public ExecutionResponse executeWorkerResolved(TaskRunWorkerContext run, String attemptId,
+            LocalDateTime deadline, JsonNode resolvedInput) {
+        if (run.taskType() != TaskType.MARKETING_VISUAL_GENERATION || resolvedInput == null || !resolvedInput.isObject()) {
+            throw new IllegalArgumentException("resolved worker input is only allowed for marketing visual generation");
+        }
+        return execute(new ExecutionRequest(run.taskRunId(), run.taskType(), mapper.writeValueAsString(resolvedInput),
+            run.inputHash(), run.correlationId(), run.contractVersion(), run.taskSchemaVersion(), run.locale()),
+            attemptId, deadline, MAX_VISUAL_JSON_BYTES);
+    }
+
+    private ExecutionResponse execute(ExecutionRequest run, String attemptId, LocalDateTime deadline, int maxJsonBytes) {
         if (properties.internalApiKey() == null || properties.internalApiKey().isBlank())
             throw new ExecutionFailure("UNAUTHORIZED_INTERNAL_CALL", "SERVICE_TOKEN_MISSING", false);
         byte[] requestBytes = mapper.writeValueAsBytes(requestEnvelope(run, attemptId, deadline));
-        enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED");
+        enforceSize(requestBytes, "REQUEST_BYTES_EXCEEDED", maxJsonBytes);
         try {
             RestClient selectedClient = clientFor(run.taskType());
             byte[] responseBytes = selectedClient.post().uri("/internal/v1/ai/executions")
@@ -146,36 +165,63 @@ public class InternalAiExecutionClient {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.internalApiKey())
                 .header("X-Correlation-Id", run.correlationId())
                 .body(requestBytes).retrieve().body(byte[].class);
-            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED");
+            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             return validateResponse(run, attemptId, parseSuccess(responseBytes));
         } catch (RestClientResponseException responseFailure) {
             byte[] responseBytes = responseFailure.getResponseBodyAsByteArray();
-            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED");
+            enforceSize(responseBytes, "RESPONSE_BYTES_EXCEEDED", maxJsonBytes);
             throw parseFailure(responseBytes, run.taskType());
-        } catch (ResourceAccessException timeoutOrConnectionFailure) {
-            throw new ExecutionFailure(
-                "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
-            );
+        } catch (RestClientException transportFailure) {
+            throw transportFailure(transportFailure);
         }
     }
 
-    /**
-     * 어느 클라이언트로 부를지는 <b>작업 종류가 정한다</b>.
-     *
-     * <p>시장조사는 90~266초 걸린다. 기본 30s 로 부르면 read timeout 이 나고, 그 실패는
-     * {@code REQUEST_DEADLINE_EXCEEDED}(retryable) 로 사상돼 <b>자동 재시도가 260초짜리를
-     * 다시 태운다</b> — 실패하면서 비용만 배가 된다.
-     */
     RestClient clientFor(TaskType taskType) {
-        return switch (taskType) {
-            case MARKET_RESEARCH,MARKETING_CONTENT_GENERATION -> longClient;
-            // 트윈 조사는 n=300·4쌍이면 셀이 7,200개다. 여기를 빠뜨리면 조용히 30초 클라이언트를
-            // 쓰고, 그 실패가 retryable 로 사상돼 재시도가 같은 값을 또 태운다.
-            case TWIN_SURVEY -> surveyClient;
-            case CONCEPT_PORTFOLIO_V2_RUN, CONCEPT_PORTFOLIO_V2_CONTINUE,
-                 CONCEPT_PORTFOLIO_V2_SELECTION_ACTION -> conceptPortfolioClient;
-            default -> client;
-        };
+        if (taskType == TaskType.MARKET_RESEARCH) {
+            return marketResearchClient;
+        }
+        if (taskType == TaskType.MARKETING_CONTENT_GENERATION
+            || taskType == TaskType.TECH_OPS_ADVISORY) {
+            return longRunningClient;
+        }
+        if (taskType == TaskType.TWIN_SURVEY) {
+            return twinSurveyClient;
+        }
+        return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN
+            || taskType == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE
+            || taskType == TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION
+            ? conceptPortfolioClient : client;
+    }
+
+    static ExecutionFailure transportFailure(RestClientException failure) {
+        Throwable cause = failure;
+        while (cause != null) {
+            if (cause instanceof ConnectException
+                || cause instanceof NoRouteToHostException
+                || cause instanceof UnknownHostException
+                || cause instanceof SSLException) {
+                return new ExecutionFailure(
+                    "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
+                );
+            }
+            String message = cause.getMessage() == null
+                ? ""
+                : cause.getMessage().toLowerCase(java.util.Locale.ROOT);
+            if (cause instanceof SocketTimeoutException
+                || cause instanceof HttpTimeoutException
+                || cause instanceof java.util.concurrent.TimeoutException
+                || cause.getClass().getSimpleName().contains("Timeout")
+                || message.contains("timed out")
+                || message.contains("timeout")) {
+                return new ExecutionFailure(
+                    "DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED", true
+                );
+            }
+            cause = cause.getCause();
+        }
+        return new ExecutionFailure(
+            "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true
+        );
     }
 
     JsonNode requestPayload(TaskRunWorkerContext run, String attemptId, LocalDateTime deadline) {
@@ -296,8 +342,8 @@ public class InternalAiExecutionClient {
         return value.asText();
     }
 
-    private void enforceSize(byte[] bytes, String reason) {
-        if (bytes == null || bytes.length > MAX_JSON_BYTES)
+    private void enforceSize(byte[] bytes, String reason, int maxJsonBytes) {
+        if (bytes == null || bytes.length > maxJsonBytes)
             throw new ExecutionFailure("PAYLOAD_TOO_LARGE", reason, false);
     }
 

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:1ed4e77697a67083231202e9f97905d24ef11de6fc419e1f438091a72d418e4b",
+  "canonicalRequestHash": "30ae8d90262aeb8af89d73fb2c1291c43949e9e30fc6092bacb8e36480d5166a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "레시피 제공 플랫폼 레시피 및 식재료 제공자 프리미엄 레시피 구독 서비스 판매자 고객과 요리 전문가 간의 연결 역할 고객의 요리 데이터를 분석하여 레시피 추천 알고리즘을 개선한다. 요리 전문가와 협력하여 다양한 레시피를 개발한다. 고객이 남은 재료 입력 시스템이 레시피 추천 고객이 레시피 선택 프리미엄 구독 결제 고객이 구독 결제 결제 시스템 처리 구독 서비스 제공 프리미엄 레시피 구독 모델 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A recipe platform that connects customers with cooking experts, offering premium recipe subscription services and utilizing customer data for recipe recommendations."
+    }
+  ],
+  "durationMs": 1731,
+  "timestamp": "2026-08-10T03:32:27.478687+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

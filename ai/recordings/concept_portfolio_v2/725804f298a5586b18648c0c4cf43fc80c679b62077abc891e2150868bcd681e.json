@@ -1,0 +1,215 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:9be04b8e02a1c4ebd1cf3df241819a94a054085836621b1a557fc3c75f4887cc",
+  "canonicalRequestHash": "725804f298a5586b18648c0c4cf43fc80c679b62077abc891e2150868bcd681e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼을 통한 장비 대여 및 관리 서비스 제공 서비스 제공업체 장비 판매 및 대여 담당 고객과 서비스 제공업체 간의 중개 역할 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 고객이 온라인 플랫폼에서 장비를 선택하고 대여 신청 서비스 제공업체가 장비를 고객에게 배송 고객이 장비를 사용하고 정기 점검 요청 고장 발생 시 고객이 즉시 교체 요청 서비스 제공업체가 고장 장비를 회수하고 교체 장비를 배송 고객이 월 단위로 요금을 결제 서비스 제공업체가 결제 확인 후 장비 배송 정기 점검 및 교체 서비스에 대한 추가 요금 발생 시 고객에게 청구 구독 모델을 통해 월 단위로 요금을 청구합니다. 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 및 관리 장비 관리 및 유지보수 서비스 제공 서비스 판매 및 고객 관리 없음 고객 맞춤형 장비 관리 서비스 제공 장비 제조업체와 협력하여 최신 장비를 확보합니다. 고객 요청 접수 장비 대여 계약 체결 정기 점검 및 유지보수 진행 고객 피드백 수집 고객이 서비스 이용 요금 결제 정기 결제 시스템 운영 서비스 제공 후 정산 구독 기반 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼을 통한 장비 대여 및 관리 서비스 제공업체 장비 대여 및 유지보수 서비스 판매 없음 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 고객이 온라인 플랫폼에서 장비를 선택하고 대여 신청 서비스 제공업체가 장비를 고객에게 배송 고객이 장비를 사용하고 정기 점검 요청 고장 발생 시 즉시 교체 서비스 제공 고객이 월 단위로 요금을 결제 서비스 제공업체가 정기 점검 및 유지보수 비용 청구 구독 모델을 통해 월 단위로 요금을 청구합니다. 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼을 통해 서비스 제공 및 관리 장비 대여 및 교육 서비스 제공 고객과의 계약 체결 및 서비스 제공 고객과 공급자 간의 중개 역할 수행 고객 맞춤형 장비 대여 및 교육 서비스 제공 장비 제조업체와 협력하여 최신 장비와 교육 자료를 확보합니다. 고객 요청 접수 장비 대여 계약 체결 장비 배송 및 설치 사용 교육 제공 정기 점검 및 유지보수 고객이 서비스 이용 요금 청구 결제 수취 후 서비스 제공 정산 및 회계 처리 정기 구독 모델 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼을 통해 고객과의 접점을 제공합니다. 장비 대여 및 유지보수 서비스 제공 고객에게 장비 대여 서비스 판매 장비 제조업체와의 협력 및 조정 역할 고객 맞춤형 장비 대여 솔루션 제공 장비 제조업체와 협력하여 최신 장비와 맞춤형 솔루션을 제공합니다. 고객 요청 접수 장비 대여 계약 체결 장비 배송 및 설치 정기 점검 및 유지보수 장비 회수 고객이 서비스 이용 요금 결제 정기 결제 시스템 운영 구독 기반 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 장비 대여 및 관리 서비스 제공업체로서 중개 역할을 수행하며, 구독 모델을 통해 월 단위로 요금을 청구."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 서비스 제공 및 관리로, 구독 기반 요금제를 운영."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "장비 대여 및 관리 서비스 제공업체로서 구독 모델을 통해 요금을 청구."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 장비 대여 및 교육 서비스 제공업체로서 중개 역할을 수행."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "장비 대여 및 유지보수 서비스 제공업체로서 구독 기반 요금제를 운영."
+    }
+  ],
+  "durationMs": 9706,
+  "timestamp": "2026-08-10T07:54:37.653976+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

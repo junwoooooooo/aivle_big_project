@@ -10,6 +10,8 @@ from typing import Any
 
 import httpx
 
+from app.providers.schema_compatibility import strict_schema_failures
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +106,19 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
                                     schema_name: str | None = None,
                                     task_type: str | None = None,
                                     timeout_seconds_override: float | None = None) -> dict[str, Any]:
+    if response_schema is not None:
+        schema_failures = strict_schema_failures(response_schema)
+        if schema_failures:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False,
+                schema_name=schema_name or "structured_result",
+                validation_fields=schema_failures,
+                safe_diagnostics={"stage": "OFFLINE_SCHEMA_PREFLIGHT"},
+            )
     api_key, model, base_url = _configuration(model_override)
     try:
-        timeout_seconds = timeout_seconds_override or float(os.getenv("AI_PROVIDER_TIMEOUT_SECONDS", "60"))
+        timeout_seconds = (float(timeout_seconds_override) if timeout_seconds_override is not None
+                           else float(os.getenv("AI_PROVIDER_TIMEOUT_SECONDS", "60")))
         if timeout_seconds <= 0:
             raise ValueError
     except ValueError as failure:
@@ -135,7 +147,7 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
     if response.status_code >= 500:
         logger.error("Provider server error taskType=%s model=%s status=%s body=%s",
                      task_type or "STRUCTURED_TASK", model, response.status_code,
-                     re.sub(r"(?i)(bearer\\s+|sk-)[a-z0-9._-]+", r"\\1[REDACTED]", response.text)[:800])
+                     re.sub(r"(?i)(bearer\\s+|sk-)[a-z0-9._-]+", r"\1[REDACTED]", response.text)[:800])
         raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True,
                               upstream_status=response.status_code, schema_name=schema_name)
     if response.status_code == 400 and response_schema is not None:

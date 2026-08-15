@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:b6c6f9180952b81b603e32b3575bcbaaff98b6b9927cf85cfec860aa03f9f355",
+  "canonicalRequestHash": "4510b0e4c71b42987d4c93dd25650943beaaaaba38607a55ac043516386ec16e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼을 통해 고객과 소통하고 주문을 처리한다. 식재료 공급업체로서 고객에게 맞춤형 식재료를 제공한다. 온라인 플랫폼에서 고객에게 식재료를 판매한다. 배송업체가 고객에게 식재료를 전달한다. 고객의 피드백을 반영하여 지속적으로 서비스 품질을 개선한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 식재료를 공급받는다. 고객이 온라인 플랫폼에서 주문을 한다. 주문 정보가 식재료 공급업체에 전달된다. 식재료 공급업체가 주문에 맞춰 식재료를 준비한다. 배송업체가 고객에게 식재료를 배송한다. 고객이 온라인 플랫폼에서 결제를 진행한다. 결제 정보가 판매자에게 전달된다. 판매자가 배송업체에 비용을 지급한다. 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 플랫폼 및 모바일 앱을 통해 고객과 소통하고 주문을 받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "온라인 플랫폼 운영 및 관리 식재료 공급 및 추천 서비스 제공 고객에게 식재료를 판매 물류 및 배송 서비스 제공 고객의 피드백을 반영하여 추천 알고리즘을 지속적으로 개선한다. 지역 농가와 협력하여 신선한 식재료를 공급받는다. 고객이 요리 스타일 입력 시스템이 맞춤형 식재료 추천 고객이 주문 농가에서 식재료 공급 물류업체가 배송 고객이 구독료 결제 시스템이 결제 확인 농가에 식재료 대금 지급 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 플랫폼 및 모바일 앱을 통해 제공",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "서비스 플랫폼 운영 및 관리 식재료 및 레시피 제공 구독 서비스 판매 물류 및 배송 관리 고객의 요리 데이터를 분석하여 서비스 품질을 지속적으로 개선한다. 요리 전문가와 협력하여 간편 레시피를 개발한다. 고객이 요리 스타일 입력 시스템이 맞춤형 식재료 및 레시피 제공 고객이 구독 결제 고객이 구독 결제 결제 시스템이 수수료 수취 서비스 제공 후 정산 프리미엄 구독 모델 소셜 미디어, 블로그, 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "레시피 제공 플랫폼 레시피 및 식재료 제공자 프리미엄 레시피 구독 서비스 판매자 고객과 요리 전문가 간의 연결 역할 고객의 요리 데이터를 분석하여 레시피 추천 알고리즘을 개선한다. 요리 전문가와 협력하여 다양한 레시피를 개발한다. 고객이 남은 재료 입력 시스템이 레시피 추천 고객이 레시피 선택 프리미엄 구독 결제 고객이 구독 결제 결제 시스템 처리 구독 서비스 제공 프리미엄 레시피 구독 모델 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "고객과 농가를 연결하는 온라인 플랫폼 제공 식재료 공급 및 품질 관리 고객에게 식재료를 판매하는 역할 고객과 공급자를 연결하는 플랫폼 운영 고객의 피드백을 반영하여 배송 주기와 품질을 개선한다. 신선한 식재료를 공급할 수 있는 지역 농가와 협력한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 농가에 전달 농가가 식재료를 준비 및 포장 물류업체가 식재료를 고객에게 배송 고객이 온라인으로 결제 결제 정보가 플랫폼에 전달 플랫폼이 농가 및 물류업체에 정산 구독 모델을 통한 안정적인 수익 창출 온라인 플랫폼 및 모바일 앱을 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 고객과 소통하고 주문을 처리하는 식재료 공급업체."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 식재료 공급 및 추천 서비스를 제공하는 업체."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "서비스 플랫폼을 운영하며 식재료 및 레시피를 제공하는 업체."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "레시피 제공 플랫폼으로 고객과 요리 전문가를 연결하는 역할."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "고객과 농가를 연결하는 온라인 플랫폼 제공 업체."
+    }
+  ],
+  "durationMs": 5334,
+  "timestamp": "2026-08-10T03:31:36.293605+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

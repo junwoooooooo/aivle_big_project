@@ -37,9 +37,16 @@ class Targets(StrictModel):
     unit: str = Field(min_length=1,max_length=50)
     years: list[YearValue] = Field(min_length=3,max_length=3)
 
+    @model_validator(mode="after")
+    def exact_years(self):
+        if sorted(item.year for item in self.years) != [1, 2, 3]:
+            raise ValueError("threeYearTargets requires exactly years 1, 2, 3")
+        return self
+
 
 class Rate(StrictModel):
     percent: float = Field(strict=True, ge=0, le=100)
+
 
 class Count(StrictModel):
     count: int = Field(strict=True, ge=1)

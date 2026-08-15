@@ -11,7 +11,10 @@ import org.springframework.data.repository.query.Param;
 public interface FinancialInputPreparationRepository extends JpaRepository<FinancialInputPreparation, String> {
     Optional<FinancialInputPreparation> findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(Long projectId);
     Optional<FinancialInputPreparation> findByProjectIdAndSourceTechOpsSnapshotIdAndDeletedAtIsNull(Long projectId, String sourceId);
-    Optional<FinancialInputPreparation> findByProjectIdAndSourceMarketResearchRunIdAndDeletedAtIsNull(Long projectId, Long sourceId);
+    Optional<FinancialInputPreparation> findByProjectIdAndSourceTechOpsSnapshotIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNull(
+        Long projectId, String techOpsId, Long marketVersionId, Long businessModelVersionId);
+    Optional<FinancialInputPreparation> findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
+        Long projectId, Long marketVersionId, Long businessModelVersionId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select value from FinancialInputPreparation value where value.id=:id and value.projectId=:projectId and value.deletedAt is null")

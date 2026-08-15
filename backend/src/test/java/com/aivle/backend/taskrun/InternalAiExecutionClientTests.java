@@ -35,7 +35,7 @@ class InternalAiExecutionClientTests {
         });
         server.start();
         try {
-            AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+            AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             ObjectMapper mapper = new ObjectMapper();
             InternalAiExecutionClient client = new InternalAiExecutionClient(RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, mapper);
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", "sha256:" + "a".repeat(64), "key", "correlation-1", 3);
@@ -49,7 +49,7 @@ class InternalAiExecutionClientTests {
 
     @Test
     void rejectsRequestAboveRawTwoMiBBeforeNetworkCall() {
-        AiServerProperties properties = new AiServerProperties("http://127.0.0.1:1", Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofMinutes(15), "test-token");
+        AiServerProperties properties = new AiServerProperties("http://127.0.0.1:1", Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
         ObjectMapper mapper = new ObjectMapper();
         InternalAiExecutionClient client = new InternalAiExecutionClient(
             RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, mapper);
@@ -73,7 +73,7 @@ class InternalAiExecutionClientTests {
         });
         server.start();
         try {
-            AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+            AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(), Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
@@ -114,7 +114,7 @@ class InternalAiExecutionClientTests {
         server.start();
         try {
             AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(),
-                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",
@@ -148,7 +148,7 @@ class InternalAiExecutionClientTests {
         try {
             AiServerProperties properties = new AiServerProperties(
                 "http://127.0.0.1:" + server.getAddress().getPort(),
-                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION,
@@ -185,7 +185,7 @@ class InternalAiExecutionClientTests {
         try {
             AiServerProperties properties = new AiServerProperties(
                 "http://127.0.0.1:" + server.getAddress().getPort(),
-                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION,
@@ -223,7 +223,7 @@ class InternalAiExecutionClientTests {
         server.start();
         try {
             AiServerProperties properties = new AiServerProperties("http://127.0.0.1:" + server.getAddress().getPort(),
-                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), "test-token");
+                Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofMinutes(15), Duration.ofMinutes(14), "test-token");
             InternalAiExecutionClient client = new InternalAiExecutionClient(
                 RestClient.builder().baseUrl(properties.baseUrl()).build(), properties, new ObjectMapper());
             TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1",

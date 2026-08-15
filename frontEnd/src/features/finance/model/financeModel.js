@@ -30,7 +30,8 @@ export const TARGET_METRICS = Object.freeze([
   ['subscriberCount', '구독자 수'], ['transactionCount', '거래 건수'],
 ]);
 
-const MONEY_FIELDS = [...FIXED_COST_FIELDS, ...INITIAL_INVESTMENT_FIELDS, ...CAC_FIELDS, ...CONDITIONAL_FIELDS, ...REVENUE_MONEY_FIELDS].map(([key]) => key);
+const MONEY_FIELDS = [...FIXED_COST_FIELDS, ...INITIAL_INVESTMENT_FIELDS, ...CAC_FIELDS,
+  ...CONDITIONAL_FIELDS, ...REVENUE_MONEY_FIELDS].map(([key]) => key);
 
 export function createFinancialDraft(fields = {}) {
   const targets = fields.threeYearTargets?.value;

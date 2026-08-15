@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { createMarketApi } from './marketApi.js';
 import { projectRoutes } from '../../app/routing/projectRoutes.js';
-import { Alert, Badge, Button, Card, Dialog, LoadingState } from '../../shared/ui';
+import { Alert, Badge, Button, Card, Dialog, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../shared/ui';
 import BmCanvas, { BmCellDetails } from './BmCanvas.jsx';
 import BmPlanForm from './BmPlanForm.jsx';
 import BmPlanPreview from './BmPlanPreview.jsx';
 import useCellFocus from './useCellFocus.js';
-import useMarketPolling from './useMarketPolling.js';
+import useMarketLiveState from './useMarketPolling.js';
 import { DECISION_VIEW } from './marketResult.js';
 import { draftFrom, emptyCellNames, emptyDraft, toPayload } from './bmPlan.js';
 import './market.css';
@@ -27,14 +27,15 @@ export default function BmCanvasPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const client = useApiClient();
+  const { liveRevision = 0 } = useOutletContext() ?? {};
   const api = useMemo(() => createMarketApi(client, projectId), [client, projectId]);
 
   const load = useCallback(() => api.currentBusinessModel(), [api]);
   // ⚠ 여기 실린 conceptId 는 **쓰이지 않는다.** 백엔드가 1단계 결과의 conceptId 를 그대로
   //    이어 쓴다 — 1단계와 다른 컨셉으로 판정하면 「관측은 A, 잣대는 B」가 되기 때문이다.
-  const start = useCallback(() => api.startBusinessModel(String(projectId), today()),
-    [api, projectId]);
-  const { run, result, error, busy, loading, active, elapsed, trigger } = useMarketPolling(load, start);
+  const start = useCallback(() => api.startBusinessModel(), [api]);
+  const { run, result, stale, error, busy, loading, active, elapsed, trigger } =
+    useMarketLiveState(load, start, liveRevision);
   const focus = useCellFocus('bm-');
   const [editingPlan, setEditingPlan] = useState(false);
   const plan = useBmPlan(api, trigger, () => setEditingPlan(false));
@@ -59,14 +60,9 @@ export default function BmCanvasPage() {
   const decision = bm ? DECISION_VIEW[bm.decision] : null;
 
   return (
-    <section className="market-page">
-      <div className="pipeline-page-heading">
-        <p>4. BM 분석</p>
-        <h2>비즈니스 모델 캔버스</h2>
-        {!result ? (
-          <span>시장조사에서 관측된 근거로만 채운다. 근거가 없는 칸은 비워 두고 사유를 적는다.</span>
-        ) : null}
-      </div>
+    <ProjectWorkspace as="section" mode="analyze" className="market-page">
+      <ProjectStageHeader step={4} eyebrow="수익 구조" title="사업이 고객에게 가치를 전달하고 수익을 만드는 방식을 확인하세요"
+        description="시장조사에서 확인된 근거로 캔버스를 구성하며, 근거가 없는 항목은 비워 둡니다." />
 
       <div className="market-page__actions">
         <Button variant="ghost" onClick={() => navigate(projectRoutes.market(projectId))}>
@@ -79,12 +75,14 @@ export default function BmCanvasPage() {
         <Button onClick={trigger} disabled={busy || active}>
           {active ? '생성 중…' : result ? '다시 생성' : '캔버스 만들기'}
         </Button>
+        {result ? <Button onClick={() => navigate(projectRoutes.techOps(projectId))}>다음 - 기술·운영 분석</Button> : null}
       </div>
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      {active ? <Alert tone="info">캔버스를 만드는 중이다 — {elapsed}초 경과.</Alert> : null}
+      {stale ? <Alert tone="warning">시장 분석이 바뀌었습니다. 최신 내용으로 다시 만들어 주세요.</Alert> : null}
+      {active ? <Alert tone="info">수익 구조를 만드는 중입니다. {elapsed}초 경과</Alert> : null}
       {run?.state === 'FAILED' ? (
-        <Alert tone="danger">생성이 실패했다{run.errorCode ? ` (${run.errorCode})` : ''}{run.errorReason ? `: ${run.errorReason}` : ''}.</Alert>
+        <Alert tone="danger">수익 구조 결과를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.</Alert>
       ) : null}
 
       {!result ? null : (
@@ -94,11 +92,15 @@ export default function BmCanvasPage() {
               <h3>판정</h3>
               {decision ? <Badge tone={decision.tone}>{decision.label}</Badge> : null}
               <Badge tone="neutral">{CONFIDENCE_VIEW[bm.confidence] ?? bm.confidence ?? '신뢰도 미기재'}</Badge>
-              <p>{bm.consistencySummary ?? bm.marketFitSummary ?? bm.summary ?? ''}</p>
+              <p>{bm.summary ?? ''}</p>
+              <dl className="bm-verdict__details">
+                <div><dt>시장 적합성</dt><dd>{bm.marketFitStatus || '미기재'} · {bm.marketFitSummary || '요약 없음'}</dd></div>
+                <div><dt>내부 일관성</dt><dd>{bm.consistencyStatus || '미기재'} · {bm.consistencySummary || '요약 없음'}</dd></div>
+              </dl>
             </div>
           ) : (
             <Alert tone="warning">
-              BM 판정이 오지 않았다 — 시장조사 결과는 유효하다. 다시 생성해 볼 수 있다.
+              수익 구조 판정을 받지 못했습니다. 시장 분석 결과는 유지되며 다시 만들 수 있습니다.
             </Alert>
           )}
 
@@ -112,11 +114,41 @@ export default function BmCanvasPage() {
             </div>
           ) : null}
 
+          {bm?.legal ? <Card title="법률 결과 반영">
+            <p>사용 여부: <strong>{bm.legal.used ? '사용함' : '사용하지 않음'}</strong></p>
+            <p>상태: <strong>{bm.legal.status || 'UNVERIFIED'}</strong></p>
+            <p>{bm.legal.summary || '법률 요약 없음'}</p>
+            <SwrBox title="법률 위험" items={bm.legal.risks} tone="var(--color-status-danger)" />
+            <SwrBox title="필수 조치" items={bm.legal.requiredActions} tone="var(--color-status-warning)" />
+          </Card> : null}
+
+          {bm?.financialHandoff ? <FinancialHandoff value={bm.financialHandoff} /> : null}
+
           {result.canvas ? <BmCellDetails cells={result.canvas} active={focus.active} /> : null}
         </>
       )}
-    </section>
+    </ProjectWorkspace>
   );
+}
+
+function FinancialHandoff({ value }) {
+  const numbers = [
+    ['기준 가격', value.priceBase], ['가격 하한', value.priceMin], ['가격 상한', value.priceMax],
+    ['TAM', value.tam], ['SAM', value.sam], ['SOM', value.som],
+    ['시장 성장률', value.marketGrowthRate], ['예상 매출', value.expectedRevenue], ['단위 원가', value.unitCost],
+  ];
+  return <Card title="재무 분석에 사용할 정보">
+    <p>다음 단계 준비: <strong>{value.handoffStatus ? '준비됨' : '정보 없음'}</strong></p>
+    <p>수익 모델: {value.revenueModel || '미입력'}</p>
+    <dl className="bm-verdict__details">{numbers.map(([label, number]) => (
+      <div key={label}><dt>{label}</dt><dd>{number ?? '미측정'}</dd></div>
+    ))}</dl>
+    <p>고정비 항목: {(value.fixedCostItems || []).length
+      ? JSON.stringify(value.fixedCostItems) : '없음'}</p>
+    <p>변동비 항목: {(value.variableCostItems || []).length
+      ? JSON.stringify(value.variableCostItems) : '없음'}</p>
+    <p>누락된 재무 입력: {(value.missingFinancialInputs || []).join(', ') || '없음'}</p>
+  </Card>;
 }
 
 /**
@@ -243,8 +275,4 @@ function SwrBox({ title, items, tone }) {
       </ul>
     </div>
   );
-}
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
 }

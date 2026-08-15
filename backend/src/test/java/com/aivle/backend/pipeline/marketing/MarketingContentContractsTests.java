@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.pipeline.concept.domain.Concept;
-import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
 import com.aivle.backend.pipeline.marketing.application.MarketingLegalGuard;
 import com.aivle.backend.pipeline.marketing.application.MarketingResultContract;
 import com.aivle.backend.pipeline.marketing.application.MarketingSourceSnapshotFactory;
@@ -53,49 +52,6 @@ class MarketingContentContractsTests {
     }
 
     @Test
-    void sourceUsesPortfolioSelectionIdentityAndNestedCandidateClaims() {
-        var marketSeed = MarketAnalysisSeedSnapshot.createPortfolio("portfolio-market-seed", 1L, 17L,
-            "portfolio-concept", "legal-report", "2.0", "sha256:" + "1".repeat(64),
-            "sha256:" + "2".repeat(64), """
-            {"selectedConcept":{"identity":{"conceptName":"실제 컨셉","targetUsers":"지역 상점","coreValue":"당일 연결"},
-             "solution":{"problemScenario":"재고 폐기","solutionMechanism":"당일 매칭","featureSet":["재고 매칭"]}},
-             "finalHypotheses":{
-                "targetRegion":{"value":"대한민국"},
-                "revenueModel":{"value":"구독"},
-                "price":{"value":"월 9,900원"},
-                "channels":{"value":["온라인 광고"]},
-                "differentiators":{"value":["당일 연결"]},
-                "preMarketSomShare":{
-                    "value":{
-                        "targetSharePercent":2.5,
-                        "horizonYears":3
-                    }
-                },
-                "preMarketSom":{
-                    "value":{
-                        "amount":100000000,
-                        "currency":"KRW"
-                    }
-                }
-            },
-             "legalResult":{"legalStatus":"IMPLEMENTABLE_WITH_CONTROLS","requiredControls":[],
-             "requiredDisclosures":[],"prohibitedVariants":[],"officialEvidenceReferences":[]}}
-            """, 9L, Instant.EPOCH);
-        ConceptPortfolioConcept concept = mock(ConceptPortfolioConcept.class);
-        when(concept.getConceptName()).thenReturn("실제 컨셉");
-        when(concept.getSummary()).thenReturn("지역 연결");
-        when(concept.getCandidateSnapshotJson()).thenReturn(
-            "{\"candidate\":{\"advertisingClaims\":[\"당일 연결 가능 지역 운영\"]}}");
-        var factory = new MarketingSourceSnapshotFactory(mapper, new SnapshotHasher(mapper));
-
-        var built = factory.create("source-v2", Instant.EPOCH, marketSeed, concept);
-
-        assertThat(built.body().path("selectionId").asLong()).isEqualTo(17L);
-        assertThat(built.body().path("conceptId").asText()).isEqualTo("portfolio-concept");
-        assertThat(built.body().path("allowedClaims").get(0).asText()).isEqualTo("당일 연결 가능 지역 운영");
-    }
-
-    @Test
     void legalGuardBlocksProhibitedClaimAndMissingDisclosure() {
         var guard = new MarketingLegalGuard(mapper);
         String source = "{\"prohibitedClaims\":[\"전 지역 최저가\"],\"requiredDisclosures\":[\"지역별 제공 범위 상이\"]}";
@@ -120,6 +76,11 @@ class MarketingContentContractsTests {
         contract.validate(valid, MarketingContentType.EMAIL);
         ((tools.jackson.databind.node.ObjectNode) valid).put("unexpected", true);
         assertThatThrownBy(() -> contract.validate(valid, MarketingContentType.EMAIL)).isInstanceOf(IllegalArgumentException.class);
+
+        var withImage = mapper.readTree("""
+            {"contract":"marketing-content-result-v1","contentType":"EMAIL","title":"Hello","body":"Body","callToAction":null,"hashtags":[],"imageBrief":"제품 이미지","legalReview":{"compliant":true,"warnings":[],"requiredDisclosuresApplied":[]},"artifactRefs":["ai-artifacts/00000000-0000-4000-8000-000000000001.jpg"]}
+            """);
+        contract.validate(withImage, MarketingContentType.EMAIL);
     }
 
     @Test

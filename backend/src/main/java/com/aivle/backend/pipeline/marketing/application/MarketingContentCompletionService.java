@@ -1,15 +1,16 @@
 package com.aivle.backend.pipeline.marketing.application;
 
+import com.aivle.backend.file.object.ObjectStoragePort;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.*;
-import com.aivle.backend.file.object.ObjectStoragePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.*;
-
 
 @Service @RequiredArgsConstructor
 public class MarketingContentCompletionService {
@@ -38,19 +39,10 @@ public class MarketingContentCompletionService {
         int number = content.completeRevision();
         MarketingContentRevision revision = revisions.save(MarketingContentRevision.create(content.getId(), number,
             MarketingRevisionType.GENERATED, MarketingRevisionOrigin.AI, json, null));
-        for (
-            JsonNode ref
-            : response.result().path("artifactRefs")
-        ) {
+        for (JsonNode ref : response.result().path("artifactRefs")) {
             validateArtifact(ref.asText());
-
-            assets.save(
-                MarketingAsset.link(
-                    content.getId(),
-                    revision.getId(),
-                    ref.asText()
-                )
-            );
+            registerRollbackCleanup(ref.asText());
+            assets.save(MarketingAsset.link(content.getId(), revision.getId(), ref.asText()));
         }
     }
 
@@ -65,35 +57,31 @@ public class MarketingContentCompletionService {
     }
 
     private void validateArtifact(String artifactRef) {
-        if (
-            !artifactRef.matches(
-                "ai-artifacts/[0-9a-f-]{36}\\.jpg"
-            )
-            || !objectStorage.exists(artifactRef)
-        ) {
-            throw new IllegalArgumentException(
-                "marketing image artifact is missing"
-            );
+        if (artifactRef == null || !artifactRef.matches(
+                "ai-artifacts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.jpg")
+                || !objectStorage.exists(artifactRef)) {
+            throw new IllegalArgumentException("marketing image artifact is missing");
         }
-
         try {
-            ObjectStoragePort.ObjectMetadata metadata =
-                objectStorage.metadata(artifactRef);
-
-            if (
-                !"image/jpeg".equals(metadata.contentType())
-                || metadata.sizeBytes() <= 0
-                || metadata.sizeBytes() > 20L * 1024 * 1024
-            ) {
-                throw new IllegalArgumentException(
-                    "marketing image artifact is invalid"
-                );
+            ObjectStoragePort.ObjectMetadata metadata = objectStorage.metadata(artifactRef);
+            if (!"image/jpeg".equals(metadata.contentType()) || metadata.sizeBytes() <= 0
+                    || metadata.sizeBytes() > 20L * 1024 * 1024) {
+                throw new IllegalArgumentException("marketing image artifact is invalid");
             }
         } catch (java.io.IOException failure) {
-            throw new IllegalArgumentException(
-                "marketing image artifact is unavailable",
-                failure
-            );
+            throw new IllegalArgumentException("marketing image artifact is unavailable", failure);
         }
+    }
+
+    private void registerRollbackCleanup(String artifactRef) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                    try { objectStorage.delete(artifactRef); }
+                    catch (java.io.IOException | RuntimeException ignored) { /* reconciliation fallback */ }
+                }
+            }
+        });
     }
 }

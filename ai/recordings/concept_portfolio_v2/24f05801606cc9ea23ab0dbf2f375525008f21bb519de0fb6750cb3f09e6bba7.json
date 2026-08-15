@@ -1,0 +1,112 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c7a316f9de1d8e2c453471e054d6cb4795edb40ba805e08cab8d0d5522b21858",
+  "canonicalRequestHash": "24f05801606cc9ea23ab0dbf2f375525008f21bb519de0fb6750cb3f09e6bba7",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemFocus": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "useContext": "중소기업의 영업팀에서 회의 기록과 이메일을 효율적으로 관리하고 CRM에 입력하는 데 사용될 수 있습니다.",
+      "valueProposition": "중소기업의 영업팀에 최적화된 도구로 업무 효율성을 높입니다.",
+      "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+      "solutionThesis": "맞춤형 도구를 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다.",
+      "differentiatingMechanics": [
+        "AI 기반 자동화",
+        "CRM 통합",
+        "사용자 친화적인 인터페이스"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어듭니다.",
+      "coreValue": "중소기업의 영업팀에 최적화된 도구로 업무 효율성을 높입니다.",
+      "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+      "solutionMechanism": "AI 알고리즘을 활용하여 회의 및 이메일 데이터를 분석하고 정리하여 CRM에 자동으로 입력합니다.",
+      "featureSet": [
+        "회의 및 이메일 자동 정리",
+        "CRM 통합 기능",
+        "후속 조치 제안 기능"
+      ],
+      "operatingModel": "클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 효율적으로 관리하고 CRM에 입력하는 데 사용될 수 있습니다.",
+        "valuePropositionThesis": "중소기업의 영업팀에 최적화된 도구로 업무 효율성을 높입니다.",
+        "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+        "solutionThesis": "맞춤형 도구를 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "맞춤형 도구를 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다",
+      "familyId": "OTHER:AUTOMATED_DIGITAL",
+      "familyLabelKo": "기타 역할 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "AI 기반 자동화",
+      "CRM 통합",
+      "사용자 친화적인 인터페이스"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구로, 중소기업의 영업팀에 최적화된 도구로 업무 효율성을 높입니다."
+  },
+  "durationMs": 2257,
+  "timestamp": "2026-08-10T03:39:10.200335+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

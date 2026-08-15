@@ -1,0 +1,115 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:d103eaad10088a49ea0a4f1babf083ca06a00a00efad7b0cdefa71641b371b5b",
+  "canonicalRequestHash": "9ce96dd68e3ee0c5e5b0643f3b1af96a8343456cc21e20b2015edd7216faa7f3",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+      "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+      "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 여행 일정 생성",
+        "실시간 예약 시스템 연동"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "problemScenario": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "coreValue": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있습니다.",
+      "conceptDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "solutionMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘을 활용한다.",
+      "featureSet": [
+        "사용자 맞춤형 여행 일정 생성",
+        "숙박 및 체험 예약 연동",
+        "실시간 일정 수정 기능"
+      ],
+      "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "BOOKING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "AI 기반의 개인화된 여행 일정 생성",
+      "실시간 예약 시스템 연동",
+      "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+      "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+      "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다."
+    ],
+    "missingMechanics": [],
+    "safeSummary": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스는 사용자가 간편하게 여행 일정을 계획할 수 있도록 하여 시간과 노력을 절약할 수 있는 가치를 제공합니다. AI 알고리즘을 활용하여 개인화된 여행 일정을 생성하고, 실시간 예약 시스템과 연동하여 사용자에게 최적의 솔루션을 제공합니다."
+  },
+  "durationMs": 4062,
+  "timestamp": "2026-08-10T09:38:21.306132+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

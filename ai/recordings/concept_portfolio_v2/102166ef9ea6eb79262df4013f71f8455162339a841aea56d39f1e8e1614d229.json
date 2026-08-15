@@ -1,0 +1,152 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c1cb57d2ad45be87d3ae5873aa79a1dc47efaaf2f7990e93435d512637b110ad",
+  "canonicalRequestHash": "102166ef9ea6eb79262df4013f71f8455162339a841aea56d39f1e8e1614d229",
+  "redactedRequest": {
+    "kind": "PLAN",
+    "left": {
+      "thesis": {
+        "targetSegmentThesis": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+        "useCaseThesis": "반려동물 돌봄 서비스",
+        "valuePropositionThesis": "신뢰할 수 있는 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+        "offerThesis": "지역 기반의 검증된 펫시터와 보호자를 연결하여 신뢰성을 높인다.",
+        "solutionThesis": "사용자가 간편하게 펫시터를 검색하고 예약할 수 있는 직관적인 플랫폼 제공"
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "사용자가 간편하게 펫시터를 검색하고 예약할 수 있는 직관적인 플랫폼 제공",
+      "familyId": "OTHER:PARTNER_NETWORK",
+      "familyLabelKo": "기타 역할 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "ON_SITE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "COMMISSION",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    },
+    "right": {
+      "thesis": {
+        "targetSegmentThesis": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+        "useCaseThesis": "반려동물 돌봄 서비스",
+        "valuePropositionThesis": "가까운 지역의 펫시터를 쉽게 찾고 예약할 수 있는 편리함 제공",
+        "offerThesis": "지역 기반의 펫시터와 보호자를 연결하여 신뢰성을 높인다.",
+        "solutionThesis": "사용자가 간편하게 펫시터를 검색하고 예약할 수 있는 직관적인 플랫폼 제공"
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "사용자가 간편하게 펫시터를 검색하고 예약할 수 있는 직관적인 플랫폼 제공",
+      "familyId": "OTHER:PARTNER_NETWORK",
+      "familyLabelKo": "기타 역할 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "ON_SITE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "COMMISSION",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "VARIANT",
+    "overlappingMechanics": [
+      "customerInteractionModel",
+      "deliveryModel",
+      "monetizationModel",
+      "operatingModel",
+      "partnerModel"
+    ],
+    "materiallyDifferentMechanics": [
+      "offerThesis",
+      "valuePropositionThesis"
+    ],
+    "safeSummary": "Both concepts share the same business architecture and operational models, but they differ in the specifics of their offer and value propositions."
+  },
+  "durationMs": 1770,
+  "timestamp": "2026-08-10T03:47:17.369026+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

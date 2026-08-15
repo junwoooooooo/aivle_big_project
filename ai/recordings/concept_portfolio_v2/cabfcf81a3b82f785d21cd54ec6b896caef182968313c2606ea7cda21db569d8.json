@@ -1,0 +1,215 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e50d405ce5ffc2133da1286995bf1804ecf3434de6307a7fa97238cff2567a8a",
+  "canonicalRequestHash": "cabfcf81a3b82f785d21cd54ec6b896caef182968313c2606ea7cda21db569d8",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "클라우드 기반 SaaS 플랫폼 제공 AI 솔루션 제공업체 서비스 판매자 CRM 솔루션 제공업체 클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 사용자가 회의 기록과 이메일을 업로드한다. AI가 내용을 분석하여 CRM에 입력한다. 사용자가 결과를 확인한다. 사용자가 구독료를 결제한다. AI 솔루션 제공업체가 수익을 수취한다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 온라인 마케팅 및 CRM 솔루션 제공업체와의 파트너십을 통한 유통",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "클라우드 기반 SaaS 플랫폼 제공 AI 도구 제공업체 서비스 판매자 CRM 솔루션 제공업체 클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 사용자가 회의 및 이메일 내용을 플랫폼에 업로드 AI가 내용을 자동으로 정리 및 분석 사용자가 결과를 확인하고 CRM에 입력 사용자가 구독 요금을 결제 결제 확인 후 서비스 제공 시작 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 온라인 마케팅, 파트너십을 통한 CRM 솔루션 제공업체와의 협력",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "AI 기반 고객 맞춤형 영업 액션 제안 플랫폼 서비스 제공자 판매자 파트너사 클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. 데이터 분석 전문 기업과의 협력을 통해 데이터 분석의 정확성을 높입니다. 사용자가 플랫폼에 고객 정보를 입력한다. AI가 고객 데이터를 분석하여 영업 액션을 제안한다. 사용자가 제안된 영업 액션을 확인하고 실행한다. 사용자가 구독료를 결제한다. 서비스 제공자가 결제를 수취한다. 정산이 이루어진다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "AI 기반 성과 분석 도구 제공 AI 도구 제공업체 구독 서비스 판매자 파트너십을 통한 판매 중개자 클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. 데이터 분석 전문 기업과의 협력을 통해 데이터 분석의 정확성을 높입니다. 사용자가 플랫폼에 가입 사용자가 성과 데이터를 입력 AI가 데이터를 분석 사용자가 분석 결과를 확인 사용자가 구독료를 결제 결제 시스템이 결제 확인 서비스 제공 시작 구독 모델(월별 또는 연별 요금제) 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "AI 기반 영업 도구 제공 AI 도구 제공업체 서비스 판매자 파트너십을 통한 판매 중개 클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 사용자가 회의 및 이메일 내용을 플랫폼에 업로드 AI가 데이터를 처리하여 결과 제공 사용자가 결과를 확인하고 CRM에 입력 사용자가 구독료를 결제 결제 확인 후 서비스 제공 정기 결제 및 갱신 관리 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반 SaaS 플랫폼으로 AI 솔루션을 제공하며, CRM 솔루션과의 파트너십을 통해 통합 서비스를 제공하는 모델."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반 SaaS 플랫폼으로 AI 도구를 제공하며, CRM 솔루션과의 파트너십을 통해 통합 서비스를 제공하는 모델."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 고객 맞춤형 영업 액션 제안 플랫폼으로, 다양한 파트너십을 통해 서비스를 제공하는 모델."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "MEDIUM",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 성과 분석 도구를 제공하며, 파트너십을 통한 판매 중개 모델."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "MEDIUM",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 영업 도구를 제공하며, CRM 솔루션과의 파트너십을 통한 판매 중개 모델."
+    }
+  ],
+  "durationMs": 9181,
+  "timestamp": "2026-08-10T08:45:59.866109+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

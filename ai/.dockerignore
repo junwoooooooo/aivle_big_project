@@ -3,12 +3,11 @@ __pycache__
 *.pyc
 .pytest_cache
 outputs
+app/twin/bank
+app/research/research2/runs
+app/research/research2/runs-generated
+app/research/research2/outputs
 .env
 .env.*
 .git
 tests
-# 시장조사 측정 원장 232MB. 이미지에 넣지 않는다 — 빌드 컨텍스트가 통째로 느려진다.
-app/research/research2/runs
-app/research/research2/outputs
-# 트윈 카드 뱅크. 크기(10.8MB)가 아니라 **재배포 금지**라 이미지에 굽지 않는다.
-app/twin/bank

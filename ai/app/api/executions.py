@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -29,8 +28,11 @@ TASK_TYPES = {
     "CONCEPT_HYPOTHESIS_ALTERNATIVE",
     "CONCEPT_DELTA_LEGAL_REVIEW",
     "TECH_OPS_PROPOSAL",
+    "TECH_OPS_ADVISORY",
     "FINANCE_ESTIMATE",
+    "FINANCE_ANALYSIS_REPORT",
     "MARKETING_CONTENT_GENERATION",
+    "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
     "TWIN_SURVEY",
     "TWIN_STIMULUS_DRAFT",
@@ -75,42 +77,17 @@ def safe_validation_fields(failure: ValidationError, prefix: str = "input") -> l
     return fields
 
 
-def validate_text_contents(task_input: dict[str, Any]) -> str | None:
-    contents = task_input.get("textContents")
-    if not isinstance(contents, list) or not 1 <= len(contents) <= 64:
-        return "FIELD_CONSTRAINT_VIOLATION"
-    total_chunks = 0
-    for content in contents:
-        if not isinstance(content, dict) or set(content) != {"contentKey", "contentType", "language", "totalCharacters", "contentHash", "chunks"}:
-            return "UNKNOWN_FIELD"
-        if content["contentType"] != "TEXT" or content["language"] != "ko-KR":
-            return "FIELD_CONSTRAINT_VIOLATION"
-        chunks = content["chunks"]
-        if not isinstance(chunks, list) or not 1 <= len(chunks) <= 64:
-            return "CHUNK_COUNT_EXCEEDED"
-        total_chunks += len(chunks)
-        joined = ""
-        for expected, chunk in enumerate(chunks):
-            if chunk.get("index") != expected:
-                return "CHUNK_SEQUENCE_INVALID"
-            text = chunk.get("text")
-            if not isinstance(text, str) or not text or len(text) > 16384 or chunk.get("characterCount") != len(text):
-                return "FIELD_CONSTRAINT_VIOLATION"
-            if chunk.get("chunkHash") != "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest():
-                return "HASH_MISMATCH"
-            joined += text
-        if content.get("totalCharacters") != len(joined) or content.get("contentHash") != "sha256:" + hashlib.sha256(joined.encode("utf-8")).hexdigest():
-            return "HASH_MISMATCH"
-    return "CHUNK_COUNT_EXCEEDED" if total_chunks > 64 else None
-
-
 def canonical_hash(body: InternalExecutionRequestV1) -> str:
+    input_value = body.input
+    if body.taskType == "MARKETING_VISUAL_GENERATION":
+        input_value = dict(body.input)
+        input_value.pop("resolvedSourceImage", None)
     return canonical_input_hash(
         contract_version=body.contractVersion,
         task_type=body.taskType,
         task_schema_version=body.taskSchemaVersion,
         locale=body.locale,
-        input_value=body.input,
+        input_value=input_value,
     )
 
 
@@ -146,29 +123,13 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                               body.taskRunId, body.taskAttemptId)
     try:
         calculated_hash = canonical_hash(body)
-    except (TypeError, ValueError) as failure:
-        # The input can contain user planning text, so do not write it to logs.
-        logger.warning("Canonical input rejected taskType=%s taskRunId=%s error=%s",
-                       body.taskType, body.taskRunId, str(failure)[:160])
+    except ValueError:
         return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
-                              body.taskRunId, body.taskAttemptId, [{
-                                  "path": "input",
-                                  "expectedType": "canonical JSON with finite numbers and unique normalized keys",
-                                  "category": "CANONICAL_INPUT_INVALID",
-                              }])
+                              body.taskRunId, body.taskAttemptId)
     if calculated_hash != body.canonicalInputHash:
         return internal_error(correlation, "INVALID_REQUEST", "HASH_MISMATCH", 400, False,
                               body.taskRunId, body.taskAttemptId)
-    if body.taskType == "MARKET_RESEARCH":
-        # 시장조사만 textContents 봉투를 쓴다 (MarketResearchInputFactory 가 그렇게 싼다).
-        # 나머지 pipeline task 들은 raw JSON 이라 아래 분기로 간다.
-        reason = validate_text_contents(body.input)
-        if reason:
-            return internal_error(correlation, "INVALID_REQUEST", reason, 400, False,
-                                  body.taskRunId, body.taskAttemptId)
-        text = "\n".join(chunk["text"] for content in body.input["textContents"] for chunk in content["chunks"])
-        source_keys = [content["contentKey"] for content in body.input["textContents"]]
-    elif body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
+    if body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
         from app.tasks.concept_portfolio_v2.models import ConceptPortfolioProductionInput
         try:
             portfolio_input = ConceptPortfolioProductionInput.model_validate(body.input)
@@ -208,6 +169,21 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_hash = body.input.get("source", {}).get("hash", body.input.get("source", {}).get("sourceSnapshotHash", "unknown"))
         source_keys = [f"finalized-planning:{source_hash}"]
+    elif body.taskType == "MARKETING_VISUAL_GENERATION":
+        from app.tasks.marketing_visual.models import MarketingVisualInput
+        try:
+            visual_input = MarketingVisualInput.model_validate(body.input)
+        except ValidationError as failure:
+            return internal_error(correlation, "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION",
+                                  400, False, body.taskRunId, body.taskAttemptId,
+                                  safe_validation_fields(failure))
+        text = json.dumps(visual_input.model_dump(mode="json"), ensure_ascii=False,
+                          sort_keys=True, separators=(",", ":"))
+        source_keys = [
+            f"marketing-content:{visual_input.marketingContentId}",
+            f"marketing-revision:{visual_input.marketingRevisionId}",
+            f"source-artifact:{visual_input.sourceImage.artifactId}",
+        ]
     elif body.taskType == "IDEA_BRIEF_DERIVATION":
         from app.tasks.idea_brief.models import IdeaBriefDerivationInput
         try:
@@ -227,27 +203,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                   "externalSourceReferences": [], "generatedAt": generated_at, "verificationNeeded": True}
     execution_warnings: list[dict[str, Any]] = []
     try:
-        if body.taskType == "MARKET_RESEARCH":
-            # 시장조사는 프롬프트 1회가 아니라 다단계 파이프라인이라 단일 프롬프트 실행 경로를
-            # 타지 않는다. 남은 deadline 을 그대로 예산으로 넘긴다.
-            # ⚠ 한 TaskType 에 **두 모드**(FULL·BM)가 있고 가르는 것은 `input.mode` 다.
-            #    봉투는 두 모드가 같고 해당 없는 칸은 null 이다 — 그래야 백엔드가
-            #    `MarketResearchContract.exact()` 한 번으로 못박을 수 있다.
-            from app.research.pipeline import run_market_research
-            budget = (deadline - datetime.now(timezone.utc)).total_seconds()
-            result = await run_market_research(body.input, body.taskAttemptId, budget)
-        elif body.taskType == "TWIN_SURVEY":
-            # 트윈 조사도 프롬프트 1회가 아니라 수백~수천 셀이다. 남은 deadline 을 예산으로
-            # 넘기고, 예산이 마르면 러너가 거기까지 모은 셀로 집계한다(부분 결과가 정상이다).
-            from app.twin import execute_twin_survey
-            budget = (deadline - datetime.now(timezone.utc)).total_seconds()
-            result = await execute_twin_survey(body.input, budget)
-        elif body.taskType == "TWIN_STIMULUS_DRAFT":
-            # 조사 자체와 달리 프롬프트 1회다(동기 인라인). 여기서 뽑은 쌍은 화면이 고르고
-            # 다듬은 뒤에야 TWIN_SURVEY 로 간다 — 이 태스크는 카드 뱅크를 건드리지 않는다.
-            from app.twin.stimulus_draft import execute_twin_stimulus_draft
-            result = await execute_twin_stimulus_draft(body.input)
-        elif body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
+        if body.taskType == "CONCEPT_PORTFOLIO_V2_RUN":
             from app.tasks.concept_portfolio_v2 import (
                 ConceptPortfolioProductionContractError,
                 execute_concept_portfolio_v2,
@@ -351,9 +307,57 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 "proposalVersion": body.input.get("proposalVersion"),
                 "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
             })
+        elif body.taskType == "TECH_OPS_ADVISORY":
+            from app.tasks.tech_ops_advisor.runtime_adapter import execute_tech_ops_advisory
+            from app.progress.safe_task_progress import progress_sender_from_environment
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await execute_tech_ops_advisory(
+                    body.input, event_sink=progress.emit if progress.enabled else None,
+                )
+        elif body.taskType == "FINANCE_ANALYSIS_REPORT":
+            from app.tasks.finance_analysis_report import execute_finance_analysis_report
+            result = await execute_finance_analysis_report(body.input)
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)
+        elif body.taskType == "MARKETING_VISUAL_GENERATION":
+            from app.tasks.marketing_visual import execute_marketing_visual
+            result = await execute_marketing_visual(body.input)
+        elif body.taskType == "MARKET_RESEARCH":
+            from app.research.product_pipeline import run_market_research
+            from app.progress.safe_task_progress import progress_sender_from_environment
+            remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await run_market_research(
+                    body.input, body.taskAttemptId, remaining,
+                    event_sink=progress.emit if progress.enabled else None,
+                    diagnostic_context={
+                        "taskRunId": body.taskRunId,
+                        "taskAttemptId": body.taskAttemptId,
+                        "correlationId": correlation,
+                        "canonicalInputHash": body.canonicalInputHash,
+                    },
+                )
+        elif body.taskType == "TWIN_STIMULUS_DRAFT":
+            from app.twin.stimulus_draft import execute_twin_stimulus_draft
+            result = await execute_twin_stimulus_draft(body.input)
+        elif body.taskType == "TWIN_SURVEY":
+            from app.twin import execute_twin_survey
+            from app.progress.safe_task_progress import progress_sender_from_environment
+            remaining = max(1.0, (deadline - datetime.now(timezone.utc)).total_seconds())
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await execute_twin_survey(
+                    body.input, remaining, event_sink=progress.emit if progress.enabled else None,
+                )
         elif body.taskType == "IDEA_BRIEF_DERIVATION":
             from app.tasks.idea_brief import execute_idea_brief_derivation
             result = await execute_idea_brief_derivation(body.input)
@@ -374,6 +378,16 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
                               body.taskRunId, body.taskAttemptId, failure.validation_fields,
                               failure.retry_after_ms)
+    except Exception:
+        logger.exception(
+            "Unexpected internal AI execution failure taskType=%s taskRunId=%s "
+            "taskAttemptId=%s correlationId=%s",
+            body.taskType, body.taskRunId, body.taskAttemptId, correlation,
+        )
+        return internal_error(
+            correlation, "INTERNAL_ERROR", "UNEXPECTED_INTERNAL_ERROR", 500, True,
+            body.taskRunId, body.taskAttemptId,
+        )
     return InternalExecutionSuccessResponseV1(contractVersion="1.0", taskType=body.taskType,
         taskSchemaVersion="1.0", taskRunId=body.taskRunId, taskAttemptId=body.taskAttemptId,
         correlationId=body.correlationId, canonicalInputHash=body.canonicalInputHash,

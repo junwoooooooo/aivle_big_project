@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:3d15843a4e0f23fd6a7270d3ed846069a7236e6bd0f6d87b8fa696175ed61127",
+  "canonicalRequestHash": "5b44e2a45a98b9adffe653325586e78a658f6ca284a5d8158388f9b86720cb70",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "온라인 플랫폼 운영 및 고객 관리 식재료 및 레시피 제공 구독 서비스 판매 물류 및 배송 관리 고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 농가 및 물류 업체에 전달 신선한 식재료와 레시피가 고객에게 배송 고객이 구독료 결제 결제 정보가 플랫폼에 전달 정기 배송에 대한 결제 확인 구독 모델을 통한 정기 배송 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PARTNER_FULFILLED",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An online platform providing subscription-based delivery of fresh ingredients and recipes, collaborating with local farmers and culinary experts."
+    }
+  ],
+  "durationMs": 2003,
+  "timestamp": "2026-08-10T03:29:50.401215+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

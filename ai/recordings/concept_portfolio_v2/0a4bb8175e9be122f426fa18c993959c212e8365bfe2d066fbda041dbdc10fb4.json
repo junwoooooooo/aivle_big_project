@@ -1,0 +1,58 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:da06f0903c5dfae2ced661982be67ac222a7eb7c4200e8e40de05433677a7e9b",
+  "canonicalRequestHash": "0a4bb8175e9be122f426fa18c993959c212e8365bfe2d066fbda041dbdc10fb4",
+  "redactedRequest": {
+    "kind": "OPPORTUNITY_SCOPE",
+    "left": {
+      "problemCore": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetCore": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "useContexts": [
+        "중소기업의 영업팀에서 회의 및 이메일 내용을 효율적으로 관리하고 CRM 시스템에 통합하기 위한 도구로 사용될 수 있습니다."
+      ],
+      "intentComponents": [
+        "AI를 활용하여 중소기업 영업팀의 회의",
+        "이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구."
+      ],
+      "mustPreserve": [
+        "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구."
+      ],
+      "maySpecialize": [
+        "핵심 대상의 의미 있는 하위 세그먼트",
+        "핵심 사용 맥락의 구체화",
+        "가치 제안 또는 offer의 구체화"
+      ],
+      "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+    },
+    "right": {
+      "targetSegmentThesis": "중소기업 영업팀",
+      "useCaseThesis": "중소기업의 영업팀에서 반복적인 업무를 자동화하여 효율성을 높이는 데 활용될 수 있습니다.",
+      "valuePropositionThesis": "반복적인 영업 업무를 자동화하여 영업팀의 효율성을 극대화합니다.",
+      "offerThesis": "AI를 통해 반복적인 영업 업무를 자동화하여 영업팀의 업무 부담을 줄입니다.",
+      "solutionThesis": "AI가 영업팀의 반복적인 업무를 자동화하여 효율성을 높입니다."
+    }
+  },
+  "providerResponse": {
+    "decision": "VARIANT",
+    "overlappingMechanics": [
+      "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구."
+    ],
+    "materiallyDifferentMechanics": [
+      "AI를 통해 반복적인 영업 업무를 자동화하여 영업팀의 업무 부담을 줄입니다.",
+      "AI가 영업팀의 반복적인 업무를 자동화하여 효율성을 높입니다.",
+      "반복적인 영업 업무를 자동화하여 영업팀의 효율성을 극대화합니다."
+    ],
+    "safeSummary": "중소기업 영업팀의 업무 효율성을 높이기 위해 AI를 활용하여 반복적인 영업 업무를 자동화하는 도구."
+  },
+  "durationMs": 3713,
+  "timestamp": "2026-08-10T07:54:28.109723+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

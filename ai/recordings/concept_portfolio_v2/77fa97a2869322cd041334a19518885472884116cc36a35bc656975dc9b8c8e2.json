@@ -1,0 +1,58 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fb50524463876081e2dbd6e9e18fee29737746956d8272b56148583e6c2f5740",
+  "canonicalRequestHash": "77fa97a2869322cd041334a19518885472884116cc36a35bc656975dc9b8c8e2",
+  "redactedRequest": {
+    "kind": "OPPORTUNITY_SCOPE",
+    "left": {
+      "problemCore": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+      "targetCore": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+      "useContexts": [
+        "소량의 식재료를 제공하고 남은 재료를 활용한 레시피를 안내하는 서비스입니다."
+      ],
+      "intentComponents": [
+        "개인 맞춤형 소량 식재료와 레시피 제공 서비스"
+      ],
+      "mustPreserve": [
+        "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+        "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+        "개인 맞춤형 소량 식재료와 레시피 제공 서비스"
+      ],
+      "maySpecialize": [
+        "핵심 대상의 의미 있는 하위 세그먼트",
+        "핵심 사용 맥락의 구체화",
+        "가치 제안 또는 offer의 구체화"
+      ],
+      "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+    },
+    "right": {
+      "targetSegmentThesis": "요리할 시간이 부족한 1~2인 가구",
+      "useCaseThesis": "소량의 식재료를 활용한 맞춤형 레시피 제공 서비스",
+      "valuePropositionThesis": "고객의 취향에 맞춘 레시피를 제공하여 요리를 쉽게 만든다.",
+      "offerThesis": "개인 맞춤형 레시피 추천 서비스 제공",
+      "solutionThesis": "소량의 식재료를 활용한 간편한 요리법을 제안한다."
+    }
+  },
+  "providerResponse": {
+    "decision": "DISTINCT",
+    "overlappingMechanics": [
+      "1~2인 가구를 대상으로 하는 점",
+      "소량의 식재료 제공"
+    ],
+    "materiallyDifferentMechanics": [
+      "개인 맞춤형 레시피 추천 서비스 제공",
+      "소량의 식재료를 활용한 간편한 요리법 제안",
+      "고객의 취향에 맞춘 레시피 제공"
+    ],
+    "safeSummary": "1~2인 가구를 위한 소량 식재료와 레시피 제공 서비스는 요리 시간 부족 문제를 해결하고, 개인 맞춤형 레시피를 통해 요리를 쉽게 만드는 것을 목표로 한다."
+  },
+  "durationMs": 4584,
+  "timestamp": "2026-08-10T05:22:57.984027+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

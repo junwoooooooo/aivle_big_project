@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:790df07b778b6b95ac23c0f5439dd04ea7365a54866708bcf1a35d676a79d803",
+  "canonicalRequestHash": "118cc9aa893bdc8d3b8098c7a413e401bbcd804c8d2b815635491ec2ba857d09",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "여행 추천 및 예약 플랫폼 제공 여행 추천 서비스 제공자 여행사 및 숙박업체 플랫폼 운영자 온라인 플랫폼을 통해 서비스 제공. 여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다. 사용자가 앱에서 여행지 검색 추천된 여행지 확인 후 예약 진행 예약 완료 후 확인 메시지 발송 사용자가 앱 내에서 결제 진행 여행사 및 숙박업체에 결제 수취 정산 후 수익 배분 제휴 업체로부터 발생하는 수익 모델. 모바일 앱 및 웹사이트를 통한 직접 예약.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "여행 추천 및 예약 플랫폼으로, 여행사 및 숙박업체와 협력하여 예약 서비스를 제공하는 중개자 역할을 수행."
+    }
+  ],
+  "durationMs": 2981,
+  "timestamp": "2026-08-10T05:15:55.033432+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

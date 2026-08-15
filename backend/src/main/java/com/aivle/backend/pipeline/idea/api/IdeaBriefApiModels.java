@@ -20,7 +20,15 @@ public final class IdeaBriefApiModels {
         @NotBlank @Size(max = 20000) String problem,
         @NotBlank @Size(max = 20000) String targetUsers,
         @Valid OptionalSeedRequest optionalSeed,
-        Set<Long> attachmentFileIds
+        @Size(max = 20) Set<Long> attachmentFileIds
+    ) {}
+
+    public record AttachmentView(
+        Long attachmentFileId,
+        String filename,
+        String mediaType,
+        long sizeBytes,
+        LocalDateTime createdAt
     ) {}
 
     public record OptionalSeedRequest(

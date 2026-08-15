@@ -1,0 +1,134 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:287794ef55638ba9593368497c568e4105be424c5a02541bbf50d67f99105717",
+  "canonicalRequestHash": "63fc84a354ff19e6b8d8235edade1d49185238220abb7272fc1a6afce5572334",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P7",
+        "businessText": "AI 기술을 활용하여 면접 코칭을 자동화합니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. 서비스 이용료를 통해 수익을 창출합니다. 신속한 코칭 제공으로 고객 만족도를 높입니다. 사용자가 플랫폼에 접속하여 자신의 면접 준비 상태를 입력하고 코칭을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "ADVISORY",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P8",
+        "businessText": "AI 기술을 활용하여 면접 시뮬레이션을 자동화합니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. 서비스 이용료를 통해 수익을 창출합니다. 신속한 시뮬레이션 제공으로 고객 만족도를 높입니다. 사용자가 플랫폼에 접속하여 면접 시뮬레이션을 진행하고 피드백을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P9",
+        "businessText": "AI 기술을 활용하여 피드백 생성을 자동화합니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. 서비스 이용료를 통해 수익을 창출합니다. 신속한 피드백 제공으로 고객 만족도를 높입니다. 사용자가 플랫폼에 접속하여 면접 후 피드백을 요청합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "ADVISORY",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 면접 코칭 자동화 서비스, 교육 기관과 협력, 구독 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 면접 시뮬레이션 자동화 서비스, 교육 기관과 협력, 구독 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 피드백 생성 자동화 서비스, 교육 기관과 협력, 구독 모델."
+    }
+  ],
+  "durationMs": 3840,
+  "timestamp": "2026-08-10T04:53:48.151216+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

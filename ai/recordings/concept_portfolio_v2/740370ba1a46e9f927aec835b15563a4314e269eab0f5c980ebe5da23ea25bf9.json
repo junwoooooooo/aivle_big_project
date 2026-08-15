@@ -1,0 +1,1018 @@
+{
+  "taskType": "PLAN_REPLENISHMENT",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-plan-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:06304385dee2316748f93963bbd9cc27294bd34f4e03d95596f6d6fe852ee8d7",
+  "canonicalRequestHash": "740370ba1a46e9f927aec835b15563a4314e269eab0f5c980ebe5da23ea25bf9",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "interpretedTargetUsers": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "usageContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "industryCategory": "여행 및 관광",
+        "researchScope": "주말 여행 계획 및 예약 서비스",
+        "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityKernel": {
+        "problemCore": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "targetCore": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "useContexts": [
+          "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스."
+        ],
+        "intentComponents": [
+          "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스."
+        ],
+        "mustPreserve": [
+          "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+          "주말에 짧은 여행을 자주 계획하는 직장인들.",
+          "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스."
+        ],
+        "maySpecialize": [
+          "핵심 대상의 의미 있는 하위 세그먼트",
+          "핵심 사용 맥락의 구체화",
+          "가치 제안 또는 offer의 구체화"
+        ],
+        "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+      },
+      "semanticAnchors": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "sourceLocks": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "existingPlans": [
+      {
+        "title": "주말 여행 자동 계획 서비스 A",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P1",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 B",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P2",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 C",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P3",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 D",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P4",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 E",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P5",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 F",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P6",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "주말 여행 자동 계획 서비스 G",
+        "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+        "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+        "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+        "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+        "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+        "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+        "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+        "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+        "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+        "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+        "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+        "differentiatingMechanics": [
+          "AI 기반의 개인화된 여행 일정 생성",
+          "실시간 예약 시스템 연동"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해.",
+        "planId": "P7",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+            "useCaseThesis": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+            "valuePropositionThesis": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+            "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+            "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "BOOKING",
+            "monetizationModel": "FREEMIUM",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "ai 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "BOOKING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "FREEMIUM",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      }
+    ],
+    "rejectedPlans": [
+      {
+        "planId": "P2",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P3",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P4",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P5",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P6",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P7",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      }
+    ],
+    "count": 5,
+    "round": 1
+  },
+  "providerResponse": [
+    {
+      "title": "주말 여행 맞춤형 추천 서비스",
+      "oneLineConcept": "사용자의 취향과 이동 가능 시간을 기반으로 최적의 여행지를 추천하는 서비스.",
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 선호하는 여행 스타일과 이동 가능 시간을 입력하면, 맞춤형 여행지를 추천하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "offerThesis": "사용자의 취향에 맞는 여행지를 추천하여 여행 계획의 번거로움을 줄인다.",
+      "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 취향에 맞는 여행지를 제안한다.",
+      "coreMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행지를 추천하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 취향을 입력하고 추천 결과를 확인한다.",
+      "valueDelivery": "추천된 여행지와 관련된 정보 및 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "추천된 여행지에 대한 정보를 제공하고, 사용자가 직접 예약할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 여행지 추천",
+        "사용자의 취향에 맞춘 맞춤형 서비스"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "여행 계획의 번거로움을 줄이고, 더 많은 여행을 즐길 수 있도록 하기 위해."
+    },
+    {
+      "title": "주말 여행 일정 자동 생성 서비스",
+      "oneLineConcept": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 생성하는 서비스.",
+      "targetSegment": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+      "offerThesis": "사용자의 입력에 따라 최적의 여행 일정을 자동으로 생성하여 제공한다.",
+      "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 자동으로 구성한다.",
+      "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 생성한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 개인화된 여행 일정 생성",
+        "실시간 예약 시스템 연동"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해."
+    },
+    {
+      "title": "주말 여행 커뮤니티 기반 일정 공유 서비스",
+      "oneLineConcept": "사용자들이 서로의 여행 일정을 공유하고 추천하는 커뮤니티 기반 서비스.",
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 자신의 여행 일정을 공유하고, 다른 사용자들의 일정을 참고하여 계획하는 서비스.",
+      "valueProposition": "사용자는 다른 사용자들의 여행 일정을 참고하여 더 쉽게 여행 계획을 세울 수 있다.",
+      "offerThesis": "사용자들이 서로의 여행 일정을 공유하여 여행 계획의 번거로움을 줄인다.",
+      "solutionThesis": "커뮤니티 기반의 일정 공유 플랫폼을 통해 사용자들이 서로의 여행 일정을 추천하고 공유한다.",
+      "coreMechanism": "사용자들이 공유한 여행 일정을 분석하여 추천하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 일정을 공유하고 다른 사용자들의 일정을 확인한다.",
+      "valueDelivery": "추천된 여행 일정과 관련된 정보 및 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "커뮤니티 기반의 플랫폼을 운영하여 사용자 간의 상호작용을 촉진한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "사용자들이 공유한 일정에 대한 정보를 제공하고, 사용자가 직접 예약할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "커뮤니티 기반의 여행 일정 공유",
+        "사용자 간의 상호작용 촉진"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "여행 계획의 번거로움을 줄이고, 더 많은 여행을 즐길 수 있도록 하기 위해."
+    },
+    {
+      "title": "AI 기반 여행 일정 최적화 서비스",
+      "oneLineConcept": "AI를 활용하여 사용자의 여행 일정을 최적화하는 서비스.",
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 최적의 여행 일정을 자동으로 구성하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있다.",
+      "offerThesis": "AI를 활용하여 사용자의 여행 일정을 최적화하여 제공한다.",
+      "solutionThesis": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 최적화한다.",
+      "coreMechanism": "사용자의 이동 가능 시간과 관심사를 분석하여 최적의 여행 일정을 생성하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 정보를 입력하고 결과를 확인한다.",
+      "valueDelivery": "자동으로 생성된 여행 일정과 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 최적화한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "자동 생성된 일정에 따라 예약을 진행하고, 사용자가 직접 확인할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 여행 일정 최적화",
+        "사용자 맞춤형 추천"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "주말 여행을 자주 계획하는 직장인들에게 시간과 노력을 절약할 수 있는 솔루션을 제공하기 위해."
+    },
+    {
+      "title": "주말 여행 테마 기반 추천 서비스",
+      "oneLineConcept": "사용자의 관심사에 맞춘 여행 테마를 추천하는 서비스.",
+      "targetSegment": "여행을 자주 가고 싶지만 계획하기 어려운 직장인들.",
+      "problemFocus": "여행 계획에 소요되는 시간과 노력을 줄이고, 더 많은 여행을 즐길 수 있도록 한다.",
+      "useContext": "사용자가 선호하는 여행 테마를 입력하면, 관련된 여행지를 추천하는 서비스.",
+      "valueProposition": "사용자는 간편하게 여행 테마에 맞는 여행지를 추천받아 더 많은 여행을 즐길 수 있다.",
+      "offerThesis": "사용자의 관심사에 맞는 여행 테마를 추천하여 여행 계획의 번거로움을 줄인다.",
+      "solutionThesis": "AI 기반의 추천 알고리즘을 통해 사용자의 관심사에 맞는 여행 테마를 제안한다.",
+      "coreMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행 테마를 추천하는 알고리즘.",
+      "customerInteraction": "사용자는 웹사이트나 모바일 앱을 통해 자신의 관심사를 입력하고 추천 결과를 확인한다.",
+      "valueDelivery": "추천된 여행 테마와 관련된 정보 및 예약 링크를 제공하여 사용자가 쉽게 예약할 수 있도록 한다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 테마를 추천한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+      "transactionApproach": "사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 서비스로 추가 기능을 제공하여 수익을 증대시킨다.",
+      "fulfillmentApproach": "추천된 여행지에 대한 정보를 제공하고, 사용자가 직접 예약할 수 있도록 한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 테마 추천",
+        "사용자 맞춤형 서비스"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "여행 계획의 번거로움을 줄이고, 더 많은 여행을 즐길 수 있도록 하기 위해."
+    }
+  ],
+  "durationMs": 46630,
+  "timestamp": "2026-08-10T09:37:16.790454+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

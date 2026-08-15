@@ -1,0 +1,298 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:9d8a6f2b5733c3de56df70d1d53abe1db676b2ec5274e749d1664557e598d399",
+  "canonicalRequestHash": "2f37dd22f6005e88b9a5347c3c2a09703343277d8849aacfd7653c254dfd3e6b",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "interpretedTargetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "usageContext": "중소기업의 영업팀에서 회의 기록과 이메일을 효율적으로 관리하고 CRM에 입력하는 데 사용될 수 있습니다.",
+        "industryCategory": "소프트웨어/AI",
+        "researchScope": "중소기업 영업 관리 도구",
+        "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않았습니다.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않았습니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "AI 영업 지원 플랫폼",
+      "oneLineConcept": "AI를 활용하여 중소기업 영업팀의 업무를 지원하는 플랫폼입니다.",
+      "targetSegment": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemFocus": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "useContext": "중소기업의 영업팀에서 회의 기록과 이메일을 효율적으로 관리하고 CRM에 입력하는 데 사용될 수 있습니다.",
+      "valueProposition": "AI 기반의 지원으로 영업팀의 업무 효율성을 극대화합니다.",
+      "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+      "solutionThesis": "플랫폼을 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다.",
+      "coreMechanism": "회의 및 이메일 내용을 분석하여 CRM에 자동으로 입력하고 후속 조치를 제안합니다.",
+      "customerInteraction": "고객과의 소통을 위한 이메일 및 회의 기록을 자동으로 정리하여 영업팀이 쉽게 접근할 수 있도록 합니다.",
+      "valueDelivery": "AI 도구를 통해 영업팀의 업무를 지원하고 고객 대응 시간을 증가시킵니다.",
+      "operatingApproach": "AI 알고리즘을 활용하여 회의 및 이메일 데이터를 분석하고 정리합니다.",
+      "partnerApproach": "CRM 시스템과의 통합을 통해 원활한 데이터 흐름을 유지합니다.",
+      "transactionApproach": "구독 모델을 통해 지속적인 서비스 제공 및 업데이트를 보장합니다.",
+      "commercialApproach": "중소기업을 대상으로 한 맞춤형 가격 정책을 수립합니다.",
+      "fulfillmentApproach": "클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다.",
+      "differentiatingMechanics": [
+        "AI 기반 자동화",
+        "CRM 통합",
+        "사용자 친화적인 인터페이스"
+      ],
+      "mainChanges": [
+        "영업팀의 업무 효율성 증가",
+        "고객 대응 시간 확보"
+      ],
+      "secondaryChanges": [
+        "회의 및 이메일 관리의 자동화",
+        "CRM 업데이트의 간소화"
+      ],
+      "legalRiskHints": [
+        "데이터 보호 및 개인정보 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "중소기업 영업팀의 업무 효율성을 높이고 고객 대응 시간을 확보하기 위해.",
+      "planId": "P6",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "useCaseThesis": "중소기업의 영업팀에서 회의 기록과 이메일을 효율적으로 관리하고 CRM에 입력하는 데 사용될 수 있습니다.",
+          "valuePropositionThesis": "AI 기반의 지원으로 영업팀의 업무 효율성을 극대화합니다.",
+          "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+          "solutionThesis": "플랫폼을 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "플랫폼을 통해 영업팀은 고객과의 소통에 더 많은 시간을 할애할 수 있습니다",
+        "familyId": "OTHER:AUTOMATED_DIGITAL",
+        "familyLabelKo": "기타 역할 · 디지털 자동화",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "AUTOMATED_DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+        "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.7881,
+      "selectionReason": "같은 Family를 허용하면서 의미 있는 target/use/value Variant를 추가",
+      "relationToPortfolio": "VARIANT"
+    },
+    "index": 3
+  },
+  "providerResponse": {
+    "conceptName": "AI 영업 지원 플랫폼",
+    "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+    "introduction": "중소기업 영업팀의 업무 효율성을 높이고 고객 대응 시간을 확보하기 위한 AI 기반 플랫폼입니다.",
+    "coreValue": "AI 기반의 지원으로 영업팀의 업무 효율성을 극대화합니다.",
+    "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+    "industryCategory": "소프트웨어/AI",
+    "researchScope": "중소기업 영업 관리 도구",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델을 통한 지속적인 서비스 제공",
+    "price": "월 10만원",
+    "channels": "온라인 마케팅, 파트너십을 통한 직접 판매",
+    "differentiators": "AI 기반 자동화, CRM 통합, 사용자 친화적인 인터페이스",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "중소기업 시장의 디지털 전환이 가속화되고 있어 AI 기반 솔루션에 대한 수요가 증가할 것으로 예상됨.",
+      "assumptions": [
+        "중소기업의 CRM 사용 비율 증가",
+        "AI 도구에 대한 인식 개선"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 50000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "중소기업 영업팀의 수와 평균 구독료를 기반으로 계산",
+      "assumptions": [
+        "중소기업의 영업팀 수 증가",
+        "AI 도구의 필요성 증가"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+    "solutionMechanism": "AI 알고리즘을 활용하여 회의 및 이메일 데이터를 분석하고 정리하여 CRM에 자동으로 입력합니다.",
+    "featureSet": [
+      "회의 및 이메일 자동 정리",
+      "CRM 통합 기능",
+      "후속 조치 제안 기능"
+    ],
+    "actorRoles": [
+      "영업팀",
+      "AI 시스템",
+      "CRM 시스템"
+    ],
+    "platformRole": "AI 기반 영업 지원 플랫폼 제공자",
+    "operatingModel": "클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다.",
+    "partnerModel": "CRM 시스템과의 통합을 통해 원활한 데이터 흐름을 유지합니다.",
+    "providerRole": "AI 솔루션 제공자",
+    "sellerRole": "영업팀",
+    "intermediaryRole": "파트너사",
+    "transactionFlow": [
+      "고객이 플랫폼에 가입",
+      "AI가 회의 및 이메일 데이터를 수집",
+      "CRM에 자동으로 입력",
+      "영업팀이 후속 조치를 수행"
+    ],
+    "paymentFlow": [
+      "고객이 구독료를 결제",
+      "결제 정보가 시스템에 기록",
+      "서비스 제공 후 정산"
+    ],
+    "personalDataUsage": [
+      "고객의 이메일 및 회의 내용을 분석하여 서비스 개선에 활용"
+    ],
+    "physicalActivities": [],
+    "partnerRequirements": [
+      "CRM 시스템과의 통합을 위한 기술적 지원"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "AI 기반으로 영업팀의 업무 효율성을 극대화합니다.",
+      "고객 대응 시간을 증가시킵니다."
+    ],
+    "constraintCompliance": [
+      "데이터 보호 및 개인정보 관련 법규 준수 필요"
+    ]
+  },
+  "durationMs": 7930,
+  "timestamp": "2026-08-10T03:37:47.025364+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:02603d292684838fb75d6aa639e3cc809223a5654ef275e69daf5d8ade14205c",
+  "canonicalRequestHash": "9372fd0bdb27dce10b86a7a7cc14269ccef067b8eea7736a070f38f88b8231be",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-F1",
+        "businessText": "서비스 플랫폼 운영 및 관리 식재료 및 레시피 제공 구독 서비스 판매 물류 및 배송 관리 고객의 요리 데이터를 분석하여 서비스 품질을 지속적으로 개선한다. 요리 전문가와 협력하여 간편 레시피를 개발한다. 고객이 요리 스타일 입력 시스템이 맞춤형 식재료 및 레시피 제공 고객이 구독 결제 고객이 구독 결제 결제 시스템이 수수료 수취 서비스 제공 후 정산 프리미엄 구독 모델 소셜 미디어, 블로그, 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "EXPERT_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A subscription-based service platform that provides ingredients and recipes, manages logistics and delivery, and analyzes cooking data to improve service quality."
+    }
+  ],
+  "durationMs": 2161,
+  "timestamp": "2026-08-10T03:32:14.885900+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

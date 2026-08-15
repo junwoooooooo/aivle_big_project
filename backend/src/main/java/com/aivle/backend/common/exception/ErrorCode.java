@@ -131,12 +131,9 @@ public enum ErrorCode {
     FINANCIAL_ALREADY_COMPLETED(HttpStatus.CONFLICT, "완료된 재무 분석은 수정할 수 없습니다. 복제해 새 분석을 만드세요.", false),
     IDEA_NOT_FOUND(HttpStatus.NOT_FOUND, "저장된 아이디어를 찾을 수 없습니다.", false),
     IDEA_NOT_CONFIRMED(HttpStatus.CONFLICT, "법률 검토 전에 아이디어를 확정해 주세요.", false),
-    // 장애가 아니라 답이다 — 컨셉의 차이가 「명백한 우열형」으로 세워지지 않는다는 뜻이고,
-    // 사용자가 차별점을 확정하면 풀린다. 그래서 화면이 문구를 갈아 끼울 수 있게 코드를 준다.
-    TWIN_STIMULUS_NO_SERVICEABLE_PAIR(HttpStatus.UNPROCESSABLE_ENTITY,
-        "지금 컨셉으로는 팔 수 있는 비교 쌍을 못 만들었습니다. 차별점을 하나 이상 확정해 주세요.", false),
     AI_CONFIGURATION_INVALID(HttpStatus.SERVICE_UNAVAILABLE, "AI Provider 설정 또는 API Key를 확인해 주세요.", false),
     AI_RESULT_INVALID(HttpStatus.BAD_GATEWAY, "AI 응답을 유효한 구조로 해석할 수 없습니다.", false),
+    TWIN_STIMULUS_NO_SERVICEABLE_PAIR(HttpStatus.UNPROCESSABLE_ENTITY, "측정 가능한 Twin 비교안을 만들지 못했습니다.", false),
     CONCEPT_NOT_SELECTABLE(HttpStatus.UNPROCESSABLE_ENTITY, "현재 공개된 컨셉 중 하나를 선택해 주세요.", false),
     CONCEPT_SELECTION_REQUIRED(HttpStatus.UNPROCESSABLE_ENTITY, "시장분석 전달 전에 컨셉 선택을 확정해 주세요.", false),
     HYPOTHESIS_NOT_FOUND(HttpStatus.NOT_FOUND, "결정할 가설을 찾을 수 없습니다.", false),

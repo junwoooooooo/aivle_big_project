@@ -2,17 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
-import { jobEventMessage, useJobEvents } from '../../../shared/async-events/index.js';
-import { formatLocalTime } from '../../../shared/async-events/formatLocalTime.js';
+import { useJobEvents } from '../../../shared/async-events/index.js';
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
+import { ProjectExecutionExperience, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_LABELS, HYPOTHESIS_TYPES, buildHypothesisChanges,
   canOpenComparison, candidateFieldOptions, candidateRequests, createCandidateDraft,
   comparisonRows, hypothesisDecisionLabel, hypothesisDisplay, hypothesisValueText, portfolioRunPresentation,
   selectedConceptId, serializeCandidateFacts, toggleComparedConcept,
 } from '../businessProposalModel.js';
+import { businessProposalExecutionPresentation } from '../businessProposalExecution.js';
 import { useConceptPortfolio } from '../hooks/useConceptPortfolio.js';
 import '../styles/business-proposal.css';
+import '../styles/business-proposal-v14.css';
 import '../styles/business-proposal-polish.css';
 
 export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
@@ -21,7 +23,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   const portfolio = useConceptPortfolio(projectId, outlet.liveRevision);
   const progressJobId = portfolio.run?.activeTaskRunId ?? portfolio.run?.initialTaskRunId ?? null;
   const progressEvents = useJobEvents(progressJobId);
-  const [clock, setClock] = useState(() => Date.now());
+  const [clock, setClock] = useState(0);
   const [mode, setMode] = useState(initialMode);
   const [compared, setCompared] = useState([]);
   const [drafts, setDrafts] = useState({});
@@ -33,6 +35,9 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   const actionableInputs = candidateRequests(portfolio.inputRequests);
   const unmatchedInputs = actionableInputs.filter((request) => !portfolio.concepts.some((concept) => concept.candidateId === request.candidateId));
   const hypothesisMap = useMemo(() => Object.fromEntries(portfolio.hypotheses.map((item) => [item.hypothesisType, item])), [portfolio.hypotheses]);
+  const readyToReview = portfolio.concepts.length > 0;
+  const preGeneration = !portfolio.run && !readyToReview;
+  const canCompare = portfolio.concepts.length >= 2;
 
   useEffect(() => {
     if (!progressJobId) return undefined;
@@ -40,16 +45,13 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
     return () => clearInterval(timer);
   }, [progressJobId]);
 
-  // ⚠ 이 effect 는 파생 상태를 effect 안에서 세팅한다 — Integration-Local 에서 그대로 물려받았다.
-  //    올바른 모양은 렌더 중 조정(ref 를 state 로 바꾸고 렌더에서 비교)인데, 그건 이 화면의
-  //    「선택 유지 중에 컨셉이 되살아났는가」 판정을 다시 짜는 일이라 병합 범위 밖으로 뺀다.
-  //    ⛔ 다른 곳에 이 패턴을 복사하지 말 것. 여기만 예외다.
   useEffect(() => {
     const selectionId = portfolio.selection?.selectionId ?? null;
     const currentIds = new Set(portfolio.concepts.map((concept) => concept.conceptId));
     if (!selectionId) {
       selectionBaseline.current = { selectionId: null, conceptIds: currentIds };
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 위 주석 참고
+      // 선택 기준이 바뀌는 순간에만 이전 복구 알림을 초기화한다.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecoveredNotice(false);
       return;
     }
@@ -59,6 +61,7 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
       return;
     }
     const recovered = [...currentIds].some((id) => !selectionBaseline.current.conceptIds.has(id));
+    // 새 후보 유입은 서버 선택 상태와 로컬 기준선의 차이로만 감지된다.
     if (recovered) setRecoveredNotice(true);
     selectionBaseline.current = { selectionId, conceptIds: currentIds };
   }, [portfolio.concepts, portfolio.selection?.selectionId]);
@@ -74,18 +77,20 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
   };
 
   if (portfolio.loading) return <main className="business-proposal" aria-busy="true"><p>검토된 사업안을 불러오고 있습니다.</p></main>;
-  return <main className="business-proposal">
-    <header className="business-proposal__hero">
-      <div><p>BUSINESS PROPOSAL</p><h1>검토된 사업안</h1><span>법률·규제 검토를 통과한 사업안은 1개부터 5개까지 모두 정상 결과입니다.</span></div>
-      <div className="business-proposal__mode"><button type="button" aria-pressed={mode === 'list'} onClick={() => setMode('list')}>사업안 목록</button><button type="button" aria-pressed={mode === 'compare'} onClick={() => setMode('compare')}>비교</button></div>
-    </header>
+  return <ProjectWorkspace as="main" mode="decide" className="business-proposal">
+    <ProjectStageHeader step={2} eyebrow={readyToReview ? '사업안 검토' : '사업안 생성'}
+      title={readyToReview ? '사업안 검토' : '사업안 생성 및 검토'}
+      description={readyToReview
+        ? '생성된 사업안의 방향과 법률·규제 검토 결과를 살펴보고 실행할 사업안을 선택하세요.'
+        : '확정한 아이디어를 바탕으로 서로 다른 방향의 사업안을 만들고, 법률·규제 검토를 거친 뒤 비교할 수 있는 결과를 준비합니다.'}
+      actions={readyToReview ? <div className="business-proposal__mode"><button type="button" aria-pressed={mode === 'list'} onClick={() => setMode('list')}>사업안 목록</button>{canCompare && <button type="button" aria-pressed={mode === 'compare'} onClick={() => setMode('compare')}>비교</button>}</div> : undefined} />
 
     {portfolio.error && <section className="business-proposal__error" role="alert"><span>{getUserErrorMessage(portfolio.error)}</span><button type="button" onClick={portfolio.refresh}>다시 시도</button></section>}
-    {!portfolio.run && <section className="business-proposal__empty"><h2>사업안 검토를 시작할 수 있습니다.</h2><p>확정된 아이디어를 바탕으로 최대 5개의 사업안을 검토합니다.</p><button type="button" disabled={portfolio.busy} onClick={portfolio.start}>사업안 검토 시작</button></section>}
-    {portfolio.run && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={() => outlet.openWorkCenterJob?.(progressJobId)} />}
+    {preGeneration && <PreGeneration onStart={portfolio.start} busy={portfolio.busy} />}
+    {portfolio.run && !readyToReview && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={() => outlet.openWorkCenterJob?.(progressJobId)} />}
     {recoveredNotice && <p className="business-proposal__notice" role="status">추가 사업안이 준비되었습니다. 현재 선택은 유지됩니다.</p>}
 
-    {mode === 'compare' && <Comparison concepts={comparedConcepts} onSelect={portfolio.select} busy={portfolio.busy} />}
+    {readyToReview && canCompare && mode === 'compare' && <Comparison concepts={comparedConcepts} onSelect={portfolio.select} busy={portfolio.busy} />}
     {portfolio.concepts.length > 0 && <section className="proposal-grid" aria-label="사업안 목록">
       {portfolio.concepts.map((concept) => <ProposalCard key={concept.conceptId} concept={concept}
         selected={concept.conceptId === selectedId} compared={compared.includes(concept.conceptId)}
@@ -112,30 +117,47 @@ export default function BusinessProposalWorkspace({ initialMode = 'list' }) {
       </div>
     </section>}
     {portfolio.report && <LegalReport report={portfolio.report} />}
-    {portfolio.selection?.status === 'READY_FOR_MARKET' && <section className="business-proposal__ready"><strong>다음 분석 준비 완료</strong><span>확정된 사업안과 검증 가정, 최종 법률 결과가 Market Seed에 고정되었습니다.</span><Link to={projectRoutes.market(projectId)}>시장 분석으로 이동</Link></section>}
-  </main>;
+    {portfolio.selection?.status === 'READY_FOR_MARKET' && <section className="business-proposal__ready"><strong>다음 분석 준비 완료</strong><span>확정된 사업안과 검증 가정, 최종 법률 결과를 시장 분석 입력으로 저장했습니다.</span><Link to={projectRoutes.market(projectId)}>시장 분석으로 이동</Link></section>}
+  </ProjectWorkspace>;
 }
 
-// `now` 는 부모가 넘기는 1초 시계다. 기본값 자리에서 Date.now() 를 부르면 렌더 중 불순 호출이라
-// 렌더마다 값이 달라진다. 안 넘기면 경과 시간을 0 으로 둔다.
+export function PreGeneration({ onStart, busy }) {
+  const phases = [
+    ['사업안 생성', '서로 다른 사업 방향으로 후보를 만듭니다.'],
+    ['법률·규제 검토', '각 사업안에서 확인해야 할 법률·규제 요소를 검토합니다.'],
+    ['비교 및 선택', '검토를 거친 사업안을 같은 기준으로 비교하고 선택합니다.'],
+  ];
+  return <section className="business-proposal__pre-generation">
+    <div className="business-proposal__process" aria-label="사업안 생성 및 검토 과정">{phases.map(([title, description], index) => <article key={title}><span>{index + 1}</span><div><h2>{title}</h2><p>{description}</p></div></article>)}</div>
+    <button type="button" disabled={busy} onClick={onStart}>사업안 생성 및 법률 검토 시작</button>
+  </section>;
+}
+
 export function PortfolioStatus({ run, busy, onRestart, onDetail, events = [], now = 0 }) {
   const view = portfolioRunPresentation(run);
   const running = run.productStatus === 'RUNNING';
-  const recent = events.slice(-5);
   const started = Date.parse(events[0]?.occurredAt ?? run.updatedAt ?? '');
   const elapsed = Number.isFinite(started) ? Math.max(0, Math.floor((now - started) / 1000)) : 0;
-  const latest = Date.parse(recent.at(-1)?.occurredAt ?? '');
+  const latest = Date.parse(events.at(-1)?.occurredAt ?? '');
   const summary = [...events].reverse().find((event) => event.stage === 'SUMMARY')?.messageParams ?? {};
   const reviewed = summary.reviewed ?? run.runSummary?.candidateGenerated;
   const failed = run.productStatus === 'FAILED';
   const needsInput = run.productStatus === 'NEEDS_INPUT';
-  const failureEvent = [...events].reverse().find((event) => event.status === 'FAILED');
   const outcome = needsInput && reviewed != null
     ? `${reviewed}개의 사업안 후보를 검토했습니다. 현재 바로 선택 가능한 사업안은 없으며, ${run.openInputCount ?? summary.needsInput ?? 0}개의 사업안은 실제 운영정보 확인 후 검토를 계속할 수 있습니다.`
     : failed && reviewed != null
       ? `${reviewed}개의 사업안 후보를 검토했지만 최종 결과를 확정하지 못했습니다.`
       : `${run.producedConceptCount ?? 0}개 사업안 · 추가 검토 ${run.openInputCount ?? 0}건`;
-  return <section className="portfolio-status"><div><strong>{view.title}{running ? '.'.repeat((Math.floor(now / 700) % 3) + 1) : ''}</strong>{view.detail && <span>{view.detail}</span>}{running && <small>경과 {String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}{Number.isFinite(latest) ? ` · 마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : ''}</small>}</div><span>{running ? '검토 결과를 준비하고 있습니다.' : outcome}</span>{failed && run.failureCode !== 'NO_ACCEPTED_CONCEPTS' && failureEvent && <span className="portfolio-status__failure-reason"><strong>원인</strong> {jobEventMessage(failureEvent)}</span>}<div className="portfolio-status__actions">{view.restart && <button type="button" disabled={busy} onClick={onRestart}>{view.action}</button>}{(failed || running) && onDetail && <button type="button" onClick={onDetail}>작업 상세 보기</button>}</div>{running && recent.length > 0 && <ol className="portfolio-status__events">{recent.map((event) => <li key={event.eventId ?? event.sequence}><time>{formatLocalTime(event.occurredAt)}</time><span>{jobEventMessage(event)}</span></li>)}</ol>}</section>;
+  const execution = businessProposalExecutionPresentation(run, events);
+  return <ProjectExecutionExperience title={running ? '사업안을 생성하고 검토하고 있습니다' : view.title}
+    {...execution} elapsedSeconds={running ? elapsed : undefined}
+    latestUpdate={running && Number.isFinite(latest) ? `마지막 업데이트 ${Math.max(0, Math.floor((now - latest) / 1000))}초 전` : undefined}
+    metric={running && reviewed != null ? `${reviewed}개의 사업안 후보를 검토했습니다.` : outcome}
+    failureMessage="사업안 생성을 완료하지 못했습니다."
+    needsInputMessage="사업안을 계속 검토하려면 추가 정보가 필요합니다."
+    onDetail={(failed || running || needsInput) ? onDetail : undefined}>
+    {view.restart && <button type="button" disabled={busy} onClick={onRestart}>{view.action}</button>}
+  </ProjectExecutionExperience>;
 }
 
 function ProposalCard({ concept, selected, compared, compareDisabled, requests, drafts, onDraft, onRespond, onRetry, onExplore, onCompare, onSelect, busy }) {
@@ -185,7 +207,7 @@ export function LegalReport({ report }) {
   const roleRows = [['플랫폼 역할', roles.platformRole], ['판매 주체', roles.sellerRole], ['서비스 제공 주체', roles.providerRole], ['중개 주체', roles.intermediaryRole]].filter(([, value]) => value);
   const advertising = body.advertisingExpressionCautions ?? {};
   const delta = asList(body.deltaLegalHistory);
-  return <section className="final-legal-report"><header><div><p>FINAL LEGAL REGULATORY REPORT</p><h2>최종 법률·규제 보고서</h2></div><span>검토 기준일 {report.basisDate}</span></header>
+  return <section className="final-legal-report"><header><div><p>최종 검토 결과</p><h2>최종 법률·규제 보고서</h2></div><span>검토 기준일 {report.basisDate}</span></header>
     <article className="legal-conclusion"><h3>결론</h3><strong>{conclusion.productionStatus ?? conclusion.route ?? '검토 완료'}</strong><p>{conclusion.safeSummary ?? '최종 법률·규제 검토 결과가 확정되었습니다.'}</p>{sourcePartial && <div role="alert">공식 근거를 확인했지만 일부 법률 소스의 조회 범위에는 제한이 있습니다.</div>}</article>
     <article><h3>사업 구조와 역할</h3>{roleRows.length === 0 ? <p>표시할 역할 정보가 없습니다.</p> : <dl>{roleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}</article>
     <BulletSection title="반드시 해야 할 조치" values={body.requiredControls} />
@@ -201,6 +223,6 @@ export function LegalReport({ report }) {
     <BulletSection title="아직 확인되지 않은 사항" values={body.unknownFacts} />
     <EvidenceSection values={body.officialEvidenceReferences} />
     <article><h3>변경사항 법률·규제 재검토 이력</h3>{delta.length === 0 ? <p>이번 확정 과정에서 법률·규제 재검토가 필요한 변경은 없었습니다.</p> : <ol>{delta.map((item, index) => <li key={item.reviewToken ?? index}>{item.legalReview?.safeSummary ?? item.safeSummary ?? item.status ?? `재검토 ${index + 1}`}</li>)}</ol>}</article>
-    {body.sourceHashes && <details className="legal-technical"><summary>정본 검증 정보</summary><dl>{Object.entries(body.sourceHashes).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>}
+    {body.sourceHashes && <details className="legal-technical"><summary>기술 정보</summary><dl>{Object.entries(body.sourceHashes).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></details>}
   </section>;
 }

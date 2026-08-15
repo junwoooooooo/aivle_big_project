@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:6b045d32f403b728ac674b4b6b297c367e5c101a046c626df69ab632aa4ac85b",
+  "canonicalRequestHash": "fea1f1598d55de131f0c6485d3428dcec697b958ef73af9d382cc328b5c4285c",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-FC1",
+        "businessText": "온라인 플랫폼을 통해 고객과의 계약 및 서비스 관리 서비스 제공자로서 고객의 장비 관리 및 유지보수 책임을 집니다. 고객과의 계약을 통해 서비스를 판매합니다. 부재 전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축합니다. 장비 제조사와 협력하여 최신 기술과 정보를 공유합니다. 고객과의 계약 체결 정기 점검 일정 조율 장비 점검 및 유지보수 수행 고객이 월정액 요금 지불 서비스 제공 후 정산 구독 기반 모델로, 월정액 요금제를 통해 수익을 창출합니다. 온라인 플랫폼 및 직접 영업을 통해 고객에게 접근합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C3-FC1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OMNICHANNEL",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "고객과의 계약 및 서비스 관리, 장비 관리 및 유지보수 책임을 지며, 구독 기반 모델로 수익을 창출하는 온라인 플랫폼."
+    }
+  ],
+  "durationMs": 9646,
+  "timestamp": "2026-08-10T08:46:56.440111+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

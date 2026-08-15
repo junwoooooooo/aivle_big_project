@@ -1,0 +1,479 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:7332b68b98b6eed3c18dbe6c2b27aff5d12864db5b8c2538a372ab28b43ed3f7",
+  "canonicalRequestHash": "ead71576ab82c011e520a61780a8352a0b472fce0397647ece0b88e632dc92e4",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "sellerRole",
+        "value": "온라인 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼 운영",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 파트너"
+        },
+        "actorRoles": [
+          "고객",
+          "물류 파트너",
+          "식재료 공급업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱을 통해 주문",
+          "주문 정보가 물류 시스템으로 전달",
+          "식재료가 준비되어 배송됨",
+          "고객이 배송된 식재료를 수령"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 정보가 처리됨",
+          "판매자가 수익을 수령"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+        "partnerModel": "지역 농가 및 식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "사용자가 원하는 요리와 필요한 재료를 입력하면 맞춤형 식재료를 제공한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C1",
+        "field": "intermediaryRole",
+        "value": "물류 파트너",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼 운영",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 파트너"
+        },
+        "actorRoles": [
+          "고객",
+          "물류 파트너",
+          "식재료 공급업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱을 통해 주문",
+          "주문 정보가 물류 시스템으로 전달",
+          "식재료가 준비되어 배송됨",
+          "고객이 배송된 식재료를 수령"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 정보가 처리됨",
+          "판매자가 수익을 수령"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+        "partnerModel": "지역 농가 및 식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "사용자가 원하는 요리와 필요한 재료를 입력하면 맞춤형 식재료를 제공한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "sellerRole",
+        "value": "온라인 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 업체"
+        },
+        "actorRoles": [
+          "고객",
+          "식재료 공급업체",
+          "물류 업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 구독 신청",
+          "식재료 공급업체에서 주문 수집",
+          "물류 업체에서 배송 준비",
+          "고객에게 식재료 배송"
+        ],
+        "paymentFlow": [
+          "고객이 구독료 결제",
+          "식재료 공급업체에 대금 지급",
+          "물류 업체에 배송비 지급"
+        ],
+        "operatingModel": "고객의 요리 선호에 따라 맞춤형 식재료를 정기적으로 배송하는 모델.",
+        "partnerModel": "식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "구독 모델을 통해 고객의 필요에 맞춘 식재료를 제공한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "intermediaryRole",
+        "value": "물류 업체",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 업체"
+        },
+        "actorRoles": [
+          "고객",
+          "식재료 공급업체",
+          "물류 업체"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 구독 신청",
+          "식재료 공급업체에서 주문 수집",
+          "물류 업체에서 배송 준비",
+          "고객에게 식재료 배송"
+        ],
+        "paymentFlow": [
+          "고객이 구독료 결제",
+          "식재료 공급업체에 대금 지급",
+          "물류 업체에 배송비 지급"
+        ],
+        "operatingModel": "고객의 요리 선호에 따라 맞춤형 식재료를 정기적으로 배송하는 모델.",
+        "partnerModel": "식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "구독 모델을 통해 고객의 필요에 맞춘 식재료를 제공한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "sellerRole",
+        "value": "온라인 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼 운영",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 파트너"
+        },
+        "actorRoles": [
+          "고객",
+          "레시피 제공업체",
+          "물류 파트너"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 레시피 선택",
+          "필요한 재료 확인 및 주문",
+          "주문 접수 및 처리",
+          "물류 파트너가 배송 준비",
+          "고객에게 배송"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 확인 후 주문 처리",
+          "물류 파트너에게 배송 비용 지급"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+        "partnerModel": "레시피 제공업체와 협력하여 다양한 레시피를 확보한다.",
+        "solutionMechanism": "고객이 선택한 레시피에 따라 필요한 재료를 자동으로 추천하고 소량으로 제공하여 낭비를 최소화한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "intermediaryRole",
+        "value": "물류 파트너",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼 운영",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 파트너"
+        },
+        "actorRoles": [
+          "고객",
+          "레시피 제공업체",
+          "물류 파트너"
+        ],
+        "transactionFlow": [
+          "고객이 앱에서 레시피 선택",
+          "필요한 재료 확인 및 주문",
+          "주문 접수 및 처리",
+          "물류 파트너가 배송 준비",
+          "고객에게 배송"
+        ],
+        "paymentFlow": [
+          "고객이 앱에서 결제",
+          "결제 확인 후 주문 처리",
+          "물류 파트너에게 배송 비용 지급"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+        "partnerModel": "레시피 제공업체와 협력하여 다양한 레시피를 확보한다.",
+        "solutionMechanism": "고객이 선택한 레시피에 따라 필요한 재료를 자동으로 추천하고 소량으로 제공하여 낭비를 최소화한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "sellerRole",
+        "value": "온라인 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 서비스 제공업체"
+        },
+        "actorRoles": [
+          "소비자",
+          "식재료 공급업체",
+          "물류 서비스 제공업체"
+        ],
+        "transactionFlow": [
+          "소비자가 앱에서 요리 패키지를 선택하고 주문한다.",
+          "주문이 접수되면 식재료 공급업체에서 패키지를 준비한다.",
+          "물류 서비스 제공업체가 패키지를 배송한다."
+        ],
+        "paymentFlow": [
+          "소비자가 앱에서 결제한다.",
+          "결제 후 주문이 확정된다.",
+          "물류 서비스 제공업체가 배송 후 정산을 진행한다."
+        ],
+        "operatingModel": "주문 후 1~2일 이내에 배송하여 신선도를 유지한다.",
+        "partnerModel": "식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "소량의 재료로 구성된 패키지를 제공하여 요리 시간을 단축한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "intermediaryRole",
+        "value": "물류 서비스 제공업체",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "물류 서비스 제공업체"
+        },
+        "actorRoles": [
+          "소비자",
+          "식재료 공급업체",
+          "물류 서비스 제공업체"
+        ],
+        "transactionFlow": [
+          "소비자가 앱에서 요리 패키지를 선택하고 주문한다.",
+          "주문이 접수되면 식재료 공급업체에서 패키지를 준비한다.",
+          "물류 서비스 제공업체가 패키지를 배송한다."
+        ],
+        "paymentFlow": [
+          "소비자가 앱에서 결제한다.",
+          "결제 후 주문이 확정된다.",
+          "물류 서비스 제공업체가 배송 후 정산을 진행한다."
+        ],
+        "operatingModel": "주문 후 1~2일 이내에 배송하여 신선도를 유지한다.",
+        "partnerModel": "식재료 공급업체와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "소량의 재료로 구성된 패키지를 제공하여 요리 시간을 단축한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C5",
+        "field": "intermediaryRole",
+        "value": "물류 및 배송을 담당하는 업체",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼 운영",
+          "providerRole": "식재료 공급자",
+          "sellerRole": "소비자에게 식재료를 판매하는 주체",
+          "intermediaryRole": "물류 및 배송을 담당하는 업체"
+        },
+        "actorRoles": [
+          "소비자",
+          "농가",
+          "물류업체"
+        ],
+        "transactionFlow": [
+          "소비자가 앱에서 주문",
+          "주문 정보가 농가에 전달",
+          "농가가 식재료를 준비",
+          "물류업체가 식재료를 수집 및 배송"
+        ],
+        "paymentFlow": [
+          "소비자가 앱에서 결제",
+          "결제 정보가 처리됨",
+          "농가 및 물류업체에 정산"
+        ],
+        "operatingModel": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 배송한다.",
+        "partnerModel": "지역 농가와 협력하여 신선한 재료를 확보한다.",
+        "solutionMechanism": "신선한 식재료를 정기적으로 제공하여 낭비를 최소화한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '온라인 플랫폼 운영자'로 sellerRole과 일치한다."
+    },
+    {
+      "candidateId": "C1",
+      "field": "intermediaryRole",
+      "decision": "EXPLICIT_ABSENCE",
+      "safeReason": "value는 '물류 파트너'로 intermediaryRole과 일치하지 않는다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '온라인 플랫폼 운영자'로 sellerRole과 일치한다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "intermediaryRole",
+      "decision": "MISMATCH",
+      "safeReason": "value는 '물류 업체'로 intermediaryRole과 다르다."
+    },
+    {
+      "candidateId": "C3",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '온라인 플랫폼 운영자'로 sellerRole과 일치한다."
+    },
+    {
+      "candidateId": "C3",
+      "field": "intermediaryRole",
+      "decision": "MISMATCH",
+      "safeReason": "value는 '물류 파트너'로 intermediaryRole과 다르다."
+    },
+    {
+      "candidateId": "C4",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '온라인 플랫폼 운영자'로 sellerRole과 일치한다."
+    },
+    {
+      "candidateId": "C4",
+      "field": "intermediaryRole",
+      "decision": "MISMATCH",
+      "safeReason": "value는 '물류 서비스 제공업체'로 intermediaryRole과 다르다."
+    },
+    {
+      "candidateId": "C5",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '물류 및 배송을 담당하는 업체'로 intermediaryRole과 일치한다."
+    }
+  ],
+  "durationMs": 4613,
+  "timestamp": "2026-08-10T06:37:23.483403+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

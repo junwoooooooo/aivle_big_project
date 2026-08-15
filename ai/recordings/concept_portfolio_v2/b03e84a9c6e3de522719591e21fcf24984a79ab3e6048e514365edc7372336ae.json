@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:532871bbc5926b09e6a6caa1dbe2cb1b6464efeaee67c558577bf51290ddc9b8",
+  "canonicalRequestHash": "b03e84a9c6e3de522719591e21fcf24984a79ab3e6048e514365edc7372336ae",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+      "problemFocus": "면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어려운 문제",
+      "useContext": "AI 서비스를 통해 모의면접 답변을 분석하고 피드백을 제공받는 상황",
+      "valueProposition": "AI의 분석을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 지원합니다.",
+      "offerThesis": "AI 분석을 통해 면접 준비생의 답변을 개선하고, 성공적인 면접을 위한 전략을 제공합니다.",
+      "solutionThesis": "AI가 제공하는 피드백으로 면접 준비생의 경쟁력을 높입니다.",
+      "differentiatingMechanics": [
+        "AI 기반의 데이터 분석",
+        "개인 맞춤형 피드백 제공"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "problemScenario": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "coreValue": "AI의 분석을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 지원합니다.",
+      "conceptDefinition": "AI를 활용하여 취업 준비생의 면접 답변을 분석하고 개선 피드백을 제공하는 서비스입니다.",
+      "solutionMechanism": "AI 알고리즘을 통해 면접 답변을 분석하고, 개선점을 도출하여 피드백을 제공합니다.",
+      "featureSet": [
+        "AI 분석 기능",
+        "모의면접 질문 데이터베이스",
+        "개인 맞춤형 피드백 시스템"
+      ],
+      "operatingModel": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "useCaseThesis": "AI 서비스를 통해 모의면접 답변을 분석하고 피드백을 제공받는 상황",
+        "valuePropositionThesis": "AI의 분석을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 지원합니다.",
+        "offerThesis": "AI 분석을 통해 면접 준비생의 답변을 개선하고, 성공적인 면접을 위한 전략을 제공합니다.",
+        "solutionThesis": "AI가 제공하는 피드백으로 면접 준비생의 경쟁력을 높입니다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai가 제공하는 피드백으로 면접 준비생의 경쟁력을 높입니다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "AI 기반의 데이터 분석",
+      "개인 맞춤형 피드백 제공"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "AI를 활용하여 취업 준비생의 면접 답변을 분석하고 개선 피드백을 제공하는 서비스로, 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 지원하는 가치 제안을 가지고 있습니다."
+  },
+  "durationMs": 2609,
+  "timestamp": "2026-08-10T03:54:07.193894+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

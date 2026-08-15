@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:392b91a9cc9ad33b4df8c6d5f57cae117270ede95cbb231d9a3b4835c3e1fdf7",
+  "canonicalRequestHash": "4868775ec926083f2a41a3f21eec6ea47f4006c8e2ee45f19c8a025d07edfa46",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1-F1",
+        "businessText": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영 서비스 제공자 장비 판매 및 대여 담당 고객과의 소통 및 지원 역할 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보합니다. 고객 주문 접수 장비 준비 및 배송 설치 및 사용 안내 고장 발생 시 교체 요청 장비 회수 고객 월간 요금 결제 장비 대여료 수취 정산 및 회계 처리 구독 기반의 월간 요금제 온라인 플랫폼 및 고객 상담 센터",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "ASSISTED",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "ASSISTED",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영 서비스 제공자로, 고객과의 소통 및 지원을 통해 맞춤형 서비스를 제공하며, 장비 제조사와 협력하여 최신 장비를 확보하고 있습니다. 구독 기반의 월간 요금제를 통해 수익을 창출하고 있습니다."
+    }
+  ],
+  "durationMs": 6587,
+  "timestamp": "2026-08-10T05:09:43.299049+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

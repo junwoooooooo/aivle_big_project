@@ -1,0 +1,70 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:63b6c1108c1ce9091d6e20e451cbe21b5e9fbb6297328b545db3eef17fb5ccc3",
+  "canonicalRequestHash": "3483bce0dbe4d03012829811cfd70836c79195922855ae9b67eef5beedc3fac2",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C2-F1",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영자",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "상품 판매자",
+          "intermediaryRole": "거래 중개자"
+        },
+        "actorRoles": [
+          "사용자",
+          "판매자",
+          "구매자"
+        ],
+        "transactionFlow": [
+          "사용자가 상품 등록",
+          "구매자가 상품 검색 및 선택",
+          "판매자와 구매자 간의 채팅 및 거래 협의",
+          "직거래 진행"
+        ],
+        "paymentFlow": [
+          "구매자가 판매자에게 직접 결제",
+          "거래 완료 후 사용자에게 거래 내역 전송"
+        ],
+        "operatingModel": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+        "partnerModel": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+        "solutionMechanism": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C2-F1",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "The value '플랫폼 운영자' directly corresponds to the providerRole, indicating that the role of the business is to operate the platform."
+    }
+  ],
+  "durationMs": 1673,
+  "timestamp": "2026-08-10T05:01:04.124836+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

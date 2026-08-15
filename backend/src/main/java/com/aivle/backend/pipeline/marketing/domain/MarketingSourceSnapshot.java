@@ -37,41 +37,22 @@ public class MarketingSourceSnapshot extends BaseEntity {
         }
         MarketingSourceSnapshot value = new MarketingSourceSnapshot();
         value.id = id; value.projectId = projectId; value.sourceMarketSeedSnapshotId = marketSeedId;
-        value.selectionId = selectionId; value.conceptId = conceptId; value.schemaVersion = schemaVersion; value.sourceType = "LEGACY";
+        value.selectionId = selectionId; value.conceptId = conceptId; value.sourceType = "LEGACY";
+        value.schemaVersion = schemaVersion;
         value.snapshotHash = hash; value.snapshotJson = json; value.createdByUserId = userId;
         value.finalizedAt = finalizedAt;
         return value;
     }
 
-    public static MarketingSourceSnapshot createPortfolio(
-        String id,
-        Long projectId,
-        String marketSeedId,
-        Long portfolioSelectionId,
-        String portfolioConceptId,
-        String schemaVersion,
-        String hash,
-        String json,
-        Long userId,
-        Instant finalizedAt
-    ) {
-        if (blank(id)
-                || projectId == null
-                || blank(marketSeedId)
-                || portfolioSelectionId == null
-                || blank(portfolioConceptId)
-                || blank(schemaVersion)
-                || !hash(hash)
-                || blank(json)
-                || userId == null
-                || finalizedAt == null) {
-            throw new IllegalArgumentException(
-                "V2 Marketing Source Snapshot 필드가 올바르지 않습니다."
-            );
+    public static MarketingSourceSnapshot createPortfolio(String id, Long projectId, String marketSeedId,
+            Long portfolioSelectionId, String portfolioConceptId, String schemaVersion, String hash,
+            String json, Long userId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || blank(marketSeedId) || portfolioSelectionId == null
+                || blank(portfolioConceptId) || blank(schemaVersion) || !hash(hash) || blank(json)
+                || userId == null || finalizedAt == null) {
+            throw new IllegalArgumentException("V2 Marketing Source Snapshot 필드가 올바르지 않습니다.");
         }
-
         MarketingSourceSnapshot value = new MarketingSourceSnapshot();
-
         value.id = id;
         value.projectId = projectId;
         value.sourceMarketSeedSnapshotId = marketSeedId;
@@ -83,10 +64,8 @@ public class MarketingSourceSnapshot extends BaseEntity {
         value.snapshotJson = json;
         value.createdByUserId = userId;
         value.finalizedAt = finalizedAt;
-
         return value;
     }
-
     private static boolean blank(String value) { return value == null || value.isBlank(); }
     private static boolean hash(String value) { return value != null && value.matches("sha256:[0-9a-f]{64}"); }
 }

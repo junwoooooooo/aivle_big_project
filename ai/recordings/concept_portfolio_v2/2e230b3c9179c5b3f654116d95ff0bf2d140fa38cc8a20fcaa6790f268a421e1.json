@@ -1,0 +1,60 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:55502e0d6e6d0aaa79958f8844a55e9b7c3fdbd873bccf4a4091d248a8b41af5",
+  "canonicalRequestHash": "2e230b3c9179c5b3f654116d95ff0bf2d140fa38cc8a20fcaa6790f268a421e1",
+  "redactedRequest": {
+    "kind": "OPPORTUNITY_SCOPE",
+    "left": {
+      "problemCore": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "targetCore": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+      "useContexts": [
+        "사용자의 이동 가능 시간과 관심사를 고려하여 여행 일정을 자동으로 구성하는 서비스."
+      ],
+      "intentComponents": [
+        "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동으로 구성하는 서비스."
+      ],
+      "mustPreserve": [
+        "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+        "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동으로 구성하는 서비스."
+      ],
+      "maySpecialize": [
+        "핵심 대상의 의미 있는 하위 세그먼트",
+        "핵심 사용 맥락의 구체화",
+        "가치 제안 또는 offer의 구체화"
+      ],
+      "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+    },
+    "right": {
+      "targetSegmentThesis": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+      "useCaseThesis": "사용자의 취향과 이동 가능 시간을 고려하여 맞춤형 여행 일정을 추천하는 서비스.",
+      "valuePropositionThesis": "사용자는 자신의 취향에 맞는 여행 일정을 쉽게 찾을 수 있다.",
+      "offerThesis": "사용자의 취향을 분석하여 최적의 여행 일정을 추천한다.",
+      "solutionThesis": "추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다."
+    }
+  },
+  "providerResponse": {
+    "decision": "DISTINCT",
+    "overlappingMechanics": [
+      "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+      "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동으로 구성하는 서비스."
+    ],
+    "materiallyDifferentMechanics": [
+      "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다.",
+      "사용자의 취향을 분석하여 최적의 여행 일정을 추천한다.",
+      "추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다.",
+      "사용자의 취향과 이동 가능 시간을 고려하여 맞춤형 여행 일정을 추천하는 서비스.",
+      "사용자는 자신의 취향에 맞는 여행 일정을 쉽게 찾을 수 있다."
+    ],
+    "safeSummary": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들을 위한 서비스로, 사용자의 이동 가능 시간과 관심사를 고려하여 여행 일정을 자동으로 구성하고, 사용자의 취향을 분석하여 최적의 여행 일정을 추천하는 기능이 포함되어 있다."
+  },
+  "durationMs": 4919,
+  "timestamp": "2026-08-10T06:48:58.879165+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

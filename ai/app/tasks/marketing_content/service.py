@@ -8,9 +8,7 @@ from app.tasks.marketing_content.models import (
     MarketingContentResult,
     lint_provider_schema,
 )
-from app.tasks.marketing_content.marketing_image import (
-    generate_and_store_marketing_image,
-)
+from app.tasks.marketing_content.marketing_image import generate_and_store_marketing_image
 from app.tasks.marketing_content.prompts import SYSTEM_PROMPT
 
 
@@ -35,14 +33,30 @@ async def execute_marketing_content(task_input: dict) -> dict:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
     if result.contentType != value.request.contentType:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
-    rendered = "\n".join(filter(None, [result.title, result.body, result.callToAction,
-                                       result.imageBrief, *result.hashtags])).casefold()
     if result.artifactRefs:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
-    if any(claim.casefold() in rendered for claim in value.source.prohibitedClaims):
+    _validate_copy_before_image(value, result)
+    result.artifactRefs = [await generate_and_store_marketing_image(value, result)]
+    try:
+        return MarketingContentResult.model_validate(result.model_dump(mode="json")).model_dump(mode="json")
+    except ValidationError as failure:
+        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+
+
+def _validate_copy_before_image(value: MarketingContentInput, result: MarketingContentResult) -> None:
+    rendered = "\n".join(filter(None, [result.title, result.body, result.callToAction,
+                                       result.imageBrief, *result.hashtags])).casefold()
+    if not result.legalReview.compliant:
         raise ProviderFailure("EXECUTION_FAILED", "SAFETY_POLICY_BLOCKED", 422, False)
-    artifact_ref = (
-        await generate_and_store_marketing_image(value, result)
-    )
-    result.artifactRefs = [artifact_ref]
-    return result.model_dump(mode="json")
+    prohibited = [claim.casefold().strip() for claim in value.source.prohibitedClaims]
+    excluded = [claim.casefold().strip() for claim in value.request.excludedPhrases]
+    if any(claim and claim in rendered for claim in [*prohibited, *excluded]):
+        raise ProviderFailure("EXECUTION_FAILED", "SAFETY_POLICY_BLOCKED", 422, False)
+    applied = {claim.casefold().strip() for claim in result.legalReview.requiredDisclosuresApplied}
+    for disclosure in value.source.requiredDisclosures:
+        required = disclosure.casefold().strip()
+        if required and required not in applied and required not in rendered:
+            raise ProviderFailure("EXECUTION_FAILED", "SAFETY_POLICY_BLOCKED", 422, False)
+    for phrase in value.request.requiredPhrases:
+        if phrase.casefold().strip() not in rendered:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)

@@ -7,12 +7,12 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.file.object.ObjectKeyGenerator;
 import com.aivle.backend.file.object.ObjectStoragePort;
 import com.aivle.backend.file.validation.ValidatedUpload;
-import com.aivle.backend.pipeline.artifact.api.ProjectEvidenceArtifactApiModels.ArtifactView;
 import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
 import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,39 +60,74 @@ public class ProjectEvidenceArtifactService {
         }
     }
 
+    @Transactional
+    public ArtifactView storeGenerated(Long ownerId, Long projectId, String filename,
+            String mediaType, byte[] content) {
+        requireOwned(ownerId, projectId);
+        String key = null;
+        try {
+            ValidatedUpload validated = policy.validate(filename, mediaType,
+                new ByteArrayInputStream(content == null ? new byte[0] : content));
+            String artifactId = UUID.randomUUID().toString();
+            key = keys.projectEvidence(projectId, artifactId, validated.extension());
+            ObjectStoragePort.StoredObject stored = storage.store(validated.openStream(), validated.sizeBytes(),
+                validated.contentType(), key);
+            if (stored.sizeBytes() != validated.sizeBytes()
+                    || !stored.checksumSha256().equals(validated.checksumSha256())) {
+                throw new IOException("stored generated artifact integrity mismatch");
+            }
+            registerRollbackCleanup(key);
+            ProjectEvidenceArtifact artifact = artifacts.saveAndFlush(ProjectEvidenceArtifact.create(
+                artifactId, projectId, storage.storageType(), key, validated.originalFilename(),
+                key.substring(key.lastIndexOf('/') + 1), validated.contentType(), stored.sizeBytes(),
+                "sha256:" + stored.checksumSha256(), ownerId));
+            return view(artifact);
+        } catch (BusinessException exception) {
+            cleanupQuietly(key);
+            throw exception;
+        } catch (IOException | RuntimeException exception) {
+            cleanupQuietly(key);
+            throw new BusinessException(ErrorCode.FILE_STORAGE_FAILED);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ResolvedArtifact resolveOwned(Long ownerId, Long projectId, String artifactId, long maxBytes) {
+        requireOwned(ownerId, projectId);
+        ProjectEvidenceArtifact artifact = requireArtifact(projectId, artifactId);
+        if (artifact.getSizeBytes() > maxBytes || !artifact.getMediaType().startsWith("image/")) {
+            throw new BusinessException(ErrorCode.MARKETING_ASSET_INVALID);
+        }
+        try (InputStream input = storage.open(artifact.getStorageKey())) {
+            byte[] content = input.readNBytes(Math.toIntExact(maxBytes + 1));
+            if (content.length != artifact.getSizeBytes() || content.length > maxBytes) {
+                throw new BusinessException(ErrorCode.MARKETING_ASSET_INVALID);
+            }
+            return new ResolvedArtifact(view(artifact), content);
+        } catch (BusinessException exception) { throw exception; }
+        catch (IOException | RuntimeException exception) { throw new BusinessException(ErrorCode.FILE_STORAGE_FAILED); }
+    }
+
     @Transactional(readOnly = true)
     public Download download(Long ownerId, Long projectId, String artifactId) {
         requireOwned(ownerId, projectId);
-        return open(projectId, artifactId);
+        ProjectEvidenceArtifact artifact = requireArtifact(projectId, artifactId);
+        return open(artifact);
     }
 
     @Transactional(readOnly = true)
     public Download downloadForAi(Long projectId, String artifactId) {
-        return open(projectId, artifactId);
+        return open(requireArtifact(projectId, artifactId));
     }
 
-    private Download open(Long projectId, String artifactId) {
-        ProjectEvidenceArtifact artifact =
-            requireArtifact(projectId, artifactId);
-
+    private Download open(ProjectEvidenceArtifact artifact) {
         try {
             if (!storage.exists(artifact.getStorageKey())) {
-                throw new BusinessException(
-                    ErrorCode.EVIDENCE_ARTIFACT_NOT_FOUND
-                );
+                throw new BusinessException(ErrorCode.EVIDENCE_ARTIFACT_NOT_FOUND);
             }
-
-            return new Download(
-                view(artifact),
-                storage.open(artifact.getStorageKey())
-            );
-        } catch (BusinessException exception) {
-            throw exception;
-        } catch (IOException | RuntimeException exception) {
-            throw new BusinessException(
-                ErrorCode.FILE_STORAGE_FAILED
-            );
-        }
+            return new Download(view(artifact), storage.open(artifact.getStorageKey()));
+        } catch (BusinessException exception) { throw exception; }
+        catch (IOException | RuntimeException exception) { throw new BusinessException(ErrorCode.FILE_STORAGE_FAILED); }
     }
 
     @Transactional
@@ -137,4 +172,5 @@ public class ProjectEvidenceArtifactService {
     }
 
     public record Download(ArtifactView artifact, InputStream content) {}
+    public record ResolvedArtifact(ArtifactView artifact, byte[] content) {}
 }

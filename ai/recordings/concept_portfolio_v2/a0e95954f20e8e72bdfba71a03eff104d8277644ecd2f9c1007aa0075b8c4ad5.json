@@ -1,0 +1,210 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e797fb96679832a9fe00b16aa48a71055f144ea3068eb3d73f9d6bf8bac7b745",
+  "canonicalRequestHash": "a0e95954f20e8e72bdfba71a03eff104d8277644ecd2f9c1007aa0075b8c4ad5",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영 서비스 제공자 장비 판매 및 대여 담당 고객과의 소통 및 지원 역할 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보합니다. 고객 주문 접수 장비 준비 및 배송 설치 및 사용 안내 고장 발생 시 교체 요청 장비 회수 고객 월간 요금 결제 장비 대여료 수취 정산 및 회계 처리 구독 기반의 월간 요금제 온라인 플랫폼 및 고객 상담 센터",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "ASSISTED",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "장비 통합 관리 플랫폼 제공 장비 대여 및 관리 서비스 제공 장비 판매 및 서비스 계약 체결 고객과 공급자 간의 계약 중개 통합 관리 시스템을 통한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, 통합 관리 시스템 개발 업체와 협력합니다. 고객이 온라인 플랫폼을 통해 장비를 선택하고 주문 장비 제조사로부터 장비를 수령 고객에게 장비를 배송 및 설치 고객의 요청에 따라 장비 유지보수 및 교체 고객이 월간 요금을 온라인으로 결제 결제 확인 후 장비 배송 및 설치 진행 정기적으로 요금 청구 및 결제 수취 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼을 통한 장비 대여 및 교육 신청 장비 대여 및 교육 서비스 제공자 장비 및 교육 서비스 판매자 없음 장비 대여와 교육을 통합한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, 교육 전문 업체와 협력합니다. 고객이 온라인 플랫폼에서 장비 대여 및 교육 신청 서비스 제공자가 장비를 배송 및 교육 실시 고객이 월간 요금제에 따라 결제 고객이 월간 요금제에 따라 결제 서비스 제공자가 수익을 정산 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 서비스 제공 및 장비 관리 장비 대여 및 판매 고객과의 계약 및 서비스 조정 AI 기술을 활용한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, AI 기술 개발 업체와 협력합니다. 고객이 온라인 플랫폼을 통해 서비스 신청 서비스 제공자가 장비를 배송 및 설치 고객이 장비를 사용 AI 시스템이 장비 상태를 모니터링 고장 발생 시 자동으로 유지보수 일정 조정 고객이 월간 요금제에 따라 결제 서비스 제공자가 결제 확인 후 장비 배송 및 설치 진행 정기적인 유지보수 서비스 제공 후 추가 비용 청구 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 및 관리 장비 대여 및 유지보수 서비스 제공 고객에게 서비스 판매 및 계약 체결 물류 서비스 제공업체와 협력하여 배송 및 설치 지원 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보합니다. 고객 주문 접수 장비 준비 및 배송 설치 및 사용 안내 정기 점검 및 유지보수 고장 발생 시 즉시 교체 고객 월간 요금 결제 장비 대여 계약 체결 정기 점검 서비스 요금 청구 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "ASSISTED",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 주문 및 관리 시스템 운영 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "장비 통합 관리 플랫폼 제공 및 고객과 공급자 간의 계약 중개."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 장비 대여 및 교육 신청 서비스 제공."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 서비스 제공 및 AI 기술 활용."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "LOW",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 서비스 제공 및 관리."
+    }
+  ],
+  "durationMs": 5246,
+  "timestamp": "2026-08-10T05:09:17.943496+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

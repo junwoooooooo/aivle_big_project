@@ -1,4 +1,5 @@
 import { gateSurvey } from './taskTypeGate.js';
+import { ProjectFormRow } from '../../shared/ui/index.js';
 
 const TYPE_VIEW = {
   DOMINANCE: { label: '명백한 우열형', tone: 'success' },
@@ -45,16 +46,16 @@ export default function StimulusEditor({
 
   return (
     <div className="twin-editor">
-      <label className="twin-editor__situation">
-        <span>상황 문장</span>
-        <input
+      <div className="project-form-layout"><ProjectFormRow label="상황 문장" id="twin-situation">
+        {(fieldProps) => <input
           type="text"
           value={situation}
           disabled={disabled}
           onChange={(event) => onSituationChange?.(event.target.value)}
           placeholder="가게에서 하나를 고릅니다. 아래 두 상품이 있습니다."
-        />
-      </label>
+          {...fieldProps}
+        />}
+      </ProjectFormRow></div>
 
       <ul className="twin-editor__list">
         {pairs.map((pair, index) => {

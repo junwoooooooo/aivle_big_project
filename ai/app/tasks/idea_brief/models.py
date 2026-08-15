@@ -35,11 +35,23 @@ class IdeaBriefFieldMetadata(StrictModel):
     regulatorySensitive: bool
 
 
+class IdeaBriefAttachmentDocument(StrictModel):
+    attachmentFileId: int
+    filename: str = Field(min_length=1, max_length=255)
+    mediaType: Literal[
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain",
+        "text/markdown",
+    ]
+    content: str = Field(max_length=20_000)
+
+
 class IdeaBriefDerivationInput(StrictModel):
     mode: DerivationMode
     ideaOverview: str = Field(min_length=1, max_length=20_000)
     fields: list[IdeaBriefFieldInput] = Field(max_length=20)
     attachmentFileIds: list[int] = Field(max_length=20)
+    attachmentDocuments: list[IdeaBriefAttachmentDocument] = Field(default_factory=list, max_length=20)
     fieldMetadata: list[IdeaBriefFieldMetadata] = Field(min_length=1, max_length=20)
 
 

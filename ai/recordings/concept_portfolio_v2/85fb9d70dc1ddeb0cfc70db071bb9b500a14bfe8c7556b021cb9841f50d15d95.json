@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e91fea8d117aae3f617ae9ccfe6dd56352671f0499b71bcfafee664ec335598b",
+  "canonicalRequestHash": "85fb9d70dc1ddeb0cfc70db071bb9b500a14bfe8c7556b021cb9841f50d15d95",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "지역 펫시터와의 파트너십을 통해 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 앱 내 결제 시스템을 통해 안전한 거래 보장 서비스 이용 수수료를 통한 수익 모델 예약 후 펫시터가 직접 고객의 집으로 방문하여 서비스 제공 앱을 통해 펫시터와 직접 소통하고 예약 진행",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "OTHER",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "OTHER",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "A pet sitting service utilizing a partner network model with an app for customer interaction and commission-based monetization."
+    }
+  ],
+  "durationMs": 6283,
+  "timestamp": "2026-08-10T03:44:54.708239+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

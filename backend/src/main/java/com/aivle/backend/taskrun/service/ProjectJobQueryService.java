@@ -8,6 +8,7 @@ import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptInputRequestSta
 import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptInputRequestRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.api.ProjectJobView;
+import com.aivle.backend.taskrun.api.ProjectJobHistoryResponse;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -57,6 +58,16 @@ public class ProjectJobQueryService {
             .toList();
     }
 
+    public ProjectJobHistoryResponse history(Long ownerId, Long projectId, int page, int size) {
+        requireOwned(ownerId, projectId);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        var result = taskRuns.findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            projectId, PageRequest.of(safePage, safeSize));
+        return new ProjectJobHistoryResponse(result.getContent().stream().map(this::view).toList(),
+            result.getNumber(), result.getSize(), result.hasNext(), result.getTotalElements());
+    }
+
     private List<ProjectJobView> find(Long projectId, List<TaskRunState> states) {
         return taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
             projectId, states, PageRequest.of(0, MAX_RESULTS)).stream().map(this::view).toList();
@@ -69,7 +80,7 @@ public class ProjectJobQueryService {
     }
 
     private ProjectJobView view(TaskRun run) {
-        JobModule module = module(run.getTaskType());
+        JobModule module = module(run);
         String rawStatus = run.getState().name();
         boolean actionable = actionable(run);
         String presentationStatus = presentationStatus(run.getState(), actionable);
@@ -128,27 +139,27 @@ public class ProjectJobQueryService {
         return rawStatus.name();
     }
 
-    private JobModule module(TaskType type) {
-        return switch (type) {
+    private JobModule module(TaskRun run) {
+        return switch (run.getTaskType()) {
             case IDEA_ATTACHMENT_PARSE, IDEA_BRIEF_DERIVATION -> JobModule.IDEA;
             case CONCEPT_PORTFOLIO_V2_RUN, CONCEPT_PORTFOLIO_V2_CONTINUE,
                 CONCEPT_PORTFOLIO_V2_SELECTION_ACTION -> JobModule.CONCEPT_PORTFOLIO;
             case CONCEPT_FACTORY_RUN, CONCEPT_CANDIDATE, CONCEPT_DISTINCTNESS_JUDGE,
                 CONCEPT_LEGAL_REVIEW, CONCEPT_REDESIGN -> JobModule.CONCEPT_FACTORY;
             case CONCEPT_HYPOTHESIS_ALTERNATIVE, CONCEPT_DELTA_LEGAL_REVIEW -> JobModule.CONCEPT_SELECTION;
-            case TECH_OPS_PROPOSAL -> JobModule.TECH_OPS;
-            case FINANCE_ESTIMATE -> JobModule.FINANCE;
-            case MARKETING_CONTENT_GENERATION -> JobModule.MARKETING;
-            case MARKET_RESEARCH -> JobModule.MARKET;
-            case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.PANEL_SURVEY;
+            case TECH_OPS_PROPOSAL, TECH_OPS_ADVISORY -> JobModule.TECH_OPS;
+            case FINANCE_ESTIMATE, FINANCE_ANALYSIS_REPORT -> JobModule.FINANCE;
+            case MARKETING_CONTENT_GENERATION, MARKETING_VISUAL_GENERATION -> JobModule.MARKETING;
+            case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
+                ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
+            case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.TWIN;
         };
     }
 
     private enum JobModule {
-        IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"),
-        CONCEPT_SELECTION("/concepts/compare"),
-        TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing"), MARKET("/market"),
-        PANEL_SURVEY("/panel-survey");
+        IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
+        MARKET("/market"), BUSINESS_MODEL("/business-model"), TWIN("/twin-survey"),
+        TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }
     }

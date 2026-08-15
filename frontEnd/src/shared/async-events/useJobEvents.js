@@ -2,7 +2,6 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import { useApiClient } from '../api/ApiClientProvider.jsx';
 import { consumeAuthenticatedSse } from './authenticatedSseClient.js';
-import { createJobEventsApi } from './jobEventsApi.js';
 import {
   initialJobEventsState,
   isTerminalJobEvent,
@@ -11,10 +10,7 @@ import {
 
 const DEFAULT_RECONNECT_DELAY = 1000;
 const DEFAULT_MAX_RECONNECT_DELAY = 8000;
-const DEFAULT_POLL_INTERVAL = 2000;
-const DEFAULT_MAX_POLL_INTERVAL = 30000;
 const DEFAULT_INACTIVITY_TIMEOUT = 45000;
-const HIDDEN_POLL_MULTIPLIER = 3;
 
 export function useJobEvents(jobId, options = {}) {
   const client = useApiClient();
@@ -28,10 +24,7 @@ export function useJobEvents(jobId, options = {}) {
   const {
     reconnectDelayMs = DEFAULT_RECONNECT_DELAY,
     maxReconnectDelayMs = DEFAULT_MAX_RECONNECT_DELAY,
-    pollIntervalMs = DEFAULT_POLL_INTERVAL,
-    maxPollIntervalMs = DEFAULT_MAX_POLL_INTERVAL,
     inactivityTimeoutMs = DEFAULT_INACTIVITY_TIMEOUT,
-    maxSseFailures = 3,
   } = options;
 
   const stop = useCallback(() => {
@@ -61,8 +54,6 @@ export function useJobEvents(jobId, options = {}) {
     if (!jobId || manuallyStopped.current) {
       return () => controller.abort();
     }
-    const api = createJobEventsApi(client);
-
     const append = (events) => {
       const validEvents = (events ?? [])
         .filter((event) => Number.isSafeInteger(event?.sequence) && event.sequence > 0)
@@ -82,8 +73,7 @@ export function useJobEvents(jobId, options = {}) {
 
     const run = async () => {
       let sseFailures = 0;
-      const failureLimit = Math.max(1, maxSseFailures);
-      while (!controller.signal.aborted && sseFailures < failureLimit) {
+      while (!controller.signal.aborted && !terminal.current) {
         dispatch({ type: 'CONNECTING' });
         const streamController = new AbortController();
         const stopStream = () => streamController.abort();
@@ -108,25 +98,17 @@ export function useJobEvents(jobId, options = {}) {
           throw new Error('event stream closed');
         } catch (error) {
           if (controller.signal.aborted || terminal.current) return;
-          // A stale task id is not a transient network failure. Stop retrying it;
-          // the owning feature can reload its current state and decide what to show.
-          if (isMissingJob(error)) {
-            terminal.current = true;
-            dispatch({ type: 'STOPPED' });
-            return;
-          }
-          if (isAuthenticationError(error)) {
+          if (isAuthenticationError(error) || isMissingJob(error)) {
             dispatch({ type: 'ERROR', error });
             return;
           }
           sseFailures += 1;
-          if (sseFailures < failureLimit) {
-            const delay = Math.min(
-              reconnectDelayMs * (2 ** (sseFailures - 1)),
-              maxReconnectDelayMs,
-            );
-            await wait(delay, controller.signal);
-          }
+          dispatch({ type: 'RECONNECTING', error });
+          const delay = Math.min(
+            reconnectDelayMs * (2 ** (sseFailures - 1)),
+            maxReconnectDelayMs,
+          );
+          await wait(delay, controller.signal);
         } finally {
           clearTimeout(inactivityTimer);
           controller.signal.removeEventListener('abort', stopStream);
@@ -134,44 +116,6 @@ export function useJobEvents(jobId, options = {}) {
         }
       }
 
-      if (controller.signal.aborted || terminal.current) return;
-      dispatch({ type: 'POLLING' });
-      let pollBackoff = 0;
-      while (!controller.signal.aborted && !terminal.current) {
-        try {
-          const result = await api.poll(jobId, cursor.current, { signal: controller.signal });
-          const receivedEvent = (result.events?.length ?? 0) > 0;
-          if (append(result.events)) return;
-          dispatch({ type: 'POLLING' });
-          if (result.hasMore || receivedEvent) {
-            pollBackoff = 0;
-            if (result.hasMore) continue;
-          } else {
-            pollBackoff += 1;
-          }
-        } catch (error) {
-          if (controller.signal.aborted || terminal.current) return;
-          if (isMissingJob(error)) {
-            terminal.current = true;
-            dispatch({ type: 'STOPPED' });
-            return;
-          }
-          if (isAuthenticationError(error)) {
-            dispatch({ type: 'ERROR', error });
-            return;
-          }
-          dispatch({ type: 'POLLING', error });
-          pollBackoff += 1;
-        }
-        const visibleDelay = Math.min(
-          pollIntervalMs * (2 ** Math.max(0, pollBackoff - 1)),
-          maxPollIntervalMs,
-        );
-        const delay = document.visibilityState === 'hidden'
-          ? Math.min(visibleDelay * HIDDEN_POLL_MULTIPLIER, maxPollIntervalMs)
-          : visibleDelay;
-        await wait(delay, controller.signal);
-      }
     };
 
     run().catch((error) => {
@@ -185,10 +129,7 @@ export function useJobEvents(jobId, options = {}) {
     client,
     jobId,
     maxReconnectDelayMs,
-    maxPollIntervalMs,
-    maxSseFailures,
     inactivityTimeoutMs,
-    pollIntervalMs,
     reconnectDelayMs,
     restartToken,
   ]);

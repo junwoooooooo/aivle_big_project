@@ -1,0 +1,182 @@
+{
+  "taskType": "IDEA_BRIEF_DERIVATION",
+  "operationVersion": "v2",
+  "promptVersion": "idea-brief-current-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8874e253b4fd3788ab69a37fc538cee564f3b4a44c1ea62d6ed14eca5d5616f9",
+  "canonicalRequestHash": "fc5b3fe1b2fb09f8b0b6587abc4a067f3c1f1682a4e68c69fc44212bb974d30f",
+  "redactedRequest": {
+    "input": {
+      "mode": "FINAL_SYNTHESIS",
+      "ideaOverview": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "10~50인 규모의 소형 사무실 운영자",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        }
+      ],
+      "attachmentFileIds": [],
+      "fieldMetadata": [
+        {
+          "fieldKey": "ideaOverview",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "problem",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetUsers",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetRegion",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "revenueModel",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "price",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "channels",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "differentiators",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        }
+      ]
+    }
+  },
+  "providerResponse": {
+    "safetyReview": {
+      "decision": "ALLOW",
+      "categories": [],
+      "restrictions": [],
+      "userFacingReason": "이 아이디어는 안전하다고 판단됩니다."
+    },
+    "interpretation": {
+      "interpretedProblem": "소규모 사업장은 회의장비 구매 비용과 유지보수 부담 때문에 적절한 장비를 운영하기 어렵다.",
+      "interpretedTargetUsers": "10~50인 규모의 소형 사무실 운영자",
+      "usageContext": "소형 사무실에서 화상회의를 위한 장비를 필요로 하는 상황",
+      "industryCategory": "서비스업",
+      "researchScope": "소형 사무실의 화상회의 장비 대여 시장",
+      "conciseIdeaDefinition": "소형 사무실을 위한 화상회의 장비 정기 대여 서비스",
+      "targetRegionInterpretation": "대여 서비스가 제공될 지역은 명시되지 않음",
+      "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음"
+    },
+    "commitmentCandidates": [],
+    "questions": [],
+    "contradictions": [],
+    "readiness": {
+      "status": "READY_FOR_REVIEW",
+      "score": 0,
+      "missingFieldKeys": []
+    },
+    "userFacingSummary": "소형 사무실에 화상회의 장비를 정기 대여하고 고장 시 교체·회수까지 제공하는 구독 서비스입니다."
+  },
+  "durationMs": 5977,
+  "timestamp": "2026-08-10T08:44:30.967742+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

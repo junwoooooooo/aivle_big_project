@@ -1,0 +1,57 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:1472f7b42ed600a86c82da68f8117e5b0ff738f6ae0e7e21d454e3c79a849d46",
+  "canonicalRequestHash": "5d67ed78b4fee4ed3739c1ab5aeddf3e8a8a440d0eee930bbc501c322790a44c",
+  "redactedRequest": {
+    "kind": "OPPORTUNITY_SCOPE",
+    "left": {
+      "problemCore": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+      "targetCore": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+      "useContexts": [
+        "소량의 식재료를 제공하고 남은 재료를 활용한 레시피를 안내하는 서비스입니다."
+      ],
+      "intentComponents": [
+        "개인 맞춤형 소량 식재료와 레시피 제공 서비스"
+      ],
+      "mustPreserve": [
+        "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+        "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+        "개인 맞춤형 소량 식재료와 레시피 제공 서비스"
+      ],
+      "maySpecialize": [
+        "핵심 대상의 의미 있는 하위 세그먼트",
+        "핵심 사용 맥락의 구체화",
+        "가치 제안 또는 offer의 구체화"
+      ],
+      "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+    },
+    "right": {
+      "targetSegmentThesis": "요리할 시간이 부족한 1~2인 가구",
+      "useCaseThesis": "건강한 식단을 관리하고 제공하는 서비스",
+      "valuePropositionThesis": "건강한 식단을 쉽게 관리할 수 있는 서비스를 제공한다.",
+      "offerThesis": "건강한 식단 관리 서비스 제공",
+      "solutionThesis": "고객의 건강 목표에 맞춘 식단을 제공한다."
+    }
+  },
+  "providerResponse": {
+    "decision": "VARIANT",
+    "overlappingMechanics": [
+      "1~2인 가구를 대상으로 하는 점",
+      "소량의 식재료 제공"
+    ],
+    "materiallyDifferentMechanics": [
+      "건강한 식단 관리에 중점을 둔 점",
+      "고객의 건강 목표에 맞춘 식단 제공"
+    ],
+    "safeSummary": "1~2인 가구를 대상으로 하는 개인 맞춤형 소량 식재료와 레시피 제공 서비스와 건강한 식단 관리 서비스는 공통적으로 1~2인 가구를 타겟으로 하지만, 전자는 음식물 쓰레기 문제 해결에 중점을 두고 후자는 건강한 식단 관리에 중점을 둡니다."
+  },
+  "durationMs": 2596,
+  "timestamp": "2026-08-10T05:23:07.660764+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

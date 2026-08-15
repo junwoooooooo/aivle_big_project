@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4f6da68448751980c5298d78d307600f998b49811765cdcb2cb2f7171f929b8a",
+  "canonicalRequestHash": "811c14384dd43423b698b6318bc4dc11a1cad38d0698af9b6ba8eefa82427314",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "서비스 제공 플랫폼으로서 펫시터와 보호자를 연결 펫시터 서비스 제공자 플랫폼 운영자 지역 펫시터와의 협력으로 서비스 운영 검증된 펫시터와의 협력으로 서비스 품질 보장 사용자가 앱에서 펫시터 검색 펫시터와 직접 소통 및 예약 진행 예약 확정 후 결제 진행 펫시터가 고객의 집으로 방문하여 서비스 제공 사용자가 앱 내 결제 시스템을 통해 결제 결제 완료 후 펫시터에게 서비스 제공 대금 지급 서비스 완료 후 고객이 이용 후기를 작성 서비스 이용 수수료를 통한 수익 모델 모바일 앱, 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "ON_SITE",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "ON_SITE",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "펫시터와 보호자를 연결하는 플랫폼으로, 예약 및 결제를 통해 수익을 창출하는 중개 서비스."
+    }
+  ],
+  "durationMs": 5065,
+  "timestamp": "2026-08-10T03:48:39.534927+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

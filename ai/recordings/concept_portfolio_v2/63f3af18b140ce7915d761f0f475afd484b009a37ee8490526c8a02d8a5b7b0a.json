@@ -1,0 +1,291 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:80b7a943419f3505cfca24a54d5c9520ba4e9b0bf1a055a1be45db824315b507",
+  "canonicalRequestHash": "63f3af18b140ce7915d761f0f475afd484b009a37ee8490526c8a02d8a5b7b0a",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+      "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "취업 준비생이 면접 답변의 품질과 개선점을 객관적으로 확인하기 어려운 문제를 해결합니다.",
+        "interpretedTargetUsers": "신입 및 주니어 채용을 준비하는 성인 취업 준비생을 대상으로 합니다.",
+        "usageContext": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스입니다.",
+        "industryCategory": "교육 및 취업 지원",
+        "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+        "conciseIdeaDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스입니다.",
+        "targetRegionInterpretation": "",
+        "relevantKnownCompetitorContext": ""
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "AI 면접 코칭 서비스",
+      "oneLineConcept": "AI가 제공하는 맞춤형 면접 코칭으로 취업 준비생을 지원합니다.",
+      "targetSegment": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+      "problemFocus": "취업 준비생은 면접 준비에 필요한 구체적인 코칭을 받기 어렵습니다.",
+      "useContext": "AI를 활용하여 면접 준비생에게 맞춤형 코칭과 피드백을 제공하는 서비스입니다.",
+      "valueProposition": "AI 기반의 코칭을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 돕습니다.",
+      "offerThesis": "AI 기술을 통해 면접 준비생의 면접 기술을 향상시킵니다.",
+      "solutionThesis": "개인 맞춤형 코칭으로 면접 준비생의 자신감을 증진시킵니다.",
+      "coreMechanism": "AI 알고리즘을 활용한 면접 코칭 및 피드백 제공",
+      "customerInteraction": "사용자가 플랫폼에 접속하여 자신의 면접 준비 상태를 입력하고 코칭을 받습니다.",
+      "valueDelivery": "AI 분석 결과를 바탕으로 개인 맞춤형 코칭과 연습 계획을 제공합니다.",
+      "operatingApproach": "AI 기술을 활용하여 면접 코칭을 자동화합니다.",
+      "partnerApproach": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+      "transactionApproach": "구독 모델을 통해 지속적인 서비스 이용을 유도합니다.",
+      "commercialApproach": "서비스 이용료를 통해 수익을 창출합니다.",
+      "fulfillmentApproach": "신속한 코칭 제공으로 고객 만족도를 높입니다.",
+      "differentiatingMechanics": [
+        "AI 기반의 맞춤형 코칭 제공",
+        "직무별 특화된 코칭 기능"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "AI 기술을 통해 취업 준비생의 면접 준비를 혁신적으로 지원합니다.",
+      "planId": "P7",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+          "useCaseThesis": "AI를 활용하여 면접 준비생에게 맞춤형 코칭과 피드백을 제공하는 서비스입니다.",
+          "valuePropositionThesis": "AI 기반의 코칭을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 돕습니다.",
+          "offerThesis": "AI 기술을 통해 면접 준비생의 면접 기술을 향상시킵니다.",
+          "solutionThesis": "개인 맞춤형 코칭으로 면접 준비생의 자신감을 증진시킵니다."
+        },
+        "architecture": {
+          "businessRole": "ADVISORY",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "개인 맞춤형 코칭으로 면접 준비생의 자신감을 증진시킵니다",
+        "familyId": "ADVISORY:AUTOMATED_DIGITAL",
+        "familyLabelKo": "전문가 자문 · 디지털 자동화",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "ADVISORY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "AUTOMATED_DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "SUBSCRIPTION",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "WEB",
+            "confidence": "MEDIUM",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+        "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+        "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.6669,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "AI 면접 코칭 서비스",
+    "conceptDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스입니다.",
+    "introduction": "AI 기술을 통해 면접 준비생의 면접 기술을 향상시킵니다.",
+    "coreValue": "AI 기반의 코칭을 통해 면접 준비생이 자신감을 가지고 면접에 임할 수 있도록 돕습니다.",
+    "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+    "industryCategory": "교육 및 취업 지원",
+    "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델을 통해 지속적인 서비스 이용을 유도합니다.",
+    "price": "월 29,000원",
+    "channels": "온라인 플랫폼 및 모바일 앱",
+    "differentiators": "AI 기반의 맞춤형 코칭 제공, 직무별 특화된 코칭 기능",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "AI 기술의 발전과 취업 시장의 변화로 인해 면접 준비 서비스의 수요가 증가할 것으로 예상됨.",
+      "assumptions": [
+        "AI 기술의 신뢰성 향상",
+        "취업 준비생의 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 5000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "신입 및 주니어 채용 시장의 10%를 목표로 설정",
+      "assumptions": [
+        "취업 준비생의 수 증가",
+        "AI 코칭의 효과에 대한 긍정적인 피드백"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "취업 준비생은 면접 준비에 필요한 구체적인 코칭을 받기 어렵습니다.",
+    "solutionMechanism": "AI를 활용하여 면접 준비생에게 맞춤형 코칭과 피드백을 제공하는 서비스입니다.",
+    "featureSet": [
+      "AI 알고리즘을 활용한 면접 코칭",
+      "직무별 맞춤형 피드백 제공",
+      "반복 연습 계획 수립"
+    ],
+    "actorRoles": [
+      "사용자",
+      "AI 시스템",
+      "코칭 전문가"
+    ],
+    "platformRole": "AI 면접 코칭 플랫폼 운영",
+    "operatingModel": "AI 기술을 활용하여 면접 코칭을 자동화합니다.",
+    "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+    "providerRole": "AI 면접 코칭 서비스 제공자",
+    "sellerRole": "서비스 판매 및 마케팅 담당",
+    "intermediaryRole": "교육 기관 및 취업 지원 센터와의 협력 담당",
+    "transactionFlow": [
+      "사용자가 플랫폼에 접속하여 면접 준비 상태 입력",
+      "AI가 면접 답변 분석 및 피드백 제공",
+      "사용자가 피드백을 바탕으로 연습 계획 수립"
+    ],
+    "paymentFlow": [
+      "사용자가 구독료 결제",
+      "결제 확인 후 서비스 이용 가능",
+      "정기 결제 및 갱신 관리"
+    ],
+    "personalDataUsage": [
+      "사용자의 면접 준비 상태 분석을 위한 데이터 수집",
+      "개인 맞춤형 피드백 제공을 위한 데이터 활용"
+    ],
+    "physicalActivities": [
+      "배송",
+      "현장 방문"
+    ],
+    "partnerRequirements": [
+      "교육 기관과의 협력 계약 체결",
+      "취업 지원 센터와의 파트너십 구축"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "AI 기반의 맞춤형 코칭으로 면접 준비생의 자신감 증진",
+      "직무별 특화된 코칭 기능 제공"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 8102,
+  "timestamp": "2026-08-10T04:54:26.062652+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

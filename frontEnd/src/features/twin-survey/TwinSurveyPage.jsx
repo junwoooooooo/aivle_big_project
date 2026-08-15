@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useOutletContext, useParams } from 'react-router-dom';
 
 import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
-import { Alert, Button, Card, LoadingState } from '../../shared/ui';
+import { Alert, Button, Card, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../shared/ui';
 import { draftFailureText } from './draftFailureText.js';
 import PairEditorDialog from './PairEditorDialog.jsx';
 import SampleSizePicker from './SampleSizePicker.jsx';
@@ -11,8 +11,22 @@ import StimulusEditor from './StimulusEditor.jsx';
 import { createTwinSurveyApi } from './twinSurveyApi.js';
 import { interviewLines } from './twinSurveyResult.js';
 import { gateSurvey } from './taskTypeGate.js';
-import useTwinSurveyPolling from './useTwinSurveyPolling.js';
+import useTwinSurveyLiveState from './useTwinSurveyPolling.js';
 import './twin-survey.css';
+
+/**
+ * 견본 컨셉. **정본은 AI 서버**(`ai/app/research/pipeline.py` 의 `CONCEPTS`)이고 여기는
+ * 이름표만 든다 — 시장조사 화면(`MarketResearchPage`)이 같은 셋을 같은 방식으로 쓴다.
+ *
+ * 확정된 컨셉이 있으면 서버가 그것을 쓰고 이 고름은 무시된다. 이 목록이 있는 이유는
+ * 컨셉 파이프라인이 아직 안 찬 환경에서도 이 단계를 시연·시험할 수 있어야 하기 때문이다.
+ */
+const SAMPLE_CONCEPTS = [
+  ['beauty-noshow', '미용실 노쇼 관리'],
+  ['household-ledger', '가계부 앱'],
+  ['pet-treat', '반려동물 수제 간식'],
+];
+const DEMO_MODE = import.meta.env.DEV && import.meta.env.VITE_TWIN_FIXTURE_MODE === 'true';
 
 /**
  * 손으로 만드는 길에 쓰는 빈 쌍.
@@ -45,6 +59,7 @@ const BLANK_PAIR = {
 export default function TwinSurveyPage() {
   const { projectId } = useParams();
   const client = useApiClient();
+  const { liveRevision = 0 } = useOutletContext() ?? {};
   const api = useMemo(() => createTwinSurveyApi(client, projectId), [client, projectId]);
 
   const [situation, setSituation] = useState('가게에서 하나를 고릅니다. 아래 두 상품이 있습니다.');
@@ -53,6 +68,8 @@ export default function TwinSurveyPage() {
   const [draft, setDraft] = useState(null);
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState(null);
+  const [draftSource, setDraftSource] = useState(null);
+  const [conceptKey, setConceptKey] = useState(SAMPLE_CONCEPTS[0][0]);
   /** 편집 중인 쌍의 인덱스. null 이면 창이 닫혀 있다. */
   const [editing, setEditing] = useState(null);
 
@@ -65,13 +82,29 @@ export default function TwinSurveyPage() {
     setDrafting(true);
     setDraftError(null);
     try {
-      setDraft(await api.draftStimulus());
+      await api.draftStimulus();
     } catch (failure) {
       setDraftError(draftFailureText(failure));
-    } finally {
-      setDrafting(false);
     }
   }, [api]);
+
+  useEffect(() => {
+    let alive = true;
+    api.currentStimulusDraft().then((current) => {
+      if (!alive || !current) return;
+      setDraftSource(current.sourceConceptName || current.sourceConceptId || null);
+      if (['QUEUED', 'READY', 'RUNNING'].includes(current.state)) setDrafting(true);
+      else {
+        setDrafting(false);
+        if (current.state === 'SUCCEEDED' && current.result) {
+          setDraft(current.result); setDraftError(null);
+        } else if (current.state === 'FAILED') {
+          setDraftError(draftFailureText({ code: current.errorCode }));
+        }
+      }
+    }).catch((failure) => { if (alive) setDraftError(draftFailureText(failure)); });
+    return () => { alive = false; };
+  }, [api, liveRevision]);
 
   const useDraft = useCallback((draftSituation, chosen) => {
     setSituation(draftSituation);
@@ -82,8 +115,8 @@ export default function TwinSurveyPage() {
   const load = useCallback(() => api.currentSurvey(), [api]);
   const start = useCallback(() => api.startSurvey(situation, pairs, sampleSize),
     [api, situation, pairs, sampleSize]);
-  const { run, result, error, busy, loading, active, elapsed, trigger } =
-    useTwinSurveyPolling(load, start);
+  const { run, result, stale, error, busy, loading, active, elapsed, trigger } =
+    useTwinSurveyLiveState(load, start, liveRevision);
 
   const gate = gateSurvey(pairs);
   const canRun = gate.canRun && situation.trim().length >= 5 && !busy && !active;
@@ -91,7 +124,9 @@ export default function TwinSurveyPage() {
   if (loading) return <LoadingState label="트윈 조사 결과를 불러오는 중" />;
 
   return (
-    <section className="twin-page">
+    <ProjectWorkspace as="section" mode="analyze" className="twin-page">
+      <ProjectStageHeader step={7} eyebrow="가상 인터뷰" title="두 사업안에 대한 반응을 비교하세요"
+        description="질문 준비, 대상 설정, 인터뷰 실행, 결과 확인 순서로 반응의 방향과 반복 패턴을 살펴봅니다." />
       {/* 모듈 이름은 셸(`ProjectLayout`)이 이미 그린다 — 여기서 다시 그리면 껍데기가 두 겹이다.
           그 자리에 산문 대신 «지금 어디까지 왔나»를 둔다. */}
       <TwinSteps pairCount={pairs.length} active={active} done={Boolean(result)} elapsed={elapsed} />
@@ -104,6 +139,21 @@ export default function TwinSurveyPage() {
               확정한 컨셉에서 <strong>비교할 두 안</strong>을 뽑아 준다.
               「가격은 양쪽 같게, 속성은 하나만」이라는 규칙은 초안이 지킨 채로 나온다.
             </p>
+            {/* 확정된 컨셉이 있으면 서버가 그것을 쓴다 — 이 고름은 그때 무시된다. */}
+            {DEMO_MODE ? <div className="twin-page__samples" role="group" aria-label="개발용 견본 컨셉 표시">
+              {SAMPLE_CONCEPTS.map(([key, label]) => (
+                <Button
+                  key={key}
+                  variant={key === conceptKey ? 'primary' : 'outline'}
+                  aria-pressed={key === conceptKey}
+                  disabled={drafting}
+                  onClick={() => setConceptKey(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div> : <p><strong>{draftSource || '현재 프로젝트에서 확정한 사업안'}</strong>을
+              기준으로 초안을 만듭니다.</p>}
             <div className="twin-page__draft-actions">
               <Button onClick={makeDraft} disabled={drafting}>
                 {drafting ? '초안 만드는 중…' : '자극 초안 만들기'}
@@ -164,14 +214,16 @@ export default function TwinSurveyPage() {
       ) : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
+      {stale ? <Alert tone="warning">선택한 사업안 또는 시장 입력이 바뀌었습니다. 최신 내용으로 다시 인터뷰해 주세요.</Alert> : null}
+      {result && !stale ? <Link className="ui-button ui-button--primary" to={`/app/projects/${projectId}/marketing`}>다음 - 8. 마케팅 콘텐츠 제작</Link> : null}
       {run?.state === 'FAILED' && run?.errorCode ? (
-        <Alert tone="danger">실행이 실패했다 — {failureText(run.errorCode)}</Alert>
+        <Alert tone="danger">인터뷰를 완료하지 못했습니다. {failureText(run.errorCode)}</Alert>
       ) : null}
 
       {result ? <TwinResult result={result} /> : null}
 
       <TwinFootnote result={result} />
-    </section>
+    </ProjectWorkspace>
   );
 }
 

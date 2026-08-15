@@ -1,0 +1,168 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:48371abf2b97b76567852bf291e051c59786615e732749c0f727efd4de85930c",
+  "canonicalRequestHash": "c8948e33ede8ce910be7dde9143dbcc21e79636089a65f8af141908d734f7e4b",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "사용자 간의 거래를 지원하는 플랫폼 제공자",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "중고 물품을 판매하는 사용자",
+          "intermediaryRole": "거래를 중개하는 플랫폼"
+        },
+        "actorRoles": [
+          "사용자",
+          "대학가 주변 상점",
+          "플랫폼 운영자"
+        ],
+        "transactionFlow": [
+          "사용자가 물품을 등록한다.",
+          "다른 사용자가 물품을 검색하고 거래를 요청한다.",
+          "판매자가 거래를 수락하고 사용자 간의 직접 거래가 이루어진다."
+        ],
+        "paymentFlow": [
+          "사용자가 거래를 완료하면 결제가 이루어진다.",
+          "결제 후 플랫폼이 수수료를 차감하고 판매자에게 지급한다."
+        ],
+        "operatingModel": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다.",
+        "partnerModel": "대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "solutionMechanism": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영자",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "상품 판매자",
+          "intermediaryRole": "거래 중개자"
+        },
+        "actorRoles": [
+          "사용자",
+          "판매자",
+          "구매자"
+        ],
+        "transactionFlow": [
+          "사용자가 상품 등록",
+          "구매자가 상품 검색 및 선택",
+          "판매자와 구매자 간의 채팅 및 거래 협의",
+          "직거래 진행"
+        ],
+        "paymentFlow": [
+          "구매자가 판매자에게 직접 결제",
+          "거래 완료 후 사용자에게 거래 내역 전송"
+        ],
+        "operatingModel": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+        "partnerModel": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+        "solutionMechanism": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼으로서 사용자 간의 거래를 지원한다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "중고품 판매자",
+          "intermediaryRole": "거래 중개 역할을 수행하지 않음"
+        },
+        "actorRoles": [
+          "학생 사용자",
+          "중고품 매장",
+          "플랫폼 운영자"
+        ],
+        "transactionFlow": [
+          "사용자가 앱에 중고품 등록",
+          "사용자가 검색 및 필터링 기능을 통해 거래 상대방 찾기",
+          "직거래를 통해 거래 완료"
+        ],
+        "paymentFlow": [
+          "사용자가 거래를 완료하고 결제",
+          "결제 후 거래 내역과 피드백 요청 전송"
+        ],
+        "operatingModel": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+        "partnerModel": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+        "solutionMechanism": "사용자가 쉽게 거래할 수 있도록 맞춤형 검색 및 필터링 기능을 제공한다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "'플랫폼 운영자'는 'providerRole'의 정의와 일치한다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "'플랫폼 운영자'는 'providerRole'의 정의와 일치한다."
+    },
+    {
+      "candidateId": "C4",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "'플랫폼 운영자'는 'providerRole'의 정의와 일치한다."
+    }
+  ],
+  "durationMs": 3750,
+  "timestamp": "2026-08-10T05:00:39.915856+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

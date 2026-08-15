@@ -1,0 +1,254 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c20d22a72de3a083f820e4a7854271364ccc11451c9b57a38cdb115f8a6ec7bf",
+  "canonicalRequestHash": "2ae29069ca642dd04611b8e5f7c85336a3ae770c814bc4b6f0a088b467c9a1e7",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다. 고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P1",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    },
+    {
+      "entityId": "P2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    },
+    {
+      "entityId": "P3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    },
+    {
+      "entityId": "P4",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    },
+    {
+      "entityId": "P5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    },
+    {
+      "entityId": "P6",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 알고리즘 개선, CRM 통합 솔루션 제공, 구독 모델, 중소기업 맞춤형 마케팅, 클라우드 기반 서비스 제공."
+    }
+  ],
+  "durationMs": 11225,
+  "timestamp": "2026-08-10T07:53:58.248899+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

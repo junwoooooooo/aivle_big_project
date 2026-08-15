@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 
 class ConceptPortfolioMigrationContractTests {
     private static final Path MIGRATION = Path.of(
-        "src/main/resources/db/migration/V13__add_concept_portfolio_v2_product.sql");
+        "src/main/resources/db/migration/V10__add_concept_portfolio_v2_product.sql");
 
     @Test
-    void v13IsAdditiveAndDefinesTheFiveCutoverTables() throws IOException {
+    void v10IsAdditiveAndDefinesTheFiveCutoverTables() throws IOException {
         String sql = Files.readString(MIGRATION).toLowerCase();
 
         assertThat(sql).doesNotContain("drop table", "truncate table", "alter table");
@@ -30,9 +30,9 @@ class ConceptPortfolioMigrationContractTests {
     }
 
     @Test
-    void v14AddsOnlyRunLineageUniqueness() throws IOException {
+    void v11AddsOnlyRunLineageUniqueness() throws IOException {
         String sql = Files.readString(Path.of(
-            "src/main/resources/db/migration/V14__harden_concept_portfolio_lineage.sql"))
+            "src/main/resources/db/migration/V11__harden_concept_portfolio_lineage.sql"))
             .toLowerCase();
         assertThat(sql).contains("alter table concept_portfolio_concepts");
         assertThat(sql).contains("unique (run_id, lineage_id)");

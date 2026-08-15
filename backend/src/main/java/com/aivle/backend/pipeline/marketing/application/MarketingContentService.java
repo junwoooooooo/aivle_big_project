@@ -8,12 +8,6 @@ import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.file.object.ObjectStoragePort;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentListView;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentSummary;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentView;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.CreateRequest;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.EditRequest;
-import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.RevisionView;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -51,15 +45,12 @@ public class MarketingContentService {
     @Transactional
     public ContentView create(Long ownerId, Long projectId, CreateRequest request, String idempotencyKey, String correlationId) {
         requireOwned(ownerId, projectId); validateRequest(request);
-        if (
-            request.referenceArtifactId() != null
-            && !request.referenceArtifactId().isBlank()
-        ) {
-            evidenceArtifacts.requireReferenceable(
-                ownerId,
-                projectId,
-                request.referenceArtifactId()
-            );
+        if (request.referenceArtifactId() != null && !request.referenceArtifactId().isBlank()) {
+            var artifact = evidenceArtifacts.requireReferenceable(ownerId, projectId, request.referenceArtifactId());
+            if (!("image/png".equals(artifact.getMediaType()) || "image/jpeg".equals(artifact.getMediaType()))
+                    || artifact.getSizeBytes() <= 0 || artifact.getSizeBytes() > 20L * 1024 * 1024) {
+                throw new BusinessException(ErrorCode.MARKETING_ASSET_INVALID);
+            }
         }
         MarketingSourceSnapshot source = sourceSnapshots.requireCurrent(projectId);
         if (!source.getId().equals(request.marketingSourceSnapshotId())) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
@@ -151,14 +142,8 @@ public class MarketingContentService {
             mapper.readTree(content.getRequestJson()), revisions.findAllByContentIdAndDeletedAtIsNullOrderByRevisionNumberAsc(content.getId())
                 .stream().map(revision -> new RevisionView(revision.getId(), revision.getRevisionNumber(),
                     revision.getRevisionType(), revision.getOrigin(), mapper.readTree(revision.getResultJson()))).toList(),
-            assets
-                .findAllByContentIdAndDeletedAtIsNullOrderByCreatedAtAsc(
-                    content.getId()
-                )
-                .stream()
-                .map(MarketingAsset::getArtifactRef)
-                .map(this::browserArtifactUrl)
-                .toList());
+            assets.findAllByContentIdAndDeletedAtIsNullOrderByCreatedAtAsc(content.getId()).stream()
+                .map(MarketingAsset::getArtifactRef).map(this::browserArtifactUrl).toList());
     }
     private ContentSummary summary(MarketingContent content, MarketingSourceSnapshot current) {
         String status = stale(content, current) ? "STALE" : content.getStatus().name();
@@ -175,13 +160,8 @@ public class MarketingContentService {
         if (!REQUEST_CONTRACT.equals(request.contract())) throw new BusinessException(ErrorCode.INVALID_REQUEST);
     }
     private String browserArtifactUrl(String artifactRef) {
-        try {
-            return objectStorage
-                .createPresignedGet(artifactRef)
-                .toString();
-        } catch (UnsupportedOperationException ignored) {
-            return artifactRef;
-        }
+        try { return objectStorage.createPresignedGet(artifactRef).toString(); }
+        catch (UnsupportedOperationException ignored) { return artifactRef; }
     }
     private MarketingContent find(Long projectId, String id) {
         return contents.findByIdAndProjectIdAndDeletedAtIsNull(id, projectId)

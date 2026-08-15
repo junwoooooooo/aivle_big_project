@@ -62,7 +62,7 @@ def _unit(*parts):
     return int(hashlib.sha256(blob).hexdigest()[:12], 16) / 16 ** 12
 
 
-async def _fake_run_survey(cards, pairs, situation, budget_seconds):
+async def _fake_run_survey(cards, pairs, situation, budget_seconds, event_sink=None):
     rows = []
     stats = {"cells": 0, "rateLimited": 0, "timeouts": 0, "retries": 0,
              "formatViolations": 0, "failures": 0, "truncated": 0, "waitSeconds": 0.0,
@@ -100,10 +100,11 @@ async def _fake_run_survey(cards, pairs, situation, budget_seconds):
     return rows, stats
 
 
-def build(monkeypatch):
+def build(monkeypatch, event_sink=None):
     monkeypatch.setattr(twin, "load", lambda: (CARDS, FRAME))
     monkeypatch.setattr(twin, "run_survey", _fake_run_survey)
-    return asyncio.run(twin.execute_twin_survey(PAYLOAD, budget_seconds=600))
+    return asyncio.run(twin.execute_twin_survey(
+        PAYLOAD, budget_seconds=600, event_sink=event_sink))
 
 
 def test_result_matches_the_golden_fixture(monkeypatch):
@@ -140,3 +141,19 @@ def test_no_raw_ledger_leaks_into_the_result(monkeypatch):
     for pair in result["pairs"]:
         assert "rows" not in pair
         assert len(pair["interviews"]) <= twin.INTERVIEWS_PER_PAIR
+
+
+def test_observer_does_not_change_result_contract_or_leak_bank_content(monkeypatch):
+    events = []
+    observed = build(monkeypatch, events.append)
+    plain = build(monkeypatch)
+
+    assert observed == plain
+    assert [event["stage"] for event in events] == [
+        "TWIN_VALIDATING", "TWIN_GATE", "TWIN_BANK_LOADING", "TWIN_BANK_READY",
+        "TWIN_SAMPLING", "TWIN_AGGREGATING", "TWIN_AGGREGATING", "TWIN_AGGREGATING",
+        "TWIN_COMPLETED",
+    ]
+    serialized = json.dumps(events, ensure_ascii=False)
+    assert "pid_hash" not in serialized
+    assert next(iter(CARDS.values())) not in serialized

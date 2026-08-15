@@ -547,7 +547,7 @@ def assert_caveats_reached(cells: list[dict], evidence_items: list[dict]) -> Non
                 f"{cell['canvasCell']} 이 인용한 근거의 경계가 칸에 없다: {sorted(missing)}")
 
 
-def bm(final, analysis) -> dict:
+def bm(final, analysis, handoff=None) -> dict:
     """`BMFinalResult` + `BMAnalysisResult` → 계약 `bm`. 이름만 바꾼다 — 판정을 다시 안 한다.
 
     ⚠ **두 물건이 필요하다.** `marketFitStatus`·`consistencyStatus` 는 최종 결과가 아니라
@@ -571,6 +571,18 @@ def bm(final, analysis) -> dict:
             "summary": final.legal_summary or None,
             "risks": _strings(final.legal_risks),
             "requiredActions": _strings(final.required_legal_actions),
+        },
+        "financialHandoff": None if handoff is None else {
+            "conceptId": handoff.concept_id,
+            "revenueModel": handoff.revenue_model,
+            "priceMin": handoff.price_min, "priceBase": handoff.price_base,
+            "priceMax": handoff.price_max, "tam": handoff.tam, "sam": handoff.sam,
+            "som": handoff.som, "marketGrowthRate": handoff.market_growth_rate,
+            "expectedRevenue": handoff.expected_revenue, "unitCost": handoff.unit_cost,
+            "fixedCostItems": list(handoff.fixed_cost_items),
+            "variableCostItems": list(handoff.variable_cost_items),
+            "missingFinancialInputs": _strings(handoff.missing_financial_inputs),
+            "handoffStatus": handoff.handoff_status,
         },
     }
 

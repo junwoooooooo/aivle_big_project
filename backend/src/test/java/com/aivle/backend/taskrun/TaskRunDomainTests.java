@@ -16,7 +16,7 @@ class TaskRunDomainTests {
         TaskAttempt first = TaskAttempt.claim(run, "worker-1", now, now.plusSeconds(30), now.plusMinutes(2));
         first.start(first.getClaimToken(), now);
         first.fail(first.getClaimToken(), "DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true, now.plusSeconds(1));
-        run.fail("AI_SERVICE_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", true, now.plusSeconds(1));
+        run.fail("AI_SERVICE_UNAVAILABLE", true, now.plusSeconds(1));
         assertThat(run.terminal()).isTrue();
         assertThatThrownBy(() -> TaskAttempt.claim(run, "worker-2", now.plusSeconds(2),
             now.plusSeconds(32), now.plusMinutes(2))).isInstanceOf(IllegalStateException.class);
@@ -55,7 +55,7 @@ class TaskRunDomainTests {
     void terminalRunRejectsMutation() {
         TaskRun run = TaskRun.create(null, TaskType.IDEA_BRIEF_DERIVATION, "IDEA_BRIEF_DERIVATION_RUN", "subject-1", "{}", HASH, "key", "correlation", 3);
         LocalDateTime now = LocalDateTime.now(); run.cancel(now);
-        assertThatThrownBy(() -> run.fail("ERROR", "TEST_FAILURE", true, now)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> run.fail("ERROR", true, now)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> run.succeed("result", now)).isInstanceOf(IllegalStateException.class);
     }
 
@@ -81,7 +81,7 @@ class TaskRunDomainTests {
         TaskAttempt attempt = TaskAttempt.claim(run, "worker", now, now.plusSeconds(30), now.plusMinutes(2));
 
         attempt.fail(attempt.getClaimToken(), "EXECUTION_FAILED", "START_BOUNDARY_FAILURE", false, now.plusSeconds(1));
-        run.fail("AI_SERVICE_UNAVAILABLE", "START_BOUNDARY_FAILURE", false, now.plusSeconds(1));
+        run.fail("AI_SERVICE_UNAVAILABLE", false, now.plusSeconds(1));
 
         assertThat(attempt.getState()).isEqualTo(TaskAttemptState.FAILED);
         assertThat(run.getState()).isEqualTo(TaskRunState.FAILED);

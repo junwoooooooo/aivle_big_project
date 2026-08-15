@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c4b8cf685b8182f4f45202dd098b6ca6d4f2bb080409a85286b67b7cec92b5ab",
+  "canonicalRequestHash": "102a5af82bd21b3eca5db0574d2d2d5e898831396bffc796ae3ac26d044f9006",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "거래 매칭 및 안전한 거래 환경 제공 플랫폼 운영자 물품 판매자 플랫폼 운영자 플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다. 사용자가 물품 등록 사용자가 거래 상대방 검색 및 매칭 사용자가 직접 거래 진행 사용자가 거래 후 결제 진행 플랫폼이 수수료 수취 판매자에게 잔액 지급 프리미엄 서비스 제공을 통한 추가 수익 창출 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "MATCHING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C2-F1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "MATCHING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "플랫폼 운영자가 거래를 중개하고, 안전한 거래 환경을 제공하는 서비스."
+    }
+  ],
+  "durationMs": 3542,
+  "timestamp": "2026-08-10T07:56:15.782545+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
