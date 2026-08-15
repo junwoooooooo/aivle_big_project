@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:3abf02ba815fbeac97d42295cf5d28e2fbdd0a0f1af285854953d68dbe80a3f0",
+  "canonicalRequestHash": "3206fccd44542adb14a29ddb58bb6b7d6c9f912d967c5882907dc5e0321c1254",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "온라인 플랫폼 운영 및 관리 식재료 공급 및 추천 서비스 제공 고객에게 식재료를 판매 물류 및 배송 서비스 제공 고객의 피드백을 반영하여 추천 알고리즘을 지속적으로 개선한다. 지역 농가와 협력하여 신선한 식재료를 공급받는다. 고객이 요리 스타일 입력 시스템이 맞춤형 식재료 추천 고객이 주문 농가에서 식재료 공급 물류업체가 배송 고객이 구독료 결제 시스템이 결제 확인 농가에 식재료 대금 지급 구독 모델을 통해 정기적으로 수익을 창출한다. 온라인 플랫폼 및 모바일 앱을 통해 제공",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PARTNER_FULFILLED",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 식재료를 공급하고 추천하는 서비스로, 지역 농가와 협력하여 신선한 식재료를 제공하며, 구독 모델을 통해 정기적인 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 3973,
+  "timestamp": "2026-08-10T03:32:05.546309+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

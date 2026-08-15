@@ -1,0 +1,156 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:56c19a94a3a9ea9d103072f2183578f98ce217257772f34666fee524e1358ab9",
+  "canonicalRequestHash": "bbee166825d5bcbb1486fb244aef188aeea17a52ca0dc0b7bd274a736b796059",
+  "redactedRequest": {
+    "kind": "PLAN",
+    "left": {
+      "thesis": {
+        "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "useCaseThesis": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스.",
+        "valuePropositionThesis": "AI 코치가 면접 준비생의 답변을 분석하고 개선점을 제시한다.",
+        "offerThesis": "AI 코치가 면접 준비를 지원하여 자신감을 높인다.",
+        "solutionThesis": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다",
+      "familyId": "OTHER:AUTOMATED_DIGITAL",
+      "familyLabelKo": "기타 역할 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    },
+    "right": {
+      "thesis": {
+        "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "useCaseThesis": "AI를 활용하여 면접 준비생의 답변을 분석하고 맞춤형 피드백을 제공하는 서비스.",
+        "valuePropositionThesis": "AI 코치가 면접 준비생의 답변을 분석하고 개선점을 제시하여 자신감을 높인다.",
+        "offerThesis": "AI 코치가 면접 준비를 지원하여 자신감을 높인다.",
+        "solutionThesis": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다",
+      "familyId": "OTHER:AUTOMATED_DIGITAL",
+      "familyLabelKo": "기타 역할 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "DISTINCT",
+    "overlappingMechanics": [
+      "businessRole",
+      "customerInteractionModel",
+      "dataDependency",
+      "deliveryModel",
+      "monetizationModel",
+      "operatingModel",
+      "partnerModel",
+      "physicalDependency",
+      "transactionModel"
+    ],
+    "materiallyDifferentMechanics": [
+      "useCaseThesis",
+      "valuePropositionThesis"
+    ],
+    "safeSummary": "The two concepts share the same business architecture and mechanics, but differ in the specifics of their use case and value proposition, indicating they are distinct."
+  },
+  "durationMs": 2500,
+  "timestamp": "2026-08-10T03:55:56.130940+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

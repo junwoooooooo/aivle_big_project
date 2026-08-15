@@ -7,7 +7,7 @@
 | 유형 | 근거 | 처리 |
 |---|---|---|
 | 명백한 우열형 | 관문 3 E 4/4 정식 통과 | 제공 |
-| 가격형 | B 3/4 모듈 성적 | 제공 (지위·B1 오답 병기) |
+| 가격형 | B 3/4 모듈 성적 → **계기 재측정에서 방향 반전** | **차단**(2026-08-10) |
 | 윤리·가치형 | H1·H3·B1 전부 불일치 | **차단** |
 | 미묘한 우열형·속성경합 | H2·H6 측정 한계 이하 | 차단 |
 | 음성대조(동일 프로필) | 잴 것이 없다 | 차단 |
@@ -35,7 +35,7 @@ ETHICAL_VALUE = "ETHICAL_VALUE"  # 윤리·가치형 — 영구 금지
 UNMEASURABLE = "UNMEASURABLE"    # 다속성 경합·팽팽한 대비 — 측정 한계 이하
 IDENTICAL = "IDENTICAL"          # 동일 프로필 — 음성대조지 상품 비교가 아니다
 
-SERVICEABLE = frozenset({DOMINANCE, PRICE})
+SERVICEABLE = frozenset({DOMINANCE})
 
 # 윤리·가치 어휘. 속성 이름·값 어느 쪽에 있어도 걸린다.
 ETHICAL_TERMS = (
@@ -110,8 +110,16 @@ def classify(pair: dict) -> Verdict:
                        differing, price_differs)
 
     if len(differing) == 1 and price_differs:
-        return Verdict(PRICE, True,
-                       f"«{differing[0]}» 프리미엄이 가격 핸디캡을 이기는지 묻는 지불의사다.",
+        # 2026-08-10 차단. 지불의사 임계는 응답자 카드가 아니라 **모델이 가진 값**이고,
+        # 계기를 바꾸면 따라 바뀐다. 같은 25명에게 같은 자극을 물은 실측이 그것을 보였다:
+        #   B3(신선 5,000 vs 냉동 4,500) CLI +0.23 / gpt-4o-mini −0.68 / gpt-5.6-terra +1.00
+        #   B4(신선 6,600 vs 냉동 4,500) CLI −0.42 / gpt-4o-mini −0.92 / gpt-5.6-terra +0.72
+        # 성향이 정반대인 두 모델이 각자 다른 방향으로 틀렸다 — 더 나은 모델을 찾는 문제가 아니다.
+        return Verdict(PRICE, False,
+                       f"«{differing[0]}» 프리미엄이 가격 핸디캡을 이기는지 묻는 지불의사다. "
+                       "지불의사의 임계는 응답자가 아니라 실행 모델이 정한다 — 계기를 바꾸면 "
+                       "방향까지 뒤집히는 것이 실측됐다. 이 유형은 예측을 제공하지 않는다. "
+                       "가격을 양쪽 같게 두고 속성 하나만 바꿔서 다시 물어라.",
                        differing, price_differs)
 
     return Verdict(

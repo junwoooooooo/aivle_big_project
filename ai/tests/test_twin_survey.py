@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from app.twin import caveats, execute_twin_survey
 from app.twin.models import Side, TwinSurveyInput
-from app.twin.task_type import DOMINANCE, PRICE
+from app.twin.task_type import DOMINANCE, PRICE, SERVICEABLE
 
 
 def request_payload(x_attrs, y_attrs, x_price=None, y_price=None, size=50):
@@ -107,7 +107,7 @@ def test_malformed_input_is_refused_before_touching_the_bank(monkeypatch):
 
 # ── 경계 문구 ─────────────────────────────────────────────────────────
 def test_every_serviceable_type_carries_non_empty_caveats():
-    for task_type in (DOMINANCE, PRICE):
+    for task_type in SERVICEABLE:
         assert caveats.for_pair(task_type), "빈 caveats 는 계약 위반이다"
 
 
@@ -116,12 +116,14 @@ def test_caveats_always_carry_the_mandated_disclosures():
     assert "외적 타당성 시험 종합 미달" in notes
     assert "한국미디어패널조사(KISDI)" in notes
     assert "실존 인물 인터뷰가 아니다" in notes
-    assert "크기·점유율·선택확률은 이 파이프라인이 산출하지 않는다" in notes
+    assert "시장 점유율도 실제 구매확률도 아니다" in notes
+    assert "차이의 크기는 이 설계가 답하지 못한다" in notes
 
 
-def test_price_type_carries_its_weaker_standing():
-    notes = " / ".join(caveats.for_pair(PRICE))
-    assert "B 3/4" in notes and "B1" in notes
+def test_dominance_carries_the_instrument_stability_evidence():
+    """우열형은 계기를 바꿔도 방향이 유지되는 것이 실측됐다 — 그 사실이 값과 같이 나가야 한다."""
+    notes = " / ".join(caveats.for_pair(DOMINANCE))
+    assert "실행 모델을 바꿔도 방향이 유지되는 것을" in notes
 
 
 def test_instrument_claim_defaults_to_unverified():

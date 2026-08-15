@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:cfff3b843eee955923ab85d09fcd8831a6308334b5b52cb36131089603fe0cb9",
+  "canonicalRequestHash": "a98bbda864751625899ad60a5e3d7c97a9ae128fe3d5bacab91b82d4f7cc4eda",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 및 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 및 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 및 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 구독 모델을 통해 지속적인 수익을 창출합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. AI 도구의 지속적인 업데이트 및 고객 지원을 통해 고객 만족도를 높입니다. 사용자는 도구에 회의 및 이메일 내용을 입력하고, 도구는 이를 분석하여 CRM에 자동으로 업데이트합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 기반 CRM 통합 및 구독 모델을 통한 중소기업 맞춤형 마케팅."
+    }
+  ],
+  "durationMs": 7421,
+  "timestamp": "2026-08-10T06:40:01.576406+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

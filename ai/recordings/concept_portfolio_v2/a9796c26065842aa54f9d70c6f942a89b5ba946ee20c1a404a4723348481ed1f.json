@@ -1,0 +1,182 @@
+{
+  "taskType": "IDEA_BRIEF_DERIVATION",
+  "operationVersion": "v2",
+  "promptVersion": "idea-brief-current-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:3846e6e9d222fec264bfa3b614859c85b4cc7e54624874da668e3c7ebeb0ba27",
+  "canonicalRequestHash": "a9796c26065842aa54f9d70c6f942a89b5ba946ee20c1a404a4723348481ed1f",
+  "redactedRequest": {
+    "input": {
+      "mode": "FINAL_SYNTHESIS",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        }
+      ],
+      "attachmentFileIds": [],
+      "fieldMetadata": [
+        {
+          "fieldKey": "ideaOverview",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "problem",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetUsers",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetRegion",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "revenueModel",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "price",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "channels",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "differentiators",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        }
+      ]
+    }
+  },
+  "providerResponse": {
+    "safetyReview": {
+      "decision": "ALLOW",
+      "categories": [],
+      "restrictions": [],
+      "userFacingReason": "이 아이디어는 안전하며, 여행 계획 서비스를 제공하는 것으로 보입니다."
+    },
+    "interpretation": {
+      "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+      "interpretedTargetUsers": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+      "usageContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+      "industryCategory": "여행 및 관광",
+      "researchScope": "주말 여행 계획 및 예약 서비스",
+      "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+      "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+      "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+    },
+    "commitmentCandidates": [],
+    "questions": [],
+    "contradictions": [],
+    "readiness": {
+      "status": "READY_FOR_REVIEW",
+      "score": 0,
+      "missingFieldKeys": []
+    },
+    "userFacingSummary": "이 서비스는 사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동으로 구성하고, 숙박 및 체험 예약 페이지로 연결하는 기능을 제공합니다."
+  },
+  "durationMs": 5148,
+  "timestamp": "2026-08-10T09:35:46.909493+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,570 @@
+{
+  "taskType": "LEGAL_FACT_COMPLETION",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-completion-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c039bb3025fc389f1fe94bccd64f4e822ef894ddeed88fbb536187250f6ee41b",
+  "canonicalRequestHash": "2eec1263b378921053eae58d2e94f765bb2ffaa1cbfe27e1bed773498e0ac178",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+      "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "취업 준비생은 면접 준비 과정에서 자신의 답변을 객관적으로 평가하고 개선할 방법이 필요하다.",
+        "interpretedTargetUsers": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "usageContext": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스.",
+        "industryCategory": "교육 및 취업 지원",
+        "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+        "conciseIdeaDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스",
+        "targetRegionInterpretation": "특정 지역은 명시되지 않음",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음"
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "AI 기반 면접 준비 커뮤니티",
+      "oneLineConcept": "AI와 커뮤니티의 힘으로 면접 준비를 지원하는 플랫폼",
+      "targetSegment": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+      "problemFocus": "취업 준비생은 혼자서 면접 준비를 하며 피드백을 받기 어려운 상황이다.",
+      "useContext": "AI와 커뮤니티의 피드백을 통해 면접 준비를 지원하는 서비스.",
+      "valueProposition": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 자신감을 높인다.",
+      "offerThesis": "AI와 커뮤니티의 협업으로 면접 준비의 질을 높인다.",
+      "solutionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+      "coreMechanism": "AI 알고리즘과 커뮤니티 피드백 시스템의 결합",
+      "customerInteraction": "사용자는 플랫폼에 접속하여 자신의 답변을 입력하고 커뮤니티와 AI로부터 피드백을 받는다.",
+      "valueDelivery": "AI 분석 결과와 커뮤니티 피드백을 바탕으로 맞춤형 피드백과 연습 계획을 제공한다.",
+      "operatingApproach": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영",
+      "partnerApproach": "교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다.",
+      "transactionApproach": "구독 모델을 통해 지속적인 서비스 이용을 유도한다.",
+      "commercialApproach": "프리미엄 피드백 서비스 및 커뮤니티 참여를 통한 수익 창출",
+      "fulfillmentApproach": "온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원",
+      "differentiatingMechanics": [
+        "AI 기반의 실시간 피드백 제공",
+        "커뮤니티 피드백 시스템"
+      ],
+      "mainChanges": [
+        "커뮤니티 기능 추가",
+        "AI 분석 알고리즘 개선"
+      ],
+      "secondaryChanges": [
+        "UI/UX 업데이트",
+        "커뮤니티 활성화를 위한 이벤트 기획"
+      ],
+      "legalRiskHints": [
+        "개인정보 보호 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "AI와 커뮤니티의 협업으로 면접 준비생의 경쟁력을 높이는 데 기여한다.",
+      "planId": "P10",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+          "useCaseThesis": "AI와 커뮤니티의 피드백을 통해 면접 준비를 지원하는 서비스.",
+          "valuePropositionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 자신감을 높인다.",
+          "offerThesis": "AI와 커뮤니티의 협업으로 면접 준비의 질을 높인다.",
+          "solutionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다."
+        },
+        "architecture": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "COMMUNITY",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "ai 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다",
+        "familyId": "PLATFORM_INFRASTRUCTURE:AUTOMATED_DIGITAL",
+        "familyLabelKo": "플랫폼 인프라 · 디지털 자동화",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "PLATFORM_INFRASTRUCTURE",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "AUTOMATED_DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "SUBSCRIPTION",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "COMMUNITY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+        "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+        "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "UNSELECTED",
+      "selectionScore": 0.0,
+      "selectionReason": "선택 평가 전",
+      "relationToPortfolio": "NOT_EVALUATED"
+    },
+    "candidate": {
+      "conceptName": "AI 기반 면접 준비 커뮤니티",
+      "conceptDefinition": "AI와 커뮤니티의 힘으로 면접 준비를 지원하는 플랫폼",
+      "introduction": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+      "coreValue": "AI 분석 결과와 커뮤니티 피드백을 바탕으로 맞춤형 피드백과 연습 계획을 제공한다.",
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "industryCategory": "교육 및 취업 지원",
+      "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+      "targetRegion": "대한민국",
+      "revenueModel": "구독 모델을 통해 지속적인 서비스 이용을 유도한다.",
+      "price": "월 29,000원",
+      "channels": "온라인 플랫폼 및 모바일 앱",
+      "differentiators": "AI 기반의 실시간 피드백 제공, 커뮤니티 피드백 시스템",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 5.0,
+        "horizonYears": 3,
+        "rationale": "AI와 커뮤니티의 협업으로 면접 준비생의 경쟁력을 높이는 데 기여한다.",
+        "assumptions": [
+          "신입 및 주니어 채용 시장의 성장",
+          "AI 기술의 발전으로 인한 서비스 품질 향상"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 500000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "신입 및 주니어 채용 시장의 5% 점유율 목표",
+        "assumptions": [
+          "취업 준비생의 수요 증가",
+          "AI 기반 서비스에 대한 신뢰도 향상"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "취업 준비생은 혼자서 면접 준비를 하며 피드백을 받기 어려운 상황이다.",
+      "solutionMechanism": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+      "featureSet": [
+        "AI 기반 피드백 제공",
+        "커뮤니티 피드백 기능",
+        "개인 맞춤형 연습 계획 제공"
+      ],
+      "actorRoles": [
+        "사용자",
+        "AI 시스템",
+        "커뮤니티 멤버"
+      ],
+      "platformRole": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영",
+      "operatingModel": "온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원",
+      "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다.",
+      "providerRole": "AI 서비스 제공자",
+      "sellerRole": "구독 서비스 판매자",
+      "intermediaryRole": "커뮤니티 운영자",
+      "transactionFlow": [
+        "사용자가 플랫폼에 가입한다.",
+        "사용자가 모의면접 답변을 입력한다.",
+        "AI가 답변을 분석한다.",
+        "커뮤니티가 피드백을 제공한다.",
+        "사용자가 피드백을 수령한다."
+      ],
+      "paymentFlow": [
+        "사용자가 구독료를 결제한다.",
+        "결제 시스템이 결제를 처리한다.",
+        "서비스 제공자가 수익을 수령한다."
+      ],
+      "personalDataUsage": [
+        "사용자의 면접 답변을 분석하기 위해 개인정보를 수집한다."
+      ],
+      "physicalActivities": [],
+      "partnerRequirements": [
+        "교육 기관과의 협력 체결 필요",
+        "취업 지원 센터와의 파트너십 구축"
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "AI 기반의 실시간 피드백 제공",
+        "커뮤니티 피드백 시스템"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 4,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "requirements": [
+      "intermediaryRole의 역할 존재·부재와 해당 책임을 의미에 맞게 명시해야 합니다."
+    ],
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "AI 기반 면접 준비 커뮤니티",
+    "conceptDefinition": "AI와 커뮤니티의 힘으로 면접 준비를 지원하는 플랫폼",
+    "introduction": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+    "coreValue": "AI 분석 결과와 커뮤니티 피드백을 바탕으로 맞춤형 피드백과 연습 계획을 제공한다.",
+    "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+    "industryCategory": "교육 및 취업 지원",
+    "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델을 통해 지속적인 서비스 이용을 유도한다.",
+    "price": "월 29,000원",
+    "channels": "온라인 플랫폼 및 모바일 앱",
+    "differentiators": "AI 기반의 실시간 피드백 제공, 커뮤니티 피드백 시스템",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 5.0,
+      "horizonYears": 3,
+      "rationale": "AI와 커뮤니티의 협업으로 면접 준비생의 경쟁력을 높이는 데 기여한다.",
+      "assumptions": [
+        "신입 및 주니어 채용 시장의 성장",
+        "AI 기술의 발전으로 인한 서비스 품질 향상"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 500000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "신입 및 주니어 채용 시장의 5% 점유율 목표",
+      "assumptions": [
+        "취업 준비생의 수요 증가",
+        "AI 기반 서비스에 대한 신뢰도 향상"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "취업 준비생은 혼자서 면접 준비를 하며 피드백을 받기 어려운 상황이다.",
+    "solutionMechanism": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+    "featureSet": [
+      "AI 기반 피드백 제공",
+      "커뮤니티 피드백 기능",
+      "개인 맞춤형 연습 계획 제공"
+    ],
+    "actorRoles": [
+      "사용자",
+      "AI 시스템",
+      "커뮤니티 멤버"
+    ],
+    "platformRole": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영",
+    "operatingModel": "온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원",
+    "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다.",
+    "providerRole": "AI 서비스 제공자",
+    "sellerRole": "구독 서비스 판매자",
+    "intermediaryRole": "커뮤니티 운영자",
+    "transactionFlow": [
+      "사용자가 플랫폼에 가입한다.",
+      "사용자가 모의면접 답변을 입력한다.",
+      "AI가 답변을 분석한다.",
+      "커뮤니티가 피드백을 제공한다.",
+      "사용자가 피드백을 수령한다."
+    ],
+    "paymentFlow": [
+      "사용자가 구독료를 결제한다.",
+      "결제 시스템이 결제를 처리한다.",
+      "서비스 제공자가 수익을 수령한다."
+    ],
+    "personalDataUsage": [
+      "사용자의 면접 답변을 분석하기 위해 개인정보를 수집한다."
+    ],
+    "physicalActivities": [],
+    "partnerRequirements": [
+      "교육 기관과의 협력 체결 필요",
+      "취업 지원 센터와의 파트너십 구축"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "AI 기반의 실시간 피드백 제공",
+      "커뮤니티 피드백 시스템"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 7582,
+  "timestamp": "2026-08-10T03:57:59.403978+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

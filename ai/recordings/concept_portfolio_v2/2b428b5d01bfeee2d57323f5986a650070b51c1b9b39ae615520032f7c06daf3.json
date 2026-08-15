@@ -1,0 +1,29 @@
+{
+  "taskType": "VALIDATE_HYPOTHESES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-hypothesis-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:005861268d3ed1dd8d89edc16c04ef4205da47427376930a0fd3b43624ec0c7b",
+  "canonicalRequestHash": "2b428b5d01bfeee2d57323f5986a650070b51c1b9b39ae615520032f7c06daf3",
+  "redactedRequest": {
+    "items": [
+      {
+        "hypothesisType": "PRICE",
+        "value": "서비스 이용 시 예약 수수료 발생"
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "hypothesisType": "PRICE",
+      "decision": "VALID",
+      "safeReason": "The statement correctly relates to a pricing hypothesis regarding service fees."
+    }
+  ],
+  "durationMs": 2033,
+  "timestamp": "2026-08-10T07:57:24.438169+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

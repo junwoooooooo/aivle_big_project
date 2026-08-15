@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e2998f2d969e79971bfaffdf0ceae829cb06c08bace0407b74c4118577ae6568",
+  "canonicalRequestHash": "56b8aa9ac9fdcadeda095021cb6fe42ba8102f329ac9132412a740a107cc2bd5",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-R1",
+        "businessText": "여행 계획 플랫폼 제공자 여행 계획 서비스 제공자 숙박 및 체험 서비스 판매자 예약 플랫폼 운영자 데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다. 숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다. 사용자가 이동 가능 시간과 관심사를 입력한다. 시스템이 최적의 여행 일정을 생성한다. 사용자가 예약을 진행한다. 사용자가 예약 시 수수료를 지불한다. 파트너에게는 일정 비율의 수익을 분배한다. 프리미엄 서비스 및 광고를 통해 추가 수익을 창출한다. 웹사이트 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C3-R1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "여행 계획 플랫폼으로, 사용자 맞춤형 서비스를 제공하며, 예약 플랫폼을 운영하고, 파트너와 협력하여 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 3397,
+  "timestamp": "2026-08-10T07:57:07.271565+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

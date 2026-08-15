@@ -8,6 +8,8 @@ import { useProjects } from '../../features/projects/hooks/useProjects.js';
 import { AppIcon, Button, Drawer, ToastRegion } from '../../shared/ui/index.js';
 import { useServicePolicy } from '../../features/service-policy/useServicePolicy.js';
 import { getWriteRestriction } from '../../features/service-policy/servicePolicyRestrictions.js';
+import { ProjectChromeProvider } from '../project-shell/ProjectChromeContext.jsx';
+import ProjectContextTools from '../project-shell/ProjectContextTools.jsx';
 import './layouts.css';
 
 function userLabel(user) {
@@ -58,10 +60,10 @@ function ProjectSearch({ onChoose }) {
 }
 
 function GlobalNavigation({ onNavigate }) {
-  return <nav className="app-global-nav" aria-label="주요 메뉴"><NavLink to={appRoutes.home} end onClick={onNavigate}>Home</NavLink><NavLink to={appRoutes.projects} onClick={onNavigate}>Projects</NavLink></nav>;
+  return <nav className="app-global-nav" aria-label="주요 메뉴"><NavLink to={appRoutes.home} end onClick={onNavigate}>홈</NavLink><NavLink to={appRoutes.projects} onClick={onNavigate}>프로젝트</NavLink></nav>;
 }
 
-export default function AppShell() {
+function AppShellContent() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accountPhase, setAccountPhase] = useState('unmounted');
   const [authTransitionFinished, setAuthTransitionFinished] = useState(false);
@@ -141,6 +143,7 @@ export default function AppShell() {
         <Link className="app-brand" to={appRoutes.home}><span aria-hidden="true">V</span>Venture Verify</Link>
         <GlobalNavigation />
         <div className="app-topbar__actions">
+          <ProjectContextTools />
           <ProjectSearch />
           <div className="app-account">
             <button ref={triggerRef} type="button" className="app-account-trigger" aria-label="계정 메뉴" aria-haspopup="menu" aria-expanded={accountOpen} onClick={toggleAccount}>
@@ -157,9 +160,10 @@ export default function AppShell() {
           <span>조회 기능은 이용할 수 있지만 변경 작업은 잠시 사용할 수 없습니다.</span>
         </div>
       )}
-      <main id="main-content" className="app-main" tabIndex="-1"><div key={pageKey} className="app-page-transition"><Outlet /></div></main>
+      <main id="main-content" className={`app-main ${/^\/app\/projects\/[^/]+/.test(location.pathname) ? 'app-main--project' : ''}`} tabIndex="-1"><div key={pageKey} className="app-page-transition"><Outlet /></div></main>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="메뉴">
         <GlobalNavigation onNavigate={() => setDrawerOpen(false)} />
+        <div className="app-drawer-project-tools"><ProjectContextTools /></div>
         <ProjectSearch onChoose={() => setDrawerOpen(false)} />
         <Link
           className={`app-drawer-new ${writeRestriction.blocked ? 'is-disabled' : ''}`}
@@ -181,4 +185,8 @@ export default function AppShell() {
       <ToastRegion />
     </div>
   );
+}
+
+export default function AppShell() {
+  return <ProjectChromeProvider><AppShellContent /></ProjectChromeProvider>;
 }

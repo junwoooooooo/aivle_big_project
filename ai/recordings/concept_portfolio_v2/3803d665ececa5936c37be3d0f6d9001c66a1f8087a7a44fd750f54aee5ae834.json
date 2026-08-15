@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:cee4b975e12e1d9fd651bf0975b06e6c948bd47e98f3c20a396ac646d3c88596",
+  "canonicalRequestHash": "3803d665ececa5936c37be3d0f6d9001c66a1f8087a7a44fd750f54aee5ae834",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "온라인 플랫폼을 통한 서비스 제공 및 관리 장비 대여 및 유지보수 서비스 제공 고객에게 서비스 판매 및 계약 체결 물류 서비스 제공업체와 협력하여 배송 및 설치 지원 고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보합니다. 고객 주문 접수 장비 준비 및 배송 설치 및 사용 안내 정기 점검 및 유지보수 고장 발생 시 즉시 교체 고객 월간 요금 결제 장비 대여 계약 체결 정기 점검 서비스 요금 청구 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OMNICHANNEL",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 장비 대여 및 유지보수 서비스를 제공하며, 고객 맞춤형 서비스와 정기 점검을 포함한 구독 기반 모델을 운영하는 비즈니스."
+    }
+  ],
+  "durationMs": 2078,
+  "timestamp": "2026-08-10T05:10:38.760461+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

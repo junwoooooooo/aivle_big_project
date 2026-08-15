@@ -17,8 +17,13 @@ import lombok.NoArgsConstructor;
 public class MarketAnalysisSeedSnapshot extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
-    @Column(name = "selection_id", nullable = false) private Long selectionId;
-    @Column(name = "concept_id", nullable = false, length = 64) private String conceptId;
+    @Column(name = "selection_id") private Long selectionId;
+    @Column(name = "concept_id", length = 64) private String conceptId;
+    @Column(name = "source_type", nullable = false, length = 40) private String sourceType;
+    @Column(name = "portfolio_selection_id") private Long portfolioSelectionId;
+    @Column(name = "portfolio_concept_id", length = 64) private String portfolioConceptId;
+    @Column(name = "legal_report_id", length = 64) private String legalReportId;
+    @Column(name = "stale_at") private Instant staleAt;
     @Column(name = "schema_version", nullable = false, length = 20) private String schemaVersion;
     @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
     @Column(name = "snapshot_hash", nullable = false, length = 71) private String snapshotHash;
@@ -39,6 +44,7 @@ public class MarketAnalysisSeedSnapshot extends BaseEntity {
         value.projectId = projectId;
         value.selectionId = selectionId;
         value.conceptId = conceptId;
+        value.sourceType = "LEGACY";
         value.schemaVersion = schemaVersion;
         value.sourceSnapshotHash = sourceSnapshotHash;
         value.snapshotHash = snapshotHash;
@@ -46,6 +52,29 @@ public class MarketAnalysisSeedSnapshot extends BaseEntity {
         value.createdByUserId = createdByUserId;
         value.finalizedAt = finalizedAt;
         return value;
+    }
+
+    public static MarketAnalysisSeedSnapshot createPortfolio(String id, Long projectId,
+            Long portfolioSelectionId, String portfolioConceptId, String legalReportId,
+            String schemaVersion, String sourceSnapshotHash, String snapshotHash,
+            String snapshotJson, Long createdByUserId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || portfolioSelectionId == null || blank(portfolioConceptId)
+                || blank(legalReportId) || blank(schemaVersion) || !hash(sourceSnapshotHash)
+                || !hash(snapshotHash) || blank(snapshotJson) || createdByUserId == null || finalizedAt == null) {
+            throw new IllegalArgumentException("V2 시장분석 Seed Snapshot 필드가 올바르지 않습니다.");
+        }
+        MarketAnalysisSeedSnapshot value = new MarketAnalysisSeedSnapshot();
+        value.id = id; value.projectId = projectId; value.sourceType = "CONCEPT_PORTFOLIO_V2";
+        value.portfolioSelectionId = portfolioSelectionId; value.portfolioConceptId = portfolioConceptId;
+        value.legalReportId = legalReportId; value.schemaVersion = schemaVersion;
+        value.sourceSnapshotHash = sourceSnapshotHash; value.snapshotHash = snapshotHash;
+        value.snapshotJson = snapshotJson; value.createdByUserId = createdByUserId;
+        value.finalizedAt = finalizedAt;
+        return value;
+    }
+
+    public void markStale(Instant now) {
+        if (staleAt == null) staleAt = now;
     }
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }

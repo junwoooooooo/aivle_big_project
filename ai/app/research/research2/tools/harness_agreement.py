@@ -31,6 +31,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "harness"))
+sys.path.insert(0, ROOT)
+import runpath                                                       # noqa: E402
 
 
 def _load(p):
@@ -82,7 +84,7 @@ def agree(x: dict, y: dict) -> dict:
 
 def drafts_of(tag: str, vocab: dict, sh) -> list:
     """저장된 초안 → (라벨, 서명). 게이트 통과 여부는 그 판의 `gate.json` 에서 온다."""
-    d = os.path.join(ROOT, "runs", "harness", tag)
+    d = runpath.harness_read_dir(tag)
     gj = os.path.join(d, "gate.json")
     passed = _load(gj).get("passed") if os.path.exists(gj) else None
     out = []
@@ -100,9 +102,10 @@ def drafts_of(tag: str, vocab: dict, sh) -> list:
 def main():
     vocab = _load(os.path.join(ROOT, "harness", "vocab.json"))
     sh = _harness()
-    hdir = os.path.join(ROOT, "runs", "harness")
-    tags = sorted(t for t in os.listdir(hdir)
-                  if os.path.isdir(os.path.join(hdir, t)))
+    # 하네스 산출물 자리가 둘이다(씨앗 `runs/harness` · 수집이 만든
+    # `runs-generated/harness`). 한쪽만 보면 새 판이 **집계에서 조용히 빠진다.**
+    tags = sorted({t for hdir in runpath.harness_bases() if os.path.isdir(hdir)
+                   for t in os.listdir(hdir) if os.path.isdir(os.path.join(hdir, t))})
 
     # ── 컨셉 단위로 묶는다. 태그가 여럿이어도 같은 컨셉이면 한 묶음 ──
     concept_of = {

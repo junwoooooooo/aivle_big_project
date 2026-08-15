@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 import io, json, os, sys
+import threading as _threading          # _FakeMeter 가 per_doc 병렬 아래서 세어야 한다
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -113,7 +114,11 @@ check("기본 문안 = v1", prompts.DEFAULT_SEARCH_VARIANT == "v1"
       and prompts.SEARCH is prompts.SEARCH_V1)
 check("규칙의 기본값도 v1", rules["adapters"]["web"]["search_prompt"] == "v1")
 check("v1 에는 12-2 문장이 없다", "누가 발행했는지로 고른다" not in prompts.SEARCH_V1)
-check("변종 둘이 보존돼 있다", set(prompts.SEARCH_VARIANTS) == {"v1", "v12-2"})
+# **포함**으로 본다 — 새 변종이 늘어나는 것은 정상이고(판 ㊱ `v33-pain`), 지켜야 할 것은
+# 「옛 변종이 사라지지 않는다」와 「기본이 v1 이다」 둘이다. 같음으로 두면 변종을 더할
+# 때마다 이 줄이 깨지면서 정작 그 두 가지를 안 지켜도 알 수 없다.
+check("옛 변종이 보존돼 있다", {"v1", "v12-2"} <= set(prompts.SEARCH_VARIANTS),
+      str(sorted(prompts.SEARCH_VARIANTS)))
 check("명시적으로 고르면 그 문안이 나온다",
       prompts.search_prompt("v12-2")[1] is prompts.SEARCH_V12_2)
 try:
@@ -123,19 +128,61 @@ except KeyError:
     check("모르는 문안이면 멈춘다 (조용히 기본으로 넘어가지 않는다)", True)
 
 print("\n  from_query 는 **실제로 모델이 받은 것**만 적는다 (안 나간 검색어를 적지 않는다)")
-_src = _io.open(os.path.join(ROOT, "adapters", "web.py"), encoding="utf-8").read()
-check("search 가 plan_query 문자열을 from_query 로 쓰지 않는다",
-      "_unused_query" in _src and "from_query=q" in _src)
+#: 소스를 grep 하던 자리다(`_unused_query` 라는 **변수 이름**을 찾았다). 판 ㊱ 에서 그
+#: 이름이 사라지자 동작은 그대로인데 검사만 빨개졌다 — 이름은 계약이 아니다.
+#: **동작으로 본다**: 모델에게 간 입력과 원장에 남은 from_query 둘 다에 plan_query 의
+#: 문자열이 없어야 한다. LLM 0회(가짜 계량기).
+class _Spy:
+    def __init__(self):
+        self.inputs = []
+
+    def create(self, node, **kw):
+        self.inputs.append(str(kw.get("input") or ""))
+
+        class _R:
+            output = []
+
+            def model_dump_json(self):
+                return "{}"
+        return _R()
+
+
+_slot = Slot(slot_id="S1", var_id="V1", formula_id="F1", claim_type="PAIN",
+             subject="1인 가구 혼자 식사", metric="문제 경험률", period="2025", unit="%")
+_planned = web.plan_query(_slot)
+_spy = _Spy()
+_cands = web.search(_slot, _spy, "S1", rules)
+check("plan_query 가 문자열을 만들기는 한다", bool(_planned), str(_planned))
+check("그 문자열이 모델 입력에 안 들어간다",
+      all(p not in i for p in _planned for i in _spy.inputs), str(_spy.inputs)[:200])
+check("그 문자열이 from_query 에도 안 남는다",
+      all(p not in (c.from_query or "") for p in _planned for c in _cands),
+      str([c.from_query for c in _cands])[:200])
 
 # ══════════════════════════════════════════════════════════════
-print("\n[extract] 슬롯 단위 1회 — 문서마다 호출하지 않는다")
+print("\n[extract] **문서마다 1회** — 묶음이 아니다 (extract_mode=per_doc)")
+# ⚠ 판 ㉛ 에서 뒤집힌 자리다. 예전에는 「슬롯 단위 1회」가 규칙이었고 이 블록이 그것을
+#   지켰다. 묶음일 때 발췌 44건이 인용 1건을 냈고(2.3%), 모델의 「없습니다」 한 마디로
+#   문서 5개가 통째로 죽으면서 **어느 문서를 실제로 읽었는지 원장에 안 남았다.**
+#   그래서 문서당 1회로 바꿨다 — 아래는 그 **바뀐 계약**을 지킨다.
 src = io.open(os.path.join(ROOT, "adapters", "web.py"), encoding="utf-8").read()
 body = src[src.index("def extract("):src.index("def collect(")]
-# LLM 호출은 _call() 로 감싼다 (예외를 값으로 바꾸기 위해) — 호출 지점은 여전히 1곳이어야 한다
-llm_calls = body.count("meter.create") + body.count('_call(meter,')
-check("extract 안에 LLM 호출 지점이 1곳뿐", llm_calls == 1, str(llm_calls))
-check("문서 여러 개를 한 프롬프트에", "render_documents" in body)
-check("doc_index 로 url 을 되돌린다", "doc_index" in body and "picked[idx].url" in body)
+one = src[src.index("def _extract_one("):src.index("def extract(")]
+# LLM 호출은 _call() 로 감싼다 (예외를 값으로 바꾸기 위해).
+# 호출 지점은 **`_extract_one` 안에 1곳**이고 `extract` 는 나눠 주기만 한다.
+check("_extract_one 안에 LLM 호출 지점이 1곳뿐",
+      one.count("meter.create") + one.count('_call(meter,') == 1,
+      str(one.count("meter.create") + one.count('_call(meter,')))
+check("extract 자신은 LLM 을 부르지 않는다 (분배만)",
+      body.count("meter.create") + body.count('_call(meter,') == 0)
+check("문서 하나를 한 프롬프트에", "render_documents" in one)
+# `_doc_index` 는 **지운 것이 맞다** — 문서가 하나라 인용의 소속이 자명하다.
+# 묶음 시절의 「quote 로 문서 역추적, 못 정하면 버림」은 조인 버그의 뿌리였다.
+# ⚠ 이름 자체는 주석에 남아 있다(왜 지웠는지를 적어 둔 자리다) — **함수와 그 사용처**가
+#   없어야 한다. 문자열 존재로 검사하면 설명을 지워야 통과하는 시험이 된다.
+check("doc_index 역추적이 사라졌다 (url 은 문서에서 바로 온다)",
+      "def _doc_index" not in src and "picked[idx].url" not in src
+      and "url=doc.url" in one)
 # 판 ㉚ — **개수가 아니라 trace_id 로** 남긴다(백로그 26). 개수만 적으면 「어느 문서가
 # 빠졌나」를 usable[:5] 로 역산해야 하고 그건 기록이 아니라 추론이다.
 check("상한으로 제외된 문서를 note 에 남긴다", "상한" in body)
@@ -147,16 +194,27 @@ check("상한 값·정렬 순서가 규칙에서 온다 (코드 상수 아님)",
 
 
 class _FakeMeter:
+    """⚠ **프롬프트를 리스트로 모은다.** per_doc 로 바뀌면서 호출이 문서마다 일어나고
+    `ThreadPoolExecutor` 아래서 돈다 — 예전처럼 `self.prompt` 하나에 덮어쓰면
+    마지막 것만 남고 그나마 경합한다. 잠금까지 걸어 개수 세기를 믿을 수 있게 둔다."""
+
     def __init__(self, text):
-        self.text, self.calls = text, 0
+        self.text, self.calls, self.prompts = text, 0, []
+        self._lock = _threading.Lock()
 
     def create(self, node, **kw):
-        self.calls += 1
-        self.prompt = kw.get("input", "")
+        with self._lock:
+            self.calls += 1
+            self.prompts.append(kw.get("input", ""))
 
         class R:
             output_text = self.text
         return R()
+
+    @property
+    def prompt(self):
+        """옛 이름 — 이 아래 검사들이 아직 쓴다. 마지막 프롬프트를 돌려준다."""
+        return self.prompts[-1] if self.prompts else ""
 
 
 docs = [Document(slot_id="S1", trace_id=f"S1-q0-u{i}", url=f"https://kosis.kr/p{i}",
@@ -167,17 +225,33 @@ payload = json.dumps({"status": "found", "findings": [
      "unit_raw": "개", "doc_index": 2, "context": "본문"}]}, ensure_ascii=False)
 m = _FakeMeter(payload)
 f = web.extract(S(), docs, m, "S1-extract")
-check("문서 4개 → 호출 1회", m.calls == 1, str(m.calls))
+check("문서 4개 → 호출 4회", m.calls == 4, str(m.calls))
 check("status=found", f.status == "found", f.note)
-check("doc_index 2 → 그 문서의 url", f.findings[0].url == "https://kosis.kr/p2",
-      f.findings[0].url)
-check("프롬프트에 문서 번호가 실림", "[문서 0]" in m.prompt and "[문서 3]" in m.prompt)
+# 문서마다 물으니 인용도 문서마다 나온다 — 4개다.
+check("인용 4건 (문서마다 1건)", len(f.findings) == 4, str(len(f.findings)))
+# url 은 역추적이 아니라 **그 문서 것**이다. payload 의 doc_index=2 는 이제 무시된다 —
+# 그 칸을 믿던 것이 옛 조인 버그였다.
+check("url 은 물어본 그 문서 것 (doc_index 를 안 믿는다)",
+      sorted(x.url for x in f.findings)
+      == [f"https://kosis.kr/p{i}" for i in range(4)],
+      str(sorted(x.url for x in f.findings)))
+check("프롬프트마다 문서가 하나뿐", len(m.prompts) == 4
+      and all("[문서 0]" in p and "[문서 1]" not in p for p in m.prompts))
+# 판 ㉛ 이 이것을 얻으려고 묶음을 버렸다 — **어느 문서를 읽었는지 값으로 남는다.**
+check("extract_log 가 문서별 결과를 남긴다",
+      len(f.extract_log["per_doc"]) == 4 and f.extract_log["calls"] == 4
+      and f.extract_log["mode"] == "per_doc",
+      json.dumps({k: f.extract_log[k] for k in ("calls", "mode")}, ensure_ascii=False))
 
-print("\n  doc_index 를 못 지목한 인용은 버린다 (url 이 없으면 대조 불가)")
+print("\n  doc_index 가 없어도 버리지 않는다 (문서가 하나라 소속이 자명하다)")
+# 옛 계약에서는 이 인용이 **버려져 not_found** 였다. 그 탈락 지점이 구조적으로 사라졌다 —
+# 되살아난 것이 판 ㉛ 의 이득이고, 여기서 그것을 못박는다.
 m2 = _FakeMeter(json.dumps({"status": "found", "findings": [
     {"quote": "어디선가 본 문장", "number_raw": "1", "unit_raw": "개"}]}, ensure_ascii=False))
 f2 = web.extract(S(), docs, m2, "S1-extract")
-check("버려지고 not_found", f2.status == "not_found", f2.note)
+check("살아남고 found", f2.status == "found", f2.note)
+check("url 이 문서에서 채워진다", all(x.url for x in f2.findings),
+      str([x.url for x in f2.findings]))
 
 print("\n  쓸 만한 본문이 없으면 LLM 을 부르지 않는다")
 m3 = _FakeMeter(payload)

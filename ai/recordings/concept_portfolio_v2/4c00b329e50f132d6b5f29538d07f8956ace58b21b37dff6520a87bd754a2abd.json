@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:002618bf4f7a5e29c602b0ffaf166b5b68ae1018e916b76d0665a86c64b8cfcc",
+  "canonicalRequestHash": "4c00b329e50f132d6b5f29538d07f8956ace58b21b37dff6520a87bd754a2abd",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "AI와 커뮤니티의 협업을 통한 자동화된 피드백 시스템 운영 AI 서비스 제공자 구독 서비스 판매자 커뮤니티 운영자 온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원 교육 기관 및 취업 지원 센터와 협력하여 커뮤니티를 활성화한다. 사용자가 플랫폼에 가입한다. 사용자가 모의면접 답변을 입력한다. AI가 답변을 분석한다. 커뮤니티가 피드백을 제공한다. 사용자가 피드백을 수령한다. 사용자가 구독료를 결제한다. 결제 시스템이 결제를 처리한다. 서비스 제공자가 수익을 수령한다. 구독 모델을 통해 지속적인 서비스 이용을 유도한다. 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 기반의 커뮤니티 피드백 플랫폼으로, 구독 모델을 통해 지속적인 서비스 제공."
+    }
+  ],
+  "durationMs": 2923,
+  "timestamp": "2026-08-10T03:58:02.329163+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -9,22 +9,19 @@ import AdminRoute from '../../features/auth/AdminRoute.jsx';
 import PublicOnlyRoute from '../../features/auth/PublicOnlyRoute.jsx';
 import { ProjectCreatePage, ProjectListPage } from '../../features/projects/ProjectPages.jsx';
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
-import { ConceptFactoryPage } from '../../features/concept-factory/index.js';
-import { ConceptComparisonPage } from '../../features/concept-selection/index.js';
+import { BusinessProposalWorkspace } from '../../features/concept-portfolio/index.js';
 import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
 import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
-import { MarketingContentPage } from '../../features/marketing-content/index.js';
-import { TechOpsPage } from '../../features/tech-ops/index.js';
-import { FinancePage } from '../../features/finance/index.js';
 import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
+import { MarketingContentPage } from '../../features/marketing-content/index.js';
+import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
+import FinalReportPage from '../../features/final-report/FinalReportPage.jsx';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
 import ProjectSettingsSheet from '../../features/projects/ProjectSettingsSheet.jsx';
 import { ProjectProvider } from '../../features/projects/ProjectContext.jsx';
 import { AuthPlaceholderPage, NotFoundPage } from '../../pages/FoundationPages.jsx';
 import LandingPage from '../../features/landing/LandingPage.jsx';
-import FinancialModulePage from '../../features/financial/module/FinancialModulePage.jsx';
-import '../../features/financial/module/financialModule.css';
 import AdminShell from '../layouts/AdminShell.jsx';
 import AdminOverviewPage from '../../features/admin/pages/AdminOverviewPage.jsx';
 import AdminOperationsPage from '../../features/admin/pages/AdminOperationsPage.jsx';
@@ -53,7 +50,6 @@ export default function AppRouter() {
     <Routes location={backgroundLocation || location}>
       <Route element={<PublicLayout />}>
         <Route index element={<LandingPage />} />
-        <Route path="module" element={<FinancialModulePage />} />
         <Route element={<PublicOnlyRoute />}>
           <Route path="auth/login" element={<LoginPage />} />
           <Route path="auth/signup" element={<SignupPage />} />
@@ -76,14 +72,18 @@ export default function AppRouter() {
             <Route index element={<ProjectRedirect />} />
             <Route path="overview" element={<ProjectOverviewPage />} />
             <Route path="idea" element={<IdeaIntakePage />} />
-            <Route path="concepts" element={<ConceptFactoryPage />} />
-            <Route path="concepts/compare" element={<ConceptComparisonPage />} />
+            <Route path="concepts" element={<BusinessProposalWorkspace />} />
+            <Route path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />} />
             <Route path="market" element={<MarketResearchPage />} />
             <Route path="business-model" element={<BmCanvasPage />} />
-            <Route path="tech-ops" element={<TechOpsPage />} />
-            <Route path="finance" element={<FinancePage />} />
-            <Route path="panel-survey" element={<TwinSurveyPage />} />
+            <Route path="twin-survey" element={<TwinSurveyPage />} />
+            <Route path="launch-readiness" element={<LaunchReadinessPage />} />
+            <Route path="technology" element={<LaunchReadinessPage />} />
+            <Route path="operations" element={<LaunchReadinessPage />} />
+            <Route path="tech-ops" element={<LaunchReadinessPage />} />
+            <Route path="finance" element={<LaunchReadinessPage />} />
             <Route path="marketing" element={<MarketingContentPage />} />
+            <Route path="final-report" element={<FinalReportPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />
             <Route path="*" element={<ProjectRedirect />} />
           </Route>

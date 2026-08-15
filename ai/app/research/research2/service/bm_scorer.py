@@ -26,6 +26,9 @@ ROOT = os.path.dirname(HERE)
 # 채움 축 토글 — **잎 모듈**이라 유리벽을 넘지 않는다(엔진 import 0).
 sys.path.insert(0, ROOT)
 import fillaxis as _fx                              # noqa: E402
+# 원장 위치 해결자. **잎 모듈이라 유리벽을 넘지 않는다** — `os` 밖에 아무것도 import 하지
+# 않고 아무것도 계산하지 않는다(경로 상수뿐). 벽이 막는 것은 엔진 계산이다.
+import runpath as _runpath                          # noqa: E402
 RULES = os.path.join(ROOT, "rules", "bm_gate.v1.json")
 
 
@@ -33,7 +36,9 @@ RULES = os.path.join(ROOT, "rules", "bm_gate.v1.json")
 # 원장 읽기 — 이 파일이 원장을 만지는 유일한 곳
 # ══════════════════════════════════════════════════════════════
 def load_ledger(run_id: str) -> dict:
-    d = os.path.join(ROOT, "runs", run_id)
+    # 원장 자리가 둘이다(씨앗 `runs/` 는 `:ro`, 수집이 만든 것은 `runs-generated/`).
+    # 답은 `runpath` 한 곳에 있다 — 여기서 다시 조립하면 읽는 자리마다 답이 갈린다.
+    d = _runpath.read_dir(run_id)
     res_p, jl_p = os.path.join(d, "result.json"), os.path.join(d, "run.jsonl")
     if not os.path.exists(res_p):
         raise FileNotFoundError(f"원장이 없다: {res_p}")

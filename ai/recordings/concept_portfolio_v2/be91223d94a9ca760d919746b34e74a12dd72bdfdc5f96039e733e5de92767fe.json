@@ -1,0 +1,182 @@
+{
+  "taskType": "IDEA_BRIEF_DERIVATION",
+  "operationVersion": "v2",
+  "promptVersion": "idea-brief-current-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:496d8f7093214cecfe18e83d40bce33f0c3d738eb3a8c98be0e4c64c25f0a63c",
+  "canonicalRequestHash": "be91223d94a9ca760d919746b34e74a12dd72bdfdc5f96039e733e5de92767fe",
+  "redactedRequest": {
+    "input": {
+      "mode": "FINAL_SYNTHESIS",
+      "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        }
+      ],
+      "attachmentFileIds": [],
+      "fieldMetadata": [
+        {
+          "fieldKey": "ideaOverview",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "problem",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetUsers",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetRegion",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "revenueModel",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "price",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "channels",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "differentiators",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        }
+      ]
+    }
+  },
+  "providerResponse": {
+    "safetyReview": {
+      "decision": "ALLOW",
+      "categories": [],
+      "restrictions": [],
+      "userFacingReason": "이 아이디어는 안전하며, 취업 준비생을 위한 유용한 서비스입니다."
+    },
+    "interpretation": {
+      "interpretedProblem": "취업 준비생이 면접 답변의 품질과 개선점을 객관적으로 확인하기 어려운 문제를 해결합니다.",
+      "interpretedTargetUsers": "신입 및 주니어 채용을 준비하는 성인 취업 준비생을 대상으로 합니다.",
+      "usageContext": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스입니다.",
+      "industryCategory": "교육 및 취업 지원",
+      "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+      "conciseIdeaDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스입니다.",
+      "targetRegionInterpretation": "",
+      "relevantKnownCompetitorContext": ""
+    },
+    "commitmentCandidates": [],
+    "questions": [],
+    "contradictions": [],
+    "readiness": {
+      "status": "READY_FOR_REVIEW",
+      "score": 0,
+      "missingFieldKeys": []
+    },
+    "userFacingSummary": "이 서비스는 취업 준비생의 모의면접 답변을 분석하고, 직무별 개선 피드백과 반복 연습 계획을 제공합니다."
+  },
+  "durationMs": 3411,
+  "timestamp": "2026-08-10T04:52:55.456515+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

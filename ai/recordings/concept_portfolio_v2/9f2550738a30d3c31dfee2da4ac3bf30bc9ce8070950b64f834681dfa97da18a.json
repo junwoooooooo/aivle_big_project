@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:2bb3054d35623ea9d1b2db05d6d08a0f27d4b472f316dfebf7e2d47993317487",
+  "canonicalRequestHash": "9f2550738a30d3c31dfee2da4ac3bf30bc9ce8070950b64f834681dfa97da18a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-F1",
+        "businessText": "고객과 농가를 연결하는 온라인 플랫폼 제공 식재료 공급 및 품질 관리 고객에게 식재료를 판매하는 역할 고객과 공급자를 연결하는 플랫폼 운영 고객의 피드백을 반영하여 배송 주기와 품질을 개선한다. 신선한 식재료를 공급할 수 있는 지역 농가와 협력한다. 고객이 온라인 플랫폼에서 주문 주문 정보가 농가에 전달 농가가 식재료를 준비 및 포장 물류업체가 식재료를 고객에게 배송 고객이 온라인으로 결제 결제 정보가 플랫폼에 전달 플랫폼이 농가 및 물류업체에 정산 구독 모델을 통한 안정적인 수익 창출 온라인 플랫폼 및 모바일 앱을 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An online platform connecting customers with local farms for fresh ingredient supply and quality management, operating as an intermediary with a subscription monetization model."
+    }
+  ],
+  "durationMs": 3828,
+  "timestamp": "2026-08-10T03:32:45.289074+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

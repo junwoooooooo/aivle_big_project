@@ -243,6 +243,25 @@ function normalizeEvidence(raw) {
   };
 }
 
+/**
+ * 계산식 한 항. ⚠ **여기서 판정하지 않는다** — `basis`(관측·가정·가설)는 서버가 정한다.
+ * 화면이 값을 보고 다시 가르면 두 구현이 갈라지고, 갈라지는 순간 표의 판정이 거짓이 된다.
+ */
+function normalizeFactor(raw) {
+  return {
+    name: text(raw?.name) ?? '(이름 없음)',
+    value: typeof raw?.value === 'number' ? raw.value : null,
+    unit: text(raw?.unit),
+    basis: text(raw?.basis) ?? '가정',
+    note: text(raw?.note),
+    bound: text(raw?.bound),
+    falsifiedIf: text(raw?.falsifiedIf),
+    sourceCount: typeof raw?.sourceCount === 'number' ? raw.sourceCount : 0,
+    sourceDomains: list(raw?.sourceDomains),
+    caveats: list(raw?.caveats),
+  };
+}
+
 function normalizeFigure(raw) {
   if (!raw || typeof raw !== 'object') return null;
   return {
@@ -250,6 +269,10 @@ function normalizeFigure(raw) {
     unit: text(raw.unit),
     grade: text(raw.grade),
     formula: text(raw.formula),
+    // 계산식의 항. 이것이 있으면 화면은 문장이 아니라 **표**로 그린다.
+    factors: list(raw.factors).map(normalizeFactor),
+    // 표가 말할 수 없는 해석 경계만 남는다(예: 「연평균이 아니다」). 요인이 없는
+    // 옛 결과에서는 여기에 가정 문장이 통째로 온다 — 그때는 표 대신 이것을 그린다.
     assumptions: list(raw.assumptions),
     caveats: list(raw.caveats),
     evidenceIds: list(raw.evidenceIds),
@@ -345,6 +368,7 @@ export function normalizeMarketResult(raw) {
         weaknesses: list(raw.bm.weaknesses),
         risks: list(raw.bm.risks),
         legal: raw.bm.legal ?? null,
+        financialHandoff: raw.bm.financialHandoff ?? null,
       }
       : null,
     // 칸별 종합 요약. **예전엔 여기서 통째로 떨어뜨렸다** — 봉투엔 있는데 화면에 없었다.

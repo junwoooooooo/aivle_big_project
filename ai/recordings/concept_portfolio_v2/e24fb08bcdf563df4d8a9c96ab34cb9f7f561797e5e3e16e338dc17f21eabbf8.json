@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:713c2a70c3047fa82b4d59fca35260dcc4e0e2bd42f310e67e5f3018e9c5ed84",
+  "canonicalRequestHash": "e24fb08bcdf563df4d8a9c96ab34cb9f7f561797e5e3e16e338dc17f21eabbf8",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-R1-CR1",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 AI 도구의 판매 및 고객 지원 CRM 시스템과의 통합 지원 AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 사용자가 회의 및 이메일 내용을 입력 AI 도구가 내용을 분석 CRM에 자동으로 업데이트 후속 조치 제안 고객이 구독료를 결제 AI 도구 제공자가 서비스 제공 고객 지원 및 업데이트 제공 구독 모델을 통해 지속적인 수익을 창출합니다. 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OWN_OPERATED",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "API",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 도구 제공자로서 CRM 시스템과 통합된 AI 도구를 개발 및 제공하며, 구독 모델을 통해 수익을 창출하는 비즈니스."
+    }
+  ],
+  "durationMs": 6610,
+  "timestamp": "2026-08-10T06:46:13.870871+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

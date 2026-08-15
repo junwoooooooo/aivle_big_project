@@ -34,10 +34,22 @@ public final class TwinSurveyContract {
         "winner", "winnerLabel", "measurable", "decisionReason",
         "deltaAvg", "confidenceInterval", "positionComponent",
         "contentShare", "contentShareLower", "mde",
-        "nPaired", "nRespondents", "respondentClasses", "rationaleExcerpts", "caveats");
+        "nPaired", "nRespondents", "respondentClasses", "interviews", "caveats");
 
-    /** 외적 타당성 시험에서 성적이 난 유형만. 늘리려면 성적이 먼저 있어야 한다. */
-    private static final Set<String> SERVICEABLE_TASK_TYPES = Set.of("DOMINANCE", "PRICE");
+    private static final Set<String> INTERVIEW = Set.of("choice", "profile", "quote");
+    private static final Set<String> PROFILE = Set.of(
+        "age", "gender", "household", "region", "income", "job");
+    private static final Set<String> INTERVIEW_CHOICES = Set.of("X", "Y", "UNDECIDED");
+    private static final int INTERVIEWS_MAX = 5;
+
+    /**
+     * 팔 수 있는 유형. <b>2026-08-10 부터 우열형 하나뿐이다.</b>
+     *
+     * <p>가격형은 계기 재측정에서 방향이 반전됐다 — 같은 25명에게 같은 자극을 물었는데
+     * CLI +0.23 / gpt-4o-mini −0.68 / gpt-5.6-terra +1.00 이었다(B3). 지불의사의 임계는
+     * 응답자가 아니라 실행 모델이 가진 값이라, 모델을 고르는 문제로 풀리지 않는다.
+     */
+    private static final Set<String> SERVICEABLE_TASK_TYPES = Set.of("DOMINANCE");
     private static final Set<String> WINNERS = Set.of("X", "Y", "TIE");
     /**
      * 응답자 분류는 다섯이고 <b>나온 것만 실린다</b>({@code Counter} → dict).
@@ -155,10 +167,33 @@ public final class TwinSurveyContract {
             nonNegativeInteger(classes, name);
         }
 
-        stringArray(pair.get("rationaleExcerpts"));
+        interviews(pair.get("interviews"));
         // ⚠ 여기가 경계다. 빈 배열은 「경계 없음」이 아니라 「경계 소실」이다.
         nonEmptyStringArray(pair.get("caveats"));
         return pairId;
+    }
+
+    /**
+     * 대표 응답자 인터뷰. 화면이 «사람의 말»로 답하는 자리다.
+     *
+     * <p>여기서 두 가지를 막는다. 하나는 <b>빈 인용</b> — 프로필만 있고 말이 없으면
+     * 화면에 얼굴만 앉는다. 다른 하나는 <b>모르는 필드</b> — 카드 원문이 통째로 실려 오는
+     * 회귀를 막는다(카드는 재배포 금지 자산이고 학력·혼인·심리척도까지 들어 있다).
+     */
+    private static void interviews(JsonNode items) {
+        if (items == null || !items.isArray() || items.size() > INTERVIEWS_MAX) invalid();
+        for (JsonNode item : items) {
+            exact(item, INTERVIEW);
+            if (!INTERVIEW_CHOICES.contains(text(item, "choice"))) invalid();
+            text(item, "quote");
+            JsonNode profile = item.get("profile");
+            exact(profile, PROFILE);
+            JsonNode age = profile.get("age");
+            if (age != null && !age.isNull() && (!age.isIntegralNumber() || age.asInt() < 0)) invalid();
+            for (String field : List.of("gender", "household", "region", "income", "job")) {
+                nullableText(profile.get(field));
+            }
+        }
     }
 
     // ── 원시 검사 ────────────────────────────────────────────────────────

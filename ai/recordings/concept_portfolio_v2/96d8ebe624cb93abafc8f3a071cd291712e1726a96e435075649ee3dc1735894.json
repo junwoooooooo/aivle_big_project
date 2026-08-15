@@ -1,0 +1,137 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8202af0b8f6d40fcc43eeeb3eb48dd3c34d1bf52003810e030c5092a241b7428",
+  "canonicalRequestHash": "96d8ebe624cb93abafc8f3a071cd291712e1726a96e435075649ee3dc1735894",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "CR1-P1",
+        "businessText": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 수수료를 최소화한다. 프리미엄 서비스 제공을 통해 추가 수익을 창출한다. 거래 성사 후 사용자 간의 직접적인 물품 인수인계를 통해 이행한다. 앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "CR1-P2",
+        "businessText": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 수수료를 최소화한다. 프리미엄 서비스 제공을 통해 추가 수익을 창출한다. 거래 성사 후 사용자 간의 직접적인 물품 인수인계를 통해 이행한다. 앱을 통해 사용자 간의 직접적인 소통과 거래를 유도한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "CR1-P3",
+        "businessText": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 수수료를 최소화한다. 프리미엄 서비스 제공을 통해 추가 수익을 창출한다. 거래 성사 후 사용자 간의 직접적인 물품 인수인계를 통해 이행한다. 앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "CR1-P1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공하는 서비스."
+    },
+    {
+      "entityId": "CR1-P2",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공하는 서비스."
+    },
+    {
+      "entityId": "CR1-P3",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공하는 서비스."
+    }
+  ],
+  "durationMs": 6632,
+  "timestamp": "2026-08-10T07:55:23.912196+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

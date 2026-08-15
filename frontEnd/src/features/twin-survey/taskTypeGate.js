@@ -14,7 +14,14 @@ export const ETHICAL_VALUE = 'ETHICAL_VALUE';
 export const UNMEASURABLE = 'UNMEASURABLE';
 export const IDENTICAL = 'IDENTICAL';
 
-export const SERVICEABLE = Object.freeze([DOMINANCE, PRICE]);
+/**
+ * 팔 수 있는 유형. **2026-08-10 부터 우열형 하나뿐이다.**
+ *
+ * 가격형은 계기 재측정에서 방향이 반전됐다 — 같은 25명·같은 자극에서
+ * CLI +0.23 / gpt-4o-mini −0.68 / gpt-5.6-terra +1.00 (B3). 지불의사의 임계는
+ * 응답자가 아니라 실행 모델이 가진 값이라 모델을 고르는 문제로 풀리지 않는다.
+ */
+export const SERVICEABLE = Object.freeze([DOMINANCE]);
 
 /** 윤리·가치 어휘. 속성 이름·값 어느 쪽에 있어도 걸린다. */
 export const ETHICAL_TERMS = Object.freeze([
@@ -87,8 +94,11 @@ export function classifyPair(pair) {
   if (differing.length === 1 && priceDiffers) {
     return {
       taskType: PRICE,
-      serviceable: true,
-      reason: `«${differing[0]}» 프리미엄이 가격 핸디캡을 이기는지 묻는 지불의사다.`,
+      serviceable: false,
+      reason: `«${differing[0]}» 프리미엄이 가격 핸디캡을 이기는지 묻는 지불의사다. `
+        + '지불의사의 임계는 응답자가 아니라 실행 모델이 정한다 — 계기를 바꾸면 '
+        + '방향까지 뒤집히는 것이 실측됐다. 이 유형은 예측을 제공하지 않는다. '
+        + '가격을 양쪽 같게 두고 속성 하나만 바꿔서 다시 물어라.',
       differing,
     };
   }

@@ -69,6 +69,14 @@ class FailureCode(StrEnum):
     CANDIDATE_REGENERATION_EXHAUSTED = "CANDIDATE_REGENERATION_EXHAUSTED"
     CANONICALIZATION_LOW_CONFIDENCE = "CANONICALIZATION_LOW_CONFIDENCE"
     LEGAL_FACT_COMPLETION_EXHAUSTED = "LEGAL_FACT_COMPLETION_EXHAUSTED"
+    LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT = "LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT"
+    LEGAL_FACT_COMPLETION_RECHECK_FAILED = "LEGAL_FACT_COMPLETION_RECHECK_FAILED"
+    LEGAL_FACT_DEPENDENCY_UNRESOLVED = "LEGAL_FACT_DEPENDENCY_UNRESOLVED"
+    LEGAL_FACT_COMPLETION_CANDIDATE_INVALID = "LEGAL_FACT_COMPLETION_CANDIDATE_INVALID"
+    LEGAL_FACT_COMPLETION_SCOPE_VIOLATION = "LEGAL_FACT_COMPLETION_SCOPE_VIOLATION"
+    CONCEPT_FACT_CONSISTENCY_INVALID = "CONCEPT_FACT_CONSISTENCY_INVALID"
+    CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED = "CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED"
+    NO_LEGAL_READY_CANDIDATES = "NO_LEGAL_READY_CANDIDATES"
     LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED = "LEGAL_REDESIGN_COMPLIANCE_EXHAUSTED"
     LEGAL_REDESIGN_LOOP_DETECTED = "LEGAL_REDESIGN_LOOP_DETECTED"
 
@@ -86,6 +94,12 @@ class LegalRoute(StrEnum):
     REPLAN_REQUIRED = "REPLAN_REQUIRED"
     NEEDS_INPUT = "NEEDS_INPUT"
     SYSTEM_FAILURE = "SYSTEM_FAILURE"
+
+
+class LegalRequirementNature(StrEnum):
+    FACT_REQUIRED = "FACT_REQUIRED"
+    STRUCTURAL_CHANGE = "STRUCTURAL_CHANGE"
+    AMBIGUOUS = "AMBIGUOUS"
 
 
 class SeedField(StrictModel):
@@ -347,11 +361,15 @@ class LegalPrecheck(StrictModel):
 
 class LegalFactCompletenessResult(StrictModel):
     candidateId: str | None = None
-    status: Literal["COMPLETE", "COMPLETABLE", "INVALID"]
+    status: Literal["COMPLETE", "SEMANTIC_REQUIRED", "COMPLETABLE", "INVALID"]
     missingDesignFacts: list[str] = Field(default_factory=list)
     contradictions: list[str] = Field(default_factory=list)
     completionRequirements: list[str] = Field(default_factory=list)
     affectedFields: list[str] = Field(default_factory=list)
+    roleSemantics: list[dict[str, Any]] = Field(default_factory=list)
+    dependencyAssessments: list["LegalFactDependencyAssessment"] = Field(default_factory=list)
+    structuredCompletionRequirements: list["LegalFactCompletionRequirement"] = Field(default_factory=list)
+    architectureRoleConsistency: dict[str, str] | None = None
     safeSummary: str
 
 
@@ -363,6 +381,120 @@ class LegalCandidatePreparation(StrictModel):
     completionValidated: int = 0
     completionAccepted: int = 0
     completionExhausted: int = 0
+    roleSemanticBatchCalls: int = 0
+    dependencySemanticBatchCalls: int = 0
+    completionCompliance: list["LegalFactCompletionCompliance"] = Field(default_factory=list)
+    consistencyReports: list["ConceptFactConsistencyResult"] = Field(default_factory=list)
+    consistencyRepairAttempted: int = 0
+    consistencyRepairAccepted: int = 0
+    consistencyRepairExhausted: int = 0
+
+
+class BusinessRoleSemanticItem(StrictModel):
+    candidateId: str
+    field: Literal["platformRole", "providerRole", "sellerRole", "intermediaryRole"]
+    decision: Literal["MATCH", "EXPLICIT_ABSENCE", "MISMATCH", "UNKNOWN"]
+    safeReason: str
+
+
+class BusinessRoleSemanticBatch(StrictModel):
+    results: list[BusinessRoleSemanticItem] = Field(min_length=1, max_length=20)
+
+
+LegalFactDependencyType = Literal["PERSONAL_DATA", "PHYSICAL_ACTIVITY", "BUSINESS_PARTNER"]
+
+
+class LegalFactDependencyAssessment(StrictModel):
+    candidateId: str | None = None
+    dependencyType: LegalFactDependencyType
+    deterministicDecision: Literal["REQUIRED", "NOT_REQUIRED", "AMBIGUOUS"]
+    semanticUsed: bool = False
+    semanticDecision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN", "NOT_RUN"] = "NOT_RUN"
+    finalDecision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN"]
+    safeReason: str
+    consistencyStatus: Literal["CONSISTENT", "POTENTIAL_CONFLICT", "NOT_ENOUGH_EVIDENCE"] = "NOT_ENOUGH_EVIDENCE"
+
+
+class LegalFactDependencySemanticItem(StrictModel):
+    candidateId: str
+    dependencyType: LegalFactDependencyType
+    decision: Literal["REQUIRED", "NOT_REQUIRED", "UNKNOWN"]
+    safeReason: str
+
+
+class LegalFactDependencySemanticBatch(StrictModel):
+    results: list[LegalFactDependencySemanticItem] = Field(min_length=1, max_length=15)
+
+
+class LegalFactCompletionRequirement(StrictModel):
+    field: Literal[
+        "platformRole", "providerRole", "sellerRole", "intermediaryRole",
+        "transactionFlow", "paymentFlow", "personalDataUsage", "physicalActivities",
+        "partnerRequirements", "targetRegion", "channels",
+    ]
+    reasonType: Literal[
+        "MISSING_REQUIRED_FACT", "DEPENDENCY_UNKNOWN", "ROLE_MISMATCH",
+        "TRANSACTION_INCOMPLETE", "PAYMENT_INCOMPLETE", "GENERAL_FACT_INCOMPLETE",
+        "FACT_CONSISTENCY_REPAIR",
+    ]
+    dependencyType: LegalFactDependencyType | None
+    instruction: str
+
+
+class LegalFactCompletionPatch(StrictModel):
+    platformRole: str | None
+    providerRole: str | None
+    sellerRole: str | None
+    intermediaryRole: str | None
+    transactionFlow: list[str] | None
+    paymentFlow: list[str] | None
+    personalDataUsage: list[str] | None
+    physicalActivities: list[str] | None
+    partnerRequirements: list[str] | None
+    targetRegion: str | None
+    channels: str | None
+
+
+class LegalFactCompletionCompliance(StrictModel):
+    candidateId: str
+    status: Literal["PASS", "FAIL", "AMBIGUOUS"]
+    satisfiedRequirements: list[str] = Field(default_factory=list)
+    unsatisfiedRequirements: list[str] = Field(default_factory=list)
+    changedFields: list[str] = Field(default_factory=list)
+    unchangedRequiredFields: list[str] = Field(default_factory=list)
+    safeSummary: str
+
+
+class ConceptFactConsistencyIssue(StrictModel):
+    field: Literal[
+        "intermediaryRole", "sellerRole", "personalDataUsage",
+        "physicalActivities", "partnerRequirements",
+    ]
+    relation: Literal[
+        "SERVICE_PHYSICAL", "TRANSACTION_INTERMEDIARY", "TRANSACTION_SELLER",
+        "PARTNER_OPERATION", "DATA_PERSONAL",
+    ]
+    status: Literal["POTENTIAL_CONFLICT", "INVALID_FACT"]
+    safeReason: str
+    repairInstruction: str
+
+
+class ConceptFactConsistencyResult(StrictModel):
+    candidateId: str | None = None
+    status: Literal["CONSISTENT", "POTENTIAL_CONFLICT", "INVALID_FACT"]
+    issues: list[ConceptFactConsistencyIssue] = Field(default_factory=list)
+    safeSummary: str
+
+
+class LegalLineageResolution(StrictModel):
+    candidateId: str
+    initialRoute: str
+    recoveryAction: str
+    recoveryCandidateId: str | None = None
+    finalRoute: str
+    finalResolution: Literal["ACCEPTED", "NEEDS_INPUT", "EXCLUDED_LEGAL", "SYSTEM_FAILURE"]
+    finalAccepted: bool
+    sourceStatus: str
 
 
 class RedesignRequirementCompliance(StrictModel):
@@ -370,6 +502,15 @@ class RedesignRequirementCompliance(StrictModel):
     satisfiedRequirements: list[str] = Field(default_factory=list)
     unsatisfiedRequirements: list[str] = Field(default_factory=list)
     safeSummary: str
+
+
+class LegalRequirementNatureAssessment(StrictModel):
+    nature: LegalRequirementNature
+    affectedFields: list[str] = Field(default_factory=list)
+    beforeSummary: str | None = None
+    requiredStructure: str | None = None
+    factQuestion: str | None = None
+    safeReason: str
 
 
 class LegalReview(StrictModel):
@@ -390,6 +531,7 @@ class LegalReview(StrictModel):
     requiredLegalChange: str | None = None
     reason: str | None = None
     possibleUserAction: str | None = None
+    unknownFacts: list[str] = Field(default_factory=list)
     inputScope: str = "CANDIDATE"
     evidenceDiagnostics: dict[str, Any] = Field(default_factory=dict)
     reviewPhase: str | None = None
@@ -416,7 +558,7 @@ class HypothesisDecision(StrictModel):
     legalImpact: str = "NONE"
     legalReviewStatus: str = "NOT_REQUIRED"
     deltaLegalRequired: bool = False
-    semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "UNASSESSED"] = "UNASSESSED"
+    semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "AMBIGUOUS", "UNASSESSED"] = "UNASSESSED"
     semanticReason: str | None = None
 
     @property
@@ -430,9 +572,19 @@ class HypothesisDecision(StrictModel):
 
 class HypothesisValueAssessment(StrictModel):
     hypothesisType: str
-    status: Literal["VALID", "UNRESOLVED", "INVALID"]
+    status: Literal["VALID", "UNRESOLVED", "INVALID", "AMBIGUOUS"]
     reason: str
     normalizedValue: Any | None = None
+
+
+class SemanticHypothesisResult(StrictModel):
+    hypothesisType: str
+    decision: Literal["VALID", "INVALID"]
+    safeReason: str
+
+
+class SemanticHypothesisBatch(StrictModel):
+    results: list[SemanticHypothesisResult] = Field(min_length=1, max_length=5)
 
 
 class DeltaLegalResult(StrictModel):
@@ -493,6 +645,7 @@ class ProviderUsage(StrictModel):
     modeCounts: dict[str, int] = Field(default_factory=dict)
     tokenUsage: dict[str, int] | None = None
     reportedCost: float | None = None
+    batchDiagnostics: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class SchemaCompatibilityItem(StrictModel):
@@ -532,6 +685,7 @@ class ArchitectureConfidenceProfile(StrictModel):
 
 
 class SemanticArchitectureClassification(StrictModel):
+    entityId: str
     architecture: BusinessArchitecture
     confidence: ArchitectureConfidenceProfile
     safeSummary: str
@@ -545,18 +699,30 @@ class RunSummary(StrictModel):
     safety: str
     requestedMaximum: int
     planned: int
+    planSelected: int = 0
+    planSelected: int = 0
     planDuplicatesRemoved: int
     candidatesExpanded: int
     candidateGenerated: int = 0
     candidateAcceptedInitially: int = 0
     candidateRegenerated: int = 0
     candidateRecovered: int = 0
+    candidateAccepted: int = 0
     reservePlansActivated: int = 0
     candidateRecoveryReplans: int = 0
     legalFactCompletionAttempted: int = 0
     legalFactCompletionValidated: int = 0
     legalFactCompletionAccepted: int = 0
     legalFactCompletionExhausted: int = 0
+    legalReady: int = 0
+    legalFactDependencySemanticCalls: int = 0
+    legalFactCompletionCompliancePassed: int = 0
+    legalFactCompletionProviderNoncompliant: int = 0
+    legalFactCompletionRecheckFailed: int = 0
+    factConsistencyInvalid: int = 0
+    factConsistencyRepairAttempted: int = 0
+    factConsistencyRepairAccepted: int = 0
+    factConsistencyRepairExhausted: int = 0
     legalRedesignAttempted: int = 0
     legalRedesignValidated: int = 0
     legalRedesignAccepted: int = 0
@@ -566,6 +732,12 @@ class RunSummary(StrictModel):
     legalReplanAccepted: int = 0
     legalReplanExhausted: int = 0
     legalAccepted: int
+    legalReviewed: int = 0
+    legalInitialReviewed: int = 0
+    legalRecoveryReviewed: int = 0
+    totalLegalReviewEvents: int = 0
+    legalInitialAccepted: int = 0
+    legalRecoveredAccepted: int = 0
     legalRedesigned: int
     replanned: int
     finalPortfolio: int
@@ -574,6 +746,20 @@ class RunSummary(StrictModel):
     downstreamHandoff: str
     providerCalls: int
     totalDurationMs: int
+    failureStage: str | None = None
+    failureCode: str | None = None
+
+
+class FailureDiagnostics(StrictModel):
+    failedStage: str
+    failureCode: str
+    safeSummary: str
+    failedEntityId: str | None = None
+    providerFailure: dict[str, Any] = Field(default_factory=dict)
+    lastSuccessfulStage: str | None = None
+    firstFailedStage: str | None = None
+    lastTraceEvents: list[TraceEvent] = Field(default_factory=list, max_length=20)
+    preLegalExclusionCountsByReason: dict[str, int] = Field(default_factory=dict)
 
 
 class ConceptPortfolioResult(StrictModel):
@@ -585,7 +771,9 @@ class ConceptPortfolioResult(StrictModel):
     concepts: list[CandidateEnvelope]
     rejectedPlans: list[RejectedPlan]
     legalSummaries: list[LegalReview]
+    legalResolutions: list[LegalLineageResolution] = Field(default_factory=list)
     requiredInputs: list[dict[str, Any]]
+    preLegalExclusions: list[dict[str, Any]] = Field(default_factory=list)
     unresolvedCandidates: list[dict[str, Any]] = Field(default_factory=list)
     trace: list[TraceEvent]
     providerUsage: ProviderUsage
@@ -593,6 +781,7 @@ class ConceptPortfolioResult(StrictModel):
     selectedConceptId: str | None = None
     handoff: DownstreamHandoff | None = None
     runSummary: RunSummary | None = None
+    failureDiagnostics: FailureDiagnostics | None = None
 
     @model_validator(mode="after")
     def terminal_and_count_consistent(self):

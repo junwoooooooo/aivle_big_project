@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:f31bdfbba29be85f5b7508ac89f718021e02f62ee3bc2025cccdde062c9763b0",
+  "canonicalRequestHash": "16d7ad42274ec6dc0142b8c2155bd426d9f21a3d97adadf4c8d5a4ad38e46184",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-RSV1",
+        "businessText": "여행 계획 및 예약 서비스를 제공하는 플랫폼 여행 계획 서비스를 제공하는 사업자 여행지 예약 서비스를 제공하는 업체 여행 예약 플랫폼 AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 테마를 추천한다. 여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다. 사용자가 웹사이트/앱에 접속하여 관심사 입력 AI 알고리즘이 여행 테마 추천 사용자가 추천된 여행지 예약 사용자가 여행지 예약 시 결제 예약 플랫폼이 수수료 수취 여행 관련 업체에 예약 금액 지급 사용자가 추천된 여행지를 예약할 때 수수료를 통해 수익을 창출한다. 웹사이트 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C2-RSV1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "여행 예약 플랫폼으로, 사용자 데이터를 분석하여 여행 테마를 추천하고, 제휴된 업체와 함께 예약 서비스를 제공하며, 수수료를 통해 수익을 창출하는 모델입니다."
+    }
+  ],
+  "durationMs": 2797,
+  "timestamp": "2026-08-10T09:38:35.488699+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,4 +1,5 @@
 import { Badge } from '../../shared/ui';
+import Emphasis from './emphasis.jsx';
 import {
   CANVAS_BANDS, CELL_DOT, CELL_STATUS_VIEW, SOURCE_KIND_VIEW,
   formatValue, gradeView, hostOf,
@@ -75,16 +76,31 @@ function Tally({ cells }) {
 }
 
 /**
- * 계획 칸에 「계획(근거 없음)」을 또 쓰면 같은 말이 두 번 나온다.
- * 요건이 다르니 말도 다르게 쓴다.
+ * 칸의 상태 한 마디.
+ *
+ * <p>⚠ <b>서버 상태를 «계획» 이라는 이유로 덮어쓰지 않는다.</b> 예전에는 계획 칸이면
+ * 무조건 「서술됨/서술 없음」으로 갈아 끼웠는데, 그러면 `KEY_PARTNERS` 의 `UNVERIFIED`
+ * 가 사라진다 — 프롬프트가 그 칸만 <b>일부러</b> 다르게 정해 둔 것이다
+ * (`bm/prompt.py`: 파트너는 비면 PLAN 이 아니라 UNVERIFIED).
+ * 「말한 적이 없다(PLAN)」와 「찾아봤는데 없다(UNVERIFIED)」는 다른 사건이다.
  */
 function statusOf(cell) {
-  if (cell.kind === '계획') return cell.content.length > 0 ? '서술됨' : '서술 없음';
+  if (cell.kind === '계획' && cell.status === 'PLAN') {
+    return cell.content.length > 0 ? '서술됨' : '서술 없음';
+  }
   return CELL_STATUS_VIEW[cell.status]?.label ?? cell.status;
 }
 
-/** 빈 칸의 사유 — 계획 칸은 조사 실패가 아니라 **입력이 없는 것**이다. */
+/**
+ * 빈 칸에 <b>할 말은 한 번만</b> 한다.
+ *
+ * <p>예전에는 같은 사실이 세 줄로 나왔다 — 상태 「서술 없음」, 고정 문구 「컨셉 서술에 이
+ * 칸 내용이 없다」, 그리고 모델의 `reason` 「입력에 고객 관계 정보가 포함되지 않음」.
+ * 네 칸이 비면 그것만 열두 줄이었다. 모델이 쓴 사유가 있으면 <b>그것을 쓴다</b> —
+ * 그 칸에 대해 구체적이기 때문이다. 없을 때만 고정 문구로 메운다.
+ */
 function emptyReason(cell) {
+  if (cell.reason && cell.reason !== '사유가 오지 않았다') return cell.reason;
   return cell.kind === '계획'
     ? '컨셉 서술에 이 칸 내용이 없다'
     : '조사에서 근거를 못 찾았다';
@@ -105,12 +121,12 @@ function SummaryCell({ cell, onJump }) {
         <h4>{cell.label}</h4>
         <span className={`bm-dot bm-dot--${CELL_DOT[cell.status] ?? 'none'}`} />
       </span>
-      {/* 첫 줄만 — 나머지는 아래 세부에 있다. 줄 수를 자르지는 않는다. */}
+      {/* 첫 줄만 — 나머지는 아래 세부에 있다. 줄 수를 자르지는 않는다.
+          ⚠ 빈 칸에서는 **아래 상태 줄이 곧 내용**이다. 여기에 같은 말을 또 쓰면
+          한 장짜리 카드가 같은 사실을 두 번 말한다. */}
       {cell.content.length > 0 ? (
-        <span className="bm-cell__lead">{cell.content[0]}</span>
-      ) : (
-        <span className="bm-cell__none">{emptyReason(cell)}</span>
-      )}
+        <span className="bm-cell__lead"><Emphasis text={cell.content[0]} /></span>
+      ) : null}
       <span className="bm-cell__foot">
         <KindChip kind={cell.kind} />
         {statusOf(cell)}
@@ -139,18 +155,23 @@ function CellDetail({ cell, active }) {
           <p className="bm-cell__none">이 칸이 결과에 오지 않았다 — 「미확인」과 다른 사건이다.</p>
         ) : null}
 
+        {/* 내용이 있으면 내용과 사유를 나란히, 없으면 **사유 한 줄만.**
+            빈 칸에 사유를 두 번 세 번 다르게 적으면 읽을 것이 없는데 자리만 커진다. */}
         {cell.content.length > 0 ? (
-          <ul className="bm-det__c">
-            {cell.content.map((line) => <li key={line}>{line}</li>)}
-          </ul>
+          <>
+            <ul className="bm-det__c">
+              {cell.content.map((line) => <li key={line}><Emphasis text={line} /></li>)}
+            </ul>
+            <p className="bm-det__r"><Emphasis text={cell.reason} /></p>
+          </>
         ) : (
-          <p className="bm-cell__none">{emptyReason(cell)}</p>
+          <p className="bm-cell__none"><Emphasis text={emptyReason(cell)} /></p>
         )}
 
-        <p className="bm-det__r">{cell.reason}</p>
-
         {/* 경계는 접지 않는다. 값과 같은 화면에 있어야 도달한 것이다. */}
-        {cell.caveats.map((caveat) => <p key={caveat} className="mr-caveat">{caveat}</p>)}
+        {cell.caveats.map((caveat) => (
+          <p key={caveat} className="mr-caveat"><Emphasis text={caveat} /></p>
+        ))}
 
         {cell.evidence.length > 0 ? (
           <table className="mr-table bm-det__t">

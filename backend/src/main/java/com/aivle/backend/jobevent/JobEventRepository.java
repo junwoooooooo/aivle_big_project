@@ -18,6 +18,12 @@ public interface JobEventRepository extends JpaRepository<JobEvent, Long> {
     Optional<JobEvent> findTopByJobIdAndProjectIdAndDeletedAtIsNullOrderBySequenceDesc(
         String jobId, Long projectId);
 
+    @EntityGraph(attributePaths = {"project", "taskRun"})
+    List<JobEvent> findByProjectIdAndIdGreaterThanAndDeletedAtIsNullOrderById(
+        Long projectId, long id, Pageable pageable);
+
+    Optional<JobEvent> findTopByProjectIdAndDeletedAtIsNullOrderByIdDesc(Long projectId);
+
     @EntityGraph(attributePaths = {"project", "project.owner", "taskRun"})
     Optional<JobEvent> findTopByJobIdAndDeletedAtIsNullOrderBySequenceDesc(String jobId);
 }

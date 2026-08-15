@@ -85,6 +85,7 @@ class CurrentIdeaBriefAdapter:
             fields=[{"fieldKey": item.fieldKey, "value": item.value,
                      "decisionState": item.decisionState} for item in seed.fields],
             attachmentFileIds=[],
+            attachmentDocuments=[],
             fieldMetadata=[{"fieldKey": key, "requiredForConcept": key in REQUIRED_SEED,
                             "regulatorySensitive": key in {"targetRegion", "revenueModel", "price", "channels"}}
                            for key in FieldKey.__args__],
@@ -191,6 +192,7 @@ class CurrentLegalAdapter:
             legalSourceStatus=raw.get("legalSourceStatus"),
             finalEvidenceJudgmentExecuted=raw.get("finalEvidenceJudgmentExecuted"),
             recoveryResolution=raw.get("recoveryResolution"),
+            unknownFacts=list(raw.get("unknownFacts") or []),
             sourceQuestionCount=raw.get("sourceQuestionCount", 0),
             resolvedByFactPatternCount=raw.get("resolvedByFactPatternCount", 0),
             designGapCount=raw.get("designGapCount", 0),
@@ -219,7 +221,8 @@ class CurrentDownstreamAdapter:
             if not item:
                 continue
             assessment = assess_hypothesis_value(key, item.finalValue if item.finalValue is not None else item.proposedValue)
-            if assessment.status != "VALID":
+            if assessment.status in {"UNRESOLVED", "INVALID"} or (
+                    assessment.status == "AMBIGUOUS" and item.semanticStatus != "VALID"):
                 invalid_semantics.append(key)
         if invalid_semantics:
             errors.append("UNRESOLVED_HYPOTHESES: " + ", ".join(invalid_semantics))

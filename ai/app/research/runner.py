@@ -72,13 +72,15 @@ async def execute_market_research(task_input: dict[str, Any], run_id: str,
     if not _SAFE_RUN_ID.fullmatch(run_id):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "runId 형식 불량")
 
-    if not os.path.isdir(os.path.join(RESEARCH_HOME, "runs", source_run)):
+    from app.research.research2 import runpath
+
+    if not runpath.exists(source_run):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "sourceRun 원장 없음")
 
     # 같은 --id 로 재실행하면 run.jsonl 이 append-only 라 지표가 2배로 보인다.
     # taskAttemptId 는 실행마다 새로 오므로 정상 경로에서는 안 겹치지만,
     # 겹치면 조용히 틀리는 종류라 여기서 막는다.
-    if os.path.exists(os.path.join(RESEARCH_HOME, "runs", run_id)):
+    if runpath.exists(run_id):
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "runId 재사용")
 
     try:
@@ -105,7 +107,7 @@ async def execute_market_research(task_input: dict[str, Any], run_id: str,
                     f"엔진 종료코드 {process.returncode}: "
                     f"{detail[-1] if detail else 'no stderr'}"[:400])
 
-    result_path = os.path.join(RESEARCH_HOME, "runs", run_id, "result.json")
+    result_path = os.path.join(runpath.read_dir(run_id), "result.json")
     try:
         with io.open(result_path, encoding="utf-8") as handle:
             payload = json.load(handle)

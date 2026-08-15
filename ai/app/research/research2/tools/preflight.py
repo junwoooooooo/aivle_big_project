@@ -31,6 +31,7 @@ ROOT = os.path.dirname(HERE)
 for p in (ROOT, os.path.join(ROOT, "adapters")):
     sys.path.insert(0, p)
 
+import runpath                                           # noqa: E402
 from base import load_env_key                                    # noqa: E402
 
 #: 상태 어휘 — **셋을 섞지 않는다.**
@@ -148,8 +149,43 @@ def _tavily_ping() -> dict:
     return {"상태": "not_checked", "why": "키 존재만 확인 — 실호출은 과금이라 쏘지 않는다"}
 
 
+def _modules_ping() -> dict:
+    """**키가 아닌 결함으로 유료 4판이 쓰러졌다** (판 ㉞).
+
+    컨테이너에 `pdfplumber` 가 없어 PDF 48건을 통째로 버렸는데, 이 도구는 키만 묻고
+    있었으므로 「진입 가능」을 네 번 내줬다. 해석기가 없는 것은 크레딧이 없는 것과
+    같은 종류의 막힘이다 — 둘 다 **돈을 쓰고도 자료를 못 얻는다.**
+
+    ⚠ **컨테이너 안에서 돌려야 뜻이 있다.** 로컬에는 다 깔려 있어 항상 ok 다.
+    유료 호출 0회라 `--no-paid` 와 무관하게 돈다.
+    """
+    from importlib.metadata import version
+    ver, 없음 = {}, []
+    for name in runlog_capabilities():
+        if name == "python":
+            continue
+        try:
+            ver[name] = version(name)
+        except Exception:
+            ver[name] = None
+            없음.append(name)
+    적힌 = " · ".join(f"{k} {v or '없음'}" for k, v in ver.items())
+    if 없음:
+        return {"상태": "unreachable", "why": f"설치 안 됨: {', '.join(없음)}  ({적힌})",
+                "버전": ver}
+    return {"상태": "ok", "why": 적힌, "버전": ver}
+
+
+def runlog_capabilities() -> tuple:
+    """엔진이 재는 목록과 **같은 목록**을 쓴다. 두 곳에 따로 적으면 갈라진다 —
+    이번 사고의 물리적 원인이 정확히 그것이었다(엔진이 쓰는 것 vs 이미지가 설치하는 것).
+    """
+    import runlog
+    return ("python",) + tuple(runlog.CAPABILITY_PACKAGES)
+
+
 CHECKS = {"openai": _openai_ping, "kosis": _kosis_ping,
-          "dart": _dart_ping, "tavily": _tavily_ping}
+          "dart": _dart_ping, "tavily": _tavily_ping, "modules": _modules_ping}
 
 
 def main():
@@ -178,7 +214,7 @@ def main():
         "확인": out, "막힘": sorted(blocked),
         "판정": "진입 가능" if not blocked else "진입 금지 — 유료 판에 들어가지 않는다",
     }
-    d = os.path.join(ROOT, "runs", "preflight")
+    d = runpath.write_dir("preflight")
     os.makedirs(d, exist_ok=True)
     p = os.path.join(d, datetime.now().strftime("%Y%m%d-%H%M%S") + ".json")
     io.open(p, "w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=1))

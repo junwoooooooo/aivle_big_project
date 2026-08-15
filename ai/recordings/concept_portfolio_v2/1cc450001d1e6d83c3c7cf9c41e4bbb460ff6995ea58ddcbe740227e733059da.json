@@ -1,0 +1,114 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4573242b08fc5a095fd0f0b9c2987b68ac67b9c193fad1230c4190875da32388",
+  "canonicalRequestHash": "1cc450001d1e6d83c3c7cf9c41e4bbb460ff6995ea58ddcbe740227e733059da",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+      "problemFocus": "취업 준비생은 혼자서 면접 준비를 하며 피드백을 받기 어려운 상황이다.",
+      "useContext": "AI와 커뮤니티의 피드백을 통해 면접 준비를 지원하는 서비스.",
+      "valueProposition": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 자신감을 높인다.",
+      "offerThesis": "AI와 커뮤니티의 협업으로 면접 준비의 질을 높인다.",
+      "solutionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+      "differentiatingMechanics": [
+        "AI 기반의 실시간 피드백 제공",
+        "커뮤니티 피드백 시스템"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "problemScenario": "취업 준비생은 혼자서 면접 준비를 하며 피드백을 받기 어려운 상황이다.",
+      "coreValue": "AI 분석 결과와 커뮤니티 피드백을 바탕으로 맞춤형 피드백과 연습 계획을 제공한다.",
+      "conceptDefinition": "AI와 커뮤니티의 힘으로 면접 준비를 지원하는 플랫폼",
+      "solutionMechanism": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다.",
+      "featureSet": [
+        "AI 기반 피드백 제공",
+        "커뮤니티 피드백 기능",
+        "개인 맞춤형 연습 계획 제공"
+      ],
+      "operatingModel": "온라인 플랫폼을 통해 즉각적인 피드백 제공 및 커뮤니티 활동 지원"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "useCaseThesis": "AI와 커뮤니티의 피드백을 통해 면접 준비를 지원하는 서비스.",
+        "valuePropositionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 자신감을 높인다.",
+        "offerThesis": "AI와 커뮤니티의 협업으로 면접 준비의 질을 높인다.",
+        "solutionThesis": "AI 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다."
+      },
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "COMMUNITY",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "ai 분석과 커뮤니티 피드백을 통해 면접 준비생의 답변을 개선한다",
+      "familyId": "PLATFORM_INFRASTRUCTURE:AUTOMATED_DIGITAL",
+      "familyLabelKo": "플랫폼 인프라 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "PLATFORM_INFRASTRUCTURE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "SUBSCRIPTION",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "COMMUNITY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "AI 분석 결과와 커뮤니티 피드백을 바탕으로 맞춤형 피드백과 연습 계획 제공",
+      "AI 기반 피드백 제공",
+      "커뮤니티 피드백 기능",
+      "개인 맞춤형 연습 계획 제공",
+      "AI 기반의 실시간 피드백 제공",
+      "커뮤니티 피드백 시스템"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "AI와 커뮤니티의 힘으로 면접 준비를 지원하는 플랫폼으로, AI 분석과 커뮤니티 피드백을 통해 맞춤형 피드백과 연습 계획을 제공하며, 신입 및 주니어 채용을 준비하는 성인 취업 준비생을 대상으로 한다."
+  },
+  "durationMs": 3524,
+  "timestamp": "2026-08-10T03:58:05.855403+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -25,9 +25,12 @@ def test_price_only_difference_is_dominance():
     assert v.task_type == DOMINANCE and v.serviceable
 
 
-def test_premium_against_price_handicap_is_price_type():
+def test_premium_against_price_handicap_is_price_type_and_blocked():
+    """분류는 여전히 PRICE 다 — 그래야 «가격형이라 막았다»고 말할 수 있다. 다만 못 판다."""
     v = classify(pair({"형태": "신선"}, {"형태": "냉동"}, 5000, 4500))
-    assert v.task_type == PRICE and v.serviceable
+    assert v.task_type == PRICE and v.blocked
+    assert "지불의사의 임계는 응답자가 아니라 실행 모델이 정한다" in v.reason
+    assert "가격을 양쪽 같게" in v.reason
 
 
 def test_two_differing_attributes_are_unmeasurable():
@@ -75,5 +78,6 @@ def test_ethical_attribute_not_on_the_axis_does_not_block():
     assert v.task_type == DOMINANCE and v.serviceable
 
 
-def test_serviceable_set_is_exactly_the_two_passing_types():
-    assert SERVICEABLE == frozenset({DOMINANCE, PRICE})
+def test_serviceable_set_is_only_dominance():
+    """2026-08-10 가격형 차단. 세 계기 실측이 방향 반전을 보였다(핸드오프 §8)."""
+    assert SERVICEABLE == frozenset({DOMINANCE})

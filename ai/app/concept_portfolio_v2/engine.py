@@ -23,17 +23,24 @@ from .candidate_governance import (
     DIRECT_CANDIDATE_LOCKS, candidate_result_to_draft, normalize_candidate_draft,
 )
 from .distinctness import deterministic_distinctness, descriptor_values
+from .fact_consistency import assess_concept_fact_consistency
 from .language_policy import candidate_language_failures, plan_language_failures
+from .legal_requirement_nature import normalize_legal_requirement_route
 from .hypothesis_validation import assess_hypotheses, assess_hypothesis_value
 from .legal_fact_completeness import (
-    assess_legal_fact_completeness, normalized_requirements, validate_redesign_requirements,
+    assess_legal_fact_completeness, assess_legal_fact_dependencies, assess_role_semantics,
+    classify_fact_presence, normalized_requirements, validate_legal_fact_completion,
+    validate_redesign_requirements,
 )
 from .mechanics import GenericConceptNormalizer, derive_candidate_descriptor
 from .models import (
+    BusinessRoleSemanticItem, ConceptFactConsistencyResult, LegalFactCompletionCompliance,
+    LegalFactCompletionRequirement, LegalFactDependencySemanticItem,
     CandidateEnvelope, CandidatePortfolioPreparation, CandidateValidation, CanonicalSeed, ConceptPortfolioResult,
     DeltaLegalResult, DesignSpaceAnalysis, DiversityAssessment, DownstreamHandoff,
-    ExplorationBreadth, FailureCode, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
-    LegalCandidatePreparation, LegalReview, LegalRoute, PlanPoolStatus, PlanValidationResult, PortfolioPlan,
+    ExplorationBreadth, FailureCode, FailureDiagnostics, HypothesisDecision, IdeaBriefLabContext, LegalPrecheck,
+    LegalCandidatePreparation, LegalLineageResolution, LegalReview, LegalRoute, PlanPoolStatus,
+    PlanValidationResult, PortfolioPlan,
     PortfolioPlanDraft, PortfolioStatus, ProviderMode, RejectedPlan, RunStage, RunSummary,
     SchemaPreflightReport, TraceEvent,
 )
@@ -75,6 +82,7 @@ _NON_FACT_VALUES = {
     "없음", "해당없음", "해당사항없음", "필요시확인", "추후확인", "검토필요",
     "필요한자격", "관련자격", "해당활동에필요한자격", "필요시필요한자격",
     "필요한경우개인정보처리", "서비스이행을위한최소정보", "필요한경우물리활동",
+    "운영사가설계된물리적이행을관리", "필요시현장활동수행", "운영사가필요한물리활동을관리",
 }
 
 
@@ -88,6 +96,37 @@ def _substantive_facts(values: list[str]) -> list[str]:
             continue
         result.append(value)
     return result
+
+
+_PHYSICAL_ACTIVITY_MARKERS = (
+    "배송", "포장", "운송", "픽업", "수거", "현장", "대면", "방문", "보관", "조립", "설치",
+    "제조", "조리", "이동", "탑승", "점검", "수리", "돌봄 수행",
+)
+
+
+def _physical_facts(values: list[str]) -> list[str]:
+    """디지털 처리·피드백 문구를 물리적 이행으로 오인하지 않는다."""
+    return [value for value in _substantive_facts(values)
+            if any(marker in str(value) for marker in _PHYSICAL_ACTIVITY_MARKERS)]
+
+
+def _required_legal_input(candidate_id: str, review: LegalReview) -> dict[str, Any]:
+    unknown = list(review.unknownFacts)
+    action = review.possibleUserAction
+    if not action and unknown:
+        action = "다음 외부 사실을 확인하거나 입력하세요: " + "; ".join(unknown)
+    return {
+        "candidateId": candidate_id,
+        "scope": "GLOBAL" if review.conflictingLock else review.inputScope,
+        "unknownFacts": unknown,
+        "conflictingLock": review.conflictingLock,
+        "currentValue": review.currentValue,
+        "requiredLegalChange": review.requiredLegalChange,
+        "reason": review.reason or review.safeSummary,
+        "possibleUserAction": action or "이 후보에 필요한 외부 사실을 확인하거나 후보를 제외하고 계속하세요.",
+        "question": review.evidenceDiagnostics.get("factQuestion"),
+        "safeSummary": review.safeSummary,
+    }
 
 
 @dataclass
@@ -120,6 +159,11 @@ class ConceptPortfolioEngine:
         self._last_plan_pool_status: PlanPoolStatus | None = None
         self._delta_legal_results: list[DeltaLegalResult] = []
         self._legal_metrics: dict[str, int] = {}
+        self._last_legal_reviews: list[LegalReview] = []
+        self._last_candidate_preparation: CandidatePortfolioPreparation | None = None
+        self._last_legal_preparation: LegalCandidatePreparation | None = None
+        self._last_pre_legal_exclusions: list[dict[str, Any]] = []
+        self._last_legal_resolutions: list[LegalLineageResolution] = []
 
     @property
     def trace(self) -> list[TraceEvent]:
@@ -133,8 +177,17 @@ class ConceptPortfolioEngine:
         self._last_idea_context = None
         self._last_plan_pool_status = None
         self._delta_legal_results = []
+        self._last_legal_reviews = []
+        self._last_candidate_preparation = None
+        self._last_legal_preparation = None
+        self._last_pre_legal_exclusions = []
+        self._last_legal_resolutions = []
         self._legal_metrics = {key: 0 for key in (
             "factAttempted", "factValidated", "factAccepted", "factExhausted",
+            "dependencySemanticCalls", "completionCompliancePassed",
+            "providerNoncompliant", "recheckFailed",
+            "consistencyInvalid", "consistencyRepairAttempted",
+            "consistencyRepairAccepted", "consistencyRepairExhausted",
             "redesignAttempted", "redesignValidated", "redesignAccepted", "redesignExhausted",
             "replanAttempted", "replanValidated", "replanAccepted", "replanExhausted",
         )}
@@ -142,7 +195,9 @@ class ConceptPortfolioEngine:
             "logicalOperations": 0, "topLevelExternalOperations": 0, "topLevelOperationsByStage": {},
             "externalProviderCalls": 0, "totalProviderCalls": 0,
             "callsByStage": {}, "externalCallsByStage": {}, "retries": 0, "durationMs": 0,
-            "modeCounts": {self.mode.value: 0}, "tokenUsage": None, "reportedCost": None})
+            "modeCounts": {self.mode.value: 0}, "tokenUsage": None, "reportedCost": None,
+            "batchDiagnostics": []})
+        self.gateway.last_failure = None
         self._event(RunStage.CREATED, "CREATED", "RUNNING", "V2 Lab 실행을 생성했습니다.")
 
     def _event(self, stage: RunStage, action: str, status: str, summary: str, *, entity_id: str | None = None,
@@ -274,9 +329,11 @@ class ConceptPortfolioEngine:
             "currentArchitecture": plan.descriptor.architecture.model_dump(mode="json"),
         } for plan in pending]
         classified = await self.gateway.classify_architectures(items)
+        classified_by_id = {item.entityId: item for item in classified}
         replacements = {plan.planId: plan.model_copy(update={
-            "descriptor": GenericConceptNormalizer.apply_semantic_fallback(plan.descriptor, result)
-        }) for plan, result in zip(pending, classified, strict=True)}
+            "descriptor": GenericConceptNormalizer.apply_semantic_fallback(
+                plan.descriptor, classified_by_id[plan.planId])
+        }) for plan in pending}
         normalized = [replacements.get(plan.planId, plan) for plan in plans]
         self._event(RunStage.PLANNING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
                     f"low-confidence Plan architecture {len(pending)}개를 batch 분류했습니다.",
@@ -539,9 +596,11 @@ class ConceptPortfolioEngine:
                       "currentArchitecture": item.descriptor.architecture.model_dump(mode="json")}
                      for item in pending]
             classified = await self.gateway.classify_architectures(items)
+            classified_by_id = {result.entityId: result for result in classified}
             replacements = {item.candidateId: item.model_copy(update={
-                "descriptor": GenericConceptNormalizer.apply_semantic_fallback(item.descriptor, result)
-            }) for item, result in zip(pending, classified, strict=True)}
+                "descriptor": GenericConceptNormalizer.apply_semantic_fallback(
+                    item.descriptor, classified_by_id[item.candidateId])
+            }) for item in pending}
             candidates = [replacements.get(item.candidateId, item) for item in candidates]
             self._event(RunStage.CANDIDATE_VALIDATING, "ARCHITECTURE_SEMANTIC_FALLBACK", "PASS",
                         f"low-confidence Candidate architecture {len(pending)}개를 batch 분류했습니다.",
@@ -793,26 +852,246 @@ class ConceptPortfolioEngine:
         self._event(RunStage.CANDIDATE_VALIDATING, "CANDIDATE_PORTFOLIO_READY", "PASS",
                     f"Candidate Portfolio={len(accepted)}/{max_concepts}, recovered={recovered}",
                     decision="READY_FULL" if len(accepted) == max_concepts else "READY_LIMITED")
-        return CandidatePortfolioPreparation(
+        preparation = CandidatePortfolioPreparation(
             candidates=accepted, reports=reports, usedPlans=used_plans,
             candidateGenerated=generated, candidateAcceptedInitially=accepted_initially,
             candidateRegenerated=regenerated, candidateRecovered=recovered,
             reservePlansActivated=reserve_activated,
             candidateRecoveryReplans=recovery_replans)
+        self._last_candidate_preparation = preparation
+        return preparation
 
     def legal_precheck(self, envelope: CandidateEnvelope) -> LegalPrecheck:
         candidate = envelope.candidate
-        physical = _substantive_facts(candidate.physicalActivities)
+        physical = _physical_facts(candidate.physicalActivities)
         personal_data = _substantive_facts(candidate.personalDataUsage)
         qualifications = _substantive_facts(candidate.qualificationRequirements)
+        seller_present = classify_fact_presence(candidate.sellerRole, "sellerRole") == "PRESENT"
+        intermediary_present = classify_fact_presence(candidate.intermediaryRole, "intermediaryRole") == "PRESENT"
         return LegalPrecheck(candidateId=envelope.candidateId,
-            directSeller="판매" in candidate.sellerRole, intermediary="중개" in candidate.intermediaryRole,
+            directSeller=(seller_present and assess_role_semantics("sellerRole", candidate.sellerRole) == "MATCH"
+                          and any(marker in candidate.sellerRole for marker in ("판매", "계약", "수취"))),
+            intermediary=(intermediary_present
+                          and assess_role_semantics("intermediaryRole", candidate.intermediaryRole) == "MATCH"),
             regulatedPhysicalActivity=bool(physical),
             personalDataDependency=bool(personal_data),
             qualificationDependency=bool(qualifications),
             riskHints=[item for item, active in (("물리 활동", bool(physical)),
                                                 ("개인정보", bool(personal_data)),
                                                 ("자격 의존", bool(qualifications))) if active])
+
+    def _role_semantic_context(self, envelope: CandidateEnvelope, field: str) -> dict[str, Any]:
+        candidate = envelope.candidate
+        descriptor = envelope.descriptor
+        return {
+            "candidateId": envelope.candidateId,
+            "field": field,
+            "value": getattr(candidate, field),
+            "roleFields": {name: getattr(candidate, name) for name in
+                           ("platformRole", "providerRole", "sellerRole", "intermediaryRole")},
+            "actorRoles": candidate.actorRoles,
+            "transactionFlow": candidate.transactionFlow,
+            "paymentFlow": candidate.paymentFlow,
+            "operatingModel": candidate.operatingModel,
+            "partnerModel": candidate.partnerModel,
+            "solutionMechanism": candidate.solutionMechanism,
+            "descriptor": {
+                "businessRole": descriptor.architecture.businessRole,
+                "operatingModel": descriptor.architecture.operatingModel,
+                "transactionModel": descriptor.architecture.transactionModel,
+                "deliveryModel": descriptor.architecture.deliveryModel,
+                "confidence": {key: value.confidence for key, value in
+                               descriptor.architectureDiagnostics.items()},
+            },
+        }
+
+    @staticmethod
+    def _architecture_role_consistency(envelope: CandidateEnvelope, report) -> dict[str, str]:
+        role_code = envelope.descriptor.architecture.businessRole
+        diagnostic = envelope.descriptor.architectureDiagnostics.get("businessRole")
+        confidence = diagnostic.confidence if diagnostic else "LOW"
+        intermediary = next((item for item in report.roleSemantics
+                             if item["field"] == "intermediaryRole"), None)
+        final = intermediary.get("finalStatus") if intermediary else None
+        if confidence == "HIGH" and role_code in {"INTERMEDIARY", "MARKETPLACE"}:
+            if final == "EXPLICIT_ABSENCE":
+                status = "POTENTIAL_CONFLICT"
+                reason = "고신뢰 architecture는 중개 역할인데 Candidate는 중개 부재를 명시합니다."
+            elif final == "MATCH":
+                status = "CONSISTENT"
+                reason = "고신뢰 architecture와 Candidate의 중개 역할이 일치합니다."
+            else:
+                status = "NOT_ENOUGH_EVIDENCE"
+                reason = "architecture와 역할의 정합성을 확정할 근거가 충분하지 않습니다."
+        elif confidence == "HIGH" and final == "EXPLICIT_ABSENCE" and role_code in {
+                "PRINCIPAL_OPERATOR", "SAAS_TOOL", "ADVISORY", "PLATFORM_INFRASTRUCTURE"}:
+            status = "CONSISTENT"
+            reason = "비중개형 고신뢰 architecture와 명시적 중개 부재가 일치합니다."
+        else:
+            status = "NOT_ENOUGH_EVIDENCE"
+            reason = "진단용 architecture confidence 또는 역할 근거가 충분하지 않습니다."
+        return {"status": status, "businessRole": role_code, "confidence": confidence,
+                "safeReason": reason}
+
+    async def _repair_fact_consistency(
+        self, seed: CanonicalSeed, candidates: list[CandidateEnvelope],
+    ) -> tuple[list[CandidateEnvelope], list[ConceptFactConsistencyResult], list[dict[str, Any]], int, int, int]:
+        """명백한 자기모순만 Candidate별 1회 targeted patch로 정정한다."""
+        plan_by_id = {item.planId: item for item in self._last_plan_pool}
+        accepted: list[CandidateEnvelope] = []
+        reports: list[ConceptFactConsistencyResult] = []
+        excluded: list[dict[str, Any]] = []
+        attempted = repaired = exhausted = 0
+        for envelope in candidates:
+            report = assess_concept_fact_consistency(
+                envelope.candidate, envelope.descriptor, envelope.candidateId)
+            reports.append(report)
+            self._event(RunStage.LEGAL_RECOVERING, "CONCEPT_FACT_CONSISTENCY_CHECKED", report.status,
+                        report.safeSummary, entity_id=envelope.candidateId, decision=report.status)
+            invalid_issues = [item for item in report.issues if item.status == "INVALID_FACT"]
+            if not invalid_issues:
+                accepted.append(envelope)
+                continue
+            attempted += 1
+            requirements = [LegalFactCompletionRequirement(
+                field=item.field, reasonType="FACT_CONSISTENCY_REPAIR", dependencyType=None,
+                instruction=item.repairInstruction) for item in invalid_issues]
+            requirements = list({item.field: item for item in requirements}.values())
+            try:
+                patch = await self.gateway.complete_legal_facts(
+                    seed, plan_by_id[envelope.planId], envelope.candidate,
+                    requirements, envelope.candidate.candidateIndex)
+            except ProviderFailure as failure:
+                if self._is_global_legal_failure(failure):
+                    raise
+                exhausted += 1
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED.value,
+                    "affectedFields": [item.field for item in requirements],
+                    "consistencyReport": report.model_dump(mode="json"),
+                    "recoveryAttempted": True, "recoveryResolution": failure.reason,
+                    "safeSummary": "사업정보 정합성 targeted patch 응답을 적용할 수 없습니다.",
+                })
+                continue
+            patch_values = patch.model_dump(mode="json")
+            changed_fields = [field for field, value in patch_values.items() if value is not None]
+            allowed_fields = {item.field for item in requirements}
+            if set(changed_fields) - allowed_fields:
+                exhausted += 1
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_SCOPE_VIOLATION.value,
+                    "affectedFields": sorted(set(changed_fields) - allowed_fields),
+                    "consistencyReport": report.model_dump(mode="json"),
+                    "patchChangedFields": changed_fields,
+                    "recoveryAttempted": True, "recoveryResolution": "PATCH_SCOPE_VIOLATION",
+                    "safeSummary": "사업정보 정합성 patch가 허용되지 않은 필드를 변경했습니다.",
+                })
+                continue
+            draft = candidate_result_to_draft(envelope.candidate).model_copy(update={
+                field: value for field, value in patch_values.items() if value is not None})
+            candidate = normalize_candidate_draft(
+                draft, seed, ExplorationBreadth(envelope.candidate.generationStrategy),
+                envelope.candidate.candidateIndex)
+            child = envelope.model_copy(update={
+                "candidateId": f"{envelope.candidateId}-FC1",
+                "parentCandidateId": envelope.candidateId,
+                "recoverySource": "FACT_CONSISTENCY_REPAIR",
+                "descriptor": derive_candidate_descriptor(candidate), "candidate": candidate,
+            })
+            others = [*accepted, *[item for item in candidates if item.candidateId != envelope.candidateId]]
+            validated, _ = await self.validate_candidates(
+                seed, [plan_by_id[envelope.planId]], [child], comparison_context=others)
+            child_report = (assess_concept_fact_consistency(
+                validated[0].candidate, validated[0].descriptor, validated[0].candidateId)
+                if validated else None)
+            if not validated or not child_report or child_report.status == "INVALID_FACT":
+                exhausted += 1
+                excluded.append({
+                    "candidateId": child.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.CONCEPT_FACT_CONSISTENCY_REPAIR_FAILED.value,
+                    "affectedFields": [item.field for item in requirements],
+                    "consistencyReport": (child_report or report).model_dump(mode="json"),
+                    "patchChangedFields": changed_fields,
+                    "recoveryAttempted": True, "recoveryResolution": (
+                        "CANDIDATE_VALIDATION_FAILED" if not validated else "CONSISTENCY_RECHECK_FAILED"),
+                    "safeSummary": "1회 정정 후에도 Candidate 검증 또는 사업정보 정합성을 통과하지 못했습니다.",
+                })
+                continue
+            reports.append(child_report)
+            accepted.append(validated[0])
+            repaired += 1
+            self._event(RunStage.LEGAL_RECOVERING, "CONCEPT_FACT_CONSISTENCY_REPAIRED", "PASS",
+                        child_report.safeSummary, entity_id=validated[0].candidateId,
+                        parent_id=envelope.candidateId, provider_call=True)
+        return accepted, reports, excluded, attempted, repaired, exhausted
+
+    async def _assess_legal_fact_batch(self, candidates: list[CandidateEnvelope]):
+        deterministic = [assess_legal_fact_completeness(
+            item.candidate, descriptor=item.descriptor).model_copy(
+            update={"candidateId": item.candidateId}) for item in candidates]
+        ambiguous_items: list[dict[str, Any]] = []
+        dependency_items: list[dict[str, Any]] = []
+        for envelope, report in zip(candidates, deterministic):
+            for role in report.roleSemantics:
+                if role["deterministicStatus"] == "AMBIGUOUS":
+                    ambiguous_items.append(self._role_semantic_context(envelope, role["field"]))
+            for dependency in assess_legal_fact_dependencies(envelope.candidate, envelope.descriptor):
+                if dependency.deterministicDecision == "AMBIGUOUS":
+                    dependency_items.append({
+                        "candidateId": envelope.candidateId,
+                        "dependencyType": dependency.dependencyType,
+                        "candidate": envelope.candidate.model_dump(mode="json"),
+                        "descriptor": envelope.descriptor.model_dump(mode="json"),
+                    })
+        decisions: dict[tuple[str, str], BusinessRoleSemanticItem] = {}
+        dependency_decisions: dict[tuple[str, str], LegalFactDependencySemanticItem] = {}
+        role_calls = dependency_calls = 0
+        if ambiguous_items:
+            diagnostic_start = len(self.gateway.usage.batchDiagnostics)
+            semantic = await self.gateway.classify_business_roles(ambiguous_items)
+            decisions = {(item.candidateId, item.field): item for item in semantic}
+            role_calls = 1
+            self._event(RunStage.LEGAL_RECOVERING, "BUSINESS_ROLE_SEMANTIC_BATCH", "PASS",
+                        f"불명확 역할 {len(ambiguous_items)}개를 1회 batch로 판정했습니다.",
+                        decision="BATCH_COMPLETE", provider_call=True)
+            self._emit_batch_extra_diagnostics(diagnostic_start)
+        if dependency_items:
+            diagnostic_start = len(self.gateway.usage.batchDiagnostics)
+            semantic_dependencies = await self.gateway.classify_legal_fact_dependencies(dependency_items)
+            dependency_decisions = {
+                (item.candidateId, item.dependencyType): item for item in semantic_dependencies}
+            dependency_calls = 1
+            self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_DEPENDENCY_SEMANTIC_BATCH", "PASS",
+                        f"불명확 dependency {len(dependency_items)}개를 1회 batch로 판정했습니다.",
+                        decision="BATCH_COMPLETE", provider_call=True)
+            self._emit_batch_extra_diagnostics(diagnostic_start)
+        final = []
+        for envelope in candidates:
+            per_candidate = {field: item for (candidate_id, field), item in decisions.items()
+                             if candidate_id == envelope.candidateId}
+            per_dependency = {dependency_type: item
+                              for (candidate_id, dependency_type), item in dependency_decisions.items()
+                              if candidate_id == envelope.candidateId}
+            report = assess_legal_fact_completeness(
+                envelope.candidate, per_candidate, per_dependency,
+                envelope.descriptor).model_copy(update={"candidateId": envelope.candidateId})
+            report = report.model_copy(update={
+                "architectureRoleConsistency": self._architecture_role_consistency(envelope, report)})
+            final.append(report)
+        return final, role_calls, dependency_calls
+
+    def _emit_batch_extra_diagnostics(self, start: int) -> None:
+        for diagnostic in self.gateway.usage.batchDiagnostics[start:]:
+            ignored = diagnostic.get("ignoredKeys", [])
+            self._event(
+                RunStage.LEGAL_RECOVERING,
+                "BATCH_EXTRA_RESULTS_IGNORED",
+                "PASS",
+                f"{diagnostic.get('safeSummary', '')} ignoredKeys={ignored}",
+                decision="IGNORED_EXTRA",
+            )
 
     async def prepare_legal_candidates(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]
                                        ) -> LegalCandidatePreparation:
@@ -823,10 +1102,19 @@ class ConceptPortfolioEngine:
         ready: list[CandidateEnvelope] = []
         reports = []
         excluded = []
-        attempted = validated = accepted = exhausted = 0
-        for envelope in candidates:
-            report = assess_legal_fact_completeness(envelope.candidate).model_copy(
-                update={"candidateId": envelope.candidateId})
+        attempted = validated = accepted = exhausted = role_calls = dependency_calls = 0
+        provider_noncompliant = recheck_failed = 0
+        compliance_results: list[LegalFactCompletionCompliance] = []
+        (candidates, consistency_reports, consistency_excluded,
+         consistency_attempted, consistency_accepted,
+         consistency_exhausted) = await self._repair_fact_consistency(seed, candidates)
+        excluded.extend(consistency_excluded)
+        exhausted += consistency_exhausted
+        initial_reports, initial_role_calls, initial_dependency_calls = await self._assess_legal_fact_batch(candidates)
+        role_calls += initial_role_calls
+        dependency_calls += initial_dependency_calls
+        completion_parents: list[tuple[CandidateEnvelope, CandidateEnvelope, Any, list[str]]] = []
+        for envelope, report in zip(candidates, initial_reports):
             reports.append(report)
             self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_COMPLETENESS_CHECKED", report.status,
                         report.safeSummary, entity_id=envelope.candidateId, decision=report.status)
@@ -835,14 +1123,60 @@ class ConceptPortfolioEngine:
                 continue
             if report.status == "INVALID":
                 exhausted += 1
-                excluded.append({"candidateId": envelope.candidateId, "scope": "CANDIDATE",
+                excluded.append({"candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
                     "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                    "affectedFields": report.affectedFields,
+                    "dependencyDecisions": [item.model_dump(mode="json") for item in report.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in report.structuredCompletionRequirements],
+                    "recoveryAttempted": False, "recoveryResolution": "INVALID",
                     "safeSummary": report.safeSummary})
                 continue
             attempted += 1
-            draft = await self.gateway.complete_legal_facts(
-                seed, plan_by_id[envelope.planId], envelope.candidate,
-                report.completionRequirements, envelope.candidate.candidateIndex)
+            requirements = report.structuredCompletionRequirements
+            try:
+                patch = await self.gateway.complete_legal_facts(
+                    seed, plan_by_id[envelope.planId], envelope.candidate,
+                    requirements, envelope.candidate.candidateIndex)
+            except ProviderFailure as failure:
+                if self._is_global_legal_failure(failure):
+                    raise
+                exhausted += 1
+                reason_code = (FailureCode.LEGAL_FACT_COMPLETION_SCOPE_VIOLATION
+                               if "UNSUPPORTED_FIELDS" in failure.reason
+                               else FailureCode.LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT)
+                excluded.append({
+                    "candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": reason_code.value,
+                    "affectedFields": report.affectedFields,
+                    "dependencyDecisions": [item.model_dump(mode="json")
+                                            for item in report.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in requirements],
+                    "recoveryAttempted": True, "recoveryResolution": failure.reason,
+                    "safeSummary": "Completion Provider 응답이 targeted patch 계약을 위반했습니다.",
+                })
+                continue
+            patch_values = patch.model_dump(mode="json")
+            changed_fields = [field for field, value in patch_values.items() if value is not None]
+            allowed_fields = {item.field for item in requirements}
+            locked = {field for field in DIRECT_CANDIDATE_LOCKS
+                      if (seed.by_key().get(field) and seed.by_key()[field].decisionState == "LOCKED"
+                          and seed.by_key()[field].value.strip())}
+            scope_violations = [field for field in changed_fields if field not in allowed_fields]
+            scope_violations.extend(field for field in changed_fields if field in locked
+                                    and _norm(patch_values[field]) != _norm(getattr(envelope.candidate, field)))
+            if scope_violations:
+                exhausted += 1
+                excluded.append({"candidateId": envelope.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_SCOPE_VIOLATION.value,
+                    "affectedFields": sorted(set(scope_violations)),
+                    "dependencyDecisions": [item.model_dump(mode="json") for item in report.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in requirements],
+                    "patchChangedFields": changed_fields, "recoveryAttempted": True,
+                    "recoveryResolution": "PATCH_SCOPE_VIOLATION",
+                    "safeSummary": "Completion patch가 허용 범위 또는 사용자 LOCK을 위반했습니다."})
+                continue
+            draft = candidate_result_to_draft(envelope.candidate).model_copy(update={
+                field: value for field, value in patch_values.items() if value is not None})
             strategy = ExplorationBreadth(envelope.candidate.generationStrategy)
             candidate = normalize_candidate_draft(
                 draft, seed, strategy, envelope.candidate.candidateIndex)
@@ -861,48 +1195,171 @@ class ConceptPortfolioEngine:
                 seed, [plan_by_id[envelope.planId]], [child], comparison_context=others)
             if not validated_children:
                 exhausted += 1
-                excluded.append({"candidateId": child.candidateId, "scope": "CANDIDATE",
-                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                excluded.append({"candidateId": child.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_CANDIDATE_INVALID.value,
+                    "affectedFields": report.affectedFields,
+                    "dependencyDecisions": [item.model_dump(mode="json") for item in report.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in requirements],
+                    "patchChangedFields": changed_fields,
+                    "recoveryAttempted": True, "recoveryResolution": "VALIDATION_FAILED",
                     "safeSummary": "Legal fact completion Candidate가 전체 validation을 통과하지 못했습니다."})
                 continue
             validated += 1
-            child = validated_children[0]
-            recheck = assess_legal_fact_completeness(child.candidate).model_copy(
-                update={"candidateId": child.candidateId})
+            completion_parents.append((envelope, validated_children[0], report, changed_fields))
+
+        completion_children = [child for _, child, _, _ in completion_parents]
+        child_reports, child_role_calls, child_dependency_calls = await self._assess_legal_fact_batch(completion_children)
+        role_calls += child_role_calls
+        dependency_calls += child_dependency_calls
+        for (envelope, child, parent_report, changed_fields), recheck in zip(completion_parents, child_reports):
             reports.append(recheck)
-            if recheck.status == "COMPLETE":
+            compliance = validate_legal_fact_completion(
+                envelope.candidate, child.candidate, parent_report.structuredCompletionRequirements,
+                recheck, child.candidateId)
+            compliance_results.append(compliance)
+            if compliance.status == "PASS" and recheck.status == "COMPLETE":
                 ready.append(child); accepted += 1
                 self._event(RunStage.LEGAL_RECOVERING, "LEGAL_FACT_COMPLETION_ACCEPTED", "PASS",
                             recheck.safeSummary, entity_id=child.candidateId,
                             parent_id=envelope.candidateId, provider_call=True)
             else:
                 exhausted += 1
-                excluded.append({"candidateId": child.candidateId, "scope": "CANDIDATE",
-                    "reasonCode": FailureCode.LEGAL_FACT_COMPLETION_EXHAUSTED.value,
+                if compliance.status == "FAIL":
+                    reason_code = FailureCode.LEGAL_FACT_COMPLETION_PROVIDER_NONCOMPLIANT
+                    provider_noncompliant += 1
+                    resolution = "PROVIDER_NONCOMPLIANT"
+                elif compliance.status == "AMBIGUOUS":
+                    reason_code = FailureCode.LEGAL_FACT_DEPENDENCY_UNRESOLVED
+                    resolution = "DEPENDENCY_UNRESOLVED"
+                else:
+                    reason_code = FailureCode.LEGAL_FACT_COMPLETION_RECHECK_FAILED
+                    recheck_failed += 1
+                    resolution = "RECHECK_FAILED"
+                excluded.append({"candidateId": child.candidateId, "scope": "PRE_LEGAL_EXCLUSION",
+                    "reasonCode": reason_code.value,
+                    "affectedFields": recheck.affectedFields,
+                    "dependencyDecisions": [item.model_dump(mode="json") for item in recheck.dependencyAssessments],
+                    "completionRequirements": [item.model_dump(mode="json") for item in parent_report.structuredCompletionRequirements],
+                    "patchChangedFields": changed_fields,
+                    "completionCompliance": compliance.model_dump(mode="json"),
+                    "recheckStatus": recheck.status,
+                    "recoveryAttempted": True, "recoveryResolution": resolution,
                     "safeSummary": recheck.safeSummary})
         ready.sort(key=lambda item: (item.slotIndex or item.candidate.candidateIndex, item.candidateId))
         self._legal_metrics["factAttempted"] += attempted
         self._legal_metrics["factValidated"] += validated
         self._legal_metrics["factAccepted"] += accepted
         self._legal_metrics["factExhausted"] += exhausted
-        return LegalCandidatePreparation(candidates=ready, reports=reports, excludedCandidates=excluded,
+        self._legal_metrics["dependencySemanticCalls"] += dependency_calls
+        self._legal_metrics["completionCompliancePassed"] += sum(
+            item.status == "PASS" for item in compliance_results)
+        self._legal_metrics["providerNoncompliant"] += provider_noncompliant
+        self._legal_metrics["recheckFailed"] += recheck_failed
+        self._legal_metrics["consistencyInvalid"] += consistency_attempted
+        self._legal_metrics["consistencyRepairAttempted"] += consistency_attempted
+        self._legal_metrics["consistencyRepairAccepted"] += consistency_accepted
+        self._legal_metrics["consistencyRepairExhausted"] += consistency_exhausted
+        preparation = LegalCandidatePreparation(candidates=ready, reports=reports, excludedCandidates=excluded,
             completionAttempted=attempted, completionValidated=validated,
-            completionAccepted=accepted, completionExhausted=exhausted)
+            completionAccepted=accepted, completionExhausted=exhausted,
+            roleSemanticBatchCalls=role_calls, dependencySemanticBatchCalls=dependency_calls,
+            completionCompliance=compliance_results, consistencyReports=consistency_reports,
+            consistencyRepairAttempted=consistency_attempted,
+            consistencyRepairAccepted=consistency_accepted,
+            consistencyRepairExhausted=consistency_exhausted)
+        self._last_legal_preparation = preparation
+        self._last_pre_legal_exclusions.extend(excluded)
+        return preparation
 
     async def review_legal(self, seed: CanonicalSeed, candidates: list[CandidateEnvelope]) -> list[LegalReview]:
         self._event(RunStage.LEGAL_REVIEWING, "STARTED", "RUNNING", "공식 Legal contract route를 실행합니다.")
-        results = []
+        results: list[LegalReview] = []
+        candidate_failure_counts: dict[tuple[str, str], int] = {}
         for envelope in candidates:
-            review = await self.review_legal_candidate(seed, envelope)
+            try:
+                review = await self.review_legal_candidate(seed, envelope)
+            except ProviderFailure as failure:
+                if self._is_global_legal_failure(failure):
+                    self._last_legal_reviews = list(results)
+                    self._event(RunStage.LEGAL_REVIEWING, "GLOBAL_LEGAL_DEPENDENCY_FAILED", "FAILED",
+                                failure.reason, entity_id=envelope.candidateId,
+                                reason=self._provider_failure_code(failure))
+                    raise
+                signature = (failure.code, failure.reason)
+                candidate_failure_counts[signature] = candidate_failure_counts.get(signature, 0) + 1
+                review = LegalReview(
+                    candidateId=envelope.candidateId, route=LegalRoute.SYSTEM_FAILURE,
+                    sourceStatus="CANDIDATE_SYSTEM_FAILURE", recoveryResolution=failure.reason,
+                    safeSummary="이 후보의 Legal 결과 계약을 복구하지 못해 후보 단위로 제외했습니다.",
+                    evidenceDiagnostics={"failureCode": failure.code,
+                        "providerFailure": dict(self.gateway.last_failure or {})})
+                self._event(RunStage.LEGAL_REVIEWING, "CANDIDATE_SYSTEM_FAILURE", "SYSTEM_FAILURE",
+                            review.safeSummary, entity_id=envelope.candidateId,
+                            decision=LegalRoute.SYSTEM_FAILURE.value,
+                            reason=self._provider_failure_code(failure))
+                if candidate_failure_counts[signature] >= 2:
+                    results.append(review)
+                    self._last_legal_reviews = list(results)
+                    self._event(RunStage.LEGAL_REVIEWING, "REPEATED_LEGAL_CONTRACT_FAILURE", "FAILED",
+                                "동일한 Legal 계약 오류가 여러 후보에서 반복되어 공통 장애로 승격했습니다.",
+                                entity_id=envelope.candidateId,
+                                reason=self._provider_failure_code(failure))
+                    raise
+            except ValidationError as failure:
+                review = LegalReview(
+                    candidateId=envelope.candidateId, route=LegalRoute.SYSTEM_FAILURE,
+                    sourceStatus="CANDIDATE_SYSTEM_FAILURE",
+                    recoveryResolution="LEGAL_RESULT_MODEL_INVALID",
+                    safeSummary="이 후보의 Legal 결과 schema가 유효하지 않아 후보 단위로 제외했습니다.",
+                    evidenceDiagnostics={"failureCode": FailureCode.RESULT_SCHEMA_INVALID.value})
+                self._event(RunStage.LEGAL_REVIEWING, "CANDIDATE_SYSTEM_FAILURE", "SYSTEM_FAILURE",
+                            review.safeSummary, entity_id=envelope.candidateId,
+                            decision=LegalRoute.SYSTEM_FAILURE.value,
+                            reason=FailureCode.RESULT_SCHEMA_INVALID)
             results.append(review)
+            self._last_legal_reviews = list(results)
         return results
+
+    @staticmethod
+    def _provider_failure_code(failure: ProviderFailure) -> FailureCode:
+        if failure.code == "RESULT_SCHEMA_INVALID":
+            return FailureCode.RESULT_SCHEMA_INVALID
+        return FailureCode.PROVIDER_TRANSIENT if failure.retryable else FailureCode.PROVIDER_PERMANENT
+
+    @staticmethod
+    def _is_global_legal_failure(failure: ProviderFailure) -> bool:
+        reason = str(failure.reason or "").upper()
+        return (failure.code in {"DEPENDENCY_UNAVAILABLE", "INVALID_REQUEST"}
+                or any(marker in reason for marker in (
+                    "CONFIGURATION", "AUTH", "REGISTRY", "MODEL_DEPENDENCY",
+                    "LEGAL_SOURCE_EVIDENCE_UNAVAILABLE", "INPUT_CONTRACT")))
 
     async def review_legal_candidate(self, seed: CanonicalSeed,
                                      envelope: CandidateEnvelope) -> LegalReview:
         review = await self.gateway.review_legal(envelope.candidateId, envelope.candidate, seed)
+        review = normalize_legal_requirement_route(review, envelope.candidate)
         self._event(RunStage.LEGAL_REVIEWING, "REVIEWED", review.route.value, review.safeSummary,
                     entity_id=envelope.candidateId, decision=review.route.value, provider_call=True)
         return review
+
+    async def _review_recovery_candidate_safe(self, seed: CanonicalSeed,
+                                              envelope: CandidateEnvelope) -> LegalReview:
+        try:
+            return await self.review_legal_candidate(seed, envelope)
+        except ProviderFailure as failure:
+            if self._is_global_legal_failure(failure):
+                raise
+            review = LegalReview(
+                candidateId=envelope.candidateId, route=LegalRoute.SYSTEM_FAILURE,
+                sourceStatus="CANDIDATE_SYSTEM_FAILURE", recoveryResolution=failure.reason,
+                safeSummary="이 복구 후보의 Legal 결과 계약이 유효하지 않아 해당 lineage만 종료했습니다.",
+                evidenceDiagnostics={"failureCode": failure.code,
+                    "providerFailure": dict(self.gateway.last_failure or {})})
+            self._event(RunStage.LEGAL_RECOVERING, "CANDIDATE_SYSTEM_FAILURE", "SYSTEM_FAILURE",
+                        review.safeSummary, entity_id=envelope.candidateId,
+                        decision=LegalRoute.SYSTEM_FAILURE.value,
+                        reason=self._provider_failure_code(failure))
+            return review
 
     async def resolve_legal(self, seed: CanonicalSeed, plans: list[PortfolioPlan], candidates: list[CandidateEnvelope],
                             reviews: list[LegalReview]) -> tuple[list[CandidateEnvelope], list[LegalReview], list[dict[str, Any]], int, int]:
@@ -921,11 +1378,7 @@ class ConceptPortfolioEngine:
                 final.append(envelope)
                 continue
             if review.route == LegalRoute.NEEDS_INPUT:
-                scope = "GLOBAL" if review.conflictingLock else review.inputScope
-                required_inputs.append({"candidateId": envelope.candidateId, "scope": scope,
-                    **{key: getattr(review, key) for key in
-                    ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
-                    "safeSummary": review.safeSummary})
+                required_inputs.append(_required_legal_input(envelope.candidateId, review))
                 continue
             lineage_redesigns = redesigns_by_lineage.get(envelope.lineageId, 0)
             if (review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE
@@ -996,7 +1449,7 @@ class ConceptPortfolioEngine:
                         continue
                     child = prepared_child.candidates[0]
                     child_id = child.candidateId
-                    child_review = await self.gateway.review_legal(child_id, child.candidate, seed)
+                    child_review = await self._review_recovery_candidate_safe(seed, child)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child)
@@ -1018,11 +1471,7 @@ class ConceptPortfolioEngine:
                             safeSummary=("동일한 Legal redesign 요구가 반복되어 loop를 종료했습니다." if repeated else
                                 f"lineage {envelope.lineageId}의 redesign 예산 {self.max_redesigns}회를 모두 사용했습니다.")))
                     elif child_review.route == LegalRoute.NEEDS_INPUT:
-                        scope = "GLOBAL" if child_review.conflictingLock else child_review.inputScope
-                        required_inputs.append({"candidateId": child_id, "scope": scope,
-                            **{key: getattr(child_review, key) for key in
-                            ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
-                            "safeSummary": child_review.safeSummary})
+                        required_inputs.append(_required_legal_input(child_id, child_review))
                     elif child_review.route == LegalRoute.REPLAN_REQUIRED:
                         recovered, nested_reviews, nested_inputs, nested_redesigned, nested_replanned = await self.resolve_legal(
                             seed, plans, [child], [child_review])
@@ -1099,8 +1548,7 @@ class ConceptPortfolioEngine:
                             safeSummary="Legal replan Candidate의 사실패턴 복구가 소진되었습니다."))
                         continue
                     child = prepared_child.candidates[0]
-                    child_review = await self.gateway.review_legal(
-                        child.candidateId, child.candidate, seed)
+                    child_review = await self._review_recovery_candidate_safe(seed, child)
                     all_reviews.append(child_review)
                     if child_review.route == LegalRoute.ACCEPT:
                         final.append(child); replanned += 1
@@ -1111,11 +1559,7 @@ class ConceptPortfolioEngine:
                                     entity_id=child.candidateId, parent_id=envelope.candidateId,
                                     reason=FailureCode.LEGAL_REPLAN_REQUIRED, provider_call=True)
                     elif child_review.route == LegalRoute.NEEDS_INPUT:
-                        scope = "GLOBAL" if child_review.conflictingLock else child_review.inputScope
-                        required_inputs.append({"candidateId": child.candidateId, "scope": scope,
-                            **{key: getattr(child_review, key) for key in
-                            ("conflictingLock", "currentValue", "requiredLegalChange", "reason", "possibleUserAction")},
-                            "safeSummary": child_review.safeSummary})
+                        required_inputs.append(_required_legal_input(child.candidateId, child_review))
                     elif child_review.route == LegalRoute.REDESIGN_WITHIN_LINEAGE:
                         recovered, nested_reviews, nested_inputs, nested_redesigned, _ = await self.resolve_legal(
                             seed, [*plans, replacement], [child], [child_review])
@@ -1152,6 +1596,28 @@ class ConceptPortfolioEngine:
     def validate_hypothesis_values(self, hypotheses: list[HypothesisDecision], *, use_final: bool = False):
         return assess_hypotheses(hypotheses, use_final=use_final)
 
+    async def resolve_hypothesis_semantics(self, hypotheses: list[HypothesisDecision], *,
+                                           use_final: bool = False) -> list[HypothesisDecision]:
+        assessments = assess_hypotheses(hypotheses, use_final=use_final)
+        ambiguous = [(item, assessment) for item, assessment in zip(hypotheses, assessments, strict=True)
+                     if assessment.status == "AMBIGUOUS"]
+        semantic_by_type = {}
+        if ambiguous:
+            semantic = await self.gateway.classify_hypotheses([{
+                "hypothesisType": item.hypothesisType,
+                "value": item.finalValue if use_final and item.finalValue is not None else item.proposedValue,
+            } for item, _ in ambiguous])
+            semantic_by_type = {item.hypothesisType: item for item in semantic}
+            self._event(RunStage.PORTFOLIO_VALIDATING, "HYPOTHESIS_SEMANTIC_BATCH", "PASS",
+                        f"ambiguous Hypothesis {len(ambiguous)}개를 batch 검증했습니다.", provider_call=True)
+        result = []
+        for item, assessment in zip(hypotheses, assessments, strict=True):
+            semantic = semantic_by_type.get(item.hypothesisType)
+            status = semantic.decision if semantic else assessment.status
+            reason = semantic.safeReason if semantic else assessment.reason
+            result.append(item.model_copy(update={"semanticStatus": status, "semanticReason": reason}))
+        return result
+
     def confirm_hypotheses(self, hypotheses: list[HypothesisDecision],
                            edits: dict[str, Any] | None = None, *,
                            confirm_all_proposed: bool = False) -> list[HypothesisDecision]:
@@ -1167,7 +1633,8 @@ class ConceptPortfolioEngine:
                 continue
             value = edits.get(item.hypothesisType, item.proposedValue)
             assessment = assess_hypothesis_value(item.hypothesisType, value)
-            if assessment.status != "VALID":
+            semantic_validated = not edited and item.semanticStatus == "VALID" and assessment.status == "AMBIGUOUS"
+            if assessment.status != "VALID" and not semantic_validated:
                 result.append(item.model_copy(update={
                     "finalValue": None, "decisionStatus": "PROPOSED",
                     "source": "USER_INPUT" if edited else item.source,
@@ -1185,7 +1652,7 @@ class ConceptPortfolioEngine:
                 "legalImpact": "DELTA_REVIEW_REQUIRED" if delta_required else item.legalImpact,
                 "legalReviewStatus": "PENDING" if delta_required else item.legalReviewStatus,
                 "deltaLegalRequired": delta_required,
-                "semanticStatus": assessment.status, "semanticReason": assessment.reason}))
+                "semanticStatus": "VALID", "semanticReason": item.semanticReason if semantic_validated else assessment.reason}))
         return result
 
     def mark_delta_legal_reviewed(self, hypotheses: list[HypothesisDecision],
@@ -1243,6 +1710,44 @@ class ConceptPortfolioEngine:
                     reason=FailureCode.DOWNSTREAM_HANDOFF_INVALID if handoff.compatibility != "PASS" else None)
         return handoff
 
+    @staticmethod
+    def _build_legal_resolutions(initial_candidates: list[CandidateEnvelope],
+                                 final_candidates: list[CandidateEnvelope],
+                                 reviews: list[LegalReview]) -> list[LegalLineageResolution]:
+        final_by_lineage = {item.lineageId: item for item in final_candidates}
+        results: list[LegalLineageResolution] = []
+        for initial in initial_candidates:
+            related = [item for item in reviews
+                       if item.candidateId == initial.candidateId
+                       or item.candidateId.startswith(f"{initial.candidateId}-")]
+            first = next((item for item in related if item.candidateId == initial.candidateId), None)
+            final_candidate = final_by_lineage.get(initial.lineageId)
+            last = related[-1] if related else first
+            if final_candidate:
+                final_review = next((item for item in reversed(related)
+                                     if item.candidateId == final_candidate.candidateId), last)
+                resolution = "ACCEPTED"
+                final_route = (final_review.route.value if final_review else LegalRoute.ACCEPT.value)
+            elif last and last.route == LegalRoute.NEEDS_INPUT:
+                resolution, final_route = "NEEDS_INPUT", last.route.value
+            elif last and last.route == LegalRoute.SYSTEM_FAILURE:
+                resolution, final_route = "SYSTEM_FAILURE", last.route.value
+            else:
+                resolution = "EXCLUDED_LEGAL"
+                final_route = last.route.value if last else "NOT_REVIEWED"
+            action = (final_candidate.recoverySource if final_candidate and
+                      final_candidate.candidateId != initial.candidateId else "NONE")
+            results.append(LegalLineageResolution(
+                candidateId=initial.candidateId,
+                initialRoute=first.route.value if first else "NOT_REVIEWED",
+                recoveryAction=action or "NONE",
+                recoveryCandidateId=(final_candidate.candidateId if final_candidate and
+                                     final_candidate.candidateId != initial.candidateId else None),
+                finalRoute=final_route, finalResolution=resolution,
+                finalAccepted=resolution == "ACCEPTED",
+                sourceStatus=(last.sourceStatus if last else "NOT_REVIEWED")))
+        return results
+
     async def run_full(self, payload: dict[str, Any] | CanonicalSeed, max_concepts: int = 5,
                        exploration_override: ExplorationBreadth | str | None = None,
         auto_confirm_hypotheses: bool = False) -> ConceptPortfolioResult:
@@ -1287,13 +1792,20 @@ class ConceptPortfolioEngine:
             candidate_preparation = await self.prepare_candidate_portfolio(seed, validated, max_concepts)
             legal_preparation = await self.prepare_legal_candidates(seed, candidate_preparation.candidates)
             candidates = legal_preparation.candidates
-            pre_legal_excluded = list(legal_preparation.excludedCandidates)
             planned = len(self._last_plan_pool)
+            if not candidates:
+                self._event(RunStage.LEGAL_RECOVERING, "LEGAL_READY_PORTFOLIO_EXHAUSTED", "FAILED",
+                            "모든 Candidate가 Legal 실행 전에 제외되어 검토 가능한 Portfolio가 없습니다.",
+                            decision="NO_LEGAL_READY_CANDIDATES",
+                            reason=FailureCode.NO_LEGAL_READY_CANDIDATES)
+                return self._terminal(PortfolioStatus.FAILED, RunStage.FAILED, max_concepts,
+                                      [], rejected, [], required_inputs, "INVALID", started)
             legal_reviews = await self.review_legal(seed, candidates)
             concepts, legal_reviews, required_inputs, redesigned, replanned = await self.resolve_legal(
                 seed, candidate_preparation.usedPlans, candidates, legal_reviews)
-            required_inputs = [*pre_legal_excluded, *required_inputs]
             concepts = concepts[:max_concepts]
+            self._last_legal_resolutions = self._build_legal_resolutions(
+                candidates, concepts, legal_reviews)
             global_inputs = [item for item in required_inputs if item.get("scope") == "GLOBAL"]
             unresolved_candidates = [item for item in required_inputs if item.get("scope") == "CANDIDATE"]
             if global_inputs:
@@ -1308,6 +1820,7 @@ class ConceptPortfolioEngine:
                 selected = concepts[0]
                 hypotheses = self.build_or_load_current_hypothesis_contract(selected)
                 if auto_confirm_hypotheses:
+                    hypotheses = await self.resolve_hypothesis_semantics(hypotheses)
                     hypotheses = self.confirm_hypotheses(hypotheses, confirm_all_proposed=True)
                     assessments = self.validate_hypothesis_values(hypotheses, use_final=True)
                     if all(item.accepted for item in hypotheses) and all(
@@ -1318,21 +1831,38 @@ class ConceptPortfolioEngine:
                                     "NOT_READY", "의미상 미확정 Hypothesis가 있어 handoff를 생성하지 않습니다.",
                                     entity_id=selected.candidateId,
                                     reason=FailureCode.DOWNSTREAM_HANDOFF_INVALID)
-            self._event(terminal, "COMPLETED", status.value, f"최종 Portfolio={len(concepts)}", decision=status.value)
+            self._event(terminal, "COMPLETED", status.value, f"최종 Portfolio={len(concepts)}", decision=status.value,
+                        reason=(FailureCode.RESULT_SCHEMA_INVALID
+                                if status == PortfolioStatus.FAILED and any(
+                                    item.route == LegalRoute.SYSTEM_FAILURE for item in legal_reviews) else None))
+            if status == PortfolioStatus.FAILED:
+                return self._terminal(status, terminal, max_concepts, concepts, rejected,
+                                      legal_reviews, required_inputs, "INVALID", started)
             duration = int((time.perf_counter() - started) * 1000)
             summary = RunSummary(safety=safety_text, requestedMaximum=max_concepts, planned=planned,
+                planSelected=len(candidate_preparation.usedPlans),
                 planDuplicatesRemoved=duplicates,
                 candidatesExpanded=candidate_preparation.candidateGenerated,
                 candidateGenerated=candidate_preparation.candidateGenerated,
                 candidateAcceptedInitially=candidate_preparation.candidateAcceptedInitially,
                 candidateRegenerated=candidate_preparation.candidateRegenerated,
                 candidateRecovered=candidate_preparation.candidateRecovered,
+                candidateAccepted=len(candidate_preparation.candidates),
                 reservePlansActivated=candidate_preparation.reservePlansActivated,
                 candidateRecoveryReplans=candidate_preparation.candidateRecoveryReplans,
                 legalFactCompletionAttempted=self._legal_metrics["factAttempted"],
                 legalFactCompletionValidated=self._legal_metrics["factValidated"],
                 legalFactCompletionAccepted=self._legal_metrics["factAccepted"],
                 legalFactCompletionExhausted=self._legal_metrics["factExhausted"],
+                legalReady=len(candidates),
+                legalFactDependencySemanticCalls=self._legal_metrics["dependencySemanticCalls"],
+                legalFactCompletionCompliancePassed=self._legal_metrics["completionCompliancePassed"],
+                legalFactCompletionProviderNoncompliant=self._legal_metrics["providerNoncompliant"],
+                legalFactCompletionRecheckFailed=self._legal_metrics["recheckFailed"],
+                factConsistencyInvalid=self._legal_metrics["consistencyInvalid"],
+                factConsistencyRepairAttempted=self._legal_metrics["consistencyRepairAttempted"],
+                factConsistencyRepairAccepted=self._legal_metrics["consistencyRepairAccepted"],
+                factConsistencyRepairExhausted=self._legal_metrics["consistencyRepairExhausted"],
                 legalRedesignAttempted=self._legal_metrics["redesignAttempted"],
                 legalRedesignValidated=self._legal_metrics["redesignValidated"],
                 legalRedesignAccepted=self._legal_metrics["redesignAccepted"],
@@ -1342,13 +1872,22 @@ class ConceptPortfolioEngine:
                 legalReplanAccepted=self._legal_metrics["replanAccepted"],
                 legalReplanExhausted=self._legal_metrics["replanExhausted"],
                 legalAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal_reviews),
+                legalReviewed=len(legal_reviews),
+                legalInitialReviewed=len(candidates),
+                legalRecoveryReviewed=max(0, len(legal_reviews) - len(candidates)),
+                totalLegalReviewEvents=len(legal_reviews),
+                legalInitialAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal_reviews[:len(candidates)]),
+                legalRecoveredAccepted=sum(item.finalAccepted and item.recoveryAction != "NONE"
+                                            for item in self._last_legal_resolutions),
                 legalRedesigned=redesigned, replanned=replanned, finalPortfolio=len(concepts),
                 portfolioStatus=status, selectedConcept=selected.candidate.conceptName if selected else None,
                 downstreamHandoff=handoff.compatibility if handoff else "PENDING_HYPOTHESIS_CONFIRMATION",
                 providerCalls=self.gateway.usage.topLevelExternalOperations, totalDurationMs=duration)
             return ConceptPortfolioResult(runId=self._context.run_id, runStatus=status, runtimeStage=terminal,
                 requestedMaxConcepts=max_concepts, producedConceptCount=len(concepts), concepts=concepts,
-                rejectedPlans=rejected, legalSummaries=legal_reviews, requiredInputs=required_inputs,
+                rejectedPlans=rejected, legalSummaries=legal_reviews,
+                legalResolutions=list(self._last_legal_resolutions), requiredInputs=required_inputs,
+                preLegalExclusions=list(self._last_pre_legal_exclusions),
                 unresolvedCandidates=unresolved_candidates,
                 trace=self.trace, providerUsage=self.gateway.usage,
                 downstreamReadiness=handoff.compatibility if handoff else "PENDING_HYPOTHESIS_CONFIRMATION",
@@ -1358,6 +1897,7 @@ class ConceptPortfolioEngine:
                 FailureCode.RESULT_SCHEMA_INVALID if getattr(failure, "code", None) == "RESULT_SCHEMA_INVALID" else
                 FailureCode.PROVIDER_TRANSIENT if getattr(failure, "retryable", False) else FailureCode.PROVIDER_PERMANENT)
             self._event(RunStage.FAILED, "FAILED", "FAILED", str(failure), reason=code)
+            legal_reviews = self._last_legal_reviews or legal_reviews
             return self._terminal(PortfolioStatus.FAILED, RunStage.FAILED, max_concepts, concepts, rejected,
                                   legal_reviews, required_inputs, "INVALID", started)
         except (ValidationError, RegistryError) as failure:
@@ -1377,11 +1917,91 @@ class ConceptPortfolioEngine:
     def _terminal(self, status, stage, maximum, concepts, rejected, legal, required, readiness, started):
         if not self.trace or self.trace[-1].stage != stage:
             self._event(stage, "COMPLETED", status.value, f"종료 상태={status.value}", decision=status.value)
+        events = self.trace
+        failed = next((item for item in events if item.status == "FAILED" or item.stage == RunStage.FAILED), None)
+        last_success = next((item for item in reversed(events)
+                             if item.status in {"PASS", "READY_FULL", "READY_LIMITED"}), None)
+        duration = int((time.perf_counter() - started) * 1000)
+        expanded_ids = {item.entityId for item in events if item.action == "EXPANDED" and item.entityId}
+        candidate_preparation = self._last_candidate_preparation
+        legal_preparation = self._last_legal_preparation
+        failure_code = (failed.reasonCode.value if failed and failed.reasonCode else None)
+        summary = RunSummary(
+            safety="PASS" if any(item.stage == RunStage.SAFETY_CHECKING and item.status == "PASS"
+                                  for item in events) else "FAIL",
+            requestedMaximum=maximum, planned=len(self._last_plan_pool),
+            planSelected=len({item.parentId for item in events if item.action == "EXPANDED" and item.parentId}),
+            planDuplicatesRemoved=sum(item.reasonCode == FailureCode.PLAN_DUPLICATE for item in rejected),
+            candidatesExpanded=(candidate_preparation.candidateGenerated if candidate_preparation else len(expanded_ids)),
+            candidateGenerated=(candidate_preparation.candidateGenerated if candidate_preparation else len(expanded_ids)),
+            candidateAcceptedInitially=(candidate_preparation.candidateAcceptedInitially if candidate_preparation else 0),
+            candidateRegenerated=(candidate_preparation.candidateRegenerated if candidate_preparation else 0),
+            candidateRecovered=(candidate_preparation.candidateRecovered if candidate_preparation else 0),
+            candidateAccepted=(len(candidate_preparation.candidates) if candidate_preparation else 0),
+            reservePlansActivated=(candidate_preparation.reservePlansActivated if candidate_preparation else 0),
+            candidateRecoveryReplans=(candidate_preparation.candidateRecoveryReplans if candidate_preparation else 0),
+            legalFactCompletionAttempted=self._legal_metrics.get("factAttempted", 0),
+            legalFactCompletionValidated=self._legal_metrics.get("factValidated", 0),
+            legalFactCompletionAccepted=self._legal_metrics.get("factAccepted", 0),
+            legalFactCompletionExhausted=self._legal_metrics.get("factExhausted", 0),
+            legalReady=(len(legal_preparation.candidates) if legal_preparation else 0),
+            legalFactDependencySemanticCalls=self._legal_metrics.get("dependencySemanticCalls", 0),
+            legalFactCompletionCompliancePassed=self._legal_metrics.get("completionCompliancePassed", 0),
+            legalFactCompletionProviderNoncompliant=self._legal_metrics.get("providerNoncompliant", 0),
+            legalFactCompletionRecheckFailed=self._legal_metrics.get("recheckFailed", 0),
+            factConsistencyInvalid=self._legal_metrics.get("consistencyInvalid", 0),
+            factConsistencyRepairAttempted=self._legal_metrics.get("consistencyRepairAttempted", 0),
+            factConsistencyRepairAccepted=self._legal_metrics.get("consistencyRepairAccepted", 0),
+            factConsistencyRepairExhausted=self._legal_metrics.get("consistencyRepairExhausted", 0),
+            legalRedesignAttempted=self._legal_metrics.get("redesignAttempted", 0),
+            legalRedesignValidated=self._legal_metrics.get("redesignValidated", 0),
+            legalRedesignAccepted=self._legal_metrics.get("redesignAccepted", 0),
+            legalRedesignExhausted=self._legal_metrics.get("redesignExhausted", 0),
+            legalReplanAttempted=self._legal_metrics.get("replanAttempted", 0),
+            legalReplanValidated=self._legal_metrics.get("replanValidated", 0),
+            legalReplanAccepted=self._legal_metrics.get("replanAccepted", 0),
+            legalReplanExhausted=self._legal_metrics.get("replanExhausted", 0),
+            legalAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal),
+            legalReviewed=len(legal),
+            legalInitialReviewed=(len(legal_preparation.candidates) if legal_preparation else 0),
+            legalRecoveryReviewed=max(0, len(legal) - (len(legal_preparation.candidates)
+                                                       if legal_preparation else 0)),
+            totalLegalReviewEvents=len(legal),
+            legalInitialAccepted=sum(item.route == LegalRoute.ACCEPT for item in legal[:(
+                len(legal_preparation.candidates) if legal_preparation else 0)]),
+            legalRecoveredAccepted=sum(item.finalAccepted and item.recoveryAction != "NONE"
+                                        for item in self._last_legal_resolutions),
+            legalRedesigned=self._legal_metrics.get("redesignAccepted", 0),
+            replanned=self._legal_metrics.get("replanAccepted", 0), finalPortfolio=len(concepts),
+            portfolioStatus=status, selectedConcept=(concepts[0].candidate.conceptName if concepts else None),
+            downstreamHandoff=readiness, providerCalls=self.gateway.usage.topLevelExternalOperations,
+            totalDurationMs=duration, failureStage=failed.stage.value if failed else None,
+            failureCode=failure_code)
+        diagnostics = None
+        if status == PortfolioStatus.FAILED:
+            failure_event = failed or events[-1]
+            diagnostics = FailureDiagnostics(
+                failedStage=failure_event.stage.value,
+                failureCode=failure_code or "UNCLASSIFIED_SYSTEM_FAILURE",
+                safeSummary=failure_event.safeSummary,
+                failedEntityId=failure_event.entityId,
+                providerFailure=dict(self.gateway.last_failure or {}),
+                lastSuccessfulStage=last_success.stage.value if last_success else None,
+                firstFailedStage=failure_event.stage.value,
+                lastTraceEvents=events[-20:],
+                preLegalExclusionCountsByReason={reason: sum(
+                    item.get("reasonCode") == reason for item in self._last_pre_legal_exclusions)
+                    for reason in sorted({str(item.get("reasonCode"))
+                                          for item in self._last_pre_legal_exclusions})})
         return ConceptPortfolioResult(runId=self._context.run_id, runStatus=status, runtimeStage=stage,
             requestedMaxConcepts=maximum, producedConceptCount=len(concepts), concepts=concepts,
-            rejectedPlans=rejected, legalSummaries=legal, requiredInputs=required, trace=self.trace,
+            rejectedPlans=rejected, legalSummaries=legal,
+            legalResolutions=list(self._last_legal_resolutions), requiredInputs=required,
+            preLegalExclusions=list(self._last_pre_legal_exclusions), trace=self.trace,
             unresolvedCandidates=[item for item in required if item.get("scope") == "CANDIDATE"],
-            providerUsage=self.gateway.usage, downstreamReadiness=readiness)
+            providerUsage=self.gateway.usage, downstreamReadiness=readiness,
+            selectedConceptId=concepts[0].candidateId if concepts else None,
+            runSummary=summary, failureDiagnostics=diagnostics)
 
 
 def _locked_count(seed: CanonicalSeed) -> int:

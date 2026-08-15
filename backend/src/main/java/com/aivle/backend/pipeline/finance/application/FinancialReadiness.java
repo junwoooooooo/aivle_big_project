@@ -27,6 +27,8 @@ public class FinancialReadiness {
     private void required(List<String> missing, JsonNode fields, String key) {
         JsonNode item = fields.path(key);
         if (!FinancialPreparationFactory.present(item.path("value"))
-                || !List.of("LOCKED", "ACCEPTED", "USER_EDITED_ACCEPTED").contains(item.path("decision").asText())) missing.add(key);
+                || !List.of("LOCKED", "ACCEPTED", "USER_EDITED_ACCEPTED").contains(item.path("decision").asText())) {
+            if (!missing.contains(key)) missing.add(key);
+        }
     }
 }

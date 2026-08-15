@@ -4,7 +4,7 @@ import com.aivle.backend.finance.dto.FinancialModels.CalculationResult;
 import java.math.BigDecimal;
 import java.util.List;
 
-/** UI-ready response: chart series, deterministic calculation, risk distribution and report narrative. */
+/** UI-ready deterministic result, risk distribution and narrative report. */
 public record FinancialModuleResponse(
     CalculationResult calculation,
     List<ChartPoint> cashFlowChart,
@@ -27,7 +27,8 @@ public record FinancialModuleResponse(
                                     BigDecimal profitP90, BigDecimal lossProbabilityPercent,
                                     BigDecimal paybackProbabilityPercent, Long seed) { }
     public record ModuleReport(String headline, List<String> findings, List<String> cautions,
-                               List<String> recommendedActions, String disclaimer) { }
+                               List<String> recommendedActions, String disclaimer,
+                               String source, String providerStatus, String safeFailureReason) { }
     public record ScalingInfo(String inputMoneyUnit, String calculationMoneyUnit, BigDecimal multiplier,
                               List<String> scaledFields, String databaseRule) { }
 }

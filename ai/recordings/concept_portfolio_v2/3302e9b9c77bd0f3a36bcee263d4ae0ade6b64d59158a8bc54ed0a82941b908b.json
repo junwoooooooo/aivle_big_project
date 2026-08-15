@@ -1,0 +1,686 @@
+{
+  "taskType": "LEGAL_REVIEW",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-review-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:445ee8755e73fd0a3c275862d87983f42662b69d885d5048ce88a5c8c74c2a44",
+  "canonicalRequestHash": "3302e9b9c77bd0f3a36bcee263d4ae0ade6b64d59158a8bc54ed0a82941b908b",
+  "redactedRequest": {
+    "candidateId": "C2",
+    "candidate": {
+      "conceptName": "대학가 중고 거래 플랫폼 B",
+      "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+      "introduction": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+      "coreValue": "학생들이 필요로 하는 중고 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+      "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "industryCategory": "중고 거래 플랫폼",
+      "researchScope": "대학가 및 학생 커뮤니티",
+      "targetRegion": "대학가 지역",
+      "revenueModel": "프리미엄 서비스 및 광고를 통해 수익을 창출한다.",
+      "price": "거래 수수료 5% 및 프리미엄 서비스 월 5,000원",
+      "channels": "모바일 앱 및 웹사이트",
+      "differentiators": "사용자 간의 직접 거래 시스템, 학생 전용 커뮤니티 기능",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "대학가 학생 수와 중고 거래 수요를 고려할 때, 3년 내 15%의 시장 점유율을 목표로 설정.",
+        "assumptions": [
+          "대학가 내 학생 수는 매년 증가할 것으로 예상된다.",
+          "중고 거래에 대한 수요는 지속적으로 증가할 것이다."
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "대학가 내 학생 수와 평균 거래 금액을 기반으로 한 추정치.",
+        "assumptions": [
+          "대학가 내 학생 수는 약 50만 명으로 추정된다.",
+          "학생 1인당 연간 평균 10만 원의 중고 거래를 할 것으로 예상된다."
+        ],
+        "confidence": "HIGH"
+      },
+      "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "solutionMechanism": "사용자가 직접 등록한 물품을 지역 내 다른 사용자와 연결하여 거래를 성사시킨다.",
+      "featureSet": [
+        "사용자 간의 직접 거래 기능",
+        "학생 전용 커뮤니티 기능",
+        "채팅 기능"
+      ],
+      "actorRoles": [
+        "사용자",
+        "플랫폼 운영자",
+        "배송 서비스 제공자"
+      ],
+      "platformRole": "중고 거래 플랫폼 제공",
+      "operatingModel": "대학가 내 커뮤니티와 협력하여 플랫폼을 운영한다.",
+      "partnerModel": "대학가 주변의 상점과 제휴하여 추가 혜택을 제공한다.",
+      "providerRole": "플랫폼 운영자",
+      "sellerRole": "물품 판매자",
+      "intermediaryRole": "없음",
+      "transactionFlow": [
+        "사용자가 물품을 등록한다.",
+        "다른 사용자가 물품을 검색하고 구매 의사를 표시한다.",
+        "판매자와 구매자가 채팅을 통해 거래 조건을 협의한다.",
+        "거래가 성사되면 사용자 간의 직접 거래가 이루어진다."
+      ],
+      "paymentFlow": [
+        "구매자가 결제한다.",
+        "결제가 완료되면 판매자에게 물품을 전달한다.",
+        "판매자는 물품을 배송하거나 직접 전달한다."
+      ],
+      "personalDataUsage": [],
+      "physicalActivities": [
+        "배송 서비스 연계"
+      ],
+      "partnerRequirements": [],
+      "qualificationRequirements": [],
+      "advertisingClaims": [],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 2,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+      "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "interpretedTargetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "usageContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황.",
+        "industryCategory": "중고 거래 플랫폼",
+        "researchScope": "대학가 및 학생 커뮤니티",
+        "conciseIdeaDefinition": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetRegionInterpretation": "대학가 지역",
+        "relevantKnownCompetitorContext": "기존의 전국 단위 중고 거래 플랫폼들."
+      },
+      "fixtureName": "custom"
+    }
+  },
+  "providerResponse": {
+    "candidateId": "C2",
+    "route": "REDESIGN_WITHIN_LINEAGE",
+    "productionStatus": "REDESIGNABLE",
+    "sourceStatus": "OFFICIAL_EVIDENCE",
+    "safeSummary": "법률검토 전에 Concept의 사업 구조를 보완해야 합니다.",
+    "requiredControls": [],
+    "requiredPartnersAndQualifications": [],
+    "redesignRequirements": [
+      "What specific types of products will be sold on the platform?"
+    ],
+    "prohibitedVariants": [],
+    "requiredDisclosures": [],
+    "officialEvidenceReferences": [
+      {
+        "referenceIndex": 0,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제12조",
+        "title": "통신판매업자의 신고 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:448fe0bd6a72942700268999bc17abaf1a130dc75ff98338f016366ffccb8d53",
+        "boundedProvisionSummary": "통신판매업자는 신고를 해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 1,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제13조",
+        "title": "신원 및 거래조건에 대한 정보의 제공",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:6e496bba7781eda4a1e42db7cb6ead3a7f9648a8557ee96ea09e290d3f30b30d",
+        "boundedProvisionSummary": "통신판매업자는 거래조건에 대한 정보를 제공해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 2,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제17조",
+        "title": "청약철회등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:086921e6e5bc694ea2d723423f266762b50490e33b8739d64e1920b7a13bde5c",
+        "boundedProvisionSummary": "소비자는 청약철회를 할 수 있는 권리가 있다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 3,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제18조",
+        "title": "청약철회등의 효과",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:48bb8d8484384496bed84e6eac658a1ea9dcd53ed91bc5d6291359764c102642",
+        "boundedProvisionSummary": "소비자는 청약철회 시 재화를 반환해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 4,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "001571",
+        "officialIdentifier": "276117",
+        "lawName": "부가가치세법",
+        "articleReference": "제5조",
+        "title": "과세기간",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20251001",
+        "effectiveDate": "20260102",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:55e12be5d081847f6c347a9be100376c35ba524c561e8d24448e063534c29ca9",
+        "boundedProvisionSummary": "부가가치세의 과세기간에 대한 규정이다.",
+        "queryKey": "sha256:429aa4f8a57d8492b35af70d9b48863ff9fd0a0c6026ce94f2febbc466f58bb8",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 5,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "001571",
+        "officialIdentifier": "276117",
+        "lawName": "부가가치세법",
+        "articleReference": "제8조",
+        "title": "사업자등록",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20251001",
+        "effectiveDate": "20260102",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:f592e37dcf9ad848267be7603a224ad1645f2b8ef32bd5463d0f81b6296939b2",
+        "boundedProvisionSummary": "사업자는 사업자등록을 신청해야 한다.",
+        "queryKey": "sha256:429aa4f8a57d8492b35af70d9b48863ff9fd0a0c6026ce94f2febbc466f58bb8",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 6,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "001571",
+        "officialIdentifier": "276117",
+        "lawName": "부가가치세법",
+        "articleReference": "제36조",
+        "title": "영수증 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EB%B6%80%EA%B0%80%EA%B0%80%EC%B9%98%EC%84%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20251001",
+        "effectiveDate": "20260102",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:73a2ea65e521a0d7b21520ba72f17ce4be74a0258a17177073833853d88968f2",
+        "boundedProvisionSummary": "사업자는 영수증을 발급해야 한다.",
+        "queryKey": "sha256:429aa4f8a57d8492b35af70d9b48863ff9fd0a0c6026ce94f2febbc466f58bb8",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 7,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000667",
+        "officialIdentifier": "260021",
+        "lawName": "약관의 규제에 관한 법률",
+        "articleReference": "제3조",
+        "title": "약관의 작성 및 설명의무 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%95%BD%EA%B4%80%EC%9D%98%20%EA%B7%9C%EC%A0%9C%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20240206",
+        "effectiveDate": "20240807",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:1616dce193e178dfd11405c2891a1bdea99e8a3b2e06ee7b662ebcb5d99bea23",
+        "boundedProvisionSummary": "사업자는 약관을 명확하게 작성해야 한다.",
+        "queryKey": "sha256:e71cfb4d78c3ba6b3c458d97c9b6b31c2f7d35ec9e1b5418ac514c78d5df3a4d",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 8,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000667",
+        "officialIdentifier": "260021",
+        "lawName": "약관의 규제에 관한 법률",
+        "articleReference": "제5조",
+        "title": "약관의 해석",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%95%BD%EA%B4%80%EC%9D%98%20%EA%B7%9C%EC%A0%9C%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20240206",
+        "effectiveDate": "20240807",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:f85b7d1c454d2a8ed12a884b224e377844ab60a45906b658e47469009efc00e6",
+        "boundedProvisionSummary": "약관은 신의성실의 원칙에 따라 해석되어야 한다.",
+        "queryKey": "sha256:e71cfb4d78c3ba6b3c458d97c9b6b31c2f7d35ec9e1b5418ac514c78d5df3a4d",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 9,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000667",
+        "officialIdentifier": "260021",
+        "lawName": "약관의 규제에 관한 법률",
+        "articleReference": "제16조",
+        "title": "일부 무효의 특칙",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%95%BD%EA%B4%80%EC%9D%98%20%EA%B7%9C%EC%A0%9C%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20240206",
+        "effectiveDate": "20240807",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:0719bda3584934dc655f86e42d2bd50b5faeedf32df5de39a409256332337d52",
+        "boundedProvisionSummary": "약관의 일부가 무효일 경우 나머지 부분은 유효하다.",
+        "queryKey": "sha256:e71cfb4d78c3ba6b3c458d97c9b6b31c2f7d35ec9e1b5418ac514c78d5df3a4d",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 10,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000667",
+        "officialIdentifier": "260021",
+        "lawName": "약관의 규제에 관한 법률",
+        "articleReference": "제17조",
+        "title": "불공정약관조항의 사용금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%95%BD%EA%B4%80%EC%9D%98%20%EA%B7%9C%EC%A0%9C%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20240206",
+        "effectiveDate": "20240807",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:c443ce12c5268686ed554a0ced386d8c85057d3bf72b69c432f50429172c692a",
+        "boundedProvisionSummary": "사업자는 불공정약관조항을 사용해서는 안 된다.",
+        "queryKey": "sha256:e71cfb4d78c3ba6b3c458d97c9b6b31c2f7d35ec9e1b5418ac514c78d5df3a4d",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 11,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제3조",
+        "title": "부당한 표시ㆍ광고 행위의 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:8a232304b3941209cf6afb47ff8485dec72a80b22d8ea0bd5f72b07f583b5826",
+        "boundedProvisionSummary": "사업자는 부당한 표시ㆍ광고 행위를 해서는 안 된다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 12,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제5조",
+        "title": "표시ㆍ광고 내용의 실증 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:175e1d20e79b88964eddbcfa658507a8968209ddba38fe094bc7005015b0ba30",
+        "boundedProvisionSummary": "사업자는 표시ㆍ광고 내용에 대한 실증을 해야 한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 13,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제10조",
+        "title": "손해배상책임",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:9e32cfffe5aee496b1832d5e3707961c9f4280d83dc0f91deaf66f0318f1de73",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위로 피해를 입은 경우 손해배상 책임이 있다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 14,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제17조",
+        "title": "벌칙",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:48:59.775519Z",
+        "contentHash": "sha256:f8efc781c87796884bf25f8d680b1efcd4e223f5e470a5b156122d6d82e15692",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위에 대한 벌칙이 있다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      }
+    ],
+    "deltaLegalReviews": [],
+    "conflictingLock": null,
+    "currentValue": null,
+    "requiredLegalChange": null,
+    "reason": null,
+    "possibleUserAction": null,
+    "unknownFacts": [],
+    "inputScope": "CANDIDATE",
+    "evidenceDiagnostics": {
+      "coverageStatus": "SOURCE_PARTIAL",
+      "coverageMessage": "공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+    },
+    "reviewPhase": "LEGAL_SOURCE",
+    "factCompletenessStatus": null,
+    "legalSourceStatus": "SOURCE_PARTIAL",
+    "finalEvidenceJudgmentExecuted": false,
+    "recoveryResolution": null,
+    "sourceQuestionCount": 2,
+    "resolvedByFactPatternCount": 0,
+    "designGapCount": 1,
+    "externalFactCount": 0,
+    "controlConvertibleCount": 0,
+    "legalClarificationCount": 1
+  },
+  "durationMs": 28845,
+  "timestamp": "2026-08-10T08:49:01.461227+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

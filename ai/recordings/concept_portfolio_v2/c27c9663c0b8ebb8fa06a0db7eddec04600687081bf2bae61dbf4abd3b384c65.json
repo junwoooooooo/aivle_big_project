@@ -1,0 +1,577 @@
+{
+  "taskType": "LEGAL_REVIEW",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-review-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:da1dbcda519d0577f9605af504acf3091979fe676971738c97646155c92910ea",
+  "canonicalRequestHash": "c27c9663c0b8ebb8fa06a0db7eddec04600687081bf2bae61dbf4abd3b384c65",
+  "redactedRequest": {
+    "candidateId": "C3",
+    "candidate": {
+      "conceptName": "AI 모의면접 분석 서비스",
+      "conceptDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스입니다.",
+      "introduction": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스입니다.",
+      "coreValue": "AI 분석 결과를 바탕으로 개인 맞춤형 피드백과 연습 계획을 제공합니다.",
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "industryCategory": "교육 및 취업 지원",
+      "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+      "targetRegion": "대한민국",
+      "revenueModel": "구독 모델을 통해 지속적인 서비스 이용을 유도합니다.",
+      "price": "월 29,000원",
+      "channels": "온라인 플랫폼 및 모바일 애플리케이션",
+      "differentiators": "AI 기반의 맞춤형 피드백 제공, 직무별 특화된 분석 기능",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 5.0,
+        "horizonYears": 3,
+        "rationale": "AI 기반의 면접 준비 서비스의 수요 증가로 인해 시장 점유율 확대가 가능하다.",
+        "assumptions": [
+          "AI 기술의 발전으로 분석 정확도가 향상될 것이다.",
+          "취업 시장의 경쟁이 치열해짐에 따라 면접 준비 서비스의 필요성이 증가할 것이다."
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 50000000.0,
+        "currency": "KRW",
+        "period": "1년",
+        "calculationBasis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생의 수를 기반으로 한 시장 규모 추정",
+        "assumptions": [
+          "취업 준비생의 10%가 이 서비스를 이용할 것이다.",
+          "서비스 이용료가 월 29,000원으로 설정된다.",
+          "서비스의 인지도가 높아질수록 이용자 수가 증가할 것이다."
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "solutionMechanism": "정확한 분석과 피드백을 통해 취업 준비생이 면접에서 자신감을 가질 수 있도록 지원합니다.",
+      "featureSet": [
+        "AI 알고리즘을 활용한 면접 답변 분석",
+        "직무별 특화된 피드백 제공",
+        "반복 연습 계획 제안"
+      ],
+      "actorRoles": [
+        "사용자",
+        "AI 시스템",
+        "교육 기관",
+        "취업 지원 센터"
+      ],
+      "platformRole": "AI 분석 플랫폼 제공",
+      "operatingModel": "AI 기술을 활용하여 효율적으로 데이터를 분석하고 피드백을 생성합니다.",
+      "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+      "providerRole": "AI 분석 서비스 제공자",
+      "sellerRole": "서비스 판매자",
+      "intermediaryRole": "교육 기관 및 취업 지원 센터",
+      "transactionFlow": [
+        "사용자가 온라인 플랫폼에 가입한다.",
+        "사용자가 면접 답변을 입력한다.",
+        "AI 시스템이 답변을 분석한다.",
+        "사용자에게 피드백이 제공된다."
+      ],
+      "paymentFlow": [
+        "사용자가 구독료를 결제한다.",
+        "결제 정보가 시스템에 기록된다.",
+        "서비스 제공자가 수익을 정산한다."
+      ],
+      "personalDataUsage": [
+        "사용자의 면접 답변 데이터를 분석하여 피드백을 제공한다."
+      ],
+      "physicalActivities": [],
+      "partnerRequirements": [
+        "교육 기관과의 협력을 통해 서비스 신뢰성을 높인다."
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "AI 기반의 분석으로 면접 준비생의 자신감을 높입니다.",
+        "직무별 특화된 피드백으로 면접 준비를 지원합니다."
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 3,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+      "problem": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "취업 준비생의 모의면접 답변을 분석하고 직무별 개선 피드백과 반복 연습 계획을 제공하는 AI 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "취업 준비생이 면접 답변의 품질과 개선점을 객관적으로 확인하기 어려운 문제를 해결합니다.",
+        "interpretedTargetUsers": "신입 및 주니어 채용을 준비하는 성인 취업 준비생을 대상으로 합니다.",
+        "usageContext": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스입니다.",
+        "industryCategory": "교육 및 취업 지원",
+        "researchScope": "취업 준비생의 면접 준비와 관련된 서비스",
+        "conciseIdeaDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스입니다.",
+        "targetRegionInterpretation": "",
+        "relevantKnownCompetitorContext": ""
+      },
+      "fixtureName": "custom"
+    }
+  },
+  "providerResponse": {
+    "candidateId": "C3",
+    "route": "ACCEPT",
+    "productionStatus": "IMPLEMENTABLE_WITH_CONTROLS",
+    "sourceStatus": "OFFICIAL_EVIDENCE",
+    "safeSummary": "AI 기반 면접 준비 지원 서비스는 고영향 인공지능으로 분류될 수 있으며, 관련 법령에 따라 안전성과 신뢰성을 확보해야 합니다. 또한, 사용자 데이터를 안전하게 처리하고, 광고 내용이 소비자를 오해하게 해서는 안 됩니다.",
+    "requiredControls": [
+      "AI 시스템이 고영향 인공지능에 해당하는지 사전 검토해야 한다.",
+      "고영향 인공지능의 안전성 및 신뢰성을 확보하기 위한 조치를 이행해야 한다.",
+      "고영향 인공지능을 이용한 제품 또는 서비스의 영향을 평가해야 한다.",
+      "정보통신서비스 제공자는 이용자를 보호하고 안전한 서비스를 제공해야 한다.",
+      "사업자는 소비자를 속이거나 잘못 알게 할 우려가 있는 광고 행위를 해서는 안 된다."
+    ],
+    "requiredPartnersAndQualifications": [
+      "교육 기관과의 협력을 통해 서비스 신뢰성을 높인다."
+    ],
+    "redesignRequirements": [],
+    "prohibitedVariants": [
+      "사용자의 면접 답변 데이터를 무단으로 제3자에게 제공하는 행위"
+    ],
+    "requiredDisclosures": [
+      "서비스 이용약관 및 개인정보 처리방침을 명확히 고지해야 한다."
+    ],
+    "officialEvidenceReferences": [
+      {
+        "referenceIndex": 0,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제3조",
+        "title": "기본원칙 및 국가 등의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:d3af532ea737d1273289ec05ed2ff55c735bccac16c517b64292d7beeccd5312",
+        "boundedProvisionSummary": "인공지능기술과 인공지능산업은 안전성과 신뢰성을 제고하여 국민의 삶의 질을 향상시키는 방향으로 발전되어야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 1,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제33조",
+        "title": "고영향 인공지능의 확인",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:3fc48c2346668bf69d17684a6ea9e0adf2b1e2deb1409e8094281cbeefa8b48d",
+        "boundedProvisionSummary": "인공지능사업자는 고영향 인공지능에 해당하는지 사전에 검토해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 2,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제34조",
+        "title": "고영향 인공지능과 관련한 사업자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:617313212eede73a9fa4de775860b754747632549637a3da96e8e1b7fc0677c4",
+        "boundedProvisionSummary": "고영향 인공지능의 안전성 및 신뢰성을 확보하기 위한 조치를 이행해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 3,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제35조",
+        "title": "고영향 인공지능 영향평가",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:fb8ebf040c2029dd28b2bd73badb7e225880c1a211d422abac790f568fb5d8c5",
+        "boundedProvisionSummary": "고영향 인공지능을 이용한 제품 또는 서비스의 영향을 평가해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 4,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000030",
+        "officialIdentifier": "282481",
+        "lawName": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+        "articleReference": "제3조",
+        "title": "정보통신서비스 제공자 및 이용자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EB%A7%9D%20%EC%9D%B4%EC%9A%A9%EC%B4%89%EC%A7%84%20%EB%B0%8F%20%EC%A0%95%EB%B3%B4%EB%B3%B4%ED%98%B8%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260106",
+        "effectiveDate": "20260707",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:0f8a92d020f0e4f81e3020f1fae1178b3a63b92768de88a28f48449d7d37dd83",
+        "boundedProvisionSummary": "정보통신서비스 제공자는 이용자를 보호하고 안전한 서비스를 제공해야 한다.",
+        "queryKey": "sha256:7950518a36e66a586195226f8a68f7683de9c44930cbffec85bfe270ccd8cc59",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 5,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제3조",
+        "title": "부당한 표시ㆍ광고 행위의 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:8a232304b3941209cf6afb47ff8485dec72a80b22d8ea0bd5f72b07f583b5826",
+        "boundedProvisionSummary": "사업자는 소비자를 속이거나 잘못 알게 할 우려가 있는 광고 행위를 해서는 안 된다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 6,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제10조",
+        "title": "손해배상책임",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:9e32cfffe5aee496b1832d5e3707961c9f4280d83dc0f91deaf66f0318f1de73",
+        "boundedProvisionSummary": "부당한 광고 행위로 피해를 입은 자에게 손해배상 책임을 진다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 7,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제17조",
+        "title": "벌칙",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T04:56:18.679476Z",
+        "contentHash": "sha256:f8efc781c87796884bf25f8d680b1efcd4e223f5e470a5b156122d6d82e15692",
+        "boundedProvisionSummary": "부당한 광고 행위를 한 경우 징역형 또는 벌금에 처해질 수 있다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      }
+    ],
+    "deltaLegalReviews": [],
+    "conflictingLock": null,
+    "currentValue": null,
+    "requiredLegalChange": null,
+    "reason": null,
+    "possibleUserAction": null,
+    "unknownFacts": [],
+    "inputScope": "CANDIDATE",
+    "evidenceDiagnostics": {
+      "coverageStatus": "SOURCE_PARTIAL",
+      "coverageMessage": "공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+    },
+    "reviewPhase": "LEGAL_SOURCE",
+    "factCompletenessStatus": null,
+    "legalSourceStatus": "SOURCE_PARTIAL",
+    "finalEvidenceJudgmentExecuted": true,
+    "recoveryResolution": null,
+    "sourceQuestionCount": 0,
+    "resolvedByFactPatternCount": 0,
+    "designGapCount": 0,
+    "externalFactCount": 0,
+    "controlConvertibleCount": 0,
+    "legalClarificationCount": 0
+  },
+  "durationMs": 18121,
+  "timestamp": "2026-08-10T04:56:24.789826+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

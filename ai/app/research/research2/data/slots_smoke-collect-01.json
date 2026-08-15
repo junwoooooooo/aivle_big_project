@@ -1,0 +1,564 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (smoke-collect-01). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 3,
+    "일자": "2026-08-11",
+    "게이트": "runs/harness/smoke-collect-01/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "1인 미용실 예약·노쇼 관리 구독 SaaS",
+  "as_of": "2026-08-11",
+  "slots": [
+    {
+      "slot_id": "S1",
+      "var_id": "V1",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "두발 미용업",
+      "metric": "사업체 수",
+      "period": "2024",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "미용업"
+      ],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        1000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S2",
+      "var_id": "V2",
+      "formula_id": "F_TAM",
+      "claim_type": "TAM",
+      "subject": "두발 미용업",
+      "metric": "종사자 1인 사업체 비율",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "1인운영"
+      ],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S3",
+      "var_id": "V4",
+      "formula_id": "F_TAM",
+      "claim_type": "PRICE",
+      "subject": "예약 관리 SaaS",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "SaaS"
+      ],
+      "must_not_contain": [
+        "무료"
+      ],
+      "value_range": [
+        1000,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S4",
+      "var_id": "V6",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "두발 미용업",
+      "metric": "사업체 수",
+      "period": "2024",
+      "unit": "개",
+      "region": "서울특별시",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "서울"
+      ],
+      "must_not_contain": [
+        "경기도"
+      ],
+      "value_range": [
+        500,
+        30000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S5",
+      "var_id": "V7",
+      "formula_id": "F_SAM",
+      "claim_type": "SAM",
+      "subject": "두발 미용업",
+      "metric": "종사자 1인 사업체 비율",
+      "period": "2025",
+      "unit": "%",
+      "region": "서울특별시",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "1인운영"
+      ],
+      "must_not_contain": [
+        "프랜차이즈"
+      ],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S6",
+      "var_id": "V9",
+      "formula_id": "F_SAM",
+      "claim_type": "PRICE",
+      "subject": "예약 관리 SaaS",
+      "metric": "월 구독료",
+      "period": "2025",
+      "unit": "원",
+      "region": "서울특별시",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "SaaS"
+      ],
+      "must_not_contain": [
+        "무료"
+      ],
+      "value_range": [
+        1000,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S7",
+      "var_id": "V11",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "두발 미용업",
+      "metric": "사업체 수",
+      "period": "2024",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "미용업"
+      ],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        1000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S8",
+      "var_id": "V12",
+      "formula_id": "F_GROWTH",
+      "claim_type": "GROWTH",
+      "subject": "두발 미용업",
+      "metric": "사업체 수",
+      "period": "2023",
+      "unit": "개",
+      "region": "대한민국",
+      "subject_code": "96112",
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "미용업"
+      ],
+      "must_not_contain": [
+        "반려동물"
+      ],
+      "value_range": [
+        1000,
+        500000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "고객 세그먼트",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S9",
+      "var_id": "V13",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "공비서",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "예약"
+      ],
+      "must_not_contain": [
+        "헬스케어"
+      ],
+      "value_range": [
+        0,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S10",
+      "var_id": "V14",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "핸드SOS",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "예약"
+      ],
+      "must_not_contain": [
+        "헬스케어"
+      ],
+      "value_range": [
+        0,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S11",
+      "var_id": "V15",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "네이버 예약",
+      "metric": "가입 매장 수",
+      "period": "2025",
+      "unit": "곳",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "예약"
+      ],
+      "must_not_contain": [
+        "헬스케어"
+      ],
+      "value_range": [
+        0,
+        10000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S12",
+      "var_id": "V16",
+      "formula_id": "F_COMP",
+      "claim_type": "COMP",
+      "subject": "네이버 예약",
+      "metric": "매출액",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": "NAVER",
+      "must_contain": [
+        "네이버"
+      ],
+      "must_not_contain": [
+        "카카오"
+      ],
+      "value_range": [
+        1000000000,
+        100000000000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      },
+      "_경계": "전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."
+    },
+    {
+      "slot_id": "S13",
+      "var_id": "V17",
+      "formula_id": "F_DIFF",
+      "claim_type": "COMPARABLE",
+      "subject": "공비서",
+      "metric": "누적 가입자 수",
+      "period": "2025",
+      "unit": "명",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "예약"
+      ],
+      "must_not_contain": [
+        "헬스케어"
+      ],
+      "value_range": [
+        0,
+        50000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S14",
+      "var_id": "V18",
+      "formula_id": "F_CHANNEL",
+      "claim_type": "CHANNEL",
+      "subject": "네이버 예약",
+      "metric": "고객 획득 비용",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "고객획득"
+      ],
+      "must_not_contain": [
+        "광고"
+      ],
+      "value_range": [
+        0,
+        100000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "채널",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S15",
+      "var_id": "V19",
+      "formula_id": "F_PAIN",
+      "claim_type": "PAIN",
+      "subject": "일정 관리",
+      "metric": "문제 경험률",
+      "period": "2025",
+      "unit": "%",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "문제"
+      ],
+      "must_not_contain": [
+        "해결"
+      ],
+      "value_range": [
+        0,
+        100
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "가치 제안",
+      "_추출_힌트": [
+        "예약 부도",
+        "노쇼",
+        "취소"
+      ],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    },
+    {
+      "slot_id": "S16",
+      "var_id": "V20",
+      "formula_id": "F_PRICE",
+      "claim_type": "PRICE",
+      "subject": "네이버 예약",
+      "metric": "이용 요금",
+      "period": "2025",
+      "unit": "원",
+      "region": "대한민국",
+      "subject_code": null,
+      "stat_code": null,
+      "corp_name": null,
+      "must_contain": [
+        "가격"
+      ],
+      "must_not_contain": [
+        "무료"
+      ],
+      "value_range": [
+        1000,
+        5000
+      ],
+      "accept": {
+        "min_score": 5,
+        "min_facts": 2
+      },
+      "_canvas_cell": "수익원",
+      "_추출_힌트": [],
+      "_proxy_선언": {
+        "대상": "",
+        "사유": ""
+      }
+    }
+  ]
+}

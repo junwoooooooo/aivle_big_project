@@ -1,0 +1,121 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5dd9fce61b3b1096d7fc161bc66072049e85e51c5e4984fafc31fe18b2ba3739",
+  "canonicalRequestHash": "d51102edf914708a4ba6025b8f43318a5acc6314a5aae931476da9c4ec44e79c",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C4-F1",
+        "field": "platformRole",
+        "value": "AI 기반 성과 분석 도구 제공",
+        "roleFields": {
+          "platformRole": "AI 기반 성과 분석 도구 제공",
+          "providerRole": "AI 도구 제공업체",
+          "sellerRole": "구독 서비스 판매자",
+          "intermediaryRole": "파트너십을 통한 판매 중개자"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 시스템",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 플랫폼에 가입",
+          "사용자가 성과 데이터를 입력",
+          "AI가 데이터를 분석",
+          "사용자가 분석 결과를 확인"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제",
+          "결제 시스템이 결제 확인",
+          "서비스 제공 시작"
+        ],
+        "operatingModel": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다.",
+        "partnerModel": "데이터 분석 전문 기업과의 협력을 통해 데이터 분석의 정확성을 높입니다.",
+        "solutionMechanism": "AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C5-F1",
+        "field": "platformRole",
+        "value": "AI 기반 영업 도구 제공",
+        "roleFields": {
+          "platformRole": "AI 기반 영업 도구 제공",
+          "providerRole": "AI 도구 제공업체",
+          "sellerRole": "서비스 판매자",
+          "intermediaryRole": "파트너십을 통한 판매 중개"
+        },
+        "actorRoles": [
+          "영업팀",
+          "AI 시스템",
+          "CRM 시스템"
+        ],
+        "transactionFlow": [
+          "사용자가 회의 및 이메일 내용을 플랫폼에 업로드",
+          "AI가 데이터를 처리하여 결과 제공",
+          "사용자가 결과를 확인하고 CRM에 입력"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제",
+          "결제 확인 후 서비스 제공",
+          "정기 결제 및 갱신 관리"
+        ],
+        "operatingModel": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다.",
+        "partnerModel": "CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다.",
+        "solutionMechanism": "AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C4-F1",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "The value 'AI 기반 성과 분석 도구 제공' aligns with the platform role of providing an AI-based performance analysis tool."
+    },
+    {
+      "candidateId": "C5-F1",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "The value 'AI 기반 영업 도구 제공' aligns with the platform role of providing an AI-based sales tool."
+    }
+  ],
+  "durationMs": 3858,
+  "timestamp": "2026-08-10T08:46:49.402864+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

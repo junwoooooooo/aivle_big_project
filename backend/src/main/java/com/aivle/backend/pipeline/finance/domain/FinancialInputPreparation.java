@@ -18,7 +18,8 @@ public class FinancialInputPreparation extends BaseEntity {
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Column(name = "source_tech_ops_snapshot_id", length = 64) private String sourceTechOpsSnapshotId;
     @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
-    @Column(name = "source_market_research_run_id") private Long sourceMarketResearchRunId;
+    @Column(name = "source_market_research_version_id") private Long sourceMarketResearchVersionId;
+    @Column(name = "source_business_model_version_id") private Long sourceBusinessModelVersionId;
     @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
     @Column(name = "financial_fields_json", nullable = false, columnDefinition = "TEXT") private String financialFieldsJson;
     @Column(name = "upstream_references_json", nullable = false, columnDefinition = "TEXT") private String upstreamReferencesJson;
@@ -46,16 +47,49 @@ public class FinancialInputPreparation extends BaseEntity {
         return value;
     }
 
-    public static FinancialInputPreparation createFromBusinessModel(String id, Long projectId, Long businessModelRunId,
-            String sourceHash, String fieldsJson, String referencesJson, String assistanceJson, Long userId) {
-        if (blank(id) || projectId == null || businessModelRunId == null || !hash(sourceHash)
-                || blank(fieldsJson) || blank(referencesJson) || blank(assistanceJson) || userId == null)
-            throw new IllegalArgumentException("Financial preparation requires a completed business-model source.");
+    public static FinancialInputPreparation createFromMarketAndBusinessModel(String id, Long projectId,
+            Long marketVersionId, Long businessModelVersionId, String sourceHash, String fieldsJson,
+            String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || marketVersionId == null || businessModelVersionId == null
+                || !hash(sourceHash) || blank(fieldsJson) || blank(referencesJson)
+                || blank(assistanceJson) || userId == null) {
+            throw new IllegalArgumentException("재무 입력에는 current Market/BM source가 필요합니다.");
+        }
         FinancialInputPreparation value = new FinancialInputPreparation();
-        value.id = id; value.projectId = projectId; value.sourceMarketResearchRunId = businessModelRunId;
-        value.sourceSnapshotHash = sourceHash; value.financialFieldsJson = fieldsJson;
-        value.upstreamReferencesJson = referencesJson; value.assistanceJson = assistanceJson;
-        value.revision = 1; value.updatedByUserId = userId;
+        value.id = id;
+        value.projectId = projectId;
+        value.sourceMarketResearchVersionId = marketVersionId;
+        value.sourceBusinessModelVersionId = businessModelVersionId;
+        value.sourceSnapshotHash = sourceHash;
+        value.financialFieldsJson = fieldsJson;
+        value.upstreamReferencesJson = referencesJson;
+        value.assistanceJson = assistanceJson;
+        value.revision = 1;
+        value.updatedByUserId = userId;
+        return value;
+    }
+
+    public static FinancialInputPreparation create(String id, Long projectId, String techOpsSnapshotId,
+            String marketSeedSnapshotId, Long marketVersionId, Long businessModelVersionId,
+            String sourceHash, String fieldsJson, String referencesJson,
+            String assistanceJson, Long userId) {
+        FinancialInputPreparation value = create(id, projectId, techOpsSnapshotId, marketSeedSnapshotId,
+            sourceHash, fieldsJson, referencesJson, assistanceJson, userId);
+        if (marketVersionId == null || businessModelVersionId == null)
+            throw new IllegalArgumentException("재무 입력에는 Market/BM version이 필요합니다.");
+        value.sourceMarketResearchVersionId = marketVersionId;
+        value.sourceBusinessModelVersionId = businessModelVersionId;
+        return value;
+    }
+
+    public static FinancialInputPreparation createStandalone(String id, Long projectId, String sourceHash,
+            String fieldsJson, String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || !hash(sourceHash) || blank(fieldsJson) || blank(referencesJson)
+                || blank(assistanceJson) || userId == null) throw new IllegalArgumentException("Financial preparation is invalid.");
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id; value.projectId = projectId; value.sourceSnapshotHash = sourceHash;
+        value.financialFieldsJson = fieldsJson; value.upstreamReferencesJson = referencesJson;
+        value.assistanceJson = assistanceJson; value.revision = 1; value.updatedByUserId = userId;
         return value;
     }
 

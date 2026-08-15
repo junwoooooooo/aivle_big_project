@@ -1,0 +1,5 @@
+.candidate-input__fields { display:grid; gap:.8rem; }
+.candidate-input__fields label { display:grid; gap:.3rem; white-space:normal; }
+.candidate-input__fields label > span { color:var(--color-text-secondary); font-size:.75rem; }
+.candidate-input__actions,.portfolio-status__actions { display:flex!important; gap:.5rem; flex-wrap:wrap; }
+.candidate-input__actions button:first-child { background:var(--color-action-primary); color:#fff; }

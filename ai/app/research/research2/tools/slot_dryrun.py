@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import importlib.util
 import io
 import json
@@ -34,6 +35,7 @@ for p in (ROOT, os.path.join(ROOT, "adapters"), os.path.join(ROOT, "harness")):
     sys.path.insert(0, p)
 
 import kosis                                             # noqa: E402
+import runpath                                           # noqa: E402
 import gate as G                                         # noqa: E402
 from base import load_env_key                            # noqa: E402
 from runlog import load_rules                            # noqa: E402
@@ -63,7 +65,7 @@ def load_slots(a) -> tuple[list, dict]:
     d = a.from_harness if os.path.isabs(a.from_harness) else os.path.join(ROOT, a.from_harness)
     raw_path = os.path.join(d, f"llm_raw_{a.attempt}.json")
     if not os.path.exists(raw_path):
-        raise SystemExit(f"없다: {raw_path}")
+        raise DryrunError(f"없다: {raw_path}")
     sh = _harness_module()
     vocab = _load(os.path.join(ROOT, "harness", "vocab.json"))
     slots, _formulas, _notes = sh.wire(_load(raw_path)["data"], vocab)
@@ -131,6 +133,22 @@ def check_guards(d: dict) -> list:
     return out
 
 
+class DryrunError(RuntimeError):
+    """부르는 쪽이 잘못 줬다. 예전에는 `SystemExit` 였고, 그러면 **함수로 부를 수 없다** —
+    `BaseException` 이라 서버에서 부르면 워커가 통째로 넘어간다."""
+
+
+@dataclasses.dataclass
+class DryrunOptions:
+    """⚠ 필드 이름은 CLI 인자의 `dest` 와 같아야 한다 — `main()` 이 `vars()` 를 붓는다."""
+
+    tag: str
+    slots: str = ""
+    from_harness: str = ""
+    attempt: int = 3
+    no_net: bool = False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True)
@@ -141,8 +159,21 @@ def main():
     ap.add_argument("--no-net", action="store_true",
                     help="stat_code 실재 대조를 건너뛴다 (라우팅만)")
     a = ap.parse_args()
+    try:
+        dryrun(DryrunOptions(**vars(a)))
+    except DryrunError as bad:
+        raise SystemExit(str(bad))          # CLI 에서는 종전과 같이 멈춘다
+    return 0
+
+
+def dryrun(a: DryrunOptions) -> dict:
+    """슬롯이 서는지 **무료로** 본다. 수집 호출 0 · LLM 0회 · 원장 쓰기 0.
+
+    ⚠ **판정하지 않는다.** 보이는 것을 적어 돌려주고, 유료 수집을 태울지는 부르는 쪽이
+      정한다 — 이 모듈의 `_규칙` 이 그렇게 적혀 있다.
+    """
     if not a.slots and not a.from_harness:
-        raise SystemExit("--slots 또는 --from-harness 중 하나가 필요하다")
+        raise DryrunError("--slots 또는 --from-harness 중 하나가 필요하다")
 
     slots, origin = load_slots(a)
     vocab = _load(os.path.join(ROOT, "harness", "vocab.json"))
@@ -192,7 +223,8 @@ def main():
         ks = [r for r in report["슬롯"] if r["route"] == "kosis"]
         report["stat_code_해결"] = {"대상": len(ks),
                                     "해결": sum(1 for r in ks if r.get("stat_code_대조"))}
-    out_dir = os.path.join(ROOT, "runs", f"dryrun-{a.tag}")
+    # 씨앗 `runs/` 는 컨테이너에서 `:ro` 라 여기가 그 자리면 드라이런이 그 자리에서 죽는다.
+    out_dir = runpath.write_dir(f"dryrun-{a.tag}")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "dryrun.json")
     io.open(path, "w", encoding="utf-8").write(json.dumps(report, ensure_ascii=False, indent=1))
@@ -200,7 +232,8 @@ def main():
     if report.get("stat_code_해결"):
         print(f"stat_code 해결: {report['stat_code_해결']['해결']}/{report['stat_code_해결']['대상']}")
     print(f"산출: {path}")
-    return 0
+    report["_산출"] = path
+    return report
 
 
 if __name__ == "__main__":

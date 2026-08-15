@@ -9,6 +9,7 @@ from openai import AsyncOpenAI
 from .analyze import run_bm_analysis
 from .contracts import BMAnalysisInput
 from .finalize import finalize_bm_analysis
+from .handoff import build_financial_handoff
 from .normalize import resolve_bm_input
 
 
@@ -17,6 +18,7 @@ async def run_bm_pipeline_flow(
     *,
     client: AsyncOpenAI | None = None,
     model: str | None = None,
+    diagnostic_context: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     resolved = resolve_bm_input(bm_input)
 
@@ -25,6 +27,7 @@ async def run_bm_pipeline_flow(
         resolved=resolved,
         client=client,
         model=model,
+        diagnostic_context=diagnostic_context,
     )
 
     final_result = finalize_bm_analysis(
@@ -32,8 +35,10 @@ async def run_bm_pipeline_flow(
         resolved=resolved,
         legal_context=bm_input.legal_context,
     )
+    financial_handoff = build_financial_handoff(final_result=final_result, resolved=resolved)
 
     return {
         "bm_analysis": bm_analysis,
         "final_result": final_result,
+        "financial_handoff": financial_handoff,
     }

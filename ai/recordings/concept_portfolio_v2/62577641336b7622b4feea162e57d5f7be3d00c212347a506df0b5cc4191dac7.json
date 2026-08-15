@@ -1,0 +1,119 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e72e8dac4c45f8a632608ee5d315344c6426b99fe519c017834dda891edd169b",
+  "canonicalRequestHash": "62577641336b7622b4feea162e57d5f7be3d00c212347a506df0b5cc4191dac7",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C3-FC1",
+        "field": "intermediaryRole",
+        "value": "부재",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 고객과의 계약 및 서비스 관리",
+          "providerRole": "서비스 제공자로서 고객의 장비 관리 및 유지보수 책임을 집니다.",
+          "sellerRole": "고객과의 계약을 통해 서비스를 판매합니다.",
+          "intermediaryRole": "부재"
+        },
+        "actorRoles": [
+          "고객",
+          "서비스 제공자",
+          "장비 제조사"
+        ],
+        "transactionFlow": [
+          "고객과의 계약 체결",
+          "정기 점검 일정 조율",
+          "장비 점검 및 유지보수 수행"
+        ],
+        "paymentFlow": [
+          "고객이 월정액 요금 지불",
+          "서비스 제공 후 정산"
+        ],
+        "operatingModel": "전문 기술 인력을 통해 고객의 장비를 관리하고, 신속한 대응 체계를 구축합니다.",
+        "partnerModel": "장비 제조사와 협력하여 최신 기술과 정보를 공유합니다.",
+        "solutionMechanism": "정기적인 점검 및 유지보수를 통해 고객의 장비를 안정적으로 관리합니다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "HYBRID",
+          "transactionModel": "RECURRING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C5",
+        "field": "intermediaryRole",
+        "value": "고객과 기술 지원 팀 간의 소통을 원활하게 하는 역할",
+        "roleFields": {
+          "platformRole": "온라인 플랫폼을 통해 고객과의 상호작용 및 서비스 제공",
+          "providerRole": "서비스 제공자로서 고객에게 장비 대여 및 기술 지원을 제공",
+          "sellerRole": "장비 대여 계약을 체결하고 고객에게 서비스를 제공하는 역할",
+          "intermediaryRole": "고객과 기술 지원 팀 간의 소통을 원활하게 하는 역할"
+        },
+        "actorRoles": [
+          "고객",
+          "기술 지원 팀",
+          "장비 제조사"
+        ],
+        "transactionFlow": [
+          "고객이 장비 대여 요청",
+          "계약 체결 및 대여 시작",
+          "기술 지원 요청 시 지원 제공",
+          "장비 반납 및 상태 점검"
+        ],
+        "paymentFlow": [
+          "고객이 월 구독료 결제",
+          "기술 지원 서비스에 대한 추가 비용 청구"
+        ],
+        "operatingModel": "전문 기술 지원 팀을 운영하여 고객의 문제를 신속하게 해결한다.",
+        "partnerModel": "장비 제조사와 협력하여 최신 기술 정보를 공유하고, 기술 지원을 강화한다.",
+        "solutionMechanism": "대여 서비스와 기술 지원을 결합하여 고객의 화상회의 환경을 안정적으로 유지한다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C3-FC1",
+      "field": "intermediaryRole",
+      "decision": "EXPLICIT_ABSENCE",
+      "safeReason": "roleFields에서 intermediaryRole의 부재가 명시되어 있음."
+    },
+    {
+      "candidateId": "C5",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "roleFields에서 intermediaryRole이 고객과 기술 지원 팀 간의 소통을 원활하게 하는 역할로 명시되어 있음."
+    }
+  ],
+  "durationMs": 2460,
+  "timestamp": "2026-08-10T08:47:01.941988+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from app.canonical_json import canonical_json
 from app.providers import ProviderFailure, execute_structured_prompt
 from app.tasks.concept_candidate.models import ConceptCandidateDraft, ConceptCandidateResult
@@ -18,10 +20,14 @@ from app.tasks.concept_candidate.models import ConceptCandidateDraft, ConceptCan
 from .adapters import CurrentLegalAdapter
 from .language_policy import candidate_language_failures, plan_language_failures
 from .models import (
+    BusinessRoleSemanticBatch, BusinessRoleSemanticItem,
     CanonicalSeed, DesignSpaceAnalysis, ExplorationBreadth, LegalReview, LegalRoute,
+    LegalFactCompletionPatch, LegalFactCompletionRequirement,
+    LegalFactDependencySemanticBatch, LegalFactDependencySemanticItem,
     PlanDraftPool, PortfolioPlan, PortfolioPlanDraft, ProviderMode, ProviderUsage,
     SemanticArchitectureBatch, SemanticArchitectureClassification,
-    SemanticDistinctnessResult, SemanticFidelityResult,
+    SemanticDistinctnessResult, SemanticFidelityResult, SemanticHypothesisBatch,
+    SemanticHypothesisResult,
 )
 from .schema_preflight import assert_strict_compatible
 
@@ -31,10 +37,42 @@ CANDIDATE_PROMPT_VERSION = "concept-portfolio-generic-candidate-v3"
 DISTINCTNESS_PROMPT_VERSION = "concept-portfolio-relation-v3"
 FIDELITY_PROMPT_VERSION = "concept-portfolio-fidelity-v3"
 FIDELITY_REGEN_PROMPT_VERSION = "concept-portfolio-fidelity-regeneration-v1"
-ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v1"
+ARCHITECTURE_PROMPT_VERSION = "concept-portfolio-architecture-classifier-v2"
+HYPOTHESIS_SEMANTIC_PROMPT_VERSION = "concept-portfolio-hypothesis-semantic-v1"
+BUSINESS_ROLE_SEMANTIC_PROMPT_VERSION = "concept-business-role-semantic-v2"
+LEGAL_FACT_DEPENDENCY_PROMPT_VERSION = "concept-legal-fact-dependency-v2"
 LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
-LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-v1"
+LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-dynamic-patch-v3"
 LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair-v1"
+
+
+_COMPLETION_LIST_FIELDS = {
+    "transactionFlow", "paymentFlow", "personalDataUsage",
+    "physicalActivities", "partnerRequirements",
+}
+
+
+def completion_field_names(requirements: list[LegalFactCompletionRequirement]) -> list[str]:
+    return list(dict.fromkeys(item.field for item in requirements))
+
+
+def legal_fact_completion_schema(requirements: list[LegalFactCompletionRequirement]) -> dict[str, Any]:
+    """요청된 fact field만 존재하는 strict Provider 응답 schema를 만든다."""
+    fields = completion_field_names(requirements)
+    if not fields:
+        raise ProviderFailure("INVALID_REQUEST", "LEGAL_FACT_COMPLETION_FIELDS_EMPTY", 400, False,
+                              schema_name="concept_legal_fact_completion_dynamic_v3")
+    properties = {}
+    for field in fields:
+        if field in _COMPLETION_LIST_FIELDS:
+            properties[field] = {
+                "title": field, "type": "array", "minItems": 1, "maxItems": 12,
+                "items": {"type": "string", "minLength": 1, "maxLength": 500},
+            }
+        else:
+            properties[field] = {"title": field, "type": "string", "minLength": 1, "maxLength": 1000}
+    return {"title": "LegalFactCompletionDynamicPatch", "type": "object",
+            "properties": properties, "required": fields, "additionalProperties": False}
 
 
 class PortfolioProvider(ABC):
@@ -67,8 +105,9 @@ class PortfolioProvider(ABC):
 
     @abstractmethod
     async def complete_legal_facts(self, seed: CanonicalSeed, plan: PortfolioPlan,
-                                   candidate: ConceptCandidateResult, requirements: list[str],
-                                   candidate_index: int) -> ConceptCandidateDraft: ...
+                                   candidate: ConceptCandidateResult,
+                                   requirements: list[LegalFactCompletionRequirement],
+                                   candidate_index: int) -> dict[str, Any]: ...
 
     @abstractmethod
     async def repair_redesign_compliance(self, seed: CanonicalSeed, plan: PortfolioPlan,
@@ -85,6 +124,17 @@ class PortfolioProvider(ABC):
 
     @abstractmethod
     async def classify_architectures(self, items: list[dict[str, Any]]) -> list[SemanticArchitectureClassification]: ...
+
+    @abstractmethod
+    async def classify_hypotheses(self, items: list[dict[str, Any]]) -> list[SemanticHypothesisResult]: ...
+
+    @abstractmethod
+    async def classify_business_roles(self, items: list[dict[str, Any]]) -> list[BusinessRoleSemanticItem]: ...
+
+    @abstractmethod
+    async def classify_legal_fact_dependencies(
+        self, items: list[dict[str, Any]],
+    ) -> list[LegalFactDependencySemanticItem]: ...
 
     @abstractmethod
     async def replacement_plans(self, seed: CanonicalSeed, design: DesignSpaceAnalysis,
@@ -325,25 +375,75 @@ class MockPortfolioProvider(PortfolioProvider):
                                          ExplorationBreadth(candidate.generationStrategy), candidate_index)
 
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
-        from .candidate_governance import candidate_result_to_draft
-        draft = candidate_result_to_draft(candidate)
-        return draft.model_copy(update={
-            "platformRole": draft.platformRole if "운영" in draft.platformRole else "운영사가 고객 접점과 거래 기준을 운영",
-            "providerRole": draft.providerRole if "제공" in draft.providerRole else "운영사 또는 명시된 제휴사가 서비스를 제공",
-            "sellerRole": draft.sellerRole if "판매" in draft.sellerRole else "운영사가 고객과 계약하고 판매 책임을 부담",
-            "intermediaryRole": draft.intermediaryRole if "중개" in draft.intermediaryRole else "제3자 거래 중개를 하지 않음",
-            "transactionFlow": draft.transactionFlow or ["고객이 운영사에 주문하고 운영사가 서비스를 제공"],
-            "paymentFlow": draft.paymentFlow or ["고객이 운영사에 결제하고 운영사가 수취"],
-            "personalDataUsage": draft.personalDataUsage or ["서비스 이행을 위해 고객 연락처를 처리"],
-            "physicalActivities": draft.physicalActivities or ["운영사가 설계된 물리적 이행을 관리"],
-            "partnerRequirements": draft.partnerRequirements or ["제휴사는 명시된 서비스 이행 역할을 수행"],
-            "targetRegion": "대한민국" if "필요" in draft.targetRegion else draft.targetRegion,
-            "price": "초기 법률검토 가정용 가격 결정 방식: 서비스 범위에 따른 정액 또는 건별 요금" if "필요" in draft.price else draft.price,
-            "channels": "운영사가 관리하는 웹·앱 고객 접점" if "필요" in draft.channels else draft.channels,
-        })
+        requested = {item.field: item for item in requirements}
+        patch: dict[str, Any] = {}
+        if "platformRole" in requested:
+            patch["platformRole"] = "운영사가 고객 접점과 거래 기준을 운영"
+        if "providerRole" in requested:
+            patch["providerRole"] = "운영사 또는 명시된 외부 주체가 서비스 이행 책임을 부담"
+        if "sellerRole" in requested:
+            patch["sellerRole"] = "운영사가 고객과 계약하고 판매 책임을 부담"
+        if "intermediaryRole" in requested:
+            transaction = canonical_json(candidate.transactionFlow).casefold()
+            patch["intermediaryRole"] = (
+                "플랫폼이 수요자와 제공자의 거래를 연결·중개"
+                if any(marker in transaction for marker in ("중개", "매칭", "연결", "판매자", "제공자"))
+                else "제3자 거래를 중개하지 않음")
+        if "transactionFlow" in requested:
+            patch["transactionFlow"] = ["고객이 운영사와 계약하고 운영사가 서비스를 제공"]
+        if "paymentFlow" in requested:
+            patch["paymentFlow"] = ["고객이 운영사에 결제하고 운영사가 대금을 수취"]
+        if "personalDataUsage" in requested:
+            physical = canonical_json([candidate.solutionMechanism, candidate.physicalActivities,
+                                       candidate.transactionFlow]).casefold()
+            patch["personalDataUsage"] = (["서비스 담당자 이름과 연락처를 배송·방문·회수 일정 안내 목적으로 처리"]
+                                           if any(marker in physical for marker in
+                                                  ("배송", "방문", "회수", "설치", "픽업"))
+                                           else ["사용자 계정 이메일을 로그인과 서비스 제공 목적으로 처리"])
+        if "physicalActivities" in requested:
+            if requested["physicalActivities"].reasonType == "FACT_CONSISTENCY_REPAIR":
+                patch["physicalActivities"] = ["물리적 이행 없음"]
+            else:
+                patch["physicalActivities"] = [
+                    f"운영사가 {plan.fulfillmentApproach}에 필요한 배송·방문·설치 등 실제 물리 이행을 수행"]
+        if "partnerRequirements" in requested:
+            patch["partnerRequirements"] = (
+                ["외부 사업 파트너를 사용하지 않음"]
+                if requested["partnerRequirements"].reasonType == "FACT_CONSISTENCY_REPAIR"
+                else [f"사업 이행을 맡는 외부 계약 파트너가 {plan.partnerApproach} 역할을 수행"])
+        if "targetRegion" in requested:
+            patch["targetRegion"] = "대한민국"
+        if "channels" in requested:
+            patch["channels"] = "운영사가 관리하는 웹·앱 고객 접점"
+        return patch
 
     async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, candidate_index):
-        return await self.complete_legal_facts(seed, plan, child, requirements, candidate_index)
+        from .candidate_governance import candidate_result_to_draft
+        field_markers = {
+            "platformRole": ("platformRole", "플랫폼"),
+            "providerRole": ("providerRole", "제공", "이행"),
+            "sellerRole": ("sellerRole", "판매"),
+            "intermediaryRole": ("intermediaryRole", "중개"),
+            "transactionFlow": ("transactionFlow", "거래", "주문", "계약"),
+            "paymentFlow": ("paymentFlow", "결제", "정산"),
+            "personalDataUsage": ("personalDataUsage", "개인정보", "데이터"),
+            "physicalActivities": ("physicalActivities", "물리", "배송", "현장"),
+            "partnerRequirements": ("partnerRequirements", "파트너", "제휴"),
+            "targetRegion": ("targetRegion", "지역"),
+            "channels": ("channels", "채널", "접점"),
+        }
+        structured = []
+        for field, markers in field_markers.items():
+            if any(any(marker in requirement for marker in markers) for requirement in requirements):
+                structured.append(LegalFactCompletionRequirement(
+                    field=field, reasonType=("ROLE_MISMATCH" if field.endswith("Role") else
+                        "TRANSACTION_INCOMPLETE" if field == "transactionFlow" else
+                        "PAYMENT_INCOMPLETE" if field == "paymentFlow" else
+                        "GENERAL_FACT_INCOMPLETE"),
+                    dependencyType=None, instruction=f"redesign 요구에 따라 {field}를 보완"))
+        patch = await self.complete_legal_facts(seed, plan, child, structured, candidate_index)
+        return candidate_result_to_draft(child).model_copy(update={
+            field: value for field, value in patch.items()})
 
     async def judge_distinctness(self, kind, left, right):
         if kind == "OPPORTUNITY_SCOPE" and "무관" in canonical_json(right):
@@ -375,12 +475,86 @@ class MockPortfolioProvider(PortfolioProvider):
             elif any(value in text for value in ("직접 운영", "직접 제공", "운영사")):
                 architecture["businessRole"] = "PRINCIPAL_OPERATOR"
             results.append(SemanticArchitectureClassification.model_validate({
+                "entityId": item["entityId"],
                 "architecture": architecture,
                 "confidence": {key: ("LOW" if value == "OTHER" else "HIGH")
                                for key, value in architecture.items()
                                if key not in {"dataDependency", "physicalDependency"}},
                 "safeSummary": "규칙 근거가 없는 축은 OTHER로 보존했습니다.",
             }))
+        return results
+
+    async def classify_hypotheses(self, items):
+        results = []
+        for item in items:
+            text = str(item.get("value") or "").casefold()
+            cross_field = (item["hypothesisType"] == "TARGET_REGION"
+                           and any(marker in text for marker in
+                                   ("가격", "견적", "구독", "수수료", "채널", "앱", "웹")))
+            results.append(SemanticHypothesisResult(
+                hypothesisType=item["hypothesisType"], decision="INVALID" if cross_field else "VALID",
+                safeReason=("다른 가설 필드의 값으로 판단했습니다." if cross_field else
+                            "placeholder가 아닌 구체적 후보값으로 판단했습니다.")))
+        return results
+
+    async def classify_business_roles(self, items):
+        markers = {
+            "platformRole": ("운영", "관리", "접점", "기준", "플랫폼"),
+            "providerRole": ("제공", "수행", "이행", "공급", "전달", "전문가", "파트너"),
+            "sellerRole": ("판매", "계약", "청구", "수취", "과금", "요금"),
+            "intermediaryRole": ("중개", "연결", "매칭", "알선", "거래 성사"),
+        }
+        results = []
+        for item in items:
+            field = item["field"]
+            text = str(item.get("value") or "").casefold()
+            decision = "MATCH" if any(marker in text for marker in markers[field]) else "UNKNOWN"
+            results.append(BusinessRoleSemanticItem(
+                candidateId=item["candidateId"], field=field, decision=decision,
+                safeReason=("요청된 역할의 주체 또는 책임을 의미상 확인했습니다."
+                            if decision == "MATCH" else "제공된 맥락만으로 해당 역할을 확정할 수 없습니다.")))
+        return results
+
+    async def classify_legal_fact_dependencies(self, items):
+        results = []
+        for item in items:
+            dependency_type = item["dependencyType"]
+            text = canonical_json(item).casefold()
+            if dependency_type == "PERSONAL_DATA":
+                if any(marker in text for marker in ("개인정보를 처리하지 않", "익명", "로그인 없음")):
+                    decision, reason = "NOT_REQUIRED", "개인 단위 식별정보를 처리하지 않는 구조가 명시되었습니다."
+                elif any(marker in text for marker in (
+                        "이메일", "전화번호", "연락처", "주소", "예약자", "회원", "사용자 계정")):
+                    decision, reason = "REQUIRED", "서비스 이행에 개인 단위 정보 처리가 필요합니다."
+                else:
+                    decision, reason = "NOT_REQUIRED", "입력 맥락에 개인 단위 정보 처리 구조가 없습니다."
+            elif dependency_type == "PHYSICAL_ACTIVITY":
+                if any(marker in text for marker in ("배송", "방문", "픽업", "설치", "수거", "현장")):
+                    decision, reason = "REQUIRED", "사업 이행에 물리 활동이 포함됩니다."
+                elif any(marker in text for marker in (
+                        "디지털", "digital", "온라인", "saas", "api", "소프트웨어")):
+                    decision, reason = "NOT_REQUIRED", "확인된 제공 구조는 디지털 이행입니다."
+                else:
+                    decision, reason = "UNKNOWN", "물리 활동 포함 여부를 확정할 근거가 부족합니다."
+            else:
+                architecture = item.get("descriptor", {}).get("architecture", {})
+                p2p = (architecture.get("operatingModel") == "PEER_TO_PEER"
+                       and architecture.get("businessRole") in {"MARKETPLACE", "INTERMEDIARY"})
+                if p2p and not any(marker in text for marker in (
+                        "외부 공급업체", "제휴 업체", "배송 파트너", "운영 위탁")):
+                    decision, reason = "NOT_REQUIRED", "판매자와 구매자는 P2P 참가자이며 별도 사업 파트너가 아닙니다."
+                elif (architecture.get("partnerModel") in {"PARTNER_NETWORK", "EXPERT_NETWORK"}
+                      or any(marker in text for marker in (
+                          "외부 공급업체", "제휴 업체", "배송 파트너", "운영 위탁", "파트너 네트워크"))):
+                    decision, reason = "REQUIRED", "사업 이행에 외부 계약·운영 파트너가 필요합니다."
+                elif (architecture.get("partnerModel") == "OWN_OPERATED"
+                      or any(marker in text for marker in ("직접 운영", "외부 파트너 없음"))):
+                    decision, reason = "NOT_REQUIRED", "직접 운영 구조이며 외부 사업 파트너가 없습니다."
+                else:
+                    decision, reason = "UNKNOWN", "참여자와 사업 파트너를 구분할 근거가 부족합니다."
+            results.append(LegalFactDependencySemanticItem(
+                candidateId=item["candidateId"], dependencyType=dependency_type,
+                decision=decision, safeReason=reason))
         return results
 
     async def replacement_plans(self, seed, design, existing_plans, count):
@@ -431,6 +605,8 @@ Plan의 target/use/value/offer/solution thesis와 핵심 differentiator, 사용�
 platformRole, providerRole, sellerRole, intermediaryRole에는 실제 주체와 책임을 명시하고,
 transactionFlow와 paymentFlow에는 주문·계약·제공·결제 수취·정산 주체를 구체적으로 작성한다.
 personalDataUsage, physicalActivities, partnerRequirements는 실제 사업 흐름상 해당할 때 처리 목적·수행 주체·파트너 기능을 작성한다.
+physicalActivities는 배송·포장·현장 방문·설치처럼 물리 세계에서 수행되는 활동만 포함한다.
+AI 분석, 디지털 피드백, 화면 처리, 온라인 상호작용은 physicalActivities가 아니며 순수 디지털이면 빈 배열로 둔다.
 qualificationRequirements는 Concept가 애초에 특정 자격 보유 주체를 사용하도록 설계한 경우에만 작성한다.
 targetRegion, revenueModel, price, channels, differentiators에는 '미제공', '검증 필요', '추후 결정'이 아니라
 사용자가 검토할 수 있는 실제 geography·수익 방식·가격/범위 가설·채널·차별화 proposal을 작성한다.
@@ -500,22 +676,26 @@ qualificationRequirements 등 Legal fact 필드는 구체적 설계상 실제 �
         return ConceptCandidateResult.model_validate(raw)
 
     async def complete_legal_facts(self, seed, plan, candidate, requirements, candidate_index):
-        prompt = """현재 Candidate의 핵심 target/value/offer/solution과 Plan identity를 바꾸지 말고,
-법률 사실패턴에 필요한 누락·모순만 보완한다. 누가 판매·제공·중개·결제 수취·정산·이행하는지
-구체적으로 명시한다. 개인정보는 실제 처리 항목과 목적, 물리 활동은 수행 주체, 파트너는 사업상
-역할을 작성한다. 존재하지 않는 면허·허가·계약을 보유했다고 만들지 않고 법령명·법률판단을 쓰지 않는다.
-해당 역할이 실제로 없으면 역할을 만들어내지 말고 '중개하지 않음', '플랫폼은 직접 판매자가 아님',
-'외부 파트너를 사용하지 않음'처럼 부재와 책임을 명확히 작성한다.
-JSON key 외 사용자-facing 내용은 한국어이며 ConceptCandidateDraft strict schema만 반환한다."""
-        schema = ConceptCandidateDraft.model_json_schema()
-        assert_strict_compatible(schema, "concept_legal_fact_completion_v1")
+        allowed_fields = completion_field_names(requirements)
+        prompt = """Candidate의 정체성과 요청되지 않은 필드는 절대 수정하지 않는다.
+completionRequirements에 열거되어 schema에 존재하는 필드만 구체적인 값으로 보완한다.
+요청되지 않은 필드는 schema에 존재하지 않으며 절대 반환하지 않는다.
+필요한 dependency가 실제로 없으면 새 역할·파트너·활동을 발명하지 말고 명시적 부재만 작성한다.
+법률 판단, 법령명, 면허·허가 보유, 합법성 결론은 생성하지 않는다. 사용자-facing 값은 한국어다.
+요청 필드만 가진 strict JSON object를 반환한다."""
+        schema = legal_fact_completion_schema(requirements)
+        schema_name = "concept_legal_fact_completion_dynamic_v3_" + "_".join(allowed_fields)
+        assert_strict_compatible(schema, schema_name)
         raw = await execute_structured_prompt(prompt, json.dumps({
             "seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
-            "candidate": candidate.model_dump(mode="json"), "completionRequirements": requirements,
+            "candidate": candidate.model_dump(mode="json"),
+            "completionRequirements": [item.model_dump(mode="json") for item in requirements],
+            "allowedFields": allowed_fields,
             "candidateIndex": candidate_index,
         }, ensure_ascii=False, sort_keys=True), response_schema=schema,
-            schema_name="concept_legal_fact_completion_v1", task_type="COMPLETE_CANDIDATE_LEGAL_FACTS")
-        return ConceptCandidateDraft.model_validate(raw)
+            schema_name=schema_name,
+            task_type="COMPLETE_CANDIDATE_LEGAL_FACTS_PATCH")
+        return raw
 
     async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, candidate_index):
         prompt = """이미 수행된 Legal redesign에서 미충족 요구만 보완한다. 새 Concept을 만들거나
@@ -552,13 +732,50 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
 
     async def classify_architectures(self, items):
         schema = SemanticArchitectureBatch.model_json_schema()
-        assert_strict_compatible(schema, "concept_architecture_classifier_v1")
+        assert_strict_compatible(schema, "concept_architecture_classifier_v2")
         raw = await execute_structured_prompt(
-            "사업 설명을 system enum으로만 분류한다. 근거가 부족하면 OTHER를 사용한다. 임의 code를 만들지 않는다. 각 축 confidence를 HIGH/MEDIUM/LOW로 반환한다.",
+            "사업 설명을 system enum으로만 분류한다. 근거가 부족하면 OTHER를 사용한다. 임의 code를 만들지 않는다. 각 축 confidence를 HIGH/MEDIUM/LOW로 반환하고 입력 entityId를 그대로 보존한다.",
             json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
-            response_schema=schema, schema_name="concept_architecture_classifier_v1",
+            response_schema=schema, schema_name="concept_architecture_classifier_v2",
             task_type="CONCEPT_PORTFOLIO_V2_ARCHITECTURE_CLASSIFICATION")
         return SemanticArchitectureBatch.model_validate(raw).results
+
+    async def classify_hypotheses(self, items):
+        schema = SemanticHypothesisBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_hypothesis_semantic_v1")
+        raw = await execute_structured_prompt(
+            "각 값이 해당 사업 가설 필드에 실제로 답하는 값인지 VALID/INVALID로만 판정한다. 새 가설을 생성하거나 값을 수정하지 않는다.",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_hypothesis_semantic_v1",
+            task_type="CONCEPT_PORTFOLIO_V2_HYPOTHESIS_SEMANTIC")
+        return SemanticHypothesisBatch.model_validate(raw).results
+
+    async def classify_business_roles(self, items):
+        schema = BusinessRoleSemanticBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_business_role_semantic_v2")
+        raw = await execute_structured_prompt(
+            """각 item의 field가 묻는 사업 역할에 value가 실제로 답하는지만 판정한다.
+다른 role fields, actorRoles, 거래·결제 흐름, 운영·파트너 모델, solution과 system descriptor는
+해석 맥락일 뿐 새 사실을 만들 근거가 아니다. 역할이 의미상 있으면 MATCH, 명시적으로 없으면
+EXPLICIT_ABSENCE, 다른 역할 설명이면 MISMATCH, 근거 부족이면 UNKNOWN을 반환한다.
+법률 판단, 사업 설계, 문구 보완은 하지 않는다. candidateId/field identity를 정확히 보존한다.""",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_business_role_semantic_v2",
+            task_type="CONCEPT_PORTFOLIO_V2_BUSINESS_ROLE_SEMANTIC_CLASSIFICATION")
+        return BusinessRoleSemanticBatch.model_validate(raw).results
+
+    async def classify_legal_fact_dependencies(self, items):
+        schema = LegalFactDependencySemanticBatch.model_json_schema()
+        assert_strict_compatible(schema, "concept_legal_fact_dependency_v2")
+        raw = await execute_structured_prompt(
+            """각 item의 사업 사실만 보고 PERSONAL_DATA, PHYSICAL_ACTIVITY, BUSINESS_PARTNER
+dependency가 실제로 필요한지 REQUIRED/NOT_REQUIRED/UNKNOWN 중 하나로 판정한다.
+법률 적용 여부를 판단하거나 새 사업 사실을 만들지 않는다. P2P 판매자·구매자 같은 거래 참가자를
+별도 계약·운영 파트너로 자동 간주하지 않는다. candidateId/dependencyType identity를 정확히 보존한다.""",
+            json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
+            response_schema=schema, schema_name="concept_legal_fact_dependency_v2",
+            task_type="CONCEPT_PORTFOLIO_V2_LEGAL_FACT_DEPENDENCY_CLASSIFICATION")
+        return LegalFactDependencySemanticBatch.model_validate(raw).results
 
     async def replacement_plans(self, seed, design, existing_plans, count):
         return await self.replenish_plans(seed, design, existing_plans, [], count, 1)
@@ -603,6 +820,48 @@ class ProviderGateway:
         if isinstance(value, dict): return {key: ProviderGateway.json_value(item) for key, item in value.items()}
         if isinstance(value, (list, tuple)): return [ProviderGateway.json_value(item) for item in value]
         return value
+
+    def _validate_keyed_batch(self, expected_keys, results, key_fn, contract_name, schema_name, *,
+                              safe_extra_values: set[str] | None = None):
+        """배열 순서가 아니라 business identity key의 완전한 일대일 대응을 검증한다."""
+        expected = list(expected_keys)
+        actual = [key_fn(item) for item in results]
+        expected_set, actual_set = set(expected), set(actual)
+        if len(expected_set) != len(expected):
+            raise ProviderFailure(
+                "INVALID_REQUEST", f"{contract_name}_REQUEST_DUPLICATE_IDENTITY",
+                400, False, schema_name=schema_name)
+        duplicate = sorted({key for key in actual if actual.count(key) > 1})
+        missing = sorted(expected_set - actual_set)
+        extra = sorted(actual_set - expected_set)
+        requested_candidates = {key[0] for key in expected if len(key) == 2}
+        safe_extra = []
+        unsafe_extra = list(extra)
+        if safe_extra_values is not None:
+            safe_extra = [key for key in extra
+                          if len(key) == 2 and key[0] in requested_candidates
+                          and key[1] in safe_extra_values]
+            unsafe_extra = [key for key in extra if key not in safe_extra]
+        if duplicate or missing or unsafe_extra:
+            reason = (
+                f"{contract_name}_BATCH_IDENTITY_MISMATCH:"
+                f"missing={missing};duplicate={duplicate};extra={unsafe_extra}")
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", reason, 502, False, schema_name=schema_name,
+                safe_diagnostics={"missingKeys": missing, "duplicateKeys": duplicate,
+                                  "extraKeys": unsafe_extra})
+        if safe_extra:
+            diagnostic = {
+                "action": "BATCH_EXTRA_RESULTS_IGNORED",
+                "contract": contract_name,
+                "ignoredKeys": [list(key) for key in safe_extra],
+                "safeSummary": "요청하지 않은 추가 의미판정 결과를 사용하지 않고 폐기했습니다.",
+            }
+            self.usage = self.usage.model_copy(update={
+                "batchDiagnostics": [*self.usage.batchDiagnostics, diagnostic],
+            })
+        by_key = {key_fn(item): item for item in results}
+        return [by_key[key] for key in expected]
 
     def note_external_call(self, stage):
         self.usage.topLevelExternalOperations += 1
@@ -721,10 +980,31 @@ class ProviderGateway:
 
     async def complete_legal_facts(self, seed, plan, candidate, requirements, index):
         payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
-                   "candidate": candidate.model_dump(mode="json"), "requirements": requirements, "index": index}
-        return await self.call("LEGAL_RECOVERING", "LEGAL_FACT_COMPLETION", payload,
+                   "candidate": candidate.model_dump(mode="json"),
+                   "requirements": [item.model_dump(mode="json") for item in requirements], "index": index}
+        raw = await self.call("LEGAL_RECOVERING", "LEGAL_FACT_COMPLETION", payload,
             lambda: self.provider.complete_legal_facts(seed, plan, candidate, requirements, index),
-            ConceptCandidateDraft, operation_version="v1", prompt_version=LEGAL_FACT_COMPLETION_PROMPT_VERSION)
+            operation_version="v3", prompt_version=LEGAL_FACT_COMPLETION_PROMPT_VERSION)
+        values = self.json_value(raw)
+        if not isinstance(values, dict):
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_FACT_COMPLETION_PATCH_NOT_OBJECT",
+                                  502, False, schema_name="concept_legal_fact_completion_dynamic_v3")
+        unsupported = sorted(set(values) - set(LegalFactCompletionPatch.model_fields))
+        if unsupported:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "LEGAL_FACT_COMPLETION_PATCH_UNSUPPORTED_FIELDS",
+                                  502, False, schema_name="concept_legal_fact_completion_dynamic_v3",
+                                  safe_diagnostics={"unsupportedFields": unsupported})
+        full = {field: None for field in LegalFactCompletionPatch.model_fields}
+        full.update(values)
+        try:
+            return LegalFactCompletionPatch.model_validate(full)
+        except ValidationError as failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "LEGAL_FACT_COMPLETION_PATCH_VALUE_INVALID",
+                502, False, schema_name="concept_legal_fact_completion_dynamic_v3",
+                validation_fields=[{"path": ".".join(str(part) for part in item["loc"]),
+                                    "reason": item["type"]}
+                                   for item in failure.errors()[:12]]) from failure
 
     async def repair_redesign_compliance(self, seed, plan, parent, child, requirements, index):
         payload = {"seed": seed.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
@@ -753,10 +1033,56 @@ class ProviderGateway:
             operation_version="v1", prompt_version=ARCHITECTURE_PROMPT_VERSION)
         results = [item if isinstance(item, SemanticArchitectureClassification)
                    else SemanticArchitectureClassification.model_validate(item) for item in raw]
-        if len(results) != len(items):
-            raise ProviderFailure("RESULT_SCHEMA_INVALID", "ARCHITECTURE_BATCH_COUNT_MISMATCH",
-                                  502, False, schema_name="concept_architecture_classifier_v1")
-        return results
+        return self._validate_keyed_batch(
+            [(item["entityId"],) for item in items], results,
+            lambda item: (item.entityId,), "ARCHITECTURE",
+            "concept_architecture_classifier_v2")
+
+    async def classify_hypotheses(self, items):
+        raw = await self.call("PORTFOLIO_VALIDATING", "VALIDATE_HYPOTHESES", {"items": items},
+            lambda: self.provider.classify_hypotheses(items),
+            operation_version="v1", prompt_version=HYPOTHESIS_SEMANTIC_PROMPT_VERSION)
+        results = [item if isinstance(item, SemanticHypothesisResult)
+                   else SemanticHypothesisResult.model_validate(item) for item in raw]
+        return self._validate_keyed_batch(
+            [(item["hypothesisType"],) for item in items], results,
+            lambda item: (item.hypothesisType,), "HYPOTHESIS",
+            "concept_hypothesis_semantic_v1")
+
+    async def classify_business_roles(self, items):
+        raw = await self.call("LEGAL_RECOVERING", "CLASSIFY_BUSINESS_ROLE_SEMANTICS", {"items": items},
+            lambda: self.provider.classify_business_roles(items),
+            operation_version="v1", prompt_version=BUSINESS_ROLE_SEMANTIC_PROMPT_VERSION)
+        try:
+            results = [item if isinstance(item, BusinessRoleSemanticItem)
+                       else BusinessRoleSemanticItem.model_validate(item) for item in raw]
+        except ValidationError as failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "BUSINESS_ROLE_BATCH_ITEM_INVALID",
+                502, False, schema_name="concept_business_role_semantic_v2") from failure
+        return self._validate_keyed_batch(
+            [(item["candidateId"], item["field"]) for item in items], results,
+            lambda item: (item.candidateId, item.field), "BUSINESS_ROLE",
+            "concept_business_role_semantic_v2",
+            safe_extra_values={"platformRole", "providerRole", "sellerRole", "intermediaryRole"})
+
+    async def classify_legal_fact_dependencies(self, items):
+        raw = await self.call(
+            "LEGAL_RECOVERING", "CLASSIFY_LEGAL_FACT_DEPENDENCIES", {"items": items},
+            lambda: self.provider.classify_legal_fact_dependencies(items),
+            operation_version="v1", prompt_version=LEGAL_FACT_DEPENDENCY_PROMPT_VERSION)
+        try:
+            results = [item if isinstance(item, LegalFactDependencySemanticItem)
+                       else LegalFactDependencySemanticItem.model_validate(item) for item in raw]
+        except ValidationError as failure:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "LEGAL_FACT_DEPENDENCY_BATCH_ITEM_INVALID",
+                502, False, schema_name="concept_legal_fact_dependency_v2") from failure
+        return self._validate_keyed_batch(
+            [(item["candidateId"], item["dependencyType"]) for item in items], results,
+            lambda item: (item.candidateId, item.dependencyType), "LEGAL_FACT_DEPENDENCY",
+            "concept_legal_fact_dependency_v2",
+            safe_extra_values={"PERSONAL_DATA", "PHYSICAL_ACTIVITY", "BUSINESS_PARTNER"})
 
     async def replacement_plans(self, seed, design, existing_plans, count=2):
         payload = {"seed": seed.model_dump(mode="json"), "design": design.model_dump(mode="json"),

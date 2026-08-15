@@ -33,6 +33,14 @@ public final class MarketResearchContract {
     private static final Set<String> STAGE_STATES = Set.of("OK", "SKIPPED", "FAILED");
     private static final Set<String> GRADES = Set.of("확정", "실무 신뢰", "추정", "근거 없음");
     private static final Set<String> EVIDENCE_KINDS = Set.of("관측", "계산");
+    /**
+     * 계산식 한 항의 «판정». AI 쪽 {@code verdict.FACTOR_BASES} 와 같은 목록이어야 한다.
+     *
+     * <p>{@code 가설} 은 <b>우리가 정한 값</b>이다(가격 등). {@code 가정} 은 규칙 파일이
+     * 값과 근거를 함께 선언한 것이고, {@code 관측} 은 원장에 출처가 있다. 셋을 한 칸에
+     * 뭉치면 「우리가 정한 39,000원」과 「국가통계 115,310개」가 같은 무게로 읽힌다.
+     */
+    private static final Set<String> FACTOR_BASES = Set.of("관측", "가정", "가설");
 
     private static final Set<String> SUBJECTS = Set.of(
         "MARKET_SIZE", "GROWTH", "COMPETITOR", "PRICE", "DEMAND", "CALCULATION", "NOT_FOUND");
@@ -147,11 +155,13 @@ public final class MarketResearchContract {
         for (String field : List.of("tam", "sam", "som", "growth")) {
             JsonNode figure = market.get(field);
             if (figure == null || figure.isNull()) continue;
-            exact(figure, Set.of("value", "unit", "grade", "formula", "assumptions", "caveats", "evidenceIds"));
+            exact(figure, Set.of("value", "unit", "grade", "formula", "factors",
+                "assumptions", "caveats", "evidenceIds"));
             nullableNumber(figure.get("value"));
             text(figure, "unit");
             if (!GRADES.contains(text(figure, "grade"))) invalid();
             nullableText(figure.get("formula"));
+            factors(figure.get("factors"));
             stringArray(figure.get("assumptions"));
             stringArray(figure.get("caveats"));
             references(figure.get("evidenceIds"), evidenceIds);
@@ -177,6 +187,35 @@ public final class MarketResearchContract {
             text(item, "detail");
         }
         nullableText(market.get("coverageCaveat"));
+    }
+
+    /**
+     * 계산식의 항들. <b>「무엇이 관측이고 무엇이 가정인가」를 문장이 아니라 값으로</b> 나른다.
+     *
+     * <p>예전에는 이 정보가 {@code assumptions} 산문 안에만 있었고, 산문은 옮기다 빠진다.
+     * 실측: 규칙 파일의 근거 서술이 {@code [:100]} 으로 잘려 문장 한가운데에서 끊긴 채
+     * 화면까지 갔다. 항으로 나르면 자를 이유가 없다.
+     *
+     * <p>비어 있어도 된다 — 요인을 못 세우는 추정이 있다. 다만 <b>배열은 항상 있어야</b>
+     * 한다. {@code null} 로 두면 「항이 없다」와 「안 실었다」가 같아진다.
+     */
+    private static void factors(JsonNode items) {
+        if (items == null || !items.isArray()) invalid();
+        for (JsonNode item : items) {
+            exact(item, Set.of("name", "value", "unit", "basis", "note",
+                "bound", "falsifiedIf", "sourceCount", "sourceDomains", "caveats"));
+            text(item, "name");
+            if (!FACTOR_BASES.contains(text(item, "basis"))) invalid();
+            nullableNumber(item.get("value"));
+            for (String field : List.of("unit", "note", "bound", "falsifiedIf")) {
+                nullableText(item.get(field));
+            }
+            nonNegative(item, "sourceCount");
+            stringArray(item.get("sourceDomains"));
+            stringArray(item.get("caveats"));
+            // 관측이라면서 출처가 0곳이면 표가 거짓말을 한다 — 그 조합은 계약 위반이다.
+            if ("관측".equals(text(item, "basis")) && item.get("sourceCount").asInt() == 0) invalid();
+        }
     }
 
     // ── BM ──────────────────────────────────────────────────────────────
@@ -229,7 +268,8 @@ public final class MarketResearchContract {
     private static void bm(JsonNode bm) {
         if (bm == null || bm.isNull()) return;      // BM 이 죽어도 시장조사 결과는 살린다
         exact(bm, Set.of("decision", "confidence", "summary", "marketFitStatus", "marketFitSummary",
-            "consistencyStatus", "consistencySummary", "strengths", "weaknesses", "risks", "legal"));
+            "consistencyStatus", "consistencySummary", "strengths", "weaknesses", "risks", "legal",
+            "financialHandoff"));
         if (!DECISIONS.contains(text(bm, "decision"))
             || !CONFIDENCES.contains(text(bm, "confidence"))
             || !FIT_STATES.contains(text(bm, "marketFitStatus"))
@@ -243,6 +283,17 @@ public final class MarketResearchContract {
         nullableText(legal.get("summary"));
         stringArray(legal.get("risks"));
         stringArray(legal.get("requiredActions"));
+        JsonNode handoff = bm.get("financialHandoff");
+        exact(handoff, Set.of("conceptId", "revenueModel", "priceMin", "priceBase", "priceMax",
+            "tam", "sam", "som", "marketGrowthRate", "expectedRevenue", "unitCost",
+            "fixedCostItems", "variableCostItems", "missingFinancialInputs", "handoffStatus"));
+        text(handoff, "conceptId");
+        nullableText(handoff.get("revenueModel"));
+        for (String field : List.of("priceMin", "priceBase", "priceMax", "tam", "sam", "som",
+                "marketGrowthRate", "expectedRevenue", "unitCost")) nullableNumber(handoff.get(field));
+        if (!handoff.get("fixedCostItems").isArray() || !handoff.get("variableCostItems").isArray()) invalid();
+        stringArray(handoff.get("missingFinancialInputs"));
+        if (!Set.of("READY", "PARTIAL", "BLOCKED").contains(text(handoff, "handoffStatus"))) invalid();
     }
 
     private static void summary(JsonNode summary, Set<String> evidenceIds) {

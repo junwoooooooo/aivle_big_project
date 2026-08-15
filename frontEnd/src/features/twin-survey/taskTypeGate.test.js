@@ -34,8 +34,9 @@ describe('판매 경계 게이트 — 서버와의 일치', () => {
 });
 
 describe('무엇을 팔 수 있는가', () => {
-  it('서비스 가능한 유형은 통과한 둘뿐이다', () => {
-    expect(SERVICEABLE).toEqual([DOMINANCE, PRICE]);
+  it('서비스 가능한 유형은 우열형 하나뿐이다', () => {
+    // 2026-08-10 가격형 차단. 서버(`task_type.py`)와 같은 집합이어야 한다.
+    expect(SERVICEABLE).toEqual([DOMINANCE]);
   });
 
   it('막힌 유형은 이유를 함께 준다 — 사용자가 고칠 수 있어야 한다', () => {
@@ -84,12 +85,13 @@ describe('gateSurvey', () => {
     expect(gateSurvey(undefined).canRun).toBe(false);
   });
 
-  it('가격형은 통과하되 유형이 그대로 보인다 — 지위를 화면이 병기해야 한다', () => {
+  it('가격형은 분류는 남기고 실행은 막는다 — 왜 막혔는지 말해야 한다', () => {
     const gate = gateSurvey([{
       X: { attrs: { 형태: '신선' }, priceKrw: 5000 },
       Y: { attrs: { 형태: '냉동' }, priceKrw: 4500 },
     }]);
-    expect(gate.canRun).toBe(true);
+    expect(gate.canRun).toBe(false);
     expect(gate.verdicts[0].taskType).toBe(PRICE);
+    expect(gate.verdicts[0].reason).toContain('가격을 양쪽 같게');
   });
 });

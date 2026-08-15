@@ -32,6 +32,8 @@ ROOT = os.path.dirname(HERE)
 # 채움 축 토글 — **잎 모듈**이라 유리벽을 넘지 않는다(엔진 import 0).
 sys.path.insert(0, ROOT)
 import fillaxis as _fx                              # noqa: E402
+# 원장 위치 해결자 — `os` 밖에 아무것도 import 하지 않는 잎 모듈이다(유리벽 유지).
+import runpath as _runpath                          # noqa: E402
 sys.path.insert(0, HERE)
 
 import bm_scorer                                    # 같은 서비스 층 (엔진 아님)
@@ -68,7 +70,8 @@ def channel_limit(card: dict) -> str:
 
 
 def _load_report(run_id: str) -> dict:
-    p = os.path.join(ROOT, "runs", run_id, "result.json")
+    # 원장 자리는 둘이다 — `runpath` 가 유일한 답이다(`bm_scorer.load_ledger` 와 같은 결).
+    p = os.path.join(_runpath.read_dir(run_id), "result.json")
     res = json.load(io.open(p, encoding="utf-8"))
     return res
 

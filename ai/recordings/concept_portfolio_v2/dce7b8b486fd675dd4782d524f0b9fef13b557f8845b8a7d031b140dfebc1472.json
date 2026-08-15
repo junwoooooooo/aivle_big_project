@@ -1,0 +1,295 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e8af7ea9fa562027f7ddee6e083355431af9151b7f1e0c20cb2b242e2d720a8b",
+  "canonicalRequestHash": "dce7b8b486fd675dd4782d524f0b9fef13b557f8845b8a7d031b140dfebc1472",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "interpretedTargetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+        "usageContext": "중소기업의 영업팀에서 회의 및 이메일 내용을 효율적으로 관리하고 CRM 시스템에 통합하기 위한 도구로 사용될 수 있습니다.",
+        "industryCategory": "소프트웨어/AI",
+        "researchScope": "중소기업의 영업 관리 및 CRM 시스템",
+        "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+        "targetRegionInterpretation": "대상 지역에 대한 정보가 필요합니다.",
+        "relevantKnownCompetitorContext": "경쟁자에 대한 정보가 필요합니다."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "중소기업 영업팀을 위한 AI 도구",
+      "oneLineConcept": "중소기업 영업팀의 업무를 지원하는 AI 기반 도구",
+      "targetSegment": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "problemFocus": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "useContext": "중소기업의 영업팀에서 회의 및 이메일 내용을 효율적으로 관리하고 CRM 시스템에 통합하기 위한 도구로 사용될 수 있습니다.",
+      "valueProposition": "AI를 통해 영업팀의 업무를 간소화하고 고객 대응 시간을 늘려줍니다.",
+      "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+      "solutionThesis": "AI가 회의 및 이메일 내용을 분석하여 CRM에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다.",
+      "coreMechanism": "자연어 처리(NLP) 기술을 활용하여 회의 및 이메일 내용을 이해하고 요약합니다.",
+      "customerInteraction": "고객과의 소통을 원활하게 하기 위해 자동으로 생성된 후속 조치를 제공합니다.",
+      "valueDelivery": "AI 도구를 통해 영업팀의 업무를 지원하고 고객 관리의 효율성을 높입니다.",
+      "operatingApproach": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+      "partnerApproach": "CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다.",
+      "transactionApproach": "구독 모델을 통해 지속적인 수익을 창출합니다.",
+      "commercialApproach": "중소기업을 대상으로 한 맞춤형 마케팅 전략을 수립합니다.",
+      "fulfillmentApproach": "클라우드 기반 플랫폼을 통해 서비스 제공 및 유지보수를 진행합니다.",
+      "differentiatingMechanics": [
+        "자동화된 회의 및 이메일 요약 기능",
+        "CRM 시스템과의 원활한 통합"
+      ],
+      "mainChanges": [
+        "영업팀의 회의 및 이메일 관리 방식 변화",
+        "고객 대응 시간 증가"
+      ],
+      "secondaryChanges": [
+        "업무 효율성 향상",
+        "CRM 데이터의 정확성 증가"
+      ],
+      "legalRiskHints": [
+        "데이터 보호 및 개인정보 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "중소기업 영업팀의 업무를 지원하여 고객 관리의 질을 향상시키기 위해 필요합니다.",
+      "planId": "P4",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "useCaseThesis": "중소기업의 영업팀에서 회의 및 이메일 내용을 효율적으로 관리하고 CRM 시스템에 통합하기 위한 도구로 사용될 수 있습니다.",
+          "valuePropositionThesis": "AI를 통해 영업팀의 업무를 간소화하고 고객 대응 시간을 늘려줍니다.",
+          "offerThesis": "AI가 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+          "solutionThesis": "AI가 회의 및 이메일 내용을 분석하여 CRM에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다."
+        },
+        "architecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "ai가 회의 및 이메일 내용을 분석하여 crm에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다",
+        "familyId": "OTHER:AUTOMATED_DIGITAL",
+        "familyLabelKo": "기타 역할 · 디지털 자동화",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "AUTOMATED_DIGITAL",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "RECURRING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+        "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+        "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.7223,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "중소기업 영업팀을 위한 AI 도구",
+    "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 및 이메일 기록을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구.",
+    "introduction": "중소기업 영업팀의 업무를 지원하는 AI 기반 도구로, 회의 및 이메일 내용을 자동으로 정리하여 영업팀의 업무 부담을 줄입니다.",
+    "coreValue": "AI를 통해 영업팀의 업무를 간소화하고 고객 대응 시간을 늘려줍니다.",
+    "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+    "industryCategory": "소프트웨어/AI",
+    "researchScope": "중소기업의 영업 관리 및 CRM 시스템",
+    "targetRegion": "대한민국",
+    "revenueModel": "구독 모델을 통해 지속적인 수익을 창출합니다.",
+    "price": "월 구독료 10만원",
+    "channels": "온라인 마케팅, 파트너십을 통한 직접 판매",
+    "differentiators": "자동화된 회의 및 이메일 요약 기능, CRM 시스템과의 원활한 통합",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 15.0,
+      "horizonYears": 3,
+      "rationale": "중소기업 시장의 CRM 수요 증가에 따른 점유율 확대 가능성.",
+      "assumptions": [
+        "중소기업의 CRM 도입 증가",
+        "AI 도구에 대한 수요 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 5000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "중소기업 영업팀 수에 기반한 시장 규모 추정",
+      "assumptions": [
+        "중소기업의 평균 영업팀 규모",
+        "AI 도구 도입률 증가"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+    "solutionMechanism": "AI가 회의 및 이메일 내용을 분석하여 CRM에 필요한 정보를 자동으로 입력하고 후속 조치를 제안합니다.",
+    "featureSet": [
+      "회의 및 이메일 자동 요약",
+      "CRM 통합 기능",
+      "사용자 맞춤형 후속 조치 제안"
+    ],
+    "actorRoles": [
+      "영업팀",
+      "CRM 시스템 제공업체",
+      "AI 도구 제공업체"
+    ],
+    "platformRole": "AI 도구 제공업체가 플랫폼을 운영하고 유지보수합니다.",
+    "operatingModel": "AI 알고리즘을 지속적으로 개선하여 사용자 경험을 향상시킵니다.",
+    "partnerModel": "CRM 시스템 제공업체와 협력하여 통합 솔루션을 제공합니다.",
+    "providerRole": "AI 도구 제공업체가 서비스 제공 및 기술 지원을 담당합니다.",
+    "sellerRole": "영업팀이 고객에게 AI 도구를 판매합니다.",
+    "intermediaryRole": "파트너십을 통해 CRM 시스템 제공업체가 중개 역할을 수행합니다.",
+    "transactionFlow": [
+      "고객이 AI 도구를 구독 신청",
+      "AI 도구 제공업체가 서비스 제공",
+      "고객이 사용 후 피드백 제공"
+    ],
+    "paymentFlow": [
+      "고객이 구독료 결제",
+      "AI 도구 제공업체가 결제 확인 및 서비스 제공"
+    ],
+    "personalDataUsage": [
+      "고객의 이메일 및 회의 내용을 분석하여 서비스 개선에 활용"
+    ],
+    "physicalActivities": [],
+    "partnerRequirements": [
+      "CRM 시스템 제공업체와의 기술적 통합 필요"
+    ],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "AI를 통한 업무 효율성 향상",
+      "고객 대응 시간 증가"
+    ],
+    "constraintCompliance": [
+      "데이터 보호 및 개인정보 관련 법규 준수 필요"
+    ]
+  },
+  "durationMs": 15417,
+  "timestamp": "2026-08-10T07:55:16.193756+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -30,6 +30,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
+sys.path.insert(0, ROOT)
+
+import runpath                                                     # noqa: E402
 from doc_intake import document_payload                            # noqa: E402
 from slot_harness import _env_key                                  # noqa: E402
 
@@ -141,7 +144,11 @@ def main():
     # 여기에 파일명을 리터럴로 적으면 엔진(v8)과 적재기(v5)가 갈라진다 — 실제로 갈라져 있었다.
     # 유리벽 밖이라 `runlog` 를 import 할 수 없으므로 **같은 데이터 파일**을 읽는다.
     wl = json.load(io.open(os.path.join(ROOT, "rules", _pin("whitelist")), encoding="utf-8"))
-    outdir = os.path.join(ROOT, "runs", a.tag)
+    # ⚠ **쓰기는 `runs-generated/` 에만.** 예전엔 `ROOT/runs` 에 직접 썼는데 거기는
+    #   씨앗 원장이고 컨테이너에서 `:ro` 로 붙는다 — 적재기가 그 자리에서 죽는다.
+    #   그리고 로컬에서는 232MB 짜리 측정 기록 옆에 산물이 섞여 「옛 자리에 남은 산물
+    #   때문에 검사가 통과처럼 읽히는」 사고를 부른다. 답은 `runpath` 한 곳에 있다.
+    outdir = runpath.write_dir(a.tag)
     os.makedirs(outdir, exist_ok=True)
 
     key = _env_key("TAVILY_API_KEY")

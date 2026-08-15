@@ -125,6 +125,135 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
     return value, unit_norm, approx
 
 
+#: 인용문 안의 **수 하나**. `_NUM` 과 달리 뒤에 붙은 한국어 배수까지 한 덩어리로 먹는다 —
+#: 「15조 5000억」을 두 조각으로 끊으면 1.55e13 이 어디에도 안 나온다.
+_QUOTE_NUM = re.compile(
+    r"-?\d[\d,]*(?:\.\d+)?(?:\s*[조억만천]\s*(?:\d[\d,]*(?:\.\d+)?)?)*")
+
+
+def 값이_인용문에_있는가(quote: str, value_num: float, units_rules: dict,
+                 tol: float = 0.005) -> bool:
+    """채택된 값이 **그 인용문 안에서 읽히는가** (판 ㊲ G5).
+
+    `quote_verified` 는 인용문이 문서에 실재하는지만 본다 — **값이 인용문 안에 있는지는
+    아무도 안 봤다.** 실측(`p36-n6-01` S14): 「배달비 부담 역시 과하다고 느끼고 있었다」가
+    75.9% 의 근거로 채택됐다. 인용문에 숫자가 0개다. 값의 출처가 인용문이 아니면 그 사실은
+    **추적 불가능한 채로 확인됨 등급을 받는다**(절대규칙 4 — 판정은 원장에서만 파생).
+
+    ⚠ **문자열 대조가 아니라 값 대조다.** 「1만 원」의 value_num 은 10000 이고 「38조」는
+      3.8e13 이라, `str(value_num) in quote` 로 보면 정상 인용이 통째로 오탐이 된다.
+      그래서 인용문에서 수를 뽑아 **`parse_number` 로 값을 만들어** 비교한다 — 파서를 새로
+      쓰지 않는다(`tests/cases_numbers.json` 50건이 그 함수 계약 위에 서 있다).
+
+    ⚠ **단위 배수는 곱하지 않는다**(`unit_raw=""`). 여기서 묻는 것은 「이 수가 인용문에
+      쓰여 있는가」이지 「단위까지 맞는가」가 아니다 — 단위는 3겹째가 이미 본다.
+    """
+    if value_num is None:
+        return True                    # 없는 기준으로 벌하지 않는다 (다른 겹들과 같은 원칙)
+    허용 = max(abs(float(tol)) * abs(value_num), 1e-9)
+    for m in _QUOTE_NUM.finditer(quote or ""):
+        tok = m.group(0).strip()
+        if not tok:
+            continue
+        v, _, _ = parse_number(tok, "", units_rules)
+        if v is not None and abs(v - value_num) <= 허용:
+            return True
+    return False
+
+
+def split_range(number_raw: str, unit_raw: str, units_rules: dict) -> list:
+    """범위 표기를 **(number_raw, unit_raw, 표시) 조각들**로 가른다. 범위가 아니면 1개.
+
+    **`parse_number` 를 건드리지 않는다.** 그 함수의 계약 위에 `tests/cases_numbers.json`
+    50건이 서 있다 — 여기서 입력을 갈라 주고 파싱은 그대로 그 함수가 한다.
+
+    왜 필요한가 (판 ㉜ 실측): `_NUM` 이 `search`(첫 매치)라 **갈래마다 다르게** 틀렸다.
+      ① 범위가 `number_raw` 에 오면 → 조용히 **하한**만 남는다(플래그도 없다)
+      ② 범위가 `unit_raw` 에 오면 → `화폐_접미` 화이트리스트에 걸려 **None**
+    조용한 ①이 더 위험하다. 그리고 pin-09 가 6/6 을 낸 가격 값이 바로 이 모양이었다
+    (배달비 「2,400~3,400원」) — 못 읽으면 가격 칸이 **구조적으로** 안 찬다.
+
+    **대표값을 만들지 않는다.** 중간값 따위를 세우면 원문에 없는 수를 지어내는 것이다.
+    하한·상한을 각각 돌려주고, 사실로 만들지는 부르는 쪽이 정한다.
+    """
+    cfg = (units_rules.get("range_split") or {})
+    if not cfg.get("enabled"):
+        return [(number_raw, unit_raw, "")]
+    seps = cfg.get("separators") or []
+    # 범위는 숫자 쪽에도 단위 쪽에도 온다 — 모델은 「원문 표기 그대로」를 지킬 뿐이다.
+    # ⚠ **숫자 쪽에 이미 범위가 있으면 단위를 붙이지 않는다.** 붙이면
+    #   「2,400원~3,400원」 + 「원」 이 "…3,400원원" 이 되어 상한이 모르는 배수로 죽는다.
+    num_s = (number_raw or "").strip()
+    if any(s in num_s for s in seps):
+        joined = num_s
+    else:
+        joined = f"{num_s}{(unit_raw or '').strip()}"
+    hit = next((s for s in seps if s in joined), "")
+    if not hit:
+        return [(number_raw, unit_raw, "")]
+    parts = [p.strip() for p in joined.split(hit) if p.strip()]
+    if len(parts) != int(cfg.get("최대_조각") or 2):
+        # 3조각 이상은 범위가 아니라 목록·날짜다. **모르면 손대지 않는다.**
+        return [(number_raw, unit_raw, "")]
+    # ⚠ **한국어 배수(만·억·조·천)는 수의 일부이지 단위가 아니다.** 「10만~30만」에서
+    #   「만」을 단위로 떼면 `unknown_multiplier` 에 걸려 양쪽 다 None 이 된다.
+    #   반면 「억원」은 단위다(`unit_scale_in_name`) — 배수 글자만으로 이뤄졌는지로 가른다.
+    ko = set(units_rules.get("ko_multipliers") or {})
+
+    def _unit_of(part: str) -> str:
+        rest = _NUM.sub("", part).strip()
+        return "" if (rest and all(c in ko for c in rest)) else rest
+
+    # 단위는 대개 뒤쪽에만 붙는다 — 「2,400원~3,400원」도 「2,400~3,400원」도 있다.
+    # 뒷조각의 단위를 앞조각에 물려준다.
+    tail_unit = _unit_of(parts[-1]) or (unit_raw or "").strip()
+    out = []
+    for i, p in enumerate(parts):
+        if not _NUM.search(p):
+            return [(number_raw, unit_raw, "")]      # 한쪽이 수가 아니면 범위가 아니다
+        own_unit = _unit_of(p)
+        # 배수 글자가 붙어 있으면 **조각 전체**를 수로 넘긴다 — `parse_number` 가 먹는다.
+        num_part = p if _NUM.sub("", p).strip() and not own_unit else _NUM.search(p).group(0)
+        out.append((num_part, own_unit or tail_unit,
+                    (cfg.get("표시") or "").format(
+                        raw=joined, which=("하한" if i == 0 else "상한"))))
+    return out
+
+
+def reread_for_unit(quote: str, slot_unit: str, units_rules: dict) -> tuple | None:
+    """인용 **한 문장 안에서** 슬롯 단위에 맞는 수를 다시 찾는다. 없으면 `None`.
+
+    왜 필요한가 (판 ㉜ 실측): 발췌 프롬프트는 슬롯 단위를 **일부러 안 본다** —
+    「슬롯과 맞는지 판단하지 마라. 관련 있어 보이면 전부 뽑아라」가 규칙이다(모델이 조용히
+    버리면 그 판단이 **아무 데도 기록되지 않기** 때문이다). 그 대가로 이런 일이 생긴다:
+
+        슬롯: 배달 음식 / 이용 요금 (원)
+        인용: 「중개수수료 **7.8%**에 배달비 **2,400~3,400원**」  → 모델이 고른 값: 7.8
+
+    단위 겹이 7.8 을 격리하는 것은 옳지만, **원 값이 같은 문장 안에 있었다.** 심사는
+    거를 뿐 되찾지 못한다. 그래서 코드가 되찾는다 — 판단을 프롬프트에서 빼앗지 않으면서.
+
+    ⚠ **인용 안에서만 본다.** 문서 전체를 뒤지면 인용과 값이 갈라져 `quote_verified`
+      (F7 의 직접 방어선)가 뜻을 잃는다 — 「이 문장이 이 값을 말한다」가 거짓이 된다.
+    `tools/extract_triage.py` 가 이미 단위로 창을 거른다. 그 수를 엔진으로 옮긴 것이다.
+    """
+    if not quote or not slot_unit:
+        return None
+    seps = "".join((units_rules.get("range_split") or {}).get("separators") or [])
+    rng = f"(?:\\s*[{re.escape(seps)}]\\s*-?\\d[\\d,]*(?:\\.\\d+)?)?" if seps else ""
+    pat = re.compile(r"(-?\d[\d,]*(?:\.\d+)?" + rng + r")\s*([가-힣%]{1,3})")
+    for m in pat.finditer(quote):
+        num_raw, unit_raw = m.group(1).strip(), m.group(2).strip()
+        if not units_compatible(slot_unit, normalize_unit(unit_raw, units_rules)[0],
+                                units_rules):
+            continue
+        # 값이 실제로 서는지까지 본다 — 단위만 맞고 파싱이 안 되면 되찾은 것이 아니다.
+        if parse_number(num_raw, unit_raw, units_rules)[0] is None:
+            continue
+        return num_raw, unit_raw
+    return None
+
+
 def normalize_unit(unit_raw: str, units_rules: dict) -> tuple:
     """'억원' → ('원', 100000000). 모르는 단위는 원문 그대로 두고 배수 없음.
 
@@ -481,59 +610,93 @@ def normalize(findings: list[Finding], docs: dict[str, Document],
             # ① 인용문이 본문에 실재하는가 — F7 의 직접 방어선
             quote_ok = bool(_squash(item.quote)) and _squash(item.quote) in body
             # ②③ 숫자·단위
-            value, unit, _approx = parse_number(item.number_raw, item.unit_raw, units)
-            # ④ 연도 — **사실의 시점**만 본다. 발행일로 메우지 않는다.
-            #    ① 인용문 안의 연도 ② 문맥 안에서 슬롯 기간에 드는 연도 ③ 없으면 None
-            #    (발행일을 사실 연도로 쓰면 같은 사실이 기사 날짜 때문에 갈라진다 — F4 가 오작동한다)
-            yf = rules["scoring"]["year_fields"]
-            order = yf["order"]                               # ①인용문 ②문맥 ③null
-            # 인용문은 창을 안 건다(짧고 그 사실을 직접 말하는 자리) — 다만 잡음 구간과
-            # 2자리 표기는 여기서도 같은 규칙을 쓴다.
-            _q = _years_of(item.quote, yf)
-            year, year_source = (_q[0] if _q else None), order[0]
-            if year is None:
-                year, year_source = _year_in_period(item.context, slot, yf), order[1]
-            if year is None:
-                # ③ **본문**에서 슬롯 기간 창 안의 연도. context 가 비었을 때만 온다.
-                #    발행일 fallback 과 다르다 — 발행일은 「문서가 나온 때」고 이건
-                #    「본문이 말하는 때」다. 추측이 아니라 **관측의 위치를 넓힌 것**이다.
-                #    창 안에 둘 이상이면 **고르지 않는다** — 고르는 순간 조용한 추측이다.
-                bs = yf.get("body_scan") or {}
-                if bs.get("enabled") and doc is not None:
-                    cands = _years_in_period(doc.text, slot, yf)
-                    if len(cands) == 1 or (cands and not bs.get("require_unique", True)):
-                        year, year_source = min(cands), order[2]
-            if year is None:
-                year_source = order[-1]
-            published_year = parse_year(doc.published_at_raw if doc else "")
-            url = canonical_url(item.url or (doc.url if doc else ""))
-            # ⑤ dedup — 같은 페이지의 같은 값은 1건 (F3)
-            dk = dedup_key(url)
-            key = (f.slot_id, dk, value, unit)
-            if key in seen:
-                continue
-            seen.add(key)
+            #
+            # **모델이 고른 수를 그대로 믿지 않는다** (판 ㉜). 발췌 프롬프트는 슬롯 단위를
+            # 일부러 안 보므로(「슬롯과 맞는지 판단하지 마라」), 한 문장에 수가 여럿이면
+            # 단위가 다른 쪽을 고를 수 있다 — 실측: 「중개수수료 7.8%에 배달비
+            # 2,400~3,400원」에서 `원` 슬롯에 7.8 을 골랐다. 심사는 그것을 **거를 뿐**
+            # 같은 문장에 있던 원 값을 되찾지 못한다. 그래서 여기서 되찾는다.
+            _nr, _ur, _재선택 = item.number_raw, item.unit_raw, {}
+            _got, _gu, _ = parse_number(_nr, _ur, units)
+            if slot.unit and not units_compatible(slot.unit, _gu, units):
+                _alt = reread_for_unit(item.quote, slot.unit, units)
+                if _alt:
+                    _재선택 = {"모델_선택": {"number_raw": _nr, "unit_raw": _ur,
+                                       "unit_norm": _gu},
+                             "코드_선택": {"number_raw": _alt[0], "unit_raw": _alt[1]},
+                             "why": f"슬롯 단위 '{slot.unit}' 와 안 맞아 인용 안에서 다시 읽었다"}
+                    _nr, _ur = _alt
 
-            facts.append(Fact(
-                fact_id=f"F{len(facts) + 1:03d}",
-                slot_id=f.slot_id, var_id=slot.var_id, trace_id=f.trace_id,
-                url=url, quote=item.quote,
-                value_num=value, unit_norm=unit, year=year, year_source=year_source,
-                dedup_key=dk,
-                match_key=slot.match_key(year),        # ⑥ 코드로 만든다 (F4)
-                quote_verified=quote_ok,
-                # 계산해 놓고 안 싣던 값(버그 G). **참고용이고 match_key 에는 안 들어간다** —
-                # 발행일로 사실 연도를 메우지 않는다는 규칙은 그대로다.
-                published_year=published_year,
-                content_status=(doc.content_status if doc else "empty"),
-                channel=(doc.channel if doc else "web"),
-                # 조회 시점을 사실까지 실어 나른다. **문서에 없으면 None 이고 채우지 않는다** —
-                # 지금 시각을 넣으면 옛 실행을 복원할 때마다 「방금 본 값」으로 둔갑한다.
-                retrieved_at=(doc.retrieved_at if doc else None),
-                account_id=getattr(item, "account_id", "") or "",
-                sj_div=getattr(item, "sj_div", "") or "",
-                scope=getattr(item, "scope", "") or "",
-            ))
+            # **범위는 값 둘이다** — 「2,400원~3,400원」은 하한·상한 두 사실로 나눈다.
+            # 대표값(중간값 따위)을 만들지 않는다: 원문에 없는 수를 지어내는 것이다.
+            조각 = split_range(_nr, _ur, units)
+            for _pn, _pu, _표시 in 조각:
+                value, unit, _approx = parse_number(_pn, _pu, units)
+                # ④ 연도 — **사실의 시점**만 본다. 발행일로 메우지 않는다.
+                #    ① 인용문 안의 연도 ② 문맥 안에서 슬롯 기간에 드는 연도 ③ 없으면 None
+                #    (발행일을 사실 연도로 쓰면 같은 사실이 기사 날짜 때문에 갈라진다 — F4 가 오작동한다)
+                yf = rules["scoring"]["year_fields"]
+                order = yf["order"]                               # ①인용문 ②문맥 ③null
+                # 인용문은 창을 안 건다(짧고 그 사실을 직접 말하는 자리) — 다만 잡음 구간과
+                # 2자리 표기는 여기서도 같은 규칙을 쓴다.
+                _q = _years_of(item.quote, yf)
+                year, year_source = (_q[0] if _q else None), order[0]
+                if year is None:
+                    year, year_source = _year_in_period(item.context, slot, yf), order[1]
+                if year is None:
+                    # ③ **본문**에서 슬롯 기간 창 안의 연도. context 가 비었을 때만 온다.
+                    #    발행일 fallback 과 다르다 — 발행일은 「문서가 나온 때」고 이건
+                    #    「본문이 말하는 때」다. 추측이 아니라 **관측의 위치를 넓힌 것**이다.
+                    #    창 안에 둘 이상이면 **고르지 않는다** — 고르는 순간 조용한 추측이다.
+                    bs = yf.get("body_scan") or {}
+                    if bs.get("enabled") and doc is not None:
+                        cands = _years_in_period(doc.text, slot, yf)
+                        if len(cands) == 1 or (cands and not bs.get("require_unique", True)):
+                            year, year_source = min(cands), order[2]
+                if year is None:
+                    year_source = order[-1]
+                published_year = parse_year(doc.published_at_raw if doc else "")
+                url = canonical_url(item.url or (doc.url if doc else ""))
+                # ⑤ dedup — 같은 페이지의 같은 값은 1건 (F3)
+                dk = dedup_key(url)
+                key = (f.slot_id, dk, value, unit)
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                facts.append(Fact(
+                    fact_id=f"F{len(facts) + 1:03d}",
+                    slot_id=f.slot_id, var_id=slot.var_id, trace_id=f.trace_id,
+                    url=url, quote=item.quote,
+                    value_num=value, unit_norm=unit, year=year, year_source=year_source,
+                    dedup_key=dk,
+                    match_key=slot.match_key(year),        # ⑥ 코드로 만든다 (F4)
+                    quote_verified=quote_ok,
+                    # 계산해 놓고 안 싣던 값(버그 G). **참고용이고 match_key 에는 안 들어간다** —
+                    # 발행일로 사실 연도를 메우지 않는다는 규칙은 그대로다.
+                    published_year=published_year,
+                    content_status=(doc.content_status if doc else "empty"),
+                    channel=(doc.channel if doc else "web"),
+                    # 조회 시점을 사실까지 실어 나른다. **문서에 없으면 None 이고 채우지 않는다** —
+                    # 지금 시각을 넣으면 옛 실행을 복원할 때마다 「방금 본 값」으로 둔갑한다.
+                    retrieved_at=(doc.retrieved_at if doc else None),
+                    account_id=getattr(item, "account_id", "") or "",
+                    sj_div=getattr(item, "sj_div", "") or "",
+                    scope=getattr(item, "scope", "") or "",
+                    # **어댑터가 다른 이름의 집계를 가져왔으면 사실이 태어날 때 울타리를 진다.**
+                    # `off_slot_reason` 의 다리 갈래는 `must_contain` 이 있어야 실행되는데,
+                    # 판 ㉛ 유료 실측에서 하네스가 그 칸을 13/13 비웠다 — 그 상태로 상위
+                    # 카테고리 값이 들어오면 경계가 **하나도 없이** 통과한다.
+                    표기_다리=[울타리(x.get("슬롯_표기") or "", x.get("통계_표기") or "", rules)
+                           for x in (getattr(f, "표기_치환", None) or [])],
+                    경로_보증=dict(getattr(f, "경로_보증", None) or {}),
+                    # **코드가 모델의 선택을 덮었으면 그 사실이 값으로 남는다.**
+                    # 조용히 덮으면 나중에 「왜 이 값이지」를 코드를 읽어야만 알 수 있고,
+                    # 그건 기록이 아니라 추론이다(표기_다리·경로_보증과 같은 계보).
+                    수_재선택=dict(_재선택),
+                    범위_쪼갬=({"원문": f"{_nr} {_ur}".strip(), "표시": _표시,
+                             "조각수": len(조각)} if _표시 else {}),
+                ))
     return facts
 
 
@@ -582,7 +745,8 @@ def _account_mismatch(fact: Fact, slot: Slot, rules: dict) -> str | None:
             f"({fact.sj_div}/{fact.account_id})")
 
 
-def _표기_다리(word: str, subject: str, hay: str, rules: dict) -> str | None:
+def _표기_다리(word: str, subject: str, hay: str, rules: dict,
+            aliases_of_slot: list | None = None) -> str | None:
     """슬롯 어휘 ↔ 통계 어휘 **다리** (판 ⑰). 통과시킨 별칭을 돌려준다.
 
     **완화가 아니라 다리다.** 「애완용품」이 「반려동물 용품」의 통계 표기임을 이미 아는
@@ -595,10 +759,19 @@ def _표기_다리(word: str, subject: str, hay: str, rules: dict) -> str | None
 
     ⚠ **넓히는 것이지 여는 것이 아니다.** 표에 없는 표기는 **여전히 차단**된다.
     """
+    # ── ① 슬롯이 들고 온 표기 변종 (판 ㉛) ───────────────────────────
+    #   규칙 파일의 별칭 표는 **kosis 업종 표기 전용**이라 회사명 변종을 담지 못하고,
+    #   견본마다 손으로 적어야 해서 실제 사업안에는 따라오지 않는다. 슬롯이 자기 변종을
+    #   들고 오면 그 한계가 없어진다 — 표기는 하네스가 LLM 으로 한 번 뽑고(설계 시점),
+    #   여기서는 **결정론적 문자열 대조만** 한다. 통과시킨 별칭은 값으로 남는다.
+    for alias in (aliases_of_slot or []):
+        if alias and alias in hay:
+            return alias
     al = (((rules.get("adapters") or {}).get("kosis") or {})
           .get("resolve") or {}).get("subject_별칭") or {}
     if not al.get("enabled"):
         return None
+    # ── ② 규칙 파일의 업종 별칭 표 ───────────────────────────────────
     # ⚠ **키의 단위가 다르다.** 별칭 표의 키는 **subject 전체 문구**(「반려동물 용품」)이고
     #   `must_contain` 은 **낱말 조각**(「반려동물」)이다. 그래서 `word` 로 직접 찾으면 안 맞는다.
     #   찾는 것은 **슬롯 subject 의 별칭**이고, `word` 는 그 subject 를 가리키는 낱말인지만 본다.
@@ -613,26 +786,92 @@ def _표기_다리(word: str, subject: str, hay: str, rules: dict) -> str | None
     return None
 
 
+def _slot_guaranteed(slot: Slot, fact: Fact, rules: dict) -> dict:
+    """이 사실의 대상이 **경로로 이미 확정됐는가.** 확정됐으면 그 근거를 값으로 돌려준다.
+
+    목록은 규칙 파일에 있다(절대규칙 7) — 어느 칸이 「정체 보증」인지는 판단이지 상수가 아니다.
+
+    보는 자리가 **둘**이다:
+      ① 슬롯이 선언한 칸 (`stat_code`·`corp_name`)
+      ② **어댑터가 조회로 확정한 것** (`Fact.경로_보증`) — 판 ㉛A 도장.
+         보증은 「슬롯이 적었는가」가 아니라 **「대상이 확정됐는가」**다. ①만 보던 시절
+         `paid31a-hmr` S3·S4 가 `must_contain=["성장"]`(거래액 응답에 있을 수 없는 낱말)로
+         격리돼 성장률이 통째로 죽었다 — 슬롯은 `stat_code` 를 비웠고 어댑터가 찾았다.
+    """
+    cfg = ((rules.get("scoring") or {}).get("off_slot") or {}).get("must_contain_면제") or {}
+    if not cfg.get("enabled"):
+        return {}
+    칸들 = cfg.get("보증_칸") or []
+    for 칸 in 칸들:
+        값 = getattr(slot, 칸, None)
+        if 값:
+            return {"경로_칸": 칸, "값": str(값),
+                    "왜": (cfg.get("사유") or "").replace("{칸}", 칸).replace("{값}", str(값))}
+    보증 = getattr(fact, "경로_보증", None) or {}
+    칸, 값 = 보증.get("경로_칸"), 보증.get("값")
+    if cfg.get("어댑터_확정_인정") and 칸 in 칸들 and 값:
+        return {"경로_칸": 칸, "값": str(값), "확정한_곳": "어댑터",
+                "왜": (cfg.get("사유_어댑터") or "").replace("{칸}", str(칸))
+                     .replace("{값}", str(값)).replace("{어떻게}", str(보증.get("어떻게") or ""))}
+    return {}
+
+
+def 울타리(슬롯_표기: str, 통계_표기: str, rules: dict) -> dict:
+    """치환 한 건을 **울타리가 붙은 값**으로 만든다. 조회는 여기 한 곳뿐이다.
+
+    ⚠ 두 자리(`off_slot_reason` 의 다리 갈래 · `normalize` 의 어댑터 치환)가 각자
+    조회하면 **같은 물음을 두 곳이 다르게 푼다** — 판 ⑫·⑬·⑯ 이 전부 그 사고였다.
+    """
+    cap = ((((rules.get("adapters") or {}).get("kosis") or {}).get("resolve") or {})
+           .get("subject_별칭", {}).get("상위_카테고리", {}).get("map", {}))
+    쪽 = cap.get(통계_표기) or {}
+    return {"슬롯_표기": 슬롯_표기, "통계_표기": 통계_표기,
+            "상한_울타리": bool(쪽.get("상한_울타리")),
+            "경계": list(쪽.get("경계") or [])}
+
+
+#: 인용문에서 걷어낼 숫자·기호. 남는 글자가 「무엇을 잰 값인지」를 말하는 부분이다.
+#: `tools/quote_audit.py` 와 **같은 물음**이지만 그쪽은 세기만 하고 이쪽이 자른다 —
+#: 재는 자와 자르는 자를 갈라 두는 것이 `design_score` 와 성적표의 관계와 같다.
+_BARE_QUOTE = re.compile(r"[\d０-９.,%％·~\-–—()\[\]{}<>/:;·、，。\s'\"“”‘’]+")
+
+
 def off_slot_reason(fact: Fact, slot: Slot, doc: Document | None, rules: dict) -> str | None:
     hay = f"{fact.quote} {doc.text if doc else ''}"
-    if slot.must_contain:
+    _off = (rules.get("scoring") or {}).get("off_slot") or {}
+    # ── 0겹 — **경로가 정체를 보증했으면 낱말 대조를 건너뛴다** (판 ㉛) ──────────
+    #   `must_contain` 은 「이 문서가 그 대상을 말하고 있는가」를 낱말로 확인하는 겹이다.
+    #   그런데 `stat_code`(통계표 확정)·`corp_name`(corpCode 로 법인 확정)로 라우팅된
+    #   문서는 **어댑터가 이미 그 대상을 지목해서 받아 온 것**이라 확인이 중복이고,
+    #   중복인 확인이 오탐을 낸다 — 실측(`smoke-collect-01` S12): DART 의 NAVER 공시가
+    #   본문에 「네이버」라는 글자가 없다고 격리됐다. 공시는 법인명을 「NAVER」로 쓰고,
+    #   corpcode 사전의 키도 「NAVER」다. **슬롯의 subject 는 「네이버 예약」이었다** —
+    #   파이프라인이 스스로 만든 모순이다.
+    #   ⚠ 나머지 겹(must_not_contain·단위·계정·value_range·기간)은 **그대로 산다.**
+    보증 = _slot_guaranteed(slot, fact, rules)
+    if slot.must_contain and 보증:
+        fact.슬롯_보증 = 보증          # 조용히 면제하지 않는다 — 근거를 값으로 남긴다
+    elif slot.must_contain:
         masked = mask_false_friends(hay, rules)
         if not any(w in masked for w in slot.must_contain):
             # 직접 표기가 없다 → **다리를 본다.** 통과시키면 **어느 별칭이 통과시켰는지
             # 사실에 값으로 남긴다**(조용한 치환 금지 — `axis_default` 와 같은 원칙).
             bridged = [(w, a) for w in slot.must_contain
-                       if (a := _표기_다리(w, slot.subject, masked, rules))]
+                       if (a := _표기_다리(w, slot.subject, masked, rules,
+                                        getattr(slot, "subject_aliases", None)))]
             if not bridged:
                 return f"must_contain 없음: {slot.must_contain}"
             # 조건 3 — **상위 카테고리면 울타리를 값으로 강제한다.** 다리로 들어온 값이
             # 상위 집계면 하위인 척 쓰이면 안 된다(사다리 2단 · 울타리 없는 2단 금지).
-            cap = (((rules.get("adapters") or {}).get("kosis") or {}).get("resolve") or {})                 .get("subject_별칭", {}).get("상위_카테고리", {}).get("map", {})
-            fact.표기_다리 = [
-                {"슬롯_표기": w, "통계_표기": a,
-                 "상한_울타리": bool(cap.get(a, {}).get("상한_울타리")),
-                 "경계": list(cap.get(a, {}).get("경계") or [])}
-                for w, a in bridged]
+            fact.표기_다리 = [울타리(w, a, rules) for w, a in bridged]
+    # 슬롯이 적은 금지어에 **claim_type 기본 금지어를 합친다**(판 ㊱ G2). 슬롯은 하네스가
+    # 판마다 새로 쓰므로 거기만 기대면 판마다 빠진다 — 「모집단이 다르다」는 세 판 연속
+    # 같은 자리에서 났다. ⚠ 인용문만 본다: `hay` 는 본문 전체라 정부 보고서처럼 소비자와
+    # 사업자를 같이 다루는 문서가 통째로 격리된다.
+    ct = _off.get("claim_type_금지어") or {}
+    ct_words = (ct.get(slot.claim_type) or []) if ct.get("enabled") else []
     hit = [w for w in slot.must_not_contain if w in hay]
+    hit += [w for w in ct_words if w in (fact.quote or "") and w not in hit]
     if hit:
         return f"must_not_contain 포함: {hit}"
     if not units_compatible(slot.unit, fact.unit_norm, rules["units"]):
@@ -660,13 +899,48 @@ def off_slot_reason(fact: Fact, slot: Slot, doc: Document | None, rules: dict) -
                 diff = abs(math.log10(v) - math.log10(abs(ref))) if v > 0 else 99.0
                 cap = float(cfg.get("차단_자릿수_차이", 3))
                 if diff > cap:
-                    return (cfg.get("차단_사유") or "값범위 밖").format(
-                        diff=diff, cap=cap, v=fact.value_num, lo=lo, hi=hi)
-                # **통과시키되 조용히 넘기지 않는다** — 플래그를 사실에 값으로 남긴다.
-                fact.기대_밖 = {"사유": (cfg.get("플래그_사유") or "").format(
-                                   lo=lo, hi=hi, diff=diff, cap=cap),
-                               "자릿수_차이": round(diff, 2),
-                               "값": fact.value_num, "기대": [lo, hi]}
+                    # ⚠ **차단 직전에 계량 전형 밴드를 본다** (판 ㉜).
+                    #   자릿수 그물은 판 ⑱ 의 **1.45자릿수** 어긋남을 보고 맞춘 값인데,
+                    #   판 ㉜ 에서 **4.28자릿수** 짜리가 왔다 — 하네스가 거래액 밴드를
+                    #   `[1e8, 2e9]` 로 적었고 참값은 38.0조였다. 그물이 그대로 통과시켰다.
+                    #   그래서 **6슬롯·4과목·blocker 1개**가 한 원인으로 죽었다.
+                    #
+                    #   여기서 구하는 것은 「기대가 좁았던 참값」뿐이다. 값이 그 계량의
+                    #   **정상 크기** 안이면 틀린 것은 값이 아니라 슬롯이 적은 자다 —
+                    #   「기대가 관측을 검열할 수 없다」(guards `_왜`)가 바로 이 말이다.
+                    #   `bad_unit`(100만 배 축소)은 전형 밴드 **밖**이라 여전히 차단된다.
+                    band = ((cfg.get("계량_전형_밴드") or {}).get(slot.metric) or {}).get("밴드")
+                    if not (band and band[0] <= v <= band[1]):
+                        return (cfg.get("차단_사유") or "값범위 밖").format(
+                            diff=diff, cap=cap, v=fact.value_num, lo=lo, hi=hi)
+                    # ⚠ **여기서 `return` 하지 않는다.** 아래 기간 겹이 아직 남아 있다 —
+                    #   빠져나가면 「값범위를 구했더니 기간 검사가 사라졌다」가 된다.
+                    fact.기대_밖 = {
+                        "사유": (cfg.get("전형_밴드_구조_사유") or "").format(
+                            lo=lo, hi=hi, diff=diff, metric=slot.metric,
+                            blo=band[0], bhi=band[1]),
+                        "자릿수_차이": round(diff, 2),
+                        "값": fact.value_num, "기대": [lo, hi],
+                        "계량_전형_밴드": list(band), "구조됨": True}
+                else:
+                    # **통과시키되 조용히 넘기지 않는다** — 플래그를 사실에 값으로 남긴다.
+                    # (`else` 다 — 위 구조 갈래가 이미 적은 사유를 덮으면 안 된다.)
+                    fact.기대_밖 = {"사유": (cfg.get("플래그_사유") or "").format(
+                                       lo=lo, hi=hi, diff=diff, cap=cap),
+                                   "자릿수_차이": round(diff, 2),
+                                   "값": fact.value_num, "기대": [lo, hi]}
+                    # ⚠ **슬롯 밴드가 틀리면 그물이 통째로 헛돈다.** 자릿수 차이는
+                    #   «값 vs 슬롯 기대» 라서, 기대가 틀린 자리에서는 **틀린 값이 기대와
+                    #   가까워** 조용히 통과한다 — guards `_currency._why` 의 카페24 사고가
+                    #   그것이다(작은 오답 245만원만 범위 안이라 확인됨 5점).
+                    #   판 ㉜ 재현: 거래액 슬롯이 `[1e8, 2e9]` 일 때 100만 배 축소된
+                    #   3.8e7 은 자릿수 차이가 0.42 라 그물을 그냥 지난다.
+                    #   **막지는 않는다**(전형 밴드로 관측을 검열하지 않는다) — 대신 보이게 한다.
+                    band = ((cfg.get("계량_전형_밴드") or {}).get(slot.metric) or {}).get("밴드")
+                    if band and not (band[0] <= v <= band[1]):
+                        fact.기대_밖["전형_밴드_밖"] = {
+                            "계량": slot.metric, "전형_밴드": list(band),
+                            "why": (cfg.get("전형_밴드_밖_사유") or "")}
             else:
                 return f"값범위 밖: {fact.value_num:g} ∉ [{lo:g}, {hi:g}]"
     # 5겹 — 기간. 슬롯이 2023 을 물었는데 2026 값이 오면 다른 사실이다.
@@ -678,6 +952,54 @@ def off_slot_reason(fact: Fact, slot: Slot, doc: Document | None, rules: dict) -
         if not (slot.period_min <= fact.year <= slot.period_max):
             return (f"기간 불일치: 슬롯 {slot.period} vs 사실 {fact.year} "
                     f"(창 {slot.period_min}~{slot.period_max})")
+
+    # ── 판 ㊱ 의 세 겹 — **인용문 자체가 근거가 되는가** ────────────────────
+    #   판 ㉟ 4단계가 성적표 6/6 을 냈는데 채택된 인용이 넷 다 슬롯이 묻는 것이
+    #   아니었다. 실패가 「못 찾아서」가 아니라 「틀린 걸 통과시켜서」였다.
+    #
+    #   ⚠ **맨 뒤다.** 처음엔 「사실 자체의 성립을 보므로 앞」이라 두었는데, 그러면
+    #     기존 겹의 사유를 가로챈다 — must_contain·값범위·가격 면제를 시험하는
+    #     검사 17개가 통째로 「무서술 인용」으로 뒤집혔다(실측). **새 겹은 최후의
+    #     수단이어야 한다**: 다른 모든 겹을 통과해 «채택될 뻔한» 사실만 걸러야
+    #     기존 진단이 뜻을 잃지 않고, off_slot 사유 세기도 안 흔들린다.
+    #   셋 다 규칙에서 켠다(`scoring.off_slot.*.enabled`) — 측정 조건이 규칙 값이다.
+    cy = _off.get("불가능_연도") or {}
+    if cy.get("enabled") and isinstance(fact.year, int) and isinstance(fact.published_year, int):
+        # ⚠ 한 방향만 본다. 「2025년 기사가 2023년 통계를 인용」은 정상이다(schema 주석).
+        if fact.year > fact.published_year:
+            return f"불가능 연도: year {fact.year} > published_year {fact.published_year}"
+
+    bare_cfg = _off.get("무서술_인용") or {}
+    if (bare_cfg.get("enabled") and fact.channel not in (bare_cfg.get("면제_채널") or [])
+            and slot.claim_type not in (bare_cfg.get("면제_claim_type") or [])):
+        # API 채널의 '인용문'은 표의 칸이지 문장이 아니다 — 정체는 stat_code 가 보증한다.
+        # PRICE 도 면제다: 가격 인용은 본질적으로 짧고(「4,900원」), 그 정체는 슬롯의
+        # must_contain 과 판 ⑩ 의 조회시점 장치가 이미 지킨다.
+        bare = _BARE_QUOTE.sub("", fact.quote or "")
+        if len(bare) < int(bare_cfg.get("최소자") or 4):
+            return f"무서술 인용: 숫자·기호를 뺀 글자 {len(bare)}자"
+
+    rg = _off.get("지역_이탈") or {}
+    if rg.get("enabled") and any(k in (slot.region or "") for k in (rg.get("국내_표기") or [])):
+        # match_key 의 region 은 **슬롯이 선언한 지역**이라 인용문이 무엇을 말하든 붙는다.
+        # 대조하려면 인용문 쪽을 봐야 한다.
+        해외 = [w for w in (rg.get("해외_낱말") or []) if w in (fact.quote or "")]
+        if 해외:
+            return f"지역 이탈: 슬롯 '{slot.region}' vs 인용문 {해외}"
+
+    # ── 다섯째 겹 (판 ㊲ G5) — **값이 인용문 안에서 읽히는가.** 맨 뒤인 이유는 위와 같다.
+    #   API 채널은 면제한다. 구조화 응답의 '인용문'은 표의 칸이지 문장이 아니고
+    #   (`"DT": "38041110"` 은 백만원 단위 칸, value_num 은 38041110000000), 그 값의 정체는
+    #   `stat_code`·`account_id` 가 보증한다. 면제하지 않으면 **정상 채움 6건이 오탐**이다(실측).
+    #   ⚠ 면제 목록을 `무서술_인용` 과 공유하지 않고 자기 칸에 둔다 — 두 겹은 면제 이유가
+    #     우연히 같을 뿐 다른 물음이고, 한쪽을 조정하다 다른 쪽이 조용히 따라 움직이면
+    #     「한 번에 하나만 켜서 잰다」가 깨진다.
+    nv = _off.get("값_부재_인용") or {}
+    if (nv.get("enabled") and fact.value_num is not None
+            and fact.channel not in (nv.get("면제_채널") or [])):
+        if not 값이_인용문에_있는가(fact.quote or "", fact.value_num, rules["units"],
+                            float(nv.get("상대_허용오차") or 0.005)):
+            return f"값 부재 인용: {fact.value_num:g} 가 인용문에서 읽히지 않는다"
     return None
 
 
@@ -1045,8 +1367,11 @@ def normalize_and_grade(findings: list[Finding], docs: dict[str, Document],
 
 
 #: off_slot 사유 문자열 → 어느 겹인지. `off_slot_reason` 이 만드는 접두사와 1:1 이다.
+#: ⚠ **겹을 늘리면 여기도 늘린다.** 안 늘리면 새 겹이 통째로 「기타」로 세어져
+#:   진단이 조용히 눈멀고, 그것이 이 판이 고치고 있는 사고의 모양 그 자체다.
 _OFF_SLOT_LAYERS = ("must_contain 없음", "must_not_contain 포함", "단위 불일치",
-                    "값범위 밖", "기간 불일치")
+                    "값범위 밖", "기간 불일치",
+                    "불가능 연도", "무서술 인용", "지역 이탈", "값 부재 인용")
 
 
 def _log_diagnostics(facts, ledger, slots, run) -> None:

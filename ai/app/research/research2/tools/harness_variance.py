@@ -12,7 +12,13 @@
 예산은 **사이클 수와 토큰 둘 다** 본다. 먼저 닿는 쪽에서 멈춘다 — 예산 도달은
 **미달이 아니라 사전등록된 종료 조건**이다(부록 M).
 
-산출: `runs/harness/<tag>-분산.json` — 판정하지 않고 보이는 것을 적는다.
+산출: `<runs-generated>/harness/<tag>-분산.json` — 판정하지 않고 보이는 것을 적는다.
+
+⚠ **원장 자리를 손으로 적지 않는다** (판 ㉜ 수리). 이 도구는 `runs/harness/...` 를
+   **리터럴로** 들고 있었는데, 그동안 하네스 산출이 `runs-generated/harness/` 로 옮겨갔다
+   (씨앗 `runs/` 는 컨테이너에서 `:ro` 라 하네스가 그 자리에서 죽는다).
+   그래서 `gate.json` 을 **한 번도 못 찾고** 반복마다 「gate.json 없음」만 쌓았을 것이다 —
+   유료 설계를 3회 돌리고 표는 비는 모양이다. 자리를 묻는 답은 `runpath` 하나뿐이다.
 """
 from __future__ import annotations
 
@@ -26,6 +32,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+import runpath                                                       # noqa: E402
 
 
 def main():
@@ -49,7 +57,7 @@ def main():
             [sys.executable, os.path.join(ROOT, "harness", "slot_harness.py"),
              "--concept", os.path.join(ROOT, a.concept), "--tag", tag, "--as-of", a.as_of],
             cwd=ROOT, env=env)
-        gp = os.path.join(ROOT, "runs", "harness", tag, "gate.json")
+        gp = os.path.join(runpath.harness_read_dir(tag), "gate.json")
         if not os.path.exists(gp):
             rows.append({"반복": i, "오류": "gate.json 없음"})
             continue
@@ -82,7 +90,10 @@ def main():
         "검사별_미통과_비율": {k: round(v / n_att, 3) for k, v in cnt.most_common()} if n_att else {},
         "시도별": rows,
     }
-    p = os.path.join(ROOT, "runs", "harness", f"{a.tag}-분산.json")
+    # 쓰기는 항상 `runs-generated/` 다 — 씨앗 `runs/` 는 `:ro` 라 여기서 죽는다.
+    out_dir = os.path.join(runpath.GENERATED_RUNS_DIR, "harness")
+    os.makedirs(out_dir, exist_ok=True)
+    p = os.path.join(out_dir, f"{a.tag}-분산.json")
     io.open(p, "w", encoding="utf-8").write(json.dumps(out, ensure_ascii=False, indent=1))
     print(f"\n기록: {p}")
     print(f"시도 {n_att} · 전체 통과 {out['전체_통과_시도']} · 토큰 {tokens:,}")

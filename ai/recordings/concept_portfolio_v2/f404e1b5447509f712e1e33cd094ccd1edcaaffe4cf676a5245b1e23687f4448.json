@@ -1,0 +1,265 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:bde45ed9d2c7c32609c8bd0de4a0d9dec475b45427b014d8f5f255e4372f8511",
+  "canonicalRequestHash": "f404e1b5447509f712e1e33cd094ccd1edcaaffe4cf676a5245b1e23687f4448",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1-F1",
+        "field": "platformRole",
+        "value": "여행 계획 서비스 제공자",
+        "roleFields": {
+          "platformRole": "여행 계획 서비스 제공자",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "숙박업체 및 체험 제공업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "숙박업체",
+          "체험 제공업체"
+        ],
+        "transactionFlow": [
+          "사용자가 이동 가능 시간과 관심사를 입력한다.",
+          "시스템이 최적의 여행 일정을 생성한다.",
+          "사용자가 예약을 진행한다."
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 수수료를 지불한다.",
+          "파트너에게는 일정 비율의 수익을 분배한다."
+        ],
+        "operatingModel": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다.",
+        "partnerModel": "숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다.",
+        "solutionMechanism": "자동화된 시스템을 통해 사용자가 입력한 정보를 바탕으로 최적의 여행 일정을 생성한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C1-F1",
+        "field": "sellerRole",
+        "value": "숙박업체 및 체험 제공업체",
+        "roleFields": {
+          "platformRole": "여행 계획 서비스 제공자",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "숙박업체 및 체험 제공업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "숙박업체",
+          "체험 제공업체"
+        ],
+        "transactionFlow": [
+          "사용자가 이동 가능 시간과 관심사를 입력한다.",
+          "시스템이 최적의 여행 일정을 생성한다.",
+          "사용자가 예약을 진행한다."
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 수수료를 지불한다.",
+          "파트너에게는 일정 비율의 수익을 분배한다."
+        ],
+        "operatingModel": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다.",
+        "partnerModel": "숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다.",
+        "solutionMechanism": "자동화된 시스템을 통해 사용자가 입력한 정보를 바탕으로 최적의 여행 일정을 생성한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C1-F1",
+        "field": "intermediaryRole",
+        "value": "예약 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "여행 계획 서비스 제공자",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "숙박업체 및 체험 제공업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "숙박업체",
+          "체험 제공업체"
+        ],
+        "transactionFlow": [
+          "사용자가 이동 가능 시간과 관심사를 입력한다.",
+          "시스템이 최적의 여행 일정을 생성한다.",
+          "사용자가 예약을 진행한다."
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 수수료를 지불한다.",
+          "파트너에게는 일정 비율의 수익을 분배한다."
+        ],
+        "operatingModel": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다.",
+        "partnerModel": "숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다.",
+        "solutionMechanism": "자동화된 시스템을 통해 사용자가 입력한 정보를 바탕으로 최적의 여행 일정을 생성한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C5-F1",
+        "field": "sellerRole",
+        "value": "숙박 및 체험 제공업체",
+        "roleFields": {
+          "platformRole": "여행 계획 서비스 제공 플랫폼",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "숙박 및 체험 제공업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "숙박업체",
+          "체험 제공업체"
+        ],
+        "transactionFlow": [
+          "사용자가 이동 가능 시간과 관심사를 입력한다.",
+          "시스템이 최적의 여행 일정을 생성한다.",
+          "사용자가 예약을 진행한다."
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 수수료를 지불한다.",
+          "파트너에게는 일정 비율의 수익을 분배한다."
+        ],
+        "operatingModel": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다.",
+        "partnerModel": "숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다.",
+        "solutionMechanism": "자동화된 시스템을 통해 사용자가 입력한 정보를 바탕으로 최적의 여행 일정을 생성한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C5-F1",
+        "field": "intermediaryRole",
+        "value": "예약 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "여행 계획 서비스 제공 플랫폼",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "숙박 및 체험 제공업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "숙박업체",
+          "체험 제공업체"
+        ],
+        "transactionFlow": [
+          "사용자가 이동 가능 시간과 관심사를 입력한다.",
+          "시스템이 최적의 여행 일정을 생성한다.",
+          "사용자가 예약을 진행한다."
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 수수료를 지불한다.",
+          "파트너에게는 일정 비율의 수익을 분배한다."
+        ],
+        "operatingModel": "데이터 분석 및 알고리즘을 통해 사용자 맞춤형 서비스를 제공한다.",
+        "partnerModel": "숙박업체 및 체험 제공업체와 협력하여 예약 서비스를 통합한다.",
+        "solutionMechanism": "자동화된 시스템을 통해 사용자가 입력한 정보를 바탕으로 최적의 여행 일정을 생성한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1-F1",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "The value '여행 계획 서비스 제공자' aligns with the platform role."
+    },
+    {
+      "candidateId": "C1-F1",
+      "field": "sellerRole",
+      "decision": "MISMATCH",
+      "safeReason": "The value '숙박업체 및 체험 제공업체' does not align with the seller role as it refers to the sellers rather than the platform."
+    },
+    {
+      "candidateId": "C1-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "The value '예약 플랫폼 운영자' aligns with the intermediary role."
+    },
+    {
+      "candidateId": "C5-F1",
+      "field": "sellerRole",
+      "decision": "MISMATCH",
+      "safeReason": "The value '숙박 및 체험 제공업체' does not align with the seller role as it refers to the sellers rather than the platform."
+    },
+    {
+      "candidateId": "C5-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "The value '예약 플랫폼 운영자' aligns with the intermediary role."
+    }
+  ],
+  "durationMs": 4432,
+  "timestamp": "2026-08-10T07:54:33.849925+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

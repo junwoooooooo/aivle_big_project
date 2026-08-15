@@ -8,9 +8,8 @@ import com.aivle.backend.pipeline.finance.api.FinancialApiModels.EstimateActionR
 import com.aivle.backend.pipeline.finance.api.FinancialApiModels.EstimateDecisionRequest;
 import com.aivle.backend.pipeline.finance.api.FinancialController;
 import com.aivle.backend.pipeline.finance.application.FinancialService;
-import com.aivle.backend.finance.service.FinancialSnapshotAnalysisService;
-import com.aivle.backend.finance.service.FinancialAnalysisReportService;
-import com.aivle.backend.finance.service.FinancialDemoService;
+import com.aivle.backend.pipeline.finance.application.FinancialAnalysisService;
+import com.aivle.backend.pipeline.finance.application.FinancialInputDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -25,8 +24,8 @@ class FinancialControllerAsyncTests {
         when(request.getHeader("X-Request-Id")).thenReturn("request-1");
         when(service.generateEstimate(7L, 41L, "totalMarketingCost", "command-1", "request-1"))
             .thenReturn(new EstimateActionResponse(null, "task-1", "task-1", "QUEUED", "GENERATE", "totalMarketingCost", 1));
-        FinancialController controller = new FinancialController(service, mock(FinancialSnapshotAnalysisService.class),
-            mock(FinancialAnalysisReportService.class), mock(FinancialDemoService.class), user);
+        FinancialController controller = new FinancialController(service, mock(FinancialAnalysisService.class),
+            mock(FinancialInputDocumentService.class), user);
 
         assertThat(controller.generateEstimate(41L, "totalMarketingCost", "command-1", request).getStatusCode())
             .isEqualTo(HttpStatus.ACCEPTED);

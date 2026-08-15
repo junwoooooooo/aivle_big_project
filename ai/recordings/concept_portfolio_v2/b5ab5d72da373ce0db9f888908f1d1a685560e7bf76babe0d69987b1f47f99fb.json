@@ -1,0 +1,293 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8feb1ac9c7a871f99e19fe9a6c7fac4f510fdebb7277929bbd939b3d68f5163e",
+  "canonicalRequestHash": "b5ab5d72da373ce0db9f888908f1d1a685560e7bf76babe0d69987b1f47f99fb",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 웹 기반 플랫폼을 통해 회의 기록과 이메일을 업로드하고 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "WEB",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. 데이터 분석 전문 기업과의 협력을 통해 데이터 분석의 정확성을 높입니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 고객 데이터를 분석하여 실시간으로 영업 액션을 제안합니다. 사용자는 플랫폼에 고객 정보를 입력하고 제안된 영업 액션을 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 플랫폼에 회의 및 이메일 내용을 업로드하고 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 플랫폼에 회의 및 이메일 내용을 업로드하고 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 플랫폼에 회의 및 이메일 내용을 업로드하고 고객 정보를 입력하여 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. 데이터 분석 전문 기업과의 협력을 통해 데이터 분석의 정확성을 높입니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 플랫폼에 성과 데이터를 입력하고 분석 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P7",
+        "businessText": "클라우드 기반의 SaaS 모델로 제공되어 사용자가 언제 어디서나 접근할 수 있습니다. CRM 솔루션 제공업체와의 파트너십을 통해 통합 서비스를 제공합니다. 구독 모델을 통해 월별 또는 연별 요금제로 서비스 이용이 가능합니다. 중소기업을 대상으로 한 맞춤형 마케팅 전략을 통해 고객을 유치합니다. AI 알고리즘이 자동으로 데이터를 처리하여 고객에게 실시간으로 결과를 제공합니다. 사용자는 플랫폼에 CRM 데이터를 입력하고 회의 및 이메일 내용을 업로드하여 결과를 확인합니다.",
+        "currentArchitecture": {
+          "businessRole": "SAAS_TOOL",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P1",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 CRM 솔루션과 통합 서비스를 제공하는 플랫폼."
+    },
+    {
+      "entityId": "P2",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 데이터 분석 전문 기업과 협력하여 서비스를 제공."
+    },
+    {
+      "entityId": "P3",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 CRM 솔루션과 통합 서비스를 제공하는 플랫폼."
+    },
+    {
+      "entityId": "P4",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 CRM 솔루션과 통합 서비스를 제공하는 플랫폼."
+    },
+    {
+      "entityId": "P5",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 CRM 솔루션과 통합 서비스를 제공하는 플랫폼."
+    },
+    {
+      "entityId": "P6",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 데이터 분석 전문 기업과 협력하여 서비스를 제공."
+    },
+    {
+      "entityId": "P7",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "클라우드 기반의 SaaS 모델로 CRM 솔루션과 통합 서비스를 제공하는 플랫폼."
+    }
+  ],
+  "durationMs": 12314,
+  "timestamp": "2026-08-10T08:44:45.120181+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

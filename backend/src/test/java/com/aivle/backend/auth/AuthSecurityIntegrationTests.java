@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
@@ -35,6 +36,7 @@ import java.util.UUID;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("jwt-test")
+@TestPropertySource(properties = "app.ai-server.internal-api-key=progress-test-secret")
 class AuthSecurityIntegrationTests {
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbcTemplate;
@@ -45,6 +47,29 @@ class AuthSecurityIntegrationTests {
         jdbcTemplate.update("delete from audit_events");
         jdbcTemplate.update("delete from refresh_tokens");
         jdbcTemplate.update("delete from users");
+    }
+
+    @Test
+    void aiProgressServiceHeaderBypassesBrowserJwtAndInvalidHeadersAreRejected() throws Exception {
+        String body = """
+            {
+              "taskRunId":"unknown-run","taskAttemptId":"attempt","correlationId":"correlation",
+              "sequence":1,"stage":"PLANNING","action":"STARTED","status":"RUNNING",
+              "safeSummary":"safe","occurredAt":"2026-08-11T00:00:00Z"
+            }
+            """;
+        mockMvc.perform(post("/internal/v1/ai/task-progress")
+                .header("X-AI-Internal-Token", "progress-test-secret")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+        mockMvc.perform(post("/internal/v1/ai/task-progress")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/internal/v1/ai/task-progress")
+                .header("X-AI-Internal-Token", "wrong")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -277,6 +277,15 @@ def _apply_check(spec, cells, ledger, coverage, rules, slots=None):
 
     if t == "no_duplicate_metric":
         by_key: dict[str, set] = {}
+        # **가격은 모순이 아니라 밴드다** (판 ㉜). 대체재 가격이 여러 값인 것은 정상이고
+        # 이 저장소도 그렇게 다룬다 — R7 의 이름이 「우리 가격이 **대체재 밴드**와 비교
+        # 가능」이다. 이 축까지 「두 값이면 모순」으로 보면 **가격 칸을 제대로 채울수록
+        # blocker 가 뜬다.** ⚠ 원래 새던 자리다: pin-09(성적표 6/6)의 실행도 이 규칙을
+        # 위반했는데 **성적표가 체인 위반을 안 보여줘서** 아무도 못 봤다.
+        # TAM·SAM 은 그대로 둔다 — 시장 규모가 38조이면서 11조일 수는 없다.
+        밴드_ct = set(ch.get("밴드_claim_type") or [])
+        밴드_슬롯 = {s.slot_id for s in (slots or []) if s.claim_type in 밴드_ct}
+        밴드_본것: dict[str, set] = {}
         # ⚠ `next(..., None)` 로 조용히 넘어가지 않는다 — 원장에 행이 없는 사실이 있으면
         #   그건 조립이 깨진 것이므로 **사유로 남긴다**(#16, 표시만·판정 로직 변경 없음).
         orphan = []
@@ -286,9 +295,13 @@ def _apply_check(spec, cells, ledger, coverage, rules, slots=None):
                 orphan.append(fid)
                 continue
             if _fx.filled(row, "c_chain._apply_check") and f.value_num is not None:
-                by_key.setdefault(f.match_key, set()).add(round(f.value_num, 4))
+                # 밴드 축은 **판정에서 빼되 기록에는 남긴다** — 조용한 통과 금지.
+                where = 밴드_본것 if f.slot_id in 밴드_슬롯 else by_key
+                where.setdefault(f.match_key, set()).add(round(f.value_num, 4))
         dup = {k: sorted(v) for k, v in by_key.items() if len(v) > 1 and max(v) > 1.1 * min(v)}
+        band = {k: sorted(v) for k, v in 밴드_본것.items() if len(v) > 1}
         note = (f" · ⚠ 원장 행이 없는 사실(누락) {orphan}" if orphan else "")
+        note += (f" · 밴드(모순 아님) {band}" if band else "")
         return not dup, (f"같은 지표 두 값: {dup}" if dup else "중복 없음") + note, []
 
     if t == "legal_resolved":
@@ -317,7 +330,9 @@ def render_report(cells: dict[str, ChainCell], violations: list[Violation],
                   ledger: Ledger, coverage: list[Coverage], slots: list[Slot],
                   adapters: dict, coverage_caveat: str | None, rules: dict,
                   unknown_codes: list | None = None,
-                  url_filtered: list | None = None) -> Report:
+                  url_filtered: list | None = None,
+                  extract_capped: list | None = None,
+                  fetch_empty: list | None = None) -> Report:
     blockers = [v for v in violations if v.status == "violated" and v.severity == "blocker"]
     warns = [v for v in violations if v.status == "violated" and v.severity == "warn"]
     skipped = [v for v in violations if v.status == "skipped"]
@@ -408,6 +423,9 @@ def render_report(cells: dict[str, ChainCell], violations: list[Violation],
         # A3 에서 **열지도 않고** 거른 후보. 무엇을 안 봤는지 밝히지 않으면
         # 커버리지가 낮을 때 "못 찾은 것"과 "우리가 안 연 것"을 구분할 수 없다 (규칙 5).
         "url_filtered": list(url_filtered or []),
+        # 물어봤는데 없는 것이 아니라 **묻지도 않은 것**이다. 섞으면 §7 이 거짓이 된다.
+        "extract_capped": list(extract_capped or []),
+        "fetch_empty": list(fetch_empty or []),
         # **'더 찾아라' 가 아니라 '찾아도 없다'.** retry_hints 와 성격이 달라 칸을 나눈다.
         # 문구는 규칙 파일에서 온다(절대규칙 7).
         # 판 ⑯ ② — **값으로 싣는다.** 규칙 파일이 목록을 주면 그대로, 없으면 빈 칸.
@@ -440,12 +458,12 @@ def _count_by(rows, keyfn) -> dict:
 # ══════════════════════════════════════════════════════════════
 def run_block_c(recs, ledger, coverage, slots, estimates, user_input, rules,
                 adapters=None, coverage_caveat=None, run=None, unknown_codes=None,
-                url_filtered=None):
+                url_filtered=None, extract_capped=None, fetch_empty=None):
     cells = build_chain(recs, ledger, user_input, rules, slots)
     violations = check_consistency(cells, ledger, coverage, rules, slots)
     report = render_report(cells, violations, estimates, recs, ledger, coverage, slots,
                            adapters or {}, coverage_caveat, rules, unknown_codes,
-                           url_filtered)
+                           url_filtered, extract_capped, fetch_empty)
     if run is not None:
         run.log_many("c1_chain", list(cells.values()))
         run.log_many("c2_violations", violations)

@@ -4,7 +4,7 @@ import { useApiClient } from '../../shared/api/ApiClientProvider.jsx';
 import { createProjectModuleApi } from './projectModuleApi.js';
 import { normalizeProjectModuleStatuses } from './projectModuleModel.js';
 
-export function useProjectModuleStatuses(projectId) {
+export function useProjectModuleStatuses(projectId, liveRevision = 0) {
   const client = useApiClient();
   const api = useMemo(() => createProjectModuleApi(client), [client]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -26,7 +26,7 @@ export function useProjectModuleStatuses(projectId) {
         if (!controller.signal.aborted) setState({ projectId, status: 'error', modules: {}, error });
       });
     return () => controller.abort();
-  }, [api, projectId, refreshKey]);
+  }, [api, projectId, refreshKey, liveRevision]);
 
   if (state.projectId !== projectId) {
     return { status: 'loading', modules: {}, error: null, retry };

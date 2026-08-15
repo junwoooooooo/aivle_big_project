@@ -7,8 +7,11 @@ from typing import Any
 from app.tasks.concept_candidate.models import ConceptCandidateDraft
 
 from .models import (
+    BusinessRoleSemanticBatch,
+    LegalFactCompletionPatch, LegalFactDependencySemanticBatch,
     PlanDraftPool, SchemaCompatibilityItem, SchemaPreflightReport,
     SemanticArchitectureBatch, SemanticDistinctnessResult, SemanticFidelityResult,
+    SemanticHypothesisBatch,
 )
 
 
@@ -106,6 +109,10 @@ def v2_schema_preflight_report() -> SchemaPreflightReport:
         ("SemanticDistinctnessResult", SemanticDistinctnessResult.model_json_schema()),
         ("SemanticFidelityResult", SemanticFidelityResult.model_json_schema()),
         ("SemanticArchitectureBatch", SemanticArchitectureBatch.model_json_schema()),
+        ("SemanticHypothesisBatch", SemanticHypothesisBatch.model_json_schema()),
+        ("BusinessRoleSemanticBatch", BusinessRoleSemanticBatch.model_json_schema()),
+        ("LegalFactDependencySemanticBatch", LegalFactDependencySemanticBatch.model_json_schema()),
+        ("LegalFactCompletionPatch", LegalFactCompletionPatch.model_json_schema()),
     ]
     results = [inspect_strict_schema(schema, name) for name, schema in schemas]
     return SchemaPreflightReport(status="PASS" if all(item.status == "PASS" for item in results) else "FAIL",

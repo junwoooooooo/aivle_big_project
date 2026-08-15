@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:e65b27616a7c41440c144f9c650a1ba9262e90482f76b53308761b163b0b455f",
+  "canonicalRequestHash": "a8bdc3289f3932c6f2abe305156a3acb3982b4f974de363732749b330edcce54",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-R1",
+        "businessText": "AI 도구 제공자로서 CRM 자동화 솔루션을 제공합니다. AI 도구 제공자 영업팀 CRM 시스템 제공업체 중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다. CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 고객이 구독 신청 AI 도구 제공자가 서비스 제공 고객이 CRM에 데이터 입력 고객이 구독료 결제 AI 도구 제공자가 결제 확인 서비스 제공 시작 구독 기반 모델로 영업팀에 서비스를 제공합니다. 온라인 마케팅 및 파트너십을 통한 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C4-R1",
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 도구 제공자로서 CRM 자동화 솔루션을 제공하며, 구독 기반 모델로 영업팀에 서비스를 제공하는 비즈니스."
+    }
+  ],
+  "durationMs": 4412,
+  "timestamp": "2026-08-10T08:11:07.119213+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

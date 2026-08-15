@@ -33,7 +33,6 @@ public class TaskRun extends BaseEntity {
  @Column(length=64) private String currentAttemptId;
  @Column(length=64) private String finalResultId;
  @Column(length=80) private String lastErrorCode;
- @Column(length=100) private String lastErrorReason;
  private LocalDateTime startedAt;
  private LocalDateTime finishedAt;
  private LocalDateTime nextAttemptAt;
@@ -42,10 +41,10 @@ public class TaskRun extends BaseEntity {
  public void scheduleInitial(LocalDateTime now){if(state!=TaskRunState.QUEUED||attemptCount!=0)throw new IllegalStateException("task already scheduled");nextAttemptAt=now;}
  public void registerAttempt(String attemptId){requireClaimable();currentAttemptId=attemptId;}
  public void claimed(String attemptId,LocalDateTime now){requireClaimable();currentAttemptId=attemptId;state=TaskRunState.RUNNING;retryable=false;nextAttemptAt=now;if(startedAt==null)startedAt=now;}
- public void succeed(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.SUCCEEDED;retryable=false;finishedAt=now;lastErrorCode=null;lastErrorReason=null;}
+ public void succeed(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.SUCCEEDED;retryable=false;finishedAt=now;lastErrorCode=null;}
  public void needsInput(LocalDateTime now){needsInput(null,now);}
  public void needsInput(String resultId,LocalDateTime now){requireRunning();finalResultId=resultId;state=TaskRunState.NEEDS_INPUT;retryable=false;finishedAt=now;lastErrorCode="NEEDS_INPUT";}
- public void fail(String code,String reason,boolean canRetry,LocalDateTime now){requireRunning();state=TaskRunState.FAILED;retryable=canRetry&&attemptCount<maxAttempts;lastErrorCode=code;lastErrorReason=reason;finishedAt=now;}
+ public void fail(String code,boolean canRetry,LocalDateTime now){requireRunning();state=TaskRunState.FAILED;retryable=canRetry&&attemptCount<maxAttempts;lastErrorCode=code;finishedAt=now;}
  public void timeOut(LocalDateTime now){requireRunning();state=TaskRunState.TIMED_OUT;retryable=attemptCount<maxAttempts;lastErrorCode="TASK_TIMEOUT";finishedAt=now;}
  public void recoverAfterLeaseExpiry(LocalDateTime now){requireRunning();lastErrorCode="TASK_TIMEOUT";if(attemptCount<maxAttempts){state=TaskRunState.QUEUED;retryable=false;finishedAt=null;nextAttemptAt=now;}else{state=TaskRunState.TIMED_OUT;retryable=false;finishedAt=now;}}
  public void exhaustAttempts(LocalDateTime now){if(state!=TaskRunState.QUEUED&&state!=TaskRunState.READY)throw new IllegalStateException("task run is not claimable");state=TaskRunState.FAILED;retryable=false;lastErrorCode="ATTEMPT_LIMIT_EXCEEDED";finishedAt=now;}

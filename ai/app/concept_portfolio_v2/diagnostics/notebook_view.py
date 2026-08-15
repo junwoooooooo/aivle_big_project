@@ -135,10 +135,14 @@ def show_legal_precheck(results):
 
 def show_legal_fact_completeness(preparation):
     summary = {key: getattr(preparation, key) for key in (
-        "completionAttempted", "completionValidated", "completionAccepted", "completionExhausted")}
+        "completionAttempted", "completionValidated", "completionAccepted", "completionExhausted",
+        "roleSemanticBatchCalls", "dependencySemanticBatchCalls", "consistencyRepairAttempted",
+        "consistencyRepairAccepted", "consistencyRepairExhausted")}
     summary["preparedForLegal"] = len(preparation.candidates)
     return {"summary": _table([summary]),
             "reports": _table([_dump(item) for item in preparation.reports]),
+            "consistencyReports": _table([_dump(item) for item in preparation.consistencyReports]),
+            "completionCompliance": _table([_dump(item) for item in preparation.completionCompliance]),
             "excludedCandidates": _table(preparation.excludedCandidates)}
 
 
@@ -182,6 +186,7 @@ def show_legal_result(results):
                     "controlConvertibleCount": item.controlConvertibleCount,
                     "legalClarificationCount": item.legalClarificationCount,
                     "safeSummary": item.safeSummary,
+                    "unknownFacts": item.unknownFacts,
                     "requiredControls": item.requiredControls,
                     "requiredPartnersAndQualifications": item.requiredPartnersAndQualifications,
                     "requiredDisclosures": item.requiredDisclosures,
@@ -233,9 +238,20 @@ def show_hypotheses(hypotheses):
 
 
 def show_hypothesis_readiness(hypotheses):
+    if not hypotheses:
+        return {"All Values Semantically Valid": False,
+                "All Decisions Confirmed": False,
+                "Ready For Handoff": False,
+                "status": "NOT_READY",
+                "reason": "NO_SELECTED_CONCEPT_OR_HYPOTHESES",
+                "unresolvedHypotheses": []}
     unresolved = [item.hypothesisType for item in hypotheses
                   if item.semanticStatus != "VALID" or not item.accepted]
-    return {"All Hypotheses Semantically Ready": not unresolved,
+    all_valid = all(item.semanticStatus == "VALID" for item in hypotheses)
+    all_confirmed = all(item.accepted for item in hypotheses)
+    return {"All Values Semantically Valid": all_valid,
+            "All Decisions Confirmed": all_confirmed,
+            "Ready For Handoff": all_valid and all_confirmed,
             "status": "READY" if not unresolved else "NOT_READY",
             "reason": None if not unresolved else "UNRESOLVED_HYPOTHESES",
             "unresolvedHypotheses": unresolved}
@@ -284,10 +300,79 @@ def show_provider_failure(gateway):
     return gateway.last_failure or {"상태": "기록된 Provider 실패 없음"}
 
 
+def show_run_failure(result):
+    if not result or not result.failureDiagnostics:
+        return {"상태": "기록된 run failure 없음"}
+    value = _dump(result.failureDiagnostics)
+    value["lastTraceEvents"] = len(value.get("lastTraceEvents", []))
+    return _table([value])
+
+
+def show_required_inputs(result_or_items):
+    items = (result_or_items.requiredInputs if hasattr(result_or_items, "requiredInputs")
+             else list(result_or_items or []))
+    keys = ("candidateId", "scope", "unknownFacts", "reason", "possibleUserAction",
+            "currentValue", "requiredLegalChange", "safeSummary")
+    return _table([{key: item.get(key) for key in keys} for item in items])
+
+
+def show_pre_legal_exclusions(result_or_items):
+    items = (result_or_items.preLegalExclusions if hasattr(result_or_items, "preLegalExclusions")
+             else list(result_or_items or []))
+    keys = ("candidateId", "scope", "reasonCode", "affectedFields", "consistencyReport", "dependencyDecisions",
+            "completionRequirements", "patchChangedFields", "completionCompliance", "recheckStatus",
+            "recoveryAttempted", "recoveryResolution", "safeSummary")
+    return _table([{key: item.get(key) for key in keys} for item in items])
+
+
+def show_legal_resolutions(result_or_items):
+    items = (result_or_items.legalResolutions if hasattr(result_or_items, "legalResolutions")
+             else list(result_or_items or []))
+    return _table([_dump(item) for item in items])
+
+
+def show_live_validation_summary(scenario_id, result):
+    legal = result.legalSummaries if result else []
+    summary = result.runSummary if result else None
+    return _table([{
+        "Scenario": scenario_id,
+        "Plan returned": summary.planned if summary else 0,
+        "Plan selected": summary.planSelected if summary else 0,
+        "Candidate generated": summary.candidateGenerated if summary else 0,
+        "Candidate valid initially": summary.candidateAcceptedInitially if summary else 0,
+        "Candidate regenerated": summary.candidateRegenerated if summary else 0,
+        "Candidate recovered": summary.candidateRecovered if summary else 0,
+        "Fact completion attempted": summary.legalFactCompletionAttempted if summary else 0,
+        "Fact completion validated": summary.legalFactCompletionValidated if summary else 0,
+        "Fact completion accepted": summary.legalFactCompletionAccepted if summary else 0,
+        "Dependency semantic calls": summary.legalFactDependencySemanticCalls if summary else 0,
+        "Completion compliance PASS": summary.legalFactCompletionCompliancePassed if summary else 0,
+        "Provider noncompliant": summary.legalFactCompletionProviderNoncompliant if summary else 0,
+        "Completion recheck failed": summary.legalFactCompletionRecheckFailed if summary else 0,
+        "Fact consistency invalid": summary.factConsistencyInvalid if summary else 0,
+        "Consistency repair attempted": summary.factConsistencyRepairAttempted if summary else 0,
+        "Consistency repair accepted": summary.factConsistencyRepairAccepted if summary else 0,
+        "Consistency repair exhausted": summary.factConsistencyRepairExhausted if summary else 0,
+        "Legal ready": summary.legalReady if summary else 0,
+        "Legal initial reviewed": summary.legalInitialReviewed if summary else 0,
+        "Legal recovery reviewed": summary.legalRecoveryReviewed if summary else 0,
+        "Total legal review events": summary.totalLegalReviewEvents if summary else 0,
+        "Legal ACCEPT": summary.legalAccepted if summary else 0,
+        "NEEDS_INPUT": sum(item.route.value == "NEEDS_INPUT" for item in legal),
+        "Final portfolio": result.producedConceptCount if result else 0,
+        "Hypothesis valid": result.downstreamReadiness if result else "NOT_RUN",
+        "Handoff": result.handoff.contractStatus if result and result.handoff else "PENDING",
+        "Provider ops": result.providerUsage.topLevelExternalOperations if result else 0,
+        "Duration(ms)": summary.totalDurationMs if summary else 0,
+    }])
+
+
 def show_run_summary(result):
-    return _table([_dump(result.runSummary) if result.runSummary else {
-        "portfolioStatus": result.runStatus.value, "finalPortfolio": result.producedConceptCount,
-        "downstreamHandoff": result.downstreamReadiness}])
+    identity = {"runId": result.runId, "runStatus": result.runStatus.value,
+                "runtimeStage": result.runtimeStage.value,
+                "producedConceptCount": result.producedConceptCount,
+                "downstreamReadiness": result.downstreamReadiness}
+    return _table([{**identity, **(_dump(result.runSummary) if result.runSummary else {})}])
 
 
 def show_raw_json(value):

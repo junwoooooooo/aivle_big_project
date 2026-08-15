@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:bb72c10aa46d0f023179d89d679f33a1120a54037475b82fc03708259d2331d8",
+  "canonicalRequestHash": "751986b6b5d5a87117272ce52530ce91a213fc16b620185fdc9d289bdc058c7e",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "CRM 시스템 제공 서비스 제공자 영업팀 파트너사 클라우드 기반 솔루션으로 언제 어디서나 접근 가능하게 합니다. CRM 제공업체와의 협력을 통해 통합 솔루션을 제공합니다. 고객이 서비스 신청 서비스 제공자가 CRM 통합 솔루션 제공 고객이 서비스 사용 고객이 구독료 결제 서비스 제공자가 결제 확인 후 서비스 제공 구독 모델을 통한 지속적인 서비스 제공 온라인 마케팅, 파트너십을 통한 직접 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "CRM 시스템 제공자로서 클라우드 기반 솔루션을 통해 고객에게 통합 서비스를 제공하며, 파트너사와 협력하여 지속적인 구독 모델로 수익을 창출하는 비즈니스 모델입니다."
+    }
+  ],
+  "durationMs": 2395,
+  "timestamp": "2026-08-10T03:38:44.157164+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

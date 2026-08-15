@@ -1,0 +1,160 @@
+{
+  "taskType": "SEMANTIC_RELATION",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-relation-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:8cf645b6c57f6a49cb0414411a52be739eabae760c876af5574c95989e0c6fdd",
+  "canonicalRequestHash": "5a95d6d6eea3d0f730754a0637473fa3caa732be52d4a29f621f9f038d75af73",
+  "redactedRequest": {
+    "kind": "PLAN",
+    "left": {
+      "thesis": {
+        "targetSegmentThesis": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+        "useCaseThesis": "사용자의 취향과 이동 가능 시간을 고려하여 맞춤형 여행 일정을 추천하는 서비스.",
+        "valuePropositionThesis": "사용자는 자신의 취향에 맞는 여행 일정을 쉽게 찾을 수 있다.",
+        "offerThesis": "사용자의 취향을 분석하여 최적의 여행 일정을 추천한다.",
+        "solutionThesis": "추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다."
+      },
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다",
+      "familyId": "INTERMEDIARY:OTHER",
+      "familyLabelKo": "거래 중개 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "INTERMEDIARY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "BOOKING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    },
+    "right": {
+      "thesis": {
+        "targetSegmentThesis": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+        "useCaseThesis": "사용자의 요구와 이동 가능 시간을 고려하여 여행 일정을 생성하는 서비스.",
+        "valuePropositionThesis": "사용자는 자신의 요구에 맞는 여행 일정을 쉽게 찾을 수 있다.",
+        "offerThesis": "사용자의 요구를 분석하여 최적의 여행 일정을 생성한다.",
+        "solutionThesis": "생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다."
+      },
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다",
+      "familyId": "INTERMEDIARY:OTHER",
+      "familyLabelKo": "거래 중개 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "INTERMEDIARY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "BOOKING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "VARIANT",
+    "overlappingMechanics": [
+      "businessRole: INTERMEDIARY",
+      "customerInteractionModel: APP",
+      "dataDependency: NONE",
+      "deliveryModel: OTHER",
+      "monetizationModel: FREEMIUM",
+      "operatingModel: OTHER",
+      "partnerModel: PARTNER_NETWORK",
+      "physicalDependency: NONE",
+      "transactionModel: BOOKING",
+      "targetSegmentThesis: 주말에 1~2일 단기 여행을 자주 계획하는 직장인들."
+    ],
+    "materiallyDifferentMechanics": [
+      "mechanismFamily: 추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다 vs 생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다",
+      "offerThesis: 사용자의 취향을 분석하여 최적의 여행 일정을 추천한다. vs 사용자의 요구를 분석하여 최적의 여행 일정을 생성한다.",
+      "solutionThesis: 추천된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다. vs 생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다.",
+      "useCaseThesis: 사용자의 취향과 이동 가능 시간을 고려하여 맞춤형 여행 일정을 추천하는 서비스. vs 사용자의 요구와 이동 가능 시간을 고려하여 여행 일정을 생성하는 서비스.",
+      "valuePropositionThesis: 사용자는 자신의 취향에 맞는 여행 일정을 쉽게 찾을 수 있다. vs 사용자는 자신의 요구에 맞는 여행 일정을 쉽게 찾을 수 있다."
+    ],
+    "safeSummary": "두 개의 아키텍처는 비즈니스 역할, 고객 상호작용 모델, 데이터 의존성, 배달 모델, 수익화 모델, 운영 모델, 파트너 모델, 물리적 의존성, 거래 모델이 동일하지만, 제안 및 솔루션의 내용과 사용 사례, 가치 제안이 다릅니다."
+  },
+  "durationMs": 4650,
+  "timestamp": "2026-08-10T06:49:09.054284+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

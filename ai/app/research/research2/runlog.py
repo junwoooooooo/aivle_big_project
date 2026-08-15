@@ -22,7 +22,12 @@ RULES_DIR = os.path.join(HERE, "rules")
 #   이미지 안 `runs/` 는 재기동마다 증발하고 232MB 급이라 이미지에 넣을 것도 아니다.
 #   컨테이너에서는 볼륨(`/research2-runs`)을 가리키고, 로컬 연구 세션에서는 기본값 그대로.
 #   ⚠ 기본값을 바꾸지 않는다 — 949개 테스트가 이 자리를 전제한다.
-RUNS_DIR = os.environ.get("RESEARCH2_RUNS_DIR") or os.path.join(HERE, "runs")
+#   ⚠ **쓰기 자리와 읽기 자리가 갈렸다.** 수집이 원장을 만들기 시작하면서 씨앗 `runs/` 는
+#     컨테이너에서 `:ro` 인 채로 두고 새 원장은 `runs-generated/` 로 간다. 답은
+#     `runpath` 한 곳에 있다 — 여기서 다시 계산하면 두 곳이 갈린다.
+import runpath                                                   # noqa: E402
+
+RUNS_DIR = runpath.RUNS_DIR
 
 
 # ══════════════════════════════════════════════════════════════
@@ -98,13 +103,39 @@ def sha(obj) -> str:
 
 
 # ══════════════════════════════════════════════════════════════
+# 실행 능력 지문 (판 ㉟ ①)
+#   **수집한 그 프로세스가 자기 능력을 적는다.** 판 ㉞ 에서 컨테이너에 `pdfplumber` 가
+#   없어 PDF 48건을 통째로 버렸는데, 원장 어디에도 「해석기가 없었다」가 없어서
+#   유료 4판(≈252회)을 결함 위에서 쟀다. 이 한 칸만 있었으면 첫 판에서 끝났다.
+#
+#   ⚠ **없는 것은 예외가 아니라 `None` 이다.** 계측이 실행을 죽이면 안 된다.
+#   ⚠ 로컬과 컨테이너가 다르다는 것이 사고의 본체였다 — 그래서 사람이 따로 돌리는
+#     `tools/preflight.py` 가 아니라 **실행 자신**이 남긴다.
+CAPABILITY_PACKAGES = ("pdfplumber", "trafilatura", "requests", "openai")
+
+
+def capability_fingerprint() -> dict:
+    import platform
+    from importlib.metadata import version
+    out: dict = {"python": platform.python_version()}
+    for name in CAPABILITY_PACKAGES:
+        try:
+            out[name] = version(name)
+        except Exception:
+            out[name] = None
+    return out
+
+
+# ══════════════════════════════════════════════════════════════
 # 실행 하나 = Run 하나
 # ══════════════════════════════════════════════════════════════
 class Run:
     def __init__(self, run_id: str, rules: dict | None = None,
                  reference_date: str | None = None):
         self.run_id = run_id
-        self.dir = os.path.join(RUNS_DIR, run_id)
+        # **쓰기는 언제나 `runs-generated/` 다.** 씨앗 원장(`runs/`)은 컨테이너에서 `:ro` 이고,
+        # 그 보호가 「컨테이너가 측정 원장을 덮어쓸 수 없다」는 규율 그 자체다.
+        self.dir = runpath.write_dir(run_id)
         os.makedirs(self.dir, exist_ok=True)
         self.jsonl = os.path.join(self.dir, "run.jsonl")
 
@@ -231,12 +262,20 @@ class Run:
             self.notes.append(note)
 
     def coverage_caveat(self) -> str | None:
+        """한계 고지. **어댑터가 꺼진 것과 해석기가 없는 것은 같은 종류의 한계다** —
+        둘 다 「자료가 없다」가 아니라 「우리가 못 봤다」이므로 한 줄에 같이 실린다.
+        하나가 다른 하나를 지우면 안 되니 갈아치우지 않고 이어 붙인다.
+        """
+        parts: list[str] = []
         off = [k for k, v in self.adapters.items() if v != "ok"]
-        if not off:
-            return None
-        if {"kosis", "dart"} & set(off):
-            return f"통계 API 미사용({', '.join(sorted(off))}) — 커버리지 하한"
-        return f"어댑터 미사용: {', '.join(sorted(off))} — 커버리지 하한"
+        if off:
+            if {"kosis", "dart"} & set(off):
+                parts.append(f"통계 API 미사용({', '.join(sorted(off))}) — 커버리지 하한")
+            else:
+                parts.append(f"어댑터 미사용: {', '.join(sorted(off))} — 커버리지 하한")
+        if capability_fingerprint().get("pdfplumber") is None:
+            parts.append("PDF 해석기 없음 — PDF 출처 커버리지 0")
+        return " / ".join(parts) if parts else None
 
     # ── 마무리 ────────────────────────────────────────────────
     def finish(self, *, concept=None, slots=None, verdict=None,
@@ -255,6 +294,9 @@ class Run:
 
             # 어댑터 상태와 한계 — 없으면 커버리지 저하의 원인을 구분할 수 없다
             "adapters": dict(self.adapters),
+            # 「어댑터가 켜졌나」 옆이 「해석기가 있나」의 자리다 (판 ㉟ ①).
+            # ⚠ 값이 None 이어도 **칸은 반드시 있어야 한다** — 칸이 없으면 0 이 아니라 미측정이다.
+            "실행_능력": capability_fingerprint(),
             "coverage_caveat": self.coverage_caveat(),
             "notes": list(self.notes),
 
@@ -308,7 +350,11 @@ class Meter:
     def __init__(self, client, run: Run):
         self._c, self._run = client, run
 
-    def create(self, node: str, **kw):
+    def create(self, node: str, *, tag: dict | None = None, **kw):
+        """`tag` 는 **API 로 안 나간다.** `**kw` 는 그대로 `responses.create` 로 흘러가므로
+        원장에만 남길 것은 키워드 전용 인자로 받아야 한다. 값은 `a3_web_query` 노드의
+        머리(`slot_id`·`trace_id` 등)로 쓰인다.
+        """
         t = time.time()
         # **유료 진입점 ①** (판 ⑪ ②). 첫 호출에서만 잰다 — 매 호출 재면 델타가
         # 「마지막 호출 기준」이 되어 실행이 길수록 사전등록이 잘 지켜진 것처럼 보인다.
@@ -331,10 +377,30 @@ class Meter:
         except Exception:
             pass
         try:                       # web_search 1콜 안에서 검색어 여러 개가 나간다
+            # 판 ㉟ ② — **세기만 하고 버리던 것을 남긴다.** r4 실측: 호출 22 · 질의 209.
+            # 수만 있으면 두 판이 갈렸을 때 「질의가 달랐나 결과가 달랐나」를 못 가른다.
+            # ⚠ 질의와 URL 을 **조인하지 않는다.** `_citations` 는 응답 전체를 훑으므로
+            #   어느 URL 이 어느 질의에서 왔는지 복원 불가다 — 없는 조인은 다음 판의 오진이다.
+            qs: list[str] = []
+            raw: list[str] = []
             for it in r.output or []:
                 if getattr(it, "type", "") == "web_search_call":
                     a = getattr(it, "action", None)
-                    self._run.count("llm.web_queries", len(getattr(a, "queries", None) or [1]))
+                    got = getattr(a, "queries", None)
+                    if not got:                                  # 복수형이 없으면 단수형
+                        one = getattr(a, "query", None)
+                        got = [one] if one else None
+                    # 세는 규칙은 판 ㉞ 이전과 **같다** — 못 읽어도 호출 1건당 1로 센다
+                    self._run.count("llm.web_queries", len(got or [1]))
+                    if got:
+                        qs.extend(str(x) for x in got)
+                    elif a is not None:                          # 모르는 모양은 접어서 남긴다
+                        raw.append(str(a)[:200])
+            if tag is not None:
+                # 질의 0 도 관측이다 — 「모델이 검색을 안 했다」는 그 자체로 발견이다
+                self._run.log("a3_web_query",
+                              {**tag, "queries": qs, "n": len(qs),
+                               **({"raw": raw} if raw else {})})
         except Exception:
             pass
         return r

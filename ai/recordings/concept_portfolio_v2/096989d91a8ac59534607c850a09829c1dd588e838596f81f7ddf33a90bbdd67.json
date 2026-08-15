@@ -1,0 +1,1378 @@
+{
+  "taskType": "CLASSIFY_LEGAL_FACT_DEPENDENCIES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-dependency-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4b3636402b0a55785ea1f8ee2e96cd89021f8c4831093095bb954137d7440b3a",
+  "canonicalRequestHash": "096989d91a8ac59534607c850a09829c1dd588e838596f81f7ddf33a90bbdd67",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "dependencyType": "PERSONAL_DATA",
+        "candidate": {
+          "conceptName": "소량 맞춤형 식재료 서비스",
+          "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+          "introduction": "1~2인 가구를 위한 개인 맞춤형 소량 식재료 제공 서비스입니다.",
+          "coreValue": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리의 편리함을 더합니다.",
+          "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "industryCategory": "식품 서비스",
+          "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사와 경쟁 분석이 필요합니다.",
+          "targetRegion": "대한민국",
+          "revenueModel": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+          "price": "월 3만원~5만원",
+          "channels": "온라인 플랫폼 및 소셜 미디어",
+          "differentiators": "고객 맞춤형 레시피 제공, 정기 배송 서비스",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 5.0,
+            "horizonYears": 3,
+            "rationale": "1~2인 가구의 증가와 요리 편의성에 대한 수요 증가",
+            "assumptions": [
+              "1~2인 가구의 요리 수요 증가",
+              "소량 식재료 서비스에 대한 인식 개선"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 100000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "1~2인 가구의 시장 규모 기반",
+            "assumptions": [
+              "소량 식재료 서비스에 대한 수요 증가",
+              "정기 구독 모델의 수익성"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+          "solutionMechanism": "개인 맞춤형 식재료와 레시피를 통해 1~2인 가구의 요리 문제를 해결합니다.",
+          "featureSet": [
+            "고객 맞춤형 레시피 제공",
+            "정기 배송 서비스",
+            "신선한 식재료 확보"
+          ],
+          "actorRoles": [
+            "고객",
+            "식재료 공급업체",
+            "배송업체"
+          ],
+          "platformRole": "온라인 플랫폼 운영자",
+          "operatingModel": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공합니다.",
+          "partnerModel": "지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보합니다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "배송업체",
+          "transactionFlow": [
+            "고객이 온라인 플랫폼에서 주문",
+            "주문에 따라 식재료 패키지 준비",
+            "배송업체가 고객에게 배송"
+          ],
+          "paymentFlow": [
+            "고객이 온라인 플랫폼에서 결제",
+            "결제 확인 후 주문 처리",
+            "배송 완료 후 정산"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송",
+            "포장",
+            "현장 방문"
+          ],
+          "partnerRequirements": [
+            "신선한 식재료 공급을 위한 지역 농가와의 협력"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "신선한 식재료 제공",
+            "음식물 쓰레기 감소"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 1,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+            "useCaseThesis": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+            "valuePropositionThesis": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리의 편리함을 더합니다.",
+            "offerThesis": "고객 맞춤형 레시피 제공 정기 배송 서비스 신선한 식재료 확보",
+            "solutionThesis": "개인 맞춤형 식재료와 레시피를 통해 1~2인 가구의 요리 문제를 해결합니다."
+          },
+          "architecture": {
+            "businessRole": "PLATFORM_INFRASTRUCTURE",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "WEB",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "개인 맞춤형 식재료와 레시피를 통해 1 2인 가구의 요리 문제를 해결합니다",
+          "familyId": "PLATFORM_INFRASTRUCTURE:PARTNER_NETWORK",
+          "familyLabelKo": "플랫폼 인프라 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "PLATFORM_INFRASTRUCTURE",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "WEB",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "dependencyType": "PERSONAL_DATA",
+        "candidate": {
+          "conceptName": "건강한 식단 관리 서비스",
+          "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+          "introduction": "1~2인 가구를 위한 건강한 식단 관리 서비스입니다.",
+          "coreValue": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+          "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "industryCategory": "식품 서비스",
+          "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사와 경쟁 분석이 필요합니다.",
+          "targetRegion": "대한민국",
+          "revenueModel": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+          "price": "월 3만원~5만원",
+          "channels": "온라인 플랫폼 및 소셜 미디어",
+          "differentiators": "건강한 식단 관리 제공, 정기 배송 서비스",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 5.0,
+            "horizonYears": 3,
+            "rationale": "1~2인 가구의 증가와 건강식에 대한 관심 증가로 시장 점유율 확대 가능",
+            "assumptions": [
+              "1~2인 가구의 건강식 수요 증가",
+              "정기 배송 서비스에 대한 수요 증가"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 1000000.0,
+            "currency": "KRW",
+            "period": "1년",
+            "calculationBasis": "1~2인 가구의 시장 규모와 예상 가입자 수 기반",
+            "assumptions": [
+              "시장 내 경쟁업체 수 감소",
+              "소비자 건강식 선호도 증가"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+          "solutionMechanism": "고객의 건강 목표에 맞춘 맞춤형 식재료 패키지 제공",
+          "featureSet": [
+            "맞춤형 식재료 패키지",
+            "정기 배송 서비스",
+            "레시피 제공"
+          ],
+          "actorRoles": [
+            "고객",
+            "영양사",
+            "배송업체"
+          ],
+          "platformRole": "온라인 플랫폼 운영",
+          "operatingModel": "고객의 건강 목표에 따라 맞춤형 식재료를 제공합니다.",
+          "partnerModel": "영양사와 협력하여 건강한 식단을 위한 식재료를 제공합니다.",
+          "providerRole": "식재료 공급업체",
+          "sellerRole": "온라인 플랫폼 운영자",
+          "intermediaryRole": "배송업체",
+          "transactionFlow": [
+            "고객이 온라인 플랫폼에서 주문",
+            "주문 정보가 식재료 공급업체로 전달",
+            "식재료가 포장되어 배송업체로 전달",
+            "배송업체가 고객에게 배송"
+          ],
+          "paymentFlow": [
+            "고객이 온라인 플랫폼에서 결제",
+            "결제 정보가 공급업체에 전달",
+            "공급업체가 배송업체에 비용 지급"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송",
+            "포장"
+          ],
+          "partnerRequirements": [
+            "영양사와의 협력 계약 체결"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "건강한 식단 관리 제공",
+            "정기 배송 서비스"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 3,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+            "useCaseThesis": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+            "valuePropositionThesis": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+            "offerThesis": "맞춤형 식재료 패키지 정기 배송 서비스 레시피 제공",
+            "solutionThesis": "고객의 건강 목표에 맞춘 맞춤형 식재료 패키지 제공"
+          },
+          "architecture": {
+            "businessRole": "PLATFORM_INFRASTRUCTURE",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "WEB",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "고객의 건강 목표에 맞춘 맞춤형 식재료 패키지 제공",
+          "familyId": "PLATFORM_INFRASTRUCTURE:PARTNER_NETWORK",
+          "familyLabelKo": "플랫폼 인프라 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "PLATFORM_INFRASTRUCTURE",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "WEB",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "dependencyType": "PERSONAL_DATA",
+        "candidate": {
+          "conceptName": "신선한 재료 정기 배송 서비스",
+          "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+          "introduction": "1~2인 가구를 위한 신선한 재료 정기 배송 서비스입니다.",
+          "coreValue": "신선한 재료를 정기적으로 배송하여 요리의 편리함을 더합니다.",
+          "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "industryCategory": "식품 서비스",
+          "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사와 경쟁 분석이 필요합니다.",
+          "targetRegion": "대한민국 전역",
+          "revenueModel": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+          "price": "월 3만원~5만원 (정기 배송 기준)",
+          "channels": "온라인 플랫폼 및 모바일 앱을 통해 주문 가능",
+          "differentiators": "신선한 재료 제공, 정기 배송 서비스",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 5.0,
+            "horizonYears": 3,
+            "rationale": "1~2인 가구의 증가와 요리 편의성에 대한 수요 증가",
+            "assumptions": [
+              "1~2인 가구의 요리 수요 증가",
+              "온라인 쇼핑의 증가 추세"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 1000000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "1~2인 가구의 시장 규모를 기반으로 한 추정",
+            "assumptions": [
+              "소량 식재료 수요 증가",
+              "정기 배송 서비스에 대한 수요 증가"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "solutionMechanism": "정기 배송을 통해 신선한 재료를 제공하여 요리의 번거로움을 줄입니다.",
+          "featureSet": [
+            "맞춤형 식재료 패키지",
+            "정기 배송 서비스",
+            "레시피 제공"
+          ],
+          "actorRoles": [
+            "고객",
+            "배송업체",
+            "농가"
+          ],
+          "platformRole": "온라인 플랫폼 운영 및 관리",
+          "operatingModel": "고객의 선호도에 따라 맞춤형 신선 재료를 제공합니다.",
+          "partnerModel": "지역 농가와 협력하여 신선한 재료를 확보합니다.",
+          "providerRole": "신선한 재료를 공급하는 역할",
+          "sellerRole": "고객에게 서비스를 판매하는 역할",
+          "intermediaryRole": "배송 및 물류 관리 역할",
+          "transactionFlow": [
+            "고객 주문",
+            "주문 확인",
+            "재료 준비",
+            "배송",
+            "고객 수령"
+          ],
+          "paymentFlow": [
+            "고객 결제",
+            "결제 확인",
+            "정산"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송",
+            "포장"
+          ],
+          "partnerRequirements": [
+            "지역 농가와의 협력 계약 체결"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "신선한 재료로 요리의 즐거움을 더합니다.",
+            "음식물 쓰레기를 줄이는 혁신적인 서비스입니다."
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 4,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+            "useCaseThesis": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+            "valuePropositionThesis": "신선한 재료를 정기적으로 배송하여 요리의 편리함을 더합니다.",
+            "offerThesis": "맞춤형 식재료 패키지 정기 배송 서비스 레시피 제공",
+            "solutionThesis": "정기 배송을 통해 신선한 재료를 제공하여 요리의 번거로움을 줄입니다."
+          },
+          "architecture": {
+            "businessRole": "PLATFORM_INFRASTRUCTURE",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "APP",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "정기 배송을 통해 신선한 재료를 제공하여 요리의 번거로움을 줄입니다",
+          "familyId": "PLATFORM_INFRASTRUCTURE:PARTNER_NETWORK",
+          "familyLabelKo": "플랫폼 인프라 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "PLATFORM_INFRASTRUCTURE",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C5",
+        "dependencyType": "PERSONAL_DATA",
+        "candidate": {
+          "conceptName": "요리 교육과 식재료 패키지 서비스",
+          "conceptDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+          "introduction": "1~2인 가구를 위한 요리 교육과 식재료 패키지 서비스입니다.",
+          "coreValue": "요리 교육과 함께 필요한 식재료를 제공하여 요리의 즐거움을 더합니다.",
+          "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "industryCategory": "식품 서비스",
+          "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사와 경쟁 분석이 필요합니다.",
+          "targetRegion": "대한민국",
+          "revenueModel": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+          "price": "월 5만원 (예상)",
+          "channels": "온라인 플랫폼 및 소셜 미디어",
+          "differentiators": "요리 교육 제공 및 정기 배송 서비스",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 5.0,
+            "horizonYears": 3,
+            "rationale": "1~2인 가구의 증가와 요리 교육에 대한 관심 증가로 시장 점유율 확대 가능성.",
+            "assumptions": [
+              "1~2인 가구의 요리 교육 수요 증가",
+              "소량 식재료 서비스에 대한 인식 개선"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 1000000.0,
+            "currency": "KRW",
+            "period": "1년",
+            "calculationBasis": "1~2인 가구의 요리 교육 및 식재료 패키지 수요 추정",
+            "assumptions": [
+              "1~2인 가구의 요리 교육 수요 증가",
+              "소량 식재료 서비스에 대한 인식 개선"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+          "solutionMechanism": "요리 교육과 함께 소량의 식재료를 제공하여 요리의 번거로움을 줄입니다.",
+          "featureSet": [
+            "맞춤형 요리 교육",
+            "소량 식재료 패키지",
+            "정기 배송 서비스"
+          ],
+          "actorRoles": [
+            "고객",
+            "요리 강사",
+            "물류 업체"
+          ],
+          "platformRole": "온라인 플랫폼 운영 및 고객 관리",
+          "operatingModel": "고객의 선호도에 따라 맞춤형 요리 교육과 식재료를 제공합니다.",
+          "partnerModel": "요리 강사와 협력하여 다양한 요리 교육 프로그램을 제공합니다.",
+          "providerRole": "식재료 공급 및 요리 교육 제공",
+          "sellerRole": "고객에게 요리 교육 및 식재료 패키지 판매",
+          "intermediaryRole": "물류 업체를 통한 배송 및 관리",
+          "transactionFlow": [
+            "고객이 온라인 플랫폼에서 요리 교육 신청 및 식재료 주문",
+            "요리 강사가 교육 진행",
+            "물류 업체가 식재료 배송"
+          ],
+          "paymentFlow": [
+            "고객이 온라인 플랫폼에서 결제",
+            "정기 구독 모델에 따른 자동 결제",
+            "물류 업체에 대한 정산"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "식재료 포장",
+            "식재료 배송",
+            "현장 방문 및 요리 교육 제공"
+          ],
+          "partnerRequirements": [
+            "요리 강사와의 계약 체결",
+            "물류 업체와의 협력 계약"
+          ],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "신선한 식재료 제공",
+            "전문 요리 강사와의 협력"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 5,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+            "useCaseThesis": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+            "valuePropositionThesis": "요리 교육과 함께 필요한 식재료를 제공하여 요리의 즐거움을 더합니다.",
+            "offerThesis": "맞춤형 요리 교육 소량 식재료 패키지 정기 배송 서비스",
+            "solutionThesis": "요리 교육과 함께 소량의 식재료를 제공하여 요리의 번거로움을 줄입니다."
+          },
+          "architecture": {
+            "businessRole": "PLATFORM_INFRASTRUCTURE",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "DIGITAL",
+            "transactionModel": "RECURRING",
+            "monetizationModel": "SUBSCRIPTION",
+            "customerInteractionModel": "WEB",
+            "dataDependency": "MATERIAL",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "요리 교육과 함께 소량의 식재료를 제공하여 요리의 번거로움을 줄입니다",
+          "familyId": "PLATFORM_INFRASTRUCTURE:PARTNER_NETWORK",
+          "familyLabelKo": "플랫폼 인프라 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "PLATFORM_INFRASTRUCTURE",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "DIGITAL",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "RECURRING",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "SUBSCRIPTION",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "WEB",
+              "confidence": "MEDIUM",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "서비스 제공에 개인 데이터 사용이 필요하지 않음."
+    },
+    {
+      "candidateId": "C3",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "서비스 제공에 개인 데이터 사용이 필요하지 않음."
+    },
+    {
+      "candidateId": "C4",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "서비스 제공에 개인 데이터 사용이 필요하지 않음."
+    },
+    {
+      "candidateId": "C5",
+      "dependencyType": "PERSONAL_DATA",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "서비스 제공에 개인 데이터 사용이 필요하지 않음."
+    }
+  ],
+  "durationMs": 9565,
+  "timestamp": "2026-08-10T07:52:01.358709+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

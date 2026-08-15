@@ -45,6 +45,40 @@ def mde_effective(mde_p: float | None, n_p: int) -> float | None:
     return max(mde_p or 0.0, MDE_FLOOR_K / n_p)
 
 
+def classify_subjects(rows: list[dict], pair_id: str) -> dict[str, str]:
+    """응답자 한 명씩의 분류. `analyze` 가 세는 것과 **같은 규칙**을 사람 단위로 낸다.
+
+    ⚠ `analyze()` 를 고쳐서 여기에 쓰지 않는다. 그 함수에는 G3D 원장 19,994셀을
+    16/16쌍·오차 1e-9 로 재현한다는 증명이 걸려 있고, 반환 모양을 바꾸면 그 증명이 끊긴다.
+    규칙이 갈리지 않게 **분류 분기는 아래 한 곳만 보고 고친다** —
+    `analyze` 의 `cls` 계산과 문장이 같아야 한다.
+
+    반환은 «화면에 앉힐 사람»을 고르는 데 쓴다. 위치응답(`position_driven`·`anti_position`)은
+    내용이 아니라 순서를 보고 고른 사람이라, 인터뷰 인용은 그들을 빼고 고른다.
+    """
+    by = defaultdict(lambda: defaultdict(dict))
+    for r in rows:
+        if r["pair_id"] == pair_id:
+            by[r["subject"]][r["direction"]][r["rep"]] = to_xy(r.get("choice"), r["direction"])
+    decided = {s: {d: decide_adaptive(dirs.get(d, {})) for d in DIRECTIONS}
+               for s, dirs in by.items()}
+
+    out: dict[str, str] = {}
+    for subject, d in decided.items():
+        f, v = d["fwd"], d["rev"]
+        if f not in ("X", "Y") or v not in ("X", "Y"):
+            out[subject] = "undecided"
+        elif f == "X" and v == "Y":
+            out[subject] = "position_driven"
+        elif f == "Y" and v == "X":
+            out[subject] = "anti_position"
+        elif f == "X":
+            out[subject] = "content_X"
+        else:
+            out[subject] = "content_Y"
+    return out
+
+
 def analyze(rows: list[dict], pair_id: str) -> dict:
     """쌍 하나의 Δ 분해 + λ_p 실측. `rows` 는 ok=True 만 넘어와야 한다."""
     by = defaultdict(lambda: defaultdict(dict))

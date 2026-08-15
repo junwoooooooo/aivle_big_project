@@ -1,0 +1,1352 @@
+{
+  "taskType": "CLASSIFY_LEGAL_FACT_DEPENDENCIES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-legal-fact-dependency-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:ff295367da940d6e7c208440814bbc9a562a387ae7fb2e1a25f2fa068aaf2c73",
+  "canonicalRequestHash": "80d5f9f880d6c4b412859f11cfc41289d6ebf8c8061a82e8b7c5642c3f61d35f",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "dependencyType": "BUSINESS_PARTNER",
+        "candidate": {
+          "conceptName": "대학가 중고 거래 플랫폼 A",
+          "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "introduction": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+          "coreValue": "학생들이 가까운 지역에서 저렴한 가격으로 중고 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "industryCategory": "중고 거래 플랫폼",
+          "researchScope": "대학가 및 학생 커뮤니티",
+          "targetRegion": "대학가 지역",
+          "revenueModel": "프리미엄 서비스 및 광고를 통해 수익을 창출한다.",
+          "price": "거래 수수료 5% 및 프리미엄 서비스 월 구독료 5,000원",
+          "channels": "모바일 앱 및 웹사이트",
+          "differentiators": "지역 기반 매칭 시스템, 학생 전용 커뮤니티 기능",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "대학가 학생 수와 중고 거래 수요를 고려할 때, 3년 내 15%의 시장 점유율을 목표로 설정.",
+            "assumptions": [
+              "대학가 학생 수는 매년 증가할 것으로 예상된다.",
+              "중고 거래에 대한 수요는 지속적으로 증가할 것이다."
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 5000000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "대학가 내 학생 수와 평균 거래 금액을 기반으로 한 추정치.",
+            "assumptions": [
+              "대학가 내 학생 수는 약 100,000명으로 추정된다.",
+              "학생 1인당 연간 평균 50,000원의 중고 거래를 할 것으로 예상된다."
+            ],
+            "confidence": "HIGH"
+          },
+          "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "solutionMechanism": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다.",
+          "featureSet": [
+            "위치 기반 검색 기능",
+            "사용자 간 직접 메시징 기능",
+            "거래 진행 및 피드백 시스템"
+          ],
+          "actorRoles": [
+            "학생 사용자",
+            "플랫폼 운영자",
+            "배송 서비스 제공자"
+          ],
+          "platformRole": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다.",
+          "operatingModel": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다.",
+          "partnerModel": "대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "학생 사용자",
+          "intermediaryRole": "없음",
+          "transactionFlow": [
+            "학생 사용자가 물품을 등록한다.",
+            "다른 학생 사용자가 해당 물품을 검색하고 연락한다.",
+            "학생 사용자가 거래를 진행한다."
+          ],
+          "paymentFlow": [
+            "학생 사용자가 거래 금액을 결제한다.",
+            "플랫폼이 수수료를 차감한 후 판매자에게 금액을 송금한다."
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송 서비스 연계"
+          ],
+          "partnerRequirements": [],
+          "qualificationRequirements": [],
+          "advertisingClaims": [],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 1,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+            "valuePropositionThesis": "학생들이 가까운 지역에서 저렴한 가격으로 중고 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+            "offerThesis": "위치 기반 검색 기능 사용자 간 직접 메시징 기능 거래 진행 및 피드백 시스템",
+            "solutionThesis": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "PHYSICAL_DELIVERY",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "PHYSICAL_DELIVERY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "dependencyType": "BUSINESS_PARTNER",
+        "candidate": {
+          "conceptName": "대학가 중고 거래 플랫폼 B",
+          "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "introduction": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+          "coreValue": "학생들이 필요로 하는 중고 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "industryCategory": "중고 거래 플랫폼",
+          "researchScope": "대학가 및 학생 커뮤니티",
+          "targetRegion": "대학가 지역",
+          "revenueModel": "프리미엄 서비스 및 광고를 통해 수익을 창출한다.",
+          "price": "거래 수수료 5% 및 프리미엄 서비스 월 5,000원",
+          "channels": "모바일 앱 및 웹사이트",
+          "differentiators": "사용자 간의 직접 거래 시스템, 학생 전용 커뮤니티 기능",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "대학가 학생 수와 중고 거래 수요를 고려할 때, 3년 내 15%의 시장 점유율을 목표로 설정.",
+            "assumptions": [
+              "대학가 내 학생 수는 매년 증가할 것으로 예상된다.",
+              "중고 거래에 대한 수요는 지속적으로 증가할 것이다."
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 5000000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "대학가 내 학생 수와 평균 거래 금액을 기반으로 한 추정치.",
+            "assumptions": [
+              "대학가 내 학생 수는 약 50만 명으로 추정된다.",
+              "학생 1인당 연간 평균 10만 원의 중고 거래를 할 것으로 예상된다."
+            ],
+            "confidence": "HIGH"
+          },
+          "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "solutionMechanism": "사용자가 직접 등록한 물품을 지역 내 다른 사용자와 연결하여 거래를 성사시킨다.",
+          "featureSet": [
+            "사용자 간의 직접 거래 기능",
+            "학생 전용 커뮤니티 기능",
+            "채팅 기능"
+          ],
+          "actorRoles": [
+            "사용자",
+            "플랫폼 운영자",
+            "배송 서비스 제공자"
+          ],
+          "platformRole": "중고 거래 플랫폼 제공",
+          "operatingModel": "대학가 내 커뮤니티와 협력하여 플랫폼을 운영한다.",
+          "partnerModel": "대학가 주변의 상점과 제휴하여 추가 혜택을 제공한다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "없음",
+          "transactionFlow": [
+            "사용자가 물품을 등록한다.",
+            "다른 사용자가 물품을 검색하고 구매 의사를 표시한다.",
+            "판매자와 구매자가 채팅을 통해 거래 조건을 협의한다.",
+            "거래가 성사되면 사용자 간의 직접 거래가 이루어진다."
+          ],
+          "paymentFlow": [
+            "구매자가 결제한다.",
+            "결제가 완료되면 판매자에게 물품을 전달한다.",
+            "판매자는 물품을 배송하거나 직접 전달한다."
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송 서비스 연계"
+          ],
+          "partnerRequirements": [],
+          "qualificationRequirements": [],
+          "advertisingClaims": [],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 2,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+            "valuePropositionThesis": "학생들이 필요로 하는 중고 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+            "offerThesis": "사용자 간의 직접 거래 기능 학생 전용 커뮤니티 기능 채팅 기능",
+            "solutionThesis": "사용자가 직접 등록한 물품을 지역 내 다른 사용자와 연결하여 거래를 성사시킨다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "PHYSICAL_DELIVERY",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "사용자가 직접 등록한 물품을 지역 내 다른 사용자와 연결하여 거래를 성사시킨다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "PHYSICAL_DELIVERY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "dependencyType": "BUSINESS_PARTNER",
+        "candidate": {
+          "conceptName": "대학가 중고 거래 플랫폼 C",
+          "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "introduction": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+          "coreValue": "학생들이 필요한 중고 생활용품을 저렴하게 거래할 수 있도록 지원한다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "industryCategory": "중고 거래 플랫폼",
+          "researchScope": "대학가 및 학생 커뮤니티",
+          "targetRegion": "대학가 지역",
+          "revenueModel": "프리미엄 서비스 및 광고를 통해 수익을 창출한다.",
+          "price": "거래 수수료 5% 및 프리미엄 서비스 월 구독료 5,000원",
+          "channels": "모바일 앱 및 웹사이트",
+          "differentiators": "지역 기반 매칭 시스템, 학생 전용 커뮤니티 기능",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "대학가 학생 수와 중고 거래 수요를 고려할 때, 3년 내 15% 시장 점유율 달성이 가능하다.",
+            "assumptions": [
+              "대학가 학생 수 증가",
+              "중고 거래에 대한 인식 변화"
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 5000000.0,
+            "currency": "KRW",
+            "period": "연간",
+            "calculationBasis": "대학가 내 중고 거래 시장 규모 추정",
+            "assumptions": [
+              "대학가 내 중고 거래 활성화",
+              "학생들의 거래 참여 증가"
+            ],
+            "confidence": "MEDIUM"
+          },
+          "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "solutionMechanism": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다.",
+          "featureSet": [
+            "위치 기반 검색 기능",
+            "사용자 간 직접 메시징",
+            "거래 후기 시스템"
+          ],
+          "actorRoles": [
+            "사용자",
+            "플랫폼 운영자",
+            "배송 서비스 제공자"
+          ],
+          "platformRole": "중고 거래 플랫폼 운영",
+          "operatingModel": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다.",
+          "partnerModel": "대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "없음",
+          "transactionFlow": [
+            "사용자가 물품 등록",
+            "구매자가 물품 검색 및 선택",
+            "판매자와 구매자 간의 거래 진행",
+            "거래 완료 후 후기 작성"
+          ],
+          "paymentFlow": [
+            "구매자가 결제 진행",
+            "플랫폼이 결제 수취",
+            "판매자에게 수익 지급"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송 서비스 연계"
+          ],
+          "partnerRequirements": [],
+          "qualificationRequirements": [],
+          "advertisingClaims": [
+            "대학가 학생들을 위한 저렴한 중고 거래",
+            "부피가 큰 중고 생활용품 거래의 용이성"
+          ],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 3,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+            "valuePropositionThesis": "학생들이 필요한 중고 생활용품을 저렴하게 거래할 수 있도록 지원한다.",
+            "offerThesis": "위치 기반 검색 기능 사용자 간 직접 메시징 거래 후기 시스템",
+            "solutionThesis": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "PHYSICAL_DELIVERY",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "PHYSICAL_DELIVERY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "dependencyType": "BUSINESS_PARTNER",
+        "candidate": {
+          "conceptName": "대학가 중고 거래 플랫폼 G",
+          "conceptDefinition": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "introduction": "대학가 학생들을 위한 맞춤형 중고 거래 서비스로, 지역 내에서 필요한 가구와 생활용품을 손쉽게 거래할 수 있는 플랫폼입니다.",
+          "coreValue": "학생들이 필요한 중고 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공합니다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "industryCategory": "중고 거래 플랫폼",
+          "researchScope": "대학가 및 학생 커뮤니티",
+          "targetRegion": "대학가 지역",
+          "revenueModel": "프리미엄 서비스 및 광고를 통해 수익을 창출한다.",
+          "price": "거래 수수료는 5%로 설정하며, 프리미엄 서비스는 월 5,000원으로 제공한다.",
+          "channels": "모바일 앱과 웹사이트를 통해 사용자와 소통하며, 대학가 커뮤니티와의 협력을 통해 홍보한다.",
+          "differentiators": "학생 전용 커뮤니티 기능과 지역 기반 매칭 시스템을 통해 사용자 경험을 극대화한다.",
+          "preMarketSomShareHypothesis": {
+            "targetSharePercent": 15.0,
+            "horizonYears": 3,
+            "rationale": "대학가 학생 수와 중고 거래 수요를 고려할 때, 3년 내 15%의 시장 점유율을 목표로 설정한다.",
+            "assumptions": [
+              "대학가 학생 수는 매년 증가할 것으로 예상된다.",
+              "중고 거래에 대한 수요는 지속적으로 증가할 것이다."
+            ]
+          },
+          "preMarketSomHypothesis": {
+            "amount": 5000000.0,
+            "currency": "KRW",
+            "period": "1년",
+            "calculationBasis": "대학가 내 학생 수와 평균 거래 금액을 기반으로 추정한다.",
+            "assumptions": [
+              "대학가 내 학생 수는 약 100,000명이다.",
+              "학생 1인당 연평균 50,000원의 거래를 할 것으로 예상된다."
+            ],
+            "confidence": "HIGH"
+          },
+          "problemScenario": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "solutionMechanism": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다.",
+          "featureSet": [
+            "지역 기반 등록 기능",
+            "사용자 간의 직접 거래 기능",
+            "채팅 기능을 통한 소통",
+            "배송 서비스 연계"
+          ],
+          "actorRoles": [
+            "학생 사용자",
+            "대학가 상점 및 서비스 제공자"
+          ],
+          "platformRole": "학생 전용 중고 거래 플랫폼 운영",
+          "operatingModel": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다.",
+          "partnerModel": "대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다.",
+          "providerRole": "플랫폼 운영 및 관리",
+          "sellerRole": "중고 물품 판매자",
+          "intermediaryRole": "거래 중개 및 지원",
+          "transactionFlow": [
+            "사용자가 물품 등록",
+            "구매자가 물품 조회 및 구매 요청",
+            "판매자와 구매자 간의 직접 거래 진행"
+          ],
+          "paymentFlow": [
+            "구매자가 결제 진행",
+            "결제 확인 후 판매자에게 물품 제공",
+            "판매자에게 수수료 차감 후 정산"
+          ],
+          "personalDataUsage": [],
+          "physicalActivities": [
+            "배송 서비스 연계"
+          ],
+          "partnerRequirements": [],
+          "qualificationRequirements": [],
+          "advertisingClaims": [],
+          "constraintCompliance": [],
+          "schemaVersion": "2.0",
+          "generationStrategy": "EXPLORE",
+          "candidateIndex": 4,
+          "originalCandidate": false,
+          "valueSemantics": [
+            {
+              "fieldKey": "conceptName",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "conceptDefinition",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "introduction",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "coreValue",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetUsers",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "industryCategory",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "researchScope",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "targetRegion",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "revenueModel",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "price",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "channels",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "differentiators",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomShareHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "preMarketSomHypothesis",
+              "source": "AI_HYPOTHESIS",
+              "authority": "OPEN",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "actorRoles",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "platformRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "problemScenario",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "solutionMechanism",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "featureSet",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "operatingModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerModel",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "providerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "sellerRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "intermediaryRole",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "transactionFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "paymentFlow",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "personalDataUsage",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "physicalActivities",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "partnerRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "qualificationRequirements",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            },
+            {
+              "fieldKey": "advertisingClaims",
+              "source": "CONCEPT_GENERATED",
+              "authority": "REVIEWABLE",
+              "decision": "PROPOSED"
+            }
+          ]
+        },
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+            "valuePropositionThesis": "학생들이 필요한 중고 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공합니다.",
+            "offerThesis": "지역 기반 등록 기능 사용자 간의 직접 거래 기능 채팅 기능을 통한 소통 배송 서비스 연계",
+            "solutionThesis": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "PHYSICAL_DELIVERY",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "OTHER",
+            "dataDependency": "NONE",
+            "physicalDependency": "MATERIAL"
+          },
+          "mechanismFamily": "지역 기반의 매칭 시스템을 통해 학생들이 서로의 필요를 충족시키는 거래를 가능하게 한다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "PHYSICAL_DELIVERY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "P2P 거래 플랫폼에서 거래 참가자는 별도 계약·운영 파트너로 간주되지 않음."
+    },
+    {
+      "candidateId": "C2",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "P2P 거래 플랫폼에서 거래 참가자는 별도 계약·운영 파트너로 간주되지 않음."
+    },
+    {
+      "candidateId": "C3",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "P2P 거래 플랫폼에서 거래 참가자는 별도 계약·운영 파트너로 간주되지 않음."
+    },
+    {
+      "candidateId": "C4",
+      "dependencyType": "BUSINESS_PARTNER",
+      "decision": "NOT_REQUIRED",
+      "safeReason": "P2P 거래 플랫폼에서 거래 참가자는 별도 계약·운영 파트너로 간주되지 않음."
+    }
+  ],
+  "durationMs": 8541,
+  "timestamp": "2026-08-10T08:47:48.932228+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

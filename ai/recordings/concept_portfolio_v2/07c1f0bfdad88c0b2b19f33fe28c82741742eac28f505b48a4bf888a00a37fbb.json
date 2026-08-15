@@ -1,0 +1,114 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:760c1f981a5914a899c19930e1da0a407ed3db1e4de8e0453a77c806d71c78bc",
+  "canonicalRequestHash": "07c1f0bfdad88c0b2b19f33fe28c82741742eac28f505b48a4bf888a00a37fbb",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+      "problemFocus": "취업 준비생은 개인 맞춤형 피드백을 받기 어렵다.",
+      "useContext": "AI 코치가 제공하는 맞춤형 피드백으로 면접 준비를 지원하는 서비스.",
+      "valueProposition": "AI 코치가 면접 준비생의 답변을 분석하고 개선점을 제시한다.",
+      "offerThesis": "AI 코치가 면접 준비를 지원하여 자신감을 높인다.",
+      "solutionThesis": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다.",
+      "differentiatingMechanics": [
+        "AI 기반의 실시간 피드백 제공",
+        "직무별 맞춤형 피드백 시스템"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "신입·주니어 채용을 준비하는 성인 취업 준비생",
+      "problemScenario": "취업 준비생은 실제 면접 전 자신의 답변 품질과 개선점을 객관적으로 확인하기 어렵다.",
+      "coreValue": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다.",
+      "conceptDefinition": "AI 기반의 모의면접 분석 및 피드백 제공 서비스",
+      "solutionMechanism": "AI 분석 및 피드백 시스템을 통한 맞춤형 코칭 제공",
+      "featureSet": [
+        "AI 코치 기능",
+        "모의면접 질문 데이터베이스",
+        "사용자 맞춤형 피드백 시스템"
+      ],
+      "operatingModel": "AI 기반의 자동화된 피드백 시스템 운영"
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "신입 및 주니어 채용을 준비하는 성인 취업 준비생",
+        "useCaseThesis": "AI 코치가 제공하는 맞춤형 피드백으로 면접 준비를 지원하는 서비스.",
+        "valuePropositionThesis": "AI 코치가 면접 준비생의 답변을 분석하고 개선점을 제시한다.",
+        "offerThesis": "AI 코치가 면접 준비를 지원하여 자신감을 높인다.",
+        "solutionThesis": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다."
+      },
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "COMMUNITY",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다",
+      "familyId": "PLATFORM_INFRASTRUCTURE:AUTOMATED_DIGITAL",
+      "familyLabelKo": "플랫폼 인프라 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "PLATFORM_INFRASTRUCTURE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "SUBSCRIPTION",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "COMMUNITY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "ADAPTED",
+    "matchedMechanics": [
+      "정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시킨다.",
+      "AI 코치가 면접 준비를 지원하여 자신감을 높인다.",
+      "신입 및 주니어 채용을 준비하는 성인 취업 준비생"
+    ],
+    "missingMechanics": [
+      "AI 기반의 실시간 피드백 제공",
+      "직무별 맞춤형 피드백 시스템"
+    ],
+    "safeSummary": "AI 기반의 모의면접 분석 및 피드백 제공 서비스는 정확한 피드백과 반복 연습을 통해 면접 준비생의 경쟁력을 향상시키며, 신입 및 주니어 채용을 준비하는 성인 취업 준비생을 대상으로 한다."
+  },
+  "durationMs": 2683,
+  "timestamp": "2026-08-10T03:58:19.168532+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

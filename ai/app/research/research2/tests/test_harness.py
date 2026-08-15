@@ -15,7 +15,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "harness"))
 
 import gate as G                                                    # noqa: E402
-from slot_harness import wire, build_prompt                         # noqa: E402
+from slot_harness import wire, build_prompt, repair_design          # noqa: E402
 
 ok, fail = 0, []
 
@@ -450,6 +450,189 @@ check("계열 D 는 **무엇을 세든 선언이 필요하다** (신시장 = 정
       not G.check_unit_subject(_tam("인구"), SU, {"_계열": {"계열": "D"}})["passed"])
 check("계열 미표기는 검사를 끄고 **그 사실을 기록한다** (이주 도구가 되지 않게)",
       G.check_unit_subject(_tam("사업체 수"), SU, {"name": "x"}).get("_비활성"))
+
+print("\n[26] 권고 검사 — **막지 않고 알린다** (판 ㉜)")
+# 권고는 「이렇게 하면 잘 되더라」이지 「이러지 않으면 틀렸다」가 아니다. 막는 검사로 두면
+# 만족 불가능해지는 순간 **수집 자체가 막힌다** — 판 ⑧ 이 그렇게 스냅샷 없이 죽었다.
+_PIN9 = json.load(io.open(os.path.join(ROOT, "data", "slots_hmr-pin09.json"),
+                          encoding="utf-8"))["slots"]
+_PIN6 = json.load(io.open(os.path.join(ROOT, "data", "slots_hmr-pin06.json"),
+                          encoding="utf-8"))["slots"]
+
+check("기준 설계(pin-09)는 두 권고 모두 0건 — 자기 자신을 나무라면 안 된다",
+      not G.check_must_contain(_PIN9)["권고"]
+      and not G.check_habitat_spread(_PIN9, VOCAB)["권고"])
+
+_p6 = G.check_must_contain(_PIN6)["권고"]
+check("거짓 6/6 판본(pin-06)의 S13 이 권고로 잡힌다",
+      any(w["slot_id"] == "S13" and w["must_contain"] == ["문제"] for w in _p6),
+      json.dumps(_p6, ensure_ascii=False)[:160])
+
+# **여기가 「경고만」 결정의 시험이다.** 권고가 몇 건이든 `passed` 는 True 다.
+check("권고가 있어도 검사 자체는 passed=True",
+      G.check_must_contain(_PIN6)["passed"]
+      and G.check_habitat_spread(_PIN6, VOCAB)["passed"])
+_rep_adv, _, _ = gate_of(GOOD)
+check("게이트 전체 판정이 권고 때문에 바뀌지 않는다", _rep_adv["passed"],
+      json.dumps(_rep_adv["요약"], ensure_ascii=False))
+check("권고는 별도 칸으로 샌다 — `요약` 은 통과/실패 이분법 그대로",
+      set(_rep_adv["요약"].values()) <= {"통과", "실패"}
+      and "권고_요약" in _rep_adv and "권고_수" in _rep_adv,
+      json.dumps(_rep_adv.get("권고_요약"), ensure_ascii=False))
+# ⚠ `tools/harness_variance.py` 가 «"통과" 가 아닌 것 = 미통과» 로 센다. 위 줄이 깨지면
+#   권고가 그 도구의 «검사별_미통과_횟수» 에 조용히 실패로 합류한다.
+
+print("\n[26-1] 위반 항목이 전부 dict 는 아니다 — fail-open 이 그걸로 터졌다 (판 ㉜)")
+# `check_hypothesis_leak` 은 «샌 값»을 **문자열**로 낸다. 슬롯에 매인 위반이 아니라 값
+# 자체가 위반이라 그 모양이 옳다. 그런데 fail-open 집계가 `.get("slot_id")` 를 부르며
+# 그것을 몰랐다 — 판 ㉜ 분산 측정에서 실제로 터졌다
+# (AttributeError: 'str' object has no attribute 'get').
+# **하필 「어떤 입력에도 출력은 나온다」를 지키라고 있는 자리가 예외로 죽는 것**이다.
+_leak = G.check_hypothesis_leak(          # 가설 가격이 슬롯 기대에 그대로 박힌 모양
+    [{"slot_id": "S1", "subject": "x", "metric": "이용 요금", "value_range": [1, 19000]}], [],
+    {"6_수익_가격": {"제안값_krw_월": 19000}})
+check("가설 누출의 위반은 문자열이다 (슬롯이 아니라 값이 위반이다)",
+      _leak["violations"] and all(isinstance(v, str) for v in _leak["violations"]),
+      str(_leak["violations"]))
+check("fail-open 집계가 문자열 위반에도 안 터진다",
+      {v.get("slot_id") for c in [_leak] for v in (c.get("violations") or [])
+       if isinstance(v, dict)} == set())
+
+print("\n[27] value_range 전형 밴드 권고 — **기준 설계도 걸려야 한다** (판 ㉜)")
+# 이 검사의 합격 조건은 pin-09 가 **걸리는 것**이다. 6/6 을 낸 기준 설계인데 S1 이
+# [1e9, 5e10] 이고 거래액 전형은 1e11~1e14 다 — 그 6/6 의 ①시장크기는 자릿수 차이
+# 2.88 로 문턱 3.0 을 **간신히** 지나 서 있었다. 통과시키면 검사가 무른 것이다.
+_rb9 = G.check_range_band(_PIN9)
+check("pin-09 가 전형 밴드 권고에 걸린다 (안 걸리면 검사가 무르다)",
+      len(_rb9["권고"]) > 0,
+      json.dumps(_rb9["권고"], ensure_ascii=False)[:160])
+check("걸린 것이 거래액 슬롯이다",
+      all(w["metric"] == "거래액" for w in _rb9["권고"]),
+      str(sorted({w["metric"] for w in _rb9["권고"]})))
+check("그래도 막지는 않는다 (권고다)", _rb9["passed"])
+# 표는 두 층이 **같은 것**을 봐야 한다 — 갈리면 「설계는 통과인데 수집이 버린다」가 생긴다.
+check("설계 층과 수집 층이 같은 표를 읽는다",
+      G._load(os.path.join(ROOT, "rules", "guards.v1.json"))["value_range"]["계량_전형_밴드"]
+      is not None)
+check("밴드 없는 계량 슬롯은 판정하지 않는다 (없는 기준으로 벌하지 않는다)",
+      not G.check_range_band([{"slot_id": "S9", "metric": "시장 점유율",
+                               "value_range": [1, 50]}])["권고"])
+
+print("\n[28] 설계 교정 — **권고를 코드가 고친다** (판 ㉝)")
+# 권고는 `passed=True` 라 재시도를 안 건다. 그래서 권고 8건이 떠도 설계가 한 칸도 안
+# 바뀌었다(§17.9 실측). 답이 표에 값으로 있는 권고는 코드가 고친다 — 그 증명을 **유료
+# 실행 0회로** 한다. 이것이 `repair_design` 이 raw draft 가 아니라 «슬롯 목록»을 받는 이유다.
+_AUTO = json.load(io.open(os.path.join(ROOT, "data", "slots_p33-auto.json"),
+                          encoding="utf-8"))["slots"]
+_HMR = json.load(io.open(os.path.join(ROOT, "data", "concept_hmr-solo.json"), encoding="utf-8"))
+
+_auto_fix = copy.deepcopy(_AUTO)
+_고침 = repair_design(_auto_fix, VOCAB)
+_vr = [c for c in _고침 if c["칸"] == "value_range"]
+_mc = [c for c in _고침 if c["칸"] == "must_contain"]
+check("자동 설계(p33-auto)의 밴드 오류 4칸을 고친다",
+      len(_vr) == 4 and all(c["metric"] == "거래액" for c in _vr),
+      json.dumps([[c["slot_id"], c["metric"]] for c in _vr], ensure_ascii=False))
+check("must_contain 의 공백 낱말 4칸을 고친다",
+      len(_mc) == 4 and all(c["교정"] == ["간편식"] for c in _mc),
+      json.dumps([[c["slot_id"], c["원안"], c["교정"]] for c in _mc], ensure_ascii=False))
+# **손 조립 6/6 판본과 같은 값으로 수렴한다** — 코드가 답을 지어낸 게 아니라는 증거다.
+check("교정 결과가 pin-09 의 가격 슬롯 낱말과 같다",
+      "간편식" in {w for s in _PIN9 for w in (s.get("must_contain") or [])})
+# **이 술어는 `tools/design_score.py` 의 value_range_자릿수 축과 같은 코드다.**
+# 권고가 0 이면 그 축은 0.69 가 아니라 1.00 이다 — 유료 실행 없이 그것을 증명한다.
+check("교정 뒤 전형 밴드 권고가 0건 (= 축 0.69 → 1.00)",
+      not G.check_range_band(_auto_fix)["권고"],
+      json.dumps(G.check_range_band(_auto_fix)["권고"], ensure_ascii=False)[:160])
+check("교정 뒤 must_contain 권고가 0건 (= 축 0.33 → 1.00)",
+      not G.check_must_contain(_auto_fix)["권고"],
+      json.dumps(G.check_must_contain(_auto_fix)["권고"], ensure_ascii=False)[:160])
+# 이미 규율을 지키는 칸은 손대지 않는다 — 안 그러면 「무엇이 고쳐졌나」가 안 보인다.
+check("이미 옳은 낱말(S13 「혼자」)은 그대로 둔다",
+      [s["must_contain"] for s in _auto_fix if s["slot_id"] == "S13"] == [["혼자"]])
+# 없는 낱말을 지어내지 않는다 — 채우는 것은 조회가 아니라 판단이다.
+_없음 = [{"slot_id": "S1", "subject": "냉동 간편식", "metric": "거래액",
+        "must_contain": ["문제"]}]
+check("subject 밖 낱말은 비운다 (지어내지 않는다)",
+      repair_design(_없음, VOCAB)[0]["교정"] == [] and _없음[0]["must_contain"] == [])
+
+# ⚠ **저장된 골든을 소급 무효로 만들지 않는다.** 교정은 넘겨받은 목록만 고치고 파일은
+#   건드리지 않는다 — [27] 이 그대로 통과하는 것이 그 증거이고, 아래가 같은 말을 pin-09
+#   원본에 대고 다시 한다. 권고를 «막는 검사»로 승격했다면 여기서 골든 둘이 죽었다.
+_pin9_fix = copy.deepcopy(_PIN9)
+repair_design(_pin9_fix, VOCAB)
+check("교정본 pin-09 는 권고 0건", not G.check_range_band(_pin9_fix)["권고"])
+check("원본 pin-09 는 그대로 걸린다 (교정이 골든을 안 건드린다)",
+      len(G.check_range_band(_PIN9)["권고"]) == len(_rb9["권고"]) > 0)
+
+check("밴드 없는 계량은 글자 하나도 안 바뀐다",
+      [s["value_range"] for s in _auto_fix if s["metric"] == "시장 점유율"]
+      == [s["value_range"] for s in _AUTO if s["metric"] == "시장 점유율"])
+# 원안이 사라지면 「교정이 무엇을 구했나」를 나중에 코드로 추론해야 하고, 그건 기록이 아니다.
+_원안 = [s for s in _auto_fix if "_value_range_원안" in s]
+check("원안을 밑줄 키로 보존한다 (run.py:243 이 걸러내 엔진에는 안 들어간다)",
+      len(_원안) == 4 and all(k.startswith("_") for s in _원안 for k in s
+                            if k == "_value_range_원안"))
+
+_off = copy.deepcopy(VOCAB)
+_off["설계_교정"]["enabled"] = False
+_off_slots = copy.deepcopy(_AUTO)
+check("끄개를 내리면 0건이고 슬롯이 불변이다 (코드를 안 고치고 되돌린다)",
+      repair_design(_off_slots, _off) == [] and _off_slots == _AUTO)
+
+# 교정이 밀어 넣은 숫자가 다른 검사를 깨뜨리지 않는가. ②는 JSON blob 부분문자열 매칭이라
+# 우연히 가설 값을 품을 수 있고, 터지면 **막는 검사**로 올라와 재시도를 태운다.
+check("교정본이 상한>하한 검사를 그대로 통과한다",
+      G.check_value_range(_auto_fix, VOCAB)["passed"])
+check("교정본이 가설 누출 검사를 그대로 통과한다",
+      G.check_hypothesis_leak(_auto_fix, [], _HMR["_hypotheses_v2"])["passed"],
+      json.dumps(G.check_hypothesis_leak(_auto_fix, [], _HMR["_hypotheses_v2"])
+                 .get("violations"), ensure_ascii=False)[:160])
+
+# **교정은 안전망이고 정본 처방은 지시 정합이다.** 검사하는 것을 프롬프트가 말하지 않으면
+# 모델은 «모르는 것을 못 맞춘» 상태로 남는다 — 교정_수가 그 상태를 재는 값이다.
+_prompt = build_prompt(_HMR, VOCAB, 2026)
+check("프롬프트가 거래액의 전형 크기를 실제로 보여준다",
+      "전형 크기 [1e+11, 1e+14]" in _prompt,
+      [l for l in _prompt.splitlines() if l.strip().startswith("거래액")][:1])
+check("밴드 없는 계량에는 전형 크기를 안 붙인다 (없는 기준을 지어내지 않는다)",
+      all("전형 크기" not in l for l in _prompt.splitlines()
+          if l.strip().startswith("도입률")))
+
+print("\n[29] 발행 가능성 — **게이트가 볼 수 있어야 되먹인다** (판 ㉝)")
+# 이 축은 판 ㉜부터 `design_score` 에만 있었고 **게이트에는 없었다.** 그래서 하네스가
+# 위반을 보지도 되먹이지도 못했고, 제품 경로 첫 유료 실행에서 PRICE 세 칸이 전부 회사를
+# 지목해 셋 다 빈손이 됐다(성적표 ④가격 미확보). 지시는 프롬프트 7 에 이미 있었다 —
+# 모델이 요동한 것이라 처방이 지시 정합이 아니라 **재시도**다.
+_ADAPT = json.load(io.open(os.path.join(ROOT, "rules", "adapters.v1.json"), encoding="utf-8"))
+_회사표적 = [{"slot_id": "S15", "claim_type": "PRICE", "subject": "비비고 냉동식품",
+          "metric": "판매가"},
+          {"slot_id": "S13", "claim_type": "PRICE", "subject": "편의점 도시락",
+           "metric": "판매가"}]
+_pub = G.check_publishability(_회사표적, VOCAB, _ADAPT, _HMR)
+check("씨앗 회사를 지목한 가격 슬롯이 잡힌다",
+      [w["slot_id"] for w in _pub["권고"]] == ["S15"],
+      json.dumps(_pub["권고"], ensure_ascii=False)[:200])
+check("대체재를 지목한 가격 슬롯은 안 잡힌다 (막는 검사가 아니다)", _pub["passed"])
+check("기준 설계(pin-09)는 발행 가능성 권고 0건 — 자기 자신을 나무라면 안 된다",
+      not G.check_publishability(_PIN9, VOCAB, _ADAPT, _HMR)["권고"],
+      json.dumps(G.check_publishability(_PIN9, VOCAB, _ADAPT, _HMR)["권고"],
+                 ensure_ascii=False)[:200])
+# 컨셉이 없으면 씨앗 이름을 모른다 — 없는 기준으로 벌하지 않는다.
+check("컨셉 미지정이면 검사를 끄고 그 사실을 기록한다",
+      G.check_publishability(_회사표적, VOCAB, _ADAPT, None).get("_비활성"))
+# 규칙 값이 코드가 아니라 vocab 에 있어야 다음 판이 코드를 안 고치고 바꾼다.
+check("재시도를 거는 권고 목록은 vocab 에 있다",
+      "발행 가능성(권고)" in VOCAB["재시도"]["권고_재시도"])
+# 코드가 답을 아는 권고는 재시도로 돈을 쓰지 않는다 — `설계_교정` 이 고친다.
+check("코드가 고치는 권고는 재시도 목록에 없다",
+      not ({"must_contain 규율(권고)", "value_range 전형 밴드(권고)"}
+           & set(VOCAB["재시도"]["권고_재시도"])),
+      str(VOCAB["재시도"]["권고_재시도"]))
+
+check("서식지 분산 문턱은 코드가 아니라 vocab 에 있다",
+      (VOCAB["요구"]["서식지_분산"]["최소_서로_다른_subject"] == 3
+       and VOCAB["요구"]["서식지_분산"]["대상_claim_type"] == ["PAIN", "PRICE"]))
 
 print(f"\n===== {ok} 통과 / {len(fail)} 실패")
 for f in fail:

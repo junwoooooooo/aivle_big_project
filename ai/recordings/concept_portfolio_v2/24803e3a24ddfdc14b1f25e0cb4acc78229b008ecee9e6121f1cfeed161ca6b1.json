@@ -1,0 +1,172 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:1d5b9c6b13c72b99bd71dbbe7e522b393ebef3deda29c39ebbe1e5278dca4763",
+  "canonicalRequestHash": "24803e3a24ddfdc14b1f25e0cb4acc78229b008ecee9e6121f1cfeed161ca6b1",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P7",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. AI 분석 서비스의 가치를 강조하여 고객을 유치합니다. 사용자가 요청한 피드백을 신속하게 제공하는 시스템을 구축합니다. 사용자는 플랫폼에 자신의 모의면접 답변을 입력하고, AI로부터 실시간 피드백을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P8",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. AI 분석 서비스의 가치를 강조하여 고객을 유치합니다. 사용자가 요청한 피드백을 신속하게 제공하는 시스템을 구축합니다. 사용자는 자신의 모의면접 답변을 입력하고, AI로부터 피드백을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P9",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. AI 분석 서비스의 가치를 강조하여 고객을 유치합니다. 사용자가 요청한 피드백을 신속하게 제공하는 시스템을 구축합니다. 사용자는 자신의 모의면접 답변을 입력하고, AI로부터 피드백을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P10",
+        "businessText": "AI 분석 시스템과 사용자 인터페이스를 통해 운영됩니다. 교육 기관 및 취업 지원 센터와 협력하여 서비스의 가치를 높입니다. 구독 모델을 통해 지속적인 서비스 이용을 유도합니다. AI 분석 서비스의 가치를 강조하여 고객을 유치합니다. 사용자가 요청한 피드백을 신속하게 제공하는 시스템을 구축합니다. 사용자는 자신의 모의면접 답변을 입력하고, AI로부터 피드백을 받습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 시스템을 통해 교육 기관과 협력하여 구독 모델로 운영되는 서비스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 시스템을 통해 교육 기관과 협력하여 구독 모델로 운영되는 서비스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 시스템을 통해 교육 기관과 협력하여 구독 모델로 운영되는 서비스."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 분석 시스템을 통해 교육 기관과 협력하여 구독 모델로 운영되는 서비스."
+    }
+  ],
+  "durationMs": 6993,
+  "timestamp": "2026-08-10T03:52:01.933575+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

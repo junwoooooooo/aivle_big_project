@@ -9,12 +9,12 @@ const ACTIVE = new Set(['QUEUED', 'READY', 'RUNNING']);
  * 상한이 없으면 죽은 작업을 영원히 조회한다.
  */
 const LIMIT_MS = 20 * 60 * 1000;
-const INTERVAL_MS = 2000;
 
-/** 「실행 → 폴링 → 결과」 한 벌. {@code useMarketPolling} 과 같은 모양이고 상한만 다르다. */
-export default function useTwinSurveyPolling(load, start) {
+/** 「실행 → SSE revision → canonical 결과」 한 벌. interval은 경과시간 표시에만 쓴다. */
+export default function useTwinSurveyLiveState(load, start, refreshKey = 0) {
   const [run, setRun] = useState(null);
   const [result, setResult] = useState(null);
+  const [stale, setStale] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,7 @@ export default function useTwinSurveyPolling(load, start) {
   const apply = useCallback((payload) => {
     setRun(payload?.run ?? null);
     setResult(normalizeTwinSurvey(payload?.version?.result));
+    setStale(Boolean(payload?.stale));
   }, []);
 
   const refresh = useCallback(async () => {
@@ -33,7 +34,7 @@ export default function useTwinSurveyPolling(load, start) {
     } catch (failure) {
       setError(getUserErrorMessage(failure));
     }
-  }, [load, apply]);
+  }, [load, apply, refreshKey]);
 
   useEffect(() => {
     let alive = true;
@@ -48,14 +49,14 @@ export default function useTwinSurveyPolling(load, start) {
       }
     })();
     return () => { alive = false; };
-  }, [load, apply]);
+  }, [load, apply, refreshKey]);
 
   const active = ACTIVE.has(run?.taskState);
 
   useEffect(() => {
     if (!active) { startedAt.current = null; return undefined; }
     if (startedAt.current === null) startedAt.current = Date.now();
-    const timer = setInterval(async () => {
+    const timer = setInterval(() => {
       const spent = Date.now() - startedAt.current;
       setElapsed(Math.floor(spent / 1000));
       if (spent > LIMIT_MS) {
@@ -63,10 +64,9 @@ export default function useTwinSurveyPolling(load, start) {
         setError('20분이 지나도 끝나지 않았다 — 실행이 멈췄을 수 있다. 새로고침하거나 다시 실행해 보라.');
         return;
       }
-      await refresh();
-    }, INTERVAL_MS);
+    }, 1000);
     return () => { clearInterval(timer); setElapsed(0); };
-  }, [active, refresh]);
+  }, [active]);
 
   const trigger = useCallback(async () => {
     setBusy(true);
@@ -83,5 +83,5 @@ export default function useTwinSurveyPolling(load, start) {
     }
   }, [start]);
 
-  return { run, result, error, busy, loading, active, elapsed, trigger, refresh };
+  return { run, result, stale, error, busy, loading, active, elapsed, trigger, refresh };
 }

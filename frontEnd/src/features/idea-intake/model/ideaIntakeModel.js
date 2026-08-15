@@ -174,7 +174,23 @@ export function validateIdeaIntake(draft) {
   ].filter(([key]) => !draft.intake[key]?.trim()));
 }
 
-export function createDerivePayload(draft) {
+export const IDEA_REFERENCE_ACCEPT = '.docx,.txt,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown';
+export const IDEA_REFERENCE_MAX_BYTES = 20 * 1024 * 1024;
+const IDEA_REFERENCE_EXTENSIONS = new Set(['docx', 'txt', 'md']);
+
+export function validateIdeaReferenceFiles(files) {
+  const values = Array.from(files ?? []);
+  if (values.length > 20) return '참고 자료는 최대 20개까지 추가할 수 있습니다.';
+  for (const file of values) {
+    const extension = file.name?.split('.').pop()?.toLowerCase();
+    if (!IDEA_REFERENCE_EXTENSIONS.has(extension)) return 'DOCX, TXT, MD 파일만 추가할 수 있습니다.';
+    if (!file.size) return '빈 파일은 추가할 수 없습니다.';
+    if (file.size > IDEA_REFERENCE_MAX_BYTES) return '파일 하나의 크기는 20MB 이하여야 합니다.';
+  }
+  return '';
+}
+
+export function createDerivePayload(draft, attachmentFileIds = []) {
   const value = (key) => draft.intake[key]?.trim() ?? '';
   return {
     ideaOverview: value('ideaOverview'),
@@ -194,7 +210,7 @@ export function createDerivePayload(draft) {
         otherConstraint: value('otherConstraint'),
       },
     },
-    attachmentFileIds: [],
+    attachmentFileIds,
   };
 }
 

@@ -1,136 +1,99 @@
 import { gateSurvey } from './taskTypeGate.js';
+import { ProjectFormRow } from '../../shared/ui/index.js';
 
 const TYPE_VIEW = {
   DOMINANCE: { label: '명백한 우열형', tone: 'success' },
-  PRICE: { label: '가격형', tone: 'warning' },
+  PRICE: { label: '가격형 — 제공하지 않음', tone: 'danger' },
   ETHICAL_VALUE: { label: '윤리·가치형 — 제공하지 않음', tone: 'danger' },
   UNMEASURABLE: { label: '측정 불가', tone: 'danger' },
   IDENTICAL: { label: '두 안이 같음', tone: 'danger' },
 };
 
+/** 축 이름과 양쪽 값 — 목록 카드가 보여주는 전부다. */
+function summarize(pair) {
+  const axis = Object.keys(pair?.X?.attrs ?? {})[0]
+    ?? Object.keys(pair?.Y?.attrs ?? {})[0] ?? '';
+  return {
+    axis,
+    x: pair?.X?.attrs?.[axis] ?? '',
+    y: pair?.Y?.attrs?.[axis] ?? '',
+    xLabel: pair?.X?.label ?? 'A안',
+    yLabel: pair?.Y?.label ?? 'B안',
+  };
+}
+
 /**
- * 자극 편집 — 사용자가 두 상품안을 확정하는 자리.
+ * 자극 목록 — **무엇과 무엇을 비교하는가**만 보이는 자리.
  *
- * 여기서 유형 판정을 **즉시** 보여주는 이유: 팔 수 없는 질문(윤리·가치형, 다속성 경합)을
- * 실행 뒤에 거절하면 사용자는 기다린 뒤에 빈손이 된다. 고치는 방법까지 그 자리에서 말한다.
+ * 이전에는 여기가 속성×양쪽 값 표였고, 표가 화면을 아래로 늘리는 동안 정작 「이 조사가 무엇을
+ * 묻는가」는 어디에도 없었다. 이제 한 쌍이 카드 한 장이고, 고치는 일은 창(`PairEditorDialog`)
+ * 에서 한다.
  *
- * ⚠ 판정의 정본은 서버다(`ai/app/twin/task_type.py`). 이건 거울이라 갈릴 수 있고,
- * 갈리면 서버가 이긴다. 그래서 실행 버튼을 여는 최종 근거로 쓰지 않는다 —
- * 화면은 막고, 서버도 막는다.
+ * ⚠ 판정의 정본은 서버다(`ai/app/twin/task_type.py`). 여기 배지는 거울이고, 갈리면 서버가
+ * 이긴다 — 그래서 실행을 여는 최종 근거로 쓰지 않는다. 화면도 막고, 서버도 막는다.
+ *
+ * ⚠ **가격 칸은 없다.** 초안이 양쪽에 같은 값을 얹고 그대로 서버로 간다 — 양쪽이 같아야
+ * 우열형이라 편집할 것이 없고, 편집칸을 두면 한쪽만 고쳐 지불의사를 만들 수 있다.
  */
 export default function StimulusEditor({
   situation = '',
   pairs = [],
   onSituationChange,
-  onChange,
+  onEdit,
   disabled = false,
 }) {
   const gate = gateSurvey(pairs);
 
-  const updatePair = (index, next) => {
-    onChange?.(pairs.map((pair, cursor) => (cursor === index ? next : pair)));
-  };
-
-  const updateAttr = (index, side, name, value) => {
-    const pair = pairs[index];
-    updatePair(index, {
-      ...pair,
-      [side]: { ...pair[side], attrs: { ...pair[side].attrs, [name]: value } },
-    });
-  };
-
-  const updatePrice = (index, side, raw) => {
-    const trimmed = String(raw).trim();
-    const parsed = trimmed === '' ? null : Number.parseInt(trimmed, 10);
-    const pair = pairs[index];
-    updatePair(index, {
-      ...pair,
-      [side]: { ...pair[side], priceKrw: Number.isFinite(parsed) ? parsed : null },
-    });
-  };
-
   return (
     <div className="twin-editor">
-      <label className="twin-editor__situation">
-        <span>상황 문장</span>
-        <input
+      <div className="project-form-layout"><ProjectFormRow label="상황 문장" id="twin-situation">
+        {(fieldProps) => <input
           type="text"
           value={situation}
           disabled={disabled}
           onChange={(event) => onSituationChange?.(event.target.value)}
           placeholder="가게에서 하나를 고릅니다. 아래 두 상품이 있습니다."
-        />
-      </label>
+          {...fieldProps}
+        />}
+      </ProjectFormRow></div>
 
-      {pairs.map((pair, index) => {
-        const verdict = gate.verdicts[index];
-        const view = TYPE_VIEW[verdict.taskType] ?? { label: verdict.taskType, tone: 'danger' };
-        const names = [...new Set([
-          ...Object.keys(pair.X?.attrs ?? {}),
-          ...Object.keys(pair.Y?.attrs ?? {}),
-        ])];
+      <ul className="twin-editor__list">
+        {pairs.map((pair, index) => {
+          const { axis, x, y, xLabel, yLabel } = summarize(pair);
+          const verdict = gate.verdicts[index];
+          const view = TYPE_VIEW[verdict.taskType] ?? { label: verdict.taskType, tone: 'danger' };
 
-        return (
-          <section key={pair.pairId} className="twin-editor__pair">
-            <h3>{pair.pairId}</h3>
-
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">속성</th>
-                  <th scope="col">{pair.X?.label ?? 'A안'}</th>
-                  <th scope="col">{pair.Y?.label ?? 'B안'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {names.map((name) => {
-                  const differs = pair.X?.attrs?.[name] !== pair.Y?.attrs?.[name];
-                  return (
-                    <tr key={name} className={differs ? 'is-differing' : undefined}>
-                      <th scope="row">{name}</th>
-                      {['X', 'Y'].map((side) => (
-                        <td key={side}>
-                          <input
-                            type="text"
-                            aria-label={`${pair.pairId} ${name} ${side}`}
-                            value={pair[side]?.attrs?.[name] ?? ''}
-                            disabled={disabled}
-                            onChange={(event) => updateAttr(index, side, name, event.target.value)}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-                <tr className={pair.X?.priceKrw !== pair.Y?.priceKrw ? 'is-differing' : undefined}>
-                  <th scope="row">가격(원)</th>
-                  {['X', 'Y'].map((side) => (
-                    <td key={side}>
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        aria-label={`${pair.pairId} 가격 ${side}`}
-                        value={pair[side]?.priceKrw ?? ''}
-                        disabled={disabled}
-                        onChange={(event) => updatePrice(index, side, event.target.value)}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-
-            <p className={`twin-editor__verdict tone-${view.tone}`} role="status">
-              <strong>{view.label}</strong> {verdict.reason}
-            </p>
-          </section>
-        );
-      })}
+          return (
+            <li key={pair.pairId}>
+              <button
+                type="button"
+                className="twin-pair-card"
+                disabled={disabled}
+                onClick={() => onEdit?.(index)}
+                aria-label={`${axis || pair.pairId} 비교안 편집`}
+              >
+                <span className="twin-pair-card__axis">{axis || '축 없음'}</span>
+                <span className="twin-pair-card__edit" aria-hidden="true">편집</span>
+                {/* 이 두 줄이 이 화면의 본문이다 — 무엇과 무엇을 비교하는가. */}
+                <span className="twin-pair-card__versus">
+                  <span className="twin-pair-card__side">
+                    <b>{xLabel}</b>{x ? ` · ${x}` : ''}
+                  </span>
+                  <span className="twin-pair-card__vs" aria-hidden="true">↔</span>
+                  <span className="twin-pair-card__side">
+                    <b>{yLabel}</b>{y ? ` · ${y}` : ''}
+                  </span>
+                </span>
+                <span className={`twin-pair-card__verdict tone-${view.tone}`}>{view.label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       {gate.blocked.length > 0 && (
         <p className="twin-editor__blocked" role="alert">
-          팔 수 없는 질문이 {gate.blocked.length}개 있다. 위 이유대로 고쳐야 실행할 수 있다.
+          팔 수 없는 질문이 {gate.blocked.length}개 있다. 카드를 눌러 고쳐야 실행할 수 있다.
         </p>
       )}
       {pairs.length === 0 && (

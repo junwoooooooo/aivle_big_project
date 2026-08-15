@@ -19,11 +19,11 @@ export function jobEventsReducer(state, action) {
       return { ...state, connectionState: 'connecting', transport: 'SSE', error: null };
     case 'CONNECTED':
       return { ...state, connectionState: 'live', transport: 'SSE', error: null };
-    case 'POLLING':
+    case 'RECONNECTING':
       return {
         ...state,
-        connectionState: 'live',
-        transport: 'POLLING',
+        connectionState: 'connecting',
+        transport: 'SSE',
         error: action.error ?? null,
       };
     case 'APPEND': {

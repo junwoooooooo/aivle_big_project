@@ -12,6 +12,31 @@ vi.mock('../../../shared/async-events/index.js', () => ({ useJobEvents: vi.fn() 
 describe('useIdeaIntake async recovery', () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it('선택한 문서를 먼저 업로드하고 반환된 ID로 사업안 정리를 시작한다', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const client = {
+      get: vi.fn().mockResolvedValue({ data: response('DRAFT', null, []) }),
+      upload: vi.fn().mockResolvedValue({ data: { attachmentFileId: 17 } }),
+      post: vi.fn().mockResolvedValue({ data: response('DERIVING', 'job-attachment', []) }),
+      patch: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.READY));
+    act(() => {
+      result.current.updateIntake('ideaOverview', '지역 상점 비교 서비스');
+      result.current.updateIntake('problem', '상품 정보를 비교하기 어렵다');
+      result.current.updateIntake('targetUsers', '지역 주민');
+      result.current.setFiles([new File(['조사 메모'], 'memo.txt', { type: 'text/plain' })]);
+    });
+
+    await act(async () => result.current.organizeIdea({ preventDefault: vi.fn() }));
+
+    expect(client.upload).toHaveBeenCalledWith('/api/v3/projects/42/idea-brief/attachments', expect.any(FormData), undefined);
+    expect(client.post).toHaveBeenCalledWith('/api/v3/projects/42/idea-brief/derive',
+      expect.objectContaining({ attachmentFileIds: [17] }), expect.any(Object));
+  });
+
   it('restores an active job and re-queries the brief after a terminal replay event', async () => {
     let terminal = false;
     useJobEvents.mockImplementation(() => ({ terminal, events: [] }));

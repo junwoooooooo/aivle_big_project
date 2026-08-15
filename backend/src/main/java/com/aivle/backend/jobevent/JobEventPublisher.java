@@ -22,19 +22,29 @@ public class JobEventPublisher {
     private final JobEventRepository events;
     private final JobEventPayloadPolicy payloadPolicy;
     private final JobEventStreamService streams;
+    private final ProjectEventStreamService projectStreams;
     private final ObjectMapper mapper;
     private final Clock clock;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public JobEventPublisher(ProjectRepository projects, TaskRunRepository taskRuns,
             JobEventRepository events, JobEventPayloadPolicy payloadPolicy,
-            JobEventStreamService streams, ObjectMapper mapper, Clock jobClock) {
+            JobEventStreamService streams, ProjectEventStreamService projectStreams,
+            ObjectMapper mapper, Clock jobClock) {
         this.projects = projects;
         this.taskRuns = taskRuns;
         this.events = events;
         this.payloadPolicy = payloadPolicy;
         this.streams = streams;
+        this.projectStreams = projectStreams;
         this.mapper = mapper;
         this.clock = jobClock;
+    }
+
+    public JobEventPublisher(ProjectRepository projects, TaskRunRepository taskRuns,
+            JobEventRepository events, JobEventPayloadPolicy payloadPolicy,
+            JobEventStreamService streams, ObjectMapper mapper, Clock jobClock) {
+        this(projects, taskRuns, events, payloadPolicy, streams, null, mapper, jobClock);
     }
 
     @Transactional
@@ -63,7 +73,10 @@ public class JobEventPublisher {
             command.status(), command.messageKey(), paramsJson, command.technicalCode(),
             sequence, LocalDateTime.now(clock)));
         JobEventView view = JobEventView.from(event, mapper);
-        afterCommit(() -> streams.publish(view));
+        afterCommit(() -> {
+            streams.publish(view);
+            if (projectStreams != null) projectStreams.publish(view);
+        });
         return view;
     }
 

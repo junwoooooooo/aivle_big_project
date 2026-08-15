@@ -1,0 +1,286 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:a49bb2dcfeeadfd6943a4f78e113b6f5530dee34f620c39c9abe6aa300fd9765",
+  "canonicalRequestHash": "382dfaba841a8ba325208e9f5a258e96ef3c4704db0aa6f7a4a3f1e6fb2ace7f",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "온라인 플랫폼을 통해 서비스 제공. 여행 관련 업체와 제휴하여 예약 서비스를 제공한다. 사용자는 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 수수료를 받는 모델. 예약 완료 후 사용자에게 확인 이메일 발송. 사용자는 앱을 통해 자신의 이동 가능 시간과 관심사를 입력하고, 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "디지털 플랫폼을 통해 서비스 운영. 여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 발생하는 수익 모델. 예약 완료 후 사용자에게 확인 메시지 발송. 앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "온라인 플랫폼을 통해 서비스 제공. 여행 관련 업체와 제휴하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 수수료를 받는 모델. 예약 완료 후 사용자에게 확인 이메일 발송. 사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "디지털 플랫폼을 통해 서비스 운영. 여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 발생하는 수익 모델. 예약 완료 후 사용자에게 확인 메시지 발송. 앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "온라인 플랫폼을 통해 서비스 제공. 여행 관련 업체와 제휴하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 수수료를 받는 모델. 예약 완료 후 사용자에게 확인 이메일 발송. 사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "디지털 플랫폼을 통해 서비스 운영. 여행사 및 숙박업체와 협력하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 발생하는 수익 모델. 예약 완료 후 사용자에게 확인 메시지 발송. 앱을 통해 사용자가 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P7",
+        "businessText": "온라인 플랫폼을 통해 서비스 제공. 여행 관련 업체와 제휴하여 예약 서비스를 제공한다. 앱 내에서 직접 예약을 진행한다. 제휴 업체로부터 수수료를 받는 모델. 예약 완료 후 사용자에게 확인 이메일 발송. 사용자는 앱을 통해 정보를 입력하고 결과를 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "COMMISSION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 여행 관련 업체와 제휴하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "디지털 플랫폼을 통해 여행사 및 숙박업체와 협력하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 여행 관련 업체와 제휴하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "디지털 플랫폼을 통해 여행사 및 숙박업체와 협력하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 여행 관련 업체와 제휴하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "디지털 플랫폼을 통해 여행사 및 숙박업체와 협력하여 예약 서비스를 제공하는 모델."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 여행 관련 업체와 제휴하여 예약 서비스를 제공하는 모델."
+    }
+  ],
+  "durationMs": 12858,
+  "timestamp": "2026-08-10T05:14:26.420885+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

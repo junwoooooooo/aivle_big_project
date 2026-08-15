@@ -1,0 +1,110 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:875bdaed4a7fe5ddca7cc34216559505658bcc9602f6b7b05fe7e54f896535d3",
+  "canonicalRequestHash": "15900ae817a3e93bdbcfe05d52285132268f0aa045432e25717c771d5d72dc1d",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "큰 포장 단위로 인해 식재료가 남고 음식물 쓰레기가 발생한다.",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+      "valueProposition": "음식물 쓰레기를 줄이는 맞춤형 식재료와 레시피를 제공하여 환경을 보호한다.",
+      "offerThesis": "음식물 쓰레기를 줄이는 맞춤형 식재료와 레시피를 제공하여 요리의 부담을 덜어준다.",
+      "solutionThesis": "고객의 요리 스타일에 맞춘 소량의 식재료와 레시피를 제공하여 음식물 쓰레기를 줄인다.",
+      "differentiatingMechanics": [
+        "음식물 쓰레기 감소 기능 제공",
+        "정기 배송 서비스"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "큰 포장 단위로 인해 식재료가 남고 음식물 쓰레기가 발생한다.",
+      "coreValue": "음식물 쓰레기를 줄이는 맞춤형 식재료와 레시피를 제공하여 환경을 보호한다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료와 레시피를 제공하는 서비스.",
+      "solutionMechanism": "고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식.",
+      "featureSet": [
+        "맞춤형 식재료 제공",
+        "레시피 추천 기능",
+        "정기 배송 서비스"
+      ],
+      "operatingModel": "고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황.",
+        "valuePropositionThesis": "음식물 쓰레기를 줄이는 맞춤형 식재료와 레시피를 제공하여 환경을 보호한다.",
+        "offerThesis": "음식물 쓰레기를 줄이는 맞춤형 식재료와 레시피를 제공하여 요리의 부담을 덜어준다.",
+        "solutionThesis": "고객의 요리 스타일에 맞춘 소량의 식재료와 레시피를 제공하여 음식물 쓰레기를 줄인다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "고객의 요리 스타일에 맞춘 소량의 식재료와 레시피를 제공하여 음식물 쓰레기를 줄인다",
+      "familyId": "OTHER:OTHER",
+      "familyLabelKo": "기타 역할 · 기타 운영",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "PHYSICAL_DELIVERY",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "DIRECT_SALE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "음식물 쓰레기 감소 기능 제공",
+      "정기 배송 서비스"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "개인 맞춤형 소량 식재료와 레시피를 제공하여 음식물 쓰레기를 줄이고 환경을 보호하는 서비스."
+  },
+  "durationMs": 1634,
+  "timestamp": "2026-08-10T03:29:52.037265+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

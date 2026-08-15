@@ -4,8 +4,11 @@ import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.idea.domain.IdeaBriefStatus;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
+import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptInputRequestStatus;
+import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptInputRequestRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.api.ProjectJobView;
+import com.aivle.backend.taskrun.api.ProjectJobHistoryResponse;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -31,12 +34,14 @@ public class ProjectJobQueryService {
     private final ProjectRepository projects;
     private final TaskRunRepository taskRuns;
     private final IdeaBriefRepository ideaBriefs;
+    private final ConceptInputRequestRepository conceptInputs;
 
     public ProjectJobQueryService(ProjectRepository projects, TaskRunRepository taskRuns,
-            IdeaBriefRepository ideaBriefs) {
+            IdeaBriefRepository ideaBriefs, ConceptInputRequestRepository conceptInputs) {
         this.projects = projects;
         this.taskRuns = taskRuns;
         this.ideaBriefs = ideaBriefs;
+        this.conceptInputs = conceptInputs;
     }
 
     public List<ProjectJobView> active(Long ownerId, Long projectId) {
@@ -53,6 +58,16 @@ public class ProjectJobQueryService {
             .toList();
     }
 
+    public ProjectJobHistoryResponse history(Long ownerId, Long projectId, int page, int size) {
+        requireOwned(ownerId, projectId);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        var result = taskRuns.findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            projectId, PageRequest.of(safePage, safeSize));
+        return new ProjectJobHistoryResponse(result.getContent().stream().map(this::view).toList(),
+            result.getNumber(), result.getSize(), result.hasNext(), result.getTotalElements());
+    }
+
     private List<ProjectJobView> find(Long projectId, List<TaskRunState> states) {
         return taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
             projectId, states, PageRequest.of(0, MAX_RESULTS)).stream().map(this::view).toList();
@@ -65,7 +80,7 @@ public class ProjectJobQueryService {
     }
 
     private ProjectJobView view(TaskRun run) {
-        JobModule module = module(run.getTaskType());
+        JobModule module = module(run);
         String rawStatus = run.getState().name();
         boolean actionable = actionable(run);
         String presentationStatus = presentationStatus(run.getState(), actionable);
@@ -92,6 +107,17 @@ public class ProjectJobQueryService {
             return run.getState() == TaskRunState.QUEUED || run.getState() == TaskRunState.READY
                 || run.getState() == TaskRunState.RUNNING;
         }
+        if ((run.getTaskType() == TaskType.CONCEPT_PORTFOLIO_V2_RUN
+                || run.getTaskType() == TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE)
+                && "CONCEPT_PORTFOLIO_RUN".equals(run.getSubjectType())) {
+            boolean latestForSubject = taskRuns
+                .findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                    run.getProject().getId(), run.getSubjectType(), run.getSubjectId())
+                .map(latest -> latest.getId().equals(run.getId())).orElse(false);
+            boolean unresolved = conceptInputs.countByRunIdAndStatusInAndDeletedAtIsNull(
+                run.getSubjectId(), List.of(ConceptInputRequestStatus.OPEN)) > 0;
+            return latestForSubject && unresolved;
+        }
         if (run.getTaskType() != TaskType.IDEA_BRIEF_DERIVATION || !"IDEA_BRIEF".equals(run.getSubjectType())) {
             return true;
         }
@@ -113,24 +139,27 @@ public class ProjectJobQueryService {
         return rawStatus.name();
     }
 
-    private JobModule module(TaskType type) {
-        return switch (type) {
+    private JobModule module(TaskRun run) {
+        return switch (run.getTaskType()) {
             case IDEA_ATTACHMENT_PARSE, IDEA_BRIEF_DERIVATION -> JobModule.IDEA;
+            case CONCEPT_PORTFOLIO_V2_RUN, CONCEPT_PORTFOLIO_V2_CONTINUE,
+                CONCEPT_PORTFOLIO_V2_SELECTION_ACTION -> JobModule.CONCEPT_PORTFOLIO;
             case CONCEPT_FACTORY_RUN, CONCEPT_CANDIDATE, CONCEPT_DISTINCTNESS_JUDGE,
                 CONCEPT_LEGAL_REVIEW, CONCEPT_REDESIGN -> JobModule.CONCEPT_FACTORY;
             case CONCEPT_HYPOTHESIS_ALTERNATIVE, CONCEPT_DELTA_LEGAL_REVIEW -> JobModule.CONCEPT_SELECTION;
-            case TECH_OPS_PROPOSAL -> JobModule.TECH_OPS;
-            case FINANCE_ESTIMATE -> JobModule.FINANCE;
-            case MARKETING_CONTENT_GENERATION -> JobModule.MARKETING;
-            case MARKET_RESEARCH -> JobModule.MARKET;
-            case TWIN_SURVEY -> JobModule.PANEL_SURVEY;
+            case TECH_OPS_PROPOSAL, TECH_OPS_ADVISORY -> JobModule.TECH_OPS;
+            case FINANCE_ESTIMATE, FINANCE_ANALYSIS_REPORT -> JobModule.FINANCE;
+            case MARKETING_CONTENT_GENERATION, MARKETING_VISUAL_GENERATION -> JobModule.MARKETING;
+            case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
+                ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
+            case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.TWIN;
         };
     }
 
     private enum JobModule {
-        IDEA("/idea"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
-        TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing"), MARKET("/market"),
-        PANEL_SURVEY("/panel-survey");
+        IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
+        MARKET("/market"), BUSINESS_MODEL("/business-model"), TWIN("/twin-survey"),
+        TECH_OPS("/tech-ops"), FINANCE("/finance"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }
     }

@@ -1,0 +1,851 @@
+{
+  "taskType": "PLAN_REPLENISHMENT",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-plan-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:19f37f55972f7f3e1850aafb7d33bcb897258ada4fd78e5cf4f0a98ccd14915f",
+  "canonicalRequestHash": "b2b057cb6ce3a66c7b835d7fdbf0595ce9e4e91ce83029fd271b65cc6006b8d3",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+      "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "interpretedTargetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "usageContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "industryCategory": "중고 거래 플랫폼",
+        "researchScope": "대학가 지역 내 중고 거래",
+        "conciseIdeaDefinition": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetRegionInterpretation": "대학가 지역",
+        "relevantKnownCompetitorContext": "기존의 전국 단위 중고 거래 플랫폼들"
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityKernel": {
+        "problemCore": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "targetCore": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "useContexts": [
+          "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황"
+        ],
+        "intentComponents": [
+          "대학가 학생들을 위한 지역 기반 중고 거래 서비스"
+        ],
+        "mustPreserve": [
+          "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "대학가 학생들을 위한 지역 기반 중고 거래 서비스"
+        ],
+        "maySpecialize": [
+          "핵심 대상의 의미 있는 하위 세그먼트",
+          "핵심 사용 맥락의 구체화",
+          "가치 제안 또는 offer의 구체화"
+        ],
+        "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+      },
+      "semanticAnchors": {
+        "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+        "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+      },
+      "sourceLocks": {
+        "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+        "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "existingPlans": [
+      {
+        "title": "대학가 중고 거래 플랫폼 A",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 가까운 지역에서 저렴한 가격으로 필요한 가구와 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+        "offerThesis": "대학가 학생들을 위한 지역 기반 중고 거래 플랫폼으로, 거래 비용을 최소화하고 편리함을 제공한다.",
+        "solutionThesis": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다.",
+        "coreMechanism": "지역 기반 매칭 시스템을 통해 사용자 간의 거래를 지원한다.",
+        "customerInteraction": "앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "valueDelivery": "거래가 성사되면 사용자에게 거래 완료 알림과 함께 후속 서비스 안내를 제공한다.",
+        "operatingApproach": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "transactionApproach": "사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "지역 기반 매칭 시스템",
+          "학생 전용 커뮤니티 기능"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들을 위한 중고 거래의 필요성을 충족시키기 위해.",
+        "planId": "P1",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 가까운 지역에서 저렴한 가격으로 필요한 가구와 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+            "offerThesis": "대학가 학생들을 위한 지역 기반 중고 거래 플랫폼으로, 거래 비용을 최소화하고 편리함을 제공한다.",
+            "solutionThesis": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "대학가 중고 거래 플랫폼 B",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 필요로 하는 가구와 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+        "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+        "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다.",
+        "coreMechanism": "사용자 간의 거래를 지원하는 지역 기반 플랫폼.",
+        "customerInteraction": "앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "valueDelivery": "거래 완료 후 사용자에게 거래 내역과 피드백 요청을 전송한다.",
+        "operatingApproach": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+        "transactionApproach": "직거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "직관적인 검색 기능",
+          "학생 전용 거래 커뮤니티"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들의 중고 거래 수요를 충족시키기 위해.",
+        "planId": "P2",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 필요로 하는 가구와 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+            "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+            "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "대학가 중고 거래 플랫폼 C",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+        "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+        "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다.",
+        "coreMechanism": "지역 기반 매칭 시스템을 통해 사용자 간의 거래를 지원한다.",
+        "customerInteraction": "앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "valueDelivery": "거래가 성사되면 사용자에게 거래 완료 알림과 함께 후속 서비스 안내를 제공한다.",
+        "operatingApproach": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "transactionApproach": "사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "지역 기반 매칭 시스템",
+          "학생 전용 커뮤니티 기능"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들을 위한 중고 거래의 필요성을 충족시키기 위해.",
+        "planId": "P3",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+            "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+            "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다",
+          "familyId": "OTHER:PARTNER_NETWORK",
+          "familyLabelKo": "기타 역할 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "대학가 중고 거래 플랫폼 D",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 가까운 지역에서 저렴한 가격으로 필요한 가구와 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+        "offerThesis": "대학가 학생들을 위한 지역 기반 중고 거래 플랫폼으로, 거래 비용을 최소화하고 편리함을 제공한다.",
+        "solutionThesis": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다.",
+        "coreMechanism": "지역 기반 매칭 시스템을 통해 사용자 간의 거래를 지원한다.",
+        "customerInteraction": "앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "valueDelivery": "거래가 성사되면 사용자에게 거래 완료 알림과 함께 후속 서비스 안내를 제공한다.",
+        "operatingApproach": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "transactionApproach": "사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "지역 기반 매칭 시스템",
+          "학생 전용 커뮤니티 기능"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들을 위한 중고 거래의 필요성을 충족시키기 위해.",
+        "planId": "P4",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 가까운 지역에서 저렴한 가격으로 필요한 가구와 생활용품을 쉽게 거래할 수 있도록 지원한다.",
+            "offerThesis": "대학가 학생들을 위한 지역 기반 중고 거래 플랫폼으로, 거래 비용을 최소화하고 편리함을 제공한다.",
+            "solutionThesis": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다."
+          },
+          "architecture": {
+            "businessRole": "INTERMEDIARY",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 등록하고 매칭할 수 있는 직관적인 인터페이스를 제공하여 거래를 촉진한다",
+          "familyId": "INTERMEDIARY:PARTNER_NETWORK",
+          "familyLabelKo": "거래 중개 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "INTERMEDIARY",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "대학가 중고 거래 플랫폼 E",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 필요한 가구와 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+        "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+        "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다.",
+        "coreMechanism": "사용자 간의 거래를 지원하는 지역 기반 플랫폼.",
+        "customerInteraction": "앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "valueDelivery": "거래 완료 후 사용자에게 거래 내역과 피드백 요청을 전송한다.",
+        "operatingApproach": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+        "transactionApproach": "직거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "직관적인 검색 기능",
+          "학생 전용 거래 커뮤니티"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들의 중고 거래 수요를 충족시키기 위해.",
+        "planId": "P5",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 필요한 가구와 생활용품을 저렴하게 구입하고 판매할 수 있는 기회를 제공한다.",
+            "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+            "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "OTHER",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 거래할 수 있도록 직관적인 검색 및 필터링 기능을 제공한다",
+          "familyId": "OTHER:OTHER",
+          "familyLabelKo": "기타 역할 · 기타 운영",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      },
+      {
+        "title": "대학가 중고 거래 플랫폼 F",
+        "oneLineConcept": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+        "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+        "problemFocus": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+        "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+        "valueProposition": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+        "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+        "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다.",
+        "coreMechanism": "지역 기반 매칭 시스템을 통해 사용자 간의 거래를 지원한다.",
+        "customerInteraction": "앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "valueDelivery": "거래가 성사되면 사용자에게 거래 완료 알림과 함께 후속 서비스 안내를 제공한다.",
+        "operatingApproach": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다.",
+        "partnerApproach": "대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "transactionApproach": "사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다.",
+        "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+        "fulfillmentApproach": "거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+        "differentiatingMechanics": [
+          "지역 기반 매칭 시스템",
+          "학생 전용 커뮤니티 기능"
+        ],
+        "mainChanges": [],
+        "secondaryChanges": [],
+        "legalRiskHints": [],
+        "reasonForPortfolioRole": "대학가 학생들을 위한 중고 거래의 필요성을 충족시키기 위해.",
+        "planId": "P6",
+        "descriptor": {
+          "thesis": {
+            "targetSegmentThesis": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+            "useCaseThesis": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+            "valuePropositionThesis": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 플랫폼을 제공한다.",
+            "offerThesis": "대학가 학생들을 위한 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감한다.",
+            "solutionThesis": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다."
+          },
+          "architecture": {
+            "businessRole": "OTHER",
+            "operatingModel": "PARTNER_NETWORK",
+            "partnerModel": "PARTNER_NETWORK",
+            "deliveryModel": "OTHER",
+            "transactionModel": "OTHER",
+            "monetizationModel": "OTHER",
+            "customerInteractionModel": "APP",
+            "dataDependency": "NONE",
+            "physicalDependency": "NONE"
+          },
+          "mechanismFamily": "사용자가 쉽게 거래할 수 있도록 직관적인 인터페이스를 제공한다",
+          "familyId": "OTHER:PARTNER_NETWORK",
+          "familyLabelKo": "기타 역할 · 파트너 네트워크",
+          "architectureDiagnostics": {
+            "businessRole": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "operatingModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "partnerModel": {
+              "code": "PARTNER_NETWORK",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            },
+            "deliveryModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "transactionModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "monetizationModel": {
+              "code": "OTHER",
+              "confidence": "LOW",
+              "source": "SEMANTIC"
+            },
+            "customerInteractionModel": {
+              "code": "APP",
+              "confidence": "HIGH",
+              "source": "SEMANTIC"
+            }
+          }
+        },
+        "preservedAnchors": {
+          "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "problem": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "targetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생"
+        },
+        "preservedLocks": {},
+        "selectionStatus": "UNSELECTED",
+        "selectionScore": 0.0,
+        "selectionReason": "선택 평가 전",
+        "relationToPortfolio": "NOT_EVALUATED"
+      }
+    ],
+    "rejectedPlans": [
+      {
+        "planId": "P4",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P1"
+      },
+      {
+        "planId": "P5",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P2"
+      },
+      {
+        "planId": "P6",
+        "reasonCode": "PLAN_DUPLICATE",
+        "safeSummary": "Concept Thesis와 Architecture가 기존 Plan과 사실상 같습니다.",
+        "conflictPlanId": "P3"
+      }
+    ],
+    "count": 3,
+    "round": 1
+  },
+  "providerResponse": [
+    {
+      "title": "대학가 중고 거래 플랫폼 G",
+      "oneLineConcept": "대학가 학생들을 위한 맞춤형 중고 거래 서비스",
+      "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "problemFocus": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+      "valueProposition": "학생들이 필요한 가구와 생활용품을 저렴하게 거래할 수 있는 맞춤형 플랫폼을 제공한다.",
+      "offerThesis": "대학가 학생들을 위한 맞춤형 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감하고 편리함을 제공한다.",
+      "solutionThesis": "사용자가 쉽게 거래할 수 있도록 맞춤형 검색 및 필터링 기능을 제공한다.",
+      "coreMechanism": "사용자 맞춤형 추천 시스템을 통해 거래를 지원한다.",
+      "customerInteraction": "앱 내 맞춤형 알림 및 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+      "valueDelivery": "거래 완료 후 사용자에게 거래 내역과 맞춤형 피드백 요청을 전송한다.",
+      "operatingApproach": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+      "partnerApproach": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+      "transactionApproach": "직거래를 통해 중개 수수료를 최소화한다.",
+      "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+      "fulfillmentApproach": "사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+      "differentiatingMechanics": [
+        "사용자 맞춤형 추천 시스템",
+        "학생 전용 거래 커뮤니티"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "대학가 학생들의 중고 거래 수요를 충족시키기 위해."
+    },
+    {
+      "title": "대학가 중고 거래 플랫폼 H",
+      "oneLineConcept": "대학가 학생들을 위한 소셜 중고 거래 서비스",
+      "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "problemFocus": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+      "valueProposition": "학생들이 필요한 가구와 생활용품을 소셜 네트워크를 통해 저렴하게 거래할 수 있도록 지원한다.",
+      "offerThesis": "대학가 학생들을 위한 소셜 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감하고 편리함을 제공한다.",
+      "solutionThesis": "사용자가 쉽게 거래할 수 있도록 소셜 네트워킹 기능을 제공한다.",
+      "coreMechanism": "소셜 미디어와 연동하여 사용자 간의 거래를 지원한다.",
+      "customerInteraction": "앱 내 소셜 피드 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+      "valueDelivery": "거래 완료 후 사용자에게 거래 내역과 소셜 피드백 요청을 전송한다.",
+      "operatingApproach": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다.",
+      "partnerApproach": "대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다.",
+      "transactionApproach": "직거래를 통해 중개 수수료를 최소화한다.",
+      "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+      "fulfillmentApproach": "사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+      "differentiatingMechanics": [
+        "소셜 미디어 연동 기능",
+        "학생 전용 거래 커뮤니티"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "대학가 학생들의 중고 거래 수요를 충족시키기 위해."
+    },
+    {
+      "title": "대학가 중고 거래 플랫폼 I",
+      "oneLineConcept": "대학가 학생들을 위한 친환경 중고 거래 서비스",
+      "targetSegment": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "problemFocus": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "useContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황",
+      "valueProposition": "학생들이 필요한 가구와 생활용품을 친환경적으로 거래할 수 있도록 지원한다.",
+      "offerThesis": "대학가 학생들을 위한 친환경 중고 거래 플랫폼으로, 지역 내 거래를 통해 비용을 절감하고 환경을 보호한다.",
+      "solutionThesis": "사용자가 쉽게 거래할 수 있도록 친환경 인증 시스템을 제공한다.",
+      "coreMechanism": "친환경 인증을 통해 거래를 지원한다.",
+      "customerInteraction": "앱 내 친환경 거래 인증 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+      "valueDelivery": "거래 완료 후 사용자에게 거래 내역과 친환경 피드백 요청을 전송한다.",
+      "operatingApproach": "대학가 내 친환경 커뮤니티와 협력하여 신뢰성을 높인다.",
+      "partnerApproach": "대학가 주변의 친환경 매장과 협력하여 다양한 상품을 제공한다.",
+      "transactionApproach": "직거래를 통해 중개 수수료를 최소화한다.",
+      "commercialApproach": "프리미엄 서비스와 광고를 통해 수익을 창출한다.",
+      "fulfillmentApproach": "사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다.",
+      "differentiatingMechanics": [
+        "친환경 인증 시스템",
+        "학생 전용 거래 커뮤니티"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "대학가 학생들의 중고 거래 수요를 충족시키기 위해."
+    }
+  ],
+  "durationMs": 13486,
+  "timestamp": "2026-08-10T04:59:31.611621+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

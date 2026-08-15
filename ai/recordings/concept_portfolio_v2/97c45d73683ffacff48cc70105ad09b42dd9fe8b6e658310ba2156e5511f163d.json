@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:c1d6f5d275fb1a5395b44dc50637e611992d836de08b39feee1571ece5fa3285",
+  "canonicalRequestHash": "97c45d73683ffacff48cc70105ad09b42dd9fe8b6e658310ba2156e5511f163d",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 공급받는다. 구독 모델을 통해 정기적으로 수익을 창출한다. 고객의 피드백을 반영하여 지속적으로 서비스 개선 및 마케팅 전략을 조정한다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 고객은 앱을 통해 원하는 식재료와 레시피를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 신선한 재료를 공급하기 위해 지역 농가와 협력한다. 구독 모델을 통해 지속적인 수익을 창출한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 주문 후 1~2일 이내에 키트를 배송한다. 앱에서 요리 키트를 선택하고 주문할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "온라인 플랫폼을 통해 레시피 추천 및 관리한다. 레시피 개발자와 협력하여 다양한 요리법을 제공한다. 무료 서비스와 프리미엄 서비스 모델을 혼합하여 수익을 창출한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 추천된 레시피는 즉시 제공된다. 앱에서 남은 재료를 입력하면 맞춤형 레시피를 추천받는다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "온라인 플랫폼을 통해 주문 및 배송을 관리한다. 신선한 재료를 공급하기 위해 지역 농가와 협력한다. 구독 모델을 통해 지속적인 수익을 창출한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 주문 후 1~2일 이내에 신선한 재료를 배송한다. 앱에서 배송 주기를 설정하고 재료를 선택할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "온라인 플랫폼을 통해 교육 및 레시피 공유를 관리한다. 요리 전문가와 협력하여 교육 콘텐츠를 제공한다. 프리미엄 교육 콘텐츠를 통해 수익을 창출한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 교육 콘텐츠는 즉시 제공된다. 앱에서 요리 교육을 받고 레시피를 공유할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "온라인 플랫폼을 통해 식단 관리 및 제공을 관리한다. 영양사와 협력하여 건강한 식단을 제공한다. 구독 모델을 통해 지속적인 수익을 창출한다. 고객의 피드백을 반영하여 서비스 개선 및 마케팅 전략을 조정한다. 주문 후 1~2일 이내에 건강한 식단을 제공한다. 앱에서 건강 목표를 설정하고 식단을 관리할 수 있다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 주문 및 배송을 관리하며, 지역 농가와 협력하여 신선한 재료를 공급받고 구독 모델로 수익을 창출한다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 주문 및 배송을 관리하며, 지역 농가와 협력하여 신선한 재료를 공급받고 구독 모델로 수익을 창출한다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 레시피 추천 및 관리를 하며, 레시피 개발자와 협력하여 다양한 요리법을 제공하고 무료 및 프리미엄 서비스 모델로 수익을 창출한다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 주문 및 배송을 관리하며, 지역 농가와 협력하여 신선한 재료를 공급받고 구독 모델로 수익을 창출한다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 교육 및 레시피 공유를 관리하며, 요리 전문가와 협력하여 교육 콘텐츠를 제공하고 프리미엄 콘텐츠로 수익을 창출한다."
+    },
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 식단 관리 및 제공을 하며, 영양사와 협력하여 건강한 식단을 제공하고 구독 모델로 수익을 창출한다."
+    }
+  ],
+  "durationMs": 8488,
+  "timestamp": "2026-08-10T05:22:48.447090+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

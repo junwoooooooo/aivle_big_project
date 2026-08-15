@@ -24,8 +24,9 @@ import a_design as A1
 import b_estimate as B
 import c_chain as C
 import dart, kosis, web
+import runpath
 from base import load_env_key
-from runlog import RUNS_DIR, Meter, Run, load_rules
+from runlog import Meter, Run, load_rules
 from schema import (Candidate, Concept, Document, Finding, FindingItem, Formula, FormulaVar,
                     Slot, to_dict, 경계_승격)
 
@@ -57,7 +58,8 @@ def load_concept(path: str) -> Concept:
 def _load_collection(source_run: str, from_stage: str, slots, rules, meter, run):
     """원본 실행의 문서를 그대로 읽는다. from_stage=extract 면 발췌만 다시 한다."""
     import web
-    src = os.path.join(HERE, "runs", source_run)
+    # 재사용할 원장은 씨앗(`runs/`)일 수도 수집이 만든 것(`runs-generated/`)일 수도 있다.
+    src = runpath.read_dir(source_run)
     rows = [json.loads(l) for l in io.open(os.path.join(src, "run.jsonl"), encoding="utf-8")
             if l.strip()]
     bodies = json.load(io.open(os.path.join(src, "a3_bodies.json"), encoding="utf-8"))
@@ -101,7 +103,14 @@ def _load_collection(source_run: str, from_stage: str, slots, rules, meter, run)
             findings.append(Finding(
                 slot_id=f["slot_id"], trace_id=f["trace_id"], status=f["status"],
                 findings=[FindingItem(**i) for i in f.get("findings", [])],
-                note=f.get("note", "")))
+                note=f.get("note", ""),
+                # ⚠ **원장에 있는 것을 재구성에서 버리면 재채점이 원판과 달라진다.**
+                #   이 둘은 어댑터만 알 수 있는 사실(무엇을 무엇으로 치환했는가 ·
+                #   무엇으로 대상을 확정했는가)이라 `--from a4` 에서는 **되살릴 방법이 없다** —
+                #   빠지면 상한 울타리와 낱말 대조 면제가 재채점에서 **조용히 사라진다.**
+                #   무료 재채점이 이 프로젝트의 주 측정 수단이라 그 차이가 곧 오측이다.
+                표기_치환=f.get("표기_치환") or [],
+                경로_보증=f.get("경로_보증") or {}))
     else:                                        # extract 부터 — 저장된 문서로 발췌만 다시
         findings = []
         by_slot = {}
@@ -111,6 +120,50 @@ def _load_collection(source_run: str, from_stage: str, slots, rules, meter, run)
             findings.append(web.extract(s_, by_slot.get(s_.slot_id, []), meter,
                                         trace_id=f"{s_.slot_id}-extract", rules=rules))
     return slots, formulas, findings, docs, dict(res.get("adapters") or {})
+
+
+def _empty_docs(docs: dict) -> list:
+    """HTTP 200 을 받고도 본문이 0자인 문서. §7 `fetch_empty` 의 재료.
+
+    **거름망이 아니다.** 예전에는 이것이 `content_status="empty"` 한 칸에 묶여
+    「걸렀다」로 세어졌고, 그래서 깔때기를 읽으면 자료가 나쁜 것처럼 보였다.
+    실측(판 ㉛)은 6건이 전부 JS 렌더 페이지임을 보였다 — 다음 행동이 「더 찾아라」가
+    아니라 「이 페이지는 이 수단으로 못 읽는다」다.
+    """
+    return [{"slot_id": d.slot_id, "url": d.url, "trace_id": d.trace_id,
+             "why": "HTTP 200 인데 본문 0자 — 본문이 JS 로 그려졌을 수 있다"}
+            for d in docs.values()
+            if d.http_status == "ok" and d.content_status == "empty" and d.url]
+
+
+def _capped_docs(findings: list) -> list:
+    """발췌 상한에 걸려 **묻지도 않은** usable 문서. §7 `extract_capped` 의 재료.
+
+    `url_filtered`(열지도 않은 URL)와 같은 부류다 — 「찾아도 없다」가 아니라
+    「우리가 안 봤다」. 이 둘을 자료 부재와 섞으면 §7 이 거짓이 된다.
+    """
+    return [{"slot_id": f.slot_id, "trace_id": t,
+             "why": f"발췌 상한(extract_max_docs)으로 제외 — 모델에게 묻지 않았다"}
+            for f in findings
+            for t in (getattr(f, "extract_log", None) or {}).get("cut") or []]
+
+
+def _log_findings(run, findings: list) -> None:
+    """`a3_finding` 과 `a3_extract` 를 **함께** 남긴다 — 로그 자리가 셋이라 한 곳에 모은다.
+
+    발췌 깔때기는 예전에 `note` 문자열 안에만 있었다(「상한 5 으로 2개 제외: [...]」).
+    문자열은 셀 수 없어서 「우리가 버렸다」와 「자료가 없다」가 구별되지 않았다 —
+    성적표의 미확보가 무엇 때문인지 못 가르던 뿌리 중 하나다(백로그 26).
+
+    ⚠ 같은 사실을 두 노드에 싣지 않는다. `a3_finding` 에서는 `extract_log` 를 **뺀다** —
+      두 곳에 두면 갈라지고, 갈라지면 어느 쪽이 참인지 나중에 못 따진다(실측 6회).
+    """
+    ex = [{"slot_id": f.slot_id, "trace_id": f.trace_id, **f.extract_log}
+          for f in findings if getattr(f, "extract_log", None)]
+    if ex:
+        run.log_many("a3_extract", ex)
+    run.log_many("a3_finding",
+                 [dataclasses.replace(f, extract_log={}) for f in findings])
 
 
 class _WebState:
@@ -146,6 +199,44 @@ def collect_slot(slot: Slot, route, rules: dict, meter):
         return ad, res.finding, {res.document.trace_id: res.document}, [], res, [], None
     f, dmap, cands, state = web.collect(slot, rules, meter, slot.slot_id)
     return ad, f, dmap, cands, _WebState(state), [], None
+
+
+class CollectError(RuntimeError):
+    """부르는 쪽이 잘못 줬다. **CLI 면 사용법 오류, 서버면 400 이다.**
+
+    예전에는 이 자리가 `ap.error(...)` 였다 — argparse 객체를 본체가 들고 있어야 했고,
+    그래서 본체를 함수로 부를 수가 없었다. 메시지는 그대로 옮긴다.
+    """
+
+
+@dataclasses.dataclass
+class CollectOptions:
+    """수집 한 판의 입력. **필드 이름은 CLI 인자의 `dest` 와 같아야 한다** —
+    `main()` 이 `vars(argparse.Namespace)` 를 그대로 부어 만들기 때문이다.
+
+    기본값도 CLI 와 같게 둔다. 두 곳이 갈리면 「CLI 로는 되는데 서버로는 안 된다」가 된다.
+    """
+
+    id: str
+    concept: str
+    slots: str = ""
+    human_slots: str = ""
+    as_of: str = ""
+    from_stage: str = ""
+    source_run: str = ""
+    slots_from: str = "source"
+    direct_only: bool = False
+    direct_urls: str = ""
+    collect_slots: str = ""
+    formulas: str = ""
+    search_prompt: str = ""
+    #: 슬롯당 검색 표본 수. 0 이면 규칙값(기본 2). **검색어가 아니라 뽑기 횟수다.**
+    search_samples: int = 0
+
+    def __post_init__(self):
+        # CLI 기본값과 같은 자리. 서버에서 부를 때 안 채워도 CLI 와 같게 돈다.
+        self.human_slots = self.human_slots or os.path.join(HERE, "data", "slots.json")
+        self.as_of = self.as_of or date.today().isoformat()
 
 
 def main():
@@ -185,11 +276,30 @@ def main():
     ap.add_argument("--formulas", default="",
                     help="사람이 쓴 식 파일(data/formulas.json). 주면 A1 대신 이것을 쓴다 — "
                          "A1 은 슬롯 분산 때문에 켜지 않는다")
+    ap.add_argument("--search-samples", dest="search_samples", type=int, default=0,
+                    help="슬롯당 검색 표본 수. 기본은 rules.adapters.web.search_samples(=2). "
+                         "**검색어가 아니라 뽑기 횟수다** — 문자열은 모델이 정하므로 "
+                         "같은 프롬프트에서 독립 표본을 N번 뽑는다. 적중률 1-(1-q)^N")
     ap.add_argument("--search-prompt", dest="search_prompt", default="",
                     help="A3 SEARCH 문안. 기본은 rules.adapters.web.search_prompt(=v1). "
                          "v12-2 는 **미채택** 문안이라 명시적으로 골라야 쓰인다")
     a = ap.parse_args()
+    try:
+        return collect(CollectOptions(**vars(a)))
+    except CollectError as bad:
+        ap.error(str(bad))                      # CLI 에서는 종전과 같은 사용법 오류다
 
+
+def collect(a: CollectOptions) -> dict:
+    """A1 → A2 → A3 → A4 → B → C. **인자 파싱 밖**이라 서버에서도 부를 수 있다.
+
+    예전에는 이 본체가 `main()` 안에 있었고 `argparse.Namespace` 와 `ap.error` 에 묶여
+    있어서 **오케스트레이터가 부를 방법이 없었다** — 그래서 수집은 사람이 CLI 를 순서대로
+    치는 절차로만 존재했다. 가른 것은 파싱뿐이고 본체는 한 줄도 바꾸지 않았다.
+
+    ⚠ **비싸다.** LLM ≈80회 · 3.5분 이상이고 외부 API(KOSIS·DART·Tavily)를 친다.
+      부르는 쪽이 예산과 마감을 들고 있어야 한다.
+    """
         # **엔진과 하네스는 같은 키를 쓴다** (판 ⑫ ⑴, 2026-08-09 사용자 결정).
     # 옛 코드는 `AI_API_KEY`(=본제품 AI 서버의 키)를 읽었다. 하네스는
     # `OPENAI_API_KEY` 를 읽었으므로 **한 판 안에서 두 계정에 과금**됐고,
@@ -204,12 +314,17 @@ def main():
         import prompts as _p
         _p.search_prompt(a.search_prompt)          # 모르는 이름이면 여기서 멈춘다
         rules["adapters"].setdefault("web", {})["search_prompt"] = a.search_prompt
+    # 표본 수도 같은 자리에서 심는다. **규칙 파일을 손으로 고쳐 재면 측정 조건이 파일
+    # 상태에 숨는다** — 판 ㊱ 에서 실제로 그렇게 쟀고, 다음 판이 무슨 조건이었는지
+    # 알려면 파일 이력을 뒤져야 했다. 판마다 명시하면 result.json 에 값째로 남는다.
+    if a.search_samples:
+        rules["adapters"].setdefault("web", {})["search_samples"] = int(a.search_samples)
     run = Run(a.id, rules=rules, reference_date=a.as_of)
     print(f"    SEARCH 문안 = {rules['adapters'].get('web', {}).get('search_prompt', 'v1')}")
     as_of_year = int(a.as_of[:4])
 
     if a.from_stage and not a.source_run:
-        ap.error("--from 을 쓰려면 --source-run 으로 원본 실행을 지정해야 한다")
+        raise CollectError("--from 을 쓰려면 --source-run 으로 원본 실행을 지정해야 한다")
 
     concept = load_concept(a.concept)
     # 사람이 쓴 식. **A1 을 켜지 않는 대신 여기서 온다** — 식은 승인 대상이라 파일에 있다.
@@ -273,8 +388,8 @@ def main():
                     by_id[sid] = s_
             missing = [x for x in want if x not in by_id]
             if missing:
-                ap.error(f"--collect-slots 에 없는 슬롯: {missing} "
-                         f"(--slots 스냅샷에 있어야 한다)")
+                raise CollectError(f"--collect-slots 에 없는 슬롯: {missing} "
+                                   f"(--slots 스냅샷에 있어야 한다)")
             targets = [by_id[x] for x in want]
             routes = {r.slot_id: r for r in A4.route_sources(targets, rules)}
             print(f"    부분 수집 {want} · 라우팅 "
@@ -329,7 +444,7 @@ def main():
         run.log_many("a3_document", [Document(**{**to_dict(d), "text": (d.text or "")[:400]})
                                      for d in docs.values()])
         run.snapshot("a3_bodies", {t: d.text for t, d in docs.items()})
-        run.log_many("a3_finding", findings)
+        _log_findings(run, findings)
         print(f"재실행 [--from {a.from_stage}] source={a.source_run} · 슬롯 {len(slots)}개 · "
               f"식 {len(formulas)}개 · 문서 {len(docs)}개 · found "
               f"{sum(1 for f in findings if f.status == 'found')}/{len(findings)}")
@@ -399,7 +514,7 @@ def main():
         run.log_many("a3_document", [Document(**{**to_dict(d), "text": (d.text or "")[:400]})
                                      for d in docs.values()])
         run.snapshot("a3_bodies", {t_: d.text for t_, d in docs.items()})
-        run.log_many("a3_finding", findings)
+        _log_findings(run, findings)
         print(f"A3' 직접 주입 문서 {len(docs)}개 · found "
               f"{sum(1 for f in findings if f.status == 'found')}/{len(findings)}")
         ledger, coverage = A4.normalize_and_grade(findings, docs, slots, rules, as_of_year, run)
@@ -469,7 +584,7 @@ def main():
     run.log_many("a3_document", [Document(**{**to_dict(d), "text": (d.text or "")[:400]})
                                  for d in docs.values()])
     run.snapshot("a3_bodies", {t: d.text for t, d in docs.items()})
-    run.log_many("a3_finding", findings)
+    _log_findings(run, findings)
     print(f"A3  문서 {len(docs)}개 (usable "
           f"{sum(1 for d in docs.values() if d.content_status == 'usable')}) · "
           f"found {sum(1 for f in findings if f.status == 'found')}/{len(findings)}"
@@ -488,9 +603,16 @@ def main():
     if url_filtered:
         print(f"    URL 필터로 거른 후보 {len(url_filtered)}건 "
               f"({', '.join(sorted({x['by'] for x in url_filtered}))}) → §7 url_filtered")
+    empties = _empty_docs(docs)
+    if empties:
+        print(f"    200 을 받고도 본문 0자인 문서 {len(empties)}건 → §7 fetch_empty")
+    capped = _capped_docs(findings)
+    if capped:
+        print(f"    발췌 상한으로 안 물어본 문서 {len(capped)}건 → §7 extract_capped")
     return _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
                    ledger, coverage, rules, as_of_year, unknown_codes,
-                   url_filtered=url_filtered, injected_diag=injected_diag)
+                   url_filtered=url_filtered, injected_diag=injected_diag,
+                   extract_capped=capped, fetch_empty=empties)
 
 
 def _seen_direct(docs: dict) -> dict:
@@ -564,10 +686,13 @@ def _collect_direct(path, slots, rules, meter, run, seen_per_slot=None):
     _refetch = bool(_raw.get("refetch"))
     # 코퍼스 색인: canonical_url → (payload, 본문)
     idx = {}
-    # 원장 위치는 `runlog.RUNS_DIR` 하나로 본다 — 컨테이너에서는 볼륨을 가리킨다(판 ㉝).
+    # 원장 위치는 `runpath` 하나로 본다 — 컨테이너에서는 볼륨을 가리킨다(판 ㉝).
     # 여기만 HERE/runs 로 남으면 주입용 코퍼스 색인이 **빈 채로 조용히** 돈다.
-    for r in sorted(os.listdir(RUNS_DIR)):
-        d = os.path.join(RUNS_DIR, r)
+    # ⚠ **두 자리를 다 훑는다.** 수집이 만든 원장의 본문도 코퍼스다 — 한쪽만 보면
+    #   주입 사양이 「본문 없음」으로 조용히 비고, 그것이 심사 실패로 오진된다.
+    for base, r in ((b, r) for b in runpath.SEARCH_ORDER if os.path.isdir(b)
+                    for r in sorted(os.listdir(b))):
+        d = os.path.join(base, r)
         jl, bp = os.path.join(d, "run.jsonl"), os.path.join(d, "a3_bodies.json")
         if not (os.path.isfile(jl) and os.path.exists(bp)):
             continue
@@ -649,7 +774,8 @@ def _collect_direct(path, slots, rules, meter, run, seen_per_slot=None):
 
 def _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
             ledger, coverage, rules, as_of_year, unknown_codes,
-            slots_overlay_diff=None, url_filtered=None, injected_diag=None):
+            slots_overlay_diff=None, url_filtered=None, injected_diag=None,
+            extract_capped=None, fetch_empty=None):
     # ── B ─────────────────────────────────────────────────────
     estimates, recs = B.run_block_b(formulas, ledger, coverage, slots,
                                     rules["assumptions"]["by_role"], rules, as_of_year, run)
@@ -663,7 +789,8 @@ def _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
         recs, ledger, coverage, slots, estimates,
         {k: v for k, v in user_input.items() if v is not None},
         rules, adapters=run.adapters, coverage_caveat=run.coverage_caveat(),
-        run=run, unknown_codes=unknown_codes, url_filtered=url_filtered)
+        run=run, unknown_codes=unknown_codes, url_filtered=url_filtered,
+        extract_capped=extract_capped, fetch_empty=fetch_empty)
     # 백로그 25 — 주입분 발췌 진단. **§7 이 아니다.** §7 은 "못 찾은 것"이고 이건
     # "주입한 문서가 발췌를 통과했는가"라 성격이 다르다. 섞으면 §7 이 오염된다.
     report.injected_extract = injected_diag or []

@@ -1,0 +1,182 @@
+{
+  "taskType": "IDEA_BRIEF_DERIVATION",
+  "operationVersion": "v2",
+  "promptVersion": "idea-brief-current-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fbc2ec4adb3fe350d8f6425de85b86cc68a1db35895870e6ddac7080a1bba498",
+  "canonicalRequestHash": "a37adcc964edc883149e34b73b22c200618901efd5fc12dfe676dc134dcf73de",
+  "redactedRequest": {
+    "input": {
+      "mode": "FINAL_SYNTHESIS",
+      "ideaOverview": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "부피가 큰 중고 생활용품은 기존 전국 단위 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        }
+      ],
+      "attachmentFileIds": [],
+      "fieldMetadata": [
+        {
+          "fieldKey": "ideaOverview",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "problem",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetUsers",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetRegion",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "revenueModel",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "price",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "channels",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "differentiators",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        }
+      ]
+    }
+  },
+  "providerResponse": {
+    "safetyReview": {
+      "decision": "ALLOW",
+      "categories": [],
+      "restrictions": [],
+      "userFacingReason": "이 아이디어는 안전하며, 대학가에서 학생들이 필요한 가구와 생활용품을 거래할 수 있는 플랫폼을 제공하는 것입니다."
+    },
+    "interpretation": {
+      "interpretedProblem": "부피가 큰 중고 생활용품은 기존 플랫폼에서 운송 비용 때문에 거래가 어렵다.",
+      "interpretedTargetUsers": "대학가에서 이사·입퇴실을 준비하는 학생과 자취생",
+      "usageContext": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 거래하는 상황.",
+      "industryCategory": "중고 거래 플랫폼",
+      "researchScope": "대학가 및 학생 커뮤니티",
+      "conciseIdeaDefinition": "대학가 학생들을 위한 지역 기반 중고 거래 서비스",
+      "targetRegionInterpretation": "대학가 지역",
+      "relevantKnownCompetitorContext": "기존의 전국 단위 중고 거래 플랫폼들."
+    },
+    "commitmentCandidates": [],
+    "questions": [],
+    "contradictions": [],
+    "readiness": {
+      "status": "READY_FOR_REVIEW",
+      "score": 100,
+      "missingFieldKeys": []
+    },
+    "userFacingSummary": "대학가에서 이사하거나 기숙사를 옮기는 학생들이 가구와 생활용품을 가까운 사람끼리 거래할 수 있도록 지역 기반 등록·매칭·거래 기능을 제공하는 서비스입니다."
+  },
+  "durationMs": 5660,
+  "timestamp": "2026-08-10T08:44:09.858070+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fb797b3919d4dc1ab1dc7533830e385cfe145876ecfe1bc433773629f3854003",
+  "canonicalRequestHash": "a5108e01e476f66a2574a27e4e61742b46c7ddcca2f3bd379147999eb9b363e6",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C2-F1",
+        "field": "platformRole",
+        "value": "거래 매칭 및 안전한 거래 환경 제공",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "HIGH",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2-F1",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "HIGH",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      },
+      {
+        "candidateId": "C2-F1",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "MEDIUM",
+            "transactionModel": "HIGH",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "LOW"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C2-F1",
+      "field": "platformRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다."
+    },
+    {
+      "candidateId": "C2-F1",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자는 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다."
+    },
+    {
+      "candidateId": "C2-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자는 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다."
+    }
+  ],
+  "durationMs": 3292,
+  "timestamp": "2026-08-10T07:56:19.078647+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

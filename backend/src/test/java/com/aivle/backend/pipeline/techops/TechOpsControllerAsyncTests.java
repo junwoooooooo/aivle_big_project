@@ -8,6 +8,7 @@ import com.aivle.backend.pipeline.techops.api.TechOpsApiModels.ProposalActionRes
 import com.aivle.backend.pipeline.techops.api.TechOpsApiModels.ProposalDecisionRequest;
 import com.aivle.backend.pipeline.techops.api.TechOpsController;
 import com.aivle.backend.pipeline.techops.application.TechOpsService;
+import com.aivle.backend.pipeline.techops.application.TechOpsAdvisoryService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ class TechOpsControllerAsyncTests {
             "command-1", "request-1")).thenReturn(new ProposalActionResponse(
                 null, "task-1", "task-1", "QUEUED", "REJECT_AND_REQUEST_ALTERNATIVE",
                 "deliveryOrProductionMethod", 2));
-        TechOpsController controller = new TechOpsController(service, user);
+        TechOpsController controller = new TechOpsController(service, mock(TechOpsAdvisoryService.class), user);
 
         var accepted = controller.decide(41L, "deliveryOrProductionMethod", alternative,
             "command-1", request);

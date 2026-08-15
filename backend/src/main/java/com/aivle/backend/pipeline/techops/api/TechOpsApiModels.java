@@ -27,4 +27,13 @@ public final class TechOpsApiModels {
     public record SnapshotView(String contract, String snapshotId, String schemaVersion, Long projectId,
         String preparationId, String sourceMarketSeedSnapshotId, String snapshotHash, Instant createdAt,
         JsonNode snapshot) {}
+    public record AdvisoryActionResponse(String taskRunId, String jobId, String status,
+        String techOpsInputSnapshotId, String sourceMarketSeedSnapshotId,
+        Long sourceMarketResearchVersionId, Long sourceBusinessModelVersionId) {}
+    public record AdvisoryView(String reportId, String taskRunId, String status, boolean retryable,
+        String errorCode, boolean stale, String techOpsInputSnapshotId,
+        String sourceMarketSeedSnapshotId, Long sourceMarketResearchVersionId,
+        Long sourceBusinessModelVersionId, Long sourcePortfolioSelectionId,
+        String selectedConceptId, String selectedConceptHash, String contractVersion,
+        JsonNode result, LocalDateTime createdAt) {}
 }

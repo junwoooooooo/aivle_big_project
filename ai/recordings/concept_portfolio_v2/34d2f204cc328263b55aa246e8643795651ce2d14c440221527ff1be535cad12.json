@@ -1,0 +1,114 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4fc69457182a53b8f371d073cc7a069a2e0e03d63630b3adec68cbabbf47f773",
+  "canonicalRequestHash": "34d2f204cc328263b55aa246e8643795651ce2d14c440221527ff1be535cad12",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결한다.",
+      "useContext": "소량의 식재료를 활용하여 요리를 할 수 있도록 돕는 서비스.",
+      "valueProposition": "남은 재료를 활용한 다양한 레시피를 제공하여 요리의 즐거움을 더한다.",
+      "offerThesis": "고객이 남은 재료로 요리할 수 있는 레시피를 제공하여 낭비를 줄인다.",
+      "solutionThesis": "남은 재료를 활용한 요리법을 제안하여 고객의 요리 경험을 풍부하게 한다.",
+      "differentiatingMechanics": [
+        "레시피 추천 알고리즘",
+        "사용자 맞춤형 요리 팁 제공",
+        "커뮤니티 피드백 시스템"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "coreValue": "고객이 남은 재료로 요리할 수 있는 레시피를 제공하여 낭비를 줄인다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "solutionMechanism": "고객이 입력한 남은 재료를 기반으로 레시피를 추천하는 시스템.",
+      "featureSet": [
+        "레시피 추천 시스템",
+        "사용자 맞춤형 요리 팁",
+        "레시피 공유 기능"
+      ],
+      "operatingModel": "고객의 요리 데이터를 분석하여 레시피 추천 알고리즘을 개선한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+        "useCaseThesis": "소량의 식재료를 활용하여 요리를 할 수 있도록 돕는 서비스.",
+        "valuePropositionThesis": "남은 재료를 활용한 다양한 레시피를 제공하여 요리의 즐거움을 더한다.",
+        "offerThesis": "고객이 남은 재료로 요리할 수 있는 레시피를 제공하여 낭비를 줄인다.",
+        "solutionThesis": "남은 재료를 활용한 요리법을 제안하여 고객의 요리 경험을 풍부하게 한다."
+      },
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "AUTOMATED_DIGITAL",
+        "partnerModel": "OTHER",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "남은 재료를 활용한 요리법을 제안하여 고객의 요리 경험을 풍부하게 한다",
+      "familyId": "OTHER:AUTOMATED_DIGITAL",
+      "familyLabelKo": "기타 역할 · 디지털 자동화",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "AUTOMATED_DIGITAL",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "RECURRING",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "ADAPTED",
+    "matchedMechanics": [
+      "레시피 추천 시스템",
+      "사용자 맞춤형 요리 팁",
+      "레시피 공유 기능"
+    ],
+    "missingMechanics": [
+      "커뮤니티 피드백 시스템"
+    ],
+    "safeSummary": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스로, 고객이 남은 재료로 요리할 수 있는 레시피를 제공하여 낭비를 줄인다. 1~2인 가구를 타겟으로 하며, 요리 데이터를 분석하여 레시피 추천 알고리즘을 개선하는 운영 모델을 갖추고 있다."
+  },
+  "durationMs": 2286,
+  "timestamp": "2026-08-10T03:32:29.768108+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

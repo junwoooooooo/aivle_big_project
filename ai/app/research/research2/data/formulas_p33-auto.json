@@ -1,0 +1,295 @@
+{
+  "_설명": "슬롯 하네스 산출 스냅샷 (p33-auto). 같은 컨셉 재실행은 이 파일을 쓴다 — 재생성 금지.",
+  "_생성": {
+    "방식": "LLM 초안 + 기계 게이트",
+    "model": "gpt-4o",
+    "시도": 2,
+    "일자": "2026-08-12",
+    "게이트": "runs/harness/p33-auto/gate.json"
+  },
+  "_수정이력": [],
+  "concept": "1인 가구 대상 프리미엄 냉동 간편식 브랜드",
+  "as_of": "2026-08-12",
+  "formulas": [
+    {
+      "formula_id": "F_TAM",
+      "target": "TAM",
+      "path": "topdown",
+      "template": "T7",
+      "vars": [
+        {
+          "var_id": "V1",
+          "var_role": "시장거래액",
+          "subject": "냉동 간편식",
+          "metric": "거래액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V2",
+          "var_role": "추정점유율",
+          "subject": "냉동 간편식",
+          "metric": "시장 점유율",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_SAM",
+      "target": "SAM",
+      "path": "bottomup",
+      "template": "T7",
+      "vars": [
+        {
+          "var_id": "V3",
+          "var_role": "시장거래액",
+          "subject": "냉동 간편식",
+          "metric": "거래액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V4",
+          "var_role": "추정점유율",
+          "subject": "냉동 간편식",
+          "metric": "시장 점유율",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_GROWTH",
+      "target": "TAM_GROWTH",
+      "path": "topdown",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V5",
+          "var_role": "성장률",
+          "subject": "냉동 간편식",
+          "metric": "거래액",
+          "period": "2024",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V6",
+          "var_role": "성장률",
+          "subject": "냉동 간편식",
+          "metric": "거래액",
+          "period": "2023",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_COMP",
+      "target": "COMP",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V7",
+          "var_role": "경쟁사규모",
+          "subject": "비비고",
+          "metric": "매출액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": "CJ제일제당",
+          "_observable": true
+        },
+        {
+          "var_id": "V8",
+          "var_role": "경쟁사규모",
+          "subject": "오뚜기 냉동식품",
+          "metric": "매출액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": "오뚜기",
+          "_observable": true
+        },
+        {
+          "var_id": "V9",
+          "var_role": "경쟁사규모",
+          "subject": "풀무원 간편식",
+          "metric": "매출액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": "풀무원식품",
+          "_observable": true
+        },
+        {
+          "var_id": "V10",
+          "var_role": "경쟁사규모",
+          "subject": "프레시지",
+          "metric": "매출액",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": "프레시지",
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_DIFF",
+      "target": "COMPARABLE",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V11",
+          "var_role": "비교축",
+          "subject": "비비고",
+          "metric": "누적 가입자 수",
+          "period": "2025",
+          "unit": "명",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_CHANNEL",
+      "target": "CHANNEL",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V12",
+          "var_role": "채널벤치마크",
+          "subject": "신세계푸드 간편식",
+          "metric": "고객 획득 비용",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_PAIN",
+      "target": "PAIN",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V13",
+          "var_role": "문제근거",
+          "subject": "1인 가구 혼자 식사",
+          "metric": "문제 경험률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V14",
+          "var_role": "문제근거",
+          "subject": "냉동 간편식 제한점",
+          "metric": "문제 경험률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V15",
+          "var_role": "문제근거",
+          "subject": "혼자 저녁 해결의 불편함",
+          "metric": "문제 경험률",
+          "period": "2025",
+          "unit": "%",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    },
+    {
+      "formula_id": "F_PRICE",
+      "target": "PRICE",
+      "path": "bottomup",
+      "template": "T5",
+      "vars": [
+        {
+          "var_id": "V16",
+          "var_role": "대체재가격",
+          "subject": "배달 음식",
+          "metric": "이용 요금",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V17",
+          "var_role": "대체재가격",
+          "subject": "편의점 도시락",
+          "metric": "이용 요금",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        },
+        {
+          "var_id": "V18",
+          "var_role": "대체재가격",
+          "subject": "외식",
+          "metric": "이용 요금",
+          "period": "2025",
+          "unit": "원",
+          "subject_code": null,
+          "stat_code": null,
+          "corp_name": null,
+          "_observable": true
+        }
+      ]
+    }
+  ]
+}

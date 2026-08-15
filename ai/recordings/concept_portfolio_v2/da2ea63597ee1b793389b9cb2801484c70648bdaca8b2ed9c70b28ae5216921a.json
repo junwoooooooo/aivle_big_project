@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:b6d5083af2651d698d597f3c161df0c1415c3c4c879747db39866e97767a0f1a",
+  "canonicalRequestHash": "da2ea63597ee1b793389b9cb2801484c70648bdaca8b2ed9c70b28ae5216921a",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C2-F1",
+        "businessText": "중고 거래 플랫폼 운영자 플랫폼 운영자 상품 판매자 거래 중개자 대학가 내 커뮤니티와 협력하여 신뢰성을 높인다. 대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다. 사용자가 상품 등록 구매자가 상품 검색 및 선택 판매자와 구매자 간의 채팅 및 거래 협의 직거래 진행 구매자가 판매자에게 직접 결제 거래 완료 후 사용자에게 거래 내역 전송 프리미엄 서비스와 광고를 통해 수익을 창출한다. 모바일 앱과 웹사이트를 통해 사용자에게 접근한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "중고 거래 플랫폼으로, 대학가 커뮤니티와 협력하여 신뢰성을 높이고 다양한 상품을 제공하는 중개자 역할을 수행."
+    }
+  ],
+  "durationMs": 2731,
+  "timestamp": "2026-08-10T05:00:51.566344+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

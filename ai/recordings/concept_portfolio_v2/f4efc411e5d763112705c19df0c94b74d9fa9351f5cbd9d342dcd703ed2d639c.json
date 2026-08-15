@@ -1,0 +1,182 @@
+{
+  "taskType": "IDEA_BRIEF_DERIVATION",
+  "operationVersion": "v2",
+  "promptVersion": "idea-brief-current-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:33e2ed4d2e2203ccd102f2eab38a72e47cdbfb68c887e9c1e154aba0f9dd85ec",
+  "canonicalRequestHash": "f4efc411e5d763112705c19df0c94b74d9fa9351f5cbd9d342dcd703ed2d639c",
+  "redactedRequest": {
+    "input": {
+      "mode": "FINAL_SYNTHESIS",
+      "ideaOverview": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "반려동물 보호자와 검증된 지역 펫시터를 연결하고 예약·결제·이용 후기를 제공하는 서비스",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "decisionState": "OPEN"
+        }
+      ],
+      "attachmentFileIds": [],
+      "fieldMetadata": [
+        {
+          "fieldKey": "ideaOverview",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "problem",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetUsers",
+          "requiredForConcept": true,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "targetRegion",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "revenueModel",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "price",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "channels",
+          "requiredForConcept": false,
+          "regulatorySensitive": true
+        },
+        {
+          "fieldKey": "differentiators",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "requiredForConcept": false,
+          "regulatorySensitive": false
+        }
+      ]
+    }
+  },
+  "providerResponse": {
+    "safetyReview": {
+      "decision": "ALLOW",
+      "categories": [],
+      "restrictions": [],
+      "userFacingReason": "이 아이디어는 안전하며, 반려동물 보호자와 펫시터를 연결하는 서비스입니다."
+    },
+    "interpretation": {
+      "interpretedProblem": "보호자가 가까운 지역에서 믿을 수 있는 돌봄 제공자를 빠르게 찾고 비교하기 어렵다.",
+      "interpretedTargetUsers": "출장·야근 등으로 단기 돌봄이 필요한 반려동물 보호자",
+      "usageContext": "반려동물 돌봄 서비스",
+      "industryCategory": "반려동물 서비스",
+      "researchScope": "지역 기반 펫시터 서비스",
+      "conciseIdeaDefinition": "반려동물 보호자와 검증된 지역 펫시터를 연결하는 플랫폼",
+      "targetRegionInterpretation": "구체적인 지역 정보는 제공되지 않음",
+      "relevantKnownCompetitorContext": "경쟁자 정보는 제공되지 않음"
+    },
+    "commitmentCandidates": [],
+    "questions": [],
+    "contradictions": [],
+    "readiness": {
+      "status": "READY_FOR_REVIEW",
+      "score": 0,
+      "missingFieldKeys": []
+    },
+    "userFacingSummary": "이 서비스는 반려동물 보호자와 검증된 지역 펫시터를 연결하여 예약, 결제 및 이용 후기를 제공하는 플랫폼입니다."
+  },
+  "durationMs": 4717,
+  "timestamp": "2026-08-10T03:46:41.123191+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

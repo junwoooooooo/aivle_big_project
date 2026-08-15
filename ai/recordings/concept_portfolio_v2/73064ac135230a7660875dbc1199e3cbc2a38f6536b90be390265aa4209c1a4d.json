@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:69bcb574b21129e872f5fd8e54819d10d76846044516f123e7cc9d8230a94e6f",
+  "canonicalRequestHash": "73064ac135230a7660875dbc1199e3cbc2a38f6536b90be390265aa4209c1a4d",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-F1",
+        "businessText": "온라인 플랫폼을 통한 장비 대여 및 교육 신청 장비 대여 및 교육 서비스 제공자 장비 및 교육 서비스 판매자 없음 장비 대여와 교육을 통합한 맞춤형 서비스 제공 장비 제조사와의 협력을 통해 최신 장비를 확보하고, 교육 전문 업체와 협력합니다. 고객이 온라인 플랫폼에서 장비 대여 및 교육 신청 서비스 제공자가 장비를 배송 및 교육 실시 고객이 월간 요금제에 따라 결제 고객이 월간 요금제에 따라 결제 서비스 제공자가 수익을 정산 구독 기반의 월간 요금제 온라인 플랫폼 및 직접 영업",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "HYBRID",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "LOW",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "MEDIUM",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "온라인 플랫폼을 통한 장비 대여 및 교육 서비스 제공으로, 구독 기반의 월간 요금제를 통해 수익을 창출하는 비즈니스 모델입니다."
+    }
+  ],
+  "durationMs": 3712,
+  "timestamp": "2026-08-10T05:10:16.766365+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

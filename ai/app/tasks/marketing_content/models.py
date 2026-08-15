@@ -10,7 +10,11 @@ class StrictModel(BaseModel):
 ShortText = Annotated[str, Field(min_length=1, max_length=500)]
 FeatureText = Annotated[str, Field(min_length=1, max_length=300)]
 ClaimText = Annotated[str, Field(min_length=1, max_length=500)]
-ArtifactRef = Annotated[str, Field(min_length=1, max_length=300)]
+ArtifactRef = Annotated[str, Field(
+    min_length=1,
+    max_length=300,
+    pattern=r"^ai-artifacts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.jpg$",
+)]
 HashText = Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
 
 ContentType = Literal[
@@ -98,6 +102,9 @@ class MarketingContentRequest(StrictModel):
     requiredPhrases: list[ClaimText] = Field(default_factory=list, max_length=20)
     excludedPhrases: list[ClaimText] = Field(default_factory=list, max_length=20)
     additionalInstruction: Annotated[str, Field(min_length=1, max_length=2000)] | None = None
+    referenceArtifactId: Annotated[str, Field(
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    )] | None = None
 
 
 class MarketingContentInput(StrictModel):
@@ -120,7 +127,7 @@ class MarketingContentResult(StrictModel):
     hashtags: list[Annotated[str, Field(min_length=1, max_length=100)]] = Field(max_length=30)
     imageBrief: Annotated[str, Field(min_length=1, max_length=4000)] | None
     legalReview: LegalReview
-    artifactRefs: list[ArtifactRef] = Field(max_length=0)
+    artifactRefs: list[ArtifactRef] = Field(max_length=1)
 
 
 def lint_provider_schema(schema: dict) -> list[str]:

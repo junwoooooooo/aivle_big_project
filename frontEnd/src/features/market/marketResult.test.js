@@ -87,6 +87,50 @@ describe('normalizeMarketResult — FULL', () => {
   });
 });
 
+describe('가정 원장 — 계산식의 항이 값으로 온다', () => {
+  const result = normalizeMarketResult(fixture('full.json'));
+
+  it('TAM 의 항이 공식과 함께 판정을 달고 온다', () => {
+    const { tam } = result.market;
+    expect(tam.formula).toContain('세그먼트비중');
+    expect(tam.factors.length).toBeGreaterThan(1);
+    expect(new Set(tam.factors.map((f) => f.basis))).toEqual(new Set(['관측', '가정', '가설']));
+  });
+
+  it('관측 항은 출처를 들고 오고, 가정 항은 0곳이라고 말한다', () => {
+    const factors = result.market.tam.factors;
+    const observed = factors.find((f) => f.basis === '관측');
+    expect(observed.sourceCount).toBeGreaterThan(0);
+    expect(observed.sourceDomains.length).toBeGreaterThan(0);
+    factors.filter((f) => f.basis !== '관측')
+      .forEach((f) => expect(f.sourceCount).toBe(0));
+  });
+
+  it('⭐ 울타리와 반증 조건이 화면까지 온다 — 예전엔 문장 안에서 잘려 사라졌다', () => {
+    const seg = result.market.tam.factors.find((f) => f.name === '세그먼트비중');
+    expect(seg.bound).toContain('0.966');
+    expect(seg.falsifiedIf).toBeTruthy();
+    // 잘린 문장은 문장부호 없이 끝난다. 서술이 통째로 와야 한다.
+    expect(seg.note.length).toBeGreaterThan(20);
+  });
+
+  it('항으로 표현되는 문장은 assumptions 에 다시 오지 않는다 — 두 벌이 뜨면 안 된다', () => {
+    expect(result.market.tam.assumptions).toEqual([]);
+    // 성장률의 문장은 항이 아니라 «읽는 법»이라 남는다.
+    expect(result.market.growth.assumptions.length).toBeGreaterThan(0);
+    expect(result.market.growth.factors.every((f) => f.basis === '관측')).toBe(true);
+  });
+
+  it('요인이 없는 옛 결과도 문장을 잃지 않는다 — 폴백이 있어야 한다', () => {
+    const raw = fixture('full.json');
+    delete raw.market.tam.factors;
+    raw.market.tam.assumptions = ['세그먼트비중은 가정이다'];
+    const old = normalizeMarketResult(raw);
+    expect(old.market.tam.factors).toEqual([]);
+    expect(old.market.tam.assumptions).toHaveLength(1);
+  });
+});
+
 describe('「못 찾은 것」 갈래표', () => {
   it('모든 진단 키가 갈래를 갖는다', () => {
     Object.entries(NOT_FOUND_VIEW).forEach(([key, [group, label]]) => {

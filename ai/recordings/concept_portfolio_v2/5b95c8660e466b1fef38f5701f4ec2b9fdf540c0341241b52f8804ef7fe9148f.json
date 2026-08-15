@@ -1,0 +1,273 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:a02270bdab0492be07fa27f4acbe196639838dbb66c15089f0557cc7a0729126",
+  "canonicalRequestHash": "5b95c8660e466b1fef38f5701f4ec2b9fdf540c0341241b52f8804ef7fe9148f",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "intermediaryRole",
+        "value": "교육 기관과의 협력 및 서비스 홍보",
+        "roleFields": {
+          "platformRole": "AI 면접 준비 도우미 플랫폼 운영",
+          "providerRole": "AI 면접 준비 도우미 서비스 제공자",
+          "sellerRole": "서비스 판매 및 마케팅 담당",
+          "intermediaryRole": "교육 기관과의 협력 및 서비스 홍보"
+        },
+        "actorRoles": [
+          "사용자",
+          "AI 시스템",
+          "교육 기관"
+        ],
+        "transactionFlow": [
+          "사용자가 플랫폼에 가입한다.",
+          "사용자가 면접 답변을 입력한다.",
+          "AI가 답변을 분석한다.",
+          "사용자에게 피드백을 제공한다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "결제 정보가 시스템에 기록된다.",
+          "서비스 이용이 활성화된다."
+        ],
+        "operatingModel": "AI 기술을 활용하여 효율적으로 데이터를 분석하고 피드백을 생성합니다.",
+        "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+        "solutionMechanism": "정확한 분석과 피드백을 통해 취업 준비생이 면접에서 자신감을 가질 수 있도록 지원합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "intermediaryRole",
+        "value": "교육 기관과의 협력",
+        "roleFields": {
+          "platformRole": "AI 분석 및 피드백 제공 플랫폼",
+          "providerRole": "AI 분석 및 피드백 제공",
+          "sellerRole": "서비스 구독 판매",
+          "intermediaryRole": "교육 기관과의 협력"
+        },
+        "actorRoles": [
+          "사용자",
+          "AI 시스템",
+          "교육 기관"
+        ],
+        "transactionFlow": [
+          "사용자가 플랫폼에 접속하여 답변 입력",
+          "AI가 답변 분석 및 피드백 생성",
+          "사용자가 피드백 수신 및 연습 계획 확인"
+        ],
+        "paymentFlow": [
+          "사용자가 구독 결제",
+          "결제 시스템이 수수료 수취",
+          "서비스 제공 후 사용자에게 피드백 제공"
+        ],
+        "operatingModel": "AI 기술을 활용하여 데이터 분석 및 피드백 생성을 자동화합니다.",
+        "partnerModel": "교육 기관과 협력하여 서비스의 신뢰성을 높입니다.",
+        "solutionMechanism": "AI를 활용하여 모의면접 답변을 분석하고 피드백을 제공하는 서비스입니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "LOW",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "intermediaryRole",
+        "value": "교육 기관 및 취업 지원 센터",
+        "roleFields": {
+          "platformRole": "AI 분석 플랫폼 제공",
+          "providerRole": "AI 분석 서비스 제공자",
+          "sellerRole": "서비스 판매자",
+          "intermediaryRole": "교육 기관 및 취업 지원 센터"
+        },
+        "actorRoles": [
+          "사용자",
+          "AI 시스템",
+          "교육 기관",
+          "취업 지원 센터"
+        ],
+        "transactionFlow": [
+          "사용자가 온라인 플랫폼에 가입한다.",
+          "사용자가 면접 답변을 입력한다.",
+          "AI 시스템이 답변을 분석한다.",
+          "사용자에게 피드백이 제공된다."
+        ],
+        "paymentFlow": [
+          "사용자가 구독료를 결제한다.",
+          "결제 정보가 시스템에 기록된다.",
+          "서비스 제공자가 수익을 정산한다."
+        ],
+        "operatingModel": "AI 기술을 활용하여 효율적으로 데이터를 분석하고 피드백을 생성합니다.",
+        "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+        "solutionMechanism": "정확한 분석과 피드백을 통해 취업 준비생이 면접에서 자신감을 가질 수 있도록 지원합니다.",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C4",
+        "field": "intermediaryRole",
+        "value": "교육 기관 및 취업 지원 센터와의 협력 담당",
+        "roleFields": {
+          "platformRole": "AI 면접 코칭 플랫폼 운영",
+          "providerRole": "AI 면접 코칭 서비스 제공자",
+          "sellerRole": "서비스 판매 및 마케팅 담당",
+          "intermediaryRole": "교육 기관 및 취업 지원 센터와의 협력 담당"
+        },
+        "actorRoles": [
+          "사용자",
+          "AI 시스템",
+          "코칭 전문가"
+        ],
+        "transactionFlow": [
+          "사용자가 플랫폼에 접속하여 면접 준비 상태 입력",
+          "AI가 면접 답변 분석 및 피드백 제공",
+          "사용자가 피드백을 바탕으로 연습 계획 수립"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료 결제",
+          "결제 확인 후 서비스 이용 가능",
+          "정기 결제 및 갱신 관리"
+        ],
+        "operatingModel": "AI 기술을 활용하여 면접 코칭을 자동화합니다.",
+        "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+        "solutionMechanism": "AI를 활용하여 면접 준비생에게 맞춤형 코칭과 피드백을 제공하는 서비스입니다.",
+        "descriptor": {
+          "businessRole": "ADVISORY",
+          "operatingModel": "OTHER",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "MEDIUM",
+            "operatingModel": "LOW",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      },
+      {
+        "candidateId": "C5",
+        "field": "intermediaryRole",
+        "value": "교육 기관 및 취업 지원 센터",
+        "roleFields": {
+          "platformRole": "AI 면접 피드백 플랫폼 운영",
+          "providerRole": "AI 면접 피드백 서비스 제공자",
+          "sellerRole": "서비스 판매자",
+          "intermediaryRole": "교육 기관 및 취업 지원 센터"
+        },
+        "actorRoles": [
+          "사용자",
+          "AI 시스템",
+          "교육 기관"
+        ],
+        "transactionFlow": [
+          "사용자가 플랫폼에 접속하여 면접 후 피드백 요청",
+          "AI 시스템이 면접 답변 분석 및 피드백 생성",
+          "사용자에게 피드백 제공"
+        ],
+        "paymentFlow": [
+          "사용자가 구독료 결제",
+          "결제 시스템이 결제 승인",
+          "서비스 제공 시작"
+        ],
+        "operatingModel": "AI 기술을 활용하여 피드백 생성을 자동화합니다.",
+        "partnerModel": "교육 기관 및 취업 지원 센터와 협력하여 서비스의 신뢰성을 높입니다.",
+        "solutionMechanism": "AI 알고리즘을 활용한 면접 피드백 제공",
+        "descriptor": {
+          "businessRole": "OTHER",
+          "operatingModel": "AUTOMATED_DIGITAL",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "LOW",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "HIGH"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "역할 필드에 '교육 기관과의 협력 및 서비스 홍보'가 명시되어 있어, intermediaryRole과 일치함."
+    },
+    {
+      "candidateId": "C2",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "역할 필드에 '교육 기관과의 협력'이 명시되어 있어, intermediaryRole과 일치함."
+    },
+    {
+      "candidateId": "C3",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "역할 필드에 '교육 기관 및 취업 지원 센터'가 명시되어 있어, intermediaryRole과 일치함."
+    },
+    {
+      "candidateId": "C4",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "역할 필드에 '교육 기관 및 취업 지원 센터와의 협력 담당'이 명시되어 있어, intermediaryRole과 일치함."
+    },
+    {
+      "candidateId": "C5",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "역할 필드에 '교육 기관 및 취업 지원 센터'가 명시되어 있어, intermediaryRole과 일치함."
+    }
+  ],
+  "durationMs": 6024,
+  "timestamp": "2026-08-10T04:54:58.564180+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

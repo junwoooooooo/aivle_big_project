@@ -1,0 +1,176 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:59387fde4c408da48f848d7f5ff4200ca51b74ffcf8fe4a708f07c5e8188c94f",
+  "canonicalRequestHash": "37cdff6836dfbec98bd5605af5861f333e7766b657e47f1c6ab2adf9a5334957",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 플랫폼 운영자 학생 사용자 없음 학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 학생 사용자가 물품을 등록한다. 다른 학생 사용자가 해당 물품을 검색하고 연락한다. 학생 사용자가 거래를 진행한다. 학생 사용자가 거래 금액을 결제한다. 플랫폼이 수수료를 차감한 후 판매자에게 금액을 송금한다. 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C2",
+        "businessText": "중고 거래 플랫폼 제공 플랫폼 운영자 물품 판매자 없음 대학가 내 커뮤니티와 협력하여 플랫폼을 운영한다. 대학가 주변의 상점과 제휴하여 추가 혜택을 제공한다. 사용자가 물품을 등록한다. 다른 사용자가 물품을 검색하고 구매 의사를 표시한다. 판매자와 구매자가 채팅을 통해 거래 조건을 협의한다. 거래가 성사되면 사용자 간의 직접 거래가 이루어진다. 구매자가 결제한다. 결제가 완료되면 판매자에게 물품을 전달한다. 판매자는 물품을 배송하거나 직접 전달한다. 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "중고 거래 플랫폼 운영 플랫폼 운영자 물품 판매자 없음 학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 사용자가 물품 등록 구매자가 물품 검색 및 선택 판매자와 구매자 간의 거래 진행 거래 완료 후 후기 작성 구매자가 결제 진행 플랫폼이 결제 수취 판매자에게 수익 지급 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "학생 전용 중고 거래 플랫폼 운영 플랫폼 운영 및 관리 중고 물품 판매자 거래 중개 및 지원 학생 커뮤니티와의 협력을 통해 플랫폼을 운영하고 홍보한다. 대학가 주변의 상점 및 서비스와 제휴하여 추가 가치를 제공한다. 사용자가 물품 등록 구매자가 물품 조회 및 구매 요청 판매자와 구매자 간의 직접 거래 진행 구매자가 결제 진행 결제 확인 후 판매자에게 물품 제공 판매자에게 수수료 차감 후 정산 프리미엄 서비스 및 광고를 통해 수익을 창출한다. 모바일 앱과 웹사이트를 통해 사용자와 소통하며, 대학가 커뮤니티와의 협력을 통해 홍보한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "학생 커뮤니티와 협력하여 운영되는 중고 거래 플랫폼으로, 물품 등록 및 거래가 이루어지며, 수수료와 광고를 통해 수익을 창출한다."
+    },
+    {
+      "entityId": "C2",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "대학가 내 커뮤니티와 협력하여 운영되는 중고 거래 플랫폼으로, 사용자 간의 직접 거래가 이루어지며, 수익은 프리미엄 서비스와 광고를 통해 창출된다."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "학생 커뮤니티와 협력하여 운영되는 중고 거래 플랫폼으로, 물품 등록 및 거래가 이루어지며, 수익은 프리미엄 서비스와 광고를 통해 창출된다."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "학생 전용 중고 거래 플랫폼으로, 물품 등록 및 거래가 이루어지며, 수익은 프리미엄 서비스와 광고를 통해 창출된다."
+    }
+  ],
+  "durationMs": 10131,
+  "timestamp": "2026-08-10T08:46:46.669222+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

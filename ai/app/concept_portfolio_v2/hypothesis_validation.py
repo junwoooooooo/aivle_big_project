@@ -15,8 +15,9 @@ _TYPE_MARKERS = {
                       "광주", "대전", "울산", "세종", "경기", "강원", "충청", "전라", "경상", "제주",
                       "해외", "글로벌", "지역", "권역"),
     "REVENUE_MODEL": ("구독", "판매", "마진", "수수료", "계약", "광고", "라이선스", "이용료", "서비스료", "요금"),
-    "PRICE": ("원", "만원", "무료", "정액", "건당", "구독료", "이용료", "요금", "가격대", "범위"),
-    "CHANNELS": ("앱", "웹", "api", "매장", "영업", "파트너", "온라인", "오프라인", "커뮤니티", "전화"),
+    "PRICE": ("원", "만원", "무료", "정액", "건당", "구독료", "이용료", "요금", "가격대", "범위", "견적"),
+    "CHANNELS": ("앱", "웹", "api", "매장", "영업", "파트너", "온라인", "오프라인", "커뮤니티", "전화",
+                 "extension", "store", "directory"),
 }
 
 
@@ -37,11 +38,17 @@ def assess_hypothesis_value(hypothesis_type: str, value: Any) -> HypothesisValue
                 reason="실제 사업값이 아닌 미정·미제공 placeholder입니다.")
         if hypothesis_type == "DIFFERENTIATORS":
             valid = len(re.sub(r"\s+", "", text)) >= 4
+        elif hypothesis_type == "TARGET_REGION":
+            valid = any(marker in text.casefold() for marker in _TYPE_MARKERS[hypothesis_type])
+        elif hypothesis_type == "PRICE":
+            valid = (any(marker in text.casefold() for marker in _TYPE_MARKERS[hypothesis_type])
+                     or bool(re.search(r"(?:[$€£¥]|\b(?:usd|eur|krw|jpy)\b|\d+(?:[.,]\d+)?\s*%)", text.casefold())))
         else:
             valid = any(marker in text.casefold() for marker in _TYPE_MARKERS[hypothesis_type])
         return HypothesisValueAssessment(hypothesisType=hypothesis_type,
-            status="VALID" if valid else "INVALID",
-            reason="실제 사업 가설값입니다." if valid else "필드 의미에 맞는 구체적 사업값을 확인할 수 없습니다.",
+            status="VALID" if valid else "AMBIGUOUS",
+            reason=("실제 사업 가설값입니다." if valid else
+                    "placeholder는 아니지만 필드 의미 적합성을 semantic classifier로 확인해야 합니다."),
             normalizedValue=text if valid else None)
 
     payload = value.model_dump(mode="json") if hasattr(value, "model_dump") else value

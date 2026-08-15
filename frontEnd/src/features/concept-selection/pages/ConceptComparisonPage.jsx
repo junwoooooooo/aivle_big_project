@@ -60,9 +60,9 @@ export default function ConceptComparisonPage() {
 
 function NotReady({ projectId, status }) {
   const messages = {
-    NEEDS_INPUT: 'Concept Factory에 필요한 입력을 확인해야 합니다.',
-    FAILED: 'Concept Factory 작업을 다시 시도해야 합니다.',
-    STALE: '최신 Idea Brief로 Concept Factory를 다시 실행해야 합니다.',
+    NEEDS_INPUT: '사업안을 만들기 위해 필요한 입력을 확인해 주세요.',
+    FAILED: '사업안 만들기를 다시 시도해 주세요.',
+    STALE: '최신 사업 아이디어를 반영해 사업안을 다시 만들어 주세요.',
   };
-  return <section className="concept-selection concept-selection--not-ready"><p>비교 준비 전</p><h1>법률검토를 통과한 5개 컨셉이 필요합니다.</h1><span>{messages[status] ?? 'Concept Factory를 완료하면 5개 컨셉을 비교할 수 있습니다.'}</span><Link to={projectRoutes.concepts(projectId)}>Concept Factory로 이동</Link></section>;
+  return <section className="concept-selection concept-selection--not-ready"><p>비교 준비 전</p><h1>법률 검토를 통과한 사업안 5개가 필요합니다.</h1><span>{messages[status] ?? '사업안 만들기를 완료하면 후보 5개를 비교할 수 있습니다.'}</span><Link to={projectRoutes.concepts(projectId)}>사업안 만들기로 이동</Link></section>;
 }

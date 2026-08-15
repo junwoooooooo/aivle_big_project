@@ -1,0 +1,360 @@
+{
+  "taskType": "PLAN_POOL",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-plan-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4e307b0c375ec1e082003d34564e8f4ad4953ac442b06a03ca0c97e99960c4f0",
+  "canonicalRequestHash": "289f0a77749e0acf43186d0b1d0f4722a77a68037ccbe77ada65c7178aa68ca0",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+        "interpretedTargetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+        "usageContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황입니다.",
+        "industryCategory": "식품 서비스",
+        "researchScope": "소량 식재료 및 레시피 제공 서비스에 대한 시장 조사와 경쟁 분석이 필요합니다.",
+        "conciseIdeaDefinition": "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다.",
+        "targetRegionInterpretation": "",
+        "relevantKnownCompetitorContext": ""
+      },
+      "fixtureName": "custom"
+    },
+    "design": {
+      "opportunityKernel": {
+        "problemCore": "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+        "targetCore": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+        "useContexts": [
+          "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황입니다."
+        ],
+        "intentComponents": [
+          "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다."
+        ],
+        "mustPreserve": [
+          "1~2인 가구에서 큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결하고자 합니다.",
+          "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구를 대상으로 합니다.",
+          "개인 맞춤형 소량 식재료와 활용 레시피를 제공하는 서비스입니다."
+        ],
+        "maySpecialize": [
+          "핵심 대상의 의미 있는 하위 세그먼트",
+          "핵심 사용 맥락의 구체화",
+          "가치 제안 또는 offer의 구체화"
+        ],
+        "forbiddenDriftSummary": "핵심 문제와 대상이 모두 무관한 기회로 교체되면 범위를 벗어납니다."
+      },
+      "semanticAnchors": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "sourceLocks": {
+        "ideaOverview": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+        "problem": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다",
+        "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구"
+      },
+      "explicitBusinessLocks": {},
+      "openDimensions": [
+        "solutionMechanism",
+        "valueDelivery",
+        "operatingModel",
+        "supplyStructure",
+        "partnerModel",
+        "transactionFlow",
+        "fulfillment",
+        "platformRole",
+        "commercialFlow",
+        "dataDependency",
+        "physicalDependency"
+      ],
+      "constrainedDimensions": [],
+      "explorationBreadth": "EXPLORE",
+      "diversityCapacity": 5,
+      "suggestedMaxConcepts": 5,
+      "rationaleSummary": "선택 입력 LOCK 0개로 11개 설계 차원이 열려 있습니다. diversityCapacity=5는 진단값이며 선택 hard cap이 아닙니다."
+    },
+    "poolSize": 7
+  },
+  "providerResponse": [
+    {
+      "title": "소량 맞춤형 식재료 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 개인 맞춤형 소량 식재료 제공 서비스입니다.",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "큰 포장 단위로 인해 식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 서비스를 제공하는 상황입니다.",
+      "valueProposition": "필요한 만큼의 식재료를 제공하여 음식물 쓰레기를 줄이고 요리의 편리함을 더합니다.",
+      "offerThesis": "소량의 식재료와 레시피를 통해 요리의 즐거움을 제공합니다.",
+      "solutionThesis": "개인 맞춤형 식재료와 레시피를 통해 1~2인 가구의 요리 문제를 해결합니다.",
+      "coreMechanism": "고객의 요리 스타일과 필요에 맞춘 소량 식재료 패키지 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택할 수 있습니다.",
+      "valueDelivery": "주문한 식재료를 정기적으로 배송하여 고객의 편리함을 극대화합니다.",
+      "operatingApproach": "고객의 선호도에 따라 맞춤형 식재료를 조합하여 제공합니다.",
+      "partnerApproach": "지역 농가 및 식품 제조업체와 협력하여 신선한 재료를 확보합니다.",
+      "transactionApproach": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+      "commercialApproach": "온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 주문에 따라 신선한 식재료를 포장하여 배송합니다.",
+      "differentiatingMechanics": [
+        "고객 맞춤형 레시피 제공",
+        "정기 배송 서비스"
+      ],
+      "mainChanges": [
+        "소량 식재료 제공 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "레시피 제공 방식의 다양화"
+      ],
+      "legalRiskHints": [
+        "식품 안전 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    },
+    {
+      "title": "간편 요리 키트 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 간편 요리 키트 제공 서비스입니다.",
+      "targetSegment": "요리할 시간이 부족한 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 식재료와 간편한 레시피를 제공하는 상황입니다.",
+      "valueProposition": "간편하게 요리할 수 있는 키트를 제공하여 요리의 부담을 줄입니다.",
+      "offerThesis": "간편한 요리 키트를 통해 요리의 즐거움을 제공합니다.",
+      "solutionThesis": "소량의 식재료와 간편한 레시피로 요리의 번거로움을 줄입니다.",
+      "coreMechanism": "미리 조리된 재료와 레시피를 조합하여 제공",
+      "customerInteraction": "앱을 통해 고객이 원하는 요리를 선택하고 주문할 수 있습니다.",
+      "valueDelivery": "주문한 요리 키트를 정기적으로 배송하여 고객의 편리함을 극대화합니다.",
+      "operatingApproach": "고객의 선호도에 따라 맞춤형 요리 키트를 제공합니다.",
+      "partnerApproach": "식품 제조업체와 협력하여 간편 요리 키트를 제작합니다.",
+      "transactionApproach": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+      "commercialApproach": "온라인 광고와 프로모션을 통해 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 주문에 따라 간편 요리 키트를 포장하여 배송합니다.",
+      "differentiatingMechanics": [
+        "간편한 조리법 제공",
+        "정기 배송 서비스"
+      ],
+      "mainChanges": [
+        "간편 요리 키트 제공 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "레시피 제공 방식의 다양화"
+      ],
+      "legalRiskHints": [
+        "식품 안전 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    },
+    {
+      "title": "맞춤형 레시피 추천 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 맞춤형 레시피 추천 서비스입니다.",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 식재료를 필요로 하는 소비자에게 맞춤형 레시피를 제공하는 상황입니다.",
+      "valueProposition": "남은 재료를 활용한 요리법을 제공하여 음식물 쓰레기를 줄입니다.",
+      "offerThesis": "남은 재료를 활용한 맞춤형 레시피를 제공합니다.",
+      "solutionThesis": "고객의 남은 재료를 기반으로 한 레시피 추천으로 요리의 즐거움을 더합니다.",
+      "coreMechanism": "고객의 남은 재료를 분석하여 맞춤형 레시피를 추천",
+      "customerInteraction": "앱을 통해 고객이 남은 재료를 입력하고 레시피를 받을 수 있습니다.",
+      "valueDelivery": "추천된 레시피를 통해 고객이 요리를 쉽게 할 수 있도록 돕습니다.",
+      "operatingApproach": "고객의 재료를 기반으로 맞춤형 레시피를 제공합니다.",
+      "partnerApproach": "레시피 개발자와 협력하여 다양한 요리법을 제공합니다.",
+      "transactionApproach": "레시피 추천 서비스에 대한 구독 모델을 운영합니다.",
+      "commercialApproach": "소셜 미디어와 블로그를 통해 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 요청에 따라 맞춤형 레시피를 제공하여 고객의 만족도를 높입니다.",
+      "differentiatingMechanics": [
+        "남은 재료 활용 레시피 제공",
+        "정기 업데이트 서비스"
+      ],
+      "mainChanges": [
+        "레시피 추천 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 서비스 제공"
+      ],
+      "legalRiskHints": [
+        "저작권 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    },
+    {
+      "title": "신선한 재료 정기 배송 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 신선한 재료 정기 배송 서비스입니다.",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 신선한 식재료를 필요로 하는 소비자에게 제공하는 상황입니다.",
+      "valueProposition": "신선한 재료를 정기적으로 배송하여 요리의 편리함을 더합니다.",
+      "offerThesis": "신선한 재료를 통해 요리의 즐거움을 제공합니다.",
+      "solutionThesis": "정기 배송을 통해 신선한 재료를 제공하여 요리의 번거로움을 줄입니다.",
+      "coreMechanism": "고객의 선호도에 따라 맞춤형 신선 재료 패키지 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 고객이 원하는 재료를 선택할 수 있습니다.",
+      "valueDelivery": "주문한 신선한 재료를 정기적으로 배송하여 고객의 편리함을 극대화합니다.",
+      "operatingApproach": "고객의 선호도에 따라 맞춤형 신선 재료를 제공합니다.",
+      "partnerApproach": "지역 농가와 협력하여 신선한 재료를 확보합니다.",
+      "transactionApproach": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+      "commercialApproach": "온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 주문에 따라 신선한 재료를 포장하여 배송합니다.",
+      "differentiatingMechanics": [
+        "신선한 재료 제공",
+        "정기 배송 서비스"
+      ],
+      "mainChanges": [
+        "신선한 재료 제공 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 서비스 제공"
+      ],
+      "legalRiskHints": [
+        "식품 안전 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    },
+    {
+      "title": "요리 교육과 식재료 패키지 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 요리 교육과 식재료 패키지 서비스입니다.",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 식재료와 요리 교육을 제공하는 상황입니다.",
+      "valueProposition": "요리 교육과 함께 필요한 식재료를 제공하여 요리의 즐거움을 더합니다.",
+      "offerThesis": "요리 교육과 식재료 패키지를 통해 요리의 즐거움을 제공합니다.",
+      "solutionThesis": "요리 교육과 함께 소량의 식재료를 제공하여 요리의 번거로움을 줄입니다.",
+      "coreMechanism": "요리 교육과 함께 맞춤형 식재료 패키지 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 고객이 요리 교육을 신청하고 식재료를 주문할 수 있습니다.",
+      "valueDelivery": "주문한 식재료와 요리 교육을 정기적으로 제공하여 고객의 만족도를 높입니다.",
+      "operatingApproach": "고객의 선호도에 따라 맞춤형 요리 교육과 식재료를 제공합니다.",
+      "partnerApproach": "요리 강사와 협력하여 다양한 요리 교육 프로그램을 제공합니다.",
+      "transactionApproach": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+      "commercialApproach": "온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 요청에 따라 요리 교육과 식재료를 제공하여 고객의 만족도를 높입니다.",
+      "differentiatingMechanics": [
+        "요리 교육 제공",
+        "정기 배송 서비스"
+      ],
+      "mainChanges": [
+        "요리 교육과 식재료 제공 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 서비스 제공"
+      ],
+      "legalRiskHints": [
+        "식품 안전 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    },
+    {
+      "title": "건강한 식단 관리 서비스",
+      "oneLineConcept": "1~2인 가구를 위한 건강한 식단 관리 서비스입니다.",
+      "targetSegment": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemFocus": "식재료가 남아 음식물 쓰레기가 발생하는 문제를 해결합니다.",
+      "useContext": "소량의 건강한 식재료를 필요로 하는 소비자에게 제공하는 상황입니다.",
+      "valueProposition": "건강한 식단을 유지할 수 있도록 소량의 식재료를 제공합니다.",
+      "offerThesis": "건강한 식단을 위한 맞춤형 식재료를 제공합니다.",
+      "solutionThesis": "소량의 건강한 식재료를 통해 요리의 번거로움을 줄입니다.",
+      "coreMechanism": "고객의 건강 목표에 맞춘 맞춤형 식재료 패키지 제공",
+      "customerInteraction": "온라인 플랫폼을 통해 고객이 건강 목표를 설정하고 식재료를 주문할 수 있습니다.",
+      "valueDelivery": "주문한 건강한 식재료를 정기적으로 배송하여 고객의 편리함을 극대화합니다.",
+      "operatingApproach": "고객의 건강 목표에 따라 맞춤형 식재료를 제공합니다.",
+      "partnerApproach": "영양사와 협력하여 건강한 식단을 위한 식재료를 제공합니다.",
+      "transactionApproach": "구독 모델을 통해 정기적으로 수익을 창출합니다.",
+      "commercialApproach": "온라인 마케팅과 소셜 미디어를 활용하여 고객을 유치합니다.",
+      "fulfillmentApproach": "고객의 주문에 따라 건강한 식재료를 포장하여 배송합니다.",
+      "differentiatingMechanics": [
+        "건강한 식단 관리 제공",
+        "정기 배송 서비스"
+      ],
+      "mainChanges": [
+        "건강한 식단 관리 방식의 혁신"
+      ],
+      "secondaryChanges": [
+        "고객 맞춤형 서비스 제공"
+      ],
+      "legalRiskHints": [
+        "식품 안전 관련 법규 준수 필요"
+      ],
+      "reasonForPortfolioRole": "1~2인 가구의 요리 문제를 해결하기 위한 혁신적인 접근 방식입니다."
+    }
+  ],
+  "durationMs": 42500,
+  "timestamp": "2026-08-10T07:50:20.456010+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

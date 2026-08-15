@@ -3,14 +3,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { createMarketIntegrationApi } from '../api/marketIntegrationApi.js';
 
-export default function useMarketIntegration(projectId) {
+export default function useMarketIntegration(projectId, liveRevision = 0) {
   const client = useApiClient();
   const api = useMemo(() => createMarketIntegrationApi(client), [client]);
   const [state, setState] = useState({ loading: true, marketSeed: null, runs: [], result: null, handoff: null, error: null, preparing: false });
   const refresh = useCallback(async () => {
     try {
+      const portfolioSelection = await api.currentPortfolioSelection(projectId)
+        .then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error));
       const [marketSeed, runPayload, result] = await Promise.all([
-        api.currentMarketSeed(projectId).then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error)),
+        (portfolioSelection
+          ? api.currentPortfolioMarketSeed(projectId, portfolioSelection.selectionId)
+          : api.currentMarketSeed(projectId))
+          .then((payload) => payload.data).catch((error) => [404, 409, 422].includes(error?.status) ? null : Promise.reject(error)),
         api.runs(projectId),
         api.result(projectId).then((payload) => payload.data).catch((error) => error?.status === 404 ? null : Promise.reject(error)),
       ]);
@@ -19,7 +24,7 @@ export default function useMarketIntegration(projectId) {
       setState((value) => ({ ...value, loading: false, error }));
     }
   }, [api, projectId]);
-  useEffect(() => { const timer = setTimeout(refresh, 0); return () => clearTimeout(timer); }, [refresh]);
+  useEffect(() => { const timer = setTimeout(refresh, 0); return () => clearTimeout(timer); }, [refresh, liveRevision]);
   const prepare = async () => {
     if (!state.marketSeed) return;
     setState((value) => ({ ...value, preparing: true, error: null }));

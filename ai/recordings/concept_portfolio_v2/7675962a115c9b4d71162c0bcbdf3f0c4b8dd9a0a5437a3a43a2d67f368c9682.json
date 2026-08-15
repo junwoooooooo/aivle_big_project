@@ -1,0 +1,696 @@
+{
+  "taskType": "LEGAL_REVIEW",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-review-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:bbccab853202402add0dae60682f9f42fef874502f239eb92b026a5bf3cc82d6",
+  "canonicalRequestHash": "7675962a115c9b4d71162c0bcbdf3f0c4b8dd9a0a5437a3a43a2d67f368c9682",
+  "redactedRequest": {
+    "candidateId": "C5",
+    "candidate": {
+      "conceptName": "AI 기반 여행 일정 최적화 서비스",
+      "conceptDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "introduction": "AI를 활용하여 사용자의 여행 일정을 최적화하여 제공하는 서비스입니다.",
+      "coreValue": "사용자는 간편하게 여행 일정을 계획할 수 있으며, 시간과 노력을 절약할 수 있습니다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "industryCategory": "여행 및 관광",
+      "researchScope": "주말 여행 계획 및 예약 서비스",
+      "targetRegion": "대한민국 전역",
+      "revenueModel": "사용자가 예약을 진행할 때 수수료를 통해 수익을 창출한다.",
+      "price": "예약 수수료의 10%",
+      "channels": "웹사이트 및 모바일 앱",
+      "differentiators": "AI 기반의 여행 일정 최적화, 사용자 맞춤형 추천",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 5.0,
+        "horizonYears": 3,
+        "rationale": "주말 여행을 자주 계획하는 직장인들이 증가하고 있어 시장 점유율 확대 가능성이 높다.",
+        "assumptions": [
+          "주말 여행 수요 증가",
+          "AI 기술의 발전으로 사용자 맞춤형 서비스 제공 가능"
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 500000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "주말 여행을 계획하는 직장인 수에 기반한 추정",
+        "assumptions": [
+          "주말 여행을 계획하는 직장인 수가 100만 명 이상",
+          "이용률이 5%에 이를 것"
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "solutionMechanism": "AI 기반의 알고리즘을 통해 사용자 맞춤형 여행 일정을 최적화한다.",
+      "featureSet": [
+        "사용자 이동 가능 시간 입력",
+        "관심사 기반 추천",
+        "자동 예약 링크 제공"
+      ],
+      "actorRoles": [
+        "사용자",
+        "여행 관련 업체",
+        "AI 시스템"
+      ],
+      "platformRole": "여행 일정 최적화 플랫폼 제공",
+      "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 일정을 최적화한다.",
+      "partnerModel": "여행 관련 업체와 제휴하여 예약 서비스를 제공한다.",
+      "providerRole": "여행 일정 최적화 서비스 제공자",
+      "sellerRole": "여행 관련 상품 판매자",
+      "intermediaryRole": "예약 서비스 중개자",
+      "transactionFlow": [
+        "사용자가 이동 가능 시간과 관심사를 입력한다.",
+        "AI가 최적의 여행 일정을 생성한다.",
+        "사용자가 예약을 진행한다.",
+        "여행 관련 업체에 예약 요청이 전달된다.",
+        "예약이 완료되면 사용자에게 확인이 전달된다."
+      ],
+      "paymentFlow": [
+        "사용자가 예약 시 결제 정보를 입력한다.",
+        "결제가 완료되면 여행 관련 업체에 수수료가 지급된다.",
+        "사용자는 예약 확인서를 수령한다."
+      ],
+      "personalDataUsage": [
+        "사용자의 이동 가능 시간과 관심사를 수집하여 맞춤형 여행 일정을 제공한다."
+      ],
+      "physicalActivities": [
+        "배송",
+        "현장 방문",
+        "설치"
+      ],
+      "partnerRequirements": [
+        "여행 관련 업체와의 제휴가 필요하다."
+      ],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "AI 기반의 여행 일정 최적화 서비스",
+        "사용자 맞춤형 추천 제공"
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 5,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "interpretedTargetUsers": "주말에 짧은 여행을 자주 계획하는 직장인들.",
+        "usageContext": "사용자가 이동 가능 시간과 관심사를 입력하면, 자동으로 여행 일정을 구성하고 예약 페이지로 연결하는 서비스.",
+        "industryCategory": "여행 및 관광",
+        "researchScope": "주말 여행 계획 및 예약 서비스",
+        "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 기반으로 주말 여행 일정을 자동으로 구성하는 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    }
+  },
+  "providerResponse": {
+    "candidateId": "C5",
+    "route": "REDESIGN_WITHIN_LINEAGE",
+    "productionStatus": "REDESIGNABLE",
+    "sourceStatus": "OFFICIAL_EVIDENCE",
+    "safeSummary": "법률검토 전에 Concept의 사업 구조를 보완해야 합니다.",
+    "requiredControls": [],
+    "requiredPartnersAndQualifications": [],
+    "redesignRequirements": [
+      "What specific personal data will be collected and how will it be used?"
+    ],
+    "prohibitedVariants": [],
+    "requiredDisclosures": [],
+    "officialEvidenceReferences": [
+      {
+        "referenceIndex": 0,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제3조",
+        "title": "기본원칙 및 국가 등의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:d3af532ea737d1273289ec05ed2ff55c735bccac16c517b64292d7beeccd5312",
+        "boundedProvisionSummary": "인공지능 기술과 산업의 발전 방향 및 국가의 책무에 대한 규정으로, 인공지능 사업자가 준수해야 할 기본 원칙을 제시한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 1,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제33조",
+        "title": "고영향 인공지능의 확인",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:3fc48c2346668bf69d17684a6ea9e0adf2b1e2deb1409e8094281cbeefa8b48d",
+        "boundedProvisionSummary": "인공지능 사업자는 고영향 인공지능 여부를 사전에 검토해야 하며, 필요한 경우 확인 요청을 할 수 있다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 2,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제34조",
+        "title": "고영향 인공지능과 관련한 사업자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:617313212eede73a9fa4de775860b754747632549637a3da96e8e1b7fc0677c4",
+        "boundedProvisionSummary": "고영향 인공지능을 제공하는 사업자는 안전성과 신뢰성을 확보하기 위한 조치를 이행해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 3,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제35조",
+        "title": "고영향 인공지능 영향평가",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:fb8ebf040c2029dd28b2bd73badb7e225880c1a211d422abac790f568fb5d8c5",
+        "boundedProvisionSummary": "고영향 인공지능을 이용한 제품 또는 서비스 제공 시 기본권에 미치는 영향을 평가해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 4,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000030",
+        "officialIdentifier": "282481",
+        "lawName": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+        "articleReference": "제3조",
+        "title": "정보통신서비스 제공자 및 이용자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EB%A7%9D%20%EC%9D%B4%EC%9A%A9%EC%B4%89%EC%A7%84%20%EB%B0%8F%20%EC%A0%95%EB%B3%B4%EB%B3%B4%ED%98%B8%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260106",
+        "effectiveDate": "20260707",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:0f8a92d020f0e4f81e3020f1fae1178b3a63b92768de88a28f48449d7d37dd83",
+        "boundedProvisionSummary": "정보통신서비스 제공자는 이용자를 보호하고 안전한 서비스를 제공해야 한다.",
+        "queryKey": "sha256:7950518a36e66a586195226f8a68f7683de9c44930cbffec85bfe270ccd8cc59",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 5,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000030",
+        "officialIdentifier": "282481",
+        "lawName": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+        "articleReference": "제4조",
+        "title": "정보통신망 이용촉진 및 정보보호등에 관한 시책의 마련",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EB%A7%9D%20%EC%9D%B4%EC%9A%A9%EC%B4%89%EC%A7%84%20%EB%B0%8F%20%EC%A0%95%EB%B3%B4%EB%B3%B4%ED%98%B8%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260106",
+        "effectiveDate": "20260707",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:fa6d134f7eaa58efaed72e7d30f93e2d19c6edf8b92fb43c9f1ce70e616989e1",
+        "boundedProvisionSummary": "정보통신망 이용촉진 및 정보보호에 관한 시책을 마련해야 한다.",
+        "queryKey": "sha256:7950518a36e66a586195226f8a68f7683de9c44930cbffec85bfe270ccd8cc59",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 6,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제12조",
+        "title": "통신판매업자의 신고 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:448fe0bd6a72942700268999bc17abaf1a130dc75ff98338f016366ffccb8d53",
+        "boundedProvisionSummary": "통신판매업자는 신고를 통해 사업자 정보를 공정거래위원회에 제출해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 7,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제13조",
+        "title": "신원 및 거래조건에 대한 정보의 제공",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:6e496bba7781eda4a1e42db7cb6ead3a7f9648a8557ee96ea09e290d3f30b30d",
+        "boundedProvisionSummary": "통신판매업자는 거래조건에 대한 정보를 소비자에게 제공해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 8,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제17조",
+        "title": "청약철회등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:086921e6e5bc694ea2d723423f266762b50490e33b8739d64e1920b7a13bde5c",
+        "boundedProvisionSummary": "소비자는 계약 체결 후 일정 기간 내에 청약철회를 할 수 있다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 9,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제18조",
+        "title": "청약철회등의 효과",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:48bb8d8484384496bed84e6eac658a1ea9dcd53ed91bc5d6291359764c102642",
+        "boundedProvisionSummary": "청약철회 시 소비자는 이미 공급받은 재화를 반환해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 10,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000667",
+        "officialIdentifier": "260021",
+        "lawName": "약관의 규제에 관한 법률",
+        "articleReference": "제3조",
+        "title": "약관의 작성 및 설명의무 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%95%BD%EA%B4%80%EC%9D%98%20%EA%B7%9C%EC%A0%9C%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20240206",
+        "effectiveDate": "20240807",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:1616dce193e178dfd11405c2891a1bdea99e8a3b2e06ee7b662ebcb5d99bea23",
+        "boundedProvisionSummary": "사업자는 약관을 고객이 쉽게 알 수 있도록 작성해야 한다.",
+        "queryKey": "sha256:e71cfb4d78c3ba6b3c458d97c9b6b31c2f7d35ec9e1b5418ac514c78d5df3a4d",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 11,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제3조",
+        "title": "부당한 표시ㆍ광고 행위의 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:8a232304b3941209cf6afb47ff8485dec72a80b22d8ea0bd5f72b07f583b5826",
+        "boundedProvisionSummary": "사업자는 소비자를 속이거나 잘못 알게 할 우려가 있는 광고를 해서는 안 된다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 12,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제5조",
+        "title": "표시ㆍ광고 내용의 실증 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:175e1d20e79b88964eddbcfa658507a8968209ddba38fe094bc7005015b0ba30",
+        "boundedProvisionSummary": "사업자는 표시ㆍ광고 중 사실과 관련한 사항에 대해 실증할 수 있어야 한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 13,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제10조",
+        "title": "손해배상책임",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:9e32cfffe5aee496b1832d5e3707961c9f4280d83dc0f91deaf66f0318f1de73",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위로 피해를 입은 자에게 손해배상의 책임을 진다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 14,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제17조",
+        "title": "벌칙",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T09:40:55.385163Z",
+        "contentHash": "sha256:f8efc781c87796884bf25f8d680b1efcd4e223f5e470a5b156122d6d82e15692",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위를 한 자에게 벌칙을 부과한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      }
+    ],
+    "deltaLegalReviews": [],
+    "conflictingLock": null,
+    "currentValue": null,
+    "requiredLegalChange": null,
+    "reason": null,
+    "possibleUserAction": null,
+    "unknownFacts": [],
+    "inputScope": "CANDIDATE",
+    "evidenceDiagnostics": {
+      "coverageStatus": "SOURCE_PARTIAL",
+      "coverageMessage": "공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+    },
+    "reviewPhase": "LEGAL_SOURCE",
+    "factCompletenessStatus": null,
+    "legalSourceStatus": "SOURCE_PARTIAL",
+    "finalEvidenceJudgmentExecuted": false,
+    "recoveryResolution": null,
+    "sourceQuestionCount": 2,
+    "resolvedByFactPatternCount": 0,
+    "designGapCount": 1,
+    "externalFactCount": 0,
+    "controlConvertibleCount": 1,
+    "legalClarificationCount": 0
+  },
+  "durationMs": 28638,
+  "timestamp": "2026-08-10T09:40:57.233229+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

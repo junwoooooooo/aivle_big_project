@@ -1,0 +1,222 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:234273bf24ffdd7b4119b4d02643c9830d61efe9acbc16470f53f1967949185c",
+  "canonicalRequestHash": "f78409557f961ec837672bd2639529ad35b382ee809650bc4997f24ecf2ca457",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C2-RSV1-F1",
+        "field": "sellerRole",
+        "value": "여행지 예약 서비스를 제공하는 업체",
+        "roleFields": {
+          "platformRole": "여행 계획 및 예약 서비스를 제공하는 플랫폼",
+          "providerRole": "여행 계획 서비스를 제공하는 사업자",
+          "sellerRole": "여행지 예약 서비스를 제공하는 업체",
+          "intermediaryRole": "여행 예약 플랫폼"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행 관련 업체",
+          "예약 플랫폼"
+        ],
+        "transactionFlow": [
+          "사용자가 웹사이트/앱에 접속하여 관심사 입력",
+          "AI 알고리즘이 여행 테마 추천",
+          "사용자가 추천된 여행지 예약"
+        ],
+        "paymentFlow": [
+          "사용자가 여행지 예약 시 결제",
+          "예약 플랫폼이 수수료 수취",
+          "여행 관련 업체에 예약 금액 지급"
+        ],
+        "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 테마를 추천한다.",
+        "partnerModel": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행 테마를 추천하는 알고리즘.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C2-RSV1-F1",
+        "field": "intermediaryRole",
+        "value": "여행 예약 플랫폼",
+        "roleFields": {
+          "platformRole": "여행 계획 및 예약 서비스를 제공하는 플랫폼",
+          "providerRole": "여행 계획 서비스를 제공하는 사업자",
+          "sellerRole": "여행지 예약 서비스를 제공하는 업체",
+          "intermediaryRole": "여행 예약 플랫폼"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행 관련 업체",
+          "예약 플랫폼"
+        ],
+        "transactionFlow": [
+          "사용자가 웹사이트/앱에 접속하여 관심사 입력",
+          "AI 알고리즘이 여행 테마 추천",
+          "사용자가 추천된 여행지 예약"
+        ],
+        "paymentFlow": [
+          "사용자가 여행지 예약 시 결제",
+          "예약 플랫폼이 수수료 수취",
+          "여행 관련 업체에 예약 금액 지급"
+        ],
+        "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행 테마를 추천한다.",
+        "partnerModel": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행 테마를 추천하는 알고리즘.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C4-F1",
+        "field": "sellerRole",
+        "value": "여행 관련 업체",
+        "roleFields": {
+          "platformRole": "여행 계획 및 예약 플랫폼 운영",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "여행 관련 업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행 관련 업체",
+          "AI 알고리즘 제공자"
+        ],
+        "transactionFlow": [
+          "사용자가 여행지 추천 요청",
+          "AI 알고리즘이 추천 결과 제공",
+          "사용자가 예약 진행",
+          "여행 관련 업체에 예약 요청"
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 결제 진행",
+          "예약 업체가 수수료 지급",
+          "서비스 제공자가 수익 수취"
+        ],
+        "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다.",
+        "partnerModel": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행지를 추천하는 알고리즘을 활용한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C4-F1",
+        "field": "intermediaryRole",
+        "value": "예약 플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "여행 계획 및 예약 플랫폼 운영",
+          "providerRole": "여행 계획 서비스 제공자",
+          "sellerRole": "여행 관련 업체",
+          "intermediaryRole": "예약 플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "여행 관련 업체",
+          "AI 알고리즘 제공자"
+        ],
+        "transactionFlow": [
+          "사용자가 여행지 추천 요청",
+          "AI 알고리즘이 추천 결과 제공",
+          "사용자가 예약 진행",
+          "여행 관련 업체에 예약 요청"
+        ],
+        "paymentFlow": [
+          "사용자가 예약 시 결제 진행",
+          "예약 업체가 수수료 지급",
+          "서비스 제공자가 수익 수취"
+        ],
+        "operatingModel": "AI 알고리즘을 활용하여 사용자 데이터를 분석하고 여행지를 추천한다.",
+        "partnerModel": "여행 관련 업체와 제휴하여 추천된 여행지의 예약 서비스를 제공한다.",
+        "solutionMechanism": "사용자의 입력 데이터를 분석하여 최적의 여행지를 추천하는 알고리즘을 활용한다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "BOOKING",
+          "deliveryModel": "DIGITAL",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "MEDIUM",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C2-RSV1-F1",
+      "field": "sellerRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '여행지 예약 서비스를 제공하는 업체'로 sellerRole의 정의와 일치한다."
+    },
+    {
+      "candidateId": "C2-RSV1-F1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "value는 '여행 예약 플랫폼'으로 intermediaryRole의 정의와 일치한다."
+    },
+    {
+      "candidateId": "C4-F1",
+      "field": "sellerRole",
+      "decision": "MISMATCH",
+      "safeReason": "value는 '여행 관련 업체'로 sellerRole의 정의와 일치하지 않는다."
+    },
+    {
+      "candidateId": "C4-F1",
+      "field": "intermediaryRole",
+      "decision": "EXPLICIT_ABSENCE",
+      "safeReason": "value는 '예약 플랫폼 운영자'로 intermediaryRole의 정의가 명시적으로 존재하지 않는다."
+    }
+  ],
+  "durationMs": 3176,
+  "timestamp": "2026-08-10T09:39:12.230502+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

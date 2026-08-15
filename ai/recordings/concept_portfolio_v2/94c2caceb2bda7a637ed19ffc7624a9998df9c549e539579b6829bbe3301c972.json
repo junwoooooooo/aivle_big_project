@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:fc1613f68885ba6f71d916ea9b40f31b3de811ee849f74b48868d4784dd5994c",
+  "canonicalRequestHash": "94c2caceb2bda7a637ed19ffc7624a9998df9c549e539579b6829bbe3301c972",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C3-R1",
+        "businessText": "중고 거래 플랫폼 운영 플랫폼 운영자 물품 판매자 플랫폼 운영자 플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다. 대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자가 물품 등록 사용자가 거래 요청 판매자와 구매자 간의 직접 거래 물품 인수인계 구매자가 결제 플랫폼이 수수료 차감 후 판매자에게 지급 프리미엄 서비스 제공을 통해 추가 수익을 창출한다. 모바일 앱, 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C3-R1",
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "MATCHING",
+        "monetizationModel": "COMMISSION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "MEDIUM",
+        "monetizationModel": "MEDIUM",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "중고 거래 플랫폼으로, 사용자 간의 거래를 중개하며, 대학가 상점과 제휴하여 혜택을 제공하고, 수수료를 통해 수익을 창출하는 모델."
+    }
+  ],
+  "durationMs": 4169,
+  "timestamp": "2026-08-10T07:58:49.192062+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

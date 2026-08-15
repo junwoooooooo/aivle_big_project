@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:96c143e7c9440feb2d58096692b26eb469dedd62df12e5458e619d97d996a13d",
+  "canonicalRequestHash": "ea444548e38abcc618d7c73394b0cdb2afc39cf542ef349895f7ee15b0e16c22",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "고객의 선호도에 따라 식재료를 조합하여 제공하는 운영 방식. 지역 농가 및 식재료 공급업체와 협력하여 신선한 재료를 확보한다. 구독 모델을 통해 정기적으로 식재료를 제공하고 결제한다. 소량 식재료 패키지를 판매하여 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 신선한 식재료를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 식재료와 레시피를 선택할 수 있도록 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "레시피에 따라 식재료를 조합하여 제공하는 운영 방식. 레시피 개발자와 협력하여 다양한 요리 레시피를 확보한다. 레시피 기반으로 식재료를 패키지로 판매한다. 레시피 패키지를 통해 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 레시피에 맞춘 식재료를 배송한다. 고객이 원하는 레시피를 선택하면 필요한 식재료를 자동으로 추천한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 구독 모델을 통해 정기적으로 식재료와 레시피를 제공하고 결제한다. 맞춤형 요리 패키지를 판매하여 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 신선한 식재료와 레시피를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 요리 스타일을 선택할 수 있도록 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "고객의 선호도에 따라 신선한 재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 구독 모델을 통해 정기적으로 신선한 재료와 레시피를 제공하고 결제한다. 신선한 재료와 레시피 패키지를 판매하여 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 신선한 재료와 레시피를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 요리 스타일을 선택할 수 있도록 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 구독 모델을 통해 정기적으로 식재료와 레시피를 제공하고 결제한다. 맞춤형 요리 패키지를 판매하여 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 신선한 식재료와 레시피를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 요리 스타일을 선택할 수 있도록 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "고객의 선호도에 따라 식재료와 레시피를 조합하여 제공하는 운영 방식. 지역 농가 및 요리 전문가와 협력하여 신선한 재료와 레시피를 확보한다. 구독 모델을 통해 정기적으로 식재료와 레시피를 제공하고 결제한다. 맞춤형 요리 패키지를 판매하여 고객의 요리 경험을 개선한다. 주문 후 1~2일 이내에 신선한 식재료와 레시피를 배송한다. 온라인 플랫폼을 통해 고객이 원하는 요리 스타일을 선택할 수 있도록 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "DIRECT_SALE",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service providing fresh ingredients based on customer preferences, collaborating with local farmers and suppliers, using a subscription model for regular deliveries."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service offering ingredient packages based on recipes developed in collaboration with recipe developers, focusing on improving cooking experiences."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service combining fresh ingredients and recipes based on customer preferences, with a subscription model for regular deliveries."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service providing fresh ingredients and recipes based on customer preferences, with a subscription model for regular deliveries."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service providing fresh ingredients and recipes based on customer preferences, with a subscription model for regular deliveries."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "DIRECT_SALE",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "A service providing fresh ingredients and recipes based on customer preferences, with a subscription model for regular deliveries."
+    }
+  ],
+  "durationMs": 6691,
+  "timestamp": "2026-08-10T03:28:20.230958+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

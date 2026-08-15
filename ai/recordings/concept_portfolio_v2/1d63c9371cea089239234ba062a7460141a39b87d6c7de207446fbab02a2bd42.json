@@ -1,0 +1,254 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:2b61c22840a6e882a50129e7ac47739fa68f367b41bc57f830f8e9b9b5e72e56",
+  "canonicalRequestHash": "1d63c9371cea089239234ba062a7460141a39b87d6c7de207446fbab02a2bd42",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 구독 모델을 통해 월 단위로 요금을 청구합니다. 소형 사무실을 대상으로 한 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 교체 서비스를 통해 고객의 요구를 충족합니다. 온라인 플랫폼을 통해 간편하게 장비를 대여하고 관리할 수 있습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "고객 맞춤형 장비 관리 서비스 제공 장비 제조업체와 협력하여 최신 장비를 확보합니다. 서비스 이용에 따른 요금을 청구합니다. 소형 사무실을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 유지보수 서비스를 통해 고객의 요구를 충족합니다. 고객의 요청에 따라 장비 점검 및 유지보수를 진행합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 구독 모델을 통해 월 단위로 요금을 청구합니다. 소형 사무실을 대상으로 한 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 교체 서비스를 통해 고객의 요구를 충족합니다. 온라인 플랫폼을 통해 간편하게 장비를 대여하고 관리할 수 있습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "고객의 요구에 맞춘 맞춤형 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 구독 모델을 통해 월 단위로 요금을 청구합니다. 소형 사무실을 대상으로 한 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 교체 서비스를 통해 고객의 요구를 충족합니다. 온라인 플랫폼을 통해 간편하게 장비를 대여하고 관리할 수 있습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "고객 맞춤형 장비 관리 서비스 제공 장비 제조업체와 협력하여 최신 장비를 확보합니다. 서비스 이용에 따른 요금을 청구합니다. 소형 사무실을 대상으로 한 맞춤형 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 유지보수 서비스를 통해 고객의 요구를 충족합니다. 고객의 요청에 따라 장비 점검 및 유지보수를 진행합니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "고객의 요구에 맞춘 맞춤형 지원 서비스 제공 장비 제조업체와의 협력을 통해 최신 장비를 확보합니다. 구독 모델을 통해 월 단위로 요금을 청구합니다. 소형 사무실을 대상으로 한 마케팅 전략을 수립합니다. 정기적인 장비 점검 및 지원 서비스를 통해 고객의 요구를 충족합니다. 온라인 플랫폼을 통해 간편하게 장비를 대여하고 지원 요청을 할 수 있습니다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "P1",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 서비스 제공 및 장비 대여 관리."
+    },
+    {
+      "entityId": "P2",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 장비 관리 서비스 제공."
+    },
+    {
+      "entityId": "P3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 서비스 제공 및 장비 대여 관리."
+    },
+    {
+      "entityId": "P4",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 서비스 제공 및 장비 대여 관리."
+    },
+    {
+      "entityId": "P5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 장비 관리 서비스 제공."
+    },
+    {
+      "entityId": "P6",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "고객 맞춤형 지원 서비스 제공 및 장비 대여 관리."
+    }
+  ],
+  "durationMs": 8323,
+  "timestamp": "2026-08-10T07:53:06.371517+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

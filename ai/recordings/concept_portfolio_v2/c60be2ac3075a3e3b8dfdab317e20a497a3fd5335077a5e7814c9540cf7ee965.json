@@ -1,0 +1,112 @@
+{
+  "taskType": "PLAN_FIDELITY",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-fidelity-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:819627066058c4f3226c82234440e97a0b4307b3adf3739e4c66c801f73897e2",
+  "canonicalRequestHash": "c60be2ac3075a3e3b8dfdab317e20a497a3fd5335077a5e7814c9540cf7ee965",
+  "redactedRequest": {
+    "plan": {
+      "targetSegment": "요리할 시간이 부족한 1~2인 가구",
+      "problemFocus": "식재료의 낭비를 줄이고 요리의 번거로움을 해결하는 문제",
+      "useContext": "소량의 식재료를 활용한 맞춤형 레시피 제공 서비스",
+      "valueProposition": "고객의 취향에 맞춘 레시피를 제공하여 요리를 쉽게 만든다.",
+      "offerThesis": "개인 맞춤형 레시피 추천 서비스 제공",
+      "solutionThesis": "소량의 식재료를 활용한 간편한 요리법을 제안한다.",
+      "differentiatingMechanics": [
+        "개인 맞춤형 레시피 제공",
+        "남은 재료 활용 추천",
+        "사용자 피드백 기반 개선"
+      ]
+    },
+    "candidate": {
+      "targetUsers": "요리할 시간이 적고 낭비를 줄이고 싶은 1~2인 가구",
+      "problemScenario": "1~2인 가구가 큰 포장 단위 때문에 식재료를 남기고 음식물 쓰레기가 발생한다.",
+      "coreValue": "고객의 요리 편의성을 높이고 음식물 쓰레기를 줄이는 데 기여한다.",
+      "conceptDefinition": "개인 맞춤형 소량 식재료를 제공하고 남은 재료 활용 레시피를 안내하는 서비스",
+      "solutionMechanism": "소량의 식재료를 활용한 간편한 요리법을 제안한다.",
+      "featureSet": [
+        "개인 맞춤형 레시피 추천",
+        "남은 재료 활용 레시피 제공",
+        "고객 피드백 기반 서비스 개선"
+      ],
+      "operatingModel": "온라인 플랫폼을 통해 레시피 추천 및 관리한다."
+    },
+    "planDescriptorSummary": {
+      "thesis": {
+        "targetSegmentThesis": "요리할 시간이 부족한 1~2인 가구",
+        "useCaseThesis": "소량의 식재료를 활용한 맞춤형 레시피 제공 서비스",
+        "valuePropositionThesis": "고객의 취향에 맞춘 레시피를 제공하여 요리를 쉽게 만든다.",
+        "offerThesis": "개인 맞춤형 레시피 추천 서비스 제공",
+        "solutionThesis": "소량의 식재료를 활용한 간편한 요리법을 제안한다."
+      },
+      "architecture": {
+        "businessRole": "PLATFORM_INFRASTRUCTURE",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "mechanismFamily": "소량의 식재료를 활용한 간편한 요리법을 제안한다",
+      "familyId": "PLATFORM_INFRASTRUCTURE:PARTNER_NETWORK",
+      "familyLabelKo": "플랫폼 인프라 · 파트너 네트워크",
+      "architectureDiagnostics": {
+        "businessRole": {
+          "code": "PLATFORM_INFRASTRUCTURE",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "operatingModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "partnerModel": {
+          "code": "PARTNER_NETWORK",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        },
+        "deliveryModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "transactionModel": {
+          "code": "OTHER",
+          "confidence": "LOW",
+          "source": "SEMANTIC"
+        },
+        "monetizationModel": {
+          "code": "FREEMIUM",
+          "confidence": "MEDIUM",
+          "source": "SEMANTIC"
+        },
+        "customerInteractionModel": {
+          "code": "APP",
+          "confidence": "HIGH",
+          "source": "SEMANTIC"
+        }
+      }
+    }
+  },
+  "providerResponse": {
+    "decision": "PASS",
+    "matchedMechanics": [
+      "개인 맞춤형 레시피 제공",
+      "남은 재료 활용 추천",
+      "사용자 피드백 기반 개선"
+    ],
+    "missingMechanics": [],
+    "safeSummary": "서비스는 개인 맞춤형 소량 식재료 제공과 남은 재료 활용 레시피 안내를 통해 고객의 요리 편의성을 높이고 음식물 쓰레기를 줄이는 데 기여한다. 1~2인 가구를 타겟으로 하여 요리의 번거로움을 해결하는 솔루션을 제공한다."
+  },
+  "durationMs": 3388,
+  "timestamp": "2026-08-10T05:24:21.301871+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

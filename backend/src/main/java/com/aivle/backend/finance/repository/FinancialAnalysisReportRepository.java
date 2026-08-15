@@ -5,5 +5,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FinancialAnalysisReportRepository extends JpaRepository<FinancialAnalysisReport, String> {
+    Optional<FinancialAnalysisReport> findFirstByProjectIdAndDeletedAtIsNullOrderByCompletedAtDesc(Long projectId);
     Optional<FinancialAnalysisReport> findFirstByProjectIdAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(Long projectId, String inputSnapshotId);
 }

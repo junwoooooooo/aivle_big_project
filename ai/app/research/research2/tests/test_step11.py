@@ -74,7 +74,9 @@ def slot(sid="S1", ctype="PRICE"):
 
 
 URL = "https://gongbiz.kr/landing-page/payment-plan"
-QUOTE = "월 19,800원"
+#: 판 ㊱ 의 무서술 겹은 PRICE 를 면제하지만 이 파일은 **PRICE 아닌 슬롯**도 시험한다.
+#: 인용문을 문장으로 적어야 그 검사가 요금 면제가 아니라 무서술 겹에 걸리지 않는다.
+QUOTE = "이 서비스의 구독 요금은 월 19,800원이다"
 BODY = "요금제 안내 — 스탠다드 월 19,800원 부터"
 
 

@@ -124,25 +124,76 @@ def _pick_base(led: dict, claim_types: set) -> tuple:
     return cands[0]["value"], cands, ""
 
 
-def _SEG_WARN(seg, a: dict) -> list:
-    """세그먼트비중 가정의 경고를 매번 같은 문장으로 싣는다.
+#: 계산식 한 항의 **판정**. 셋뿐이고 층이 마음대로 늘리지 않는다(도장 어휘와 같은 규율).
+#:   관측 — 원장에 출처가 있는 사실에서 왔다
+#:   가정 — `rules/assumptions.v1.json` 이 값과 근거를 함께 선언한 것이다
+#:   가설 — **우리가 정한 값**이다(가격 등). 시장에서 관측한 것이 아니다
+FACTOR_BASES = ("관측", "가정", "가설")
 
-    한 번 쓰고 마는 경고가 아니라, 이 값이 나가는 모든 칸에 붙어야 한다.
-    빌려온 가정은 빌려왔다는 사실이 값과 함께 움직여야 오독되지 않는다.
+#: 단가는 `rules` 가 아니라 **컨셉의 가격 가설**에서 온다. 그래서 rules 의 `basis`
+#: (요금제 관측 참조)를 붙이면 다른 값의 근거를 이 값에 다는 셈이 된다.
+_PRICE_NOTE = "우리 가격 가설이지 관측된 시장 단가가 아니다"
 
-    **판 ④ 에서 2중 → 1중이 됐다.** 옛 경고는 「업종 불일치(카페→미용)」와
-    「역할 불일치(지역 비중을 1인 비중 자리에)」 둘이었다. 지역 비중은 이제 서울
-    사업체 수로 직접 관측되므로 빌려 쓰지 않고, 남은 결함은 하나다 —
-    **1~4명 안에서 「1인」이 몇 %인지가 관측되지 않았다.**
-    관측된 것은 **상한뿐**이라 그 울타리를 값과 함께 싣는다.
+
+def _요인(이름, 값, 판정, 단위=None, 설명=None, 울타리=None, 반증=None, rows=None) -> dict:
+    """계산식의 한 항을 **레코드**로 편다. 문장이 아니라 표의 한 줄이다.
+
+    ⚠ **설명을 자르지 않는다.** 옛 `_SEG_WARN` 은 `basis[:100]` 으로 잘라 문장 한가운데가
+    끊긴 채로 화면까지 보냈다("… 두발 미"). 자를 자리는 화면이지 판정 층이 아니다.
+
+    ⚠ **여기서 판정하지 않는다.** `판정` 은 부르는 쪽이 이미 아는 사실이다 — 값이
+    `rules/` 에서 왔으면 가정이고 원장에서 왔으면 관측이다. 이 함수가 추론하면 같은
+    물음을 두 곳이 각자 풀게 된다.
     """
-    cap = a.get("_관측된_상한")
-    return [
-        f"세그먼트비중 {seg} 는 **관측이 아니라 가정**이다 (1~4명 중 1인 구성비 미관측)",
-        f"⚠ 관측된 것은 **상한뿐** — 1~4명 비율 {cap} ({a.get('_상한_출처')}). "
-        f"「1인」 구간은 국가통계에 없다(표 6개 전수 확인)",
-        f"원 근거 서술: {str(a.get('basis'))[:100]}",
-    ]
+    if 판정 not in FACTOR_BASES:
+        raise ValueError(f"요인 판정이 어휘 밖이다: {판정!r}")
+    기반 = _대조_기반(list(rows or []), 가정=(판정 != "관측"))
+    return {"이름": 이름, "값": 값, "단위": 단위, "판정": 판정,
+            "설명": 설명, "울타리": 울타리, "반증": 반증,
+            "출처_수": 기반["출처_수"], "원출처_도메인": 기반["원출처_도메인"],
+            "경계": 기반["경계"]}
+
+
+def _역할_요인(이름, 역할, 값, by_role: dict, 판정="가정", 설명=None) -> dict:
+    """`rules/assumptions.v1.json::by_role` 한 칸을 요인 한 줄로 편다.
+
+    `_관측된_상한` 이 있으면 **울타리**로 싣는다 — 「가정이지만 이 선은 못 넘는다」는
+    관측이고, 가정과 같은 칸에 두면 둘이 구분되지 않는다.
+    """
+    a = by_role.get(역할) or {}
+    상한, 출처 = a.get("_관측된_상한"), a.get("_상한_출처")
+    return _요인(이름, 값, 판정, 단위=a.get("unit"),
+                설명=a.get("basis") if 설명 is None else 설명,
+                울타리=(f"관측 상한 {상한} · {출처}" if 상한 is not None else None),
+                반증=a.get("falsified_if"))
+
+
+def _가정_문장(요인들: list) -> list:
+    """요인 표의 **문장 투영**. 표를 못 읽는 소비자(성적표·카드·보고서)를 위해 남긴다.
+
+    ⚠ **문장을 따로 손으로 쓰지 않는다.** 두 벌을 각자 쓰면 표와 문장이 갈라지고,
+    갈라지는 순간 어느 쪽이 정본인지 알 수 없게 된다(판 ⑩ 「자를 둘 두지 않는다」).
+    """
+    out = []
+    for f in 요인들:
+        if f["판정"] == "관측":
+            continue
+        # 조사를 붙이지 않는다 — 「0.1 는/은」은 숫자를 읽어야 정해지고, 그 규칙을
+        # 여기 넣으면 판정 층이 한국어 형태론을 갖게 된다. 값 뒤는 줄표로 끊는다.
+        꼬리 = " · ".join(x for x in (f.get("설명"), f.get("울타리")) if x)
+        머리 = f"{f['이름']} {f['값']}{(' ' + f['단위']) if f.get('단위') else ''} — {f['판정']}이다"
+        out.append(f"{머리}. {꼬리}" if 꼬리 else 머리)
+    return out
+
+
+def _가정수(요인들: list) -> int:
+    """가정의 개수는 **요인 표에서 센다.** 문장 수를 세면 한 요인이 세 문장이던 시절의
+    수(6)와 실제 가정 수(4)가 갈라진다 — 실제로 갈라져 있었다."""
+    return len([f for f in 요인들 if f["판정"] != "관측"])
+
+
+# `_SEG_WARN` 은 `_역할_요인` 이 대신한다(판 ㉞). 그 함수가 하던 일 셋 — 값·상한 울타리·
+# 원 근거 서술 — 은 이제 요인 한 줄의 `값`·`울타리`·`설명` 이고, **잘리지 않는다.**
 
 
 _YEAR = re.compile(r"(?:19|20)\d{2}")
@@ -207,6 +258,12 @@ def judge_growth(led: dict) -> dict | None:
         "표시": (g.get("표시") or {}).get("형식", "").format(
             span=span, y0=a["year"], y1=b["year"]),
         "가정": 가정,
+        # 성장률의 항은 **둘 다 관측**이다. 그래서 요인 표에 가정 행이 없고,
+        # `가정` 의 문장들은 항이 아니라 **해석**에 붙는다(연평균이 아니다·과거다).
+        # 둘을 같은 칸에 두면 「관측 2건의 산술」이 「지어낸 값」과 같은 무게로 읽힌다.
+        "요인": [_요인(f"{x['year']}년", x["value"], "관측", 단위=x["unit"], rows=[x])
+               for x in (a, b)],
+        "해석_경계": 가정,
         # 코드가 따로 세지 않는다 — 가정 목록의 길이가 곧 개수다.
         "assumption_count": len(가정),
         # 입력 사실 2건의 trace 를 **반드시** 싣는다 — 어느 관측에서 나왔는지 되짚을 수 있어야 한다
@@ -288,19 +345,25 @@ def _judge_market_t7(led: dict, hyp: dict, spec: dict) -> dict:
 
     share_a = by_role.get(spec.get("점유율_role") or "추정점유율") or {}
     share = share_a.get("value")
+    # 계열 C 의 `경계` 는 **항에 붙지 않는 해석 경계**다(구조 자체에 대한 단서).
+    # 그래서 요인 표에 넣지 않고 표 밖에 남긴다 — 표가 말할 수 있는 것만 표에 넣는다.
     경계 = list(spec.get("경계") or [])
-    가정 = 경계 + [f"{spec.get('점유율_role')} {share} 는 가정이다 — "
-                 f"{str(share_a.get('basis'))[:80]}"]
+    역할 = spec.get("점유율_role") or "추정점유율"
 
     def _est(base, evid, 이름):
         if base is None:
             return None
-        return {"식": spec.get("식"), "입력": {f"{이름} 거래액": base,
-                                            spec.get("점유율_role"): share},
+        요인 = [_요인(f"{이름} 거래액", base, "관측", 단위="원", rows=evid),
+               _역할_요인(역할, 역할, share, by_role)]
+        return {"식": spec.get("식"), "입력": {f"{이름} 거래액": base, 역할: share},
                 "값": (base * share) if share else None,
-                "assumption_count": len(가정), "가정": 가정, "근거": evid,
+                "assumption_count": _가정수(요인),
+                "요인": 요인,
+                "가정": 경계 + _가정_문장(요인),
+                "해석_경계": 경계,
+                "근거": evid,
                 "대조_기반": {"거래액": _대조_기반(evid),
-                           spec.get("점유율_role"): _대조_기반([], 가정=True)}}
+                           역할: _대조_기반([], 가정=True)}}
 
     out["TAM_추정"] = _est(gmv, ev, "시장")
     if out["TAM_추정"] is None:
@@ -348,32 +411,46 @@ def judge_market(led: dict, hyp: dict, concept: dict | None = None) -> dict:
     pen_a = by_role.get("침투율") or {}
     pen = pen_a.get("value")
     months = (by_role.get("연환산") or {}).get("value") or 12
-    가정 = _SEG_WARN(seg, seg_a) + [
-        f"침투율 {pen} 은 가정이다 — {str(pen_a.get('basis'))[:80]}",
-        f"단가 {price} 원은 **우리 가격 가설**이지 관측된 시장 단가가 아니다",
-        f"연환산 {months} 개월 — 이탈 없는 만액 결제 가정"]
+    # 값 옆에 각각의 대조 기반을 두어 「무엇이 관측이고 무엇이 가정인지」가 **숫자로**
+    # 드러나게 한다 — 지금까지는 문장으로만 있었고, 문장은 옮기다 빠진다.
+    def _요인들(라벨, 밑동, 근거):
+        return [
+            _요인(라벨, 밑동, "관측", 단위="개", rows=근거),
+            _역할_요인("세그먼트비중", "세그먼트비중", seg, by_role),
+            _역할_요인("침투율", "침투율", pen, by_role),
+            # ⚠ 단가는 `by_role["단가"]` 에서 오지 않는다 — 그 레코드는 **다른 값**
+            #   (요금제 관측 근사 30,000원)의 근거·반증이다. 컨셉의 가격 가설에 그것을
+            #   달면 이 값의 근거가 아닌 문장이 이 값 옆에 선다.
+            _요인("단가", price, "가설", 단위="원", 설명=_PRICE_NOTE),
+            _역할_요인("연환산", "연환산", months, by_role),
+        ]
+
+    tam_요인 = _요인들("전국 사업체 수", base, nation)
     out["TAM_추정"] = {
         "식": "TAM(연) = 전국 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산",
         "입력": {"전국 사업체 수": base, "세그먼트비중": seg, "침투율": pen,
                "단가": price, "연환산": months},
         "값": (base * seg * pen * price * months) if (seg and pen and price) else None,
-        "assumption_count": 4,
-        "가정": 가정,
+        "assumption_count": _가정수(tam_요인),
+        "요인": tam_요인,
+        "가정": _가정_문장(tam_요인),
+        # 요인 표가 말하지 못하는 해석 경계. 여기 계열엔 없다 — 모든 문장이 항에 붙는다.
+        "해석_경계": [],
         "근거": nation,
-        # 사업체 수는 관측이지만 **세그먼트비중·침투율은 가정**이다. 값 옆에 각각의
-        # 대조 기반을 두어 「무엇이 관측이고 무엇이 가정인지」가 숫자로 드러나게 한다 —
-        # 지금까지는 문장으로만 있었고, 문장은 옮기다 빠진다.
         "대조_기반": {"사업체_수": _대조_기반(nation),
                    "세그먼트비중": _대조_기반([], 가정=True),
                    "침투율": _대조_기반([], 가정=True)}}
     if seoul:
         sb = base_s
+        sam_요인 = _요인들("서울 사업체 수", sb, seoul)
         out["SAM_추정"] = {
             "식": "SAM(연) = 서울 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산",
             "입력": {"서울 사업체 수": sb, "세그먼트비중": seg, "침투율": pen,
                    "단가": price, "연환산": months},
             "값": (sb * seg * pen * price * months) if (seg and pen and price) else None,
-            "assumption_count": 4, "가정": 가정, "근거": seoul}
+            "assumption_count": _가정수(sam_요인),
+            "요인": sam_요인, "가정": _가정_문장(sam_요인), "해석_경계": [],
+            "근거": seoul}
     else:
         out["SAM_추정"] = None
         out["SAM_사유"] = ("서울 사업체 수 확인됨 0건(S5 not_found) — 지역 비중 가정을 "
@@ -619,22 +696,32 @@ def judge_som(led: dict, hyp: dict) -> dict:
     # 판 ④ 에서 성장률(%)·비율(%) 관측이 들어오면 그중 하나가 조용히 세그먼트비중이 된다.
     # 「1인 비율」은 어느 국가통계에도 없음이 실측으로 확정됐으므로(kosis-probe-04)
     # 이 자리는 **가정으로 고정**하고, 관측으로 승격하는 문은 닫는다.
-    a = ((_rules().get("assumptions") or {}).get("by_role") or {}).get("세그먼트비중") or {}
+    by_role = (_rules().get("assumptions") or {}).get("by_role") or {}
+    a = by_role.get("세그먼트비중") or {}
     seg, seg_src = a.get("value"), "가정(rules/assumptions.v1.json) — 관측 아님"
-    assumptions = list(_SEG_WARN(seg, a))
     seg = 1.0 if seg is None else seg
 
+    # 침투율은 **원장이 아니라 컨셉의 SOM 가설**에서 온다 — rules 의 침투율과 다른 값이다.
+    # 그래서 rules 의 basis 를 붙이지 않고 출신을 그대로 적는다.
+    요인 = [
+        _요인("사업체 수", base, "관측", 단위="개", rows=counts,
+            설명=f"슬롯 {counts[0]['slot_id']} 의 확인됨"),
+        _역할_요인("세그먼트비중", "세그먼트비중", seg, by_role),
+        _요인("침투율", rate, "가정", 단위="비율",
+            설명="관측 근거가 없는 순수 가정 — 컨셉의 9_SOM_초기점유 가설에서 왔다"),
+        _요인("월 구독가", price, "가설", 단위="원", 설명=_PRICE_NOTE),
+        _요인("개월", 12, "가정", 단위="개월", 설명="이탈 없는 12개월 만액 결제"),
+    ]
     targets = base * seg * (rate or 0)
     calc = {"식": "SOM(연) = 사업체 수 × 세그먼트비중 × 침투율 × 월 구독가 × 12",
             "입력": {"사업체 수": base, "세그먼트비중": seg, "세그먼트비중_출처": seg_src,
                    "침투율": rate, "월 구독가": price, "개월": 12},
             "목표 고객 수": targets,
             "값": (targets * price * 12) if price else None,
-            "assumption_count": len(assumptions) + 2,
-            "가정": assumptions + [
-                   f"침투율 {rate} 는 **관측 근거가 없는 순수 가정**이다",
-                   "이탈 없는 12개월 만액 결제를 가정했다",
-                   f"사업체 수는 슬롯 {counts[0]['slot_id']} 의 확인됨이다"],
+            "assumption_count": _가정수(요인),
+            "요인": 요인,
+            "가정": _가정_문장(요인),
+            "해석_경계": [],
             "근거": counts,
             **({"선택_주의": warn} if warn else {})}
     return {"가설": "9_SOM_초기점유", "도장": "미검증",

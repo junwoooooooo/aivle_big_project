@@ -1,0 +1,741 @@
+{
+  "taskType": "LEGAL_REVIEW",
+  "operationVersion": "v3",
+  "promptVersion": "concept-legal-review-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:5323f883da8e111a448358e5a62332206adceda44c93e72220e32e8b518e8260",
+  "canonicalRequestHash": "4298d71c00569651e45a51d557676faea8e3aa39f93e4096eec75eae06bbeac7",
+  "redactedRequest": {
+    "candidateId": "C1",
+    "candidate": {
+      "conceptName": "회의 기록 자동 정리 도구",
+      "conceptDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다.",
+      "introduction": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구입니다.",
+      "coreValue": "회의 기록 정리를 자동화하여 영업팀의 시간을 절약합니다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "industryCategory": "소프트웨어/AI 도구",
+      "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+      "targetRegion": "대한민국",
+      "revenueModel": "구독 기반 모델로 영업팀에 서비스를 제공합니다.",
+      "price": "월 10만원",
+      "channels": "온라인 마케팅 및 파트너십을 통한 유통",
+      "differentiators": "자동화된 회의 기록 정리 및 고객별 맞춤형 영업 액션 제안",
+      "preMarketSomShareHypothesis": {
+        "targetSharePercent": 15.0,
+        "horizonYears": 3,
+        "rationale": "중소기업 시장의 영업 효율성 향상에 대한 수요 증가",
+        "assumptions": [
+          "중소기업의 영업팀은 인력 부족 문제를 겪고 있다.",
+          "AI 도구에 대한 수용도가 높아지고 있다."
+        ]
+      },
+      "preMarketSomHypothesis": {
+        "amount": 5000000.0,
+        "currency": "KRW",
+        "period": "연간",
+        "calculationBasis": "중소기업 영업팀의 수를 기반으로 한 시장 규모 추정",
+        "assumptions": [
+          "중소기업의 영업팀 수는 지속적으로 증가할 것이다.",
+          "AI 도구의 도입률이 증가할 것이다."
+        ],
+        "confidence": "MEDIUM"
+      },
+      "problemScenario": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "solutionMechanism": "AI 도구를 통해 회의 내용을 자동으로 분석하고 정리하여 CRM에 입력할 후속 조치를 제안합니다.",
+      "featureSet": [
+        "회의 기록 자동 정리",
+        "고객별 맞춤형 영업 액션 제안",
+        "CRM 통합 기능"
+      ],
+      "actorRoles": [
+        "영업팀",
+        "AI 도구 제공자"
+      ],
+      "platformRole": "AI 도구 제공 플랫폼",
+      "operatingModel": "중소기업 영업팀의 특성을 반영한 맞춤형 AI 솔루션을 제공합니다.",
+      "partnerModel": "CRM 시스템과의 통합을 통해 파트너십을 구축합니다.",
+      "providerRole": "AI 도구 제공자",
+      "sellerRole": "영업팀",
+      "intermediaryRole": "없음",
+      "transactionFlow": [
+        "고객이 구독 신청",
+        "AI 도구 제공자가 서비스 제공",
+        "고객이 회의 기록을 입력",
+        "AI 도구가 자동으로 정리 및 제안"
+      ],
+      "paymentFlow": [
+        "고객이 구독료 결제",
+        "AI 도구 제공자가 결제 확인",
+        "서비스 제공 시작"
+      ],
+      "personalDataUsage": [
+        "고객의 회의 내용 및 이메일을 분석하여 맞춤형 제안을 제공"
+      ],
+      "physicalActivities": [],
+      "partnerRequirements": [],
+      "qualificationRequirements": [],
+      "advertisingClaims": [
+        "효율적인 회의 기록 관리로 영업팀의 성과를 극대화합니다."
+      ],
+      "constraintCompliance": [],
+      "schemaVersion": "2.0",
+      "generationStrategy": "EXPLORE",
+      "candidateIndex": 1,
+      "originalCandidate": false,
+      "valueSemantics": [
+        {
+          "fieldKey": "conceptName",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "conceptDefinition",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "introduction",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "coreValue",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "industryCategory",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "researchScope",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "price",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "channels",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "differentiators",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomShareHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "preMarketSomHypothesis",
+          "source": "AI_HYPOTHESIS",
+          "authority": "OPEN",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "actorRoles",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "platformRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "problemScenario",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "solutionMechanism",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "featureSet",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "operatingModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerModel",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "providerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "sellerRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "intermediaryRole",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "transactionFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "paymentFlow",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "personalDataUsage",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "physicalActivities",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "partnerRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "qualificationRequirements",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        },
+        {
+          "fieldKey": "advertisingClaims",
+          "source": "CONCEPT_GENERATED",
+          "authority": "REVIEWABLE",
+          "decision": "PROPOSED"
+        }
+      ]
+    },
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+      "problem": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+      "targetUsers": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 AI 업무 도구",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "영업 담당자가 회의·메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "별도 영업 운영 인력이 부족한 중소기업 영업팀",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "영업 담당자가 회의 및 이메일 내용을 수작업으로 정리하고 CRM을 업데이트하느라 실제 고객 대응 시간이 줄어드는 문제를 해결합니다.",
+        "interpretedTargetUsers": "별도의 영업 운영 인력이 부족한 중소기업 영업팀을 대상으로 합니다.",
+        "usageContext": "중소기업의 영업팀에서 회의 기록과 이메일을 정리하고 CRM에 입력하는 업무를 지원하는 도구입니다.",
+        "industryCategory": "소프트웨어/AI 도구",
+        "researchScope": "중소기업의 영업 효율성 향상에 관한 연구",
+        "conciseIdeaDefinition": "AI를 활용하여 중소기업 영업팀의 회의 기록과 이메일을 정리하고 CRM에 입력할 후속 조치와 고객별 영업 액션을 제안하는 도구입니다.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않았습니다.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않았습니다."
+      },
+      "fixtureName": "custom"
+    }
+  },
+  "providerResponse": {
+    "candidateId": "C1",
+    "route": "REDESIGN_WITHIN_LINEAGE",
+    "productionStatus": "REDESIGNABLE",
+    "sourceStatus": "OFFICIAL_EVIDENCE",
+    "safeSummary": "법률검토 전에 Concept의 사업 구조를 보완해야 합니다.",
+    "requiredControls": [],
+    "requiredPartnersAndQualifications": [],
+    "redesignRequirements": [
+      "구체적인 판매 방식에 대한 정보가 필요합니다."
+    ],
+    "prohibitedVariants": [],
+    "requiredDisclosures": [],
+    "officialEvidenceReferences": [
+      {
+        "referenceIndex": 0,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제3조",
+        "title": "기본원칙 및 국가 등의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:d3af532ea737d1273289ec05ed2ff55c735bccac16c517b64292d7beeccd5312",
+        "boundedProvisionSummary": "인공지능기술과 인공지능산업은 안전성과 신뢰성을 제고하여 국민의 삶의 질을 향상시키는 방향으로 발전되어야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 1,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제33조",
+        "title": "고영향 인공지능의 확인",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:3fc48c2346668bf69d17684a6ea9e0adf2b1e2deb1409e8094281cbeefa8b48d",
+        "boundedProvisionSummary": "인공지능사업자는 고영향 인공지능에 해당하는지 사전에 검토해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 2,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제34조",
+        "title": "고영향 인공지능과 관련한 사업자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:617313212eede73a9fa4de775860b754747632549637a3da96e8e1b7fc0677c4",
+        "boundedProvisionSummary": "고영향 인공지능의 안전성 및 신뢰성을 확보하기 위한 조치를 이행해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 3,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "014820",
+        "officialIdentifier": "282791",
+        "lawName": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+        "articleReference": "제35조",
+        "title": "고영향 인공지능 영향평가",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%9D%B8%EA%B3%B5%EC%A7%80%EB%8A%A5%20%EB%B0%9C%EC%A0%84%EA%B3%BC%20%EC%8B%A0%EB%A2%B0%20%EA%B8%B0%EB%B0%98%20%EC%A1%B0%EC%84%B1%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EA%B8%B0%EB%B3%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:fb8ebf040c2029dd28b2bd73badb7e225880c1a211d422abac790f568fb5d8c5",
+        "boundedProvisionSummary": "고영향 인공지능을 이용한 제품 또는 서비스의 영향을 평가해야 한다.",
+        "queryKey": "sha256:5df7a84e71ddb6c9bbd565f0fbe1a0986b1c9b0ac7bb1179c4e7c0753c8175d9",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 4,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000030",
+        "officialIdentifier": "282481",
+        "lawName": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+        "articleReference": "제3조",
+        "title": "정보통신서비스 제공자 및 이용자의 책무",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EB%A7%9D%20%EC%9D%B4%EC%9A%A9%EC%B4%89%EC%A7%84%20%EB%B0%8F%20%EC%A0%95%EB%B3%B4%EB%B3%B4%ED%98%B8%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260106",
+        "effectiveDate": "20260707",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:0f8a92d020f0e4f81e3020f1fae1178b3a63b92768de88a28f48449d7d37dd83",
+        "boundedProvisionSummary": "정보통신서비스 제공자는 이용자를 보호하고 안전한 서비스를 제공해야 한다.",
+        "queryKey": "sha256:7950518a36e66a586195226f8a68f7683de9c44930cbffec85bfe270ccd8cc59",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 5,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "000030",
+        "officialIdentifier": "282481",
+        "lawName": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+        "articleReference": "제4조",
+        "title": "정보통신망 이용촉진 및 정보보호등에 관한 시책의 마련",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EB%A7%9D%20%EC%9D%B4%EC%9A%A9%EC%B4%89%EC%A7%84%20%EB%B0%8F%20%EC%A0%95%EB%B3%B4%EB%B3%B4%ED%98%B8%20%EB%93%B1%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260106",
+        "effectiveDate": "20260707",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:fa6d134f7eaa58efaed72e7d30f93e2d19c6edf8b92fb43c9f1ce70e616989e1",
+        "boundedProvisionSummary": "정보통신망 이용촉진 및 정보보호 시책을 마련해야 한다.",
+        "queryKey": "sha256:7950518a36e66a586195226f8a68f7683de9c44930cbffec85bfe270ccd8cc59",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 6,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제15조",
+        "title": "개인정보의 수집ㆍ이용",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:d057e48fdd8c23f93bcfcb814c84c02a71c51f476b2b2f824635725d488e4d9c",
+        "boundedProvisionSummary": "개인정보처리자는 개인정보를 수집할 때 동의를 받아야 한다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 7,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제16조",
+        "title": "개인정보의 수집 제한",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:92011a2e3a02220ab77a308a194cdf773752b2c24e3059a67a0e03a80399f032",
+        "boundedProvisionSummary": "개인정보처리자는 최소한의 개인정보를 수집해야 한다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 8,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제20조",
+        "title": "정보주체 이외로부터 수집한 개인정보의 수집 출처 등 통지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:55c5d509f53ddd4fe40875720902fff238b927862a415b5d68f91faf6a283e3a",
+        "boundedProvisionSummary": "정보주체 이외로부터 수집한 개인정보의 출처를 통지해야 한다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 9,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "011357",
+        "officialIdentifier": "270351",
+        "lawName": "개인정보 보호법",
+        "articleReference": "제22조",
+        "title": "동의를 받는 방법",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%20%EB%B3%B4%ED%98%B8%EB%B2%95",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250401",
+        "effectiveDate": "20251002",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:0a2c63314441f4a7596423f6d8e42a957e7186af1edd0e3e608019dcb8e5f2d7",
+        "boundedProvisionSummary": "동의를 받을 때 각 동의 사항을 구분하여 알리고 동의를 받아야 한다.",
+        "queryKey": "sha256:81c12570e2e5cea79930d1a540adc219753f11bd9d414624649648c5446ffd4a",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 10,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제3조",
+        "title": "부당한 표시ㆍ광고 행위의 금지",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:8a232304b3941209cf6afb47ff8485dec72a80b22d8ea0bd5f72b07f583b5826",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위를 금지해야 한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 11,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제5조",
+        "title": "표시ㆍ광고 내용의 실증 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:175e1d20e79b88964eddbcfa658507a8968209ddba38fe094bc7005015b0ba30",
+        "boundedProvisionSummary": "사업자는 표시ㆍ광고 중 사실과 관련한 사항을 실증할 수 있어야 한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 12,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제10조",
+        "title": "손해배상책임",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:9e32cfffe5aee496b1832d5e3707961c9f4280d83dc0f91deaf66f0318f1de73",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위로 피해를 입은 자에게 손해배상 책임을 진다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 13,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "002011",
+        "officialIdentifier": "268659",
+        "lawName": "표시ㆍ광고의 공정화에 관한 법률",
+        "articleReference": "제17조",
+        "title": "벌칙",
+        "officialSourceUri": "https://www.law.go.kr/법령/%ED%91%9C%EC%8B%9C%E3%86%8D%EA%B4%91%EA%B3%A0%EC%9D%98%20%EA%B3%B5%EC%A0%95%ED%99%94%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20250121",
+        "effectiveDate": "20250121",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:f8efc781c87796884bf25f8d680b1efcd4e223f5e470a5b156122d6d82e15692",
+        "boundedProvisionSummary": "부당한 표시ㆍ광고 행위를 한 자에게 벌칙을 부과한다.",
+        "queryKey": "sha256:90d9771bc75e6de6069905fe746a5d12ae11896159015fd6e37c2f5d242dbfbe",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 14,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제12조",
+        "title": "통신판매업자의 신고 등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:448fe0bd6a72942700268999bc17abaf1a130dc75ff98338f016366ffccb8d53",
+        "boundedProvisionSummary": "통신판매업자는 신고해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 15,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제13조",
+        "title": "신원 및 거래조건에 대한 정보의 제공",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:6e496bba7781eda4a1e42db7cb6ead3a7f9648a8557ee96ea09e290d3f30b30d",
+        "boundedProvisionSummary": "통신판매업자는 거래조건에 대한 정보를 제공해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 16,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제17조",
+        "title": "청약철회등",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:086921e6e5bc694ea2d723423f266762b50490e33b8739d64e1920b7a13bde5c",
+        "boundedProvisionSummary": "소비자는 청약철회를 할 수 있다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      },
+      {
+        "referenceIndex": 17,
+        "sourceType": "OFFICIAL_LAW",
+        "lawId": "009318",
+        "officialIdentifier": "282793",
+        "lawName": "전자상거래 등에서의 소비자보호에 관한 법률",
+        "articleReference": "제18조",
+        "title": "청약철회등의 효과",
+        "officialSourceUri": "https://www.law.go.kr/법령/%EC%A0%84%EC%9E%90%EC%83%81%EA%B1%B0%EB%9E%98%20%EB%93%B1%EC%97%90%EC%84%9C%EC%9D%98%20%EC%86%8C%EB%B9%84%EC%9E%90%EB%B3%B4%ED%98%B8%EC%97%90%20%EA%B4%80%ED%95%9C%20%EB%B2%95%EB%A5%A0",
+        "jurisdiction": "KR",
+        "promulgationDate": "20260120",
+        "effectiveDate": "20260721",
+        "retrievedAt": "2026-08-10T08:08:47.399852Z",
+        "contentHash": "sha256:48bb8d8484384496bed84e6eac658a1ea9dcd53ed91bc5d6291359764c102642",
+        "boundedProvisionSummary": "청약철회 시 재화 등을 반환해야 한다.",
+        "queryKey": "sha256:602e295f16136be3303188937186db5e352b09cf13eb7009076c93ed7530c296",
+        "registryVersion": "legal-registry-v1"
+      }
+    ],
+    "deltaLegalReviews": [],
+    "conflictingLock": null,
+    "currentValue": null,
+    "requiredLegalChange": null,
+    "reason": null,
+    "possibleUserAction": null,
+    "unknownFacts": [],
+    "inputScope": "CANDIDATE",
+    "evidenceDiagnostics": {
+      "coverageStatus": "SOURCE_PARTIAL",
+      "coverageMessage": "공식 근거를 바탕으로 구현 가능성을 검토했으나, 일부 법률 소스의 조회 범위에는 제한이 있습니다."
+    },
+    "reviewPhase": "LEGAL_SOURCE",
+    "factCompletenessStatus": null,
+    "legalSourceStatus": "SOURCE_PARTIAL",
+    "finalEvidenceJudgmentExecuted": false,
+    "recoveryResolution": null,
+    "sourceQuestionCount": 1,
+    "resolvedByFactPatternCount": 0,
+    "designGapCount": 1,
+    "externalFactCount": 0,
+    "controlConvertibleCount": 0,
+    "legalClarificationCount": 0
+  },
+  "durationMs": 108238,
+  "timestamp": "2026-08-10T08:08:50.716057+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

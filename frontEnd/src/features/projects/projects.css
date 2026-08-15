@@ -141,12 +141,33 @@
 @media (max-width:700px) { .project-row { padding:.4rem 0; }.project-row__main-link { grid-template-columns:1fr auto; padding:.5rem .1rem; }.project-row__main-link > span, .project-row__main-link > time { grid-column:1; }.project-row__main-link .ui-badge { grid-column:2; grid-row:1; }.project-row--compact { padding:1rem; }.project-row--compact .project-row__main-link { min-height:0; }.project-action-menu { position:absolute; top:.45rem; right:0; }.project-row__project { padding-inline-end:2.5rem; } }
 .workspace-home__layout {
   display: grid;
-  grid-template-columns: minmax(16.25rem, 18.75rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: clamp(1.5rem, 4vw, 3.5rem);
 }
+.workspace-home__layout--with-rail { grid-template-columns:minmax(16.25rem,18.75rem) minmax(0,1fr); }
+.workspace-home__layout--single { grid-template-columns:minmax(0,1fr); }
 
 .workspace-home__content { display: grid; min-width: 0; gap: var(--space-6); }
+.workspace-home__continue-project { display:grid; grid-template-columns:minmax(12rem,.8fr) minmax(20rem,1.5fr) auto; align-items:center; gap:1.25rem; padding:1.25rem 1.35rem; border:1px solid #b9ddd6; border-radius:.75rem; background:linear-gradient(135deg,#eff9f6,#fff); }
+.workspace-home__continue-project p,.workspace-home__continue-project h2,.workspace-home__continue-project span { margin:0; }
+.workspace-home__continue-project p { color:var(--color-action-primary); font-size:.7rem; font-weight:850; }
+.workspace-home__continue-project h2 { margin:.2rem 0; font-size:1.1rem; }
+.workspace-home__continue-project span { color:var(--color-text-secondary); font-size:.76rem; }
+.workspace-home__continue-project dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; margin:0; }
+.workspace-home__continue-project dl div { display:grid; gap:.2rem; }
+.workspace-home__continue-project dt { color:var(--color-text-secondary); font-size:.68rem; }
+.workspace-home__continue-project dd { margin:0; font-size:.78rem; font-weight:750; }
+.workspace-home__continue-project > a { display:inline-flex; align-items:center; justify-content:center; min-height:2.5rem; padding:.5rem .8rem; border-radius:.45rem; background:var(--color-action-primary); color:#fff; font-size:.78rem; font-weight:800; text-decoration:none; white-space:nowrap; }
+.workspace-home__attention { display:grid; gap:.75rem; }
+.workspace-home__attention .section-heading p,.workspace-home__attention .section-heading h2 { margin:0; }
+.workspace-home__attention .section-heading p { color:var(--color-action-primary); font-size:.7rem; font-weight:850; }
+.workspace-home__attention .section-heading h2 { margin-top:.2rem; font-size:1rem; }
+.workspace-home__attention ul { display:grid; gap:.45rem; margin:0; padding:0; list-style:none; }
+.workspace-home__attention li a { display:grid; grid-template-columns:minmax(10rem,.6fr) minmax(14rem,1fr) auto; align-items:center; gap:1rem; min-height:3.4rem; padding:.55rem .8rem; border:1px solid var(--color-border-default); border-radius:.5rem; background:#fff; color:var(--color-text-primary); text-decoration:none; }
+.workspace-home__attention li a:hover,.workspace-home__attention li a:focus-visible { border-color:#d5a758; background:#fffaf0; outline:none; }
+.workspace-home__attention li span,.workspace-home__attention li small,.workspace-home__clear { color:var(--color-text-secondary); font-size:.74rem; }
+.workspace-home__clear { margin:0; padding:.9rem 1rem; border:1px dashed var(--color-border-default); border-radius:.5rem; background:var(--color-surface-subtle); }
 
 .getting-started-rail {
   position: sticky;
@@ -215,25 +236,19 @@
   .project-status-help { inset-inline-start:auto; inset-inline-end:1rem; inset-block-start:auto; inset-block-end:1rem; transform:none; }.project-status-help__content { inset-inline-start:auto; inset-inline-end:0; inset-block-start:auto; inset-block-end:calc(100% + .75rem); transform-origin:bottom right; }
 }
 
-/* Current pipeline project dashboard */
-.project-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; border:0; }
-.project-card-grid .project-row { min-height:13rem; padding:1.1rem; border:1px solid var(--color-border-default); border-radius:.85rem; background:var(--color-surface); }
-.project-card-grid .project-row__main-link { grid-template-columns:1fr auto; grid-template-rows:auto auto auto; gap:.9rem; min-height:0; padding:0; }
-.project-card-grid .project-row__project { grid-column:1 / -1; }
-.project-row__journey { display:grid; grid-column:1 / -1; grid-template-columns:1fr auto; gap:.35rem .75rem; color:var(--color-text-secondary); font-size:.78rem; }
-.project-row__journey > div { grid-column:1 / -1; height:.42rem; overflow:hidden; border-radius:999px; background:#e4eeec; }
-.project-row__journey > .ui-progress { height:auto; overflow:visible; border-radius:0; background:transparent; }
-.project-row__journey .ui-progress progress { height:.42rem; }
-.project-row__journey i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#21a38f,#087465); }
-.project-row__journey small { justify-self:end; }
-.project-row__attention { align-self:center; color:#52706d; font-size:.75rem; font-weight:750; }
-.project-row__attention.is-needed { color:#a76313; }
-.project-row__continue { display:grid; grid-column:1 / -1; grid-template-columns:auto 1fr; align-items:center; gap:.75rem; padding-top:.75rem; border-top:1px solid var(--color-border-default); }
-.project-row__continue strong { justify-self:end; color:var(--color-action-primary); font-size:.78rem; }
-.project-row--compact { --project-columns:minmax(12rem,1fr) minmax(10rem,.7fr) auto minmax(8rem,.6fr); }
-.project-row--compact .project-row__continue { display:block; padding:0; border:0; }
-@media (max-width:800px) { .project-card-grid { grid-template-columns:1fr; } }
-@media (max-width:700px) { .project-row__journey, .project-row__continue { grid-column:1 / -1 !important; }.project-row--compact .project-row__journey { display:none; } }
+/* V9: 목록과 홈 모두 1프로젝트 = 1행 언어를 사용한다. */
+.project-row-list { display:grid; gap:0; border-top:1px solid var(--color-border-default); }
+.project-row { --project-columns:minmax(13rem,1.5fr) minmax(8rem,.7fr) minmax(5.5rem,.45fr) minmax(6rem,.45fr) minmax(10rem,.75fr); border-bottom:1px solid var(--color-border-default); border-radius:0; background:var(--color-surface); }
+.project-row__journey,.project-row__progress,.project-row__continue { display:grid; gap:.18rem; min-width:0; }
+.project-row__journey span,.project-row__progress span,.project-row__continue span { color:var(--color-text-secondary); font-size:.68rem; font-weight:700; }
+.project-row__journey strong,.project-row__progress strong { overflow:hidden; color:var(--color-text-primary); font-size:.82rem; text-overflow:ellipsis; white-space:nowrap; }
+.project-row__continue time { color:var(--color-text-primary); font-size:.76rem; }
+.project-row__continue small { overflow:hidden; color:var(--color-action-primary); font-size:.7rem; text-overflow:ellipsis; white-space:nowrap; }
+.project-row--compact { --project-columns:minmax(13rem,1.4fr) minmax(8rem,.7fr) minmax(5.5rem,.45fr) minmax(6rem,.45fr) minmax(8rem,.6fr); width:100%; padding:0 .8rem; border:1px solid var(--color-border-default); border-radius:.5rem; background:var(--color-surface); }
+@media (max-width:800px) { .project-row__main-link { grid-template-columns:1fr auto; gap:.6rem 1rem; padding:1rem .1rem; }.project-row__project { grid-column:1 / -1; }.project-row__journey,.project-row__progress,.project-row__continue { grid-column:1; }.project-row__main-link .ui-badge { grid-column:2; grid-row:2; }.project-row--compact { padding:.4rem .8rem; } }
+
+@media (max-width:900px) { .workspace-home__continue-project { grid-template-columns:1fr auto; }.workspace-home__continue-project dl { grid-column:1 / -1; grid-row:2; } }
+@media (max-width:700px) { .workspace-home__continue-project { grid-template-columns:1fr; }.workspace-home__continue-project dl { grid-column:1; grid-template-columns:1fr; }.workspace-home__continue-project > a { justify-self:start; }.workspace-home__attention li a { grid-template-columns:1fr; gap:.2rem; padding:.75rem; } }
 
 @media (max-width: 560px) {
   .getting-started-rail ol { grid-template-columns: 1fr; }

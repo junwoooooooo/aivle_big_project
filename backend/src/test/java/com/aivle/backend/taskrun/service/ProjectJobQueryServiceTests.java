@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.pipeline.idea.domain.IdeaBrief;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
+import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptInputRequestRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -23,12 +24,16 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 class ProjectJobQueryServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
     private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
     private final IdeaBriefRepository ideaBriefs = mock(IdeaBriefRepository.class);
-    private final ProjectJobQueryService service = new ProjectJobQueryService(projects, taskRuns, ideaBriefs);
+    private final ConceptInputRequestRepository conceptInputs = mock(ConceptInputRequestRepository.class);
+    private final ProjectJobQueryService service = new ProjectJobQueryService(
+        projects, taskRuns, ideaBriefs, conceptInputs);
 
     @Test
     void ownerCanRestoreActiveJobsFromTaskRunTruth() {
@@ -94,6 +99,36 @@ class ProjectJobQueryServiceTests {
     }
 
     @Test
+    void ownerCanPageThroughCompleteProjectHistory() {
+        Project project = mock(Project.class);
+        TaskRun run = mock(TaskRun.class);
+        when(project.getId()).thenReturn(9L);
+        when(run.getProject()).thenReturn(project);
+        when(run.getId()).thenReturn("history-1");
+        when(run.getTaskType()).thenReturn(TaskType.MARKET_RESEARCH);
+        when(run.getSubjectType()).thenReturn("MARKET_RESEARCH_FULL");
+        when(run.getSubjectId()).thenReturn("market-1");
+        when(run.getState()).thenReturn(TaskRunState.SUCCEEDED);
+        when(run.terminal()).thenReturn(true);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
+        when(taskRuns.findByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(9L, PageRequest.of(1, 20)))
+            .thenReturn(new PageImpl<>(List.of(run), PageRequest.of(1, 20), 41));
+
+        var history = service.history(2L, 9L, 1, 20);
+
+        assertThat(history.items()).extracting(job -> job.jobId()).containsExactly("history-1");
+        assertThat(history.page()).isEqualTo(1);
+        assertThat(history.hasMore()).isTrue();
+        assertThat(history.totalElements()).isEqualTo(41);
+    }
+
+    @Test
+    void nonOwnerCannotQueryProjectHistory() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 3L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.history(3L, 9L, 0, 20)).isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void resolvedNeedsInputMovesToRecentWhenANewerJobExists() {
         Project project = mock(Project.class);
         TaskRun oldNeedsInput = ideaRun("job-a", project, TaskRunState.NEEDS_INPUT);
@@ -153,6 +188,47 @@ class ProjectJobQueryServiceTests {
         assertThat(service.active(2L, 9L)).extracting(job -> job.jobId()).containsExactly("job-b");
     }
 
+    @Test
+    void oldPortfolioNeedsInputBecomesNonActionableAfterContinuationJobExists() {
+        Project project = mock(Project.class);
+        TaskRun initial = portfolioRun("initial", project, TaskType.CONCEPT_PORTFOLIO_V2_RUN,
+            TaskRunState.NEEDS_INPUT);
+        TaskRun continuation = portfolioRun("continue", project, TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE,
+            TaskRunState.RUNNING);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
+        when(taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            9L, "CONCEPT_PORTFOLIO_RUN", "portfolio-1")).thenReturn(Optional.of(continuation));
+        when(conceptInputs.countByRunIdAndStatusInAndDeletedAtIsNull(eq("portfolio-1"), any()))
+            .thenReturn(1L);
+        when(taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            eq(9L), any(), any(Pageable.class))).thenReturn(List.of(continuation, initial));
+
+        assertThat(service.active(2L, 9L)).extracting(job -> job.jobId()).containsExactly("continue");
+        when(taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            eq(9L), any(), any(Pageable.class))).thenReturn(List.of(initial));
+        assertThat(service.recent(2L, 9L)).singleElement().satisfies(job -> {
+            assertThat(job.actionable()).isFalse();
+            assertThat(job.presentationStatus()).isEqualTo("RESOLVED_INPUT");
+        });
+    }
+
+    @Test
+    void latestPortfolioNeedsInputIsActionableOnlyWithOpenDomainRequest() {
+        Project project = mock(Project.class);
+        TaskRun continuation = portfolioRun("continue", project, TaskType.CONCEPT_PORTFOLIO_V2_CONTINUE,
+            TaskRunState.NEEDS_INPUT);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(9L, 2L)).thenReturn(Optional.of(project));
+        when(taskRuns.findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(
+            eq(9L), any(), any(Pageable.class))).thenReturn(List.of(continuation));
+        when(taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            9L, "CONCEPT_PORTFOLIO_RUN", "portfolio-1")).thenReturn(Optional.of(continuation));
+        when(conceptInputs.countByRunIdAndStatusInAndDeletedAtIsNull(eq("portfolio-1"), any()))
+            .thenReturn(1L);
+
+        assertThat(service.active(2L, 9L)).singleElement()
+            .satisfies(job -> assertThat(job.actionable()).isTrue());
+    }
+
     private TaskRun ideaRun(String id, Project project, TaskRunState state) {
         TaskRun run = mock(TaskRun.class);
         when(run.getId()).thenReturn(id);
@@ -162,6 +238,16 @@ class ProjectJobQueryServiceTests {
         when(run.getSubjectType()).thenReturn("IDEA_BRIEF");
         when(run.getSubjectId()).thenReturn("brief-1");
         when(run.getState()).thenReturn(state);
+        when(run.terminal()).thenReturn(state == TaskRunState.NEEDS_INPUT);
+        return run;
+    }
+
+    private TaskRun portfolioRun(String id, Project project, TaskType type, TaskRunState state) {
+        TaskRun run = mock(TaskRun.class);
+        when(run.getId()).thenReturn(id); when(run.getProject()).thenReturn(project);
+        when(project.getId()).thenReturn(9L); when(run.getTaskType()).thenReturn(type);
+        when(run.getSubjectType()).thenReturn("CONCEPT_PORTFOLIO_RUN");
+        when(run.getSubjectId()).thenReturn("portfolio-1"); when(run.getState()).thenReturn(state);
         when(run.terminal()).thenReturn(state == TaskRunState.NEEDS_INPUT);
         return run;
     }

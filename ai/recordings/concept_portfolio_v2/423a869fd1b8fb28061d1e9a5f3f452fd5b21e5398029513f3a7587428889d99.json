@@ -1,0 +1,470 @@
+{
+  "taskType": "CLASSIFY_BUSINESS_ROLE_SEMANTICS",
+  "operationVersion": "v1",
+  "promptVersion": "concept-business-role-semantic-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:4617e912747ccad35eb5be5369a882f26f5734c84e6ce12af13ac9b2daebe6c3",
+  "canonicalRequestHash": "423a869fd1b8fb28061d1e9a5f3f452fd5b21e5398029513f3a7587428889d99",
+  "redactedRequest": {
+    "items": [
+      {
+        "candidateId": "C1",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "학생 사용자",
+          "대학가 상점",
+          "플랫폼 운영자"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 구매자와 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "구매자가 물품 대금 지불",
+          "판매자가 물품 인도",
+          "플랫폼이 수수료 수취"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C1",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "학생 사용자",
+          "대학가 상점",
+          "플랫폼 운영자"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 구매자와 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "구매자가 물품 대금 지불",
+          "판매자가 물품 인도",
+          "플랫폼이 수수료 수취"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "platformRole",
+        "value": "거래 매칭 및 안전한 거래 환경 제공",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C2",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "거래 매칭 및 안전한 거래 환경 제공",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 상대방 검색 및 매칭",
+          "사용자가 직접 거래 진행"
+        ],
+        "paymentFlow": [
+          "사용자가 거래 후 결제 진행",
+          "플랫폼이 수수료 수취",
+          "판매자에게 잔액 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "사용자가 직접 만나 거래할 수 있는 기능을 통해 안전하고 효율적인 거래를 지원합니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "MATCHING",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "HIGH",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "학생 사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 요청",
+          "판매자와 구매자 간의 직접 거래",
+          "물품 인수인계"
+        ],
+        "paymentFlow": [
+          "구매자가 결제",
+          "플랫폼이 수수료 차감 후 판매자에게 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C3",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼 운영",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "학생 사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품 등록",
+          "사용자가 거래 요청",
+          "판매자와 구매자 간의 직접 거래",
+          "물품 인수인계"
+        ],
+        "paymentFlow": [
+          "구매자가 결제",
+          "플랫폼이 수수료 차감 후 판매자에게 지급"
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공한다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공한다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높인다.",
+        "descriptor": {
+          "businessRole": "PLATFORM_INFRASTRUCTURE",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "HIGH",
+            "transactionModel": "LOW",
+            "monetizationModel": "MEDIUM",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C4-CR2",
+        "field": "providerRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼으로서 사용자 간의 거래를 중개합니다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품을 등록한다.",
+          "구매자가 물품을 선택하고 판매자와 채팅한다.",
+          "판매자와 구매자가 거래를 성사시킨다.",
+          "물품 인수인계가 이루어진다."
+        ],
+        "paymentFlow": [
+          "구매자가 물품 대금을 결제한다.",
+          "결제가 완료되면 판매자에게 대금이 지급된다."
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높입니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      },
+      {
+        "candidateId": "C4-CR2",
+        "field": "intermediaryRole",
+        "value": "플랫폼 운영자",
+        "roleFields": {
+          "platformRole": "중고 거래 플랫폼으로서 사용자 간의 거래를 중개합니다.",
+          "providerRole": "플랫폼 운영자",
+          "sellerRole": "물품 판매자",
+          "intermediaryRole": "플랫폼 운영자"
+        },
+        "actorRoles": [
+          "사용자",
+          "플랫폼 운영자",
+          "제휴 상점"
+        ],
+        "transactionFlow": [
+          "사용자가 물품을 등록한다.",
+          "구매자가 물품을 선택하고 판매자와 채팅한다.",
+          "판매자와 구매자가 거래를 성사시킨다.",
+          "물품 인수인계가 이루어진다."
+        ],
+        "paymentFlow": [
+          "구매자가 물품 대금을 결제한다.",
+          "결제가 완료되면 판매자에게 대금이 지급된다."
+        ],
+        "operatingModel": "플랫폼 운영을 통해 사용자 간의 거래를 중개하고, 안전한 거래 환경을 제공합니다.",
+        "partnerModel": "대학가 주변의 상점과 제휴하여 추가적인 혜택을 제공합니다.",
+        "solutionMechanism": "학생들이 직접 만나 거래할 수 있는 기능을 통해 운송 비용을 절감하고, 거래의 안전성을 높입니다.",
+        "descriptor": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "transactionModel": "OTHER",
+          "deliveryModel": "OTHER",
+          "confidence": {
+            "businessRole": "HIGH",
+            "operatingModel": "HIGH",
+            "partnerModel": "HIGH",
+            "deliveryModel": "LOW",
+            "transactionModel": "LOW",
+            "monetizationModel": "HIGH",
+            "customerInteractionModel": "MEDIUM"
+          }
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "candidateId": "C1",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 providerRole에 해당한다."
+    },
+    {
+      "candidateId": "C1",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 intermediaryRole에 해당한다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "platformRole",
+      "decision": "MISMATCH",
+      "safeReason": "value가 '거래 매칭 및 안전한 거래 환경 제공'인데, platformRole은 이를 포함하지 않는다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 providerRole에 해당한다."
+    },
+    {
+      "candidateId": "C2",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 intermediaryRole에 해당한다."
+    },
+    {
+      "candidateId": "C3",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 providerRole에 해당한다."
+    },
+    {
+      "candidateId": "C3",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 intermediaryRole에 해당한다."
+    },
+    {
+      "candidateId": "C4-CR2",
+      "field": "providerRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 providerRole에 해당한다."
+    },
+    {
+      "candidateId": "C4-CR2",
+      "field": "intermediaryRole",
+      "decision": "MATCH",
+      "safeReason": "플랫폼 운영자 역할이 intermediaryRole에 해당한다."
+    }
+  ],
+  "durationMs": 5300,
+  "timestamp": "2026-08-10T07:56:09.064826+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -12,6 +12,7 @@
 .market-page { display: grid; align-content: start; gap: 1.75rem; min-width: 0; }
 .market-page > .pipeline-page-heading { margin-bottom: -1.25rem; }  /* 머리글은 바로 아래와 한 덩이 */
 .market-page__actions { display: flex; justify-content: flex-end; gap: .5rem; }
+.market-page__live-progress { display: block; margin-top: .35rem; }
 .market-note { color: var(--color-text-secondary); font-size: .85rem; margin: 0 0 .75rem; }
 .mr-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 
@@ -39,9 +40,12 @@
 .mr-kpi small { color: var(--color-text-secondary); font-size: .75rem; }
 .mr-kpi .ui-badge { margin-top: .5rem; }
 
-/* ── 이 숫자를 읽는 조건 — 규칙상 지울 수 없는 문장들 ────── */
+/* ── 이 숫자를 읽는 조건 — «가정 원장» ──────────────────────
+   이 화면의 시그니처다. 결론 숫자 하나가 아니라 **계산식을 항으로 펴서** 관측과 가정을
+   눈으로 가르게 한다. 예전에는 경고 여섯 개를 ` · ` 로 이은 한 문단이었다.
+   ⚠ 여기 있는 문장은 규칙상 접거나 지울 수 없다 — 표로 옮긴 것이지 없앤 게 아니다. */
 .mr-limits {
-  display: grid; gap: .65rem; padding: 1.25rem 1.35rem;
+  display: grid; gap: 1.5rem; padding: 1.35rem 1.45rem;
   border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-bg-subtle);
 }
@@ -52,6 +56,34 @@
   content: ""; position: absolute; left: 0; top: .68rem; width: 5px; height: 5px;
   border-radius: 50%; background: var(--color-status-warning);
 }
+
+.mr-ledger { display: grid; gap: .75rem; }
+.mr-ledger__h { display: flex; align-items: baseline; flex-wrap: wrap; gap: .6rem; }
+.mr-ledger__h h4 { margin: 0; font-size: .88rem; }
+/* 공식이 표의 머리다 — 항이 어디서 왔는지 눈으로 잇게. */
+.mr-ledger__h code {
+  padding: .15rem .45rem; border-radius: 3px;
+  background: var(--color-surface); color: var(--color-text-secondary); font-size: .74rem;
+}
+.mr-ledger__t { background: var(--color-surface); border-radius: var(--radius-control); }
+.mr-ledger__t th, .mr-ledger__t td { padding: .7rem .8rem; }
+.mr-ledger__t thead th:first-child, .mr-ledger__t tbody td:first-child { padding-left: 1rem; }
+/* 가정 행은 왼쪽 점선으로 «관측이 아님»을 줄 전체에 건다. 색만으로 가르지 않는다. */
+.mr-ledger__t tbody tr.is-assumed td:first-child { box-shadow: inset 3px 0 0 -1px var(--color-status-warning); }
+.mr-ledger__t tbody tr.is-assumed .v { color: var(--color-status-warning); }
+.mr-ledger__t tfoot td {
+  padding-top: .85rem; border-top: 2px solid var(--color-border-default);
+  color: var(--color-text-secondary); font-size: .8rem;
+}
+.mr-ledger__t tfoot .v { color: var(--color-text-primary); font-size: 1rem; }
+.mr-fact__name { color: var(--color-text-secondary); font-weight: 700; white-space: nowrap; }
+.mr-fact__why { color: var(--color-text-primary); font-size: .82rem; line-height: 1.75; }
+.mr-fact__note { margin-top: .4rem; font-size: .79rem; line-height: 1.7; }
+.mr-fact__note b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }
+.mr-fact__src { margin-top: .4rem; color: var(--color-text-secondary); font-size: .76rem; }
+/* 표가 말할 수 없는 것 — 항이 아니라 «읽는 법»에 붙는 문장이다. */
+.mr-ledger__reads { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.mr-limits__foot { margin: 0; padding: 0; list-style: none; }
 
 /* ── 과목 섹션 — 성적표 7과목이 곧 목차다 ────────────────── */
 .mr-sec {
@@ -109,6 +141,36 @@
 .mr-comp b { font-weight: 700; }
 .mr-comp .none { color: var(--color-text-secondary); font-weight: 400; }
 .mr-comp__src { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid var(--color-neutral-100); font-size: .78rem; }
+
+/* ── 못 찾은 것 — 갈래마다 다음 행동이 다르다 ─────────────── */
+.mr-nf { display: grid; gap: 1.35rem; }
+.mr-nf__h { display: flex; align-items: center; gap: .55rem; margin-bottom: .7rem; }
+.mr-nf__h > span { color: var(--color-text-secondary); font-size: .78rem; }
+.mr-nf__b { padding-left: .1rem; margin-bottom: .8rem; }
+.mr-nf__b:last-child { margin-bottom: 0; }
+.mr-nf__b h4 { display: flex; align-items: baseline; gap: .45rem; margin: 0 0 .4rem; font-size: .82rem; }
+.mr-nf__b h4 small { color: var(--color-text-secondary); font-size: .72rem; font-weight: 400; }
+.mr-nf__b ul { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.mr-nf__b li { position: relative; padding-left: .9rem; color: var(--color-text-secondary); font-size: .81rem; line-height: 1.7; }
+.mr-nf__b li::before { content: ""; position: absolute; left: .15rem; top: .6rem; width: 4px; height: 4px; border-radius: 50%; background: var(--color-neutral-300); }
+
+/* ── BM 앞 단계 — 실행 계획 확인 ─────────────────────────── */
+/* 폼 옆에 캔버스를 세워 **타이핑하는 대로 차는 것**을 보여 준다.
+   좁아지면 폼이 위로 간다 — 미리보기가 먼저 오면 채울 것이 안 보인다. */
+.bm-plan__split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 1100px) { .bm-plan__split { grid-template-columns: 1fr; } }
+
+.bm-plan { display: grid; gap: 1.5rem; }
+.bm-plan__row { display: grid; gap: .5rem; }
+.bm-plan__q { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+.bm-plan__q label, .bm-plan__label { font-size: .88rem; font-weight: 700; }
+/* 어느 칸을 채우는지 — 시스템 어휘로 묻지 않으면서 결과와 이어 보게 한다. */
+.bm-plan__cell { margin-left: auto; padding: .1rem .45rem; border-radius: 999px; background: var(--color-bg-subtle); color: var(--color-text-secondary); font-size: .7rem; font-weight: 700; }
+.bm-plan__hint { margin: 0; color: var(--color-text-secondary); font-size: .78rem; line-height: 1.7; }
+.bm-plan__nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+@media (max-width: 620px) { .bm-plan__nums { grid-template-columns: 1fr; } }
+.bm-plan__preview { display: grid; gap: .6rem; }
+.bm-plan__preview h3 { margin: 0; font-size: 1rem; }
 
 /* ═══ BM 캔버스 ═══════════════════════════════════════════ */
 .bm-verdict { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: 1.1rem 1.25rem; }
@@ -194,3 +256,7 @@
 .bm-det__t { margin-top: .6rem; }
 .bm-det__m { margin-top: 1rem; color: var(--color-text-primary); font-size: .81rem; line-height: 1.7; }
 .bm-det__m b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }
+.competitor-seeds__row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 12px; margin: 12px 0; }
+.competitor-seeds__actions { display: flex; gap: 8px; margin-top: 12px; }
+.competitor-seeds__hint { color: var(--color-text-muted, #596579); font-size: .9rem; }
+@media (max-width: 760px) { .competitor-seeds__row { grid-template-columns: 1fr; } }

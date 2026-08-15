@@ -42,6 +42,16 @@ export function useProjects() {
     return () => { active = false; };
   }, [client]);
 
+  useEffect(() => {
+    const refreshOnFocus = () => {
+      createProjectApi(client).list().then((projects) => {
+        setState({ status: 'success', projects: mapProjects(projects), error: null });
+      }).catch(() => { /* 화면 복귀 갱신 실패는 기존 목록을 유지한다. */ });
+    };
+    window.addEventListener('focus', refreshOnFocus);
+    return () => window.removeEventListener('focus', refreshOnFocus);
+  }, [client]);
+
   return { ...state, retry: load };
 }
 

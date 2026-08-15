@@ -1,0 +1,59 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:df10bb1c6ab1d710817fc65b0c35c3ddf615fe30f64f0dea0ac32ab074b180e7",
+  "canonicalRequestHash": "1ad374117a3deae99da30b57fd518515fd49d3706af17a87b0260ba8045a9139",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C5-FC1",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 서비스 판매 및 고객 지원 파트너십 관리 및 고객 연결 클라우드 기반 AI 솔루션 제공 CRM 시스템과의 통합을 통해 파트너십을 구축합니다. 고객이 서비스에 가입한다. AI 도구가 고객 데이터를 수집한다. AI가 맞춤형 영업 액션을 제안한다. 고객이 구독료를 결제한다. 결제 정보가 시스템에 기록된다. 서비스 제공 후 정산이 이루어진다. 구독 기반 모델로 영업팀에 서비스를 제공합니다. 온라인 마케팅 및 파트너십을 통한 유통",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C5-FC1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "AI 도구 제공자로서 고객과의 파트너십을 통해 구독 기반 모델로 서비스를 제공하며, 데이터와 물리적 의존성이 존재합니다."
+    }
+  ],
+  "durationMs": 4540,
+  "timestamp": "2026-08-10T08:06:45.171193+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -38,6 +38,13 @@ export const WINNER_VIEW = {
 };
 const WINNER_MISSING = { label: '판정 없음', tone: 'danger' };
 
+/** 인터뷰 카드의 선택 배지 색. 라벨 문구는 그 조사의 상품명이라 화면이 채운다. */
+export const CHOICE_VIEW = {
+  X: { tone: 'lead' },
+  Y: { tone: 'trail' },
+  UNDECIDED: { tone: 'neutral' },
+};
+
 /** 응답자 갈래. 위치응답이 많으면 그 쌍의 신호가 얇다는 뜻이라 숨기지 않는다. */
 export const CLASS_LABEL = {
   content_X: 'A안을 내용으로 선택',
@@ -82,6 +89,69 @@ export function taskTypeView(taskType) {
   return TASK_TYPE_VIEW[taskType] ?? TASK_TYPE_MISSING;
 }
 
+/**
+ * 응답 구성 — 이긴 쪽 / 판단 불가 / 진 쪽 세 토막.
+ *
+ * ⚠ **이 비율은 시장 점유율도 구매확률도 아니다.** 이 표본 응답자들이 어떻게 갈렸는지일 뿐이고,
+ * 그 문장은 `caveats` 로 값과 같은 자리에 실려 온다(`ai/app/twin/caveats.py`).
+ *
+ * 위치응답(`position_driven`·`anti_position`)을 «미결정»에 합치되 라벨을 분리해 적는다 —
+ * 순서를 보고 고른 사람과 못 고른 사람은 다르고, 둘 다 «내용으로 고르지 않았다»는 점만 같다.
+ */
+export function composition(pair) {
+  const classes = pair?.respondentClasses ?? {};
+  const count = (key) => (Number.isFinite(classes[key]) ? classes[key] : 0);
+  const total = Object.values(classes).reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+  const undecided = count('undecided') + count('position_driven') + count('anti_position');
+  const leadIsX = pair?.winner !== 'Y';
+  const lead = leadIsX ? count('content_X') : count('content_Y');
+  const trail = leadIsX ? count('content_Y') : count('content_X');
+  const percent = (value) => (total > 0 ? Math.round((value / total) * 100) : 0);
+  return {
+    total,
+    leadLabel: leadIsX ? (pair?.labels?.X ?? 'A안') : (pair?.labels?.Y ?? 'B안'),
+    trailLabel: leadIsX ? (pair?.labels?.Y ?? 'B안') : (pair?.labels?.X ?? 'A안'),
+    lead,
+    trail,
+    undecided,
+    leadPercent: percent(lead),
+    trailPercent: percent(trail),
+    undecidedPercent: percent(undecided),
+  };
+}
+
+function normalizeInterview(raw) {
+  const profile = raw?.profile ?? {};
+  const text = (value) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+  return {
+    choice: CHOICE_VIEW[raw?.choice] ? raw.choice : 'UNDECIDED',
+    choiceView: CHOICE_VIEW[raw?.choice] ?? CHOICE_VIEW.UNDECIDED,
+    quote: text(raw?.quote),
+    profile: {
+      age: Number.isFinite(profile.age) ? profile.age : null,
+      gender: text(profile.gender),
+      household: text(profile.household),
+      region: text(profile.region),
+      income: text(profile.income),
+      job: text(profile.job),
+    },
+  };
+}
+
+/** 인터뷰 카드 두 줄. 못 읽은 칸은 그냥 빠진다 — 「알 수 없음」으로 채우지 않는다. */
+export function interviewLines(interview, labels) {
+  const p = interview?.profile ?? {};
+  const head = [
+    p.age === null || p.age === undefined ? null : `${p.age}세`,
+    p.gender, p.household, p.region,
+  ].filter(Boolean).join(' · ');
+  const sub = [p.income, p.job].filter(Boolean).join(' · ');
+  const badge = interview?.choice === 'X' ? (labels?.X ?? 'A안')
+    : interview?.choice === 'Y' ? (labels?.Y ?? 'B안')
+      : '미결정';
+  return { head, sub, badge };
+}
+
 export function winnerView(winner) {
   return WINNER_VIEW[winner] ?? WINNER_MISSING;
 }
@@ -115,7 +185,8 @@ function normalizePair(raw) {
     nPaired: asNumber(raw?.nPaired) ?? 0,
     nRespondents: asNumber(raw?.nRespondents) ?? 0,
     classes,
-    excerpts: asArray(raw?.rationaleExcerpts),
+    interviews: asArray(raw?.interviews).map(normalizeInterview).filter((item) => item.quote),
+    composition: composition(raw),
     // 비어 있으면 자리표시자를 넣는다. 빈 배열로 두면 화면에 아무것도 안 나오고,
     // 그러면 경계 없는 수치가 그대로 읽힌다 — 이 파이프라인이 없애려던 실패 그 자체다.
     caveats: caveats.length > 0 ? caveats : CAVEATS_MISSING,

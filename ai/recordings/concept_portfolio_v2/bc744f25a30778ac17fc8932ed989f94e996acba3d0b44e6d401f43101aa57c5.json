@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:a7273e296c388c5bb3efaf64e5ba8e715a0ab7bcb87f10d5bfde2f1764d4d760",
+  "canonicalRequestHash": "bc744f25a30778ac17fc8932ed989f94e996acba3d0b44e6d401f43101aa57c5",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다. 대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다. 대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다. 직거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다. 대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다. 대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "대학가 내 커뮤니티와 협력하여 신뢰성을 높인다. 대학가 주변의 중고품 매장과 협력하여 다양한 상품을 제공한다. 직거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱 내 채팅 기능을 통해 사용자 간의 소통을 원활하게 한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "지역 커뮤니티와 협력하여 사용자 기반을 확장하고 신뢰성을 높인다. 대학가 주변 상점과 제휴하여 추가적인 혜택을 제공한다. 사용자 간의 직접 거래를 통해 중개 수수료를 최소화한다. 프리미엄 서비스와 광고를 통해 수익을 창출한다. 거래 후 사용자 피드백을 통해 서비스 품질을 지속적으로 개선한다. 앱을 통해 사용자 간의 직접적인 메시징과 거래 진행을 지원한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business acts as an intermediary, leveraging partnerships to enhance user trust and minimize transaction fees."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business collaborates with local stores but lacks a clear defined role or operating model."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business utilizes partnerships but does not define a specific business role."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business operates as an intermediary, focusing on partnerships and user feedback."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business collaborates with local stores but lacks a clear defined role or operating model."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "HIGH",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "The business utilizes partnerships but does not define a specific business role."
+    }
+  ],
+  "durationMs": 5780,
+  "timestamp": "2026-08-10T04:59:18.113188+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

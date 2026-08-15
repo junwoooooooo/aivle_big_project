@@ -106,6 +106,46 @@ def test_resolve_drops_legal_context():
     assert "막힘" not in str(resolved.model_dump(mode="json"))
 
 
+def test_execution_constraints_reach_the_model_payload():
+    """비용 구조 칸의 **유일한 원천**이다.
+
+    빠뜨려도 아무것도 안 깨진다 — 프롬프트 §8 이 「예산·기간·비용 정보가 전혀 없으면
+    content=[]」 이라 모델이 지시대로 빈 칸을 낸다. 그래서 그것이 정상처럼 보인다.
+    실제로 `pipeline._bm` 이 이 인자를 안 넘겨 계획 칸이 오래 비어 있었다.
+    """
+    source = create_bm_analysis_input(
+        market_data=_market(),
+        execution_constraints={"budget_krw": 5000000, "months": 10, "team": 2})
+    payload = resolve_bm_input(source).model_dump(mode="json")
+
+    assert payload["execution_constraints"] == {
+        "budget_krw": 5000000, "months": 10, "team": 2}
+    # 부동소수점이 섞이면 canonical hash 가 런타임에 거부한다(CLAUDE.md §5-2).
+    assert all(isinstance(v, int) for v in payload["execution_constraints"].values())
+
+
+def test_concept_snapshot_extra_fields_survive_to_the_model():
+    """계획 5칸의 재료는 `concept_snapshot` 의 **확장 필드**로 간다.
+
+    `extra="allow"` 가 언젠가 `forbid`/`ignore` 로 바뀌면 핵심 활동·자원·파트너·고객 관계가
+    **조용히** 빈다 — 모델은 「입력에 없다」로 읽고 규칙대로 빈 칸을 낸다. 그래서 불변식이다.
+    """
+    snapshot = ConceptSnapshot(
+        concept_name="컨셉", revenue_model="구독",
+        key_activities=["예약 채널 통합 운영"],
+        key_resources=["예약 데이터 통합 처리"],
+        key_partners=["예약 플랫폼"],
+        customer_relationship="구독 유지 중심의 자동 알림 운영")
+    source = create_bm_analysis_input(market_data=_market(concept_snapshot=snapshot))
+    payload = resolve_bm_input(source).model_dump(mode="json")
+
+    reached = payload["market_join_data"]["concept_snapshot"]
+    assert reached["key_activities"] == ["예약 채널 통합 운영"]
+    assert reached["key_resources"] == ["예약 데이터 통합 처리"]
+    assert reached["key_partners"] == ["예약 플랫폼"]
+    assert reached["customer_relationship"] == "구독 유지 중심의 자동 알림 운영"
+
+
 # ══════════════════════════════ 판정표 ══════════════════════════════
 @pytest.mark.parametrize("fit,consistency,blocked,expected", [
     ("PASS", "PASS", False, BMDecision.PASS),

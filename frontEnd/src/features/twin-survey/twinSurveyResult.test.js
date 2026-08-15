@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  formatDelta, formatInterval, normalizeTwinSurvey, taskTypeView, winnerView,
+  composition, formatDelta, formatInterval, interviewLines,
+  normalizeTwinSurvey, taskTypeView, winnerView,
 } from './twinSurveyResult.js';
 
 /**
@@ -24,8 +25,8 @@ describe('normalizeTwinSurvey', () => {
   it('쌍마다 유형과 그 근거 지위가 같이 온다', () => {
     expect(result.pairs).toHaveLength(2);
     expect(result.pairs[0].taskTypeView.label).toBe('명백한 우열형');
-    expect(result.pairs[1].taskTypeView.label).toBe('가격형');
-    expect(result.pairs[1].taskTypeView.standing).toContain('관문 통과가 아니다');
+    expect(result.pairs[1].taskTypeView.label).toBe('명백한 우열형');
+    expect(result.pairs[0].taskTypeView.standing).toContain('4/4');
   });
 
   it('경계가 쌍마다 붙어 온다 — 값과 한 몸이다', () => {
@@ -116,5 +117,89 @@ describe('빠진 값은 조용히 넘어가지 않는다', () => {
   it('입력이 결과가 아니면 null 을 준다', () => {
     expect(normalizeTwinSurvey(null)).toBeNull();
     expect(normalizeTwinSurvey('결과')).toBeNull();
+  });
+});
+
+describe('대표 응답자 인터뷰', () => {
+  const result = normalizeTwinSurvey(fixture('survey.json'));
+  const pair = result.pairs[0];
+
+  it('쌍마다 인터뷰가 붙어 오고 다섯을 넘지 않는다', () => {
+    result.pairs.forEach((item) => {
+      expect(item.interviews.length).toBeGreaterThan(0);
+      expect(item.interviews.length).toBeLessThanOrEqual(5);
+    });
+  });
+
+  it('양쪽과 미결정이 함께 보인다 — 이긴 쪽만 보이면 인터뷰가 판정을 두 번 말한다', () => {
+    expect(new Set(pair.interviews.map((item) => item.choice)))
+      .toEqual(new Set(['X', 'Y', 'UNDECIDED']));
+  });
+
+  it('인용문에 «선택:» 줄이 남지 않는다 — 사람 말이지 로그가 아니다', () => {
+    pair.interviews.forEach((item) => {
+      expect(item.quote).toBeTruthy();
+      expect(item.quote).not.toContain('선택:');
+    });
+  });
+
+  it('프로필 두 줄을 만들고, 못 읽은 칸은 «알 수 없음»으로 채우지 않고 뺀다', () => {
+    const lines = interviewLines(pair.interviews[0], pair.labels);
+    expect(lines.head).toMatch(/\d+세/);
+    expect(lines.badge).toBe(pair.labels.X);
+
+    const sparse = interviewLines(
+      { choice: 'UNDECIDED', profile: { age: 41, gender: '여성', household: null, region: null, income: null, job: null } },
+      pair.labels,
+    );
+    expect(sparse.head).toBe('41세 · 여성');
+    expect(sparse.sub).toBe('');
+    expect(sparse.badge).toBe('미결정');
+  });
+
+  it('인용이 없는 인터뷰는 화면에 앉히지 않는다 — 프로필만 있으면 얼굴만 남는다', () => {
+    const only = normalizeTwinSurvey({
+      ...fixture('survey.json'),
+      pairs: [{ ...fixture('survey.json').pairs[0], interviews: [{ choice: 'X', profile: {}, quote: '  ' }] }],
+    });
+    expect(only.pairs[0].interviews).toHaveLength(0);
+  });
+});
+
+describe('응답 구성', () => {
+  const result = normalizeTwinSurvey(fixture('survey.json'));
+
+  it('이긴 쪽이 앞에 오고 세 토막이 100 을 넘지 않는다', () => {
+    const c = result.pairs[0].composition;
+    expect(c.leadLabel).toBe(result.pairs[0].labels.X);
+    expect(c.lead).toBeGreaterThan(c.trail);
+    expect(c.leadPercent + c.trailPercent + c.undecidedPercent).toBeLessThanOrEqual(101);
+  });
+
+  it('위치응답자는 미결정 쪽으로 묶인다 — 내용으로 고른 사람이 아니다', () => {
+    const c = composition({
+      winner: 'X',
+      labels: { X: 'A', Y: 'B' },
+      respondentClasses: { content_X: 50, content_Y: 30, undecided: 10, position_driven: 8, anti_position: 2 },
+    });
+    expect(c.total).toBe(100);
+    expect(c.undecided).toBe(20);
+    expect(c.leadPercent).toBe(50);
+  });
+
+  it('Y 가 이기면 Y 가 앞에 온다', () => {
+    const c = composition({
+      winner: 'Y',
+      labels: { X: 'A', Y: 'B' },
+      respondentClasses: { content_X: 20, content_Y: 60, undecided: 20 },
+    });
+    expect(c.leadLabel).toBe('B');
+    expect(c.lead).toBe(60);
+  });
+
+  it('응답자가 없어도 0 으로 떨어질 뿐 깨지지 않는다', () => {
+    const c = composition({ winner: null, labels: {}, respondentClasses: {} });
+    expect(c.total).toBe(0);
+    expect(c.leadPercent).toBe(0);
   });
 });

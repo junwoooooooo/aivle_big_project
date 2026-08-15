@@ -6,22 +6,14 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response
 
-from app.api.errors import (
-    ApiHttpException,
-    api_http_exception_handler,
-    http_exception_handler,
-    internal_exception_handler,
-    validation_exception_handler,
-)
-from app.api.executions import router as execution_router, internal_error
-from app.api.financial import router as financial_router
-from app.legal.registry import LegalRegistry, RegistryError
+from app.api.errors import (ApiHttpException, api_http_exception_handler,
+                            http_exception_handler, internal_exception_handler,
+                            validation_exception_handler)
+from app.api.executions import internal_error, router as execution_router, safe_validation_fields
+from app.api.launch_readiness import router as launch_readiness_router
 from app.models.contracts import HealthResponse
-from app.request_context import (
-    REQUEST_ID_HEADER,
-    current_request_id,
-    resolve_request_id,
-)
+from app.request_context import REQUEST_ID_HEADER, current_request_id, resolve_request_id
+from app.legal.registry import LegalRegistry, RegistryError
 
 
 app = FastAPI(title="New Pipeline AI Server", version="1.0.0")
@@ -95,7 +87,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 app.include_router(execution_router)
-app.include_router(financial_router)
+app.include_router(launch_readiness_router)
 
 
 def health_payload(request: Request, health_status: str) -> HealthResponse:

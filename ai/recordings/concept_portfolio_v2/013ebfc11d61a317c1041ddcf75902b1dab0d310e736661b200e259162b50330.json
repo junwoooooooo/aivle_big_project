@@ -1,0 +1,248 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:1c4b69d0d3fe65ad19bfa1a7b7f0dc81bb2b81c9091504bb1682be14adb6307a",
+  "canonicalRequestHash": "013ebfc11d61a317c1041ddcf75902b1dab0d310e736661b200e259162b50330",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "P1",
+        "businessText": "사용자 데이터를 기반으로 지속적으로 알고리즘을 개선하여 더 나은 여행 일정을 제공한다. 숙박 및 체험 제공업체와 제휴하여 예약 서비스를 통합한다. 사용자는 앱 내에서 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 서비스 모델을 도입하여 추가 기능을 제공한다. 자동 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱을 통해 자신의 이동 가능 시간과 관심사를 입력하고, 자동 생성된 일정을 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P2",
+        "businessText": "사용자 피드백을 통해 추천 알고리즘을 지속적으로 개선한다. 여행 관련 업체와 제휴하여 추천 서비스를 강화한다. 사용자는 추천된 일정에 따라 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 추천 서비스 모델을 도입하여 추가 기능을 제공한다. 추천된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱에서 자신의 취향을 입력하고, 추천된 일정을 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P3",
+        "businessText": "사용자 데이터를 기반으로 알고리즘을 지속적으로 개선하여 최적의 일정을 제공한다. 숙박 및 체험 제공업체와 제휴하여 예약 서비스를 통합한다. 사용자는 앱 내에서 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 서비스 모델을 도입하여 추가 기능을 제공한다. 최적화된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱을 통해 이동 가능 시간과 관심사를 입력하고, 최적화된 일정을 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P4",
+        "businessText": "사용자 데이터를 기반으로 알고리즘을 지속적으로 개선하여 더 나은 여행 계획을 지원한다. 숙박 및 체험 제공업체와 제휴하여 예약 서비스를 통합한다. 사용자는 앱 내에서 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 서비스 모델을 도입하여 추가 기능을 제공한다. 지원되는 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱을 통해 자신의 이동 가능 시간과 관심사를 입력하고, 지원되는 일정을 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P5",
+        "businessText": "사용자 피드백을 통해 생성 알고리즘을 지속적으로 개선한다. 여행 관련 업체와 제휴하여 생성 서비스를 강화한다. 사용자는 생성된 일정에 따라 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 생성 서비스 모델을 도입하여 추가 기능을 제공한다. 생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱에서 자신의 요구를 입력하고, 생성된 일정을 확인한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      },
+      {
+        "entityId": "P6",
+        "businessText": "사용자 데이터를 기반으로 추천 알고리즘을 지속적으로 개선하여 더 나은 일정을 제공한다. 숙박 및 체험 제공업체와 제휴하여 예약 서비스를 통합한다. 사용자는 추천된 일정에 따라 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다. 프리미엄 추천 및 예약 서비스 모델을 도입하여 추가 기능을 제공한다. 추천된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다. 사용자는 앱에서 추천된 일정을 확인하고, 예약을 진행한다.",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An intermediary app that integrates booking services with partners, generating revenue through a freemium model."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An intermediary app that enhances recommendation services through partnerships, generating revenue via a freemium model."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An app providing optimized scheduling services through partnerships, generating revenue through a freemium model."
+    },
+    {
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An app supporting travel planning through partnerships, generating revenue via a freemium model."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An intermediary app that enhances generated services through partnerships, generating revenue via a freemium model."
+    },
+    {
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "BOOKING",
+        "monetizationModel": "FREEMIUM",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "An intermediary app that integrates booking services with partners, generating revenue through a freemium model."
+    }
+  ],
+  "durationMs": 10686,
+  "timestamp": "2026-08-10T06:48:53.957430+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

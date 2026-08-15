@@ -58,6 +58,7 @@ public class FinancialEstimateCompletionService {
         ObjectNode proposal = (ObjectNode) assistance.path(fieldKey);
         proposal.set("proposalValue", result.path("proposedValue").deepCopy());
         proposal.set("assumptions", result.path("assumptions").deepCopy());
+        proposal.set("externalEvidence", result.path("externalEvidence").deepCopy());
         proposal.put("explanation", result.path("explanation").asText());
         proposal.put("confidence", result.path("confidence").asText());
         proposal.put("source", "AI_ESTIMATE");
@@ -86,8 +87,10 @@ public class FinancialEstimateCompletionService {
     private boolean fresh(FinancialInputPreparation preparation, TaskRunWorkerContext context, JsonNode input) {
         if (!matches(preparation, context, input)
                 || preparation.getRevision() != input.path("expectedPreparationRevision").asInt()
-                || preparation.getSourceMarketResearchRunId() == null
-                || preparation.getSourceMarketResearchRunId().longValue() != input.path("sourceMarketResearchRunId").asLong(-1)
+                || preparation.getSourceMarketResearchVersionId() == null
+                || preparation.getSourceMarketResearchVersionId().longValue() != input.path("sourceMarketResearchVersionId").asLong(-1)
+                || preparation.getSourceBusinessModelVersionId() == null
+                || preparation.getSourceBusinessModelVersionId().longValue() != input.path("sourceBusinessModelVersionId").asLong(-1)
                 || !preparation.getSourceSnapshotHash().equals(input.path("sourceSnapshotHash").asText())
                 || snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(
                     preparation.getId(), context.projectId()).isPresent()) return false;
@@ -148,11 +151,15 @@ public class FinancialEstimateCompletionService {
         if (!java.util.Set.of("unitVariableCost", "paymentFee", "partnerPayout", "shippingCost",
                 "customerIncrementalInfraCost").contains(fieldKey)) return;
         JsonNode context = mapper.readTree(input.path("contextJson").asText("{}"));
-        BigDecimal price = context.path("marketAndBmReferences").path("marketAnalysis").path("price").path("base").decimalValue();
-        if (price == null || price.signum() <= 0) {
-            price = context.path("financialFields").path("monthlySubscriptionPrice").path("value").path("amount").decimalValue();
-        }
-        if (price == null || price.signum() <= 0 || !value.path("amount").isNumber()) return;
+        JsonNode fields = context.path("financialFields");
+        boolean oneTime = "ONE_TIME".equals(fields.path("revenueModel").path("value").asText());
+        BigDecimal price = fields.path(oneTime ? "unitPrice" : "monthlySubscriptionPrice")
+            .path("value").path("amount").decimalValue();
+        if (price.signum() <= 0) price = fields.path(oneTime ? "monthlySubscriptionPrice" : "unitPrice")
+            .path("value").path("amount").decimalValue();
+        if (price.signum() <= 0) price = context.path("marketAndBmReferences").path("marketAnalysis")
+            .path("price").path("base").decimalValue();
+        if (price.signum() <= 0 || !value.path("amount").isNumber()) return;
         BigDecimal multiplier = switch (fieldKey) {
             case "unitVariableCost" -> BigDecimal.valueOf(0.45);
             case "paymentFee" -> BigDecimal.valueOf(0.05);
@@ -251,6 +258,7 @@ public class FinancialEstimateCompletionService {
         if (STALE.equals(reason)) return STALE;
         if ("DEADLINE_EXCEEDED".equals(code)) return "TASK_TIMEOUT";
         if ("RATE_LIMITED".equals(code)) return "RATE_LIMITED";
+        if ("RESULT_SCHEMA_INVALID".equals(code) || "AI_RESULT_INVALID".equals(reason)) return "AI_RESULT_INVALID";
         return "AI_SERVICE_UNAVAILABLE";
     }
 

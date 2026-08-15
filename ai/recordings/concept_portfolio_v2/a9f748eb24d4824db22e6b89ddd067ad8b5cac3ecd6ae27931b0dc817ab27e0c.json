@@ -1,0 +1,286 @@
+{
+  "taskType": "EXPAND",
+  "operationVersion": "v3",
+  "promptVersion": "concept-portfolio-generic-candidate-v3",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:3d8ac791363b430a299734f07e4e82e7e50923391f9502023b02562fd5dd77d2",
+  "canonicalRequestHash": "a9f748eb24d4824db22e6b89ddd067ad8b5cac3ecd6ae27931b0dc817ab27e0c",
+  "redactedRequest": {
+    "seed": {
+      "ideaBriefSnapshotId": "lab-idea-brief",
+      "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+      "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+      "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+      "fields": [
+        {
+          "fieldKey": "ideaOverview",
+          "value": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "problem",
+          "value": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetUsers",
+          "value": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+          "source": "USER_INPUT",
+          "decisionState": "LOCKED"
+        },
+        {
+          "fieldKey": "targetRegion",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "knownCompetitors",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "revenueModel",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "price",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "channels",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "differentiators",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "budgetConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "teamConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "timelineConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        },
+        {
+          "fieldKey": "otherConstraint",
+          "value": "",
+          "source": "MISSING",
+          "decisionState": "OPEN"
+        }
+      ],
+      "interpretation": {
+        "interpretedProblem": "짧은 주말 여행을 계획하는 데 소요되는 시간과 노력을 줄이는 것.",
+        "interpretedTargetUsers": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+        "usageContext": "사용자의 이동 가능 시간과 관심사를 고려하여 여행 일정을 자동으로 구성하는 서비스.",
+        "industryCategory": "여행 및 관광",
+        "researchScope": "주말 여행 계획 서비스에 대한 시장 조사.",
+        "conciseIdeaDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동으로 구성하는 서비스.",
+        "targetRegionInterpretation": "대상 지역은 명시되지 않음.",
+        "relevantKnownCompetitorContext": "경쟁자는 명시되지 않음."
+      },
+      "fixtureName": "custom"
+    },
+    "plan": {
+      "title": "주말 여행 일정 생성 서비스",
+      "oneLineConcept": "사용자의 요구에 맞춘 여행 일정을 생성하는 서비스.",
+      "targetSegment": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+      "problemFocus": "여행 일정 생성 시 개인의 요구를 반영하기 어려운 문제 해결.",
+      "useContext": "사용자의 요구와 이동 가능 시간을 고려하여 여행 일정을 생성하는 서비스.",
+      "valueProposition": "사용자는 자신의 요구에 맞는 여행 일정을 쉽게 찾을 수 있다.",
+      "offerThesis": "사용자의 요구를 분석하여 최적의 여행 일정을 생성한다.",
+      "solutionThesis": "생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다.",
+      "coreMechanism": "사용자의 요구를 분석하는 알고리즘을 통해 여행 일정을 생성한다.",
+      "customerInteraction": "사용자는 앱에서 자신의 요구를 입력하고, 생성된 일정을 확인한다.",
+      "valueDelivery": "생성된 여행 일정은 사용자가 쉽게 예약할 수 있도록 관련 링크를 제공한다.",
+      "operatingApproach": "사용자 피드백을 통해 생성 알고리즘을 지속적으로 개선한다.",
+      "partnerApproach": "여행 관련 업체와 제휴하여 생성 서비스를 강화한다.",
+      "transactionApproach": "사용자는 생성된 일정에 따라 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다.",
+      "commercialApproach": "프리미엄 생성 서비스 모델을 도입하여 추가 기능을 제공한다.",
+      "fulfillmentApproach": "생성된 일정에 따라 사용자가 직접 예약을 진행하도록 유도한다.",
+      "differentiatingMechanics": [
+        "개인 맞춤형 생성 알고리즘",
+        "사용자의 피드백을 반영한 지속적인 개선"
+      ],
+      "mainChanges": [],
+      "secondaryChanges": [],
+      "legalRiskHints": [],
+      "reasonForPortfolioRole": "사용자의 요구를 반영한 여행 일정 생성을 통해 만족도를 높이기 위해.",
+      "planId": "P5",
+      "descriptor": {
+        "thesis": {
+          "targetSegmentThesis": "주말에 1~2일 단기 여행을 자주 계획하는 직장인들.",
+          "useCaseThesis": "사용자의 요구와 이동 가능 시간을 고려하여 여행 일정을 생성하는 서비스.",
+          "valuePropositionThesis": "사용자는 자신의 요구에 맞는 여행 일정을 쉽게 찾을 수 있다.",
+          "offerThesis": "사용자의 요구를 분석하여 최적의 여행 일정을 생성한다.",
+          "solutionThesis": "생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다."
+        },
+        "architecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "BOOKING",
+          "monetizationModel": "FREEMIUM",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "NONE"
+        },
+        "mechanismFamily": "생성된 여행 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다",
+        "familyId": "INTERMEDIARY:OTHER",
+        "familyLabelKo": "거래 중개 · 기타 운영",
+        "architectureDiagnostics": {
+          "businessRole": {
+            "code": "INTERMEDIARY",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "operatingModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "partnerModel": {
+            "code": "PARTNER_NETWORK",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "deliveryModel": {
+            "code": "OTHER",
+            "confidence": "LOW",
+            "source": "SEMANTIC"
+          },
+          "transactionModel": {
+            "code": "BOOKING",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "monetizationModel": {
+            "code": "FREEMIUM",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          },
+          "customerInteractionModel": {
+            "code": "APP",
+            "confidence": "HIGH",
+            "source": "SEMANTIC"
+          }
+        }
+      },
+      "preservedAnchors": {
+        "ideaOverview": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+        "problem": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+        "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인"
+      },
+      "preservedLocks": {},
+      "selectionStatus": "SELECTED",
+      "selectionScore": 0.6711,
+      "selectionReason": "현재 Portfolio에 주요 사업 선택의 비교 범위를 추가",
+      "relationToPortfolio": "DISTINCT"
+    },
+    "index": 4
+  },
+  "providerResponse": {
+    "conceptName": "주말 여행 일정 생성 서비스",
+    "conceptDefinition": "사용자의 이동 가능 시간과 관심사를 바탕으로 주말 근거리 여행 일정을 자동 구성하고 숙박·체험 예약 페이지로 연결하는 여행 계획 서비스",
+    "introduction": "사용자의 요구를 분석하여 최적의 여행 일정을 생성하는 서비스입니다.",
+    "coreValue": "사용자는 자신의 요구에 맞는 여행 일정을 쉽게 찾을 수 있습니다.",
+    "targetUsers": "주말 1~2일 단기 여행을 자주 계획하는 직장인",
+    "industryCategory": "여행 및 관광",
+    "researchScope": "주말 여행 계획 서비스에 대한 시장 조사",
+    "targetRegion": "한국 전역",
+    "revenueModel": "사용자는 생성된 일정에 따라 직접 예약을 진행하며, 수수료를 통해 수익을 창출한다.",
+    "price": "서비스 이용 시 발생하는 예약 수수료",
+    "channels": "모바일 앱, 웹사이트",
+    "differentiators": "개인 맞춤형 생성 알고리즘과 사용자의 피드백을 반영한 지속적인 개선",
+    "preMarketSomShareHypothesis": {
+      "targetSharePercent": 5.0,
+      "horizonYears": 3,
+      "rationale": "주말 여행 시장의 성장과 사용자 요구 증가에 따른 점유율 확보 가능성",
+      "assumptions": [
+        "주말 여행 수요 증가",
+        "사용자 맞춤형 서비스에 대한 선호도 증가"
+      ]
+    },
+    "preMarketSomHypothesis": {
+      "amount": 1000000.0,
+      "currency": "KRW",
+      "period": "연간",
+      "calculationBasis": "주말 여행 관련 예약 수수료 수익",
+      "assumptions": [
+        "시장 성장률 10%",
+        "사용자 증가율 15%"
+      ],
+      "confidence": "MEDIUM"
+    },
+    "problemScenario": "짧은 주말 여행은 이동 시간까지 고려해 일정을 직접 조합하는 데 많은 시간이 든다.",
+    "solutionMechanism": "사용자의 요구를 분석하는 알고리즘을 통해 여행 일정을 생성하고, 생성된 일정은 사용자가 선호하는 숙박 및 체험 예약 페이지로 연결된다.",
+    "featureSet": [
+      "사용자 맞춤형 여행 일정 생성",
+      "숙박 및 체험 예약 링크 제공",
+      "피드백 기반 알고리즘 개선"
+    ],
+    "actorRoles": [
+      "사용자",
+      "여행 관련 업체",
+      "개발팀"
+    ],
+    "platformRole": "여행 일정 생성 플랫폼 제공",
+    "operatingModel": "사용자 피드백을 통해 생성 알고리즘을 지속적으로 개선한다.",
+    "partnerModel": "여행 관련 업체와 제휴하여 생성 서비스를 강화한다.",
+    "providerRole": "여행 일정 생성 서비스 제공자",
+    "sellerRole": "여행 관련 상품 판매자",
+    "intermediaryRole": "예약 플랫폼 운영자",
+    "transactionFlow": [
+      "사용자가 요구 입력",
+      "알고리즘에 의한 일정 생성",
+      "사용자가 생성된 일정 확인",
+      "사용자가 직접 예약 진행"
+    ],
+    "paymentFlow": [
+      "사용자가 예약 진행",
+      "예약 수수료 수취",
+      "수익 정산"
+    ],
+    "personalDataUsage": [],
+    "physicalActivities": [
+      "배송",
+      "현장 방문",
+      "설치"
+    ],
+    "partnerRequirements": [],
+    "qualificationRequirements": [],
+    "advertisingClaims": [
+      "사용자의 요구를 반영한 최적의 여행 일정 제공"
+    ],
+    "constraintCompliance": []
+  },
+  "durationMs": 9223,
+  "timestamp": "2026-08-10T06:49:51.684075+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v1",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:ea530d4cd50ea1b022ab5062416a7a74caa4d736a6ef13779f1bf75e52e8f0e0",
+  "canonicalRequestHash": "da3a3dfda0b856f049633f0d132ce6e338e83fcce2d926455da252c9c4a85498",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C4-F1",
+        "businessText": "AI 도구 제공자 AI 도구 개발 및 유지보수 서비스 판매 및 고객 지원 파트너십을 통한 고객 유치 클라우드 기반 서비스로 제공 CRM 시스템과의 통합을 통해 원활한 데이터 전송 지원 고객이 서비스에 가입 AI 도구가 고객 데이터를 수집 및 분석 AI 도구가 영업 액션을 제안 영업팀이 제안을 기반으로 고객과 상호작용 고객이 구독료를 결제 결제 정보가 AI 도구에 전달 서비스 제공 후 정산 구독 기반 모델 온라인 마케팅, 파트너십을 통한 판매",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "DIGITAL",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "NONE"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "architecture": {
+        "businessRole": "SAAS_TOOL",
+        "operatingModel": "OWN_OPERATED",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "DIGITAL",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "WEB",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "NONE"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "MEDIUM",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "MEDIUM"
+      },
+      "safeSummary": "AI 도구 제공자로서 클라우드 기반의 구독 모델을 통해 고객에게 서비스를 제공하며, CRM 시스템과 통합하여 고객 데이터를 수집하고 분석하는 SaaS 플랫폼."
+    }
+  ],
+  "durationMs": 3375,
+  "timestamp": "2026-08-10T03:41:47.611071+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}

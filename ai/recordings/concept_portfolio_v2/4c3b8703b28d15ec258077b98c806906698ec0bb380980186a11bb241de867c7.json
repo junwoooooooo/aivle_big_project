@@ -1,0 +1,176 @@
+{
+  "taskType": "NORMALIZE_ARCHITECTURES",
+  "operationVersion": "v1",
+  "promptVersion": "concept-portfolio-architecture-classifier-v2",
+  "schemaVersion": "2.0",
+  "canonicalInputHash": "sha256:40f12945c860034d0f4bb8507ca173df45531cfeb176ca2f33066aa07d4ebba3",
+  "canonicalRequestHash": "4c3b8703b28d15ec258077b98c806906698ec0bb380980186a11bb241de867c7",
+  "redactedRequest": {
+    "items": [
+      {
+        "entityId": "C1",
+        "businessText": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 신선한 식재료를 배송한다. 식재료 공급 및 배송을 담당하는 업체 고객에게 식재료를 판매하는 역할 물류 및 배송을 담당하는 중개업체 주문 후 24시간 이내에 신선한 식재료를 배송한다. 지역 농가와 협력하여 신선한 식재료를 공급받는다. 고객이 앱을 통해 주문 주문 정보가 물류업체에 전달 물류업체가 식재료를 준비 및 배송 고객이 식재료를 수령 고객이 앱을 통해 결제 결제 정보가 처리됨 판매자가 수익을 수취 구독 모델을 통해 정기적으로 수익을 창출한다. 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "OTHER",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C3",
+        "businessText": "온라인 플랫폼 운영 및 주문 관리 식재료 및 요리 키트 제공 고객에게 요리 키트 판매 물류 파트너를 통한 배송 관리 온라인 플랫폼을 통해 주문을 받고, 물류 시스템으로 신선한 키트를 배송한다. 식재료 공급업체와 협력하여 신선한 재료를 확보한다. 고객이 앱에서 키트 선택 주문 접수 및 결제 처리 물류 파트너가 키트 배송 고객이 결제 결제 확인 후 주문 처리 물류 파트너에게 배송 비용 지급 구독 모델로 지속적인 수익을 창출한다 온라인 플랫폼 및 모바일 앱",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "OTHER",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "APP",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C4",
+        "businessText": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템으로 신선한 재료를 배송한다. 신선한 재료를 공급하는 공급자 역할을 수행한다. 고객에게 서비스를 제공하는 판매자 역할을 수행한다. 물류 시스템을 통해 배송을 관리하는 중개자 역할을 수행한다. 고객의 피드백을 반영하여 재료의 품질을 개선하고, 지역 농가와 협력하여 신선한 재료를 공급받는다. 지역 농가와 협력하여 신선한 재료를 공급받는다. 고객이 앱에서 주문을 생성한다. 주문이 접수되면 물류 시스템이 배송을 준비한다. 신선한 재료가 고객에게 배송된다. 고객이 앱에서 결제를 진행한다. 결제 확인 후 주문이 처리된다. 배송 완료 후 정산이 이루어진다. 구독 모델을 통한 지속적인 수익 창출 모바일 앱 및 웹사이트를 통한 주문",
+        "currentArchitecture": {
+          "businessRole": "INTERMEDIARY",
+          "operatingModel": "PARTNER_NETWORK",
+          "partnerModel": "PARTNER_NETWORK",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "OTHER",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "NONE",
+          "physicalDependency": "MATERIAL"
+        }
+      },
+      {
+        "entityId": "C5",
+        "businessText": "온라인 플랫폼 운영 식재료 관리 서비스 제공자 구독 서비스 판매자 없음 온라인 플랫폼을 통해 식재료 관리 서비스를 운영한다. 식재료 관리 전문가와 협력하여 서비스를 개발한다. 고객이 앱에서 구독 신청 서비스 제공자가 식재료 관리 및 레시피 제공 고객이 요리 후 피드백 제공 고객이 구독료 결제 결제 확인 후 서비스 제공 시작 구독 모델 모바일 앱 및 웹사이트",
+        "currentArchitecture": {
+          "businessRole": "OTHER",
+          "operatingModel": "OTHER",
+          "partnerModel": "OTHER",
+          "deliveryModel": "PHYSICAL_DELIVERY",
+          "transactionModel": "RECURRING",
+          "monetizationModel": "SUBSCRIPTION",
+          "customerInteractionModel": "OTHER",
+          "dataDependency": "MATERIAL",
+          "physicalDependency": "MATERIAL"
+        }
+      }
+    ]
+  },
+  "providerResponse": [
+    {
+      "entityId": "C1",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "OTHER",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "LOW",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 주문을 받고, 물류 시스템을 통해 신선한 식재료를 배송하는 중개업체."
+    },
+    {
+      "entityId": "C3",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "OTHER",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "APP",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "HIGH",
+        "deliveryModel": "LOW",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "HIGH"
+      },
+      "safeSummary": "온라인 플랫폼을 운영하며 요리 키트를 제공하고 구독 모델로 수익을 창출하는 서비스."
+    },
+    {
+      "entityId": "C4",
+      "architecture": {
+        "businessRole": "INTERMEDIARY",
+        "operatingModel": "PARTNER_NETWORK",
+        "partnerModel": "PARTNER_NETWORK",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "OTHER",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "NONE",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "HIGH",
+        "operatingModel": "MEDIUM",
+        "partnerModel": "HIGH",
+        "deliveryModel": "HIGH",
+        "transactionModel": "LOW",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "온라인 플랫폼을 통해 신선한 재료를 배송하고 구독 모델로 수익을 창출하는 중개업체."
+    },
+    {
+      "entityId": "C5",
+      "architecture": {
+        "businessRole": "OTHER",
+        "operatingModel": "OTHER",
+        "partnerModel": "OTHER",
+        "deliveryModel": "PHYSICAL_DELIVERY",
+        "transactionModel": "RECURRING",
+        "monetizationModel": "SUBSCRIPTION",
+        "customerInteractionModel": "OTHER",
+        "dataDependency": "MATERIAL",
+        "physicalDependency": "MATERIAL"
+      },
+      "confidence": {
+        "businessRole": "LOW",
+        "operatingModel": "LOW",
+        "partnerModel": "LOW",
+        "deliveryModel": "HIGH",
+        "transactionModel": "HIGH",
+        "monetizationModel": "HIGH",
+        "customerInteractionModel": "LOW"
+      },
+      "safeSummary": "식재료 관리 서비스를 제공하는 온라인 플랫폼으로 구독 모델을 통해 수익을 창출."
+    }
+  ],
+  "durationMs": 11656,
+  "timestamp": "2026-08-10T07:55:50.037363+00:00",
+  "providerMetadata": {
+    "mode": "LIVE",
+    "retries": 0
+  }
+}
