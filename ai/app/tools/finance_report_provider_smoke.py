@@ -11,8 +11,8 @@ import asyncio
 from pydantic import ValidationError
 
 from app.providers import ProviderFailure
-from app.tasks.finance_analysis_report.models import FinanceAnalysisReportResult
-from app.tasks.finance_analysis_report.service import execute_finance_analysis_report
+from app.tasks.launch_readiness.finance_analysis_report.models import FinanceAnalysisReportResult
+from app.tasks.launch_readiness.finance_analysis_report.service import execute_finance_analysis_report
 
 
 SCHEMA_NAME = "finance_analysis_report_v1"

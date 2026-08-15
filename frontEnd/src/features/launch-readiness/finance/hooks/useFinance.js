@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
-import { useJobEvents } from '../../../shared/async-events/index.js';
+import { useApiClient } from '../../../../shared/api/ApiClientProvider.jsx';
+import { useJobEvents } from '../../../../shared/async-events/index.js';
 import { createFinanceApi } from '../api/financeApi.js';
 
 const commandOptions = () => {
@@ -67,6 +67,16 @@ export default function useFinance(projectId, liveRevision = 0) {
   return {
     ...state, estimateEvents, analysisEvents, refresh,
     save: (values) => act('save', () => api.patchFields(projectId, values)),
+    downloadTemplate: () => act('template', () => api.template(projectId)),
+    downloadFinancialAnalysisDocument: () => act('financial-analysis-document', () => client.get(
+      `/api/v3/projects/${encodeURIComponent(projectId)}/reports/download?modules=finance`,
+      { timeoutMs: 60000, responseType: 'blob' },
+    )),
+    importAndAnalyze: (file) => act('import-analyze', async () => {
+      await api.importDocument(projectId, file);
+      await api.finalize(projectId);
+      return api.startAnalysis(projectId, commandOptions());
+    }),
     generateEstimate: (fieldKey) => act(`estimate:${fieldKey}`, () => api.generateEstimate(projectId, fieldKey, commandOptions())),
     generateEstimates: (fieldKeys) => act('estimate:group', async () => {
       const outcomes = await Promise.allSettled(

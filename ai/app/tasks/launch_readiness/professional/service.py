@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 
 from app.providers import execute_structured_prompt
-from app.tasks.professional_readiness.models import (
+from app.tasks.launch_readiness.professional.models import (
     AnalysisReview,
     ProfessionalAnalysis,
     ProfessionalAnalysisRequest,

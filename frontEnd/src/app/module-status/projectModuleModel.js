@@ -20,10 +20,9 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'concepts', label: '2. 사업안', shortLabel: '사업안', routeKey: 'concepts', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'market', label: '3. 시장 분석', shortLabel: '시장 분석', routeKey: 'market', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'businessModel', label: '4. 사업 모델', shortLabel: '사업 모델', routeKey: 'businessModel', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
-  { id: 'techOps', label: '5. 기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.NOT_READY },
-  { id: 'finance', label: '6. 재무 분석', shortLabel: '재무', routeKey: 'finance', defaultStatus: MODULE_STATUS.NOT_READY },
-  { id: 'twinSurvey', label: '7. 트윈 패널 조사', shortLabel: '트윈 패널', routeKey: 'twinSurvey', defaultStatus: MODULE_STATUS.NOT_READY },
-  { id: 'marketing', label: '8. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'launchReadiness', label: '5. 출시 준비', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'twinSurvey', label: '6. 트윈 패널 조사', shortLabel: '트윈 패널', routeKey: 'twinSurvey', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'marketing', label: '7. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'settings', label: '프로젝트 설정', shortLabel: '설정', routeKey: 'settings', defaultStatus: MODULE_STATUS.READY },
 ]);
 
@@ -31,7 +30,7 @@ const API_MODULE_IDS = Object.freeze({
   IDEA: 'idea', CONCEPT_PORTFOLIO: 'concepts', CONCEPT_FACTORY: 'concepts',
   CONCEPT_SELECTION: 'concepts', MARKET_ANALYSIS: 'market', BUSINESS_MODEL: 'businessModel',
   TWIN_SURVEY: 'twinSurvey',
-  TECH_OPS: 'techOps', FINANCE: 'finance', MARKETING: 'marketing',
+  TECH_OPS: 'launchReadiness', FINANCE: 'launchReadiness', MARKETING: 'marketing',
 });
 
 export function getModuleStatusView(status) { return MODULE_STATUS_VIEW[status] ?? MODULE_STATUS_VIEW.NOT_READY; }

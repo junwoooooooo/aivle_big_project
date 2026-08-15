@@ -1,8 +1,8 @@
 import asyncio
 import pytest
 from pydantic import ValidationError
-from app.tasks.finance_estimate import service
-from app.tasks.finance_estimate.models import FinanceEstimateResult
+from app.tasks.launch_readiness.finance_estimate import service
+from app.tasks.launch_readiness.finance_estimate.models import FinanceEstimateResult
 
 
 def test_estimate_preserves_ai_source_and_assumptions(monkeypatch):

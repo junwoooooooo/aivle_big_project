@@ -1,8 +1,8 @@
 import asyncio
 from unittest.mock import AsyncMock
 
-from app.tasks.professional_readiness import service
-from app.tasks.professional_readiness.models import AnalysisReview, ProfessionalAnalysis
+from app.tasks.launch_readiness.professional import service
+from app.tasks.launch_readiness.professional.models import AnalysisReview, ProfessionalAnalysis
 
 
 def _analysis(score: int = 72) -> ProfessionalAnalysis:

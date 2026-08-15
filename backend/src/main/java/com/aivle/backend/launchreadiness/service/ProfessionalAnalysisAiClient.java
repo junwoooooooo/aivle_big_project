@@ -18,7 +18,7 @@ public class ProfessionalAnalysisAiClient {
     private final RestClient client;
     private final AiServerProperties properties;
 
-    public ProfessionalAnalysisAiClient(@Qualifier("aiServerLongRestClient") RestClient client,
+    public ProfessionalAnalysisAiClient(@Qualifier("aiServerRestClient") RestClient client,
             AiServerProperties properties) {
         this.client = client;
         this.properties = properties;

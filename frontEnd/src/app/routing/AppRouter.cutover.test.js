@@ -4,6 +4,12 @@ import { describe, expect, it } from 'vitest';
 const routerSource = readFileSync('src/app/routing/AppRouter.jsx', 'utf8');
 
 describe('project route cutover', () => {
+  it('uses one launch-readiness workspace for technology, operations, and finance', () => {
+    expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');
+    expect(routerSource).toContain('path="tech-ops" element={<LaunchReadinessPage />}');
+    expect(routerSource).toContain('path="finance" element={<LaunchReadinessPage />}');
+  });
+
   it('uses one canonical Business Proposal Workspace for both compatible routes', () => {
     expect(routerSource).toContain('path="concepts" element={<BusinessProposalWorkspace />}');
     expect(routerSource).toContain('path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />}');

@@ -300,7 +300,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                 "rejectedProposalJson": body.input.get("rejectedProposalJson", ""),
             })
         elif body.taskType == "FINANCE_ESTIMATE":
-            from app.tasks.finance_estimate import execute_finance_estimate
+            from app.tasks.launch_readiness.finance_estimate import execute_finance_estimate
             result = await execute_finance_estimate({
                 "contextJson": body.input.get("contextJson"),
                 "fieldKey": body.input.get("fieldKey"),
@@ -318,7 +318,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
                     body.input, event_sink=progress.emit if progress.enabled else None,
                 )
         elif body.taskType == "FINANCE_ANALYSIS_REPORT":
-            from app.tasks.finance_analysis_report import execute_finance_analysis_report
+            from app.tasks.launch_readiness.finance_analysis_report import execute_finance_analysis_report
             result = await execute_finance_analysis_report(body.input)
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content

@@ -7,6 +7,41 @@
   gap: 1rem;
 }
 
+.launch-readiness-section .finance-minimal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+}
+
+.launch-readiness-section .finance-save {
+  justify-self: auto;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.launch-readiness-file-input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  padding: 0 !important;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0 !important;
+}
+
+.launch-readiness-file-name {
+  min-width: 0;
+  max-width: 280px;
+  overflow: hidden;
+  color: #53657b;
+  font-size: .86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .launch-readiness-section__heading {
   display: flex;
   align-items: flex-start;

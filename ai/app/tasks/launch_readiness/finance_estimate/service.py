@@ -4,8 +4,8 @@ import math
 from pydantic import ValidationError
 
 from app.providers import ProviderFailure, execute_structured_prompt
-from app.tasks.finance_estimate.models import FinanceEstimateInput, FinanceEstimateResult
-from app.tasks.finance_estimate.tavily import search_finance_benchmarks
+from app.tasks.launch_readiness.finance_estimate.models import FinanceEstimateInput, FinanceEstimateResult
+from app.tasks.launch_readiness.finance_estimate.tavily import search_finance_benchmarks
 
 
 MARKET_BM_FINANCE_PROMPT = """You prepare one financial-input recommendation for a Korean business-planning service.

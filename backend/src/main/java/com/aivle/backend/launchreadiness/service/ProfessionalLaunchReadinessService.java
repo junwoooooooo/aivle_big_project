@@ -98,7 +98,22 @@ public class ProfessionalLaunchReadinessService {
         return reports.findFirstByProjectIdAndModuleTypeAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, type).map(this::view).orElse(null);
     }
 
+    /** 통합 보고서의 출처 페이지에 표시할, 실제 분석에 사용된 외부 참고자료다. */
+    public List<ExternalReference> externalReferences(Long ownerId, Long projectId, ModuleType type) {
+        AnalysisView result = current(ownerId, projectId, type);
+        if (result == null) return List.of();
+        return result.externalEvidence().stream()
+            .map(source -> new ExternalReference(text(source, "title"), text(source, "url")))
+            .filter(source -> !source.title().isBlank() && !source.url().isBlank())
+            .toList();
+    }
+
     public byte[] pdf(Long ownerId, Long projectId, ModuleType type) {
+        return pdf(ownerId, projectId, type, true);
+    }
+
+    /** 통합 보고서는 마지막 통합 출처 페이지만 사용하므로 개별 출처 섹션을 생략할 수 있다. */
+    public byte[] pdf(Long ownerId, Long projectId, ModuleType type, boolean includeExternalReferences) {
         AnalysisView result = current(ownerId, projectId, type);
         if (result == null) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY, "분석을 먼저 실행해 주세요.");
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -149,11 +164,13 @@ public class ProfessionalLaunchReadinessService {
             for (Map<String, Object> action : result.actions()) {
                 document.add(new Paragraph("• " + text(action, "title") + " — " + text(action, "completionEvidence"), small));
             }
-            addSection(document, "7. 외부 참고 출처", heading);
-            if (result.externalEvidence().isEmpty()) document.add(new Paragraph("외부 검색 근거 없음 · 사용자 전문입력만으로 분석", small));
-            for (Map<String, Object> source : result.externalEvidence()) {
-                Anchor link = new Anchor(text(source, "title"), body); link.setReference(text(source, "url"));
-                document.add(new Paragraph(link)); document.add(new Paragraph(text(source, "url"), small));
+            if (includeExternalReferences) {
+                addSection(document, "7. 외부 참고 출처", heading);
+                if (result.externalEvidence().isEmpty()) document.add(new Paragraph("외부 검색 근거 없음 · 사용자 전문입력만으로 분석", small));
+                for (Map<String, Object> source : result.externalEvidence()) {
+                    Anchor link = new Anchor(text(source, "title"), body); link.setReference(text(source, "url"));
+                    document.add(new Paragraph(link)); document.add(new Paragraph(text(source, "url"), small));
+                }
             }
             document.add(space()); document.add(new Paragraph("본 보고서는 입력 자료와 공개 참고자료를 바탕으로 한 의사결정 지원 문서이며, 법률·보안 인증 또는 성과를 보장하지 않습니다.", small));
             document.close(); return output.toByteArray();
@@ -205,6 +222,7 @@ public class ProfessionalLaunchReadinessService {
         private static String value(Map<String, Object> row, String key) { return String.valueOf(row.getOrDefault(key, "")); }
         boolean qualityPassed() { Object value = analysis.get("quality"); return value instanceof Map<?, ?> map && Boolean.TRUE.equals(map.get("passed")); }
     }
+    public record ExternalReference(String title, String url) { }
     private record Field(String key, String label, String guide) { }
     private List<Field> fields(ModuleType type) { return type == ModuleType.TECHNOLOGY ? List.of(
         new Field("systemArchitecture", "시스템·제품 구조", "구성도, 주요 구성 요소와 연결 관계"), new Field("coreFunctions", "핵심 기능과 구현 상태", "기능별 현재 상태와 출시 기준"), new Field("techStack", "기술 스택·인프라", "언어, 프레임워크, 클라우드, 데이터베이스"), new Field("integrations", "외부 연동·의존성", "API, 결제, 인증, 장애 시 대안"), new Field("dataSecurity", "데이터·보안 기준", "개인정보, 권한, 백업, 보안 요구사항"), new Field("performanceTarget", "성능·확장 목표", "사용자 수, 응답 시간, 처리량"), new Field("developmentTeam", "개발 인력·역할", "담당자, 외주 여부, 책임 범위"), new Field("releaseSchedule", "개발·출시 일정", "마일스톤과 완료 기준"), new Field("testPlan", "테스트·검증 계획", "테스트 범위, 방법, 통과 기준"), new Field("technicalRisks", "기술 위험과 대응", "위험, 영향, 대응책")) : List.of(

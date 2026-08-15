@@ -1,6 +1,6 @@
 import asyncio
 
-from app.tasks.finance_estimate import tavily
+from app.tasks.launch_readiness.finance_estimate import tavily
 
 
 def test_tavily_is_disabled_without_key(monkeypatch):

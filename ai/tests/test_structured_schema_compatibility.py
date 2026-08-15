@@ -21,8 +21,8 @@ from app.tasks.concept_legal_review.models import (
     ConceptLegalReviewProviderResult, LegalQuestionClassificationBatch,
 )
 from app.tasks.concept_legal_review.service import _runtime_provider_schema
-from app.tasks.finance_analysis_report.models import FinanceAnalysisReportResult
-from app.tasks.finance_estimate.models import FinanceEstimateResult
+from app.tasks.launch_readiness.finance_analysis_report.models import FinanceAnalysisReportResult
+from app.tasks.launch_readiness.finance_estimate.models import FinanceEstimateResult
 from app.tasks.idea_brief.models import IdeaBriefProviderResult
 from app.tasks.marketing_content.models import MarketingContentResult
 from app.tasks.tech_ops_proposal.models import TechOpsProposalResult

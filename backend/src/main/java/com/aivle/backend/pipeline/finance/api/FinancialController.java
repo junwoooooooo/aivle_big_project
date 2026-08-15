@@ -6,11 +6,15 @@ import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.pipeline.finance.application.FinancialService;
 import com.aivle.backend.pipeline.finance.application.FinancialAnalysisService;
+import com.aivle.backend.pipeline.finance.application.FinancialInputDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class FinancialController {
     private final FinancialService service;
     private final FinancialAnalysisService analysis;
+    private final FinancialInputDocumentService documentService;
     private final CurrentUserProvider user;
 
     @PostMapping("/preparation/initialize")
@@ -36,6 +41,21 @@ public class FinancialController {
     public ApiResponse<PreparationView> patch(@PathVariable Long projectId, @Valid @RequestBody FinancialFieldsPatch body,
             HttpServletRequest request) {
         return ApiResponse.success(service.patchFields(user.currentUserId(), projectId, body), request.getHeader("X-Request-Id"));
+    }
+
+    @GetMapping(value = "/preparation/template", produces = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    public ResponseEntity<ByteArrayResource> template(@PathVariable Long projectId) {
+        service.current(user.currentUserId(), projectId);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+            .header("Content-Disposition", "attachment; filename=financial-input-template.docx")
+            .body(new ByteArrayResource(documentService.template(projectId)));
+    }
+
+    @PostMapping(value = "/preparation/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<PreparationView> importDocument(@PathVariable Long projectId, @RequestPart("file") MultipartFile file,
+            HttpServletRequest request) {
+        return ApiResponse.success(service.importFields(user.currentUserId(), projectId,
+            new FinancialFieldsPatch(documentService.parse(file))), request.getHeader("X-Request-Id"));
     }
 
     @PostMapping("/preparation/assistance/{fieldKey}/decision")

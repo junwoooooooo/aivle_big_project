@@ -53,6 +53,20 @@ public class FinancialService {
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
+        // 출시 준비 화면의 재무 분석은 업로드한 재무 입력 문서가 기준이다. 이전 단계의
+        // 시장/BM 결과가 없는 프로젝트도 분석을 시작할 수 있어야 한다.
+        var latest = preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId);
+        if (latest.isPresent()) return view(latest.get());
+        var standalone = preparationFactory.createStandalone();
+        ObjectNode lineage = mapper.createObjectNode();
+        lineage.put("mode", "USER_DOCUMENT_INPUT");
+        String id = UUID.randomUUID().toString();
+        var saved = preparations.save(FinancialInputPreparation.createStandalone(id, projectId,
+            snapshotHasher.hash(lineage), mapper.writeValueAsString(standalone.financialFields()),
+            mapper.writeValueAsString(standalone.upstreamReferences()),
+            mapper.writeValueAsString(standalone.assistance()), ownerId));
+        return view(saved);
+        /*
         CurrentSources source = currentSources(ownerId, projectId);
         var existing = preparations
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
@@ -70,12 +84,23 @@ public class FinancialService {
             mapper.writeValueAsString(initial.financialFields()), mapper.writeValueAsString(initial.upstreamReferences()),
             mapper.writeValueAsString(initial.assistance()), ownerId));
         return view(saved);
+        */
     }
 
     @Transactional(readOnly = true)
     public PreparationView current(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
         return view(requireCurrent(ownerId, projectId));
+    }
+
+    /** Replaces the editable preparation values with a user-provided DOCX revision. */
+    @Transactional
+    public PreparationView importFields(Long ownerId, Long projectId, FinancialFieldsPatch request) {
+        FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId);
+        if (snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(preparation.getId(), projectId).isPresent()) {
+            reopenPreparation(ownerId, projectId);
+        }
+        return patchFields(ownerId, projectId, request);
     }
 
     @Transactional
@@ -219,10 +244,13 @@ public class FinancialService {
         String id = UUID.randomUUID().toString();
         Instant now = Instant.now();
         var built = snapshotFactory.create(id, now, preparation);
-        return snapshotView(snapshots.save(FinancialInputSnapshot.createFromMarketAndBusinessModel(
-            id, projectId, preparation.getId(), preparation.getSourceMarketResearchVersionId(),
-            preparation.getSourceBusinessModelVersionId(),
-            FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now)));
+        FinancialInputSnapshot snapshot = preparation.getSourceMarketResearchVersionId() == null
+            ? FinancialInputSnapshot.createStandalone(id, projectId, preparation.getId(),
+                FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now)
+            : FinancialInputSnapshot.createFromMarketAndBusinessModel(id, projectId, preparation.getId(),
+                preparation.getSourceMarketResearchVersionId(), preparation.getSourceBusinessModelVersionId(),
+                FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now);
+        return snapshotView(snapshots.save(snapshot));
     }
 
     @Transactional
@@ -239,10 +267,8 @@ public class FinancialService {
     @Transactional(readOnly = true)
     public SnapshotView currentSnapshot(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
-        CurrentSources source = currentSources(ownerId, projectId);
         return snapshotView(snapshots
-            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
-                projectId, source.market().getId(), source.businessModel().getId())
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY)));
     }
 
@@ -334,10 +360,8 @@ public class FinancialService {
     }
 
     private FinancialInputPreparation requireCurrent(Long ownerId, Long projectId) {
-        CurrentSources source = currentSources(ownerId, projectId);
         return preparations
-            .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
-                projectId, source.market().getId(), source.businessModel().getId())
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
     }
 
@@ -383,6 +407,7 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputPreparation value) {
+        if (value.getSourceMarketResearchVersionId() == null || value.getSourceBusinessModelVersionId() == null) return false;
         try {
             CurrentSources current = currentSources(value.getUpdatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())
@@ -391,6 +416,7 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputSnapshot value) {
+        if (value.getSourceMarketResearchVersionId() == null || value.getSourceBusinessModelVersionId() == null) return false;
         try {
             CurrentSources current = currentSources(value.getCreatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())

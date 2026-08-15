@@ -1,10 +1,16 @@
 const root = (projectId) => `/api/v3/projects/${encodeURIComponent(projectId)}`;
 const finance = (projectId) => `${root(projectId)}/finance`;
+const documentOptions = (options) => ({ timeoutMs: 60000, ...options, responseType: 'blob' });
 
 export const createFinanceApi = (client) => Object.freeze({
   preparation: async (projectId, options) => (await client.get(`${finance(projectId)}/preparation`, options)).data,
   initialize: async (projectId, options) => (await client.post(`${finance(projectId)}/preparation/initialize`, {}, options)).data,
   patchFields: async (projectId, values, options) => (await client.patch(`${finance(projectId)}/preparation`, { values }, options)).data,
+  template: (projectId, options) => client.get(`${finance(projectId)}/preparation/template`, documentOptions(options)),
+  importDocument: async (projectId, file, options) => {
+    const form = new FormData(); form.append('file', file);
+    return (await client.upload(`${finance(projectId)}/preparation/import`, form, { timeoutMs: 60000, ...options })).data;
+  },
   generateEstimate: async (projectId, fieldKey, options) => (await client.post(`${finance(projectId)}/preparation/assistance/${encodeURIComponent(fieldKey)}/generate`, {}, options)).data,
   decideEstimate: async (projectId, fieldKey, payload, options) => (await client.post(`${finance(projectId)}/preparation/assistance/${encodeURIComponent(fieldKey)}/decision`, payload, options)).data,
   finalize: async (projectId, options) => (await client.post(`${finance(projectId)}/input-snapshots/finalize`, {}, options)).data,

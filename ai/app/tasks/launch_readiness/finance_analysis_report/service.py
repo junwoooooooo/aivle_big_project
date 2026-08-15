@@ -3,7 +3,7 @@ import json
 from pydantic import ValidationError
 
 from app.providers import ProviderFailure, execute_structured_prompt
-from app.tasks.finance_analysis_report.models import (
+from app.tasks.launch_readiness.finance_analysis_report.models import (
     FinanceAnalysisReportInput,
     FinanceAnalysisReportResult,
 )

@@ -4,8 +4,8 @@ import pytest
 
 from app.providers import ProviderFailure
 from app.providers.schema_compatibility import strict_schema_failures
-from app.tasks.finance_analysis_report import service
-from app.tasks.finance_analysis_report.models import FinanceAnalysisReportResult
+from app.tasks.launch_readiness.finance_analysis_report import service
+from app.tasks.launch_readiness.finance_analysis_report.models import FinanceAnalysisReportResult
 
 
 def _input():
