@@ -72,6 +72,18 @@ public class ConceptPortfolioSelection extends BaseEntity {
         status = next; failureCode = code;
     }
 
+    /** Auxiliary work owns its outcome elsewhere and must not mutate the selected concept status. */
+    public void completeAuxiliaryTask(String taskRunId) {
+        requireActive(taskRunId);
+        activeTaskRunId = null; activeAction = null; failureCode = null;
+    }
+
+    public void clearAuxiliaryTaskIfActive(String taskRunId) {
+        if (taskRunId != null && taskRunId.equals(activeTaskRunId)) {
+            activeTaskRunId = null; activeAction = null; failureCode = null;
+        }
+    }
+
     public void reportReady() {
         if (!isCurrent || status != ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT)
             throw new IllegalStateException("Legal report gate is closed");

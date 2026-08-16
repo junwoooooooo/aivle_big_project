@@ -5,6 +5,7 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.domain.*;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.*;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementMaterializationService;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.*;
 import java.time.*;
@@ -24,6 +25,7 @@ public class ConceptPortfolioSelectionMaterializationService {
     private final ConceptPortfolioSelectionService selectionService;
     private final ConceptPortfolioJsonHasher hasher;
     private final TaskRunService taskRuns;
+    private final ConceptRefinementMaterializationService refinement;
     private final ObjectMapper mapper;
     private final Clock clock;
 
@@ -33,20 +35,27 @@ public class ConceptPortfolioSelectionMaterializationService {
             ConceptLegalRegulatoryReportRepository reports,
             MarketAnalysisSeedSnapshotRepository marketSeeds,
             ConceptPortfolioSelectionService selectionService, ConceptPortfolioJsonHasher hasher,
-            TaskRunService taskRuns, ObjectMapper mapper, Clock clock) {
+            TaskRunService taskRuns, ConceptRefinementMaterializationService refinement,
+            ObjectMapper mapper, Clock clock) {
         this.selections=selections; this.hypotheses=hypotheses; this.deltas=deltas;
         this.reports=reports; this.marketSeeds=marketSeeds; this.selectionService=selectionService;
-        this.hasher=hasher; this.taskRuns=taskRuns; this.mapper=mapper; this.clock=clock;
+        this.hasher=hasher; this.taskRuns=taskRuns; this.refinement=refinement;
+        this.mapper=mapper; this.clock=clock;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = ConceptRefinementMaterializationService.StaleResult.class)
     public String complete(TaskRunService.Claim claim, TaskRunWorkerContext context, ExecutionResponse response) {
         taskRuns.assertActiveClaim(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken());
-        ConceptPortfolioSelection selection=locked(context);
         JsonNode result=validate(response.result());
         String action=result.path("action").asText();
         JsonNode input=mapper.readTree(context.inputSnapshot());
         require(action.equals(input.path("action").asText()));
+        ConceptPortfolioSelection selection = "REFINE_FROM_MARKET".equals(action)
+            ? lockedForRefinement(context) : locked(context);
+        if ("REFINE_FROM_MARKET".equals(action)) {
+            refinement.complete(claim, context, response, result, input, selection);
+            return action;
+        }
         require(input.path("expectedHypothesisRevision").isIntegralNumber()
             && input.path("expectedHypothesisRevision").asInt() == selection.getHypothesisRevision());
         switch(action) {
@@ -113,8 +122,12 @@ public class ConceptPortfolioSelectionMaterializationService {
     @Transactional
     public void fail(TaskRunService.Claim claim,TaskRunWorkerContext context,String code,String reason,boolean retryable){
         taskRuns.assertActiveClaim(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken());
-        ConceptPortfolioSelection selection=locked(context);
         String action=mapper.readTree(context.inputSnapshot()).path("action").asText();
+        ConceptPortfolioSelection selection="REFINE_FROM_MARKET".equals(action)
+            ? lockedForRefinement(context):locked(context);
+        if("REFINE_FROM_MARKET".equals(action)){
+            refinement.fail(claim,context,code,reason,retryable,selection);return;
+        }
         selection.failTask(context.taskRunId(),"DELTA_LEGAL".equals(action)?ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED:
             ConceptPortfolioSelectionStatus.FAILED,code); taskRuns.fail(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken(),code,reason,retryable);
     }
@@ -137,6 +150,8 @@ public class ConceptPortfolioSelectionMaterializationService {
     private JsonNode validate(JsonNode result){require(result!=null&&result.isObject());require("concept-portfolio-v2-selection-action-result-v1".equals(result.path("contract").asText()));require("1.0".equals(result.path("schemaVersion").asText()));return result;}
     private ConceptPortfolioSelection locked(TaskRunWorkerContext c){ConceptPortfolioSelection s=selections.findLocked(Long.valueOf(c.subjectId())).orElseThrow(ContractViolation::new);
         require(s.isCurrent()&&s.getProjectId().equals(c.projectId())&&c.taskRunId().equals(s.getActiveTaskRunId()));return s;}
+    private ConceptPortfolioSelection lockedForRefinement(TaskRunWorkerContext c){ConceptPortfolioSelection s=selections.findLocked(Long.valueOf(c.subjectId())).orElseThrow(ContractViolation::new);
+        require(s.getProjectId().equals(c.projectId()));return s;}
     private void adopt(TaskRunService.Claim claim,TaskRunWorkerContext c,ExecutionResponse r){taskRuns.adopt(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken(),mapper.writeValueAsString(r.result()),c.inputHash(),r.resultSchemaVersion());}
     private void staleDependents(Long id){reports.findAllBySelectionIdAndStatusAndDeletedAtIsNull(id,"CURRENT").forEach(ConceptLegalRegulatoryReport::markStale);marketSeeds.findAllByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(id).forEach(v->v.markStale(Instant.now(clock)));}
     private static void require(boolean condition){if(!condition)throw new ContractViolation();}

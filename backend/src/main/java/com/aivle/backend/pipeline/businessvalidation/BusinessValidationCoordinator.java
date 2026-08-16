@@ -64,6 +64,29 @@ public class BusinessValidationCoordinator {
             .orElseGet(CurrentView::notStarted);
     }
 
+    /** Internal authority for downstream work that must bind to one exact validation cycle. */
+    @Transactional(readOnly = true)
+    public CompletedSource requireCurrentCompletedSource(Long ownerId, Long projectId) {
+        owned(ownerId, projectId);
+        BusinessValidationSession session = sessions
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST,
+                "현재 완료된 사업 검증이 필요합니다."));
+        if (session.getState() != BusinessValidationSession.State.COMPLETED
+                || session.getMarketVersionId() == null || session.getBmVersionId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                "현재 완료된 사업 검증이 필요합니다.");
+        }
+        if (stale(ownerId, session)) {
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "사업 검증 입력이 변경되었습니다. 사업 검증을 다시 실행해 주세요.");
+        }
+        return new CompletedSource(session.getId(), session.getMarketVersionId(),
+            session.getBmVersionId(), session.getSourceMarketSeedSnapshotId(),
+            session.getSourcePortfolioSelectionId(), session.getSourceSelectionRevision(),
+            session.getSourceBmPlanRevision(), session.getCanonicalInputHash());
+    }
+
     @Transactional
     public CurrentView retryBm(Long ownerId, Long projectId, String commandKey,
             String correlationId) {
@@ -223,6 +246,11 @@ public class BusinessValidationCoordinator {
     public record StageView(String state, boolean completed,
                             tools.jackson.databind.JsonNode result,
                             String errorCode, boolean retryable) { }
+    public record CompletedSource(String businessValidationSessionId,
+                                  Long marketVersionId, Long bmVersionId,
+                                  String marketSeedSnapshotId, Long selectionId,
+                                  Integer selectionRevision, Integer bmPlanRevision,
+                                  String canonicalInputHash) { }
     public record CurrentView(String state, boolean stale, StageView market,
                               StageView businessModel, List<String> actions) {
         static CurrentView notStarted() {

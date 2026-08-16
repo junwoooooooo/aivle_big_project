@@ -11,6 +11,8 @@ from app.concept_portfolio_v2.adapters import CurrentDownstreamAdapter
 from app.concept_portfolio_v2.models import HypothesisDecision
 from app.concept_portfolio_v2.snapshot_hash import production_compatible_snapshot_hash
 from app.tasks.concept_hypothesis_alternative import execute_concept_hypothesis_alternative
+from app.tasks.concept_refinement import propose_refinements
+from app.validation.drift import filter_proposals, filter_ungrounded
 
 from .selection_models import (
     HYPOTHESIS_TYPES,
@@ -75,6 +77,19 @@ class ConceptPortfolioSelectionActionFacade:
                 action=value.action,
                 hypotheses=hypotheses,
                 deltaLegalResult=result,
+            )
+        if value.action == "REFINE_FROM_MARKET":
+            material = value.refinementMaterial.model_dump(mode="json")
+            concept = value.selectedCandidate.candidate.model_dump(mode="json")
+            raw = await propose_refinements(material, concept)
+            grounded, evidence_rejections = filter_ungrounded(
+                raw, material["marketEvidence"], material["legalFindings"]
+            )
+            accepted, drift_rejections = filter_proposals(grounded, concept)
+            return ConceptPortfolioSelectionActionResult(
+                action=value.action,
+                refinementProposals=accepted,
+                driftRejections=(evidence_rejections + drift_rejections)[:6],
             )
 
         legal = value.baseLegalReview.model_copy(update={

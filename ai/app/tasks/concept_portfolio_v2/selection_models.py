@@ -24,6 +24,7 @@ SelectionAction = Literal[
     "PROPOSE_ALTERNATIVE",
     "DELTA_LEGAL",
     "BUILD_HANDOFF",
+    "REFINE_FROM_MARKET",
 ]
 HypothesisType = Literal[
     "TARGET_REGION",
@@ -44,6 +45,47 @@ class ProductionBinding(StrictModel):
     marketSeedSnapshotId: str = Field(min_length=1, max_length=64)
 
 
+class RefinementSourceBinding(StrictModel):
+    businessValidationSessionId: str = Field(min_length=1, max_length=64)
+    marketVersionId: int = Field(gt=0)
+    bmVersionId: int = Field(gt=0)
+    marketSeedSnapshotId: str = Field(min_length=1, max_length=64)
+    selectionId: int = Field(gt=0)
+    selectionRevision: int | None = Field(default=None, ge=0)
+    bmPlanRevision: int | None = Field(default=None, ge=0)
+
+
+class RefinementMaterial(StrictModel):
+    round: int = Field(ge=1, le=3)
+    attempt: int = Field(ge=1, le=3)
+    policyVersion: Literal["REFINEMENT_POLICY_V1"]
+    maxProposals: Literal[6]
+    priceTolerance: float = Field(ge=0.0, le=1.0)
+    listChangeAllowance: Literal[1]
+    sourceBinding: RefinementSourceBinding
+    frozenFields: list[str]
+    refinableFields: dict[str, str]
+    gateReasons: list[Any] = Field(default_factory=list)
+    canvas: Any | None = None
+    marketEvidence: list[dict[str, Any]] = Field(default_factory=list, max_length=200)
+    legalFindings: list[dict[str, Any]] = Field(default_factory=list)
+    driftRejections: list[dict[str, Any]] = Field(default_factory=list)
+    userDeclined: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class RefinementProposal(StrictModel):
+    fieldKey: str = Field(min_length=1, max_length=80)
+    currentValue: Any | None = None
+    proposedValue: Any
+    title: str = Field(min_length=1, max_length=80)
+    beforeText: str = Field(min_length=1, max_length=240)
+    afterText: str = Field(min_length=1, max_length=240)
+    rationale: str = Field(min_length=1, max_length=1000)
+    source: Literal["MARKET", "LEGAL"]
+    evidenceIds: list[str] = Field(default_factory=list, max_length=200)
+    legalRef: str | None = Field(default=None, max_length=500)
+
+
 class ConceptPortfolioSelectionActionInput(StrictModel):
     action: SelectionAction
     expectedHypothesisRevision: int = Field(default=0, ge=0)
@@ -58,6 +100,7 @@ class ConceptPortfolioSelectionActionInput(StrictModel):
     proposalVersion: int | None = Field(default=None, ge=2, le=20)
     approvedDeltaLegalResults: list[DeltaLegalResult] = Field(default_factory=list, max_length=5)
     productionBinding: ProductionBinding | None = None
+    refinementMaterial: RefinementMaterial | None = None
 
     @model_validator(mode="after")
     def action_payload(self):
@@ -83,6 +126,8 @@ class ConceptPortfolioSelectionActionInput(StrictModel):
             )
             if len(self.hypotheses) != 7:
                 raise ValueError("Handoff에는 확정된 7개 가정이 필요합니다")
+        elif self.action == "REFINE_FROM_MARKET":
+            self._require(self.selectedCandidate, self.refinementMaterial)
         return self
 
     @staticmethod
@@ -102,3 +147,5 @@ class ConceptPortfolioSelectionActionResult(StrictModel):
     deltaLegalResult: DeltaLegalResult | None = None
     handoff: DownstreamHandoff | None = None
     marketSeedSnapshotHash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    refinementProposals: list[RefinementProposal] = Field(default_factory=list, max_length=6)
+    driftRejections: list[dict[str, Any]] = Field(default_factory=list, max_length=6)
