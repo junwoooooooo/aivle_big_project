@@ -22,8 +22,7 @@ describe('ProjectSplitWorkspace', () => {
     </ProjectWorkspace>);
     expect(container.querySelector('main')).toHaveClass('project-workspace--document');
     expect(screen.getByRole('heading', { name: '사업의 전체 흐름을 확인하세요' })).toBeInTheDocument();
-    // 여정 «안»의 소제목 번호다 — 큰 단계(여정 1~6)와 뒤섞이지 않게 「N번째」로 읽는다.
-    expect(screen.getByLabelText('8번째')).toBeInTheDocument();
+    expect(screen.getByLabelText('8단계')).toBeInTheDocument();
   });
 });
 

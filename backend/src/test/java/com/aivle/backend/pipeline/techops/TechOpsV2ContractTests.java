@@ -36,7 +36,7 @@ class TechOpsV2ContractTests {
             "V5__v2_10f_project_evidence_artifacts.sql")).toLowerCase(Locale.ROOT);
         assertThat(artifactSql).contains("create table project_evidence_artifacts",
             "add column artifact_id", "fk_tech_ops_evidence_artifact", "alter column artifact_ref drop not null");
-        var schema=new ObjectMapper().readTree(Files.readString(Path.of("..","docs","legacy","rebuild","contracts","tech-ops-input-snapshot-v1.schema.json")));
+        var schema=new ObjectMapper().readTree(Files.readString(Path.of("..","docs","rebuild","contracts","tech-ops-input-snapshot-v1.schema.json")));
         assertThat(schema.path("properties").path("contract").path("const").asText()).isEqualTo("tech-ops-input-snapshot-v1");
         assertThat(schema.path("required").toString()).contains("snapshotId","hash","createdAt","requiredFacts",
             "requiredDecisions","evidenceReferences");

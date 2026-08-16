@@ -17,10 +17,7 @@ export const workflowSteps = [
   { number: '01', title: '사업 기획', description: '아이디어를 정리하고 법률 검토가 포함된 사업안을 확정합니다.', kind: 'project' },
   { number: '02', title: '사업 검증', description: '시장 근거를 수집하고 실행 가능한 사업 모델을 검증합니다.', kind: 'structure' },
   { number: '03', title: '출시 준비', description: '기술·운영 구성과 재무 전망을 확정해 출시를 준비합니다.', kind: 'review' },
-  // ⚠ 「구매 의향」을 약속하지 않는다. 시장 인터뷰는 **절대 척도를 내지 않고**
-  //    무엇이 몇 번 언급됐는지만 센다(백분율 금지). 랜딩이 없는 산출을 약속하면
-  //    사용자가 그것을 기대하고 들어온다.
-  { number: '04', title: '시장 인터뷰', description: '가상 응답자의 말에서 무엇이 몇 번 나왔는지 셉니다.', kind: 'summary' },
+  { number: '04', title: '가상 인터뷰', description: '가상 패널의 반응과 사용·구매 의향을 확인합니다.', kind: 'summary' },
   { number: '05', title: '마케팅 전략', description: '확정된 근거를 기반으로 메시지와 콘텐츠를 제작합니다.', kind: 'project' },
   { number: '06', title: '최종 보고서', description: '각 업무 단계의 정본 결과와 출처를 실무 문서로 정리합니다.', kind: 'summary' },
 ];

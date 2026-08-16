@@ -45,22 +45,6 @@ LEGAL_OPERATION_VERSION = "concept-legal-review-v3"
 LEGAL_FACT_COMPLETION_PROMPT_VERSION = "concept-legal-fact-completion-dynamic-patch-v3"
 LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair-v1"
 
-#: 항목별 배치 호출 넷이 공통으로 붙이는 <b>개수 대응 요구</b> (2026-08-16 유료 실행에서 실측).
-#:
-#: 네 프롬프트 모두 「identity를 그대로 보존한다」는 말했지만 **몇 개를 내라는 말이 없었다.**
-#: 그래서 items 5개를 넣었는데 모델이 하나만 돌려줬고, `_validate_keyed_batch` 의 ID 대조가
-#: 배치를 통째로 거부해(`ARCHITECTURE_BATCH_IDENTITY_MISMATCH: missing=[C2,C3,C4,C5]`)
-#: 후보 5개가 전부 버려졌다 — 사업안 0개로 실행이 실패했다.
-#:
-#: ⚠ **검사를 약하게 만들어 고치지 않는다.** 빠진 것을 눈감으면 사업안이 조용히 줄어든 채
-#:   「성공」으로 나간다. 고칠 자리는 검사가 아니라 «요구» 쪽이고, 그것이 이 한 줄이다.
-#: ⚠ 한 벌로 둔다 — 네 군데에 따로 적으면 한 곳만 고쳐지고 나머지가 조용히 남는다.
-BATCH_COMPLETENESS_RULE = (
-    " 입력 items의 모든 항목에 대해 결과를 하나씩 낸다 — results 길이는 items 길이와 정확히"
-    " 같아야 하고, 하나라도 빠뜨리거나 합치거나 중복하면 안 된다. 판단이 어려운 항목도"
-    " 건너뛰지 말고 이 스키마가 허용하는 «모름» 값으로 낸다."
-)
-
 
 _COMPLETION_LIST_FIELDS = {
     "transactionFlow", "paymentFlow", "personalDataUsage",
@@ -750,10 +734,7 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
         schema = SemanticArchitectureBatch.model_json_schema()
         assert_strict_compatible(schema, "concept_architecture_classifier_v2")
         raw = await execute_structured_prompt(
-            # ★ 이 배치가 2026-08-16 에 실제로 깨진 자리다. 사유는 상수 옆에 적어 뒀다.
-            "사업 설명을 system enum으로만 분류한다. 근거가 부족하면 OTHER를 사용한다. 임의 code를 만들지 않는다. "
-            "각 축 confidence를 HIGH/MEDIUM/LOW로 반환하고 입력 entityId를 그대로 보존한다."
-            + BATCH_COMPLETENESS_RULE,
+            "사업 설명을 system enum으로만 분류한다. 근거가 부족하면 OTHER를 사용한다. 임의 code를 만들지 않는다. 각 축 confidence를 HIGH/MEDIUM/LOW로 반환하고 입력 entityId를 그대로 보존한다.",
             json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_architecture_classifier_v2",
             task_type="CONCEPT_PORTFOLIO_V2_ARCHITECTURE_CLASSIFICATION")
@@ -763,7 +744,7 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
         schema = SemanticHypothesisBatch.model_json_schema()
         assert_strict_compatible(schema, "concept_hypothesis_semantic_v1")
         raw = await execute_structured_prompt(
-            "각 값이 해당 사업 가설 필드에 실제로 답하는 값인지 VALID/INVALID로만 판정한다. 새 가설을 생성하거나 값을 수정하지 않는다." + BATCH_COMPLETENESS_RULE,
+            "각 값이 해당 사업 가설 필드에 실제로 답하는 값인지 VALID/INVALID로만 판정한다. 새 가설을 생성하거나 값을 수정하지 않는다.",
             json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_hypothesis_semantic_v1",
             task_type="CONCEPT_PORTFOLIO_V2_HYPOTHESIS_SEMANTIC")
@@ -777,7 +758,7 @@ target/value/offer/solution/Plan identity를 바꾸지 않는다. 법령명·법
 다른 role fields, actorRoles, 거래·결제 흐름, 운영·파트너 모델, solution과 system descriptor는
 해석 맥락일 뿐 새 사실을 만들 근거가 아니다. 역할이 의미상 있으면 MATCH, 명시적으로 없으면
 EXPLICIT_ABSENCE, 다른 역할 설명이면 MISMATCH, 근거 부족이면 UNKNOWN을 반환한다.
-법률 판단, 사업 설계, 문구 보완은 하지 않는다. candidateId/field identity를 정확히 보존한다.""" + BATCH_COMPLETENESS_RULE,
+법률 판단, 사업 설계, 문구 보완은 하지 않는다. candidateId/field identity를 정확히 보존한다.""",
             json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_business_role_semantic_v2",
             task_type="CONCEPT_PORTFOLIO_V2_BUSINESS_ROLE_SEMANTIC_CLASSIFICATION")
@@ -790,7 +771,7 @@ EXPLICIT_ABSENCE, 다른 역할 설명이면 MISMATCH, 근거 부족이면 UNKNO
             """각 item의 사업 사실만 보고 PERSONAL_DATA, PHYSICAL_ACTIVITY, BUSINESS_PARTNER
 dependency가 실제로 필요한지 REQUIRED/NOT_REQUIRED/UNKNOWN 중 하나로 판정한다.
 법률 적용 여부를 판단하거나 새 사업 사실을 만들지 않는다. P2P 판매자·구매자 같은 거래 참가자를
-별도 계약·운영 파트너로 자동 간주하지 않는다. candidateId/dependencyType identity를 정확히 보존한다.""" + BATCH_COMPLETENESS_RULE,
+별도 계약·운영 파트너로 자동 간주하지 않는다. candidateId/dependencyType identity를 정확히 보존한다.""",
             json.dumps({"items": items}, ensure_ascii=False, sort_keys=True),
             response_schema=schema, schema_name="concept_legal_fact_dependency_v2",
             task_type="CONCEPT_PORTFOLIO_V2_LEGAL_FACT_DEPENDENCY_CLASSIFICATION")

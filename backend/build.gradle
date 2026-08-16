@@ -57,14 +57,6 @@ tasks.named('test') {
 	useJUnitPlatform {
 		excludeTags 'postgres', 'minio'
 	}
-	// 테스트 클래스 128개 중 `@SpringBootTest` 는 18개뿐이고 나머지는 순수 단위 테스트다
-	// (postgres·minio 태그 8개는 위에서 빠진다). 단일 포크로 줄 세울 이유가 없다.
-	//
-	// ⚠ 포크마다 JVM 이 따로라 **Spring 컨텍스트 캐시도 따로**다. 포크를 늘릴수록
-	//   컨텍스트를 다시 짓는 값이 붙으므로 코어 수만큼 올리면 오히려 느려진다.
-	//   4 는 「단위 테스트를 갈라 태우되 컨텍스트 재구축은 4벌까지만」의 타협이다.
-	maxParallelForks = Math.min(4, Runtime.runtime.availableProcessors().intdiv(2)) ?: 1
-	maxHeapSize = '1g'
 }
 
 tasks.register('postgresTest', Test) {

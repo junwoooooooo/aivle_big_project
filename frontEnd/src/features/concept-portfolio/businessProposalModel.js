@@ -3,21 +3,32 @@ export const HYPOTHESIS_TYPES = Object.freeze([
   'PRE_MARKET_SOM_SHARE', 'PRE_MARKET_SOM',
 ]);
 
+export const BUSINESS_BASIS_TYPES = Object.freeze(HYPOTHESIS_TYPES.slice(0, 5));
+export const MARKET_TARGET_TYPES = Object.freeze(HYPOTHESIS_TYPES.slice(5));
+
 export const HYPOTHESIS_LABELS = Object.freeze({
-  TARGET_REGION: '목표 지역', REVENUE_MODEL: '수익 모델', PRICE: '가격', CHANNELS: '판매·제공 채널',
-  DIFFERENTIATORS: '차별점', PRE_MARKET_SOM_SHARE: '시장 점유 가정', PRE_MARKET_SOM: '초기 확보 시장 규모',
+  TARGET_REGION: '사업 대상 지역',
+  REVENUE_MODEL: '수익을 만드는 방식',
+  PRICE: '가격·과금 방식',
+  CHANNELS: '고객에게 제공하는 경로',
+  DIFFERENTIATORS: '핵심 차별점',
+  PRE_MARKET_SOM_SHARE: '목표 시장 점유율',
+  PRE_MARKET_SOM: '초기 목표 시장 규모',
 });
 
 export const CANDIDATE_FACT_FIELDS = Object.freeze({
-  sellerRole: { label: '실제 판매 주체', type: 'string' },
-  providerRole: { label: '실제 서비스 제공 주체', type: 'string' },
-  intermediaryRole: { label: '실제 중개 주체', type: 'string' },
-  transactionFlow: { label: '거래 흐름', type: 'list' },
-  paymentFlow: { label: '결제·수취 흐름', type: 'list' },
-  partnerRequirements: { label: '파트너·자격 요건', type: 'list' },
-  personalDataUsage: { label: '개인정보 이용', type: 'list' },
-  physicalActivities: { label: '실제 물리 활동', type: 'list' },
+  sellerRole: { label: '실제로 상품·서비스를 판매하는 주체', type: 'string', question: '누가 고객에게 상품이나 서비스를 판매하나요?', help: '사업자나 매장처럼 실제 계약의 판매자 역할을 적어 주세요.' },
+  providerRole: { label: '실제로 서비스를 제공하는 주체', type: 'string', question: '누가 고객에게 실제 서비스를 제공하나요?', help: '직접 제공하는 조직이나 협력 업체의 역할을 적어 주세요.' },
+  intermediaryRole: { label: '거래를 연결·중개하는 주체', type: 'string', question: '거래를 연결하거나 중개하는 주체가 있나요?', help: '플랫폼 등 거래 당사자를 연결하는 역할이 있다면 적어 주세요.' },
+  transactionFlow: { label: '고객이 신청·구매하고 서비스가 제공되는 과정', type: 'list', question: '고객의 신청부터 서비스 제공까지 어떤 순서로 진행되나요?', help: '주요 단계를 한 줄에 하나씩 적어 주세요.' },
+  paymentFlow: { label: '결제와 정산이 이루어지는 흐름', type: 'list', question: '고객 결제와 판매자·파트너 정산은 어떻게 이루어지나요?', help: '돈이 이동하는 주요 단계를 한 줄에 하나씩 적어 주세요.' },
+  partnerRequirements: { label: '필요한 외부 파트너·자격', type: 'list', question: '이 사업을 운영하려면 어떤 외부 파트너나 자격이 필요한가요?', help: '회사명이 정해지지 않았다면 역할이나 자격 유형만 적어도 됩니다.' },
+  personalDataUsage: { label: '수집·이용할 개인정보', type: 'list', question: '서비스에서 어떤 개인정보를 수집하거나 이용하나요?', help: '이름, 연락처, 위치처럼 실제로 필요한 정보만 한 줄에 하나씩 적어 주세요.' },
+  physicalActivities: { label: '오프라인에서 실제로 이루어지는 활동', type: 'list', question: '현장 방문·배송·시술처럼 오프라인에서 이루어지는 활동이 있나요?', help: '사람이나 물품이 실제로 움직이는 활동을 한 줄에 하나씩 적어 주세요.' },
 });
+
+const candidateOf = (concept) => concept?.candidate?.candidate ?? concept?.candidate ?? {};
+const normalizeComparable = (value) => displayValue(value).replace(/\s+/g, ' ').trim();
 
 export function normalizePortfolioConcepts(items) {
   if (!Array.isArray(items)) return [];
@@ -26,11 +37,11 @@ export function normalizePortfolioConcepts(items) {
 
 export function toggleComparedConcept(current, conceptId) {
   if (current.includes(conceptId)) return current.filter((id) => id !== conceptId);
-  if (current.length >= 3) return current;
+  if (current.length >= 2) return current;
   return [...current, conceptId];
 }
 
-export function canOpenComparison(ids) { return ids.length >= 2 && ids.length <= 3; }
+export function canOpenComparison(ids) { return ids.length === 2; }
 
 export function candidateRequests(requests, candidateId) {
   return (requests ?? []).filter((request) => request.scope === 'CANDIDATE'
@@ -44,13 +55,12 @@ export function openCandidateRequests(requests, candidateId) {
 
 export function candidateFieldOptions(request) {
   const affected = Array.isArray(request?.affectedFields) ? request.affectedFields : [];
-  const allowed = [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
-  return allowed;
+  return [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
 }
 
 export function candidateDefaultField(request) {
+  const allowed = candidateFieldOptions(request);
   const affected = Array.isArray(request?.affectedFields) ? request.affectedFields : [];
-  const allowed = [...new Set(affected.filter((field) => CANDIDATE_FACT_FIELDS[field]))];
   return affected.length === 1 && allowed.length === 1 ? allowed[0] : '';
 }
 
@@ -117,64 +127,38 @@ export function hypothesisDisplay(type, value) {
   return hypothesisValueText(value);
 }
 
-const displayValue = (value) => {
-  if (Array.isArray(value)) return value.filter(Boolean).join(' · ');
-  if (value && typeof value === 'object') return Object.values(value).filter((item) => typeof item !== 'object' && item != null).join(' · ');
-  return value == null || value === '' ? '정보 없음' : String(value);
-};
+const CURRENCY_LABELS = Object.freeze({ KRW: '원', USD: '달러', JPY: '엔', EUR: '유로' });
 
-export function comparisonRows(concepts) {
-  const definitions = [
-    ['사업안 한 줄 정의', (c) => c.conceptDefinition ?? c.summary],
-    ['주요 사용자', (c) => c.targetUsers], ['해결 문제', (c) => c.problemScenario],
-    ['사용 상황', (c) => c.useContext ?? c.researchScope], ['핵심 가치', (c) => c.coreValue],
-    ['제공 방식', (c) => c.solutionMechanism], ['핵심 기능', (c) => c.featureSet],
-    ['플랫폼 역할', (c) => c.platformRole], ['서비스 제공 주체', (c) => c.providerRole],
-    ['판매·중개 구조', (c) => [c.sellerRole, c.intermediaryRole].filter(Boolean)],
-    ['거래 흐름', (c) => c.transactionFlow], ['결제 흐름', (c) => c.paymentFlow],
-    ['수익 모델', (c) => c.revenueModel], ['가격·과금 구조', (c) => c.price],
-    ['파트너 의존', (c) => c.partnerRequirements], ['운영 방식', (c) => c.operatingModel],
-    ['개인정보 이용', (c) => c.personalDataUsage], ['물리 활동', (c) => c.physicalActivities],
-    ['선택 전 법률·규제 요약', (_, concept) => concept.legalReview?.safeSummary],
-    ['필수 통제', (_, concept) => concept.legalReview?.requiredControls],
-    ['필수 파트너·자격', (_, concept) => concept.legalReview?.requiredPartnersAndQualifications],
-  ];
-  return definitions.map(([label, read]) => ({
-    label,
-    values: concepts.map((concept) => displayValue(read(concept.candidate?.candidate ?? concept.candidate ?? {}, concept))),
-  })).filter((row) => row.values.some((value) => value !== '정보 없음'));
+function formatKoreanNumberGroup(value) {
+  const number = Math.trunc(value);
+  if (number === 0) return '';
+  const units = [[1000, '천'], [100, '백'], [10, '십']];
+  let remainder = number;
+  let output = '';
+  for (const [unit, label] of units) {
+    const digit = Math.floor(remainder / unit);
+    if (digit > 0) output += `${digit}${label}`;
+    remainder %= unit;
+  }
+  if (remainder > 0) output += String(remainder);
+  return output;
 }
 
-export function hypothesisDecisionLabel(hypothesis) {
-  if (hypothesis?.locked) return '확정된 사업 조건';
-  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus) ? '확인됨' : '제안값';
+export function formatKoreanCurrencyAmount(amount, currency = '') {
+  const number = Number(amount);
+  if (!Number.isFinite(number)) return '';
+  const sign = number < 0 ? '-' : '';
+  let remainder = Math.floor(Math.abs(number));
+  const groups = [[1_000_000_000_000, '조'], [100_000_000, '억'], [10_000, '만']];
+  const parts = [];
+  for (const [unit, label] of groups) {
+    const group = Math.floor(remainder / unit);
+    if (group > 0) parts.push(`${formatKoreanNumberGroup(group)}${label}`);
+    remainder %= unit;
+  }
+  if (remainder > 0 || parts.length === 0) parts.push(formatKoreanNumberGroup(remainder) || '0');
+  return `${sign}${parts.join(' ')} ${CURRENCY_LABELS[currency] ?? currency}`.trim();
 }
-
-export function portfolioRunPresentation(run) {
-  const status = run?.productStatus;
-  if (status === 'QUEUED') return { title: '사업안 검토를 준비하고 있습니다.' };
-  if (status === 'RUNNING') return { title: '사업안을 검토하고 있습니다.' };
-  if (status === 'RESULTS_AVAILABLE') return { title: '검토 완료' };
-  if (status === 'RESULTS_WITH_OPEN_INPUT') return {
-    title: '검토 가능한 사업안이 준비되었습니다.', detail: '추가로 확인할 사업정보가 있습니다.',
-  };
-  if (status === 'NEEDS_INPUT') return { title: '사업안을 완성하려면 추가 사업정보가 필요합니다.' };
-  if (status === 'FAILED' && run?.failureCode === 'NO_ACCEPTED_CONCEPTS') return {
-    title: '현재 조건에서 검토 가능한 사업안이 없습니다.', action: '다른 방향으로 다시 탐색', restart: true,
-  };
-  if (status === 'FAILED') return { title: '사업안 검토를 완료하지 못했습니다.', action: '다시 시도', restart: true };
-  if (status === 'STALE') return { title: '아이디어가 변경되어 사업안을 다시 검토해야 합니다.', action: '다시 검토', restart: true };
-  return { title: '사업안 상태를 확인하고 있습니다.' };
-}
-
-export function selectedConceptId(selection) { return selection?.conceptId ?? null; }
-
-/* ── 아래 넷은 **팀원 판(#49)의 법률 보고서 부품**이 쓰는 것이다. (2026-08-16 병합)
- *
- * 이 파일은 사업안 화면의 정본이라 그쪽 판을 통째로 받으면 화면 동작이 바뀐다
- * (실측: 입력 칸 라벨과 처리 기록 버튼이 사라졌다). 그래서 **동작은 이 판을 지키고,
- * 저쪽 부품이 부르는 함수만 그대로 옮겨 왔다** — 한쪽만 살리면 빌드가 깨진다.
- * ⚠ `LegalRegulatoryReportDocument.jsx` 가 이 넷을 부른다. 지우기 전에 그쪽을 본다. */
 
 const LEGAL_STATUS_LABELS = Object.freeze({
   IMPLEMENTABLE: '현재 조건으로 진행 가능',
@@ -185,6 +169,99 @@ const LEGAL_STATUS_LABELS = Object.freeze({
   CONDITIONAL: '필요한 조치를 반영하면 진행 가능',
   ACCEPT: '검토 결과 확인 완료',
 });
+
+export function legalStatusLabel(status) {
+  return LEGAL_STATUS_LABELS[status] ?? '검토 결과 확인 필요';
+}
+
+export function displayValue(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).join(' · ');
+  if (value && typeof value === 'object') return Object.values(value).filter((item) => typeof item !== 'object' && item != null).join(' · ');
+  return value == null || value === '' ? '정보 없음' : String(value);
+}
+
+const PREVIEW_FIELDS = Object.freeze([
+  ['targetUsers', '주요 고객'],
+  ['coreValue', '핵심 가치'],
+  ['solutionMechanism', '제공 방식'],
+  ['revenueModel', '수익 방식'],
+  ['price', '가격·과금'],
+  ['operatingModel', '운영 방식'],
+  ['featureSet', '핵심 기능'],
+  ['partnerRequirements', '파트너 조건'],
+]);
+
+export function buildProposalPreview(concept, allConcepts = []) {
+  const candidate = candidateOf(concept);
+  const candidates = allConcepts.map(candidateOf);
+  const different = PREVIEW_FIELDS.filter(([key]) => {
+    if (candidate[key] == null || displayValue(candidate[key]) === '정보 없음') return false;
+    return new Set(candidates.map((item) => normalizeComparable(item[key])).filter((value) => value !== '정보 없음')).size > 1;
+  });
+  const chosen = [...different];
+  for (const field of PREVIEW_FIELDS) {
+    if (chosen.length >= 4) break;
+    if (!chosen.some(([key]) => key === field[0]) && displayValue(candidate[field[0]]) !== '정보 없음') chosen.push(field);
+  }
+  return {
+    definition: displayValue(candidate.conceptDefinition ?? concept?.summary),
+    highlights: chosen.slice(0, 3).map(([key, label]) => ({ key, label, value: displayValue(candidate[key]) })),
+  };
+}
+
+const BASIC_COMPARISON = Object.freeze([
+  ['주요 고객', 'targetUsers'],
+  ['해결하려는 문제', 'problemScenario'],
+  ['핵심 가치', 'coreValue'],
+  ['제공 방식', 'solutionMechanism'],
+  ['수익 방식', 'revenueModel'],
+  ['운영상 차이', 'operatingModel'],
+]);
+
+export const DETAILED_COMPARISON_GROUPS = Object.freeze([
+  { title: '서비스 구성', fields: [['핵심 기능', 'featureSet'], ['사용 상황', 'useContext']] },
+  { title: '사업 운영', fields: [['플랫폼 역할', 'platformRole'], ['제공 주체', 'providerRole'], ['판매 주체', 'sellerRole'], ['중개 주체', 'intermediaryRole'], ['운영 방식', 'operatingModel']] },
+  { title: '거래와 수익', fields: [['거래 흐름', 'transactionFlow'], ['결제 흐름', 'paymentFlow'], ['수익 모델', 'revenueModel'], ['가격', 'price']] },
+  { title: '운영 조건', fields: [['파트너', 'partnerRequirements'], ['개인정보', 'personalDataUsage'], ['물리 활동', 'physicalActivities']] },
+]);
+
+const rowsFrom = (concepts, definitions) => definitions.map(([label, key]) => ({
+  label,
+  values: concepts.map((concept) => displayValue(candidateOf(concept)[key])),
+})).filter((row) => row.values.some((value) => value !== '정보 없음'));
+
+export function comparisonRows(concepts) { return rowsFrom(concepts, BASIC_COMPARISON); }
+export function detailedComparisonGroups(concepts) {
+  return DETAILED_COMPARISON_GROUPS.map((group) => ({ ...group, rows: rowsFrom(concepts, group.fields) }))
+    .filter((group) => group.rows.length > 0);
+}
+
+export function hypothesisDecisionLabel(hypothesis) {
+  if (hypothesis?.locked) return '확정된 값';
+  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus) ? '확인 완료' : 'AI가 제안한 값';
+}
+
+export function businessDecisionStage(selection) {
+  if (!selection) return 'PROPOSAL_SELECTION';
+  if (['HYPOTHESES_PREPARING', 'PENDING_HYPOTHESIS_CONFIRMATION', 'DELTA_LEGAL_PENDING',
+    'DELTA_LEGAL_FAILED', 'READY_FOR_LEGAL_REPORT'].includes(selection.status)) return 'BUSINESS_BASIS';
+  if (['MARKET_SEED_FINALIZING', 'READY_FOR_MARKET'].includes(selection.status)) return 'VALIDATION_PREP';
+  return 'LEGAL_REVIEW';
+}
+
+export function businessDecisionReachability({ concepts = [], selection, report, validationPrepReached = false } = {}) {
+  const stage = businessDecisionStage(selection);
+  return {
+    PROPOSAL_SELECTION: concepts.length > 0,
+    BUSINESS_BASIS: Boolean(selection),
+    LEGAL_REVIEW: Boolean(report) || ['LEGAL_REVIEW', 'VALIDATION_PREP'].includes(stage),
+    VALIDATION_PREP: validationPrepReached || ['MARKET_SEED_FINALIZING', 'READY_FOR_MARKET'].includes(selection?.status),
+  };
+}
+
+export function canChangeSelection(selection) {
+  return Boolean(selection) && selection.status !== 'STALE';
+}
 
 const normalizeLawName = (value) => {
   const name = String(value ?? '').trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
@@ -206,6 +283,17 @@ export function groupLegalEvidence(evidence) {
   return [...groups.values()].map((group) => ({ lawName: group.lawName, articles: group.articles }));
 }
 
-export function legalStatusLabel(status) {
-  return LEGAL_STATUS_LABELS[status] ?? '검토 결과 확인 필요';
+export function portfolioRunPresentation(run) {
+  const status = run?.productStatus;
+  if (status === 'QUEUED') return { title: '사업안 검토를 준비하고 있습니다.' };
+  if (status === 'RUNNING') return { title: '사업안을 검토하고 있습니다.' };
+  if (status === 'RESULTS_AVAILABLE') return { title: '검토 완료' };
+  if (status === 'RESULTS_WITH_OPEN_INPUT') return { title: '검토 가능한 사업안이 준비되었습니다.', detail: '추가로 확인할 사업정보가 있습니다.' };
+  if (status === 'NEEDS_INPUT') return { title: '사업안을 완성하려면 추가 사업정보가 필요합니다.' };
+  if (status === 'FAILED' && run?.failureCode === 'NO_ACCEPTED_CONCEPTS') return { title: '현재 조건에서 검토 가능한 사업안이 없습니다.', action: '다른 방향으로 다시 탐색', restart: true };
+  if (status === 'FAILED') return { title: '사업안 검토를 완료하지 못했습니다.', action: '다시 시도', restart: true };
+  if (status === 'STALE') return { title: '아이디어가 변경되어 사업안을 다시 검토해야 합니다.', action: '다시 검토', restart: true };
+  return { title: '사업안의 상태를 확인하고 있습니다.' };
 }
+
+export function selectedConceptId(selection) { return selection?.conceptId ?? null; }

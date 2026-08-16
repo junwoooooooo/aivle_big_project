@@ -19,32 +19,7 @@ import tools.jackson.databind.node.ObjectNode;
 @Component
 public class MarketResearchInputFactory {
     private static final int CHUNK_CHARACTERS = 16_000;
-    /**
-     * 시장조사 FULL 의 모델 호출 상한.
-     *
-     * <p><b>판 ㊸ — 90 → 270.</b> 절 체인(문서를 절 단위로 다시 읽어 2·8·9절을 만드는 걸음)이
-     * 붙었다. 90 이면 수집이 83 을 써서 남는 7 이 최소 소요 30 에 못 미쳐
-     * <b>절 체인이 통째로 안 돌고</b> {@code judgment}·{@code prescriptions}·{@code synthesis}
-     * 가 셋 다 {@code null} 로 나갔다(실측).
-     *
-     * <p>★ <b>판 ㊺ — 270 → 500.</b> 270 은 재질문이 문서의 <b>절반에 못 미치는</b> 수였다.
-     * 산수는 {@code pipeline._sections} 에서 그대로 나온다(문서 94건 기준):
-     *
-     * <pre>
-     *   270 → 여유 266 → 읽기 94회        → 남은 176
-     *       → 남은 172 → 문서상한 43      → 재질문 43×4 = 172회
-     * </pre>
-     *
-     * 즉 재질문이 문서 94건 중 43건(46%)에만 닿고 나머지 51건은 경고조차 안 뜬다
-     * ({@code 문서상한 > 0} 이라 {@code REASK_SKIPPED} 가 안 걸린다). 전량을 덮으려면
-     * {@code 94 + 94×4 + 9절 1 + 요약 3 = 474} 이고, 문서가 더 많은 원장을 위해 <b>500</b>으로 둔다.
-     *
-     * <p>⚠ <b>상한이지 지출이 아니다.</b> 문서가 적은 사업안은 적게 쓴다. 모자라면
-     * {@code SECTIONS_TRUNCATED} 로 <b>덜 읽었다는 사실이 원장에 남는다</b>.
-     *
-     * <p>⚠ 실행 1회가 ≈1,200원에서 <b>≈1,600원</b>이 된다. 사람이 정했다(2026-08-15).
-     */
-    private static final int LLM_BUDGET_FULL = 500;
+    private static final int LLM_BUDGET_FULL = 90;
     private static final java.util.regex.Pattern SAFE_LABEL =
         java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1,64}");
     private static final List<String> CONSTRAINT_KEYS = List.of("budget_krw", "months", "team");

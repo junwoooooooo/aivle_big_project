@@ -9,54 +9,12 @@
      (`features/marketing-content/styles/marketing-content.css`). 실제로 `.mk-actions` 가
      겹쳐 이 화면의 「다음」 버튼이 화면 하단에 sticky 로 붙어 버렸다. CSS 는 전역이다. */
 
-/* 본문 폭 920px — 목업이 정한 한 컬럼이다. 셸의 `minmax(0,1fr)` 안에 그대로 앉는다.
-   ⚠ 여백은 카드 사이 14px 하나로 통일한다(목업 `.card { margin-bottom:14px }`). */
-.market-page { display: grid; align-content: start; gap: .875rem; min-width: 0; max-width: 920px; }
-.market-page > .pipeline-page-heading { margin-bottom: .5rem; }
+.market-page { display: grid; align-content: start; gap: 1.75rem; min-width: 0; }
+.market-page > .pipeline-page-heading { margin-bottom: -1.25rem; }  /* 머리글은 바로 아래와 한 덩이 */
 .market-page__actions { display: flex; justify-content: flex-end; gap: .5rem; }
 .market-page__live-progress { display: block; margin-top: .35rem; }
 .market-note { color: var(--color-text-secondary); font-size: .85rem; margin: 0 0 .75rem; }
 .mr-actions { display: flex; justify-content: flex-end; gap: .5rem; }
-
-/* 카드 — 흰 배경 · 1px 테두리 · 12px 반경 · 20px 안여백. **그림자 없음.**
-   그림자는 「떠 있음」을 뜻하는데 이 화면의 카드는 전부 같은 층이다. */
-.market-page .ui-card { padding: 1.25rem; box-shadow: none; }
-.market-page .ui-card__title { margin: 0 0 .25rem; font-size: 1rem; }
-
-/* ── 섹션 머리 — 「시장 분석」·「비즈니스 모델」 ────────────── */
-.bv-sec { display: flex; align-items: baseline; gap: .75rem; margin: 1rem 0 0; }
-.bv-sec h3 { margin: 0; font-size: 1rem; }
-.bv-sec > span { color: var(--color-text-secondary); font-size: .78rem; line-height: 1.6; }
-.bv-sec > .ui-button { margin-left: auto; min-height: 2.25rem; padding: 0 .75rem; font-size: .78rem; }
-/* 판 ㊻ — 제목과 버튼을 **한 줄에 왼쪽으로** 붙인다. 버튼을 오른쪽 끝으로 밀지 않는다. */
-.bv-sec--acts { align-items: center; }
-.bv-sec--acts > .ui-button { margin-left: 0; }
-
-.bv-foot { display: flex; justify-content: flex-end; gap: .625rem; margin-top: .75rem; }
-.bv-label { margin: 0 0 .5rem; font-size: .82rem; font-weight: 700; }
-
-/* ── 진행바 — **불확정**이다 ────────────────────────────────
-   서버가 진행률을 주지 않는다. 퍼센트로 바꾸면 없는 수를 지어내는 것이다.
-   막대는 「돌고 있다」만 말하고, 얼마나 남았는지는 말하지 않는다. */
-.bv-runbar {
-  height: 6px; margin-top: .875rem; overflow: hidden;
-  border-radius: 3px; background: var(--color-neutral-100);
-}
-.bv-runbar i {
-  display: block; width: 38%; height: 100%;
-  border-radius: 3px; background: var(--color-action-primary);
-  animation: bv-slide 1.6s ease-in-out infinite;
-}
-@keyframes bv-slide { from { margin-left: -38%; } to { margin-left: 100%; } }
-@media (prefers-reduced-motion: reduce) {
-  .bv-runbar i { width: 100%; opacity: .5; animation: none; }
-}
-
-/* 점프 착지 — 900ms 민트 깜빡임. 테두리·그림자로 표시하면 스크롤 도중에는 안 보인다. */
-@keyframes bv-land { from { background: var(--color-mint-50); } to { background: transparent; } }
-@media (prefers-reduced-motion: reduce) {
-  .mr-sub.is-on, .bm-det.is-on { animation: none; background: var(--color-mint-50); }
-}
 
 /* 견본 컨셉 고르기 — 임시 다리. 컨셉이 DB 에서 오면 이 규칙도 같이 사라진다. */
 .market-concept-picker { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -68,16 +26,15 @@
 .num { font-variant-numeric: tabular-nums; }
 
 /* ── KPI 4장 ─────────────────────────────────────────────── */
-.mr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .625rem; }
-@media (max-width: 720px) { .mr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 840px) { .mr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .mr-kpi {
-  display: grid; gap: .25rem; align-content: start; padding: .95rem;
+  display: grid; gap: .4rem; align-content: start; padding: 1.35rem 1.25rem;
   border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-surface); font: inherit; text-align: left; cursor: pointer;
-  transition: border-color var(--motion-fast);
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
 }
-/* hover 는 **테두리만** 민트다. 그림자·이동은 카드가 떠 있다는 뜻인데 그렇지 않다. */
-.mr-kpi:hover { border-color: var(--color-action-primary); }
+.mr-kpi:hover { border-color: var(--color-action-primary); background: var(--color-mint-50); }
 .mr-kpi > span:first-child { color: var(--color-text-secondary); font-size: .75rem; font-weight: 700; }
 .mr-kpi b { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.25; }
 .mr-kpi small { color: var(--color-text-secondary); font-size: .75rem; }
@@ -128,52 +85,23 @@
 .mr-ledger__reads { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
 .mr-limits__foot { margin: 0; padding: 0; list-style: none; }
 
-/* 「이 숫자의 기준」 — KPI 바로 밑 한 줄 카드. 경계 문장이라 접지 않는다. */
-.mr-basis p { margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.7; }
-.mr-basis b { color: var(--color-text-primary); }
-
-/* ── 과목 7줄 — 성적표가 곧 목차다 ────────────────────────
-   카드 **하나** 안에 일곱 줄이 1px 상단 구분선으로 들어간다. 과목마다 카드를 세우면
-   첫 화면이 7장으로 불어나 목차 구실을 못 한다. */
-.mr-subs { padding-block: .75rem !important; }
-.mr-sub { border-top: 1px solid var(--color-neutral-100); scroll-margin-top: 5.5rem; }
-.mr-sub:first-child { border-top: 0; }
-.mr-sub.is-on { animation: bv-land 900ms ease-out; }
-/* ★ 판 ㊻ — 목표 보고서의 절 머리(`market-report.html` `h2` + `p.lede`)를 그대로 옮긴다.
-   전에는 다섯 칸이 «한 줄»이라 제목이 13.9px 였다 — 목표는 22px 짜리 문서 제목이다.
-   두 줄로 가른다: 윗줄 「⓵ 제목 · 판정 배지」, 아랫줄 「한 줄 요약 · 근거 N건」.
-   ⚠ 단추는 «하나»로 유지한다 — 줄 안에 단추가 둘이 되면 `MarketResultBody.live.test.jsx`
-     의 `getByRole('button')` 이 모호해져 깨진다. */
-.mr-sub__h {
-  display: grid;
-  grid-template-columns: 1.55rem minmax(0, auto) minmax(0, 1fr) auto;
-  grid-template-areas:
-    "n  title  badge  badge"
-    ".  det    det    cnt";
-  gap: .35rem .6rem; align-items: baseline; width: 100%;
-  padding: 1.65rem 0 .35rem; border: 0; background: none;
-  color: inherit; font: inherit; text-align: left; cursor: pointer;
+/* ── 과목 섹션 — 성적표 7과목이 곧 목차다 ────────────────── */
+.mr-sec {
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
+  background: var(--color-surface); scroll-margin-top: 5.5rem;
 }
-.mr-sub:first-child .mr-sub__h { padding-top: .5rem; }
-.mr-sub__h:disabled { cursor: default; }
-/* 절 번호 — 목표 보고서는 강조색 테두리의 동그라미다(23px). */
-.mr-sub__n {
-  grid-area: n; align-self: center;
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 23px; height: 23px; flex: 0 0 23px;
-  border: 1px solid var(--color-mint-700); border-radius: 50%;
-  color: var(--color-mint-700); font-size: 12px; font-weight: 700;
+.mr-sec.is-on { border-color: var(--color-action-primary); box-shadow: 0 0 0 3px var(--color-mint-50); }
+.mr-sec__h { display: flex; align-items: center; gap: .7rem; padding: 1.25rem 1.5rem; }
+.mr-sec__n {
+  display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: .35rem;
+  background: var(--color-neutral-100); color: var(--color-text-secondary); font-size: .68rem; font-weight: 800;
 }
-.mr-sub__h > b { grid-area: title; font-size: 1.375rem; letter-spacing: -.015em; line-height: 1.3; }
-.mr-sub__h > .ui-badge { grid-area: badge; justify-self: start; align-self: center; }
-/* 한 줄 요약 = 목표 보고서의 `.lede`. 줄바꿈을 막지 않는다 — 아랫줄을 통째로 쓴다. */
-.mr-sub__d { grid-area: det; min-width: 0; color: var(--color-text-secondary); font-size: .9375rem; }
-.mr-sub__c {
-  grid-area: cnt; justify-self: end; align-self: center;
-  color: var(--color-mint-700); font-size: .8rem; font-weight: 700; white-space: nowrap;
+.mr-sec__h h3 { margin: 0; font-size: 1rem; }
+.mr-sec__h > span:last-child {
+  margin-left: auto; color: var(--color-text-secondary);
+  font-size: .78rem; line-height: 1.6; text-align: right;
 }
-.mr-sub__h:hover:not(:disabled) .mr-sub__c { text-decoration: underline; }
-.mr-sub__b { padding: .25rem 0 2rem; overflow-x: auto; }
+.mr-sec__b { padding: 1.5rem; border-top: 1px solid var(--color-neutral-100); }
 
 .mr-figs { display: flex; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 1.35rem; }
 .mr-figs > div > span { display: block; margin-bottom: .2rem; color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
@@ -181,54 +109,19 @@
 .mr-figs small { display: block; margin-top: .15rem; color: var(--color-text-secondary); font-size: .76rem; }
 
 /* ⚠ 태그 선택자로 쓰지 않는다 — 전역 CSS 라 다른 화면의 표까지 덮는다. */
-/* 판 ㊻ — 목표 보고서의 표 규격(`market-report.html:61-66`) 그대로.
-   14.5px · 9px 12px 안여백 · 아래 실선 · 머리글 11.5px 대문자 간격. */
 .mr-table { width: 100%; border-collapse: collapse; }
-.mr-table th, .mr-table td { padding: 9px 12px; font-size: 14.5px; line-height: 1.65; text-align: left; vertical-align: top; }
+.mr-table th, .mr-table td { padding: .95rem 0; font-size: .87rem; line-height: 1.65; text-align: left; vertical-align: top; }
 .mr-table thead th {
-  padding-bottom: .5rem; border-bottom: 1px solid var(--color-border-default);
-  color: var(--color-text-secondary); font-size: 11.5px; font-weight: 700;
-  letter-spacing: .05em; white-space: nowrap;
+  padding-bottom: .6rem; border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary); font-size: .7rem; font-weight: 800; letter-spacing: .02em;
 }
 .mr-table tbody tr { border-top: 1px solid var(--color-neutral-100); }
 .mr-table tbody tr:first-child { border-top: 0; }
-/* 「규모」는 **오른쪽 정렬**이다 — 보고서의 수 열은 자릿수가 맞아야 읽힌다. */
-.mr-table th.v, .mr-table td.v { text-align: right; font-weight: 700; white-space: nowrap; }
-.mr-table td.p { color: var(--color-text-secondary); font-size: 13px; white-space: nowrap; }
-.mr-table td.s { color: var(--color-text-secondary); font-size: 12.5px; white-space: nowrap; }
+.mr-table td.v { padding-right: 1.35rem; font-weight: 700; white-space: nowrap; }
+.mr-table td.p { padding-right: 1.1rem; color: var(--color-text-secondary); font-size: .79rem; white-space: nowrap; }
+.mr-table td.s { text-align: right; white-space: nowrap; }
 .mr-table td.s a::after { content: " ↗"; font-size: .65rem; color: var(--color-text-secondary); }
 .mr-src-kind { text-align: right; }
-
-/* ── 엔진이 쓴 절 글 (`ReportProse`) — 절의 «답»이 서는 자리 ──────────
-   ⚠ 근거 표보다 «위»에 서고, 아래 이름표(`__by`)로 「대조를 거치지 않은 글」임을 밝힌다. */
-.mr-prose { margin-bottom: 1.5rem; }
-.mr-prose .md > :first-child { margin-top: 0; }
-.mr-prose .md h2 { font-size: 1rem; margin: 1.4rem 0 .5rem; letter-spacing: -.01em; }
-.mr-prose .md h3 { font-size: .93rem; margin: 1.2rem 0 .4rem; }
-.mr-prose .md h4 { font-size: .88rem; margin: 1rem 0 .35rem; }
-.mr-prose .md p { margin: 0 0 .8rem; font-size: .89rem; line-height: 1.8; }
-.mr-prose .md ul, .mr-prose .md ol { margin: 0 0 .8rem 1.1rem; font-size: .89rem; line-height: 1.8; }
-.mr-prose .md strong { font-weight: 800; }
-/* 넓은 표는 **제 안에서** 가로로 흐른다 — 화면 전체가 밀리면 안 된다. */
-.mr-prose .tw { overflow-x: auto; margin: 0 0 1rem; }
-.mr-prose table { width: 100%; border-collapse: collapse; font-size: .84rem; }
-.mr-prose th, .mr-prose td { padding: 7px 10px; text-align: left; vertical-align: top; line-height: 1.65; }
-.mr-prose thead th {
-  border-bottom: 1px solid var(--color-border-default); white-space: nowrap;
-  color: var(--color-text-secondary); font-size: 11px; font-weight: 700; letter-spacing: .05em;
-}
-.mr-prose tbody tr { border-top: 1px solid var(--color-neutral-100); }
-.mr-prose tbody tr:first-child { border-top: 0; }
-.mr-prose td.num, .mr-prose th.num { text-align: right; white-space: nowrap; font-weight: 700; }
-/* 6행에서 자른 나머지. **접되 건수를 말한다** — 숨기면 표가 원래 그만큼인 줄 안다. */
-.mr-prose .md-more > summary {
-  cursor: pointer; color: var(--color-text-secondary); font-size: .78rem;
-  padding: .3rem 0 .6rem;
-}
-.mr-prose__by {
-  margin: .2rem 0 0; padding-top: .5rem; border-top: 1px dashed var(--color-border-default);
-  color: var(--color-text-secondary); font-size: .76rem; line-height: 1.7;
-}
 
 /* 경계 — 값과 함께 옮겨야 하는 문장. **절대 접지 않는다.** */
 .mr-caveat { margin-top: .5rem; color: var(--color-status-warning); font-size: .8rem; font-style: italic; line-height: 1.7; }
@@ -267,18 +160,41 @@
 .bm-plan__split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
 @media (max-width: 1100px) { .bm-plan__split { grid-template-columns: 1fr; } }
 
-/* 폼 자체(`.bm-plan*`)는 컨셉 단계로 갔다 — `concept-portfolio/styles/business-proposal-polish.css`.
-   여기 남은 둘은 아직 이 폴더의 `BmPlanPreview.jsx` 가 쓴다. */
+.bm-plan { display: grid; gap: 1.5rem; }
+.bm-plan__optional-all { margin: 0; color: var(--color-text-secondary); font-size: .82rem; }
+.bm-plan__workspace { display: grid; gap: 1.25rem; min-width: 0; }
+.bm-plan__operations, .bm-plan__resources { display: grid; gap: .85rem; min-width: 0; }
+.bm-plan__operations > header, .bm-plan__resources > header { display: flex; gap: .75rem; align-items: center; justify-content: space-between; }
+.bm-plan__operations h3, .bm-plan__resources h3 { margin: 0; font-size: 1rem; }
+.bm-plan__resources { padding: 1rem; border-radius: var(--radius-control); background: var(--color-bg-subtle); }
+.bm-plan__resources > p { margin: 0; color: var(--color-text-secondary); font-size: .78rem; }
+.bm-plan__row { display: grid; gap: .65rem; padding: .9rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: color-mix(in srgb, var(--color-bg-subtle) 60%, var(--color-surface)); }
+.bm-plan__row > header { display: flex; gap: .75rem; align-items: start; justify-content: space-between; }
+.bm-plan__row > header > div { display: grid; gap: .2rem; }
+.bm-plan__row label, .bm-plan__row header strong, .bm-plan__label { font-size: .88rem; font-weight: 700; }
+.bm-plan__row header p, .bm-plan__row header small { margin: 0; color: var(--color-text-secondary); font-size: .76rem; line-height: 1.5; }
+.bm-plan__text-action { flex: none; padding: .3rem .5rem; border: 0; border-radius: .35rem; background: transparent; color: var(--color-action-primary); font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.bm-plan__read, .bm-plan__suggestion { display: grid; gap: .3rem; padding: .75rem; border-radius: .5rem; background: var(--color-surface); }
+.bm-plan__read span, .bm-plan__suggestion span { color: var(--color-action-primary); font-size: .72rem; font-weight: 700; }
+.bm-plan__read p, .bm-plan__suggestion p { margin: 0; white-space: pre-line; }
+.bm-plan__suggestion button { justify-self: start; }
+.bm-plan__empty { margin: 0; color: var(--color-text-secondary); font-size: .8rem; }
+.bm-plan__editor .ui-input { border-color: var(--color-border-default); background: var(--color-surface); }
+/* 어느 칸을 채우는지 — 시스템 어휘로 묻지 않으면서 결과와 이어 보게 한다. */
+.bm-plan__cell { margin-left: auto; padding: .1rem .45rem; border-radius: 999px; background: var(--color-bg-subtle); color: var(--color-text-secondary); font-size: .7rem; font-weight: 700; }
+.bm-plan__hint { margin: 0; color: var(--color-text-secondary); font-size: .78rem; line-height: 1.7; }
+.bm-plan__nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+@media (max-width: 620px) { .bm-plan__nums { grid-template-columns: 1fr; } }
 .bm-plan__preview { display: grid; gap: .6rem; }
 .bm-plan__preview h3 { margin: 0; font-size: 1rem; }
+.bm-plan-prepared { display: flex; gap: .5rem; align-items: center; justify-content: space-between; padding: 1rem; border-radius: var(--radius-control); background: var(--color-bg-subtle); }
+.bm-plan-prepared span { color: var(--color-text-secondary); font-size: .82rem; }
+@media (max-width: 620px) { .bm-plan-prepared { display: grid; } }
 
 /* ═══ BM 캔버스 ═══════════════════════════════════════════ */
-/* 목업의 `.verdict` — 큰 배지 + 굵은 한 문장 + 흐린 확신도. */
-.bm-verdict { display: flex; align-items: center; gap: .875rem; flex-wrap: wrap; padding: 1.1rem 1.25rem; }
-.bm-verdict > .ui-badge { font-size: .875rem; padding: .5rem .875rem; }
-.bm-verdict p { flex: 1 1 16rem; margin: 0; font-size: .85rem; }
-.bm-verdict strong { color: var(--color-text-primary); }
-.bm-verdict__conf { color: var(--color-text-secondary); }
+.bm-verdict { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: 1.1rem 1.25rem; }
+.bm-verdict h3 { margin: 0; font-size: .95rem; }
+.bm-verdict p { flex: 1 1 16rem; margin: 0; color: var(--color-text-secondary); font-size: .85rem; }
 
 .bm-tally { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; color: var(--color-text-secondary); font-size: .78rem; }
 .bm-tally span { display: inline-flex; align-items: center; gap: .4rem; }
@@ -287,20 +203,30 @@
 .bm-kind--obs { background: #e5f4f8; color: #176275; }
 .bm-kind--plan { background: #edf1f1; color: #51676a; }
 
-/* 9칸 — **3×3 균등**. 목업(`public/wireframe.html`)이 정본이라 4·3·2 밴드는 걷어냈다.
-   좁아지면 3→2→1 로 접힌다. */
-.bm-canvas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; align-items: start; }
-@media (max-width: 720px) { .bm-canvas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 480px) { .bm-canvas { grid-template-columns: 1fr; } }
+/* 9칸을 «의미»로 세 묶음. 5열 포스터 배치는 웹 폭에서 칸당 195px 밖에 안 나와
+   한글이 10~12자마다 끊긴다. 4·3·2 로 나누면 칸당 280px 이상 나오고, 행 병합이
+   사라져 짧은 칸 옆의 빈 구멍도 없어진다. 묶음 순서 = 누구에게 · 어떻게 만들고 · 돈은. */
+.bm-band { display: grid; gap: .75rem; margin-bottom: 1.75rem; }
+.bm-band:last-of-type { margin-bottom: 0; }
+.bm-band__t {
+  display: flex; align-items: center; gap: .6rem;
+  color: var(--color-text-secondary); font-size: .72rem; font-weight: 800; letter-spacing: .06em;
+}
+.bm-band__t::after { content: ""; flex: 1; height: 1px; background: var(--color-neutral-100); }
+.bm-band__row { display: grid; gap: 1rem; align-items: start; }
+.bm-band--4 .bm-band__row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bm-band--3 .bm-band__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bm-band--2 .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@media (max-width: 620px) { .bm-band__row { grid-template-columns: 1fr !important; } }
 
 .bm-cell {
-  display: flex; flex-direction: column; gap: .5rem; min-height: 6.5rem; padding: .75rem;
-  border: 1px solid var(--color-border-default); border-radius: .625rem;
+  display: flex; flex-direction: column; gap: .85rem; padding: 1.25rem 1.35rem 1.15rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-surface); font: inherit; text-align: left; cursor: pointer;
-  transition: border-color var(--motion-fast);
+  transition: border-color var(--motion-fast), background-color var(--motion-fast);
 }
-/* hover 는 **테두리만** 민트다 — 그림자·이동 없음. */
-.bm-cell:hover { border-color: var(--color-action-primary); }
+.bm-cell:hover { border-color: var(--color-action-primary); background: var(--color-mint-50); }
 .bm-cell--plan { background: var(--color-bg-subtle); }
 .bm-cell__h { display: flex; align-items: center; gap: .45rem; }
 .bm-cell__h h4 { margin: 0; color: var(--color-text-primary); font-size: .84rem; font-weight: 700; }
@@ -316,29 +242,19 @@
 .bm-cell__lead { color: var(--color-text-primary); font-size: .86rem; line-height: 1.75; }
 .bm-cell__none { margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.75; }
 /* 구분선을 없앤다. 바닥에 고정된 줄이 짧은 카드 안에 빈 공간을 만들고 있었다. */
-/* 경계 — 도장과 같은 칸에 선다. **접거나 흐리게 두지 않는다**(`mr-caveat` 와 같은 색). */
-.bm-cell__caveat { color: var(--color-status-warning); font-size: .74rem; font-style: italic; line-height: 1.6; }
 .bm-cell__foot { display: flex; align-items: center; gap: .45rem; color: var(--color-text-secondary); font-size: .73rem; }
 
-.bm-swr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .625rem; align-items: start; }
-@media (max-width: 720px) { .bm-swr { grid-template-columns: 1fr; } }
+.bm-swr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+@media (max-width: 800px) { .bm-swr { grid-template-columns: 1fr; } }
 .bm-swr > div {
   padding: 1.35rem 1.35rem 1.5rem; border: 1px solid var(--color-border-default);
   border-radius: var(--radius-card); background: var(--color-surface);
 }
-/* 제목이다 — 이모지를 뺀 자리를 **글자 크기**가 대신한다(판 ㊻). 왼쪽 색 띠가 보조. */
-.bm-swr h4 { margin: 0 0 .9rem; font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; }
+.bm-swr h4 { margin: 0 0 .85rem; font-size: .72rem; font-weight: 800; letter-spacing: .02em; }
 .bm-swr ul { margin: 0; padding: 0; list-style: none; }
 .bm-swr li { position: relative; margin-bottom: .6rem; padding-left: .9rem; color: var(--color-text-primary); font-size: .84rem; line-height: 1.75; }
 .bm-swr li::before { content: ""; position: absolute; left: .15rem; top: .6rem; width: 4px; height: 4px; border-radius: 50%; background: var(--color-border-strong); }
 .bm-swr__none { color: var(--color-text-secondary); }
-
-/* 누른 칸 — 테두리를 민트로 굳혀 「지금 아래 펴진 것이 이 칸」을 잇는다. */
-.bm-cell.is-open { border-color: var(--color-action-primary); background: var(--color-mint-50); }
-/* 빈 칸의 「왜 비었는지」. 내용이 아니라 사유이므로 흐리게 — 사유를 내용으로 읽으면 안 된다. */
-.bm-cell__why { color: var(--color-text-secondary); font-style: italic; }
-/* 누를 수 있다는 표시. 없으면 아무도 안 누른다. */
-.bm-cell__more { margin-left: auto; color: var(--color-action-primary); font-size: .73rem; }
 
 .bm-dets__title { margin: .75rem 0 -.75rem; font-size: 1rem; }
 .bm-dets { display: grid; gap: .9rem; }
@@ -346,7 +262,7 @@
   border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-surface); scroll-margin-top: 5.5rem;
 }
-.bm-det.is-on { animation: bv-land 900ms ease-out; }
+.bm-det.is-on { border-color: var(--color-action-primary); box-shadow: 0 0 0 3px var(--color-mint-50); }
 .bm-det__h { display: flex; align-items: center; gap: .6rem; padding: 1.15rem 1.5rem; }
 .bm-det__h h4 { margin: 0; font-size: .95rem; }
 .bm-det__h > .ui-badge:last-child { margin-left: auto; }
@@ -359,291 +275,7 @@
 .bm-det__t { margin-top: .6rem; }
 .bm-det__m { margin-top: 1rem; color: var(--color-text-primary); font-size: .81rem; line-height: 1.7; }
 .bm-det__m b { margin-right: .4rem; color: var(--color-text-secondary); font-weight: 700; }
-
-/* 경쟁 씨앗 — main 판 격자(디자인 시스템 폭). 내 판과 겹쳐 한쪽만 남긴다. */
 .competitor-seeds__row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 12px; margin: 12px 0; }
 .competitor-seeds__actions { display: flex; gap: 8px; margin-top: 12px; }
 .competitor-seeds__hint { color: var(--color-text-muted, #596579); font-size: .9rem; }
 @media (max-width: 760px) { .competitor-seeds__row { grid-template-columns: 1fr; } }
-/* 「왜 경쟁인가」가 가장 넓다 — 프롬프트에서 슬롯의 뜻을 정하는 칸이라 짧게 쓰면
-   조사가 엉뚱한 것을 잰다. 칸 너비로 그 사실을 말한다(main 격자의 1.5fr 가 그 자리다). */
-.competitor-seeds__why { margin: 0 0 12px; color: var(--color-text-secondary); font-size: .9rem; line-height: 1.6; }
-
-/* 옛 `.bv-progress`(두 걸음 알약)는 2026-08-13 에 걷어냈다 — 목업에 없고, 그 자리는
-   조사 중 카드의 `.bv-runbar` 가 가져갔다. */
-
-/* ═══ 화면 2 「다듬어진 컨셉」 ════════════════════════════════
-   같은 라우트 안의 둘째 뷰다. 색은 전부 토큰이고 파랑은 쓰지 않는다. */
-
-/* 2단계 표시 — 여정 사이드바는 「3. 사업 검증」 한 칸이라, 그 안에 화면이 둘이라는
-   사실을 말할 자리가 여기밖에 없다. */
-.bv-steps { display: flex; gap: .375rem; margin: 0 0 .25rem; padding: 0; list-style: none; }
-.bv-steps button {
-  display: inline-flex; align-items: center; gap: .45rem;
-  padding: .35rem .75rem; border: 1px solid transparent; border-radius: var(--radius-pill);
-  background: none; color: var(--color-text-secondary); font: inherit;
-  font-size: .78rem; font-weight: 700; cursor: pointer;
-}
-.bv-steps button:hover { border-color: var(--color-action-primary); }
-.bv-steps button.is-on { background: var(--color-mint-50); color: var(--color-mint-700); font-weight: 800; }
-.bv-steps__n { color: var(--color-border-strong); font-size: .72rem; font-weight: 800; }
-.bv-steps button.is-on .bv-steps__n { color: var(--color-mint-700); }
-
-/* 다듬기는 사업 모델 탭 «안»의 구획이다 — 페이지 제목이 아니라 구획 제목을 쓴다. */
-.cr-heading { display: grid; gap: .25rem; margin: 2rem 0 .5rem;
-  padding-top: 1.5rem; border-top: 1px solid var(--color-border, #e5e7eb); }
-.cr-heading h3 { margin: 0; }
-.cr-heading span { color: var(--color-text-muted, #6b7280); font-size: .9rem; }
-.cr-outcome { display: flex; align-items: baseline; gap: .5rem; margin: 0; }
-.cr-outcome .market-note { margin: 0; }
-.cr-foot-note { margin: .25rem 0 0; text-align: right; }
-
-/* 컨셉 원문 — **문서처럼** 읽힌다. 15px / 줄간 2.0 은 목업 그대로다. */
-/* 고르는 동안의 «지금 → 고르면» 대조표.
-   ⚠ 오른쪽이 «체크한 것만» 따라 움직이는 것이 이 표의 전부다 — 체크를 안 한 줄은
-   흐리게 「그대로」라고 적는다. 빈 칸으로 두면 「지워진다」로 읽힌다. */
-.cr-cmp { display: grid; gap: .25rem; }
-.cr-cmp__h { display: grid; grid-template-columns: 7rem 1fr 1fr; gap: .75rem;
-  font-size: .8125rem; color: #6b7280; padding: 0 .5rem .25rem; }
-.cr-cmp__h span:first-child { grid-column: 2; }
-.cr-cmp__r { display: grid; grid-template-columns: 7rem 1fr 1fr; gap: .75rem;
-  align-items: start; padding: .5rem; border-radius: .5rem; font-size: .875rem; }
-.cr-cmp__r.is-on { background: #ecfdf5; }
-.cr-cmp__k { font-size: .8125rem; color: #6b7280; }
-/* ⚠ 취소선을 긋지 않는다(2026-08-16 사용자 지시) — 나란히 놓고 «읽어» 비교하는 표라
-   왼쪽에 줄이 그어져 있으면 읽기가 방해된다. 무엇이 바뀌는지는 오른쪽 굵기와
-   초록 배경이 이미 말한다. */
-.cr-cmp__a { color: #6b7280; }
-.cr-cmp__b { font-weight: 600; }
-.cr-cmp__same { color: #9ca3af; font-weight: 400; }
-@media (max-width: 640px) {
-  .cr-cmp__h { display: none; }
-  .cr-cmp__r { grid-template-columns: 1fr; gap: .125rem; }
-}
-
-.cr-doc { font-size: .9375rem; line-height: 2; }
-.cr-doc p { margin: 0 0 .75rem; }
-.cr-doc p:last-child { margin-bottom: 0; }
-/* 서술문 갈래 — 한 문단으로 흐른다. 칸 이름표가 없으니 들여쓰기도 없다. */
-.cr-doc--flow p { margin: 0; }
-.cr-doc__k {
-  display: block; color: var(--color-text-secondary);
-  font-size: .72rem; font-weight: 800; line-height: 1.6; letter-spacing: .02em;
-}
-/* 바뀐 구간 — 초록 배경 + 초록 밑줄 + 위첨자 번호. 누르면 아래 그 항목으로 간다. */
-.cr-chg {
-  padding: .0625rem .1875rem; border: 0; border-bottom: 2px solid var(--color-status-success);
-  border-radius: 3px; background: rgb(46 125 79 / 10%);
-  color: inherit; font: inherit; line-height: inherit; cursor: pointer;
-}
-.cr-chg:hover { background: rgb(46 125 79 / 18%); }
-.cr-chg sup {
-  margin-left: .125rem; padding: 0 .3125rem; border-radius: .5rem;
-  background: var(--color-status-success); color: var(--color-text-inverse);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: .625rem; font-weight: 800;
-}
-
-/* 「무엇이, 왜 바뀌었나요」 — 카드를 쪼개지 않고 1px 상단 구분선으로 나눈다. */
-.cr-why { border-top: 1px solid var(--color-border-default); padding: .9375rem 0; scroll-margin-top: 5.5rem; }
-.cr-why:first-of-type { border-top: 0; padding-top: 0; }
-.cr-why.is-on { animation: bv-land 900ms ease-out; }
-.cr-why__h { display: flex; align-items: center; gap: .5rem; margin: 0; }
-.cr-why__h b { font-size: .875rem; }
-.cr-tag {
-  padding: .0625rem .4375rem; border-radius: .5rem;
-  background: var(--color-status-success); color: var(--color-text-inverse);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: .6875rem; font-weight: 800;
-}
-.cr-diff { margin: .375rem 0 0; font-size: .84rem; line-height: 1.75; }
-.cr-old { color: var(--color-border-strong); text-decoration: line-through; }
-.cr-why__r { margin: .375rem 0 0; color: var(--color-text-secondary); font-size: .84rem; line-height: 1.75; }
-/* 근거 «원문» — 기계는 「그 번호가 목록에 있나」만 본다. 방향이 맞는지는 사람만 읽는다.
-   그래서 체크박스 바로 아래에 인용문·출처·시점·경계를 «펴 둔다». 접으면 아무도 안 편다. */
-.cr-src { margin: .5rem 0 0; padding: .5rem .75rem 0; list-style: none; border-left: 2px solid var(--color-border); }
-.cr-src > li { margin: 0 0 .5rem; font-size: .8rem; line-height: 1.7; }
-.cr-src__q { display: block; color: var(--color-text-primary); }
-.cr-src__m { display: block; color: var(--color-text-secondary); font-size: .74rem; }
-/* 경계 표시. **흐리게 하지 마라** — 이 줄이 「그럴듯한 근거」를 걸러 내는 유일한 자리다. */
-.cr-src__w { display: block; margin-top: .125rem; color: var(--color-amber-700, #92400e); font-size: .74rem; }
-.cr-src__x { color: var(--color-text-secondary); }
-/* 「근거 보기」 — 이 화면의 핵심 이동이다. 민트 pill 하나로 화면 1 의 그 과목까지 간다. */
-.cr-from {
-  display: inline-flex; align-items: center; gap: .375rem;
-  margin-top: .5rem; padding: .1875rem .625rem;
-  border: 0; border-radius: var(--radius-control);
-  background: var(--color-mint-50); color: var(--color-mint-700);
-  font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer;
-}
-.cr-from:hover { text-decoration: underline; }
-.cr-ev {
-  padding: .0625rem .375rem; border: 1px solid var(--color-action-primary);
-  border-radius: 4px; background: var(--color-mint-50); color: var(--color-mint-700);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .65rem; font-weight: 600;
-}
-
-/* 법률 검토 — 같은 카드 안의 줄. 경계 문장(「법률 자문이 아니에요」)은 맨 위에 남는다. */
-.cr-law { border-top: 1px solid var(--color-border-default); padding: .9375rem 0; scroll-margin-top: 5.5rem; }
-.cr-law.is-on { animation: bv-land 900ms ease-out; }
-.cr-law__sum { margin: 0 0 .25rem; font-size: .84rem; line-height: 1.75; }
-.cr-law__sum small { color: var(--color-text-secondary); }
-.cr-law__h { display: flex; align-items: center; flex-wrap: wrap; gap: .4375rem; margin: 0; }
-.cr-law__h b { font-size: .875rem; }
-.cr-clause {
-  padding: .0625rem .4375rem; border-radius: 4px;
-  background: var(--color-mint-50); color: var(--color-mint-700);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .69rem;
-}
-/* 주제 — 검토가 이 컨셉의 말로 적은 한 마디(「「저나트륨」 표시 기준」).
-   조문 번호(.cr-clause)와 같은 자리에 서지만 코드가 아니라 «말»이라 폭이 자유롭다. */
-.cr-topic { color: var(--color-text-secondary); font-size: .78rem; }
-/* 조항이 이 컨셉에 왜 걸리는지 — 법 조문 해설이 아니다. */
-.cr-law__r { margin: .375rem 0 0; color: var(--color-text-secondary); font-size: .84rem; line-height: 1.75; }
-.cr-law__n { margin: .3125rem 0 0; color: var(--color-text-secondary); font-size: .84rem; line-height: 1.75; }
-.cr-law__l { display: grid; gap: .3125rem; margin: .4375rem 0 0; padding: 0; list-style: none; }
-.cr-law__l li {
-  position: relative; padding-left: .9rem;
-  color: var(--color-text-secondary); font-size: .84rem; line-height: 1.75;
-}
-.cr-law__l li::before {
-  content: ""; position: absolute; left: .15rem; top: .7rem;
-  width: 4px; height: 4px; border-radius: 50%; background: var(--color-border-strong);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cr-why.is-on, .cr-law.is-on { animation: none; background: var(--color-mint-50); }
-}
-
-/* ── 판 ㊸ — 사람 보고서의 2·8·9절 · 절 사실 표 ─────────────────── */
-
-/* 원문 표기. 환산값 아래에 작게 — 「36,745억원」을 되짚을 수 있어야 한다. */
-.mr-raw { display: block; font-weight: 400; font-size: .72rem; color: var(--color-text-secondary); }
-
-/* 발행사 꼬리표. **두 회사의 표가 하나로 읽히는 것을 막는다.** */
-.mr-issuer { display: block; font-size: .74rem; color: var(--color-status-warning); }
-
-/* 합이 온전한 표는 경고색이 아니다 — 경고를 남발하면 진짜 경고가 안 읽힌다. */
-.mr-caveat--ok { color: var(--color-text-secondary); font-style: normal; }
-
-/* 같은 표의 행 묶음. 표끼리 붙어 버리면 어디까지가 한 표인지 안 보인다. */
-.mr-tablegroup + .mr-tablegroup { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 2px solid var(--color-neutral-100); }
-
-.mr-judgment__lines { margin: 1rem 0 0; padding: 0; list-style: none; }
-.mr-judgment__lines > li + li { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--color-neutral-100); }
-.mr-judgment__calc { color: var(--color-text-secondary); font-size: .8rem; }
-.mr-judgment__src { color: var(--color-text-secondary); font-size: .78rem; }
-
-.mr-rx__kind { margin-top: .25rem; color: var(--color-text-secondary); font-size: .74rem; }
-
-.mr-synth__g + .mr-synth__g { margin-top: 1.3rem; }
-.mr-synth__g h4 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.01em; }
-.mr-synth__g ul { margin: 0; padding-left: 1.1rem; }
-.mr-synth__g li + li { margin-top: .7rem; }
-.mr-synth__g--ok h4 { color: var(--color-status-success); }
-.mr-synth__g--warn h4 { color: var(--color-status-warning); }
-.mr-synth__src { margin-top: .2rem; color: var(--color-text-secondary); font-size: .76rem; }
-
-/* 발행사 묶음 — **회사 수와 사실 수는 다른 수다.** 안 묶으면 「경쟁사 41곳」으로 읽힌다. */
-.mr-issuergroup { margin-top: 1.2rem; }
-/* 판 ㊻ — 절 안의 소제목은 목표 보고서의 `h3`(16px · 위 26px / 아래 8px)를 따른다. */
-.mr-issuergroup h4 { margin: 26px 0 8px; font-size: 16px; letter-spacing: -.01em; }
-
-/* 결론이 선 근거의 연도. **결론 자리에 없으면 오늘 값처럼 읽힌다.** */
-.mr-judgment__years { margin-top: .5rem; font-size: .78rem; opacity: .85; }
-
-/* 「덜 조사됐다」의 기계 사유. 사람 문장 아래 작게 — 지우지는 않는다. */
-.mr-shortfall__d { margin-top: .15rem; font-size: .74rem; opacity: .75; }
-
-/* ── 판 ㊻ — 목표 보고서의 `.kpi` 상자 셋 (`market-report.html:68-73`) ──────
-   절을 여는 「큰 수 카드」. 값 하나가 「라벨(작게) / 값(크게) / 연도·출처(작게)」다.
-   ⚠ `mr-figs` 자체는 성장률·가격 카드도 쓰므로 여기서만 덮는다.
-   ⚠ **왼쪽 들여쓰기를 걷어냈다** — 40px 들여쓴 카드가 그 아래 표와 어긋나 있었다.
-     목표 보고서는 상자와 표의 왼쪽 끝이 같은 자리다. */
-.mr-figs--lead {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px; margin: .35rem 0 20px; padding: 0;
-}
-@media (max-width: 660px) { .mr-figs--lead { grid-template-columns: 1fr; } }
-.mr-figs--lead > div {
-  border: 1px solid var(--color-border-default); border-radius: 6px;
-  padding: 16px 18px; background: var(--color-surface);
-}
-.mr-figs--lead > div > span { display: block; margin-bottom: 0;
-  color: var(--color-text-secondary); font-size: 12px; font-weight: 700;
-  letter-spacing: .03em; line-height: 1.45; }
-.mr-figs--lead b { display: block; margin: 5px 0 3px;
-  font-size: 25px; font-weight: 700; letter-spacing: -.02em; line-height: 1.25; }
-.mr-figs--lead small { display: block; margin-top: 0;
-  color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
-
-/* 경계는 표 «위»에 한 번만 선다 — 행마다 반복하면 표가 안 읽힌다.
-   판 ㊻ — 목표 보고서의 `.warnbox`(`market-report.html:78-80`) 규격:
-   왼쪽 3px 색 막대 + 연한 배경 + 15px 18px 안여백 + 14.5px.
-   ⚠ **문장을 지우거나 흐리게 하지 않는다.** 기울임만 뗐다 — 목표 보고서가 정체다. */
-.mr-caveats { margin: 0 0 16px; padding: 15px 18px; border-left: 3px solid #8a5410;
-  background: #f7ecd8; border-radius: 0 5px 5px 0; }
-.mr-caveats .mr-caveat { margin: 0 0 .35rem; color: #6f4711; font-size: 14.5px; font-style: normal; }
-.mr-caveats .mr-caveat:last-child { margin-bottom: 0; }
-.mr-caveats .mr-caveat strong, .mr-caveats .mr-caveat b { color: #8a5410; }
-
-/* 값과 등급이 붙어 「1조 6,058억원추정」으로 읽히던 것을 뗀다. */
-.mr-table td.v [class*="badge"] { margin-left: .4rem; vertical-align: middle; }
-/* 출처는 한 줄로 — 「kass.mafra.go.kr / aggregate」 두 줄은 표를 두 배로 늘린다. */
-.mr-table td.s { white-space: nowrap; }
-/* 출처 종류(「aggregate」·「정부 통계」)는 «표 안에서» 줄을 하나 더 먹는다.
-   목표 보고서는 도메인 한 줄만 쓴다 — 종류는 근거를 펼쳤을 때 카드가 이미 말한다. */
-.mr-table td.s .mr-src-kind { display: none; }
-
-.mr-caveats__more { margin-top: .5rem; }
-.mr-caveats__more summary { cursor: pointer; font-size: .78rem; color: var(--color-text-secondary); }
-.mr-caveats__more .mr-caveat { margin-top: .35rem; }
-/* 등급 배지가 값보다 커 보이지 않게 — 목표 보고서의 `.chip` 은 11px 이다.
-   ⚠ 선택자를 `.badge` 로 적어 **한 줄도 안 걸리고 있었다** — 실제 클래스는 `ui-badge` 다. */
-.mr-table td.v [class*="badge"] {
-  font-size: 11px; font-weight: 700; letter-spacing: .03em;
-  padding: 2px 7px; border-radius: 3px; opacity: .9;
-}
-
-.mr-more { margin-top: .75rem; }
-.mr-more summary { cursor: pointer; font-size: 13px; color: var(--color-text-secondary);
-  padding: .35rem 0; }
-/* 서랍 — 「절의 답이 아닌 것」. 「나머지 더 보기」와 갈라 세운다. */
-.mr-more--drawer { margin-top: .35rem; }
-
-/* ── 가격 눈금자 — 목표 보고서 §2 `.scale` 과 같은 규격 ── */
-.mr-scale { background: var(--color-surface, #fff); border: 1px solid var(--color-border, #d5ddd5);
-  border-radius: 6px; padding: 20px 20px 12px; margin: 0 0 16px; }
-.mr-bar { position: relative; height: 3px; background: var(--color-border, #d5ddd5);
-  margin: 44px 0 8px; border-radius: 2px; }
-.mr-tick { position: absolute; top: -34px; transform: translateX(-50%); text-align: center;
-  font-size: 12px; line-height: 1.35; white-space: nowrap; color: var(--color-text-secondary); }
-.mr-tick i { display: block; width: 1px; height: 16px; background: var(--color-border, #d5ddd5);
-  margin: 4px auto 0; }
-.mr-tick b { display: block; font-variant-numeric: tabular-nums; color: var(--color-text); }
-.mr-tick.is-me { color: var(--color-primary, #0d6046); }
-.mr-tick.is-me b { color: var(--color-primary, #0d6046); font-size: 14px; }
-.mr-tick.is-me i { background: var(--color-primary, #0d6046); height: 22px; width: 2px; }
-
-/* 라벨이 길면 잘라서 겹침을 막는다 — 자는 «순서»를 보이는 물건이지 설명하는 물건이 아니다. */
-.mr-tick__n { display: block; max-width: 130px; overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; margin: 0 auto; }
-
-/* ── 판 ㊻ — 목표 보고서 표와 같은 «읽는 순서» ── */
-/* 우리 세그먼트 줄은 굵게 — 표가 「어디를 봐야 하나」를 짚어 준다.
-   목표 보고서가 「냉동간편식 소매시장」 한 줄만 굵게 쓴 그 자리다. */
-.mr-table tr.is-ours td { font-weight: 700; }
-.mr-table tr.is-ours td.v { color: var(--color-text); }
-/* 같은 표에서 이어지는 줄 — 목표의 `├ 즉석조리식품` */
-.mr-sub { color: var(--color-text-secondary); font-weight: 400; }
-/* 등급이 다 같을 때 표 위에 한 번 */
-.mr-tablenote { margin: 0 0 .4rem; font-size: .78rem; color: var(--color-text-secondary); }
-
-/* 판정은 제목 옆 배지 한 줄이다 — 큰 카드로 세우면 바로 아래 캔버스가 같은 사실을 다시 말한다. */
-.bm-verdict__badges { display: inline-flex; gap: .4rem; align-items: center; }
-
-/* 「이 값으로 조사해요」 — 확정 가설을 이름·값 두 칸으로 편다. */
-.mr-basis__list { display: grid; gap: .4rem; margin: .5rem 0 .75rem; }
-.mr-basis__list > div { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr; gap: .75rem; }
-.mr-basis__list dt { color: var(--color-text-secondary); font-size: .82rem; font-weight: 700; }
-.mr-basis__list dd { margin: 0; font-size: .86rem; line-height: 1.6; }

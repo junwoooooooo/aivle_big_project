@@ -115,8 +115,8 @@ function FigureLedger({ title, figure }) {
               <td className="v num">{total}</td>
               <td colSpan={2}>
                 {assumed > 0
-                  ? `가정이 ${assumed}개 곱해진 추정이에요`
-                  : '모든 항이 관측이에요'}
+                  ? `가정이 ${assumed}개 곱해진 추정이다`
+                  : '모든 항이 관측이다'}
               </td>
             </tr>
           </tfoot>
@@ -145,7 +145,7 @@ export default function AssumptionLedger({ market }) {
 
   const footnotes = [];
   if (market.price?.baseNote) footnotes.push(market.price.baseNote);
-  if (!market.som) footnotes.push('SOM 은 산출하지 않았어요 — 0 이 아니라 «안 쟀다»예요.');
+  if (!market.som) footnotes.push('SOM 은 산출하지 않았다 — 0 이 아니라 «안 쟀다»다.');
 
   if (ledgers.length === 0 && footnotes.length === 0) return null;
 

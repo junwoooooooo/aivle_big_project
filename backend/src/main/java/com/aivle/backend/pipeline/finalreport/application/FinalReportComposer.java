@@ -53,7 +53,7 @@ public class FinalReportComposer {
         section(sections, "3", "시장 및 사업성 검증", sources, "MARKET", "BUSINESS_MODEL");
         section(sections, "4", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS",
             "TECH_OPS", "FINANCE", "FINANCE_REPORT");
-        section(sections, "5", "시장 인터뷰 결과", sources, "TWIN_SURVEY");
+        section(sections, "5", "가상 인터뷰 결과", sources, "TWIN_SURVEY");
         section(sections, "6", "마케팅 전략", sources, "MARKETING", "MARKETING_ASSETS");
         section(sections, "7", "주요 위험 및 대응", sources, "LEGAL", "MARKET", "LAUNCH_TECHNOLOGY",
             "LAUNCH_OPERATIONS", "TECH_OPS", "FINANCE");

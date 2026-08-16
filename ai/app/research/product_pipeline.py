@@ -626,24 +626,6 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
     stage.llm_calls = 1
 
     result = _read_result(source_run)
-
-    # 게이트 — `_bm_product` 와 같은 이유로 여기도 붙인다. 다만 이 갈래는 FULL 봉투가 없어
-    # 성적표를 못 넘긴다 → 사유 갈래(`cause`)가 전부 `UNMAPPED` 이 된다. 그래도 「판정이
-    # 아예 안 붙는 것」보다는 낫고, 제품 경로는 `_bm_product` 를 탄다.
-    from app.validation import gate                                   # noqa: PLC0415
-    from app.validation import citation                               # noqa: PLC0415
-
-    analysis, corrections = citation.enforce(out["bm_analysis"])
-    if corrections:
-        ledger.degrade("bm", "UNCITED_CLAIM",
-                       f"근거 없이 확인을 주장한 {len(corrections)}칸을 미확인으로 내렸다: "
-                       + ", ".join(f"{item.cell}({item.was})" for item in corrections))
-    cells = serialize.canvas_cells(
-        analysis.canvas, evidence,
-        _user_planned_cells(plan_material, plan_constraints))
-    gate_reasons = gate.evaluate(cells, None)
-    decision = gate.apply_decision(out["final_result"].decision.value, gate_reasons)
-
     return serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(result.get("reference_date") or _now()[:10]),
@@ -651,9 +633,10 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
         stages=[s.as_contract() for s in ledger.stages],
         degradations=ledger.degradations,
         scorecard=None, market=None,
-        canvas={"cells": cells},
-        bm=serialize.bm(out["final_result"], analysis, decision, gate_reasons,
-                        out.get("financial_handoff")),
+        canvas={"cells": serialize.canvas_cells(
+            out["bm_analysis"].canvas, evidence,
+            _user_planned_cells(plan_material, plan_constraints))},
+        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff")),
         evidence=evidence, summary=None,
         notes=list(serialize.NOTES_BM))
 
@@ -699,39 +682,15 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     stage.seconds = int(time.monotonic() - began)
     stage.llm_calls = 1
     _observe(event_sink, "BM_MODEL", "COMPLETED", "Business Model 분석 완료")
-
-    # ── 검증 게이트 ──────────────────────────────────────────────────────────
-    # ⚠ 이 블록이 없으면 **캔버스는 나오는데 판정이 안 붙는다.** 제품 BM 경로는
-    #   `pipeline._bm` 를 안 타서 게이트가 자동으로 따라오지 않는다(2026-08-16 병합에서 잡음).
-    #   LLM 0회다 — 모델이 스스로 「확인됨」이라 쓴 것을 기계가 반증할 뿐이다.
-    #
-    #   `mapping.apply` 는 여기서 안 부른다. 그건 원시 카드(`cards`)를 요구하는데 제품 경로에는
-    #   직렬화된 근거만 있다. `citation.enforce` 는 분석본만 받으므로 그대로 쓴다.
-    from app.validation import gate                                   # noqa: PLC0415
-    from app.validation import citation                               # noqa: PLC0415
-
-    analysis, corrections = citation.enforce(out["bm_analysis"])
-    if corrections:
-        ledger.degrade("bm", "UNCITED_CLAIM",
-                       f"근거 없이 확인을 주장한 {len(corrections)}칸을 미확인으로 내렸다: "
-                       + ", ".join(f"{item.cell}({item.was})" for item in corrections))
-    cells = serialize.canvas_cells(
-        analysis.canvas, evidence,
-        _user_planned_cells(plan_material, plan_constraints))
-    # 성적표는 **FULL 봉투가 이미 갖고 있다** — 다시 세지 않는다. 이게 없으면 게이트가
-    # 「이 칸의 근거가 애초에 수집되긴 했는가」를 몰라 사유 갈래가 전부 UNMAPPED 이 된다.
-    scorecard = market_result.get("scorecard")
-    gate_reasons = gate.evaluate(cells, scorecard)
-    decision = gate.apply_decision(out["final_result"].decision.value, gate_reasons)
-
     result = serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(market_result.get("asOf") or _now()[:10]), generatedAt=_now(), mode="BM",
         stages=[s.as_contract() for s in ledger.stages],
-        degradations=ledger.degradations, scorecard=scorecard, market=None,
-        canvas={"cells": cells},
-        bm=serialize.bm(out["final_result"], analysis, decision, gate_reasons,
-                        out.get("financial_handoff")),
+        degradations=ledger.degradations, scorecard=None, market=None,
+        canvas={"cells": serialize.canvas_cells(
+            out["bm_analysis"].canvas, evidence,
+            _user_planned_cells(plan_material, plan_constraints))},
+        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff")),
         evidence=evidence, summary=None, notes=list(serialize.NOTES_BM))
     _observe(event_sink, "BM_SERIALIZATION", "COMPLETED", "Business Model 결과 정리 완료",
              status="COMPLETED")

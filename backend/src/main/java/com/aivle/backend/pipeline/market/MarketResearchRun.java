@@ -22,14 +22,7 @@ import lombok.NoArgsConstructor;
 public class MarketResearchRun extends BaseEntity {
 
     /** FULL = 1단계(시장조사) · BM = 2단계(캔버스). */
-    /**
-     * 실행 갈래. {@code VALIDATION} 은 {@code FULL}+{@code BM} 을 <b>한 실행</b>으로 이은 것이다
-     * (여정 3번 「사업 검증」). 옛 둘은 지우지 않았다 — 이미 쌓인 이력이 그 값으로 남아 있다.
-     *
-     * <p>⚠ 컬럼이 {@code VARCHAR(10)} 이고 {@code 'VALIDATION'} 이 정확히 10자다. 더 긴 값을
-     * 넣으려면 컬럼부터 늘려야 한다.
-     */
-    public enum Kind { FULL, BM, VALIDATION }
+    public enum Kind { FULL, BM }
     public enum State { QUEUED, RUNNING, SUCCEEDED, FAILED }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;

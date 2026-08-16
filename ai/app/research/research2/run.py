@@ -284,21 +284,6 @@ def main():
                     help="A3 SEARCH 문안. 기본은 rules.adapters.web.search_prompt(=v1). "
                          "v12-2 는 **미채택** 문안이라 명시적으로 골라야 쓰인다")
     a = ap.parse_args()
-    # ★ 판 ㊳ — **`--from` 인데 `--concept` 을 안 주면 멈춘다.**
-    #   `--concept` 의 기본값 `data/concept.json` 은 **판마다 갈아 끼우는 작업용 파일**이다.
-    #   재채점은 원본의 관측을 그대로 쓰므로, 컨셉만 엉뚱하면 **관측은 HMR 인데 잣대는 카페**가
-    #   되고 아무도 모른다 — 실측(2026-08-14): HMR 원장을 `--from a4` 로 재채점했더니
-    #   `concept_id=CPT-CAFE-INV` 로 굳어 계열이 C→A 로 갈렸고, TAM 사유가
-    #   「점유율 관측이 없다」에서 「전국 사업체 수 확인됨 0건」이라는 **틀린 말**로 바뀌었다.
-    #   ⚠ 조용히 되짚어 고르지 않는다 — 되짚기가 틀린 원장이 이미 넷 있다(pipeline.py:59-63).
-    #     사람이 명시하게 한다.
-    if a.from_stage and not any(x == "--concept" or x.startswith("--concept=")
-                                for x in sys.argv[1:]):
-        ap.error("--from 을 쓸 때는 --concept 을 **명시**해야 한다. "
-                 "기본값 data/concept.json 은 작업용 파일이라 원본 원장과 다를 수 있고, "
-                 "그러면 관측은 그대로인데 잣대만 바뀐 채 조용히 채점된다. "
-                 f"원본({a.source_run or '<--source-run>'})이 어느 컨셉이었는지는 "
-                 "그 원장의 result.json `input.concept.concept_id` 에 있다")
     try:
         return collect(CollectOptions(**vars(a)))
     except CollectError as bad:

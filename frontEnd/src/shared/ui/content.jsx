@@ -3,15 +3,9 @@ import { Link } from 'react-router-dom';
 import { Button, Spinner } from './controls.jsx';
 import './ui.css';
 
-/**
- * `title` 은 **화면에 보이는 제목**이지 HTML 툴팁이 아니다.
- * props 로 흘리면 제목과 툴팁이 둘 다 뜨므로 반드시 구조분해로 빼낸다.
- * 툴팁이 필요하면 `aria-label` 을 쓴다.
- */
-export function Card({ as: Element = 'section', className = '', title, children, ...props }) {
+export function Card({ as: Element = 'section', className = '', children, ...props }) {
   return (
     <Element className={`ui-card ${className}`} {...props}>
-      {title ? <h3 className="ui-card__title">{title}</h3> : null}
       {children}
     </Element>
   );

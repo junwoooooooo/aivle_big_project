@@ -125,129 +125,6 @@ def test_market_figures_only_cite_evidence_that_exists():
 
 
 # ══════════════════════════════════════════════════════════════
-# 판 ㊻ — 사람이 읽는 보고서 글
-# ══════════════════════════════════════════════════════════════
-def _report_doc() -> dict:
-    return {"쓴_모델": "gpt-5.6-luna", "유령_수": 16, "컨셉_누출_수": 1,
-            "머리말": "> - 재료: **인용 대조를 통과한 사실 3,073건**", "꼬리말": None,
-            "절": [{"section": "MARKET_SIZE", "본문": "### 1.1 표\n\n문단"},
-                   {"section": "PRICE", "본문": "   "},
-                   {"section": "GAPS", "본문": "- 입점 수수료 — 유통사 MD"},
-                   {"section": "SYNTHESIS", "본문": "### 지지\n\n- 크다"}]}
-
-
-def test_report_matches_the_golden_key_set():
-    block = serialize.report(_report_doc())
-    golden = _golden("full.json")["report"]
-    assert set(block) == set(golden)
-    assert set(block["sections"][0]) == set(golden["sections"][0])
-    # 빈 절은 안 싣는다 — 빈 글은 「할 말이 없었다」로 읽히고 그것은 거짓이다.
-    assert [s["subject"] for s in block["sections"]] == ["MARKET_SIZE", "GAPS", "SYNTHESIS"]
-    assert {s["subject"] for s in golden["sections"]} <= set(serialize.REPORT_SECTIONS)
-
-
-def test_report_keeps_the_two_warning_counts_and_the_lead():
-    """**경계 표시다.** 「이 글의 수 몇 개는 조사 결과가 아니다」를 화면이 이걸로 쓴다."""
-    block = serialize.report(_report_doc())
-    assert block["unverifiedNumbers"] == 16 and block["conceptLeaks"] == 1
-    assert block["writtenBy"] == "gpt-5.6-luna"
-    assert "인용 대조를 통과한 사실" in block["lead"]
-    # 도구가 발문을 안 쓰면 **없는 것을 지어내지 않는다.**
-    assert block["tail"] is None
-
-
-def test_report_is_null_when_there_is_nothing_written():
-    """`null` 이어도 나머지 봉투는 그대로다 — 프론트가 물러설 수 있어야 한다."""
-    assert serialize.report(None) is None
-    assert serialize.report({"절": []}) is None
-    assert serialize.envelope(runId="r", conceptId="c")["report"] is None
-
-
-def test_report_refuses_a_section_code_the_contract_does_not_have():
-    with pytest.raises(serialize.ContractDrift):
-        serialize.report({"쓴_모델": "m", "절": [{"section": "GROWTH", "본문": "글"}]})
-
-
-def test_report_sections_are_exactly_the_writers_sections():
-    """**짝이다.** 쓰는 쪽(`write_report`)과 계약이 갈리면 글이 조용히 버려진다."""
-    import write_report  # noqa: PLC0415 — pipeline 이 research2 경로를 얹은 뒤라야 보인다
-
-    본문 = {code for code, _, _ in write_report.SECTIONS}
-    assert 본문 | set(write_report.TAIL_SECTIONS) == set(serialize.REPORT_SECTIONS)
-
-
-def test_the_tail_is_split_into_the_two_sections_it_holds():
-    """8·9절은 **한 번의 호출**로 나오고 봉투에서는 절 둘이다. 가르는 셈은 한 곳이다."""
-    import write_report  # noqa: PLC0415
-
-    쪼갠 = write_report.꼬리_절(
-        "## 8 · 못 구한 것 — 다음에 채울 자리\n\n- 입점 수수료 — MD 문의\n\n"
-        "## 9 · 이 조사가 말하는 것\n\n### 지지\n\n- 크다")
-    assert [x["section"] for x in 쪼갠] == ["GAPS", "SYNTHESIS"]
-    assert 쪼갠[0]["본문"] == "- 입점 수수료 — MD 문의"
-    # 제목에 번호가 없으면 **차례로** 붙인다 — 9절이 8절 자리에 앉지 않게.
-    번호없음 = write_report.꼬리_절("## 못 구한 것\n\n가\n\n## 이 조사가 말하는 것\n\n나")
-    assert [x["section"] for x in 번호없음] == ["GAPS", "SYNTHESIS"]
-    # 조각이 하나뿐이면 **없는 절을 만들지 않는다.**
-    assert len(write_report.꼬리_절("## 8 · 못 구한 것\n\n가")) == 1
-
-
-def test_report_title_line_is_stripped_in_exactly_one_place():
-    """봉투는 `###` 이하만 싣는다. 자르는 셈은 `write_report._본문` 하나다."""
-    import write_report  # noqa: PLC0415
-
-    assert write_report._본문("## 1 · 시장 크기\n\n### 1.1\n문단") == "### 1.1\n문단"
-    assert write_report._본문("### 소제목만") == "### 소제목만"
-
-
-def test_report_is_skipped_without_spending_when_the_budget_cannot_finish_it():
-    """완주 못 할 지출은 시작조차 낭비다 — 그리고 **건너뛴 사실은 값으로 남는다.**"""
-    ledger, budget = pipeline.Run(), pipeline.Budget(total=2)
-    stage = ledger.stage("sections")
-
-    assert pipeline._report(ledger, budget, stage, "run", {}, "rid", False) is None
-    assert budget.spent == 0 and stage.llm_calls == 0
-    assert [d["code"] for d in ledger.degradations] == ["REPORT_SKIPPED"]
-
-
-def test_rescore_never_writes_a_report():
-    """재채점은 LLM 0회다 — 무료 재채점이 조용히 유료가 되면 안 된다."""
-    ledger, budget = pipeline.Run(), pipeline.Budget(total=1000)
-    stage = ledger.stage("sections")
-
-    assert pipeline._report(ledger, budget, stage, "run", {}, "rid", True) is None
-    assert budget.spent == 0
-    assert ledger.degradations[0]["code"] == "REPORT_SKIPPED"
-
-
-def test_a_failed_report_still_charges_what_it_spent(monkeypatch):
-    """⚠ **이미 쓴 돈은 안 쓴 것이 되지 않는다.** 안 적으면 원장이 거짓말한다(실측 34배)."""
-    import write_report  # noqa: PLC0415
-
-    monkeypatch.setattr(write_report, "build",
-                        lambda *a, **kw: (None, 4, "RuntimeError: 모델이 죽었다"))
-    ledger, budget = pipeline.Run(), pipeline.Budget(total=1000)
-    stage = ledger.stage("sections")
-
-    assert pipeline._report(ledger, budget, stage, "run", {}, "rid", False) is None
-    assert budget.spent == 4 and stage.llm_calls == 4
-    assert ledger.degradations[0]["code"] == "REPORT_FAILED"
-
-
-def test_a_written_report_charges_its_calls_and_reaches_the_contract(monkeypatch):
-    import write_report  # noqa: PLC0415
-
-    monkeypatch.setattr(write_report, "build", lambda *a, **kw: (_report_doc(), 7, ""))
-    ledger, budget = pipeline.Run(), pipeline.Budget(total=1000)
-    stage = ledger.stage("sections")
-
-    block = pipeline._report(ledger, budget, stage, "run", {}, "rid", False)
-    assert block["sections"][0]["subject"] == "MARKET_SIZE"
-    assert budget.spent == 7 and stage.llm_calls == 7
-    assert not ledger.degradations
-
-
-# ══════════════════════════════════════════════════════════════
 # 사용자가 채운 실행 계획 — 요청에서 컨셉으로 들어가는 문
 # ══════════════════════════════════════════════════════════════
 def test_plan_material_keeps_only_the_four_cells_the_concept_never_gives():
@@ -363,36 +240,19 @@ def test_factor_note_is_the_whole_basis_not_a_prefix():
         {"mode": "RESCORE", "sourceRun": SEED_RUN, "conceptId": "smoke"},
         "test-envelope-untruncated", 600))
 
-    # ★ 판 ㊳ — **표적이 옮겨졌다.** 계열별 계산식을 들어내면서 시장 크기 칸에서
-    #   규칙(가정)에서 온 요인이 사라졌다 — 이제 그 자리는 **관측 층위**만 담는다.
-    #   그러므로 「규칙 요인이 0개면 실패」는 더 이상 참이 아니다. 대신 둘을 본다:
-    #     ① 규칙에서 온 요인이 **어디에든** 있으면 그 note 는 원문 그대로여야 한다(옛 목적)
-    #     ② 시장 크기 칸에는 **가정 항이 없어야 한다**(새 계약) — 이쪽이 비면 검사가 공허해지므로
-    #        관측 요인이 실제로 있는지도 함께 못 박는다
-    seen_rule, seen_obs = 0, 0
+    checked = 0
     for name in ("tam", "sam", "som", "growth"):
         figure = out["market"][name]
         if figure is None:
             continue
         for factor in figure["factors"]:
-            if factor["basis"] == "관측":
-                seen_obs += 1
             role = by_role.get(factor["name"])
             # 단가는 규칙이 아니라 **컨셉의 가격 가설**에서 온다 — 대조 대상이 아니다.
             if not role or factor["basis"] == "가설":
                 continue
-            seen_rule += 1
+            checked += 1
             assert factor["note"] == role["basis"], f"{name}/{factor['name']} 이 잘렸다"
-
-    assert seen_obs, "관측 요인이 0개면 이 검사는 아무것도 못 본다"
-    for name in ("tam", "sam"):
-        figure = out["market"][name]
-        if figure is None:
-            continue
-        가정 = [f["name"] for f in figure["factors"] if f["basis"] != "관측"]
-        assert not 가정, (
-            f"{name}: 시장 크기 칸에 가정 항이 남아 있다 — 판 ㊳ 이후 여기는 "
-            f"**관측 층위**만 담는다: {가정}")
+    assert checked, "규칙에서 온 요인이 0개면 이 검사는 아무것도 못 본다"
 
 
 @needs_ledger
@@ -551,8 +411,7 @@ def test_bm_block_matches_the_golden_key_set():
         concept_id="c1", concept_name="n", canvas=_canvas_items("C-F010"),
         market_fit_status="PARTIAL", consistency_status="PASS",
         market_fit_summary="a", consistency_summary="b")
-    block = serialize.bm(final, analysis, "REVISION_REQUIRED", [
-        {"code": "G1", "cell": "CHANNELS", "message": "자료 0건", "evidenceIds": []}])
+    block = serialize.bm(final, analysis)
     golden = _golden("bm.json")["bm"]
     assert set(block) == set(golden)
     assert set(block["legal"]) == set(golden["legal"])
@@ -588,13 +447,7 @@ def test_bm_mode_derives_caveats_end_to_end(monkeypatch):
         "test-envelope-bm", 600))
 
     assert out["mode"] == "BM"
-    # 1-2: **성적표는 BM 모드에서도 실린다.** 게이트가 사유의 갈래(cause)를 가르려면
-    # 「이 과목이 애초에 수집됐는지」를 알아야 한다. `market` 은 여전히 FULL 전용이다.
-    assert out["market"] is None
-    assert out["scorecard"] and {row["subject"] for row in out["scorecard"]} >= {
-        "MARKET_SIZE", "DEMAND", "PRICE"}
-    causes = {reason["cause"] for reason in out["bm"]["gateReasons"]}
-    assert causes <= {"UNCOLLECTED", "UNCITED", "UNMAPPED"}
+    assert out["scorecard"] is None and out["market"] is None
     assert set(out) == _keys(_golden("bm.json"))
 
     by_id = {item["id"]: item for item in out["evidence"]}

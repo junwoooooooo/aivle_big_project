@@ -118,21 +118,10 @@ class FindingEvidenceCoverage(StrictModel):
     findingType: FindingType
     findingIndex: int = Field(strict=True, ge=0, le=29)
     evidenceReferenceIndexes: list[int] = Field(min_length=1, max_length=20)
-    #: 소견의 말. 조항과 이어 두지 않으면 화면이 「법명·조항」만 나열하게 된다.
-    topic: str = Field(default="", max_length=20)
-    text: str = Field(default="", max_length=1000)
 
 
 class EvidenceBackedFinding(StrictModel):
     text: str = Field(min_length=1, max_length=1000)
-    #: 이 소견이 무엇에 관한 것인지 짧은 말 — 「「저나트륨」 표시 기준」.
-    #: 조문 제목(`OfficialEvidence.title`)은 법이 정하는 바이지 이 컨셉의 이야기가 아니라
-    #: 화면에 그대로 쓸 수 없다. 그래서 같은 호출 안에서 한 마디를 더 받는다(추가 호출 0회).
-    #: ⚠ **기본값을 두지 않는다.** OpenAI strict 스키마는 모든 속성이 `required` 여야 하고
-    #:   `default` 키워드를 거절한다 — 기본값을 두면 호출 전에 `RESULT_SCHEMA_INVALID` 로
-    #:   죽는다(`providers/schema_compatibility.py` 사전검사가 잡는다).
-    #:   `min_length` 가 없으므로 모델이 빈 문자열을 줘도 통과한다 — 필수는 «있음»뿐이다.
-    topic: str = Field(max_length=20)
     evidenceReferenceIndexes: list[int] = Field(min_length=1, max_length=20)
 
 

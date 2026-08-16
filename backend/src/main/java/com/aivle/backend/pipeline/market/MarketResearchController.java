@@ -43,16 +43,6 @@ public class MarketResearchController {
             MarketResearchRun.Kind.FULL), id(request));
     }
 
-    // ⚠ 사업 검증(`POST /business-validation`, 한 실행에 FULL+BM)은 **여기에 없다.**
-    //   여정 2번은 main 의 두 실행(`/market-research` → `/business-model`)을 그대로 쓴다.
-    //   옛 구현은 main 이 지운 `MarketAnalysisSeedLookup`·`ResearchConceptFactory` 위에
-    //   서 있어서 옮겨 붙일 수가 없다 — main 자료구조(`readySelection` + 씨앗 스냅샷)에
-    //   맞춰 **다시 써야** 한다. 화면이 부르지 않는 경로를 지금 다시 쓰지 않는다.
-    //   남아 있는 것: `TaskType.BUSINESS_VALIDATION` · `BusinessValidationWorker` ·
-    //   `MarketResearchRun.Kind.VALIDATION` · `ai/app/validation/runner.py`.
-    //   붙이려면 이 넷 위에 `startValidation` + `MarketResearchInputFactory.validation()` 만
-    //   새로 쓰면 된다.
-
     @PostMapping("/market-research/recollect")
     public ResponseEntity<ApiResponse<MarketResearchService.RunView>> recollect(
             @PathVariable Long projectId, @Valid @RequestBody RecollectRequest body,
@@ -124,11 +114,6 @@ public class MarketResearchController {
 
     /** BM source는 서버가 current immutable Market version에서 결속한다. */
     public record BmRequest() { }
-
-    // ⚠ `ValidationRequest` 는 사업 검증 엔드포인트와 함께 뺐다(위 주석 참조).
-    //   되살릴 때 기억할 것: 이 record 에 `conceptId` 를 **넣지 말 것.** 사업안을 확정하기
-    //   전에 누르면 서버가 견본으로 조용히 떨어져 남의 컨셉 원장으로 6/6 SUCCEEDED 를
-    //   냈다(2026-08-12 실측). 이름표는 확정된 시드에서 서버가 정한다.
 
     /**
      * ⚠ 두 칸 모두 <b>필수가 아니다.</b> 전부 선택 입력이므로 빈 계획도 정상 요청이고,

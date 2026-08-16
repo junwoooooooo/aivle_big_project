@@ -342,41 +342,6 @@ class Run:
 
 
 # ══════════════════════════════════════════════════════════════
-# 모델마다 받는 인자가 다르다 — **한 자리에만 적는다**
-# ══════════════════════════════════════════════════════════════
-#: 추론 모델의 이름 앞자리. 목록이 낡는 것보다 **조용히 400 이 나는 것**이 훨씬 비싸다.
-_REASONING_PREFIXES = ("gpt-5", "o1", "o3", "o4")
-
-
-def is_reasoning(model: str) -> bool:
-    return model.startswith(_REASONING_PREFIXES)
-
-
-def call_options(model: str, output_cap: int | None = None) -> dict:
-    """`responses.create` 에 얹을 인자. **모델을 바꿀 때 고치는 자리는 여기 하나다.**
-
-    지뢰 둘을 같이 막는다(2026-08-15 실측).
-
-    1. **추론 모델은 `temperature` 를 400 으로 거절한다.**
-       `gpt-5.6-luna`: 「Unsupported parameter: 'temperature' is not supported with this
-       model.」 그래서 추론 모델에는 온도를 아예 안 보낸다.
-
-    2. ★ **추론 모델은 «생각한 토큰»도 `max_output_tokens` 에서 깎는다.**
-       상한을 그대로 두면 생각하다 예산이 끝나 **본문이 빈 채로 «성공»한다** —
-       예외도 안 나고 원장에는 성공으로 남는 가장 나쁜 실패다. 그래서 상한을 4배로 연다.
-
-    ⚠ 이 함수를 **베끼지 마라.** 이 저장소에서 「베낀 조회는 갈라진다」가 이미 세 번
-      일어났다. 새 호출 자리를 만들면 여기서 가져다 쓴다.
-    """
-    if is_reasoning(model):
-        return {"max_output_tokens": output_cap * 4} if output_cap else {}
-    options: dict = {"temperature": 0}
-    if output_cap:
-        options["max_output_tokens"] = output_cap
-    return options
-
-
-# ══════════════════════════════════════════════════════════════
 # LLM 호출 계측 — A블록에서만 쓰인다 (B·C 에 들어가면 절대규칙 1 위반)
 # ══════════════════════════════════════════════════════════════
 class Meter:

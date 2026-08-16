@@ -28,9 +28,7 @@ function fieldLabel(key) {
 function sourceTypeLabel(type) {
   return ({ PROJECT: '프로젝트 정보', IDEA_BRIEF: '사업 아이디어', CONCEPT_SELECTION: '선정 사업안',
     MARKET_RESEARCH: '시장 분석', BUSINESS_MODEL: '수익 구조 분석', TECH_OPS: '기술·운영 계획',
-    // ⚠ 왼쪽 키 `TWIN_SURVEY` 는 백엔드 enum 값 이름이라 그대로 둔다 — 라벨만 바꾼다.
-    FINANCE: '재무 분석', TWIN_SURVEY: '시장 인터뷰', MARKET_INTERVIEW: '시장 인터뷰',
-    MARKETING: '마케팅 콘텐츠' })[type] ?? '프로젝트 자료';
+    FINANCE: '재무 분석', TWIN_SURVEY: '가상 인터뷰', MARKETING: '마케팅 콘텐츠' })[type] ?? '프로젝트 자료';
 }
 
 function ReportValue({ value, depth = 0 }) {
@@ -83,7 +81,7 @@ export default function FinalReportPage() {
   const view = state.view;
   const statusView = STATE_VIEW[view.state] ?? STATE_VIEW.NOT_READY;
   return <ProjectWorkspace mode="document" className="final-report-page">
-    <ProjectStageHeader step={1} eyebrow="최종 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
+    <ProjectStageHeader step={9} eyebrow="최종 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
       description="확정된 프로젝트 자료만 사용하며, 준비되지 않은 내용은 추정하지 않습니다."
       status={<span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span>}
       actions={<>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></>} />

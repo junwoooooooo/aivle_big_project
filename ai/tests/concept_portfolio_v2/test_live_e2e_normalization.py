@@ -60,8 +60,7 @@ def evidence(index=0):
 def legal_provider(index=0, text="필수 통제를 적용합니다"):
     return ConceptLegalReviewProviderResult.model_validate({
         "status": "IMPLEMENTABLE_WITH_CONTROLS", "reviewedActivities": ["거래 운영"],
-        # `topic` 은 strict 스키마에서 **필수**다 — 모델은 빼고 답할 수 없다.
-        "requiredControls": [{"text": text, "topic": "통제", "evidenceReferenceIndexes": [index]}],
+        "requiredControls": [{"text": text, "evidenceReferenceIndexes": [index]}],
         "requiredPartnersAndQualifications": [], "requiredDisclosures": [],
         "prohibitedVariants": [], "evidenceReferenceIndexes": [index],
         "redesignRequirements": [], "unknownFacts": [], "expertReviewRecommended": True,

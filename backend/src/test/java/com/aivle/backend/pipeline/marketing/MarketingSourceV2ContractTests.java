@@ -65,8 +65,8 @@ class MarketingSourceV2ContractTests {
     @Test
     void requestAndSourceSchemasUseTheNewBoundary() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        var request = mapper.readTree(Files.readString(Path.of("..", "docs", "legacy", "rebuild", "contracts", "marketing-content-request-v1.schema.json")));
-        var source = mapper.readTree(Files.readString(Path.of("..", "docs", "legacy", "rebuild", "contracts", "marketing-source-snapshot-v1.schema.json")));
+        var request = mapper.readTree(Files.readString(Path.of("..", "docs", "rebuild", "contracts", "marketing-content-request-v1.schema.json")));
+        var source = mapper.readTree(Files.readString(Path.of("..", "docs", "rebuild", "contracts", "marketing-source-snapshot-v1.schema.json")));
         assertThat(request.path("required").toString()).contains("marketingSourceSnapshotId").doesNotContain("planningSnapshotId");
         assertThat(source.path("required").toString()).contains("allowedClaims", "prohibitedClaims",
             "requiredDisclosures", "requiredControls", "communicationRequiredControls", "hash", "createdAt");

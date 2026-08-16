@@ -115,9 +115,6 @@ class MarketJoinData(BaseModel):
     market_size_calculation: dict
     missing_items: list[dict] = Field(default_factory=list)
     evidence_list: list[dict] = Field(default_factory=list)
-    #: 채널 절 근거 — 2026-08-15 신설. 정본 사본은 `ai/app/research/bm/contracts.py` 이고
-    #: `ai/tests/test_bm_contract_parity.py` 가 둘을 대조한다. **한쪽만 고치면 빨개진다.**
-    channel_analysis: list[dict] = Field(default_factory=list)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -192,9 +189,6 @@ def _evidence(c: dict) -> dict:
         "formula": c.get("식"), "inputs": c.get("입력"),
         "material_ids": list(c.get("재료_카드_id") or []),
         "assumptions": list(c.get("가정") or []),
-        # 승격 카드에만 있다(슬롯 카드는 `None`). 모델이 「이 사실이 어느 절 것인가」를
-        # 알아야 엉뚱한 칸에 인용하지 않는다. 정본은 `publish_gate.절()` 이다.
-        "section": c.get("_절"),
     }
 
 
@@ -299,25 +293,17 @@ def execution_constraints_of(con: dict) -> dict:
 
 
 def build_from(cv: dict, vd: dict, cd: dict, con: dict,
-               run: str, concept_id: str,
-               promoted: list[dict] | None = None) -> MarketJoinData:
+               run: str, concept_id: str) -> MarketJoinData:
     """**서브프로세스 0 · 파일 읽기 0.** 이미 만들어진 재료만 받아 조립한다.
 
     서버는 이 경로를 쓴다 — 파이프라인이 canvas·verdict·cards 를 이미 메모리에 들고 있다.
-
-    `promoted` 는 **절 조사가 승격시킨 사실 카드**(`tools/promote_cards.py`)다. 없으면
-    `None` 이고 그때는 판 ㊸ 이전과 똑같이 동작한다.
-
-    ⚠ **승격 카드는 `evidence_list` 와 `channel_analysis` 에만 들어간다.** 시장 추정
-      (TAM·성장률)·가격 대표값·경쟁/수요 목록은 **슬롯 카드에서만** 뽑는다 — 판 ㊸ 이
-      「`serialize.market()` 에는 승격 카드를 넘기지 않는다, 슬롯 판정이 바뀐다」고 정해 뒀고
-      그 규율은 여기에도 그대로 걸린다. 특히 `price_base` 는 중앙값이라 모집단이 바뀌면
-      **값 자체가 달라진다.**
     """
     cards = cd["카드"]
-    승격 = list(promoted or [])
+    by_ct = {}
+    for c in cards:
+        by_ct.setdefault(c.get("칸") or "", []).append(c)
 
-    ev = [_evidence(c) for c in cards] + [_evidence(c) for c in 승격]
+    ev = [_evidence(c) for c in cards]
     m = vd.get("시장_추정") or {}
     tam, sam = m.get("TAM_추정") or {}, m.get("SAM_추정") or {}
     gr = m.get("성장률_추정") or {}
@@ -327,10 +313,6 @@ def build_from(cv: dict, vd: dict, cd: dict, con: dict,
             if (c.get("칸") in ("COMP", "COMPARABLE") or c.get("계량") in ("매출액", "가입 매장 수"))]
     demand = [_evidence(c) for c in cards
               if c.get("칸") == "PAIN" or c.get("계량") == "문제 경험률"]
-    # 채널 — **슬롯 카드의 `칸` + 승격 카드의 `_절` 둘 다**에서 온다. 이 자리가 없으면
-    # 모델이 채널 칸을 쓸 재료를 입력에서 못 찾고, 프롬프트 §4 대로 `content=[]` 를 낸다.
-    channels = ([_evidence(c) for c in cards if c.get("칸") == "CHANNEL"]
-                + [_evidence(c) for c in 승격 if c.get("_절") == "CHANNEL"])
     prices = sorted(float(c["값"]) for c in cards
                     if c.get("칸") == "PRICE" and isinstance(c.get("값"), (int, float)))
     pa = PriceAnalysisData(currency="KRW")
@@ -369,7 +351,6 @@ def build_from(cv: dict, vd: dict, cd: dict, con: dict,
         competitor_analysis=comp,
         price_analysis=pa,
         demand_evidence=demand,
-        channel_analysis=channels,
         market_size_calculation=calc,
         missing_items=missing,
         evidence_list=ev,

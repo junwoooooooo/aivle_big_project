@@ -118,6 +118,6 @@ describe('가정 원장 — 합계 줄', () => {
   it('가정이 몇 개 곱해졌는지 결론 옆에 적는다', () => {
     const { container } = render(<AssumptionLedger market={market()} />);
     const foot = container.querySelector('.mr-ledger__t tfoot');
-    expect(within(foot).getByText(/가정이 \d+개 곱해진 추정이에요/)).toBeInTheDocument();
+    expect(within(foot).getByText(/가정이 \d+개 곱해진 추정이다/)).toBeInTheDocument();
   });
 });

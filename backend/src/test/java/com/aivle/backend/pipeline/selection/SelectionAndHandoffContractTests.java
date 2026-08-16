@@ -36,7 +36,7 @@ class SelectionAndHandoffContractTests {
 
     @Test
     void marketSeedSnapshotSchemaIsTheOnlyMarketInputContract() throws Exception {
-        JsonNode schema = mapper.readTree(Files.readString(Path.of("..", "docs", "legacy", "rebuild", "contracts", "market-analysis-seed-snapshot-v1.schema.json")));
+        JsonNode schema = mapper.readTree(Files.readString(Path.of("..", "docs", "rebuild", "contracts", "market-analysis-seed-snapshot-v1.schema.json")));
         Set<String> required = new HashSet<>();
         schema.path("required").forEach(node -> required.add(node.asText()));
         assertThat(schema.path("properties").path("contract").path("const").asText())

@@ -33,19 +33,6 @@ _SUBJECT = {
     "7_못찾은것": "NOT_FOUND",
 }
 
-#: 판 ㊸ — 절 체인이 새로 채우는 과목 셋. **엔진 `doc["과목"]` 에는 없다.**
-#: 성적은 「그 절에 실린 사실이 몇 건인가」에서 온다 — 새 판정을 만들지 않는다.
-#: ⚠ **판 ㊺ 로 이 줄이 거짓이 됐다 — 고쳐 적는다.**
-#:   옛 문장: 「목록 순서가 곧 화면 절 번호다」. **이제 아니다.** 화면 절 번호의 정본은
-#:   `frontEnd/.../marketResult.js` 의 **`SECTION_ORDER`**(9칸)이고, 성적표는 여전히
-#:   10과목을 보내되 화면이 그중 일곱만 목차에 세운다(성장률·계산은 1절 «안»으로 접혔다).
-#:   → **여기 순서를 바꿔도 화면 번호는 안 움직인다.** 화면을 바꾸려면 `SECTION_ORDER` 를 본다.
-_SECTION_SUBJECT = {
-    "CHANNEL": "어디서 팔리나 — 채널별 비중",
-    "UNIT_ECONOMICS": "한 개 팔면 얼마가 남나",
-    "REGULATION": "무엇을 지켜야 하나",
-}
-
 #: 근거 카드 한글 키 → 계약 키. **이 표가 evidence 의 allowlist 다** —
 #: 여기 없는 카드 칸(`슬롯`·`채택`·`연도`·`약한_고리` …)은 나가지 않는다.
 _EVIDENCE = {
@@ -55,15 +42,6 @@ _EVIDENCE = {
     "출처_url": "sourceUrl", "kind": "sourceKind", "조회일": "retrievedAt",
     "인용": "quote", "식": "formula", "입력": "inputs",
     "재료_카드_id": "materialIds", "가정": "assumptions",
-    # ── 판 ㊸ — 절 배치를 **서버 것으로** 만든다 ──────────────────
-    # 지금까지 「이 근거가 어느 과목이냐」는 프론트 `bucketEvidence` 가 다시 풀었고,
-    # 코드가 스스로 「분류를 여기서 다시 짜면 두 화면이 같은 근거를 다른 과목이라고
-    # 말한다」고 경고를 적어 뒀다. 답을 한 곳으로 옮긴다.
-    "_절": "section",          # 절 코드 (MARKET_SIZE · CHANNEL · …)
-    "_갈래": "placement",       # 게재 갈래 — 「상한으로만」 경계의 근거
-    "_발행사": "issuer",        # 발행사 이름. **두 회사의 표가 하나로 읽히는 것을 막는다**
-    "_표키": "tableKey",        # 어느 행이 한 표인가. 없으면 「합 100%」도 「⚠ 아니다」도 못 만든다
-    "_원문값": "raw",           # 원문 수 표기(`36,745억원`). 환산값만으로는 원문을 못 되짚는다
 }
 
 #: 카드가 경계를 담는 칸들. **하나라도 빠뜨리면 §4 위반**이다 — 경계는 값과 같이 옮긴다.
@@ -211,177 +189,43 @@ def evidence(cards: list[dict]) -> list[dict]:
         item["assumptions"] = _strings(item.get("assumptions"))
         item["caveats"] = caveats_of_card(card)
         for key in ("metric", "subject", "period", "unit",
-                    "sourceUrl", "sourceKind", "retrievedAt", "formula",
-                    "section", "placement", "issuer", "tableKey", "raw"):
+                    "sourceUrl", "sourceKind", "retrievedAt", "formula"):
             item[key] = str(item[key]) if item.get(key) is not None else None
         out.append(item)
     return out
 
 
-#: 경쟁사 지표로 읽는 계량. **프론트 `COMP_METRICS` 에서 옮겨 왔다** — 그 자리에
-#: 「봉투에 과목 필드가 생기면 이 표는 없어진다」고 적혀 있었고, 지금이 그때다.
-_COMPETITOR_METRICS = ("가입 매장 수", "누적 가입자 수", "매출액", "이용 요금", "월 활성 사용자")
-
-
-def assign_sections(items: list[dict], market: dict | None) -> None:
-    """**절이 안 붙은 근거**(슬롯 카드)에 절을 붙인다. 제자리에서 고친다.
-
-    승격 카드(`promote_cards`)는 이미 `section` 을 들고 온다 — 건드리지 않는다.
-    여기서 채우는 것은 슬롯 기반 카드뿐이고, 셈은 **프론트 `bucketEvidence` 가 하던 그대로**다.
-    옮긴 이유는 규칙을 바꾸려는 게 아니라 **답이 나는 자리를 하나로 만들려는** 것이다.
-
-    ⚠ `market` 을 알아야 풀 수 있어 `evidence()` 안에서 못 한다 — market 이 evidence 뒤에
-    만들어지기 때문이다. 그래서 조립하는 쪽이 둘 다 손에 쥔 뒤 부른다.
-    """
-    m = market or {}
-
-    def ids(*names) -> set:
-        out = set()
-        for name in names:
-            figure = m.get(name)
-            if isinstance(figure, dict):
-                out |= set(_strings(figure.get("evidenceIds")))
-        return out
-
-    size, grow, price = ids("tam", "sam", "som"), ids("growth"), ids("price")
-    for item in items:
-        if item.get("section"):
-            continue
-        if item.get("kind") == "계산":
-            item["section"] = "CALCULATION"
-        elif item.get("metric") in _COMPETITOR_METRICS:
-            item["section"] = "COMPETITOR"
-        elif item["id"] in price:
-            item["section"] = "PRICE"
-        elif item["id"] in size:
-            item["section"] = "MARKET_SIZE"
-        elif item["id"] in grow:
-            item["section"] = "GROWTH"
-        else:
-            # **「그 밖」은 수요가 아니다.** 지금까지 프론트가 그렇게 했고 그대로 옮기지만,
-            # 이것은 분류가 아니라 **나머지 통**이다. 다음 판이 볼 자리로 적어 둔다.
-            item["section"] = "DEMAND"
-
-
 # ══════════════════════════════════════════════════════════════
 # FULL — 성적표 · 시장
 # ══════════════════════════════════════════════════════════════
-def scorecard(doc: dict, section_counts: dict | None = None,
-              threshold: int = 3) -> list[dict]:
-    """10과목 **전부** 싣는다. 빠진 과목은 「미확보」가 아니라 「안 쟀다」로 읽힌다.
-
-    `section_counts` 는 절 체인이 센 「그 절에 실린 사실 수」다. 없으면(체인이 안 돈 실행)
-    새 세 과목은 **`MISSING` + 「이 실행은 절 조사를 돌리지 않았다」**로 나간다 —
-    **0건과 「안 쟀다」를 같은 말로 만들지 않는다.**
-    """
+def scorecard(doc: dict) -> list[dict]:
+    """7과목 **전부** 싣는다. 빠진 과목은 「미확보」가 아니라 「안 쟀다」로 읽힌다."""
     subjects = doc.get("과목") or {}
     out = []
     for korean, subject in _SUBJECT.items():
-        if subject == "NOT_FOUND":
-            out.extend(_section_rows(section_counts, threshold))
         row = subjects.get(korean) or {}
         state = _STATE.get(row.get("상태"))
         if state is None:
             raise ContractDrift(f"{korean} 상태가 계약 밖이다: {row.get('상태')!r}")
         out.append({"subject": subject, "state": state,
-                    "detail": _text(_곁들임(_detail(korean, row), subject, section_counts),
-                                    "세부 없음")})
+                    "detail": _text(_detail(korean, row), "세부 없음")})
     return out
-
-
-def _곁들임(detail: str, subject: str, counts: dict | None) -> str:
-    """슬롯 판정 줄에 **절 조사가 실은 사실 수**를 덧붙인다.
-
-    ⚠ **판정을 바꾸지 않는다.** `state` 는 슬롯 카드가 정한 그대로다 — 이 함수는
-    **말을 맞출 뿐**이다.
-
-    왜 필요한가(유료 스모크 실측 2026-08-15). 성적표 수요 줄이
-
-        5  수요  [미확보]  근거 0건 · 최고 등급 None        근거 13건 ▾
-
-    로 나갔다. 「0건」은 슬롯 카드의 수고 「13건」은 절 조사가 실은 수인데, 화면은 두
-    모집단을 모른 채 **한 줄에 두 수**를 찍었다. 사용자에게는 동시에 참일 수 없는 말이라
-    어느 쪽을 믿어도 손해다 — 배지를 믿으면 실린 13건을 버리고, 표를 믿으면 배지를
-    화면 고장으로 읽는다.
-
-    두 모집단을 **성적표에서 합치는 것은 설계 결정**이라 이 판에서 하지 않는다.
-    여기서는 **모순으로 보이지 않게 이름을 붙일 뿐**이다.
-    """
-    n = int((counts or {}).get(subject) or 0)
-    if not n:
-        return detail
-    return (f"{detail} · 절 조사가 실은 **정황 근거 {n}건**은 아래에 있다 "
-            f"— 위 판정을 세운 직접 근거는 아니다")
-
-
-def _section_rows(counts: dict | None, threshold: int) -> list[dict]:
-    """절 체인이 채우는 세 과목의 성적. **새 판정을 만들지 않는다** — 건수를 옮긴다."""
-    out = []
-    for code, what in _SECTION_SUBJECT.items():
-        if counts is None:
-            out.append({"subject": code, "state": "MISSING",
-                        "detail": "이 실행은 절 조사를 돌리지 않았다 — 0건이 아니라 «안 쟀다»다"})
-            continue
-        n = int(counts.get(code) or 0)
-        state = "FILLED" if n >= threshold else "PARTIAL" if n else "MISSING"
-        detail = (f"{what} — 실린 사실 {n}건" if n else
-                  f"{what} — **한 건도 못 구했다.** 8절 처방을 보라")
-        out.append({"subject": code, "state": state, "detail": detail})
-    return out
-
-
-def _what(row: dict, limit: int = 4) -> str:
-    """★ 판 ㊳ — **무엇을 세었는지** 한 줄에 붙인다.
-
-    건수만 보이면 「가격 확인됨 5건」이 참말처럼 읽힌다. 그 5건이 배달비·편의점 도시락이면
-    거짓말이고, 지금까지 그 사실은 화면 어디에도 없었다. 관련성 판정은 여기서 하지
-    않는다 — **이름을 드러내 사람이 알아보게** 한다.
-    """
-    items = [str(x) for x in (row.get("셈한_것") or []) if str(x).strip()]
-    if not items:
-        return ""
-    head = ", ".join(items[:limit])
-    more = f" 외 {len(items) - limit}종" if len(items) > limit else ""
-    return f" — {head}{more}"
 
 
 def _detail(korean: str, row: dict) -> str:
     """사람이 읽는 한 줄. **판정을 새로 하지 않고** 성적표가 이미 센 수를 옮기기만 한다."""
     if korean == "1_시장크기":
-        # ⚠ `등급` 은 리스트다. 그대로 f-string 에 넣으면 화면에 `['확정']` 이라는
-        #   **파이썬 코드 표기**가 뜬다(화면 감사 04). 사람 문장으로 편다.
-        등급 = ", ".join(_strings(row.get("등급"))) or "없음"
-        층 = row.get("층위")
-        겹 = (f"관측 {row.get('n')}건 → **층위 {층}개**"
-              if 층 is not None and 층 != row.get("n") else f"관측 {row.get('n')}건")
-        return f"시장 크기 {겹} · 등급 {등급}{_what(row)}"
+        return f"TAM 밑동 관측 {row.get('n')}건 · 등급 {row.get('등급')}"
     if korean == "2_성장률":
         return (f"{_num(row.get('값_퍼센트'), 2)}% · 갈래 {row.get('갈래')}"
                 " · 단순 증감률이며 CAGR 아님")
     if korean == "3_경쟁사":
         return f"URL 도메인 {row.get('n_url')}곳 — {', '.join(row.get('도메인') or []) or '없음'}"
     if korean == "4_가격":
-        return f"표시가격 {row.get('n')}건{_what(row)}"
+        return f"표시가격 {row.get('n')}건"
     if korean == "5_수요":
-        # ⚠ **파이썬 `None` 을 한국어 문장에 넣지 않는다.** 등급이 없으면 없다고 말한다 —
-        #   실측(유료 스모크): 「최고 등급 None」 이 그대로 화면에 앉았다.
-        등급 = row.get("최고_등급")
-        꼬리 = f" · 최고 등급 {등급}" if 등급 else " · 등급을 매길 근거가 없다"
-        return f"근거 {row.get('n')}건{꼬리}{_what(row)}"
+        return f"근거 {row.get('n')}건 · 최고 등급 {row.get('최고_등급')}"
     if korean == "6_계산":
-        # 값이 없으면 **없다고 말한다.** 예전에는 `TAM None원 · 가정 1개 명시` 로 나갔다.
-        if row.get("TAM") is None:
-            rng = row.get("범위") or None
-            if rng:
-                lo, hi = rng.get("하한"), rng.get("상한")
-                폭 = f"{_num(lo)} ~ {_num(hi)}원" if lo is not None else f"{_num(hi)}원 이하"
-                return (f"점 추정은 못 했고 **범위**만 냈다 — {폭}"
-                        f" (관측 점유율 {rng.get('근거_점유율_수')}건)")
-            층 = row.get("층위") or 0
-            if 층:
-                return (f"시장 크기를 계산하지 않는다 — 관측 {층}개 층위를 그대로 낸다 "
-                        f"(가정을 곱해 값을 만들지 않는다)")
-            return "시장 크기 관측 0건 — 낼 층위가 없다"
         return f"TAM {_num(row.get('TAM'))}원 · 가정 {row.get('가정수')}개 명시"
     # ⑦행. `건수` 는 이름과 달리 **원본 목록**을 담고 있다(`tools/scorecard.py`). 그대로 join
     # 하면 파이썬 repr 수백 자가 표 한 칸에 쏟아진다 — 갈래별 건수로 접는다.
@@ -444,45 +288,20 @@ def _figure(estimate: dict | None, unit: str, grade: str | None) -> dict | None:
     남는 것은 **표가 말할 수 없는 것**뿐이다(예: 「연평균이 아니다」·「과거 관측이다」).
     요인이 없는 옛 판정 출력은 `가정` 을 그대로 쓴다 — 그때는 표가 아예 없다.
     """
-    if not isinstance(estimate, dict):
+    if not isinstance(estimate, dict) or estimate.get("값") is None:
         return None
-    # ★ 판 ㊳ — **값이 없어도 분해표는 남긴다.**
-    #   값을 못 내는 것과 아무것도 모르는 것은 다르다. 「거래액 38.04조까지는 관측했고
-    #   점유율이 없어 시장 크기로 환산하지 못한다」가 사용자에게 줄 답이다.
-    #   예전에는 여기서 통째로 None 을 돌려줘 요인 표·근거·식이 전부 사라졌다.
-    #   ⚠ 계약은 이미 이것을 허용한다 — `value` 는 nullableNumber 이고
-    #     `GRADES` 에 「근거 없음」이 있다(Java `MarketResearchContract.java:38`).
-    if estimate.get("값") is None:
-        if not estimate.get("요인"):
-            return None            # 표도 없으면 정말 할 말이 없다
-        grade = grade or "근거 없음"
     if grade not in GRADES:
         raise ContractDrift(f"계산값 등급이 계약 밖이다: {grade!r}")
     factors = _factors(estimate.get("요인"))
-    raw = (estimate.get("값_퍼센트") if unit == "PERCENT_PER_YEAR"
-           else estimate.get("값"))
-    # **왜 값이 없는지**는 경계 문장으로 나간다. 빈 칸만 보내면 화면이 「조사를 안 했다」로 읽는다.
-    사유 = [s for s in (estimate.get("값_불가_사유"),) if s]
-    밑동 = estimate.get("관측된_밑동") or None
-    if 밑동 and 밑동.get("값") is not None:
-        사유.append(f"관측한 데까지: {밑동.get('이름')} {_num(밑동.get('값'))}"
-                   f"{(' ' + 밑동['단위']) if 밑동.get('단위') else ''}")
-    # ★ 판 ㊳ — 점 추정을 못 내도 **범위**는 낸다. 계약에 범위 칸이 없으므로 경계 문장으로.
-    rng = estimate.get("범위") or None
-    if rng:
-        lo, hi = rng.get("하한"), rng.get("상한")
-        폭 = (f"{_num(lo)} ~ {_num(hi)}" if lo is not None
-              else f"{_num(hi)} 이하")
-        사유.append(f"관측 점유율로 만든 범위: {폭}")
-        사유.extend(_strings(rng.get("읽는_법")))
     return {
-        "value": float(raw) if isinstance(raw, (int, float)) else None,
+        "value": float(estimate.get("값_퍼센트") if unit == "PERCENT_PER_YEAR"
+                       else estimate.get("값")),
         "unit": unit,
         "grade": grade,
         "formula": estimate.get("식") or None,
         "factors": factors,
-        "assumptions": _strings(사유 + list(estimate.get("해석_경계") or [])) if factors
-                       else _strings(사유 + list(estimate.get("가정") or [])),
+        "assumptions": _strings(estimate.get("해석_경계") if factors
+                                else estimate.get("가정")),
         "caveats": [],
         "evidenceIds": [f"C-{g.get('fact_id')}" for g in (estimate.get("근거") or [])
                         if isinstance(g, dict) and g.get("fact_id")],
@@ -728,19 +547,15 @@ def assert_caveats_reached(cells: list[dict], evidence_items: list[dict]) -> Non
                 f"{cell['canvasCell']} 이 인용한 근거의 경계가 칸에 없다: {sorted(missing)}")
 
 
-def bm(final, analysis, decision: str, gate_reasons: list[dict], handoff=None) -> dict:
+def bm(final, analysis, handoff=None) -> dict:
     """`BMFinalResult` + `BMAnalysisResult` → 계약 `bm`. 이름만 바꾼다 — 판정을 다시 안 한다.
 
     ⚠ **두 물건이 필요하다.** `marketFitStatus`·`consistencyStatus` 는 최종 결과가 아니라
       **핵심 판정**에 있다. 최종 결과에는 그 «요약 문장»만 실려 있어서, 하나만 받으면
       상태 칸을 채울 수 없다(그러려면 요약에서 되짚어야 하고 그건 추측이다).
-
-    `decision` 은 **게이트가 내린 뒤의** 값을 받는다. 여기서 다시 재지 않는 이유는 위와 같다 —
-    이 함수는 이름만 바꾸는 자리다. 판정은 `app.validation.gate` 가 하고 부른 쪽이 넘긴다.
     """
     return {
-        "decision": decision,
-        "gateReasons": [dict(reason) for reason in gate_reasons],
+        "decision": final.decision.value,
         "confidence": final.confidence,
         "summary": _text(final.summary, "요약 없음"),
         "marketFitStatus": analysis.market_fit_status,
@@ -793,113 +608,7 @@ def summary_lines(doc: dict | None, evidence_ids: set[str]) -> list[dict] | None
 #: 그래야 봉투를 `exact()` 한 번으로 못박을 수 있다.
 ENVELOPE = ("runId", "conceptId", "asOf", "generatedAt", "mode",
             "stages", "degradations",
-            "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes",
-            # ── 판 ㊸ — 사람 보고서의 2·8·9절 ─────────────────────
-            "judgment", "prescriptions", "synthesis",
-            # ── 판 ㊻ — **사람이 읽는 보고서 글** ─────────────────
-            # 사실(evidence[])만 실으면 화면은 표밖에 못 그린다. 목표 보고서는 절마다
-            # 여는 문장·소제목·표·설명 문단이 있고, 그 «글»이 여기로 실린다.
-            # **`null` 이어도 나머지 화면은 그대로 돈다** — 프론트가 물러설 수 있게.
-            "report")
-
-
-#: 보고서 글이 설 수 있는 절. 앞 일곱은 **evidence 의 `_절` 과 같은 어휘다** — 새 이름을
-#: 만들면 화면이 글과 근거를 같은 절에 못 세운다.
-#: 뒤 둘은 보고서의 꼬리다 — `GAPS` 8절(못 구한 것) · `SYNTHESIS` 9절(이 조사가 말하는 것).
-#: ⚠ 봉투의 `prescriptions`·`synthesis` 와 **다른 물건이다.** 저쪽은 기계가 원장에서 뽑은
-#:   값이고 이쪽은 모델이 쓴 «글»이다. 한쪽으로 합치면 「기계가 판정했다」가 흐려진다.
-REPORT_SECTIONS = ("MARKET_SIZE", "PRICE", "COMPETITOR", "CHANNEL", "DEMAND",
-                   "UNIT_ECONOMICS", "REGULATION", "GAPS", "SYNTHESIS")
-
-
-def report(doc: dict | None) -> dict | None:
-    """`write_report.build()` 산출 → 계약. **번역만 한다 — 세지도 자르지도 않는다.**
-
-    `unverifiedNumbers`(유령 수)·`conceptLeaks`(컨셉 누출)는 도구가 이미 센 값이다.
-    ⚠ **이 둘을 떨어뜨리지 마라.** 화면이 이걸로 「이 글의 수 몇 개는 조사 결과가 아니다」를
-      경고한다 — 경계 표시다.
-    ⚠ `lead` 도 경계 표시다 — 재료가 무엇이고 누가 썼는지가 거기 적혀 있다.
-      **글만 떼어 그리면 모델이 쓴 문장이 조사 결과로 읽힌다.**
-    """
-    if not doc:
-        return None
-    sections = []
-    for row in doc.get("절") or []:
-        code, markdown = row.get("section"), (row.get("본문") or "").strip()
-        if not markdown:
-            continue
-        if code not in REPORT_SECTIONS:
-            raise ContractDrift(f"보고서 절이 계약 밖이다: {code!r}")
-        sections.append({"subject": code, "markdown": markdown})
-    if not sections:
-        return None
-    return {"writtenBy": _text(doc.get("쓴_모델"), "모델 미상"),
-            "unverifiedNumbers": int(doc.get("유령_수") or 0),
-            "conceptLeaks": int(doc.get("컨셉_누출_수") or 0),
-            "lead": (doc.get("머리말") or "").strip() or None,
-            "tail": (doc.get("꼬리말") or "").strip() or None,
-            "sections": sections}
-
-
-def judgment(doc: dict | None) -> dict | None:
-    """2절 **가격 판단**. `judge_lines.build()` 산출 → 계약.
-
-    ⚠ **계산식만 실으면 반쪽이다.** 사업가가 사는 것은 「1.37배」가 아니라 「그래서 어느 쪽으로
-    팔라」이고, 그 문장은 기계가 계산된 부호에서 뽑는다. `conclusion` 을 빼지 마라.
-    """
-    price = (doc or {}).get("가격") or {}
-    if not price:
-        return None
-    lines = []
-    for g in price.get("갈래") or []:
-        lines.append({
-            "what": _text(g.get("무엇"), "무엇 없음"),
-            "sentence": g.get("문장") or None,
-            "formula": g.get("계산") or None,
-            # **못 쓴 이유도 값이다**(절대규칙 5). 침묵을 「해당 없음」으로 읽히게 두지 않는다.
-            "silentBecause": g.get("왜_못_쓰나") or None,
-            # ⚠ **연도를 뗀 근거는 오늘 값처럼 읽힌다.** 실측: 「배달 한 끼 8,244원」의
-            #    자장면값이 2018년인데 결론 문장에는 그 사실이 없었다.
-            "sources": [{"raw": f"{s.get('number_raw')}{s.get('unit_raw') or ''}",
-                         "subject": _text(s.get("subject"), "무엇의 수인지 미상"),
-                         "period": str(s["year"]) if s.get("year") else None,
-                         "url": _text(s.get("_url"), "")}
-                        for s in (g.get("근거") or [])],
-        })
-    정가 = price.get("정가")
-    return {"price": float(정가) if isinstance(정가, (int, float)) else None,
-            "lines": lines,
-            "conclusion": price.get("결론") or None}
-
-
-def prescriptions(rows: list | None) -> list[dict] | None:
-    """8절 **처방** — 「무엇을 못 구했나 / 왜 / 어디서」."""
-    if not rows:
-        return None
-    return [{"section": _text(r.get("절"), "UNKNOWN"),
-             "kind": _text(r.get("갈래"), "UNKNOWN"),
-             "kindLabel": _text(r.get("갈래말"), "갈래 없음"),
-             "what": _text(r.get("진단"), "진단 없음"),
-             "why": _text(r.get("왜"), "사유 없음"),
-             "where": _text(r.get("어디서"), "어디서 구할지 미기록")}
-            for r in rows]
-
-
-def synthesis(doc: dict | None) -> list[dict] | None:
-    """9절 **지지 / 흔듦**. 검사에서 **버려진 문장은 안 싣는다** — 버린 것을 화면에 올리면
-    「검사를 했다」가 「검사를 통과했다」로 읽힌다."""
-    lines = [x for x in ((doc or {}).get("문장") or []) if x.get("문장")]
-    if not lines:
-        return None
-    return [{"key": _text(x.get("키"), "키 없음"),
-             "stance": _text(x.get("갈래"), "미상"),
-             "sentence": _text(x.get("문장"), ""),
-             "what": _text(x.get("무엇"), ""),
-             "sources": [{"raw": f"{s.get('number_raw')}{s.get('unit_raw') or ''}",
-                          "subject": _text(s.get("subject"), "무엇의 수인지 미상"),
-                          "period": str(s["year"]) if s.get("year") else None}
-                         for s in (x.get("근거") or [])]}
-            for x in lines]
+            "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes")
 
 NOTES_FULL = (
     "등급은 evidence[].grade 에 있다. 값만 떼어 쓰면 추정이 확정처럼 읽힌다.",
@@ -910,8 +619,6 @@ NOTES_FULL = (
 NOTES_BM = (
     "칸의 caveats 는 인용한 근거에서 기계가 파생한 것이다 — 모델이 쓴 문장이 아니다.",
     "content 만 떼어 쓰면 경계가 사라진다. 값과 같은 자리에 두어라.",
-    "gateReasons[].cause 가 UNCOLLECTED 이면 컨셉을 고쳐도 안 고쳐진다 — 재수집이 답이고, "
-    "그래도 없으면 「미확보」로 확정하고 멈춘다.",
 )
 
 

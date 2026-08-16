@@ -1,6 +1,6 @@
 import BmCanvas from './BmCanvas.jsx';
 import { CANVAS_LAYOUT, CELL_KIND } from './marketResult.js';
-import { LIST_FIELDS, PLAN_CELL, PLAN_FIELDS } from '../concept-portfolio/bmPlan.js';
+import { LIST_FIELDS, PLAN_CELL, PLAN_FIELDS } from './bmPlan.js';
 
 /**
  * 타이핑하는 대로 차는 캔버스.

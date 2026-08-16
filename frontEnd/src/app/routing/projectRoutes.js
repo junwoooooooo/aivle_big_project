@@ -17,10 +17,7 @@ export const projectRoutes = Object.freeze({
   legalReport: (projectId) => `${projectBase(projectId)}/concepts/legal-report`,
   market: (projectId) => `${projectBase(projectId)}/market`,
   businessModel: (projectId) => `${projectBase(projectId)}/business-model`,
-  conceptRefinement: (projectId) => `${projectBase(projectId)}/concept-refinement`,
-  marketInterview: (projectId) => `${projectBase(projectId)}/market-interview`,
-  // 출시 준비는 팀원 판(#49)을 그대로 받는다. techOps·finance 는 그 화면의 다른 초점으로
-  // 들어가므로 «옛 경로 이름은 남기되 목적지는 하나»다 — 부르는 곳을 안 고쳐도 된다.
+  twinSurvey: (projectId) => `${projectBase(projectId)}/twin-survey`,
   launchReadiness: (projectId) => `${projectBase(projectId)}/launch-readiness`,
   launchReadinessReport: (projectId, reportType, modules = []) => {
     const route = `${projectBase(projectId)}/launch-readiness/reports/${encodeURIComponent(reportType)}`;

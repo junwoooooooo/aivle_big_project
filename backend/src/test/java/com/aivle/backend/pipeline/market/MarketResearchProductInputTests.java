@@ -52,9 +52,7 @@ class MarketResearchProductInputTests {
         assertThat(concept.path("hypotheses")).isEmpty();
         assertThat(concept.path("_계열").path("계열").asText()).isEqualTo("C");
         assertThat(concept.path("_다듬기5").path("4_업종_분류").has("코드")).isFalse();
-        // 90 → 500 (2026-08-16 병합). 90 이면 _collect 가 83 을 태우고 **절 체인이 통째로
-        // 건너뛰어져** judgment·prescriptions·synthesis 가 전부 null 로 나온다.
-        assertThat(input.path("llmBudget").asInt()).isEqualTo(500);
+        assertThat(input.path("llmBudget").asInt()).isEqualTo(90);
     }
 
     @Test

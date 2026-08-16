@@ -6,7 +6,7 @@ import { ProjectOverviewPage } from './ProjectModulePages.jsx';
 
 const journeys = [
   ['planning', '사업 기획', 'READY'], ['validation', '사업 검증', 'NOT_STARTED'],
-  ['launch', '출시 준비', 'NOT_STARTED'], ['interview', '시장 인터뷰', 'NOT_STARTED'],
+  ['launch', '출시 준비', 'NOT_STARTED'], ['interview', '가상 인터뷰', 'NOT_STARTED'],
   ['marketingStrategy', '마케팅 전략', 'NOT_STARTED'], ['finalReport', '최종 보고서', 'NOT_STARTED'],
 ].map(([id, shortLabel, status]) => ({ id, shortLabel, label: shortLabel, status, href: `/app/projects/41/${id}` }));
 

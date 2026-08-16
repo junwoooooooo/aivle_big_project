@@ -9,7 +9,7 @@ import tools.jackson.databind.ObjectMapper;
 
 class MarketResultSchemaTests {
     @Test void schemaRequiresEvidenceBackedCompetitorsAndExcludesPlanningChanges() throws Exception {
-        Path schemaPath = Path.of("..", "docs", "legacy", "rebuild", "contracts", "market-analysis-result-v1.schema.json");
+        Path schemaPath = Path.of("..", "docs", "rebuild", "contracts", "market-analysis-result-v1.schema.json");
         var schema = new ObjectMapper().readTree(Files.readString(schemaPath));
         var competitorRequired = schema.path("properties").path("competitors").path("items").path("required");
         assertThat(competitorRequired.toString()).contains("sourceReferences", "verificationStatus", "officialUrl");

@@ -156,8 +156,5 @@ def test_run_bm_analysis_logs_validation_once_and_preserves_failure(caplog):
             ))
 
     assert caught.value is failure
-    # 호출은 **2회**다 — 9칸을 못 맞추면 `analyze._REASK_ONCE` 로 한 번만 더 묻는다.
-    # 진단은 그래도 **한 번만** 남는다(재요청까지 실패한 뒤에 찍는다). 이 테스트가 재는 것은
-    # 「진단이 한 번인가」이지 「호출이 한 번인가」가 아니다.
-    assert client.responses.calls == 2
+    assert client.responses.calls == 1
     assert caplog.text.count("BM schema validation failed") == 1

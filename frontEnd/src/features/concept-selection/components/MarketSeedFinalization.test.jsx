@@ -22,6 +22,6 @@ describe('MarketSeedFinalization', () => {
       snapshot={{ snapshotId: 'seed-1', schemaVersion: '2.0', snapshotHash: `sha256:${'a'.repeat(64)}`, createdAt: '2026-08-08T00:00:00Z' }}
       finalizing={false} onFinalize={onFinalize} /></MemoryRouter>);
     expect(screen.getByText('seed-1')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '시장분석으로 이동' })).toHaveAttribute('href', '/app/projects/7/business-validation');
+    expect(screen.getByRole('link', { name: '시장분석으로 이동' })).toHaveAttribute('href', '/app/projects/7/market');
   });
 });

@@ -12,10 +12,7 @@ export function ProjectWorkspace({ as: Element = 'div', mode = PROJECT_WORKSPACE
 export function ProjectStageHeader({ step, eyebrow, title, titleId, description, status, actions, className = '' }) {
   return <header className={`project-stage-header ${className}`}>
     <div className="project-stage-header__context">
-      {/* ⚠ 「N단계」가 아니라 「N번째」다. 이 숫자는 **여정 안에서** 1부터 세는 소제목 번호이고
-          (2026-08-16 사용자 지시), 큰 단계는 여정 1~6 뿐이다. 「1단계」라고 읽어 주면
-          화면 낭독기 쓰는 사람에게 여정 번호와 뒤섞인다. */}
-      {step != null && <span className="project-stage-header__step" aria-label={`${step}번째`}>{step}</span>}
+      {step != null && <span className="project-stage-header__step" aria-label={`${step}단계`}>{step}</span>}
       <div>{eyebrow && <p>{eyebrow}</p>}<h1 id={titleId}>{title}</h1>{description && <span>{description}</span>}</div>
     </div>
     {(status || actions) && <div className="project-stage-header__aside">{status}{actions}</div>}

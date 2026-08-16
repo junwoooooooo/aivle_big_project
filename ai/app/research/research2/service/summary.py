@@ -58,19 +58,12 @@ PROMPT = """너는 시장조사 결과를 **사실 그대로 요약**한다.
 """
 
 
-#: 모델은 발췌(`tools/read_sections.py`)와 같은 것을 쓴다 — 지점마다 모델이 갈리면
-#: 비용·품질 비교가 안 된다. 발췌가 판 ㊺ 에 루나로 갔고 여기가 안 따라가 **그 규칙이
-#: 한동안 깨져 있었다**(판 ㊾ 에서 맞춤).
-SUMMARY_MODEL = "gpt-5.6-luna"
+#: 모델은 발췌와 같은 것을 쓴다 — 지점마다 모델이 갈리면 비용·품질 비교가 안 된다.
+SUMMARY_MODEL = "gpt-4o-mini"
 #: **온도를 고정한다** (판 ㉜ ①). 요약은 창작이 아니라 카드 옮겨 적기이므로 흔들릴 이유가 없고,
 #  흔들리면 「검사를 통과할 때까지 다시 부르기」가 **재시도가 아니라 뽑기**가 된다.
 #  ⚠ 0 이 아니라 0.2 인 이유: 완전 고정은 한 번 막히면 **세 번 다 같은 문장**이 나와
 #  재시도가 무의미해진다(판 ㉛ 에서 A 가 3회 연속 같은 자리에서 죽었다).
-#
-#  ⚠⚠ **추론 모델에는 이 값이 안 나간다** — `runlog.call_options` 가 뺀다(400 이라서).
-#  그러면 위 「완전 고정」 걱정은 저절로 사라지지만(추론이 판마다 갈린다), **의도한 0.2 가
-#  아니라 기본값 1.0 으로 도는 것**임을 알고 있어야 한다. 재시도가 뽑기가 되지 않게
-#  막는 것은 이제 온도가 아니라 `summary_check` 의 검사다.
 SUMMARY_TEMPERATURE = 0.2
 
 
@@ -84,13 +77,8 @@ def _call(prompt: str) -> tuple:
     from base import load_env_key                                  # noqa: E402
     os.environ.setdefault("OPENAI_API_KEY", load_env_key("OPENAI_API_KEY") or "")
     from openai import OpenAI                                      # noqa: E402
-    from runlog import call_options                                # noqa: E402
-    # ⚠ 온도는 `call_options` 가 정한다 — 추론 모델이면 빼야 400 이 안 난다.
-    #   위 `SUMMARY_TEMPERATURE` 는 **추론 모델이 아닐 때만** 실제로 나간다.
-    options = call_options(SUMMARY_MODEL)
-    if "temperature" in options:
-        options["temperature"] = SUMMARY_TEMPERATURE
-    r = OpenAI().responses.create(model=SUMMARY_MODEL, input=prompt, **options)
+    r = OpenAI().responses.create(model=SUMMARY_MODEL, input=prompt,
+                                  temperature=SUMMARY_TEMPERATURE)
     u = getattr(r, "usage", None)
     return (r.output_text or ""), {"in": getattr(u, "input_tokens", 0) or 0,
                                    "out": getattr(u, "output_tokens", 0) or 0}

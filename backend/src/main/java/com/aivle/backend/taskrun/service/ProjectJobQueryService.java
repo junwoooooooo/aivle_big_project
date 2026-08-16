@@ -153,21 +153,14 @@ public class ProjectJobQueryService {
             case MARKETING_CONTENT_GENERATION, MARKETING_VISUAL_GENERATION -> JobModule.MARKETING;
             case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
                 ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
-            // 사업 검증(한 실행)은 시장 분석 탭이 대표한다 — 여정 2번 안에서 시작하는 일이다.
-            case BUSINESS_VALIDATION -> JobModule.MARKET;
             case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.TWIN;
-            // ⚠ 여정 4번을 「시장 인터뷰」로 바꾸는 것은 3판이다. 지금은 백엔드만 있고
-            //    프론트 라우트(`/market-interview`)가 아직 없다.
-            case MARKET_INTERVIEW -> JobModule.MARKET_INTERVIEW;
         };
     }
 
     private enum JobModule {
         IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
         MARKET("/market"), BUSINESS_MODEL("/business-model"), TWIN("/twin-survey"),
-        MARKET_INTERVIEW("/market-interview"),
-        TECH_OPS("/tech-ops"), FINANCE("/finance"), LAUNCH_READINESS("/launch-readiness"),
-        MARKETING("/marketing");
+        TECH_OPS("/tech-ops"), FINANCE("/finance"), LAUNCH_READINESS("/launch-readiness"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }
     }

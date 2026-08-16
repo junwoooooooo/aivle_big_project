@@ -31,10 +31,6 @@ class InternalAiExecutionClientRoutingTests {
         assertThat(client.clientFor(TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION)).isSameAs(conceptRead);
         assertThat(client.clientFor(TaskType.TWIN_SURVEY)).isSameAs(twinRead);
         assertThat(client.clientFor(TaskType.MARKET_RESEARCH)).isSameAs(marketRead);
-        // 사업 검증은 FULL+BM 을 한 실행으로 잇는다 — 시장조사와 같은 긴 예산을 쓴다.
-        assertThat(client.clientFor(TaskType.BUSINESS_VALIDATION)).isSameAs(marketRead);
-        // 시장 인터뷰는 뒤에 전수를 한 프롬프트에 넣는 주제 코딩 1회가 붙는다.
-        assertThat(client.clientFor(TaskType.MARKET_INTERVIEW)).isSameAs(twinRead);
         assertThat(client.clientFor(TaskType.MARKETING_CONTENT_GENERATION)).isSameAs(longRead);
         assertThat(client.clientFor(TaskType.TECH_OPS_ADVISORY)).isSameAs(longRead);
         assertThat(client.clientFor(TaskType.FINANCE_ESTIMATE)).isSameAs(normal);
@@ -42,7 +38,7 @@ class InternalAiExecutionClientRoutingTests {
         assertThat(client.clientFor(TaskType.IDEA_BRIEF_DERIVATION)).isSameAs(normal);
         assertThat(properties.readTimeout()).isEqualTo(Duration.ofSeconds(30));
         assertThat(properties.longReadTimeout()).isEqualTo(Duration.ofMinutes(7));
-        assertThat(properties.marketResearchReadTimeout()).isEqualTo(Duration.ofMinutes(63));
+        assertThat(properties.marketResearchReadTimeout()).isEqualTo(Duration.ofMinutes(22));
         assertThat(properties.conceptPortfolioReadTimeout()).isEqualTo(Duration.ofMinutes(15));
         assertThat(properties.twinSurveyReadTimeout()).isEqualTo(Duration.ofMinutes(14));
     }

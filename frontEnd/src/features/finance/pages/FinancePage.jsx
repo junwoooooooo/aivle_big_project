@@ -1,7 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
-import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import { ProjectSplitWorkspace, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import useFinance from '../hooks/useFinance.js';
 import {
@@ -56,7 +55,7 @@ function FinanceWorkspace({ projectId, finance }) {
   const refreshContainer = () => void finance.refresh({ preserveView: true });
 
   return <FinanceRefreshContext.Provider value={refreshContainer}><ProjectWorkspace as="main" mode="compose" className="finance-page">
-    <ProjectStageHeader step={2} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
+    <ProjectStageHeader step={6} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
       description="최신 시장 분석과 수익 구조를 바탕으로 핵심 비용·가격·매출 목표와 세부 가정을 정리합니다."
       status={<div className="finance-statuses" aria-label="재무 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
@@ -176,9 +175,9 @@ function FinanceWorkspace({ projectId, finance }) {
     {finance.analysis?.stale && <p className="finance-warning" role="status">앞 단계의 입력이 바뀌어 재무 결과를 업데이트해야 합니다. 입력을 다시 저장해 주세요.</p>}
     {finance.analysis?.safeErrorCode && !finance.analysis?.result && <div className="finance-error" role="alert"><p>재무 보고서를 만들지 못했습니다.{finance.analysis.retryable ? ' 잠시 후 다시 시도해 주세요.' : ' 입력 내용을 확인해 주세요.'}</p><details><summary>기술 정보</summary><p>{finance.analysis.safeErrorCode}</p></details></div>}
     <AnalysisReport analysis={finance.analysis} />
-    {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 시장 인터뷰</p>
-      <h2>재무 판단 다음으로 컨셉이 어떻게 읽히는지 확인하세요.</h2><span>컨셉보드를 확정하고 인터뷰 응답의 이해도·차별점 인식을 언급 수로 확인합니다. 가설이며 실제 고객 응답이 아닙니다.</span></div>
-      <Link to={projectRoutes.marketInterview(projectId)}>다음 - 시장 인터뷰</Link></section>}
+    {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 트윈 패널 조사</p>
+      <h2>재무 판단 다음으로 고객 선택 방향을 패널에서 확인하세요.</h2><span>확정 Concept의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.</span></div>
+      <Link to={`/app/projects/${projectId}/twin-survey`}>다음 - 트윈 패널 조사</Link></section>}
   </ProjectWorkspace></FinanceRefreshContext.Provider>;
 }
 

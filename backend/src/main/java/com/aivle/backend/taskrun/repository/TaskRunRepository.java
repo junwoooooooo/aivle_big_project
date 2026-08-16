@@ -29,14 +29,6 @@ public interface TaskRunRepository extends JpaRepository<TaskRun, String> {
     Optional<TaskRun> findOwned(@Param("ownerId") Long ownerId, @Param("projectId") Long projectId, @Param("id") String id);
 
     Optional<TaskRun> findByProjectIdAndIdempotencyScopeAndIdempotencyKey(Long projectId, String idempotencyScope, String idempotencyKey);
-    /**
-     * 한 논리 단위(예: 다듬기 라운드 1)에 걸린 실행을 <b>시도 순서대로</b> 모두 준다.
-     *
-     * <p>멱등키가 같으면 새 실행이 서지 않으므로, 재시도는 키 뒤에 시도 번호를 붙여 만든다.
-     * 「몇 번째 시도까지 갔나」를 세려면 접두사로 훑는 수밖에 없다.
-     */
-    List<TaskRun> findByProjectIdAndIdempotencyScopeAndIdempotencyKeyStartingWithAndDeletedAtIsNullOrderByCreatedAtAsc(
-        Long projectId, String idempotencyScope, String idempotencyKeyPrefix);
     Optional<TaskRun> findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndInputHashAndStateIn(
         Long projectId, com.aivle.backend.taskrun.domain.TaskType taskType, String subjectType,
         String subjectId, String inputHash, List<TaskRunState> states);

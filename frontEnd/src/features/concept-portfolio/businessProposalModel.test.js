@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
-  candidateFieldOptions, candidateRequests, comparisonRows, hypothesisDecisionLabel,
-  createCandidateDraft, hypothesisDisplay, portfolioRunPresentation, serializeCandidateFact,
+    buildProposalPreview, businessDecisionReachability, businessDecisionStage, canOpenComparison, candidateFieldOptions,
+  candidateRequests, comparisonRows, hypothesisDecisionLabel, createCandidateDraft,
+  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
   serializeCandidateFacts, toggleComparedConcept,
 } from './businessProposalModel.js';
 
@@ -44,17 +45,38 @@ describe('candidate input strict contract', () => {
 });
 
 describe('proposal comparison and structured SOM', () => {
-  it('keeps comparison to three and uses actual candidate and legal fields', () => {
-    expect(toggleComparedConcept(['a', 'b', 'c'], 'd')).toEqual(['a', 'b', 'c']);
-    const rows = comparisonRows([{ conceptId: 'a', candidate: { targetUsers: ['소상공인'], paymentFlow: ['고객→플랫폼'] }, legalReview: { safeSummary: '중개 고지 필요' } },
-      { conceptId: 'b', candidate: { targetUsers: ['창업자'], paymentFlow: ['고객→판매자'] }, legalReview: { safeSummary: '판매자 책임' } }]);
-    expect(rows.find((row) => row.label === '주요 사용자').values).toEqual(['소상공인', '창업자']);
-    expect(rows.find((row) => row.label === '결제 흐름').values).toEqual(['고객→플랫폼', '고객→판매자']);
-    expect(rows.find((row) => row.label === '선택 전 법률·규제 요약').values).toEqual(['중개 고지 필요', '판매자 책임']);
+  it('comparison contract is exactly two and excludes legal details', () => {
+    expect(toggleComparedConcept([], 'a')).toEqual(['a']);
+    expect(toggleComparedConcept(['a'], 'b')).toEqual(['a', 'b']);
+    expect(toggleComparedConcept(['a', 'b'], 'c')).toEqual(['a', 'b']);
+    expect(toggleComparedConcept(['a', 'b'], 'a')).toEqual(['b']);
+    expect([0, 1, 2, 3].map((count) => canOpenComparison(Array.from({ length: count })))).toEqual([false, false, true, false]);
+    const rows = comparisonRows([{ conceptId: 'a', candidate: { targetUsers: ['소상공인'], revenueModel: '구독' } },
+      { conceptId: 'b', candidate: { targetUsers: ['창업자'], revenueModel: '수수료' } }]);
+    expect(rows.find((row) => row.label === '주요 고객').values).toEqual(['소상공인', '창업자']);
+    expect(rows.find((row) => row.label === '수익 방식').values).toEqual(['구독', '수수료']);
+    expect(rows.some((row) => row.label.includes('법률'))).toBe(false);
+  });
+  it('builds candidate-specific preview from existing fields with fallback', () => {
+    const concepts = [
+      { conceptId: 'a', summary: '같은 요약', candidate: { targetUsers: ['매장'], revenueModel: '월 구독', coreValue: '자동화' } },
+      { conceptId: 'b', summary: '같은 요약', candidate: { targetUsers: ['고객'], revenueModel: '거래 수수료', coreValue: '자동화' } },
+      { conceptId: 'c', summary: '같은 요약', candidate: { targetUsers: ['파트너'], revenueModel: '광고', coreValue: '자동화' } },
+    ];
+    expect(buildProposalPreview(concepts[0], concepts).highlights).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: '주요 고객', value: '매장' }),
+      expect.objectContaining({ label: '수익 방식', value: '월 구독' }),
+    ]));
+    expect(buildProposalPreview(concepts[0], concepts).highlights).toHaveLength(3);
+    expect(buildProposalPreview({ summary: 'fallback', candidate: { coreValue: '가치' } }, []).highlights[0])
+      .toMatchObject({ label: '핵심 가치', value: '가치' });
   });
   it('formats structured SOM without exposing JSON', () => {
     expect(hypothesisDisplay('PRE_MARKET_SOM_SHARE', { targetSharePercent: 2.5, horizonYears: 3 })).toBe('2.5% · 3년');
     expect(hypothesisDisplay('PRE_MARKET_SOM', { amount: 240000000, currency: 'KRW', period: '3년' })).toBe('240,000,000 KRW · 3년');
+    expect(formatKoreanCurrencyAmount(50000000, 'KRW')).toBe('5천만 원');
+    expect(formatKoreanCurrencyAmount(125000000, 'USD')).toBe('1억 2천5백만 달러');
+    expect(formatKoreanCurrencyAmount(1_000_020_000_000, 'EUR')).toBe('1조 2천만 유로');
   });
 });
 
@@ -70,12 +92,45 @@ describe('hypothesis provenance', () => {
     expect(buildHypothesisChanges(hypotheses, {})).toEqual({});
   });
   it('uses actual accepted statuses and user-facing locked copy', () => {
-    expect(hypothesisDecisionLabel({ decisionStatus: 'ACCEPTED' })).toBe('확인됨');
-    expect(hypothesisDecisionLabel({ decisionStatus: 'USER_EDITED_ACCEPTED' })).toBe('확인됨');
-    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('제안값');
-    expect(hypothesisDecisionLabel({ locked: true })).toBe('확정된 사업 조건');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'ACCEPTED' })).toBe('확인 완료');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'USER_EDITED_ACCEPTED' })).toBe('확인 완료');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('AI가 제안한 값');
+    expect(hypothesisDecisionLabel({ locked: true })).toBe('확정된 값');
   });
   it('contains exactly seven validation assumptions', () => expect(HYPOTHESIS_TYPES).toHaveLength(7));
+});
+
+describe('decision flow and legal grouping', () => {
+  it('derives the presentation stage only from backend selection state', () => {
+    expect(businessDecisionStage(null)).toBe('PROPOSAL_SELECTION');
+    expect(businessDecisionStage({ status: 'PENDING_HYPOTHESIS_CONFIRMATION' })).toBe('BUSINESS_BASIS');
+    expect(businessDecisionStage({ status: 'READY_FOR_LEGAL_REPORT' })).toBe('BUSINESS_BASIS');
+    expect(businessDecisionStage({ status: 'LEGAL_REPORT_READY' })).toBe('LEGAL_REVIEW');
+    expect(businessDecisionStage({ status: 'READY_FOR_MARKET' })).toBe('VALIDATION_PREP');
+  });
+  it('서버 데이터에서 조회 가능한 Decision 단계를 결정한다', () => {
+    expect(businessDecisionReachability({ concepts: [{}] })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: false, LEGAL_REVIEW: false, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'PENDING_HYPOTHESIS_CONFIRMATION' } })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: false, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'LEGAL_REPORT_READY' }, report: {} })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: true, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'READY_FOR_MARKET' }, report: {} })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: true, VALIDATION_PREP: true });
+  });
+  it('maps every legal status without exposing raw enums', () => {
+    expect(['IMPLEMENTABLE', 'IMPLEMENTABLE_WITH_CONTROLS', 'NEEDS_FACTS', 'REDESIGNABLE', 'REJECTED'].map(legalStatusLabel)).toEqual([
+      '현재 조건으로 진행 가능', '필요한 조치를 반영하면 진행 가능', '추가 정보 확인 필요', '일부 구조 조정 후 진행 가능', '현재 형태로 진행하기 어려움',
+    ]);
+  });
+  it('groups by normalized law name, deduplicates articles, and preserves source fields', () => {
+    const evidence = [
+      { lawName: ' 개인정보 보호법 ', articleReference: '제15조', officialSourceUri: 'https://law/15', boundedProvisionSummary: '수집·이용', effectiveDate: '2025-01-01', contentHash: 'h15' },
+      { lawName: '개인정보 보호법', articleReference: '제17조', officialSourceUri: 'https://law/17', boundedProvisionSummary: '제공', contentHash: 'h17' },
+      { lawName: '개인정보 보호법', articleReference: '제17조', officialSourceUri: 'https://law/17', boundedProvisionSummary: '제공', contentHash: 'h17' },
+      { lawName: '전자상거래법', articleReference: '제13조', officialSourceUri: 'https://law/e13' },
+    ];
+    const groups = groupLegalEvidence(evidence);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].articles).toHaveLength(2);
+    expect(groups[0].articles[1]).toMatchObject({ articleReference: '제17조', officialSourceUri: 'https://law/17', contentHash: 'h17' });
+  });
 });
 
 describe('portfolio run presentation', () => {

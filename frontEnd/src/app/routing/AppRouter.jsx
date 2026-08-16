@@ -13,8 +13,7 @@ import { BusinessProposalWorkspace } from '../../features/concept-portfolio/inde
 import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
 import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
 import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
-import ConceptRefinementPage from '../../features/market/ConceptRefinementPage.jsx';
-import MarketInterviewPage from '../../features/market-interview/MarketInterviewPage.jsx';
+import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import LaunchReadinessReportPage from '../../features/launch-readiness/pages/LaunchReadinessReportPage.jsx';
@@ -80,10 +79,7 @@ export default function AppRouter() {
             <Route path="concepts/legal-report" element={<LegalRegulatoryReportPage />} />
             <Route path="market" element={<MarketResearchPage />} />
             <Route path="business-model" element={<BmCanvasPage />} />
-            <Route path="concept-refinement" element={<ConceptRefinementPage />} />
-            <Route path="market-interview" element={<MarketInterviewPage />} />
-            {/* 출시 준비는 팀원 판(#49)을 그대로 받는다. 옛 tech-ops·finance 경로도 이 화면의
-                초점으로 들어간다 — 링크를 들고 있던 곳이 죽지 않게. */}
+            <Route path="twin-survey" element={<TwinSurveyPage />} />
             <Route path="launch-readiness" element={<LaunchReadinessPage />} />
             <Route path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />} />
             <Route path="technology" element={<LaunchReadinessPage initialFocus="technology" />} />

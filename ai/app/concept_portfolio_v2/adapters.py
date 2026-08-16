@@ -131,52 +131,6 @@ def business_fingerprint(candidate: ConceptCandidateResult) -> BusinessFingerpri
     return BusinessFingerprint.model_validate({key: getattr(candidate, key) for key in BUSINESS_FINGERPRINT_FIELDS})
 
 
-#: 소견 갈래 → 화면이 읽는 말. 「직접 확인이 필요해요」는 **외부 사실**을 물을 때만 붙는다.
-_FINDING_LABEL = {
-    "requiredControls": "지켜야 할 통제",
-    "requiredPartnersAndQualifications": "필요한 자격·파트너",
-    "requiredDisclosures": "알려야 할 것",
-    "prohibitedVariants": "하면 안 되는 것",
-}
-
-
-def _clauses_with_findings(raw: dict[str, Any]) -> list[dict[str, Any]]:
-    """조항마다 <b>이 컨셉이 왜 걸리는지</b>를 붙여서 내보낸다.
-
-    ⚠ 지어내는 것이 하나도 없다. 검토는 이미 소견마다 어느 조항 때문인지를 들고 있고
-    (`findingEvidence`), 그동안 그 이음이 여기서 **버려지고 있었다**. 그래서 화면이
-    법명·조항만 나열했고, 사용자가 「뭐 법 설명하냐」고 반려했다.
-
-    ⚠ `boundedProvisionSummary`(조문 해설)는 붙이지 않는다. 그것은 「법이 무엇을 정하는가」이지
-    「이 컨셉이 왜 걸리는가」가 아니다 — 같은 이유로 반려됐다.
-
-    `conceptStatus` 는 결정론이다. 「컨셉에 반영했어요」는 여기서 못 정한다 —
-    이 조항이 이번 다듬기를 낳았는지는 AI 가 모른다. Java 가 제안의 `legalRef` 와 대조해 덮는다.
-    """
-    evidence = list(raw.get("officialEvidence") or [])
-    needs_facts = raw.get("status") == "NEEDS_FACTS"
-    by_index: dict[int, list[dict[str, str]]] = {}
-    for item in raw.get("findingEvidence") or []:
-        finding = {
-            "type": _FINDING_LABEL.get(item.get("findingType", ""), item.get("findingType", "")),
-            "topic": item.get("topic") or "",
-            "text": item.get("text") or "",
-        }
-        if not finding["text"]:
-            continue
-        for index in item.get("evidenceReferenceIndexes") or []:
-            by_index.setdefault(index, []).append(finding)
-
-    clauses = []
-    for clause in evidence:
-        findings = by_index.get(clause.get("referenceIndex"), [])
-        checkable = any(item["type"] == _FINDING_LABEL["requiredPartnersAndQualifications"]
-                        for item in findings)
-        clauses.append({**clause, "findings": findings,
-                        "conceptStatus": "NEEDS_CHECK" if (checkable or needs_facts) else "OK"})
-    return clauses
-
-
 class CurrentLegalAdapter:
     """현행 공식 근거/MOLEG legal task와 동일한 입력 계약을 만든다."""
 
@@ -233,7 +187,7 @@ class CurrentLegalAdapter:
             requiredPartnersAndQualifications=raw["requiredPartnersAndQualifications"],
             redesignRequirements=raw["redesignRequirements"], prohibitedVariants=raw["prohibitedVariants"],
             requiredDisclosures=raw["requiredDisclosures"],
-            officialEvidenceReferences=_clauses_with_findings(raw),
+            officialEvidenceReferences=raw["officialEvidence"],
             reviewPhase=raw.get("reviewPhase"), factCompletenessStatus=raw.get("factCompletenessStatus"),
             legalSourceStatus=raw.get("legalSourceStatus"),
             finalEvidenceJudgmentExecuted=raw.get("finalEvidenceJudgmentExecuted"),

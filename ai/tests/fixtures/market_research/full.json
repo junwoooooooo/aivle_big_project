@@ -102,21 +102,6 @@
       "detail": "TAM 1,025,336,520원 · 가정 6개 명시"
     },
     {
-      "subject": "CHANNEL",
-      "state": "MISSING",
-      "detail": "어디서 팔리나 — 채널별 비중 — **한 건도 못 구했다.** 8절 처방을 보라"
-    },
-    {
-      "subject": "UNIT_ECONOMICS",
-      "state": "PARTIAL",
-      "detail": "한 개 팔면 얼마가 남나 — 실린 사실 2건"
-    },
-    {
-      "subject": "REGULATION",
-      "state": "MISSING",
-      "detail": "무엇을 지켜야 하나 — **한 건도 못 구했다.** 8절 처방을 보라"
-    },
-    {
       "subject": "NOT_FOUND",
       "state": "REPORTED",
       "detail": "아직 못 채운 것 26건 · 가정으로 메운 변수 14건 · 걸러낸 것 2건 · 값이 갈린 것 5건 · 찾아도 없는 것 5건"
@@ -367,12 +352,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "MARKET_SIZE",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F007",
@@ -392,12 +372,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "MARKET_SIZE",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F008",
@@ -417,12 +392,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "GROWTH",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F009",
@@ -442,12 +412,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "GROWTH",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F010",
@@ -469,12 +434,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "COMPETITOR",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F011",
@@ -496,12 +456,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "DEMAND",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F001",
@@ -521,12 +476,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "PRICE",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F003",
@@ -546,12 +496,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "PRICE",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-F002",
@@ -571,12 +516,7 @@
       "formula": null,
       "inputs": null,
       "materialIds": [],
-      "assumptions": [],
-      "section": "PRICE",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
+      "assumptions": []
     },
     {
       "id": "C-CALC-TAM",
@@ -603,39 +543,7 @@
       ],
       "assumptions": [
         "세그먼트비중 0.19 는 가정이다 — 국가통계에 「1인」 구간이 없다"
-      ],
-      "section": "CALCULATION",
-      "placement": null,
-      "issuer": null,
-      "tableKey": null,
-      "raw": null
-    },
-    {
-      "id": "sec-0001",
-      "kind": "관측",
-      "metric": "미용 프랜차이즈 가맹점 수",
-      "subject": "미용 프랜차이즈 가맹점 수",
-      "period": "2024",
-      "value": 1240.0,
-      "unit": "개",
-      "grade": "확정",
-      "gradeReason": "등급표:public_filing(whitelist:kind.krx.co.kr) · 인용 본문 대조 통과",
-      "sourceUrl": "https://kind.krx.co.kr/example",
-      "sourceKind": "public_filing",
-      "retrievedAt": "2026-06-10T09:12:00",
-      "quote": "2024년 말 기준 가맹점 수는 1,240개로 전년 대비 증가하였다",
-      "caveats": [
-        "⚠ 시장 전체가 아니라 **예시프랜차이즈 한 회사**의 수다."
-      ],
-      "formula": null,
-      "inputs": null,
-      "materialIds": [],
-      "assumptions": [],
-      "section": "COMPETITOR",
-      "placement": "COMPETITOR_FIRM",
-      "issuer": "예시프랜차이즈",
-      "tableKey": "T-EX-01|가맹점 현황|2024",
-      "raw": "1,240개"
+      ]
     }
   ],
   "canvas": null,
@@ -646,113 +554,5 @@
     "caveats 를 떨어뜨리지 마라 — 값과 함께 옮겨야 하는 문장이다.",
     "법률 결과는 반영되지 않았다.",
     "SOM 은 이 파이프라인이 산출하지 않는다 — som:null 은 0 이 아니라 «안 쟀다»다."
-  ],
-  "judgment": {
-    "price": 19800.0,
-    "lines": [
-      {
-        "what": "같은 진열대의 한 개 값",
-        "sentence": "컨셉 가격 19,800원은 경쟁 구독료 15,000원의 1.32배다.",
-        "formula": "19,800 ÷ 15,000 = 1.32",
-        "silentBecause": null,
-        "sources": [
-          {
-            "raw": "15,000원",
-            "subject": "월 구독료",
-            "url": "https://example.kr/pricing",
-            "period": "2025"
-          }
-        ]
-      },
-      {
-        "what": "장부 대행으로 대체될 때",
-        "sentence": null,
-        "formula": null,
-        "silentBecause": "비교쌍이 둘 다 있어야 셈이 된다. 지금 실린 것은 한쪽뿐이다.",
-        "sources": []
-      }
-    ],
-    "conclusion": "**값이 위다.** 값이 아닌 이유가 서지 않으면 이 가격은 지탱되지 않는다. 어느 쪽으로 팔지는 **이 조사가 정하지 못한다** — 시장 인터뷰에서 물을 것."
-  },
-  "prescriptions": [
-    {
-      "section": "REGULATION",
-      "kind": "REACHABLE",
-      "kindLabel": "공개 자료에 있는데 이 조사가 못 닿았다",
-      "what": "후보 자체가 안 잡혔다",
-      "why": "공개돼 있으나 이 조사의 검색이 닿지 못했다. 어디를 볼지 적어 준다.",
-      "where": "공중위생관리법 시행규칙의 미용업 준수사항을 보라"
-    },
-    {
-      "section": "DEMAND",
-      "kind": "INTERVIEW",
-      "kindLabel": "시장 인터뷰에서 물어야 풀린다",
-      "what": "침투율은 **컨셉이 스스로 「관측 근거가 없는 순수 가정」이라 적어 둔 값**이다",
-      "why": "사람의 선호·지불 의사·고르는 이유는 문서에 없다. 다음 단계의 질문이 된다.",
-      "where": "구매 의향을 직접 묻는다. ⚠ 의향은 실제 구매가 아니다 — 언급 수로만 읽는다"
-    }
-  ],
-  "synthesis": [
-    {
-      "key": "값이_위에_있다",
-      "stance": "흔듦",
-      "sentence": "19,800원은 경쟁 구독료 15,000원보다 위여서 값만으로는 고를 이유가 없다.",
-      "what": "우리 가격이 대체 수단보다 위인가",
-      "sources": [
-        {
-          "raw": "15,000원",
-          "subject": "월 구독료",
-          "period": "2025"
-        },
-        {
-          "raw": "30,000원",
-          "subject": "월 구독료",
-          "period": "2025"
-        }
-      ]
-    }
-  ],
-  "report": {
-    "writtenBy": "gpt-5.6-luna",
-    "unverifiedNumbers": 16,
-    "conceptLeaks": 1,
-    "lead": "> - 재료: **인용 대조를 통과한 사실 3,073건**\n> - 쓴 모델: **gpt-5.6-luna** · 온도 0\n> - LLM **8회** · 입력 512,000 · 출력 41,000 토큰 · 545.0초\n> - 값은 전부 인용 대조를 통과했다 — 목표 보고서에 없는 보증이다.\n> - **유령 수 16개** — 재료에도 컨셉에도 없는데 본문에 나온 수다. 이 줄들은 조사 결과가 아니다.\n> - **컨셉 누출 1개** — 재료에 없고 **사업가가 쓴 가정에만** 있던 수가 본문에 나왔다. 조사 결과가 아니다.",
-    "tail": null,
-    "sections": [
-      {
-        "subject": "MARKET_SIZE",
-        "markdown": "### 1.1 국내 시장 — 무엇이 얼마나 큰가\n\n사업 컨셉과 가장 가까운 공개 통계는 아래 둘이다. **기준이 다르므로 서로 합산하지 않는다.**\n\n| 시장·범주 | 연도 | 규모 | 어떻게 읽나 | 출처 |\n|---|---:|---:|---|---|\n| 상위 범주 | 2024 | 6조 8,000억원 | 우리보다 넓은 범주라 **상한으로만** 본다 | 예시 기관 |\n\n### 판단\n\n상한은 있으나 우리 칸의 크기는 아직 못 구했다.\n"
-      },
-      {
-        "subject": "REGULATION",
-        "markdown": "### 7.1 표시 기준\n\n이 절에 쓸 재료가 **한 건도 없었습니다.**\n"
-      },
-      {
-        "subject": "GAPS",
-        "markdown": "- 입점 수수료 — 유통사 MD 에게 직접 문의\n- 실제 구매 의사 — 시장 인터뷰"
-      },
-      {
-        "subject": "SYNTHESIS",
-        "markdown": "### 사업안을 지지하는 근거\n\n- 상위 범주가 6조 8,000억원으로 크다.\n\n### 사업안을 흔드는 근거\n\n- 우리 칸의 크기를 말해 주는 값이 한 건도 없다."
-      }
-    ]
-  },
-  "_판㊻_report_왜_이_모양인가": [
-    "봉투에 **사람이 읽는 보고서 글**이 실린다. 사실(evidence[])만으로는 화면이 표밖에 못 그린다.",
-    "subject 는 **기존 절 코드 일곱 + 꼬리 둘**뿐이다(serialize.REPORT_SECTIONS) — 새 어휘를 만들면 글과 근거가 다른 절에 선다.",
-    "GAPS(8절)·SYNTHESIS(9절)는 봉투의 prescriptions·synthesis 와 **다른 물건이다.** 저쪽은 기계가 원장에서 뽑은 값, 이쪽은 모델이 쓴 글이다.",
-    "lead 는 **경계 표시다** — 재료가 무엇이고 누가 썼는지가 거기 적혀 있다. 글만 떼어 그리면 모델 문장이 조사 결과로 읽힌다.",
-    "tail 은 지금 null 이다. 도구가 「주요 출처」 발문을 쓰지 않기 때문이고, **없는 것을 지어내지 않는다** — 출처는 절마다 표 안에 있다.",
-    "markdown 은 그 절의 본문이다. 제목 줄(`## 1 · 시장 크기`)은 빼고 `###` 이하만 싣는다 — 절 번호의 정본은 화면이다.",
-    "unverifiedNumbers(유령 수)·conceptLeaks 는 **경계 표시다.** 「이 글의 수 몇 개는 조사 결과가 아니다」를 화면이 이걸로 쓴다. 지우지 않는다.",
-    "재료가 없던 절은 **글로 없다고 적는다** — 빈 절은 「안 썼다」로도 「없다」로도 읽힌다.",
-    "BM 모드에서는 null 이다(bm.json). RESCORE·예산 부족·실패도 null 이고, 그때는 degradations 에 REPORT_SKIPPED·REPORT_FAILED 가 남는다."
-  ],
-  "_판㊸_왜_늘렸나": [
-    "evidence 에 section·placement·issuer·tableKey·raw 가 늘었다. 슬롯 카드는 뒤 넷이 늘 null 이라",
-    "**절 승격 카드 한 장(sec-0001)을 손으로 넣어** 스키마가 보이게 했다.",
-    "값은 지어낸 예시다 — 실행 산출물을 굽지 않는다는 이 파일의 규칙(_왜_손으로_썼나)을 지킨다.",
-    "judgment 의 둘째 줄은 **문장이 없는 갈래**다. 「못 썼다」도 계약의 일부라 그 모양을 남긴다.",
-    "sec-0001 의 retrievedAt 은 **비워 두지 않는다.** 승격은 채택 4요건(fill.v2.json)을 지켜야 하고 그중 하나가 조회일이다 — null 로 두면 되찾은 조회일이 다시 사라져도 안 잡힌다."
   ]
 }

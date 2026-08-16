@@ -12,15 +12,9 @@ describe('project route cutover', () => {
     expect(routerSource).not.toContain('ConceptComparisonPage');
   });
 
-  it('routes journey 4 to the Market Interview page', () => {
-    expect(routerSource).toContain('path="market-interview" element={<MarketInterviewPage />}');
-    expect(routerSource).not.toContain('TwinSurveyPage');
-  });
-
   it('keeps legacy source files without exposing them through official routes', () => {
     expect(existsSync('src/features/concept-factory/pages/ConceptFactoryPage.jsx')).toBe(true);
     expect(existsSync('src/features/concept-selection/pages/ConceptComparisonPage.jsx')).toBe(true);
-    expect(existsSync('src/features/twin-survey/TwinSurveyPage.jsx')).toBe(true);
   });
 
   it('출시 준비의 canonical 및 호환 경로를 하나의 화면으로 연결한다', () => {

@@ -51,8 +51,7 @@ def source(values=None, questions=None):
 
 def provider(index=0, coverage=True, status="IMPLEMENTABLE_WITH_CONTROLS", unknown=None):
     return {"status": status, "reviewedActivities": ["예약 연락처 처리"],
-        # `topic` 은 strict 스키마에서 **필수**다 — 모델은 빼고 답할 수 없다.
-        "requiredControls": [{"text": "개인정보 처리방침을 공개합니다.", "topic": "처리방침 공개",
+        "requiredControls": [{"text": "개인정보 처리방침을 공개합니다.",
             "evidenceReferenceIndexes": ([index] if coverage else [])}],
         "requiredPartnersAndQualifications": [], "requiredDisclosures": [], "prohibitedVariants": [],
         "evidenceReferenceIndexes": [index], "redesignRequirements": [],

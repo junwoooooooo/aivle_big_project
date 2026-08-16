@@ -32,7 +32,7 @@ class FinancialV2ContractTests {
         String sql = Files.readString(Path.of("src", "main", "resources", "db", "migration", "V1__new_pipeline_baseline.sql"))
             .toLowerCase(Locale.ROOT);
         assertThat(sql).contains("create table financial_input_preparations", "create table financial_input_snapshots", "'financial_analysis'");
-        var schema = new ObjectMapper().readTree(Files.readString(Path.of("..", "docs", "legacy", "rebuild", "contracts", "financial-input-snapshot-v1.schema.json")));
+        var schema = new ObjectMapper().readTree(Files.readString(Path.of("..", "docs", "rebuild", "contracts", "financial-input-snapshot-v1.schema.json")));
         assertThat(schema.path("properties").path("contract").path("const").asText()).isEqualTo("financial-input-snapshot-v1");
         assertThat(schema.path("required").toString()).contains(
             "sourceMarketResearchVersionId", "sourceBusinessModelVersionId",

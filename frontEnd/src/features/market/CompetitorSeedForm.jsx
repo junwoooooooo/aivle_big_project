@@ -6,6 +6,7 @@ const MAX_ROWS = 8;
 
 export default function CompetitorSeedForm({ api, disabled }) {
   const [rows, setRows] = useState([EMPTY_ROW]);
+  const [warning, setWarning] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -15,6 +16,7 @@ export default function CompetitorSeedForm({ api, disabled }) {
       name: seed.name ?? '', reason: seed.reason ?? '', operatorName: seed.operatorName ?? '',
     }));
     setRows(next.length ? next : [EMPTY_ROW]);
+    setWarning(view?.warning ?? null);
   }, []);
 
   useEffect(() => {
@@ -50,11 +52,8 @@ export default function CompetitorSeedForm({ api, disabled }) {
         이미 이 문제를 풀고 있는 서비스를 아는 만큼 적어라. 조사가 <strong>경쟁을 찾는 출발점</strong>으로
         쓴다. <strong>씨앗이지 조사 결과가 아니다</strong> — 조사가 찾은 것과 합쳐 같은 잣대로 검증한다.
       </p>
-      {/* ⚠ 줄에 `project-form-layout` 을 같이 걸지 않는다. 그 클래스는 **라벨을 왼쪽에 두는
-          가로형 필드 행**이라, 아래 3열 격자와 겹치면 라벨과 입력칸이 한 칸씩 나뉘어 들어가
-          줄이 통째로 무너진다(2026-08-16 화면에서 실측). */}
       {rows.map((row, index) => (
-        <div key={index} className="competitor-seeds__row">
+        <div key={index} className="competitor-seeds__row project-form-layout">
           <TextInput label="이름" value={row.name} onChange={set(index, 'name')} disabled={locked} placeholder="예: 공비서" />
           <TextInput label="왜 경쟁인가" value={row.reason} onChange={set(index, 'reason')} disabled={locked}
             placeholder="예: 노쇼 방지 방식이 우리 차별점과 겹친다" />
@@ -72,9 +71,7 @@ export default function CompetitorSeedForm({ api, disabled }) {
       </div>
       {error ? <Alert tone="danger">{error}</Alert> : null}
       {saved && !error ? <Alert tone="success">저장했다.</Alert> : null}
-      {/* ⚠ 서버가 주는 「경쟁 씨앗이 없습니다…」 경고는 **그리지 않는다**(2026-08-16 사용자 지시).
-          씨앗은 선택 입력인데 안 적었다고 경고를 세우면 «틀린 것을 한 것»처럼 읽힌다.
-          계약은 그대로 두고 화면만 안 쓴다 — 서버 응답에는 계속 실려 온다. */}
+      {warning ? <Alert tone="warning">{warning}</Alert> : null}
     </form>
   );
 }

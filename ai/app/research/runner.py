@@ -56,20 +56,11 @@ def _fail(code: str, reason: str, detail: str = "") -> ProviderFailure:
     """등록된 (코드, 사유) 조합만 낸다. 상세는 사유가 아니라 **메시지**로 간다.
 
     ⚠ 목록에 없는 조합을 부르면 여기서 터진다 — 조용히 뭉개지는 것보다 낫다.
-
-    ⚠ `detail` 은 **서버 로그용**이다. 화면까지 가지 않는다 —
-      `MarketResearchService.safeErrorReason` 이 계약 어휘만 통과시킨다
-      ("provider details and input text stay server-side").
-
-    실측(2026-08-13): 예전엔 `detail` 을 받아 놓고 **버렸다.** 그래서 유료 BM 실행이
-    15초 만에 죽었는데 남은 것이 `EXECUTION_FAILED / TRANSIENT_EXECUTION_FAILURE` 두 낱말뿐이라
-    원인을 끝내 못 밝혔다. 호출부는 전부 원인 문장을 만들어 넘기고 있었다.
     """
     if (code, reason) not in _ALLOWED:
         raise AssertionError(f"등록되지 않은 실패 어휘: {code}/{reason}")
     status_code, retryable = _ALLOWED[(code, reason)]
-    return ProviderFailure(code, reason, status_code, retryable,
-                           safe_provider_message=detail or None)
+    return ProviderFailure(code, reason, status_code, retryable)
 
 
 async def execute_market_research(task_input: dict[str, Any], run_id: str,

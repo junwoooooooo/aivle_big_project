@@ -214,14 +214,12 @@ public class FinalReportService {
     private List<ReadinessItem> readiness(List<ProjectModuleStatusResponse> statuses) {
         Map<String, List<PipelineModuleType>> groups = Map.of(
             "planning", List.of(PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO),
-            // 화면·프로젝트 목록과 **같은 세 걸음**이어야 한다(시장 분석 → 사업 모델 → 컨셉 다듬기).
-            "validation", List.of(PipelineModuleType.MARKET_ANALYSIS,
-                PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.CONCEPT_REFINEMENT),
+            "validation", List.of(PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL),
             "launch", List.of(PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
             "interview", List.of(PipelineModuleType.TWIN_SURVEY),
             "marketingStrategy", List.of(PipelineModuleType.MARKETING));
         Map<String, String> labels = Map.of("planning", "사업 기획", "validation", "사업 검증",
-            "launch", "출시 준비", "interview", "시장 인터뷰", "marketingStrategy", "마케팅 전략");
+            "launch", "출시 준비", "interview", "가상 인터뷰", "marketingStrategy", "마케팅 전략");
         return List.of("planning", "validation", "launch", "interview", "marketingStrategy").stream()
             .map(id -> new ReadinessItem(id, labels.get(id), aggregate(statuses.stream()
                 .filter(value -> groups.get(id).contains(value.module())).map(ProjectModuleStatusResponse::status).toList())))

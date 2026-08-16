@@ -50,8 +50,8 @@ describe('FinancePage', () => {
     expect(screen.getByText('AI 추천', { selector: 'small' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '입력 내용 저장' })).toBeDisabled();
     expect(container.querySelectorAll('.finance-form-grid.project-form-layout').length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: '다음 - 시장 인터뷰' }))
-      .toHaveAttribute('href', '/app/projects/1/market-interview');
+    expect(screen.getByRole('link', { name: '다음 - 트윈 패널 조사' }))
+      .toHaveAttribute('href', '/app/projects/1/twin-survey');
   });
 
   it('추천값은 input에 미리 보이지만 일반 저장 payload에는 들어가지 않는다', () => {

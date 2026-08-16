@@ -15,8 +15,7 @@
 
 import re
 
-__all__ = ["parse_profile", "parse_target_facts", "FIELDS", "TARGET_FIELDS",
-           "HOUSEHOLD_ROLES"]
+__all__ = ["parse_profile", "FIELDS"]
 
 FIELDS = ("age", "gender", "household", "region", "income", "job")
 
@@ -81,60 +80,3 @@ def parse_profile(card_text: str | None) -> dict:
 def is_empty(profile: dict) -> bool:
     """전부 못 읽었다. 빈 카드를 화면에 앉히지 않으려고 쓴다."""
     return all(profile.get(field) is None for field in FIELDS)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 타겟 «판정»용 칸 — 화면에 나가지 않는다
-# ─────────────────────────────────────────────────────────────────────────────
-#
-# **왜 `parse_profile` 을 늘리지 않고 함수를 따로 두나.** 위 6필드는 봉투에 실려 화면까지
-# 가는 계약이다(Java `MarketInterviewContract.PROFILE`). 카드는 재배포 금지
-# 마이크로데이터라 봉투로 나가는 칸을 늘리는 것은 재식별 표면을 넓히는 일이고, 여기서
-# 필요한 것은 「누구를 뽑을지 고르는 것」뿐이지 「그 사람을 화면에 보이는 것」이 아니다.
-# 그래서 이 칸들은 **표집 단계에서만 쓰고 봉투에 넣지 않는다.**
-
-#: 「저는 … 2세대가구(부부+자녀) 형태의 3인 가구이고,」 — 세대구성.
-_GENERATION = re.compile(r"(\d)세대가구")
-#: 자녀가 사는 가구의 세대구성. 실측(8,595장): 2세대(부부+자녀) 5,527 · 3세대 392 = 5,919.
-_WITH_CHILDREN = re.compile(r"2세대가구\(부부\+자녀\)|3세대가구")
-#: 「가구 안에서는 가구주의 배우자입니다.」 / 「… 가구주입니다.」
-_ROLE = re.compile(r"가구 안에서는 ([^.]+?)입니다")
-#: 「혼인 상태는 기혼입니다.」
-_MARITAL = re.compile(r"혼인 상태는 ([^.]+?)입니다")
-
-#: 가구 안 지위 4종. 조건식이 쓸 수 있는 말을 여기서 고정한다.
-HOUSEHOLD_ROLES = ("가구주", "가구주의 배우자", "가구주의 자녀", "부모")
-
-#: 「자녀를 둔 부모」를 뜻하는 지위. ★ **이 한 쌍이 이 모듈의 핵심이다.**
-#:
-#: 실측(2026-08-15, 8,595장): 자녀가 있는 가구 5,919장 중 **1,611장이 「그 집 자녀 본인」**
-#: 이다. 27%. 세대구성만 보고 「자녀를 둔 사람」으로 세면 22세 자녀가 부모 타겟에 들어간다.
-#: 자녀 유무와 가구 안 지위는 **따로 쓰면 안 되는 한 쌍**이다.
-PARENT_ROLES = ("가구주", "가구주의 배우자")
-
-TARGET_FIELDS = FIELDS + ("hasChildren", "householdRole", "marital")
-
-
-def parse_target_facts(card_text: str | None) -> dict:
-    """표집 판정용 8칸(+참고 2칸). 화면 6칸에 새 3칸을 얹은 모양이다.
-
-    **못 읽은 칸은 `None` 이고, `None` 은 조건을 통과하지 못한다**
-    (`interview/targeting.matches`). 확인할 수 없는 것을 타겟으로 세면 표본이 조용히
-    오염되기 때문이다.
-
-    ⚠ 세대구성은 실측 커버리지 **89%** 다(없음 929장). 그 929장 중 **704장이 1인가구**라
-    「자녀 있음」에서 빠지는 것이 대체로 옳고, 애매한 것은 2인 113 · 3인 112 뿐이다.
-    """
-    text = card_text or ""
-    profile = parse_profile(text)
-
-    has_children = None
-    if _GENERATION.search(text):
-        has_children = bool(_WITH_CHILDREN.search(text))
-
-    role = _first(_ROLE, text)
-    if role is not None and role not in HOUSEHOLD_ROLES:
-        role = None                       # 모르는 표기를 조건에 통과시키지 않는다
-
-    return {**profile, "hasChildren": has_children, "householdRole": role,
-            "marital": _first(_MARITAL, text)}

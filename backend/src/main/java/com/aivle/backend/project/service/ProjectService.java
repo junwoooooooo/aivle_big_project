@@ -93,13 +93,9 @@ public class ProjectService {
         List<ProjectModuleStatusResponse> statuses = moduleStatuses.findAll(userId, p.getId());
         List<JourneySummary> journeys = List.of(
             journey("사업 기획", statuses, PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO),
-            // 사업 검증은 **세 걸음**이다 — 시장 분석 → 사업 모델 → 컨셉 다듬기.
-            // 다듬기를 빼면 「다 끝냈는데 완료로 안 바뀐다」의 반대, 즉 «아직 안 골랐는데
-            // 완료로 세는» 일이 난다. 화면(projectJourneyModel)과 같은 묶음이어야 한다.
-            journey("사업 검증", statuses, PipelineModuleType.MARKET_ANALYSIS,
-                PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.CONCEPT_REFINEMENT),
+            journey("사업 검증", statuses, PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL),
             journey("출시 준비", statuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
-            journey("시장 인터뷰", statuses, PipelineModuleType.TWIN_SURVEY),
+            journey("가상 인터뷰", statuses, PipelineModuleType.TWIN_SURVEY),
             journey("마케팅 전략", statuses, PipelineModuleType.MARKETING));
         FinalReportApiModels.State reportState = finalReports.state(userId, p.getId());
         boolean reportCurrent = reportState == FinalReportApiModels.State.CURRENT;

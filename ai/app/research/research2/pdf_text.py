@@ -47,89 +47,6 @@ def is_pdf(raw: bytes, content_type: str, cfg: dict) -> bool:
     return any(x in ct for x in (cfg.get("content_type_contains") or []))
 
 
-def _lines(words: list, y_tol: float) -> list:
-    """낱말을 같은 줄로 묶어 문자열 목록으로. y 가 `y_tol` 안이면 한 줄이다."""
-    rows, cur, cy = [], [], None
-    for w in sorted(words, key=lambda w: (round(w["top"], 1), w["x0"])):
-        if cy is None or abs(w["top"] - cy) <= y_tol:
-            cur.append(w)
-            cy = w["top"] if cy is None else cy
-        else:
-            rows.append(cur)
-            cur, cy = [w], w["top"]
-    if cur:
-        rows.append(cur)
-    return [" ".join(x["text"] for x in sorted(r, key=lambda w: w["x0"])) for r in rows]
-
-
-def _gutters(words: list, width: float, band: float, min_gap: float) -> list:
-    """**낱말이 하나도 안 걸치는 세로 빈 띠**를 전부 찾는다. 그것이 단 사이 틈이다.
-
-    단 수를 미리 정하지 않는다 — 실측 문서가 2단이 아니라 **3단**이었다.
-    """
-    cov: dict = {}
-    for w in words:
-        for b in range(int(w["x0"] // band), int(w["x1"] // band) + 1):
-            cov[b] = cov.get(b, 0) + 1
-    out, run = [], None
-    for b in range(int(width // band) + 1):
-        if cov.get(b, 0) == 0:
-            run = b if run is None else run
-        elif run is not None:
-            out.append((run * band, b * band))
-            run = None
-    if run is not None:
-        out.append((run * band, (int(width // band) + 1) * band))
-    # 양끝 여백은 단 사이 틈이 아니다
-    return [(a, b) for a, b in out
-            if b - a >= min_gap and a > width * 0.05 and b < width * 0.95]
-
-
-def _page_text(pg, c: dict) -> tuple:
-    """(본문, 어떻게 읽었나). **못 하겠으면 옛 방식으로 떨어진다** — 조용히가 아니라 사유와 함께."""
-    fallback = pg.extract_text() or ""
-    try:
-        words = pg.extract_words()
-    except Exception as e:
-        return fallback, f"낱말 실패({type(e).__name__})"
-    if len(words) < 40:
-        return fallback, "낱말이 적다"
-    band = float(c.get("band") or 10.0)
-    gs = _gutters(words, pg.width, band, float(c.get("min_gap") or 25.0))
-    if not gs:
-        return fallback, "단 없음"
-    cuts = [(a + b) / 2 for a, b in gs]
-    edges = [0.0] + cuts + [pg.width]
-    cols: list = [[] for _ in range(len(edges) - 1)]
-    cross: list = []
-    for w in words:
-        if any(w["x0"] < g - 2.0 and w["x1"] > g + 2.0 for g in cuts):
-            cross.append(w)        # 단을 가로지르는 것(제목·표)은 따로 둔다
-            continue
-        mid = (w["x0"] + w["x1"]) / 2
-        i = 0
-        for k in range(len(edges) - 1):
-            if edges[k] <= mid < edges[k + 1]:
-                i = k
-                break
-        cols[i].append(w)
-    if len(cross) / len(words) > float(c.get("max_cross") or 0.10):
-        return fallback, f"걸침 과다({100 * len(cross) / len(words):.1f}%)"
-    # **가짜 단 가드.** 발표자료는 요소 사이가 넓어 세로 빈 띠가 진짜로 생기는데 그건
-    # 읽기 순서가 아니다(실측: 회사소개 슬라이드에서 4단·3단이 잡혔다). 나뉜 단이
-    # 저마다 충분한 몫을 갖지 못하면 단이 아니다.
-    share = float(c.get("min_col_share") or 0.15)
-    used = [col for col in cols if col]
-    if len(used) < 2 or any(len(col) < share * len(words) for col in used):
-        return fallback, "단이 고르지 않다"
-    y_tol = float(c.get("y_tol") or 3.0)
-    parts = _lines(cross, y_tol) if cross else []
-    for col in cols:
-        if col:
-            parts += _lines(col, y_tol)
-    return "\n".join(parts), f"{len(cols)}단"
-
-
 def extract(raw: bytes, cfg: dict) -> tuple:
     """(본문, 사유). 본문이 있으면 사유는 빈 문자열.
 
@@ -142,19 +59,10 @@ def extract(raw: bytes, cfg: dict) -> tuple:
     except Exception as e:                       # pragma: no cover - 설치돼 있다
         return "", f"pdfplumber 없음: {type(e).__name__}"
     max_pages = int(cfg.get("max_pages") or 40)
-    cols = (cfg.get("columns") or {})
     try:
         with pdfplumber.open(_io.BytesIO(raw)) as pdf:
             pages = pdf.pages[:max_pages]
-            if cols.get("enabled"):
-                # **다단 조판을 단 단위로 읽는다.** 안 그러면 좌우 단이 줄 단위로 끼어들어
-                # 온전한 문장이 하나도 안 남고, 인용 대조가 **맞는 사실을 지어낸 것으로**
-                # 판정한다(판 ㊳ 실측: 그 문서 인용 8건 중 7건). 쪽마다 따로 판정하고
-                # 못 하겠으면 그 쪽만 옛 방식으로 떨어진다.
-                got = [_page_text(pg, cols) for pg in pages]
-                text = "\n".join(t for t, _ in got)
-            else:
-                text = "\n".join((pg.extract_text() or "") for pg in pages)
+            text = "\n".join((pg.extract_text() or "") for pg in pages)
     except Exception as e:
         return "", f"파싱 실패: {type(e).__name__}: {str(e)[:80]}"
     if len(text.strip()) < int(cfg.get("min_text_len") or 1):

@@ -26,9 +26,6 @@ IMPLEMENTABLE/IMPLEMENTABLE_WITH_CONTROLS는 architecture 변경이 필요 없�
 고지·처리방침·운영 제한은 requiredControls/requiredDisclosures에, 결제 주체나 사업 역할 자체의 변경은
 REDESIGNABLE의 redesignRequirements에만 둔다.
 evidenceReferenceIndexes에는 입력의 allowedEvidenceReferenceIndexes에 있는 정수만 사용한다.
-모든 finding은 topic에 그 소견이 무엇에 관한 것인지 20자 이내 한 마디를 적는다
-(예: 「저나트륨」 표시 기준, 냉동식품 제조·유통 허가, 구독 해지·환불 안내).
-topic은 조문 제목을 그대로 옮기지 말고 이 Concept의 말로 적는다.
 자문이 아니다. strict schema만 반환한다."""
 
 REPAIR_PROMPT = """법률 판단, 상태, finding 문구, 통제, 요약을 변경하지 않는다.
@@ -216,11 +213,8 @@ def _validate_coverage(provider: ConceptLegalReviewProviderResult,
             if not refs or len(refs) != len(set(refs)) or any(index not in indexes for index in refs):
                 raise ProviderFailure("RESULT_SCHEMA_INVALID", "CONCEPT_LEGAL_FINDING_EVIDENCE_REQUIRED", 502, False)
             cited.update(refs)
-            # ⚠ `text`·`topic` 을 여기 같이 담는다. 이 둘이 없으면 화면이 「이 조항이 이
-            # 컨셉에 왜 걸리나」를 말할 수 없어 법명·조항만 나열하게 된다.
             coverage.append({"findingType": field, "findingIndex": finding_index,
-                "evidenceReferenceIndexes": refs,
-                "topic": finding.topic, "text": finding.text})
+                "evidenceReferenceIndexes": refs})
     if provider.status in {"IMPLEMENTABLE", "IMPLEMENTABLE_WITH_CONTROLS"} and not cited:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "CONCEPT_LEGAL_EVIDENCE_REQUIRED", 502, False)
     return strings, coverage, sorted(cited)

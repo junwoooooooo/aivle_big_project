@@ -48,11 +48,8 @@ class ConceptPortfolioSelectionServiceP5Tests {
     private final ConceptPortfolioJsonHasher hasher=mock(ConceptPortfolioJsonHasher.class);
     private final ObjectMapper mapper=new ObjectMapper();
     private final Clock clock=Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"),ZoneOffset.UTC);
-    private final com.aivle.backend.pipeline.refinement.ConceptRefinementFinalRepository refinementFinals=
-        mock(com.aivle.backend.pipeline.refinement.ConceptRefinementFinalRepository.class);
     private final ConceptPortfolioSelectionService service=new ConceptPortfolioSelectionService(projects,runs,concepts,
-        selections,hypotheses,deltas,reports,marketSeeds,briefFields,seedBuilder,taskFactory,taskRuns,hasher,
-        refinementFinals,mapper,clock);
+        selections,hypotheses,deltas,reports,marketSeeds,briefFields,seedBuilder,taskFactory,taskRuns,hasher,mapper,clock);
 
     @BeforeEach
     void defaults(){reset(projects,runs,concepts,selections,hypotheses,deltas,reports,marketSeeds,briefFields,seedBuilder,taskFactory,taskRuns,hasher);

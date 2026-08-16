@@ -125,7 +125,7 @@ export default function TwinSurveyPage() {
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="twin-page">
-      <ProjectStageHeader step={1} eyebrow="가상 인터뷰" title="두 사업안에 대한 반응을 비교하세요"
+      <ProjectStageHeader step={7} eyebrow="가상 인터뷰" title="두 사업안에 대한 반응을 비교하세요"
         description="질문 준비, 대상 설정, 인터뷰 실행, 결과 확인 순서로 반응의 방향과 반복 패턴을 살펴봅니다." />
       {/* 모듈 이름은 셸(`ProjectLayout`)이 이미 그린다 — 여기서 다시 그리면 껍데기가 두 겹이다.
           그 자리에 산문 대신 «지금 어디까지 왔나»를 둔다. */}

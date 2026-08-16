@@ -66,7 +66,7 @@ describe('project context tools', () => {
   it('개요를 포함한 7개 탐색 순서를 사용하고 마지막 단계 문구를 노출하지 않는다', async () => {
     const overviewModel = { ...model, currentJourney: { id: 'overview', shortLabel: '프로젝트 개요' }, journeys: [
       ...model.journeys,
-      { id: 'interview', shortLabel: '시장 인터뷰', href: '/app/projects/41/market-interview', status: 'NOT_STARTED' },
+      { id: 'interview', shortLabel: '가상 인터뷰', href: '/app/projects/41/twin-survey', status: 'NOT_STARTED' },
       { id: 'marketingStrategy', shortLabel: '마케팅 전략', href: '/app/projects/41/marketing', status: 'NOT_STARTED' },
       { id: 'finalReport', shortLabel: '최종 보고서', href: '/app/projects/41/final-report', status: 'NOT_STARTED' },
     ] };
