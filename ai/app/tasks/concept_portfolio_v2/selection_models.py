@@ -69,6 +69,9 @@ class RefinementMaterial(StrictModel):
     canvas: Any | None = None
     marketEvidence: list[dict[str, Any]] = Field(default_factory=list, max_length=200)
     legalFindings: list[dict[str, Any]] = Field(default_factory=list)
+    currentEditableValues: dict[str, Any]
+    frozenValues: dict[str, Any]
+    allowedLegalRefs: list[str]
     driftRejections: list[dict[str, Any]] = Field(default_factory=list)
     userDeclined: list[dict[str, Any]] = Field(default_factory=list)
 

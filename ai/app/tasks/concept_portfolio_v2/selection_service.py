@@ -83,9 +83,11 @@ class ConceptPortfolioSelectionActionFacade:
             concept = value.selectedCandidate.candidate.model_dump(mode="json")
             raw = await propose_refinements(material, concept)
             grounded, evidence_rejections = filter_ungrounded(
-                raw, material["marketEvidence"], material["legalFindings"]
+                raw, material["marketEvidence"], material["allowedLegalRefs"]
             )
-            accepted, drift_rejections = filter_proposals(grounded, concept)
+            accepted, drift_rejections = filter_proposals(
+                grounded, material["currentEditableValues"], material["frozenValues"]
+            )
             return ConceptPortfolioSelectionActionResult(
                 action=value.action,
                 refinementProposals=accepted,

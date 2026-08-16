@@ -98,10 +98,19 @@ public class ConceptRefinementMaterializationService {
     private void validateProposals(JsonNode proposals, JsonNode material) {
         Set<String> evidence = new HashSet<>();
         material.path("marketEvidence").forEach(item -> evidence.add(item.path("id").asText()));
-        String legal = mapper.writeValueAsString(material.path("legalFindings"));
+        JsonNode currentValues = material.path("currentEditableValues");
+        require(currentValues.isObject());
+        Set<String> legalRefs = new HashSet<>();
+        material.path("allowedLegalRefs").forEach(value -> legalRefs.add(value.asText()));
         proposals.forEach(proposal -> {
             require(proposal.isObject());
-            require(nonblank(proposal, "fieldKey") && proposal.hasNonNull("proposedValue"));
+            require(nonblank(proposal, "fieldKey") && proposal.has("currentValue")
+                && proposal.hasNonNull("proposedValue"));
+            String field = proposal.path("fieldKey").asText();
+            require(currentValues.has(field));
+            JsonNode authoritativeCurrent = currentValues.get(field);
+            require(proposal.get("currentValue").equals(authoritativeCurrent));
+            require(!proposal.get("proposedValue").equals(authoritativeCurrent));
             require(nonblank(proposal, "title") && nonblank(proposal, "beforeText")
                 && nonblank(proposal, "afterText") && nonblank(proposal, "rationale"));
             String source = proposal.path("source").asText();
@@ -111,7 +120,7 @@ public class ConceptRefinementMaterializationService {
                 ids.forEach(id -> require(evidence.contains(id.asText())));
             } else if ("LEGAL".equals(source)) {
                 String ref = proposal.path("legalRef").asText("").strip();
-                require(!ref.isBlank() && legal.contains(ref));
+                require(!ref.isBlank() && legalRefs.contains(ref));
             } else throw new ContractViolation();
         });
     }

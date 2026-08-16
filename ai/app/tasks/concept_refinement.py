@@ -8,6 +8,9 @@ from app.providers import execute_structured_prompt
 
 MAX_PROPOSALS = 6
 SYSTEM = """당신은 검증된 시장·BM·법률 근거로 현재 사업안을 좁게 다듬는 분석가다.
+현재 값은 currentEditableValues가 정본이다. selectedCandidate의 원래 값보다 항상 우선한다.
+currentValue를 임의로 다시 작성하지 말고 currentEditableValues의 값을 그대로 사용한다.
+currentEditableValues에 없는 field를 만들지 않는다.
 동결된 필드는 변경하지 말고 refinableFields에 있는 키만 사용한다.
 목록 필드는 한 번에 한 항목만 추가하거나 교체하고 가격은 원본 대비 ±30% 안에서 제안한다.
 MARKET 제안에는 제공된 marketEvidence의 실제 id를, LEGAL 제안에는 제공된 legalFindings의 실제 legalRef를 사용한다.
@@ -27,10 +30,13 @@ async def propose_refinements(material: dict[str, Any], concept: dict[str, Any])
         "listChangeAllowance": material.get("listChangeAllowance", 1),
         "frozenFields": material.get("frozenFields") or [],
         "refinableFields": material.get("refinableFields") or {},
+        "currentEditableValues": material.get("currentEditableValues") or {},
+        "frozenValues": material.get("frozenValues") or {},
         "gateReasons": material.get("gateReasons") or [],
         "canvas": material.get("canvas"),
         "marketEvidence": material.get("marketEvidence") or [],
         "legalFindings": material.get("legalFindings") or [],
+        "allowedLegalRefs": material.get("allowedLegalRefs") or [],
         "previouslyRejectedByContract": material.get("driftRejections") or [],
         "previouslyDeclinedByUser": material.get("userDeclined") or [],
     }, ensure_ascii=False, sort_keys=True)

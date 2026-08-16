@@ -110,6 +110,21 @@ class ConceptRefinementServiceTests {
     }
 
     @Test
+    void staleSeedOrBmMaterialGateCreatesNoTask() {
+        when(rounds.findTopByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberDescIdDesc(
+            41L, "session-1")).thenReturn(Optional.empty());
+        when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.empty());
+        when(materials.input(41L, selection, source, 1))
+            .thenThrow(new BusinessException(ErrorCode.MODULE_INPUT_STALE));
+
+        assertThatThrownBy(() -> service.start(7L, 41L, "start-1", "request-1"))
+            .isInstanceOf(BusinessException.class);
+        verify(tasks, never()).create(anyLong(), any(), anyString(), any(), anyString(), anyString());
+        verify(rounds, never()).save(any());
+    }
+
+    @Test
     void sameSourceProposingAndAwaitingDecisionNeverDuplicateTask() {
         ConceptRefinementRound round = ConceptRefinementRound.start(41L, source, "old-task", "old-key", HASH);
         when(rounds.findTopByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberDescIdDesc(

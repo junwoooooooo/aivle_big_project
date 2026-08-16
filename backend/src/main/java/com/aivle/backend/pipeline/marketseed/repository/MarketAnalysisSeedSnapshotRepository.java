@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MarketAnalysisSeedSnapshotRepository extends JpaRepository<MarketAnalysisSeedSnapshot, String> {
+    Optional<MarketAnalysisSeedSnapshot> findByIdAndStaleAtIsNullAndDeletedAtIsNull(String id);
     Optional<MarketAnalysisSeedSnapshot> findBySelectionIdAndProjectIdAndDeletedAtIsNull(Long selectionId, Long projectId);
     Optional<MarketAnalysisSeedSnapshot> findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(Long projectId);
     Optional<MarketAnalysisSeedSnapshot> findFirstByProjectIdAndSourceTypeAndStaleAtIsNullAndDeletedAtIsNullOrderByFinalizedAtDesc(

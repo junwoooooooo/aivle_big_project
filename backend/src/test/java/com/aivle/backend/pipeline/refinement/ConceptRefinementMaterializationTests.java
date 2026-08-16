@@ -91,6 +91,17 @@ class ConceptRefinementMaterializationTests {
         verify(taskRuns, never()).adopt(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
     }
 
+    @Test
+    void responseCurrentValueMustDeepEqualAuthoritativeMaterialBaseline() {
+        JsonNode result = result();
+        ((tools.jackson.databind.node.ObjectNode) result.path("refinementProposals").path(0))
+            .put("currentValue", "8,900원");
+
+        assertThatThrownBy(() -> service.complete(claim, context, response(result), result, input(), selection))
+            .isInstanceOf(ConceptRefinementMaterializationService.ContractViolation.class);
+        verify(taskRuns, never()).adopt(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+    }
+
     private JsonNode input() {
         var input = mapper.createObjectNode();
         input.put("expectedHypothesisRevision", 4);
@@ -101,13 +112,17 @@ class ConceptRefinementMaterializationTests {
         binding.put("selectionId", 31); binding.put("selectionRevision", 4); binding.put("bmPlanRevision", 3);
         material.putArray("marketEvidence").addObject().put("id", "E-1");
         material.putArray("legalFindings").addObject().put("reference", "법률 제1조");
+        material.putObject("currentEditableValues").put("price", "10,000원");
+        material.putObject("frozenValues").put("conceptName", "Seed 사업안");
+        material.putArray("allowedLegalRefs").add("법률 제1조");
         return input;
     }
 
     private JsonNode result() {
         var result = mapper.createObjectNode();
         var proposal = result.putArray("refinementProposals").addObject();
-        proposal.put("fieldKey", "price"); proposal.put("proposedValue", "11,000원");
+        proposal.put("fieldKey", "price"); proposal.put("currentValue", "10,000원");
+        proposal.put("proposedValue", "11,000원");
         proposal.put("title", "가격 조정"); proposal.put("beforeText", "10,000원");
         proposal.put("afterText", "11,000원"); proposal.put("rationale", "시장 근거 반영");
         proposal.put("source", "MARKET"); proposal.putArray("evidenceIds").add("E-1");

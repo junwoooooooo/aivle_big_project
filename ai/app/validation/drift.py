@@ -1,7 +1,6 @@
 """REFINEMENT_POLICY_V1 deterministic drift and evidence gate."""
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
 
@@ -124,16 +123,16 @@ def check(field: str, current: Any, proposed: Any, frozen: dict[str, Any] | None
 
 
 def filter_ungrounded(proposals: list[dict[str, Any]], evidence: list[dict[str, Any]],
-                      legal_findings: list[dict[str, Any]]) -> tuple[list[dict], list[dict]]:
+                      allowed_legal_refs: list[str]) -> tuple[list[dict], list[dict]]:
     allowed = {str(item.get("id")) for item in evidence if item.get("id") is not None}
-    legal_text = json.dumps(legal_findings, ensure_ascii=False, sort_keys=True)
+    legal_refs = {str(value) for value in allowed_legal_refs}
     passed: list[dict] = []
     rejected: list[dict] = []
     for proposal in proposals:
         source = str(proposal.get("source") or "MARKET")
         if source == "LEGAL":
             legal_ref = str(proposal.get("legalRef") or "").strip()
-            if legal_ref and legal_ref in legal_text:
+            if legal_ref and legal_ref in legal_refs:
                 passed.append(proposal)
             else:
                 rejected.append({**proposal, "rejectionReason": "확인 가능한 법률 근거가 없다"})
@@ -147,17 +146,29 @@ def filter_ungrounded(proposals: list[dict[str, Any]], evidence: list[dict[str, 
     return passed, rejected
 
 
-def filter_proposals(proposals: list[dict[str, Any]], concept: dict[str, Any]) -> tuple[list[dict], list[dict]]:
+def filter_proposals(proposals: list[dict[str, Any]], current_values: dict[str, Any],
+                     frozen_values: dict[str, Any]) -> tuple[list[dict], list[dict]]:
     passed: list[dict] = []
     rejected: list[dict] = []
     for raw in proposals:
         field = canonical_field(str(raw.get("fieldKey") or ""))
         proposal = {**raw, "fieldKey": field}
+        if field not in current_values:
+            rejected.append({**proposal, "rejectionReason": "현재 검증 baseline에 없는 칸이다"})
+            continue
+        if "proposedValue" not in proposal or proposal.get("proposedValue") is None:
+            rejected.append({**proposal, "rejectionReason": "제안 값이 없다"})
+            continue
+        authoritative_current = current_values[field]
+        if proposal.get("proposedValue") == authoritative_current:
+            rejected.append({**proposal, "currentValue": authoritative_current,
+                             "rejectionReason": "현재 값과 같은 제안이다"})
+            continue
         try:
-            check(field, concept.get(field), proposal.get("proposedValue"), concept)
+            check(field, authoritative_current, proposal.get("proposedValue"), frozen_values)
         except DriftRejection as failure:
-            rejected.append({**proposal, "rejectionReason": failure.reason})
+            rejected.append({**proposal, "currentValue": authoritative_current,
+                             "rejectionReason": failure.reason})
         else:
-            passed.append(proposal)
+            passed.append({**proposal, "currentValue": authoritative_current})
     return passed, rejected
-
