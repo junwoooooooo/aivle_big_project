@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.refinement;
 import com.aivle.backend.common.entity.BaseEntity;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConceptRefinementRound extends BaseEntity {
-    public enum State { PROPOSING, AWAITING_DECISION, NO_CHANGES, FAILED, STALE }
+    public enum State {
+        PROPOSING, AWAITING_DECISION, NO_CHANGES, FAILED, STALE,
+        DECISION_RECORDED, KEEP_CURRENT
+    }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(name = "project_id", nullable = false) private Long projectId;
@@ -38,6 +42,11 @@ public class ConceptRefinementRound extends BaseEntity {
     @Column(name = "proposal_json", columnDefinition = "TEXT") private String proposalJson;
     @Column(name = "drift_rejections_json", columnDefinition = "TEXT") private String driftRejectionsJson;
     @Column(name = "last_error_code", length = 80) private String lastErrorCode;
+    @Column(name = "decision_json", columnDefinition = "TEXT") private String decisionJson;
+    @Column(name = "decision_hash", length = 71) private String decisionHash;
+    @Column(name = "decision_idempotency_key", length = 128) private String decisionIdempotencyKey;
+    @Column(name = "decided_by_user_id") private Long decidedByUserId;
+    @Column(name = "decided_at") private Instant decidedAt;
 
     public static ConceptRefinementRound start(Long projectId, CompletedSource source,
             String taskRunId, String commandKey, String canonicalMaterialHash) {
@@ -88,6 +97,25 @@ public class ConceptRefinementRound extends BaseEntity {
     }
 
     public void markStale() { state = State.STALE; }
+
+    public void recordDecision(String decisionJson, String decisionHash,
+            String idempotencyKey, Long userId, Instant now, boolean keepCurrent) {
+        if (state != State.AWAITING_DECISION || this.decisionJson != null) {
+            throw new IllegalStateException("Refinement decision is unavailable");
+        }
+        if (decisionJson == null || decisionJson.isBlank()
+                || decisionHash == null || !decisionHash.matches("sha256:[0-9a-f]{64}")
+                || idempotencyKey == null || idempotencyKey.isBlank()
+                || userId == null || now == null) {
+            throw new IllegalArgumentException("Refinement decision is invalid");
+        }
+        this.decisionJson = decisionJson;
+        this.decisionHash = decisionHash;
+        this.decisionIdempotencyKey = idempotencyKey;
+        this.decidedByUserId = userId;
+        this.decidedAt = now;
+        this.state = keepCurrent ? State.KEEP_CURRENT : State.DECISION_RECORDED;
+    }
 
     public boolean boundTo(CompletedSource source) {
         return source != null

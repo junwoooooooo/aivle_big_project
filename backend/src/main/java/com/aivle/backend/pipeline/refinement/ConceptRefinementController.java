@@ -4,6 +4,7 @@ import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.common.web.RequestIds;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ConceptRefinementController {
     private final ConceptRefinementService refinement;
+    private final ConceptRefinementDecisionService decisions;
     private final CurrentUserProvider currentUser;
 
     @PostMapping("/start")
@@ -35,10 +37,22 @@ public class ConceptRefinementController {
             request.getHeader("Idempotency-Key"), id(request)), request);
     }
 
+    @PostMapping("/decision")
+    public ApiResponse<ConceptRefinementService.CurrentView> decision(
+            @PathVariable Long projectId, @RequestBody DecisionRequest body,
+            HttpServletRequest request) {
+        return ApiResponse.success(decisions.decide(currentUser.currentUserId(), projectId,
+            request.getHeader("Idempotency-Key"), body.expectedRound(), body.proposalSetHash(),
+            body.selectedProposalKeys(), body.keepCurrent()), id(request));
+    }
+
     private ResponseEntity<ApiResponse<ConceptRefinementService.CurrentView>> accepted(
             ConceptRefinementService.CurrentView value, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(value, id(request)));
     }
 
     private String id(HttpServletRequest request) { return RequestIds.resolve(request); }
+
+    public record DecisionRequest(Integer expectedRound, String proposalSetHash,
+                                  List<String> selectedProposalKeys, boolean keepCurrent) { }
 }

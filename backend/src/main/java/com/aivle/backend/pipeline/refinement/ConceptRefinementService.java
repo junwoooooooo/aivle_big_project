@@ -30,16 +30,18 @@ public class ConceptRefinementService {
     private final ConceptPortfolioSelectionTaskFactory tasks;
     private final CanonicalInputHasher inputHasher;
     private final ObjectMapper mapper;
+    private final ConceptRefinementDecisionContract decisions;
 
     public ConceptRefinementService(ProjectRepository projects, BusinessValidationCoordinator validations,
             ConceptPortfolioSelectionRepository selections,
             MarketAnalysisSeedSnapshotRepository marketSeeds,
             ConceptRefinementRoundRepository rounds, ConceptRefinementMaterialFactory materials,
             ConceptPortfolioSelectionTaskFactory tasks, CanonicalInputHasher inputHasher,
-            ObjectMapper mapper) {
+            ObjectMapper mapper, ConceptRefinementDecisionContract decisions) {
         this.projects = projects; this.validations = validations; this.selections = selections;
         this.marketSeeds = marketSeeds; this.rounds = rounds; this.materials = materials;
         this.tasks = tasks; this.inputHasher = inputHasher; this.mapper = mapper;
+        this.decisions = decisions;
     }
 
     @Transactional
@@ -154,15 +156,19 @@ public class ConceptRefinementService {
         return selection;
     }
 
-    private CurrentView view(ConceptRefinementRound round, boolean computedStale) {
+    CurrentView view(ConceptRefinementRound round, boolean computedStale) {
         boolean stale = computedStale || round.getState() == ConceptRefinementRound.State.STALE;
         String state = stale ? "STALE" : round.getState().name();
         boolean retryAvailable = !stale && round.getState() == ConceptRefinementRound.State.FAILED
             && round.getAttempt() < ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND;
+        ConceptRefinementDecisionContract.ProposalSet proposalSet = round.getProposalJson() == null
+            ? null : decisions.proposalSet(round);
         return new CurrentView(state, stale, round.getRoundNumber(), policy(),
-            jsonArray(round.getProposalJson()), jsonArray(round.getDriftRejectionsJson()),
+            proposalSet == null ? jsonArray(null) : proposalSet.projected(),
+            jsonArray(round.getDriftRejectionsJson()),
             round.getLastErrorCode(), new RetryView(retryAvailable, round.getAttempt(),
-                ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND));
+                ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
+            proposalSet == null ? null : proposalSet.hash(), decisions.decisionView(round));
     }
 
     private PolicyView policy() {
@@ -199,7 +205,8 @@ public class ConceptRefinementService {
     public record RetryView(boolean available, int attempts, int maxAttempts) { }
     public record CurrentView(String state, boolean stale, int round, PolicyView policy,
                               JsonNode proposals, JsonNode rejected, String errorCode,
-                              RetryView retry) {
+                              RetryView retry, String proposalSetHash,
+                              ConceptRefinementDecisionContract.DecisionView decision) {
         static CurrentView notStarted() {
             return new CurrentView("NOT_STARTED", false, 0,
                 new PolicyView(ConceptRefinementPolicy.VERSION,
@@ -207,7 +214,8 @@ public class ConceptRefinementService {
                     (int) (ConceptRefinementPolicy.PRICE_TOLERANCE * 100),
                     ConceptRefinementPolicy.LIST_CHANGE_ALLOWANCE),
                 JsonNodeFactory.instance.arrayNode(), JsonNodeFactory.instance.arrayNode(),
-                null, new RetryView(false, 0, ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND));
+                null, new RetryView(false, 0, ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
+                null, null);
         }
     }
 }

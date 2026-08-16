@@ -19,6 +19,8 @@ import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.user.entity.User;
 import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -36,6 +38,7 @@ class ConceptRefinementServiceTests {
     @Mock ConceptRefinementMaterialFactory materials;
     @Mock ConceptPortfolioSelectionTaskFactory tasks;
     @Mock CanonicalInputHasher inputHasher;
+    @Mock ConceptRefinementDecisionContract decisions;
     @Mock Project project;
     @Mock User owner;
     @Mock ConceptPortfolioSelection selection;
@@ -48,7 +51,7 @@ class ConceptRefinementServiceTests {
     @BeforeEach
     void setUp() {
         service = new ConceptRefinementService(projects, validations, selections, seeds, rounds,
-            materials, tasks, inputHasher, mapper);
+            materials, tasks, inputHasher, mapper, decisions);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
         when(project.getOwner()).thenReturn(owner);
         when(owner.getId()).thenReturn(7L);
@@ -70,6 +73,9 @@ class ConceptRefinementServiceTests {
         lenient().when(tasks.create(anyLong(), same(selection), eq("REFINE_FROM_MARKET"),
             any(), anyString(), anyString())).thenReturn(task);
         lenient().when(rounds.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(decisions.proposalSet(any())).thenReturn(
+            new ConceptRefinementDecisionContract.ProposalSet(HASH, mapper.createArrayNode(),
+                Map.of(), List.of()));
     }
 
     @Test
