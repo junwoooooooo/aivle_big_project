@@ -39,13 +39,13 @@ public class ConceptRefinementFinalizationService {
             throw new BusinessException(ErrorCode.RESOURCE_VERSION_CONFLICT);}
         if(round.getFinalizationIdempotencyKey()!=null&&round.getState()!=ConceptRefinementRound.State.FINALIZATION_FAILED){
             if(key.equals(round.getFinalizationIdempotencyKey()))
-                return view(finals.findByRoundIdAndDeletedAtIsNull(round.getId()).orElse(null),round);
+                return view(ownerId,projectId,finals.findByRoundIdAndDeletedAtIsNull(round.getId()).orElse(null),round);
             throw unavailable();}
         OutcomePlan outcome=outcome(round); String identity=finalizationHash(round,outcome);
         if(round.getFinalizationIdempotencyKey()!=null){
             if(key.equals(round.getFinalizationIdempotencyKey())){
                 if(!identity.equals(round.getFinalizationHash()))throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
-                return view(finals.findByRoundIdAndDeletedAtIsNull(round.getId()).orElse(null),round);}
+                return view(ownerId,projectId,finals.findByRoundIdAndDeletedAtIsNull(round.getId()).orElse(null),round);}
             if(round.getState()!=ConceptRefinementRound.State.FINALIZATION_FAILED||round.getFinalizationAttempt()>=3)
                 throw unavailable();}
         boolean current=java.util.Set.of(ConceptRefinementRound.State.KEEP_CURRENT,ConceptRefinementRound.State.NO_CHANGES)
@@ -62,14 +62,14 @@ public class ConceptRefinementFinalizationService {
             round.startFinalization(key,identity,null,Instant.now(clock));
             ConceptRefinementFinal saved=createFinal(ownerId,projectId,round,outcome.outcome,
                 round.getSourceMarketSeedSnapshotId(),selectionRevision,bmRevision,outcome.overlayNode,outcome.selectedChanges);
-            round.finalized(saved.getId(),saved.getFinalMarketSeedSnapshotId(),Instant.now(clock)); return view(saved,round);}
+            round.finalized(saved.getId(),saved.getFinalMarketSeedSnapshotId(),Instant.now(clock)); return view(ownerId,projectId,saved,round);}
         String snapshotId=UUID.randomUUID().toString(); ObjectNode binding=binding(round,identity,snapshotId);
         TaskRun task=selectionService.finalizeMarketSeedFromRefinement(ownerId,projectId,round.getSelectionId(),
             round.getSourceMarketSeedSnapshotId(),outcome.overlayNode,binding,key,snapshotId);
         if(round.getState()==ConceptRefinementRound.State.FINALIZATION_FAILED)
             round.retryFinalization(key,identity,task.getId(),Instant.now(clock));
         else round.startFinalization(key,identity,task.getId(),Instant.now(clock));
-        return view(null,round);
+        return view(ownerId,projectId,null,round);
     }
 
     ConceptRefinementFinal createFinal(Long userId,Long projectId,ConceptRefinementRound round,
@@ -94,9 +94,19 @@ public class ConceptRefinementFinalizationService {
 
     public FinalView current(Long ownerId,Long projectId){ownedRead(ownerId,projectId);ConceptRefinementFinal value=finals
         .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
-        return value==null?null:view(value,currentRound(projectId));}
-    private FinalView view(ConceptRefinementFinal value,ConceptRefinementRound round){if(value==null)return new FinalView(round.getState().name(),null,true,null);
-        boolean stale=!lineage.postApplyCurrent(value.getProjectId(),round)||seeds
+        if(value!=null)return view(ownerId,projectId,value,rounds.findById(value.getRoundId()).orElse(null));
+        return view(ownerId,projectId,null,rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null));}
+    private FinalView view(Long ownerId,Long projectId,ConceptRefinementFinal value,ConceptRefinementRound round){
+        if(value==null){if(round==null)return new FinalView("NOT_STARTED",null,false,null);
+            boolean stale=switch(round.getState()){
+                case STALE,FINALIZED -> true;
+                case KEEP_CURRENT,NO_CHANGES -> !lineage.preApplyCurrent(ownerId,projectId,round);
+                default -> round.postApplyState()?!lineage.postApplyCurrent(projectId,round):!lineage.preApplyCurrent(ownerId,projectId,round);};
+            return new FinalView(round.getState().name(),null,stale,null);}
+        boolean bound=round!=null&&!round.isDeleted()&&Objects.equals(value.getProjectId(),projectId)
+            &&Objects.equals(round.getProjectId(),value.getProjectId())&&Objects.equals(round.getSelectionId(),value.getSelectionId())
+            &&Objects.equals(round.getFinalId(),value.getId())&&Objects.equals(round.getFinalMarketSeedSnapshotId(),value.getFinalMarketSeedSnapshotId());
+        boolean stale=!bound||!lineage.postApplyCurrent(projectId,round)||seeds
             .findByIdAndStaleAtIsNullAndDeletedAtIsNull(value.getFinalMarketSeedSnapshotId()).isEmpty();
         return new FinalView("FINALIZED",value.getOutcome().name(),stale,mapper.readTree(value.getFinalJson()));}
     private OutcomePlan outcome(ConceptRefinementRound round){

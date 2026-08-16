@@ -71,6 +71,12 @@ public class ConceptRefinementController {
             request.getHeader("Idempotency-Key"),body.expectedRound(),body.expectedDecisionHash()),id(request));
     }
 
+    @GetMapping("/final")
+    public ApiResponse<ConceptRefinementFinalizationService.FinalView> currentFinal(
+            @PathVariable Long projectId,HttpServletRequest request){
+        return ApiResponse.success(finalization.current(currentUser.currentUserId(),projectId),id(request));
+    }
+
     private ResponseEntity<ApiResponse<ConceptRefinementService.CurrentView>> accepted(
             ConceptRefinementService.CurrentView value, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(value, id(request)));
