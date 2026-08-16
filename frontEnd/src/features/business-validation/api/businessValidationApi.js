@@ -4,6 +4,10 @@ const commandKey = () => globalThis.crypto?.randomUUID?.()
 
 export function createBusinessValidationApi(client, projectId) {
   const root = base(projectId);
+  const refinementRoot = `${root}/business-validation/refinement`;
+  const command = (path, body = {}) => client.post(`${refinementRoot}${path}`, body, {
+    timeoutMs: 30000, headers: { 'Idempotency-Key': commandKey() },
+  }).then((response) => response.data);
   return {
     async current() {
       return (await client.get(`${root}/business-validation/current`)).data;
@@ -27,5 +31,17 @@ export function createBusinessValidationApi(client, projectId) {
     async currentBmPlan() {
       return (await client.get(`${root}/business-model/plan`)).data;
     },
+    async currentRefinement() {
+      return (await client.get(`${refinementRoot}/current`)).data;
+    },
+    async currentRefinementFinal() {
+      return (await client.get(`${refinementRoot}/final`)).data;
+    },
+    startRefinement() { return command('/start'); },
+    retryRefinement() { return command('/retry'); },
+    decideRefinement(body) { return command('/decision', body); },
+    applyRefinement(body) { return command('/apply', body); },
+    retryRefinementLegal(body) { return command('/apply/retry-legal', body); },
+    finalizeRefinement(body) { return command('/finalize', body); },
   };
 }
