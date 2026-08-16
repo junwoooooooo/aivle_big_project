@@ -14,6 +14,8 @@ public interface FinancialInputPreparationRepository extends JpaRepository<Finan
         Long projectId, String techOpsId, Long marketVersionId, Long businessModelVersionId);
     Optional<FinancialInputPreparation> findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
         Long projectId, Long marketVersionId, Long businessModelVersionId);
+    Optional<FinancialInputPreparation> findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+        Long projectId, String sourceMode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select value from FinancialInputPreparation value where value.id=:id and value.projectId=:projectId and value.deletedAt is null")

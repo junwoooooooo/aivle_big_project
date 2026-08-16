@@ -124,13 +124,23 @@ public class ProjectModuleStatusService {
         TaskRun techOpsAdvisoryTask = taskRunRepository
             .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
                 projectId, TaskType.TECH_OPS_ADVISORY).orElse(null);
-        var financialPreparation = currentMarketVersion == null || currentBusinessVersion == null
-            ? null : financialPreparationRepository
+        TaskRun launchTechnologyTask = taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.LAUNCH_TECHNOLOGY_READINESS).orElse(null);
+        TaskRun launchOperationsTask = taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.LAUNCH_OPERATIONS_READINESS).orElse(null);
+        var userDocumentPreparation = financialPreparationRepository
+            .findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(projectId, "USER_DOCUMENT_INPUT").orElse(null);
+        var financialPreparation = userDocumentPreparation != null ? userDocumentPreparation
+            : currentMarketVersion == null || currentBusinessVersion == null ? null : financialPreparationRepository
                 .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
                     projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
                 .orElse(null);
-        var financialSnapshot = currentMarketVersion == null || currentBusinessVersion == null
-            ? null : financialSnapshotRepository
+        var userDocumentSnapshot = financialSnapshotRepository
+            .findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId, "USER_DOCUMENT_INPUT").orElse(null);
+        var financialSnapshot = userDocumentSnapshot != null ? userDocumentSnapshot
+            : currentMarketVersion == null || currentBusinessVersion == null ? null : financialSnapshotRepository
                 .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
                     projectId, currentMarketVersion.getId(), currentBusinessVersion.getId())
                 .orElse(null);
@@ -167,16 +177,8 @@ public class ProjectModuleStatusService {
             || !currentMarketVersion.getId().equals(techOpsAdvisory.getSourceMarketResearchVersionId())
             || !currentBusinessVersion.getId().equals(techOpsAdvisory.getSourceBusinessModelVersionId())
             || !portfolioSelection.getId().equals(techOpsAdvisory.getSourcePortfolioSelectionId()));
-        PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
-            : techOpsPreparation == null ? PipelineModuleStatus.READY
-            : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
-            : currentMarketVersion == null || currentBusinessVersion == null ? PipelineModuleStatus.NOT_READY
-            : techOpsAdvisoryStale ? PipelineModuleStatus.STALE
-            : techOpsAdvisoryTask == null ? PipelineModuleStatus.READY
-            : taskStatus(techOpsAdvisoryTask.getState());
-        PipelineModuleStatus financialBaseStatus = currentMarketVersion == null || currentBusinessVersion == null
-            ? PipelineModuleStatus.NOT_READY
-            : financialPreparation == null ? PipelineModuleStatus.READY
+        PipelineModuleStatus techOpsStatus = aggregateLaunchStatus(launchTechnologyTask, launchOperationsTask);
+        PipelineModuleStatus financialBaseStatus = financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
         TaskRun activeFinancialReportTask = activeTask(financialTask);
@@ -214,21 +216,14 @@ public class ProjectModuleStatusService {
                 currentMarketVersion == null ? null : String.valueOf(currentMarketVersion.getId()), null, null,
                 businessRun == null ? null : businessRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.TECH_OPS, techOpsStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId")
-                    : techOpsSnapshot == null ? List.of("techOpsRequiredFacts", "techOpsRequiredDecisions")
-                    : techOpsAdvisory == null ? List.of("techOpsAdvisoryReport") : List.of(),
-                new NextAction("기술·운영 상용화 자문", "/tech-ops"),
-                techOpsAdvisory == null ? null : techOpsAdvisory.getId(),
-                activeTask(techOpsAdvisoryTask) == null ? null : techOpsAdvisoryTask.getId(),
-                techOpsSnapshot == null ? null : techOpsSnapshot.getId(), null, null,
-                techOpsAdvisoryTask == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt()
-                    : techOpsAdvisoryTask.getUpdatedAt()),
+                List.of(), new NextAction("출시 준비 분석", "/launch-readiness"),
+                latestId(launchTechnologyTask, launchOperationsTask),
+                latestActiveId(launchTechnologyTask, launchOperationsTask), null, null, null,
+                latestUpdatedAt(launchTechnologyTask, launchOperationsTask)),
             response(projectId, PipelineModuleType.FINANCE, financialStatus,
-                currentMarketVersion == null ? List.of("marketResearchVersionId")
-                    : currentBusinessVersion == null ? List.of("businessModelVersionId")
-                    : financialSnapshot == null ? List.of("financialRequiredInputs")
+                financialSnapshot == null ? List.of("financialInputDocument")
                     : financialTask == null ? List.of("financialAnalysisReport") : List.of(),
-                new NextAction("재무 입력 준비", "/finance"), activeFinancialTask == null
+                new NextAction("출시 준비 분석", "/launch-readiness"), activeFinancialTask == null
                     ? financialTask == null ? null : financialTask.getId() : activeFinancialTask.getId(),
                 activeFinancialTask == null ? null : activeFinancialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
@@ -278,6 +273,25 @@ public class ProjectModuleStatusService {
             case NEEDS_INPUT, SUCCEEDED, FAILED, CANCELLED, TIMED_OUT -> base;
         };
     }
+
+    private PipelineModuleStatus aggregateLaunchStatus(TaskRun technology, TaskRun operations) {
+        List<TaskRun> tasks = java.util.stream.Stream.of(technology, operations).filter(java.util.Objects::nonNull).toList();
+        if (tasks.isEmpty()) return PipelineModuleStatus.READY;
+        if (tasks.stream().anyMatch(task -> List.of(TaskRunState.FAILED, TaskRunState.CANCELLED, TaskRunState.TIMED_OUT).contains(task.getState()))) return PipelineModuleStatus.FAILED;
+        if (tasks.stream().anyMatch(task -> task.getState() == TaskRunState.NEEDS_INPUT)) return PipelineModuleStatus.NEEDS_INPUT;
+        if (tasks.stream().anyMatch(task -> task.getState() == TaskRunState.RUNNING)) return PipelineModuleStatus.RUNNING;
+        if (tasks.stream().anyMatch(task -> List.of(TaskRunState.QUEUED, TaskRunState.READY).contains(task.getState()))) return PipelineModuleStatus.QUEUED;
+        return technology != null && operations != null && tasks.stream().allMatch(task -> task.getState() == TaskRunState.SUCCEEDED)
+            ? PipelineModuleStatus.COMPLETED : PipelineModuleStatus.READY;
+    }
+
+    private TaskRun latest(TaskRun left, TaskRun right) {
+        if (left == null) return right; if (right == null) return left;
+        return left.getUpdatedAt().isAfter(right.getUpdatedAt()) ? left : right;
+    }
+    private String latestId(TaskRun left, TaskRun right) { TaskRun value = latest(left, right); return value == null ? null : value.getId(); }
+    private String latestActiveId(TaskRun left, TaskRun right) { TaskRun value = latest(activeTask(left), activeTask(right)); return value == null ? null : value.getId(); }
+    private LocalDateTime latestUpdatedAt(TaskRun left, TaskRun right) { TaskRun value = latest(left, right); return value == null ? null : value.getUpdatedAt(); }
 
     private PipelineModuleStatus ideaStatus(IdeaBrief brief) {
         if (brief == null) return PipelineModuleStatus.NEEDS_INPUT;

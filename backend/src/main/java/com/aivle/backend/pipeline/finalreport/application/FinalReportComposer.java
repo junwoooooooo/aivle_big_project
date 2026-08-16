@@ -51,11 +51,14 @@ public class FinalReportComposer {
         section(sections, "1", "Executive Summary", sources, "PROJECT", "IDEA", "SELECTED_CONCEPT");
         section(sections, "2", "사업 개요 및 기획", sources, "IDEA", "SELECTED_CONCEPT", "LEGAL");
         section(sections, "3", "시장 및 사업성 검증", sources, "MARKET", "BUSINESS_MODEL");
-        section(sections, "4", "출시 준비", sources, "TECH_OPS", "FINANCE", "FINANCE_REPORT");
+        section(sections, "4", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS",
+            "TECH_OPS", "FINANCE", "FINANCE_REPORT");
         section(sections, "5", "가상 인터뷰 결과", sources, "TWIN_SURVEY");
         section(sections, "6", "마케팅 전략", sources, "MARKETING", "MARKETING_ASSETS");
-        section(sections, "7", "주요 위험 및 대응", sources, "LEGAL", "MARKET", "TECH_OPS", "FINANCE");
-        section(sections, "8", "종합 판단 및 권고사항", sources, "MARKET", "BUSINESS_MODEL", "FINANCE", "TWIN_SURVEY");
+        section(sections, "7", "주요 위험 및 대응", sources, "LEGAL", "MARKET", "LAUNCH_TECHNOLOGY",
+            "LAUNCH_OPERATIONS", "TECH_OPS", "FINANCE");
+        section(sections, "8", "종합 판단 및 권고사항", sources, "MARKET", "BUSINESS_MODEL",
+            "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "TWIN_SURVEY");
         report.put("caveat", "이 문서는 각 업무 단계의 저장된 정본 결과를 결정적으로 편집한 것입니다. 자료가 없는 항목은 추정하지 않습니다.");
         return report;
     }

@@ -55,6 +55,22 @@ def test_report_input_does_not_require_techops(monkeypatch):
     assert result["providerStatus"] == "SUCCEEDED"
 
 
+def test_user_document_report_does_not_require_market_or_business_model(monkeypatch):
+    value = _input()
+    value["sourceMarketResearchVersionId"] = None
+    value["sourceBusinessModelVersionId"] = None
+
+    async def prompt(*_args, **_kwargs):
+        return {"headline": "사용자 문서 기준 결과", "findings": ["계산 결과 확인"],
+            "cautions": ["입력 가정 주의"], "recommendedActions": ["실제 값 검증"],
+            "disclaimer": "입력 가정에 따른 결과입니다.", "source": "AI_GENERATED_REPORT",
+            "providerStatus": "SUCCEEDED", "safeFailureReason": None}
+
+    monkeypatch.setattr(service, "execute_structured_prompt", prompt)
+    result = asyncio.run(service.execute_finance_analysis_report(value))
+    assert result["providerStatus"] == "SUCCEEDED"
+
+
 def test_finance_provider_schema_is_closed_fully_required_and_literal_bound() -> None:
     schema = FinanceAnalysisReportResult.model_json_schema()
     assert strict_schema_failures(schema) == []

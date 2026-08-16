@@ -16,4 +16,14 @@ describe('project route cutover', () => {
     expect(existsSync('src/features/concept-factory/pages/ConceptFactoryPage.jsx')).toBe(true);
     expect(existsSync('src/features/concept-selection/pages/ConceptComparisonPage.jsx')).toBe(true);
   });
+
+  it('출시 준비의 canonical 및 호환 경로를 하나의 화면으로 연결한다', () => {
+    expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');
+    expect(routerSource).toContain('path="technology" element={<LaunchReadinessPage initialFocus="technology" />}');
+    expect(routerSource).toContain('path="operations" element={<LaunchReadinessPage initialFocus="operations" />}');
+    expect(routerSource).toContain('path="tech-ops" element={<LaunchReadinessPage />}');
+    expect(routerSource).toContain('path="finance" element={<LaunchReadinessPage initialFocus="finance" />}');
+    expect(routerSource).not.toContain('element={<TechOpsPage />}');
+    expect(routerSource).not.toContain('element={<FinancePage />}');
+  });
 });

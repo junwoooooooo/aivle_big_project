@@ -10,7 +10,7 @@ RUN ./gradlew --no-daemon bootJar -x test
 FROM eclipse-temurin:17-jre-jammy
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl \
+    && apt-get install --no-install-recommends -y curl fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app \
     && useradd --system --gid app --home-dir /app app

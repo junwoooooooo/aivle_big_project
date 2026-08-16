@@ -10,8 +10,8 @@ class StrictModel(BaseModel):
 class FinanceAnalysisReportInput(StrictModel):
     snapshotId: str = Field(min_length=1, max_length=64)
     snapshotHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    sourceMarketResearchVersionId: int = Field(gt=0)
-    sourceBusinessModelVersionId: int = Field(gt=0)
+    sourceMarketResearchVersionId: int | None
+    sourceBusinessModelVersionId: int | None
     sourceTechOpsSnapshotId: str | None = Field(default=None, min_length=1, max_length=64)
     deterministicResult: dict
 

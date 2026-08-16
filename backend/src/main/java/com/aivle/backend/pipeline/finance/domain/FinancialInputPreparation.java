@@ -26,6 +26,25 @@ public class FinancialInputPreparation extends BaseEntity {
     @Column(name = "assistance_json", nullable = false, columnDefinition = "TEXT") private String assistanceJson;
     @Column(nullable = false) private int revision;
     @Column(name = "updated_by_user_id", nullable = false) private Long updatedByUserId;
+    @Column(name = "source_mode", length = 40) private String sourceMode;
+    @Column(name = "source_document_artifact_id", length = 64) private String sourceDocumentArtifactId;
+    @Column(name = "source_document_hash", length = 71) private String sourceDocumentHash;
+
+    public static FinancialInputPreparation createFromUserDocument(String id, Long projectId,
+            String artifactId, String documentHash, String sourceHash, String fieldsJson,
+            String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || blank(artifactId) || !hash(documentHash) || !hash(sourceHash)
+                || blank(fieldsJson) || blank(referencesJson) || blank(assistanceJson) || userId == null) {
+            throw new IllegalArgumentException("사용자 재무 입력 문서 정보가 올바르지 않습니다.");
+        }
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id; value.projectId = projectId; value.sourceMode = "USER_DOCUMENT_INPUT";
+        value.sourceDocumentArtifactId = artifactId; value.sourceDocumentHash = documentHash;
+        value.sourceSnapshotHash = sourceHash; value.financialFieldsJson = fieldsJson;
+        value.upstreamReferencesJson = referencesJson; value.assistanceJson = assistanceJson;
+        value.revision = 1; value.updatedByUserId = userId;
+        return value;
+    }
 
     public static FinancialInputPreparation create(String id, Long projectId, String techOpsSnapshotId,
             String marketSeedSnapshotId, String sourceHash, String fieldsJson, String referencesJson,

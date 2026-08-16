@@ -31,6 +31,8 @@ TASK_TYPES = {
     "TECH_OPS_ADVISORY",
     "FINANCE_ESTIMATE",
     "FINANCE_ANALYSIS_REPORT",
+    "LAUNCH_TECHNOLOGY_READINESS",
+    "LAUNCH_OPERATIONS_READINESS",
     "MARKETING_CONTENT_GENERATION",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
@@ -320,6 +322,12 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "FINANCE_ANALYSIS_REPORT":
             from app.tasks.finance_analysis_report import execute_finance_analysis_report
             result = await execute_finance_analysis_report(body.input)
+        elif body.taskType in {"LAUNCH_TECHNOLOGY_READINESS", "LAUNCH_OPERATIONS_READINESS"}:
+            from app.tasks.launch_readiness.professional import analyze_professional_readiness
+            result = await analyze_professional_readiness({
+                "moduleType": "TECHNOLOGY" if body.taskType == "LAUNCH_TECHNOLOGY_READINESS" else "OPERATIONS",
+                "input": body.input.get("professionalInput", {}),
+            })
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)

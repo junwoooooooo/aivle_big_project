@@ -5,7 +5,8 @@ import { aggregateJourneyStatus, getJourneyByPath, getProjectJourneys, JOURNEY_S
 describe('project journey model', () => {
   it.each([
     ['/idea', 'planning'], ['/concepts', 'planning'], ['/concepts/legal-report', 'planning'], ['/market', 'validation'],
-    ['/business-model', 'validation'], ['/tech-ops', 'launch'], ['/finance', 'launch'],
+    ['/business-model', 'validation'], ['/launch-readiness', 'launch'], ['/technology', 'launch'],
+    ['/operations', 'launch'], ['/tech-ops', 'launch'], ['/finance', 'launch'],
     ['/twin-survey', 'interview'], ['/marketing', 'marketingStrategy'], ['/final-report', 'finalReport'],
   ])('%s 경로를 %s Journey로 연결한다', (path, journey) => {
     expect(getJourneyByPath(`/app/projects/41${path}`).id).toBe(journey);

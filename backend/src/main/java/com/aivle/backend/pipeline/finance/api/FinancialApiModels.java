@@ -23,6 +23,8 @@ public final class FinancialApiModels {
         String preparationId, String sourceTechOpsSnapshotId, String sourceMarketSeedSnapshotId,
         Long sourceMarketResearchVersionId, Long sourceBusinessModelVersionId,
         String snapshotHash, Instant createdAt, JsonNode snapshot, boolean stale) {}
+    public record DocumentImportResponse(PreparationView preparation, SnapshotView snapshot,
+        AnalysisActionResponse analysis) {}
     public record AnalysisActionResponse(String taskRunId, String jobId, String status,
         String snapshotId, String snapshotHash) {}
     public record AnalysisView(String taskRunId, String jobId, String status, boolean retryable,

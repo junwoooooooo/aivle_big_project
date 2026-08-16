@@ -15,8 +15,7 @@ import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
 import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
 import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
-import { TechOpsPage } from '../../features/tech-ops/index.js';
-import { FinancePage } from '../../features/finance/index.js';
+import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import FinalReportPage from '../../features/final-report/FinalReportPage.jsx';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
@@ -80,8 +79,11 @@ export default function AppRouter() {
             <Route path="market" element={<MarketResearchPage />} />
             <Route path="business-model" element={<BmCanvasPage />} />
             <Route path="twin-survey" element={<TwinSurveyPage />} />
-            <Route path="tech-ops" element={<TechOpsPage />} />
-            <Route path="finance" element={<FinancePage />} />
+            <Route path="launch-readiness" element={<LaunchReadinessPage />} />
+            <Route path="technology" element={<LaunchReadinessPage initialFocus="technology" />} />
+            <Route path="operations" element={<LaunchReadinessPage initialFocus="operations" />} />
+            <Route path="tech-ops" element={<LaunchReadinessPage />} />
+            <Route path="finance" element={<LaunchReadinessPage initialFocus="finance" />} />
             <Route path="marketing" element={<MarketingContentPage />} />
             <Route path="final-report" element={<FinalReportPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />

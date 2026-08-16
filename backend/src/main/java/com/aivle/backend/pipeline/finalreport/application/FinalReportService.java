@@ -11,6 +11,8 @@ import com.aivle.backend.pipeline.finalreport.domain.FinalReportSnapshot;
 import com.aivle.backend.pipeline.finalreport.repository.FinalReportSnapshotRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefRepository;
+import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType;
+import com.aivle.backend.pipeline.launchreadiness.repository.LaunchReadinessReportRepository;
 import com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus;
 import com.aivle.backend.pipeline.marketing.repository.MarketingAssetRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
@@ -48,7 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FinalReportService {
     private static final List<String> REQUIRED = List.of(
         "IDEA", "SELECTED_CONCEPT", "MARKET", "BUSINESS_MODEL",
-        "TECH_OPS", "FINANCE", "TWIN_SURVEY", "MARKETING");
+        "FINANCE", "TWIN_SURVEY", "MARKETING");
 
     private final ProjectRepository projects;
     private final IdeaBriefRepository ideaBriefs;
@@ -56,6 +58,7 @@ public class FinalReportService {
     private final ConceptPortfolioConceptRepository concepts;
     private final MarketResearchVersionRepository marketVersions;
     private final TechOpsAdvisoryReportRepository techOpsReports;
+    private final LaunchReadinessReportRepository launchReadinessReports;
     private final FinancialInputSnapshotRepository financeSnapshots;
     private final TwinSurveyVersionRepository twinVersions;
     private final MarketingContentRepository marketingContents;
@@ -158,6 +161,8 @@ public class FinalReportService {
         techOpsReports.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
             .ifPresent(value -> sources.add(source("TECH_OPS", value.getId(), null, null, null,
                 instant(value.getUpdatedAt()), json(value.getResultJson()))));
+        addLaunchReadinessSource(sources, projectId, ModuleType.TECHNOLOGY, "LAUNCH_TECHNOLOGY");
+        addLaunchReadinessSource(sources, projectId, ModuleType.OPERATIONS, "LAUNCH_OPERATIONS");
         financeSnapshots.findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId).ifPresent(value -> {
             sources.add(source("FINANCE", value.getId(), null, null, value.getSnapshotHash(),
                 value.getFinalizedAt(), json(value.getSnapshotJson())));
@@ -187,10 +192,23 @@ public class FinalReportService {
 
         ArrayNode manifest = composer.manifest(sources);
         String hash = composer.hash(manifest);
-        List<String> missing = REQUIRED.stream().filter(type -> sources.stream().noneMatch(source -> source.type().equals(type))).toList();
+        List<String> missing = new ArrayList<>(REQUIRED.stream()
+            .filter(type -> sources.stream().noneMatch(source -> source.type().equals(type))).toList());
+        boolean legacyLaunch = sources.stream().anyMatch(source -> source.type().equals("TECH_OPS"));
+        boolean professionalLaunch = sources.stream().anyMatch(source -> source.type().equals("LAUNCH_TECHNOLOGY"))
+            && sources.stream().anyMatch(source -> source.type().equals("LAUNCH_OPERATIONS"));
+        if (!legacyLaunch && !professionalLaunch) missing.add("LAUNCH_READINESS");
         List<ReadinessItem> readiness = readiness(moduleStatuses.findAll(ownerId, projectId));
         boolean stagesComplete = readiness.stream().allMatch(item -> item.status().equals("COMPLETED"));
-        return new SourceSet(List.copyOf(sources), manifest, hash, readiness, missing, missing.isEmpty() && stagesComplete);
+        return new SourceSet(List.copyOf(sources), manifest, hash, readiness, List.copyOf(missing), missing.isEmpty() && stagesComplete);
+    }
+
+    private void addLaunchReadinessSource(List<ReportSource> sources, Long projectId,
+            ModuleType moduleType, String sourceType) {
+        launchReadinessReports
+            .findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByCompletedAtDesc(projectId, moduleType)
+            .ifPresent(value -> sources.add(source(sourceType, value.getId(), null, null,
+                value.getResultHash(), value.getCompletedAt(), json(value.getAnalysisJson()))));
     }
 
     private List<ReadinessItem> readiness(List<ProjectModuleStatusResponse> statuses) {

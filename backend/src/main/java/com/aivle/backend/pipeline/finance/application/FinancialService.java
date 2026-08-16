@@ -226,6 +226,45 @@ public class FinancialService {
     }
 
     @Transactional
+    public SnapshotView importUserDocument(Long ownerId, Long projectId, String artifactId,
+            String documentHash, JsonNode normalizedValues) {
+        requireOwnedForUpdate(ownerId, projectId);
+        if (normalizedValues == null || !normalizedValues.isObject())
+            throw invalid("문서 입력 내용을 확인해 주세요.");
+        ObjectNode fields = mapper.createObjectNode();
+        for (String key : FinancialPreparationFactory.ALL_KEYS) {
+            JsonNode value = normalizedValues.path(key);
+            if (value.isMissingNode()) value = mapper.nullNode();
+            validateField(key, value, FinancialPreparationFactory.REQUIRED_KEYS.contains(key));
+            ObjectNode field = fields.putObject(key);
+            field.set("value", value.deepCopy()); field.put("source", "USER_DOCUMENT_INPUT");
+            field.put("decision", FinancialPreparationFactory.present(value) ? "LOCKED" : "OPEN");
+            field.put("readOnly", false); field.put("sourceDocumentArtifactId", artifactId);
+            field.put("provenance", "uploaded-finance-document." + key);
+        }
+        if (calculator.calculateCac(fields) == null)
+            throw invalid("마케팅비·영업비와 신규 고객 수를 확인해 주세요.");
+        ObjectNode lineage = mapper.createObjectNode();
+        lineage.put("sourceMode", "USER_DOCUMENT_INPUT"); lineage.put("sourceDocumentArtifactId", artifactId);
+        lineage.put("sourceDocumentHash", documentHash); lineage.set("normalizedValues", normalizedValues.deepCopy());
+        String sourceHash = snapshotHasher.hash(lineage);
+        ObjectNode references = mapper.createObjectNode(); references.set("userDocument", lineage.deepCopy());
+        ObjectNode assistance = mapper.createObjectNode();
+        for (String key : FinancialPreparationFactory.ALL_KEYS) assistance.putObject(key).put("decision", "NOT_USED");
+        String preparationId = UUID.randomUUID().toString();
+        FinancialInputPreparation preparation = preparations.save(FinancialInputPreparation.createFromUserDocument(
+            preparationId, projectId, artifactId, documentHash, sourceHash,
+            mapper.writeValueAsString(fields), mapper.writeValueAsString(references),
+            mapper.writeValueAsString(assistance), ownerId));
+        String snapshotId = UUID.randomUUID().toString(); Instant now = Instant.now();
+        var built = snapshotFactory.createUserDocument(snapshotId, now, preparation);
+        FinancialInputSnapshot snapshot = snapshots.save(FinancialInputSnapshot.createFromUserDocument(
+            snapshotId, projectId, preparationId, preparation.getRevision(), artifactId, documentHash,
+            FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now));
+        return snapshotView(snapshot);
+    }
+
+    @Transactional
     public PreparationView reopenPreparation(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
         FinancialInputPreparation preparation = lockedCurrent(ownerId, projectId);
@@ -239,6 +278,9 @@ public class FinancialService {
     @Transactional(readOnly = true)
     public SnapshotView currentSnapshot(Long ownerId, Long projectId) {
         requireOwned(ownerId, projectId);
+        var userDocument = snapshots.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            projectId, "USER_DOCUMENT_INPUT");
+        if (userDocument.isPresent()) return snapshotView(userDocument.get());
         CurrentSources source = currentSources(ownerId, projectId);
         return snapshotView(snapshots
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
@@ -334,6 +376,9 @@ public class FinancialService {
     }
 
     private FinancialInputPreparation requireCurrent(Long ownerId, Long projectId) {
+        var userDocument = preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+            projectId, "USER_DOCUMENT_INPUT");
+        if (userDocument.isPresent()) return userDocument.get();
         CurrentSources source = currentSources(ownerId, projectId);
         return preparations
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
@@ -383,6 +428,11 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputPreparation value) {
+        if ("USER_DOCUMENT_INPUT".equals(value.getSourceMode())) {
+            return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                value.getProjectId(), "USER_DOCUMENT_INPUT").map(current -> !current.getId().equals(value.getId())
+                    || !current.getSourceDocumentHash().equals(value.getSourceDocumentHash())).orElse(true);
+        }
         try {
             CurrentSources current = currentSources(value.getUpdatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())
@@ -391,6 +441,12 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputSnapshot value) {
+        if ("USER_DOCUMENT_INPUT".equals(value.getSourceMode())) {
+            return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                value.getProjectId(), "USER_DOCUMENT_INPUT").map(current -> !current.getId().equals(value.getPreparationId())
+                    || current.getRevision() != value.getPreparationRevision()
+                    || !current.getSourceDocumentHash().equals(value.getSourceDocumentHash())).orElse(true);
+        }
         try {
             CurrentSources current = currentSources(value.getCreatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())

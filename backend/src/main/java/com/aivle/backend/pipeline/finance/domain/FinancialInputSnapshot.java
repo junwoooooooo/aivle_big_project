@@ -27,6 +27,27 @@ public class FinancialInputSnapshot extends BaseEntity {
     @Column(name = "snapshot_json", nullable = false, columnDefinition = "TEXT") private String snapshotJson;
     @Column(name = "created_by_user_id", nullable = false) private Long createdByUserId;
     @Column(name = "finalized_at", nullable = false) private Instant finalizedAt;
+    @Column(name = "source_mode", length = 40) private String sourceMode;
+    @Column(name = "preparation_revision") private Integer preparationRevision;
+    @Column(name = "source_document_artifact_id", length = 64) private String sourceDocumentArtifactId;
+    @Column(name = "source_document_hash", length = 71) private String sourceDocumentHash;
+
+    public static FinancialInputSnapshot createFromUserDocument(String id, Long projectId,
+            String preparationId, int preparationRevision, String artifactId, String documentHash,
+            String schemaVersion, String hash, String json, Long userId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || blank(preparationId) || preparationRevision < 1
+                || blank(artifactId) || !hash(documentHash) || blank(schemaVersion) || !hash(hash)
+                || blank(json) || userId == null || finalizedAt == null) {
+            throw new IllegalArgumentException("사용자 재무 입력 Snapshot 정보가 올바르지 않습니다.");
+        }
+        FinancialInputSnapshot value = new FinancialInputSnapshot();
+        value.id = id; value.projectId = projectId; value.preparationId = preparationId;
+        value.sourceMode = "USER_DOCUMENT_INPUT"; value.preparationRevision = preparationRevision;
+        value.sourceDocumentArtifactId = artifactId; value.sourceDocumentHash = documentHash;
+        value.schemaVersion = schemaVersion; value.snapshotHash = hash; value.snapshotJson = json;
+        value.createdByUserId = userId; value.finalizedAt = finalizedAt;
+        return value;
+    }
 
     public static FinancialInputSnapshot create(String id, Long projectId, String preparationId,
             String techOpsSnapshotId, String marketSeedSnapshotId, String schemaVersion, String hash,
