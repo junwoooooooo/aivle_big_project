@@ -115,7 +115,7 @@ def check_role_kind(formulas: list, vocab: dict, metric_cat: dict) -> dict:
     return {"name": "var_role↔계량 종류", "passed": not bad, "violations": bad}
 
 
-def check_template_roles(formulas: list, vocab: dict) -> dict:
+def check_template_roles(formulas: list, vocab: dict, assumptions: dict | None = None) -> dict:
     """G9 — 템플릿이 요구하는 자리가 다 있는가.
 
     T2 에 `연환산` 이 없으면 월 매출을 연 매출로 읽는다(12배 축소). 1차 초안이 그랬고
@@ -123,6 +123,12 @@ def check_template_roles(formulas: list, vocab: dict) -> dict:
     """
     req = vocab["template"]["required_roles"]
     assume_ok = set(vocab["var_role"]["_가정_역할"])
+    if assumptions is None:
+        assumptions = _load(os.path.join(ROOT, "rules", "assumptions.v1.json"))
+    assumption_values = {
+        role for role, spec in (assumptions.get("by_role") or {}).items()
+        if isinstance(spec, dict) and spec.get("value") is not None
+    }
     # **초과 자리 검사** (판 ⑫ ①′). 목록이 있는 템플릿만 정확 일치를 요구한다 —
     # 모르는 템플릿(T1·T4·T5)에 걸면 멀쩡한 식을 죽인다. 값은 규칙 파일에.
     allow_cfg = vocab["template"].get("허용_자리") or {}
@@ -146,10 +152,18 @@ def check_template_roles(formulas: list, vocab: dict) -> dict:
                             "why": (allow_cfg.get("_위반_문구") or "").format(
                                 template=f.get("template"), 허용=list(allow), 초과=extra)})
         for v in f.get("vars", []):
-            if v.get("_observable") is False and v.get("var_role") not in assume_ok:
+            if v.get("_observable") is not False:
+                continue
+            role = v.get("var_role")
+            if role not in assume_ok:
                 bad.append({"formula_id": f.get("formula_id"), "var_id": v.get("var_id"),
-                            "var_role": v.get("var_role"),
-                            "why": "관측 안 하는데 assumptions.by_role 에 없는 역할 — B 가 값을 못 채운다"})
+                            "var_role": role,
+                            "why": "관측하지 않는 역할이 허용 어휘 밖이다"})
+            elif role not in assumption_values:
+                bad.append({"formula_id": f.get("formula_id"), "var_id": v.get("var_id"),
+                            "var_role": role,
+                            "why": ("허용된 역할이지만 business-independent assumption 값이 없다 — "
+                                    "관측으로 채우거나 식에서 제거/재설계해야 한다")})
     return {"name": "템플릿 필수 자리", "passed": not bad, "violations": bad}
 
 

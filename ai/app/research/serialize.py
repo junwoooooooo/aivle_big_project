@@ -288,7 +288,8 @@ def _figure(estimate: dict | None, unit: str, grade: str | None) -> dict | None:
     남는 것은 **표가 말할 수 없는 것**뿐이다(예: 「연평균이 아니다」·「과거 관측이다」).
     요인이 없는 옛 판정 출력은 `가정` 을 그대로 쓴다 — 그때는 표가 아예 없다.
     """
-    if not isinstance(estimate, dict) or estimate.get("값") is None:
+    if (not isinstance(estimate, dict) or estimate.get("값") is None
+            or grade == "근거 없음"):
         return None
     if grade not in GRADES:
         raise ContractDrift(f"계산값 등급이 계약 밖이다: {grade!r}")

@@ -217,6 +217,17 @@
    "_min_text_len": "텍스트층이 없는 스캔본은 여기서 걸린다. OCR 은 하지 않는다 — 추측을 본문으로 만들면 인용 대조(F7)가 무의미해진다.",
    "max_pages": 40,
    "_max_pages": "상한을 넘긴 페이지는 읽지 않는다. 실측 대상(mss 보도자료)은 7p.",
+   "columns": {
+    "_why": "페이지별로 충분히 명확한 다단 구조만 열 순서로 읽고, 불확실한 페이지는 기존 extract_text 결과를 유지한다.",
+    "enabled": true,
+    "min_words": 40,
+    "band": 10.0,
+    "min_gap": 25.0,
+    "max_cross_ratio": 0.1,
+    "min_column_share": 0.15,
+    "y_tolerance": 3.0,
+    "cross_margin": 2.0
+   },
    "unreadable_status": "pdf_unreadable",
    "_unreadable_status": "본문을 못 얻은 PDF 의 content_status. `usable` 이 아니므로 `caps.no_usable_body`(=2) 가 그대로 걸린다 — 심사를 봐주는 값이 아니라 **실패를 구분해 남기는** 값이다(절대규칙 5)."
   }

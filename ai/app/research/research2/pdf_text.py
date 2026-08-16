@@ -24,6 +24,93 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 UNREADABLE = "pdf_unreadable"
 
 
+def _lines(words: list[dict], y_tol: float) -> list[str]:
+    """단어를 원래 행으로 묶되, 행 안에서는 왼쪽에서 오른쪽으로 읽는다."""
+    rows: list[list[dict]] = []
+    for word in sorted(words, key=lambda item: (float(item.get("top") or 0),
+                                                float(item.get("x0") or 0))):
+        top = float(word.get("top") or 0)
+        if not rows or abs(top - float(rows[-1][0].get("top") or 0)) > y_tol:
+            rows.append([word])
+        else:
+            rows[-1].append(word)
+    return [" ".join(str(word.get("text") or "")
+                     for word in sorted(row, key=lambda item: float(item.get("x0") or 0))).strip()
+            for row in rows if any(str(word.get("text") or "").strip() for word in row)]
+
+
+def _gutters(words: list[dict], width: float, band: float, min_gap: float) -> list[tuple[float, float]]:
+    """단어가 전혀 걸치지 않는 세로 띠 중 충분히 넓은 내부 띠만 반환한다."""
+    if width <= 0 or band <= 0:
+        return []
+    count = max(1, int(width / band) + 1)
+    occupied = [False] * count
+    for word in words:
+        left = max(0, min(count - 1, int(float(word.get("x0") or 0) / band)))
+        right = max(left, min(count - 1, int(float(word.get("x1") or 0) / band)))
+        for index in range(left, right + 1):
+            occupied[index] = True
+    gaps: list[tuple[float, float]] = []
+    start = None
+    for index, used in enumerate(occupied + [True]):
+        if not used and start is None:
+            start = index
+        elif used and start is not None:
+            left, right = start * band, min(index * band, width)
+            if right - left >= min_gap and left > band and right < width - band:
+                gaps.append((left, right))
+            start = None
+    return gaps
+
+
+def _page_text(page, columns_cfg: dict) -> tuple[str, str]:
+    """페이지 하나만 다단 판정한다. 불확실하면 그 페이지의 기존 추출값으로 돌아간다."""
+    fallback = page.extract_text() or ""
+    if not columns_cfg.get("enabled"):
+        return fallback, "columns_disabled"
+    try:
+        words = page.extract_words() or []
+    except Exception:
+        return fallback, "word_extraction_failed"
+
+    minimum = int(columns_cfg.get("min_words") or 40)
+    if len(words) < minimum:
+        return fallback, "too_few_words"
+    width = float(getattr(page, "width", 0) or 0)
+    gutters = _gutters(words, width,
+                       float(columns_cfg.get("band") or 10),
+                       float(columns_cfg.get("min_gap") or 25))
+    if not gutters:
+        return fallback, "no_gutter"
+
+    cuts = [(left + right) / 2 for left, right in gutters]
+    columns: list[list[dict]] = [[] for _ in range(len(cuts) + 1)]
+    crossing: list[dict] = []
+    margin = float(columns_cfg.get("cross_margin") or 2)
+    for word in words:
+        x0, x1 = float(word.get("x0") or 0), float(word.get("x1") or 0)
+        crossed = [cut for cut in cuts if x0 < cut - margin and x1 > cut + margin]
+        if crossed:
+            crossing.append(word)
+            continue
+        index = sum(1 for cut in cuts if x0 >= cut)
+        columns[index].append(word)
+
+    if len(crossing) / len(words) > float(columns_cfg.get("max_cross_ratio") or 0.10):
+        return fallback, "too_many_cross_column_words"
+    minimum_share = float(columns_cfg.get("min_column_share") or 0.15)
+    populated = [column for column in columns if column]
+    if len(populated) < 2 or any(len(column) / len(words) < minimum_share for column in populated):
+        return fallback, "unbalanced_columns"
+
+    y_tol = float(columns_cfg.get("y_tolerance") or 3)
+    parts = _lines(crossing, y_tol)
+    for column in populated:
+        parts.extend(_lines(column, y_tol))
+    text = "\n".join(part for part in parts if part).strip()
+    return (text, "column_order") if text else (fallback, "empty_column_result")
+
+
 def load_pdf_cfg() -> dict:
     """`rules/scoring.v1.json` 의 `content_status.pdf`.
 
@@ -62,7 +149,8 @@ def extract(raw: bytes, cfg: dict) -> tuple:
     try:
         with pdfplumber.open(_io.BytesIO(raw)) as pdf:
             pages = pdf.pages[:max_pages]
-            text = "\n".join((pg.extract_text() or "") for pg in pages)
+            columns_cfg = cfg.get("columns") or {}
+            text = "\n".join(_page_text(pg, columns_cfg)[0] for pg in pages)
     except Exception as e:
         return "", f"파싱 실패: {type(e).__name__}: {str(e)[:80]}"
     if len(text.strip()) < int(cfg.get("min_text_len") or 1):

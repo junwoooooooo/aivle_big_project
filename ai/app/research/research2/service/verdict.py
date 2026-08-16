@@ -86,6 +86,9 @@ def _confirmed(led: dict, claim_types: set | None) -> list:
             out.append({"slot_id": r["slot_id"], "fact_id": r.get("fact_id"),
                         "trace_id": f.get("trace_id"), "value": f.get("value_num"),
                         "unit": unit, "unit_src": src, "url": (r.get("url") or "")[:70],
+                        "source_url": r.get("url") or "", "metric": slot.get("metric"),
+                        "period": slot.get("period"), "claim_type": slot.get("claim_type"),
+                        "grade": r.get("등급"),
                         "kind": r.get("kind"), "score": r.get("score")})
     return out
 
@@ -376,7 +379,8 @@ def _judge_market_t7(led: dict, hyp: dict, spec: dict) -> dict:
     return out
 
 
-def judge_market(led: dict, hyp: dict, concept: dict | None = None) -> dict:
+def _retired_judge_market_assumption(led: dict, hyp: dict,
+                                     concept: dict | None = None) -> dict:
     # 계열별 TAM 구조. **`map` 에 없는 계열은 아래 기본(T2) 경로를 그대로 탄다** —
     # 계열 A·미표기의 코드 경로는 문자 그대로 종전과 같다(회귀 증명: beauty-09c 델타 0).
     _cfg = (_rules().get("series_unit") or {}).get("계열_TAM_구조") or {}
@@ -456,6 +460,91 @@ def judge_market(led: dict, hyp: dict, concept: dict | None = None) -> dict:
         out["SAM_사유"] = ("서울 사업체 수 확인됨 0건(S5 not_found) — 지역 비중 가정을 "
                          "따로 두지 않았다. **세그먼트비중 0.19 를 지역 비중으로 재사용하지 "
                          "않는다** — 같은 수를 두 뜻으로 쓰면 계산이 조용히 거짓이 된다")
+    return out
+
+
+def _market_observations(led: dict) -> list[dict]:
+    """TAM/SAM 슬롯의 원천 사실을 provenance를 보존한 채 중복만 제거한다.
+
+    같은 trace/source의 같은 metric·값·단위·기간이 여러 슬롯에 복사된 경우만 한 사실로
+    본다. 값이 우연히 같은 독립 출처는 합치지 않는다.
+    """
+    seen: dict[tuple, dict] = {}
+    for row in _confirmed(led, {"TAM", "SAM"}):
+        if row.get("value") is None:
+            continue
+        source_identity = (row.get("trace_id") or row.get("source_url")
+                           or row.get("fact_id") or row.get("slot_id"))
+        key = (source_identity, row.get("metric"), row.get("value"),
+               row.get("unit"), str(row.get("period") or ""))
+        if key in seen:
+            seen[key]["slot_ids"].append(row.get("slot_id"))
+            if row.get("claim_type") not in seen[key]["claim_types"]:
+                seen[key]["claim_types"].append(row.get("claim_type"))
+            continue
+        seen[key] = {
+            "slot_ids": [row.get("slot_id")],
+            "claim_types": [row.get("claim_type")],
+            "fact_id": row.get("fact_id"),
+            "trace_id": row.get("trace_id"),
+            "metric": row.get("metric"),
+            "value": row.get("value"),
+            "unit": row.get("unit"),
+            "period": row.get("period"),
+            "source_url": row.get("source_url"),
+            "grade": row.get("grade"),
+            "근거": [row],
+        }
+    return sorted(seen.values(), key=lambda item: (
+        str(item.get("unit") or ""), -float(item.get("value") or 0),
+        str(item.get("trace_id") or item.get("source_url") or item.get("fact_id") or "")))
+
+
+def _observed_market_estimate(observations: list[dict], claim_type: str) -> dict | None:
+    money = [item for item in observations
+             if claim_type in (item.get("claim_types") or [])
+             and (item.get("unit") or "") in _MONEY_UNITS]
+    if not money:
+        return None
+    chosen = money[0]
+    evidence = chosen.get("근거") or []
+    factors = [_요인(f"{claim_type} 직접 관측", chosen["value"], "관측",
+                    단위=chosen.get("unit"), rows=evidence)]
+    return {
+        "식": "직접 관측된 시장 규모",
+        "입력": {"관측값": chosen["value"], "단위": chosen.get("unit")},
+        "값": chosen["value"],
+        "assumption_count": 0,
+        "요인": factors,
+        "가정": [],
+        "해석_경계": (["동일 층위의 독립 관측이 여러 건이면 provenance를 보존해 함께 제시한다."]
+                    if len(money) > 1 else []),
+        "근거": evidence,
+        "대조_기반": _대조_기반(evidence),
+    }
+
+
+def judge_market(led: dict, hyp: dict, concept: dict | None = None) -> dict:
+    """시장 크기는 직접 확인된 규모만 투영한다. 가정 곱셈으로 빈 TAM/SAM을 만들지 않는다."""
+    del hyp, concept
+    head = {item.get("target"): item
+            for item in (led.get("report", {}).get("headline_numbers") or [])}
+    observations = _market_observations(led)
+    tam = _observed_market_estimate(observations, "TAM")
+    sam = _observed_market_estimate(observations, "SAM")
+    out = {
+        "엔진_§2": [{"target": target, **{key: head.get(target, {}).get(key)
+                                           for key in ("value", "badge", "status")}}
+                    for target in ("TAM", "SAM", "SOM") if target in head],
+        "_보존": "직접 관측된 시장 규모만 투영하며 관측되지 않은 TAM/SAM은 계산하지 않는다.",
+        "시장_관측": observations,
+        "TAM_추정": tam,
+        "SAM_추정": sam,
+    }
+    if tam is None:
+        out["사유"] = "직접 방어 가능한 TAM 금액 관측이 없어 미확보로 남긴다"
+    if sam is None:
+        out["SAM_사유"] = "직접 방어 가능한 SAM 금액 관측이 없어 미확보로 남긴다"
     return out
 
 
@@ -699,7 +788,6 @@ def judge_som(led: dict, hyp: dict) -> dict:
     by_role = (_rules().get("assumptions") or {}).get("by_role") or {}
     a = by_role.get("세그먼트비중") or {}
     seg, seg_src = a.get("value"), "가정(rules/assumptions.v1.json) — 관측 아님"
-    seg = 1.0 if seg is None else seg
 
     # 침투율은 **원장이 아니라 컨셉의 SOM 가설**에서 온다 — rules 의 침투율과 다른 값이다.
     # 그래서 rules 의 basis 를 붙이지 않고 출신을 그대로 적는다.
@@ -712,20 +800,24 @@ def judge_som(led: dict, hyp: dict) -> dict:
         _요인("월 구독가", price, "가설", 단위="원", 설명=_PRICE_NOTE),
         _요인("개월", 12, "가정", 단위="개월", 설명="이탈 없는 12개월 만액 결제"),
     ]
-    targets = base * seg * (rate or 0)
+    targets = (base * seg * rate) if seg is not None and rate is not None else None
     calc = {"식": "SOM(연) = 사업체 수 × 세그먼트비중 × 침투율 × 월 구독가 × 12",
             "입력": {"사업체 수": base, "세그먼트비중": seg, "세그먼트비중_출처": seg_src,
                    "침투율": rate, "월 구독가": price, "개월": 12},
             "목표 고객 수": targets,
-            "값": (targets * price * 12) if price else None,
+            # 관측되지 않은 세그먼트비중·침투율·가격을 곱한 값은 시장 규모 authority가 아니다.
+            "값": None,
+            "계산_불가_사유": ("세그먼트비중 관측이 없어 시장 전체(1.0)로 대체하지 않는다"
+                           if seg is None else "가정이 포함된 시장 규모 점추정은 노출하지 않는다"),
             "assumption_count": _가정수(요인),
             "요인": 요인,
             "가정": _가정_문장(요인),
             "해석_경계": [],
             "근거": counts,
             **({"선택_주의": warn} if warn else {})}
-    return {"가설": "9_SOM_초기점유", "도장": "미검증",
-            "why": "가정으로 계산한 값이다 — 관측이 뒷받침한 것이 아니다",
+    return {"가설": "9_SOM_초기점유", "도장": "판정_불가",
+            "why": ("세그먼트비중을 관측하지 못해 1.0으로 대체하지 않는다"
+                    if seg is None else "가정 곱셈으로 시장 규모를 만들지 않는다"),
             "추정": calc, "엔진_SOM": som.get("value"), "badge": som.get("badge")}
 
 

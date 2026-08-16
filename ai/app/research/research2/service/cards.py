@@ -159,13 +159,18 @@ def build(run: str, concept: str) -> dict:
         if 미관측_입력:
             mats.append("추정")
         등급 = weakest(mats, ladder)
+        값_죽음 = 등급 == "근거 없음"
+        표시값 = (est.get("값_퍼센트") if name == "성장률" else est.get("값"))
         cards.append({
             "카드_id": f"C-CALC-{name}",
             "종류": "계산",
             "칸": "고객 세그먼트" if name != "성장률" else "고객 세그먼트",
-            "값": est.get("값"),
+            "값": None if 값_죽음 else 표시값,
             "단위": "원" if name in ("TAM", "SAM") else "%",
-            "값_퍼센트": est.get("값_퍼센트"),
+            "값_퍼센트": None if 값_죽음 else est.get("값_퍼센트"),
+            "_비율_원값": est.get("값") if name == "성장률" else None,
+            "값_죽음_사유": ("계산 카드 등급이 근거 없음이라 숫자를 노출하지 않는다"
+                           if 값_죽음 else None),
             "등급": 등급,
             "등급_근거": (f"약한 고리: {sorted(set(mats), key=ladder.index)} → {등급}"
                        + (f" · 뒷받침 없는 입력 {미관측_입력}개" if 미관측_입력 else

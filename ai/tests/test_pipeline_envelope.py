@@ -231,7 +231,8 @@ def test_market_figures_carry_the_factor_ledger_key_for_key():
 @needs_ledger
 def test_factor_note_is_the_whole_basis_not_a_prefix():
     """**자르지 않는다.** 옛 `_SEG_WARN` 은 `basis[:100]` 으로 잘라 문장 한가운데가 끊긴
-    채로 화면까지 보냈다("… 두발 미"). 규칙 파일의 서술과 **글자 그대로 같아야** 한다."""
+    채로 화면까지 보냈다("… 두발 미"). 규칙 기반 요인이 있을 때 서술은 **글자 그대로**
+    같아야 한다. 사업별 default를 제거한 실행에서는 그런 요인이 0개인 것이 정상이다."""
     rules = os.path.join(pipeline.RESEARCH_HOME, "rules", "assumptions.v1.json")
     with io.open(rules, encoding="utf-8") as handle:
         by_role = json.load(handle)["by_role"]
@@ -252,7 +253,8 @@ def test_factor_note_is_the_whole_basis_not_a_prefix():
                 continue
             checked += 1
             assert factor["note"] == role["basis"], f"{name}/{factor['name']} 이 잘렸다"
-    assert checked, "규칙에서 온 요인이 0개면 이 검사는 아무것도 못 본다"
+    if not checked:
+        assert set(by_role) <= {"연환산"}, "시장별 default가 남아 검사가 조용히 비면 안 된다"
 
 
 @needs_ledger

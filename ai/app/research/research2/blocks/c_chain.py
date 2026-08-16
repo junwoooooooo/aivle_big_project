@@ -435,8 +435,11 @@ def render_report(cells: dict[str, ChainCell], violations: list[Violation],
                 (ledger and getattr(ledger, "run_id", "")) or "", [])
             or ((rules.get("assumptions") or {}).get("자료_부재_확정") or {}).get("_공용", [])),
         "independent_topdown_blocked": list(
-            ((rules.get("consistency") or {}).get("report_notes") or {})
-            .get("independent_topdown_blocked") or []),
+            (((rules.get("consistency") or {}).get("report_notes") or {})
+             .get("independent_topdown_blocked") or {}).get(
+                (ledger and getattr(ledger, "run_id", "")) or "", [])
+            or (((rules.get("consistency") or {}).get("report_notes") or {})
+                .get("independent_topdown_blocked") or {}).get("_공용", [])),
     }
     for k in NOT_FOUND_KEYS:              # 하나라도 빠지면 침묵이 생긴다
         not_found.setdefault(k, [])
