@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import Any, get_args, get_type_hints
 
 import pytest
@@ -49,6 +50,39 @@ def test_marketing_request_schema_is_closed_and_accepts_blog_intro() -> None:
     invalid["request"]["personaId"] = "forbidden"
     with pytest.raises(ValidationError):
         MarketingContentInput.model_validate(invalid)
+
+
+def test_v26_exact_lineage_and_generation_context_are_validated_but_not_prompted(monkeypatch) -> None:
+    value = request_input()
+    value["source"].update({
+        "schemaVersion": "2.1", "selectionRevision": 6, "bmPlanRevision": 4,
+        "businessModel": {"key_activities": ["고객 지원"], "customer_relationship": "정기 안내"},
+        "businessConstraints": {"budget_krw": 1000000, "months": 3, "team": 2},
+    })
+    value["generation"] = {
+        "operation": "REGENERATE", "attempt": 1, "designVersion": "marketing-draft-v1",
+    }
+    captured = {}
+
+    async def provider(_system, prompt, **_kwargs):
+        captured.update(json.loads(prompt))
+        return {
+            "contract": "marketing-content-result-v1", "contentType": "BLOG_INTRO",
+            "title": "검토할 초안", "body": "게시 전 확인이 필요한 본문", "callToAction": None,
+            "hashtags": [], "imageBrief": "제품 중심 이미지",
+            "legalReview": {"compliant": True, "warnings": [], "requiredDisclosuresApplied": []},
+            "artifactRefs": [],
+        }
+
+    async def image(*_args):
+        return "ai-artifacts/00000000-0000-4000-8000-000000000001.jpg"
+
+    monkeypatch.setattr(service, "execute_structured_prompt", provider)
+    monkeypatch.setattr(service, "generate_and_store_marketing_image", image)
+    asyncio.run(service.execute_marketing_content(value))
+    assert set(captured) == {"source", "request"}
+    assert captured["source"]["selectionRevision"] == 6
+    assert captured["source"]["businessModel"]["key_activities"] == ["고객 지원"]
 
 
 def test_ai_result_schema_is_closed() -> None:

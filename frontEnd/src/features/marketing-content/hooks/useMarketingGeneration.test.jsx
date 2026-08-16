@@ -120,4 +120,34 @@ describe('useMarketingGeneration canonical refresh', () => {
     await vi.advanceTimersByTimeAsync(100);
     expect(api.detail).not.toHaveBeenCalled();
   });
+
+  it('recovers an ambiguous mutation with one current GET and never resends the POST', async () => {
+    const recovered = detail('RUNNING', 'content-2', 'job-2');
+    const api = {
+      detail: vi.fn(),
+      create: vi.fn().mockRejectedValue(new Error('network ambiguous')),
+      regenerate: vi.fn(),
+      retry: vi.fn(),
+      current: vi.fn().mockResolvedValue(recovered),
+    };
+    const { result } = renderHook(() => useMarketingGeneration({ api, projectId: '7' }));
+
+    await act(async () => { await result.current.create({ channel: 'Instagram' }); });
+
+    expect(api.create).toHaveBeenCalledTimes(1);
+    expect(api.current).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe('RUNNING');
+    expect(result.current.contentId).toBe('content-2');
+  });
+
+  it('uses the explicit retry endpoint once', async () => {
+    const api = {
+      detail: vi.fn(), create: vi.fn(), regenerate: vi.fn(), current: vi.fn(),
+      retry: vi.fn().mockResolvedValue(detail('QUEUED', 'retry-1', 'job-r')),
+    };
+    const { result } = renderHook(() => useMarketingGeneration({ api, projectId: '7' }));
+    await act(async () => { await result.current.retry('failed-1'); });
+    expect(api.retry).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe('QUEUED');
+  });
 });

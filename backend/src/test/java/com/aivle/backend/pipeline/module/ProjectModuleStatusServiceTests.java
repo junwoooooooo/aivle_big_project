@@ -318,7 +318,7 @@ class ProjectModuleStatusServiceTests {
     @Test
     void keepsCompletedMarketingContentCompleteWhenTheLatestVisualTaskFails() {
         MarketingContent content = MarketingContent.queued("content-1", 41L, "source-1", "sha256:source",
-            "{}", "{}", MarketingContentType.SOCIAL_POST, "SOCIAL", "title", 7L);
+            "{}", "{}", MarketingContentType.SOCIAL_POST, "SOCIAL", "title", 7L, 1, null);
         content.start();
         content.completeRevision();
         TaskRun visualTask = mock(TaskRun.class);

@@ -27,10 +27,12 @@ class MarketingSourceV2ContractTests {
         assertThat(source.getSourceMarketSeedSnapshotId()).isEqualTo("market-seed-1");
         assertThat(source.getFinalizedAt()).isEqualTo(Instant.EPOCH);
         var portfolio = MarketingSourceSnapshot.createPortfolio("source-v2", 1L, "market-seed-v2", 3L,
-            "portfolio-concept-1", "2.0", "sha256:" + "b".repeat(64), "{}", 7L, Instant.EPOCH);
+            "portfolio-concept-1", 4, 2, "2.1", "sha256:" + "b".repeat(64), "{}", 7L, Instant.EPOCH);
         assertThat(portfolio.getSourceType()).isEqualTo("CONCEPT_PORTFOLIO_V2");
         assertThat(portfolio.getSelectionId()).isNull();
         assertThat(portfolio.getPortfolioSelectionId()).isEqualTo(3L);
+        assertThat(portfolio.getSourceSelectionRevision()).isEqualTo(4);
+        assertThat(portfolio.getSourceBmPlanRevision()).isEqualTo(2);
     }
 
     @Test
@@ -60,6 +62,14 @@ class MarketingSourceV2ContractTests {
         String marketingTable = sql.substring(sql.indexOf("create table pipeline_marketing_contents"),
             sql.indexOf("create table pipeline_marketing_content_revisions"));
         assertThat(marketingTable).doesNotContain("planning_snapshot_id", "finalized_planning_snapshots");
+    }
+
+    @Test
+    void v38AllowsOneSourcePerExactSeedSelectionAndBmRevision() throws Exception {
+        String sql = Files.readString(Path.of("src", "main", "resources", "db", "migration",
+            "V38__harden_marketing_execution_lineage.sql")).toLowerCase(Locale.ROOT);
+        assertThat(sql).contains("source_selection_revision", "source_bm_plan_revision",
+            "uk_marketing_source_exact_lineage", "previous_content_id", "'stale'");
     }
 
     @Test

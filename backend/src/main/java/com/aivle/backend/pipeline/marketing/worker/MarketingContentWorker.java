@@ -40,7 +40,7 @@ public class MarketingContentWorker {
         try {
             publish(context,"STARTED","job.marketing.started",JobEvent.Status.RUNNING,null);
             taskRuns.startExecution(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken());
-            completion.start(context.subjectId(),context.projectId());
+            completion.start(claim.taskRunId(),context.projectId());
             publish(context,"SOURCE_PREPARED","job.marketing.source_prepared",JobEvent.Status.RUNNING,null);
             publish(context,"COPY_GENERATING","job.marketing.copy_generating",JobEvent.Status.RUNNING,null);
             ExecutionResponse response=ai.executeWorker(context,claim.taskAttemptId(),LocalDateTime.now().plusMinutes(5));

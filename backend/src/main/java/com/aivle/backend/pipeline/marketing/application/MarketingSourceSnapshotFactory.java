@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.marketing.application;
 import com.aivle.backend.pipeline.concept.domain.Concept;
 import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService.PlanView;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import tools.jackson.databind.node.ObjectNode;
 @RequiredArgsConstructor
 public class MarketingSourceSnapshotFactory {
     public static final String CONTRACT = "marketing-source-snapshot-v1";
-    public static final String SCHEMA_VERSION = "2.0";
+    public static final String SCHEMA_VERSION = "2.1";
     private final ObjectMapper mapper;
     private final SnapshotHasher hasher;
 
@@ -29,14 +30,20 @@ public class MarketingSourceSnapshotFactory {
     }
 
     public BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed,
-            ConceptPortfolioConcept concept) {
+            ConceptPortfolioConcept concept, int selectionRevision, PlanView bm) {
         JsonNode envelope = mapper.readTree(concept.getCandidateSnapshotJson());
         return create(snapshotId, createdAt, marketSeed, concept.getConceptName(), concept.getSummary(),
-            envelope.path("candidate"));
+            envelope.path("candidate"), selectionRevision, bm);
     }
 
     private BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed,
             String fallbackName, String fallbackSummary, JsonNode candidate) {
+        return create(snapshotId, createdAt, marketSeed, fallbackName, fallbackSummary, candidate, 0,
+            new PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 0));
+    }
+
+    private BuiltSnapshot create(String snapshotId, Instant createdAt, MarketAnalysisSeedSnapshot marketSeed,
+            String fallbackName, String fallbackSummary, JsonNode candidate, int selectionRevision, PlanView bm) {
         JsonNode seed = mapper.readTree(marketSeed.getSnapshotJson());
         JsonNode identity = seed.path("selectedConcept").path("identity");
         JsonNode solution = seed.path("selectedConcept").path("solution");
@@ -50,6 +57,10 @@ public class MarketingSourceSnapshotFactory {
         body.put("contract", CONTRACT); body.put("schemaVersion", SCHEMA_VERSION);
         body.put("snapshotId", snapshotId); body.put("projectId", marketSeed.getProjectId());
         body.put("selectionId", selectionId); body.put("conceptId", conceptId);
+        body.put("selectionRevision", selectionRevision);
+        body.put("bmPlanRevision", bm.revision());
+        body.set("businessModel", bm.plan().deepCopy());
+        body.set("businessConstraints", bm.constraints().deepCopy());
         body.put("marketAnalysisSeedSnapshotId", marketSeed.getId());
         body.put("marketAnalysisSeedSnapshotHash", marketSeed.getSnapshotHash()); body.put("createdAt", createdAt.toString());
         body.put("conceptName", text(identity, "conceptName", fallbackName));

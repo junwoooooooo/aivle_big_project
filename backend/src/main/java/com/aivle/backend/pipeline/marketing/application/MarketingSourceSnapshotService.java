@@ -4,13 +4,11 @@ import static com.aivle.backend.pipeline.marketing.api.MarketingSourceApiModels.
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.concept.repository.ConceptRepository;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptPortfolioConceptRepository;
-import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.marketing.domain.MarketingSourceSnapshot;
 import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
-import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
-import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.time.Instant;
 import java.util.UUID;
@@ -23,11 +21,8 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class MarketingSourceSnapshotService {
     private final ProjectRepository projects;
-    private final ConceptSelectionRepository selections;
-    private final ConceptPortfolioSelectionRepository portfolioSelections;
-    private final MarketAnalysisSeedSnapshotRepository marketSeeds;
+    private final CurrentConceptSourceResolver currentConcepts;
     private final MarketingSourceSnapshotRepository sources;
-    private final ConceptRepository concepts;
     private final ConceptPortfolioConceptRepository portfolioConcepts;
     private final MarketingSourceSnapshotFactory factory;
     private final ObjectMapper mapper;
@@ -35,29 +30,22 @@ public class MarketingSourceSnapshotService {
     @Transactional
     public SnapshotView finalizeSnapshot(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        var marketSeed = currentMarketSeed(projectId);
-        var existing = sources.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(marketSeed.getId(), projectId);
+        Source current = currentConcepts.require(projectId,
+            "현재 확정된 사업안으로 마케팅 초안을 만들 수 없습니다.");
+        var marketSeed = current.seed();
+        var existing = exact(current, projectId);
         if (existing.isPresent()) return view(existing.get());
         String id = UUID.randomUUID().toString(); Instant now = Instant.now();
-        MarketingSourceSnapshot saved;
-        if ("CONCEPT_PORTFOLIO_V2".equals(marketSeed.getSourceType())) {
-            var concept = portfolioConcepts.findByIdAndProjectIdAndDeletedAtIsNull(
-                    marketSeed.getPortfolioConceptId(), projectId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_NOT_SELECTABLE));
-            var built = factory.create(id, now, marketSeed, concept);
-            saved = sources.save(MarketingSourceSnapshot.createPortfolio(id, projectId, marketSeed.getId(),
-                marketSeed.getPortfolioSelectionId(), marketSeed.getPortfolioConceptId(),
-                MarketingSourceSnapshotFactory.SCHEMA_VERSION, built.hash(),
-                mapper.writeValueAsString(built.body()), ownerId, now));
-        } else {
-            var concept = concepts.findByIdAndProjectIdAndPublishedTrueAndDeletedAtIsNull(
-                    marketSeed.getConceptId(), projectId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_NOT_SELECTABLE));
-            var built = factory.create(id, now, marketSeed, concept);
-            saved = sources.save(MarketingSourceSnapshot.create(id, projectId, marketSeed.getId(),
-                marketSeed.getSelectionId(), marketSeed.getConceptId(), MarketingSourceSnapshotFactory.SCHEMA_VERSION,
-                built.hash(), mapper.writeValueAsString(built.body()), ownerId, now));
-        }
+        var concept = portfolioConcepts.findByIdAndProjectIdAndDeletedAtIsNull(
+                current.selection().getConceptId(), projectId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_NOT_SELECTABLE));
+        var built = factory.create(id, now, marketSeed, concept,
+            current.selection().getHypothesisRevision(), current.bm());
+        MarketingSourceSnapshot saved = sources.save(MarketingSourceSnapshot.createPortfolio(
+            id, projectId, marketSeed.getId(), current.selection().getId(), current.selection().getConceptId(),
+            current.selection().getHypothesisRevision(), current.bm().revision(),
+            MarketingSourceSnapshotFactory.SCHEMA_VERSION, built.hash(),
+            mapper.writeValueAsString(built.body()), ownerId, now));
         return view(saved);
     }
 
@@ -69,8 +57,9 @@ public class MarketingSourceSnapshotService {
 
     @Transactional(readOnly = true)
     public MarketingSourceSnapshot requireCurrent(Long projectId) {
-        var marketSeed = currentMarketSeed(projectId);
-        return sources.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(marketSeed.getId(), projectId)
+        Source current = currentConcepts.require(projectId,
+            "현재 확정된 사업안으로 마케팅 초안을 만들 수 없습니다.");
+        return exact(current, projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MARKETING_CONTENT_SOURCE_UNAVAILABLE,
                 "Marketing Source Snapshot을 먼저 확정해 주세요."));
     }
@@ -81,26 +70,16 @@ public class MarketingSourceSnapshotService {
         catch (BusinessException missing) { return null; }
     }
 
-    private com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot currentMarketSeed(Long projectId) {
-        var portfolio = portfolioSelections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId);
-        if (portfolio.isPresent()) {
-            return marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(portfolio.get().getId())
-                .filter(seed -> "CONCEPT_PORTFOLIO_V2".equals(seed.getSourceType()))
-                .filter(seed -> projectId.equals(seed.getProjectId()))
-                .filter(seed -> portfolio.get().getConceptId().equals(seed.getPortfolioConceptId()))
-                .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE,
-                    "current CPV2 Market Analysis Seed가 필요합니다."));
-        }
-        var selection = selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
-        return marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+    private java.util.Optional<MarketingSourceSnapshot> exact(Source source, Long projectId) {
+        return sources.findBySourceMarketSeedSnapshotIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndProjectIdAndDeletedAtIsNull(
+            source.seed().getId(), source.selection().getHypothesisRevision(), source.bm().revision(), projectId);
     }
     private SnapshotView view(MarketingSourceSnapshot value) {
         boolean portfolio = "CONCEPT_PORTFOLIO_V2".equals(value.getSourceType());
         return new SnapshotView(MarketingSourceSnapshotFactory.CONTRACT, value.getId(), value.getSchemaVersion(),
             value.getProjectId(), portfolio ? value.getPortfolioSelectionId() : value.getSelectionId(),
-            portfolio ? value.getPortfolioConceptId() : value.getConceptId(), value.getSourceMarketSeedSnapshotId(),
+            portfolio ? value.getPortfolioConceptId() : value.getConceptId(), value.getSourceSelectionRevision(),
+            value.getSourceBmPlanRevision(), value.getSourceMarketSeedSnapshotId(),
             value.getSnapshotHash(), value.getFinalizedAt(), mapper.readTree(value.getSnapshotJson()));
     }
     private void requireOwnedForUpdate(Long ownerId, Long projectId) {

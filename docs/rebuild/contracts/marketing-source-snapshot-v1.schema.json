@@ -5,7 +5,8 @@
   "additionalProperties": false,
   "required": [
     "contract", "schemaVersion", "snapshotId", "hash", "sourceSnapshotHash", "createdAt",
-    "projectId", "selectionId", "conceptId", "marketAnalysisSeedSnapshotId", "marketAnalysisSeedSnapshotHash",
+    "projectId", "selectionId", "selectionRevision", "bmPlanRevision", "conceptId",
+    "marketAnalysisSeedSnapshotId", "marketAnalysisSeedSnapshotHash", "businessModel", "businessConstraints",
     "conceptName", "targetSegment", "problem", "valueProposition", "positioning", "keyFeatures",
     "targetRegion", "revenueModel", "price", "pricing", "channels", "competitorDifferentiators",
     "preMarketSomShare", "preMarketSom", "legalStatus", "allowedClaims", "prohibitedClaims",
@@ -14,16 +15,20 @@
   ],
   "properties": {
     "contract": { "const": "marketing-source-snapshot-v1" },
-    "schemaVersion": { "const": "2.0" },
+    "schemaVersion": { "const": "2.1" },
     "snapshotId": { "type": "string", "minLength": 1 },
     "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "sourceSnapshotHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "createdAt": { "type": "string", "format": "date-time" },
     "projectId": { "type": "integer" },
     "selectionId": { "type": "integer" },
+    "selectionRevision": { "type": "integer", "minimum": 0 },
+    "bmPlanRevision": { "type": "integer", "minimum": 0 },
     "conceptId": { "type": "string" },
     "marketAnalysisSeedSnapshotId": { "type": "string" },
     "marketAnalysisSeedSnapshotHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "businessModel": { "$ref": "#/$defs/businessModel" },
+    "businessConstraints": { "$ref": "#/$defs/businessConstraints" },
     "conceptName": { "type": "string" }, "targetSegment": { "type": "string" },
     "problem": { "type": "string" }, "valueProposition": { "type": "string" },
     "positioning": { "type": "string" }, "keyFeatures": { "$ref": "#/$defs/textArray" },
@@ -38,6 +43,23 @@
     "officialEvidenceReferences": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/officialEvidenceReference" } }
   },
   "$defs": {
+    "businessModel": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "key_activities": { "$ref": "#/$defs/textArray" },
+        "key_resources": { "$ref": "#/$defs/textArray" },
+        "key_partners": { "$ref": "#/$defs/textArray" },
+        "customer_relationship": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "businessConstraints": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "budget_krw": { "type": "integer", "minimum": 0 },
+        "months": { "type": "integer", "minimum": 0 },
+        "team": { "type": "integer", "minimum": 0 }
+      }
+    },
     "textArray": { "type": "array", "maxItems": 30, "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
     "preMarketSomShare": {
       "type": "object", "additionalProperties": false,

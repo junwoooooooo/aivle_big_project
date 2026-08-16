@@ -43,7 +43,7 @@ class MarketingContentContractsTests {
         var second = factory.create("source-1", Instant.EPOCH, marketSeed, concept);
 
         assertThat(first.hash()).isEqualTo(second.hash()).matches("sha256:[0-9a-f]{64}");
-        assertThat(first.body().path("schemaVersion").asText()).isEqualTo("2.0");
+        assertThat(first.body().path("schemaVersion").asText()).isEqualTo("2.1");
         assertThat(first.body().path("allowedClaims").get(0).asText()).isEqualTo("당일 연결 가능 지역 운영");
         assertThat(first.body().path("prohibitedClaims").get(0).asText()).isEqualTo("전 지역 최저가");
         assertThat(first.body().path("communicationRequiredControls").get(0).asText()).isEqualTo("광고 범위 고지");
@@ -86,7 +86,7 @@ class MarketingContentContractsTests {
     @Test
     void taskLifecycleSeparatesGeneratedUserAndFinalizedRevisions() {
         var content = MarketingContent.queued("content-1", 1L, "source-1", "sha256:" + "0".repeat(64),
-            "{}", "{}", MarketingContentType.SOCIAL_POST, "social", "title", 7L);
+            "{}", "{}", MarketingContentType.SOCIAL_POST, "social", "title", 7L, 1, null);
         content.attachTaskRun("task-1"); content.start(); int generated = content.completeRevision();
         int edited = content.addUserRevision(); int finalized = content.finalizeContent(Instant.EPOCH);
         assertThat(MarketingContentRevision.create(content.getId(), generated, MarketingRevisionType.GENERATED,

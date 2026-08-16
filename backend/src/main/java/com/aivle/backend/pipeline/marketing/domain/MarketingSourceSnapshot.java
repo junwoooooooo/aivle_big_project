@@ -23,6 +23,8 @@ public class MarketingSourceSnapshot extends BaseEntity {
     @Column(name = "source_type", nullable = false, length = 40) private String sourceType;
     @Column(name = "portfolio_selection_id") private Long portfolioSelectionId;
     @Column(name = "portfolio_concept_id", length = 64) private String portfolioConceptId;
+    @Column(name = "source_selection_revision") private Integer sourceSelectionRevision;
+    @Column(name = "source_bm_plan_revision") private Integer sourceBmPlanRevision;
     @Column(name = "schema_version", nullable = false, length = 20) private String schemaVersion;
     @Column(name = "snapshot_hash", nullable = false, length = 71) private String snapshotHash;
     @Column(name = "snapshot_json", nullable = false, columnDefinition = "TEXT") private String snapshotJson;
@@ -45,10 +47,12 @@ public class MarketingSourceSnapshot extends BaseEntity {
     }
 
     public static MarketingSourceSnapshot createPortfolio(String id, Long projectId, String marketSeedId,
-            Long portfolioSelectionId, String portfolioConceptId, String schemaVersion, String hash,
+            Long portfolioSelectionId, String portfolioConceptId, int selectionRevision, int bmPlanRevision,
+            String schemaVersion, String hash,
             String json, Long userId, Instant finalizedAt) {
         if (blank(id) || projectId == null || blank(marketSeedId) || portfolioSelectionId == null
-                || blank(portfolioConceptId) || blank(schemaVersion) || !hash(hash) || blank(json)
+                || blank(portfolioConceptId) || selectionRevision < 0 || bmPlanRevision < 0
+                || blank(schemaVersion) || !hash(hash) || blank(json)
                 || userId == null || finalizedAt == null) {
             throw new IllegalArgumentException("V2 Marketing Source Snapshot 필드가 올바르지 않습니다.");
         }
@@ -59,6 +63,8 @@ public class MarketingSourceSnapshot extends BaseEntity {
         value.sourceType = "CONCEPT_PORTFOLIO_V2";
         value.portfolioSelectionId = portfolioSelectionId;
         value.portfolioConceptId = portfolioConceptId;
+        value.sourceSelectionRevision = selectionRevision;
+        value.sourceBmPlanRevision = bmPlanRevision;
         value.schemaVersion = schemaVersion;
         value.snapshotHash = hash;
         value.snapshotJson = json;

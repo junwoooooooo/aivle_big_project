@@ -1,6 +1,10 @@
 package com.aivle.backend.pipeline.marketing.application;
 
 import com.aivle.backend.file.object.ObjectStoragePort;
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
@@ -15,6 +19,8 @@ import tools.jackson.databind.*;
 @Service @RequiredArgsConstructor
 public class MarketingContentCompletionService {
     private final MarketingContentRepository contents;
+    private final MarketingSourceSnapshotRepository sources;
+    private final CurrentConceptSourceResolver currentConcepts;
     private final MarketingContentRevisionRepository revisions;
     private final MarketingAssetRepository assets;
     private final MarketingResultContract contract;
@@ -24,13 +30,19 @@ public class MarketingContentCompletionService {
     private final ObjectMapper mapper;
 
     @Transactional
-    public void start(String contentId, Long projectId) {
-        MarketingContent content = locked(contentId, projectId); content.start();
+    public void start(String taskRunId, Long projectId) {
+        MarketingContent content = lockedByTask(taskRunId, projectId);
+        if (!bound(content)) {
+            content.markStale();
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "사업안이 변경되어 이 마케팅 초안을 계속 만들 수 없습니다.");
+        }
+        content.start();
     }
 
     @Transactional
     public void complete(TaskRunService.Claim claim, TaskRunWorkerContext context, ExecutionResponse response) {
-        MarketingContent content = locked(context.subjectId(), context.projectId());
+        MarketingContent content = lockedByTask(claim.taskRunId(), context.projectId());
         contract.validate(response.result(), content.getContentType());
         legalGuard.validate(content.getSourceSnapshotJson(), response.result());
         String json = mapper.writeValueAsString(response.result());
@@ -44,16 +56,35 @@ public class MarketingContentCompletionService {
             registerRollbackCleanup(ref.asText());
             assets.save(MarketingAsset.link(content.getId(), revision.getId(), ref.asText()));
         }
+        if (!bound(content)) content.markStale();
     }
 
     @Transactional
     public void fail(TaskRunService.Claim claim, TaskRunWorkerContext context, String code, String reason, boolean retryable) {
         taskRuns.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), code, reason, retryable);
-        locked(context.subjectId(), context.projectId()).fail();
+        MarketingContent content = lockedByTask(claim.taskRunId(), context.projectId());
+        if (bound(content)) content.fail(); else content.markStale();
     }
 
-    private MarketingContent locked(String id, Long projectId) {
-        return contents.findLocked(id, projectId).orElseThrow(() -> new IllegalStateException("marketing content missing"));
+    private MarketingContent lockedByTask(String taskRunId, Long projectId) {
+        MarketingContent value = contents.findByTaskRunIdAndDeletedAtIsNull(taskRunId)
+            .orElseThrow(() -> new IllegalStateException("marketing content missing"));
+        if (!projectId.equals(value.getProjectId())) throw new IllegalStateException("marketing project mismatch");
+        return contents.findLocked(value.getId(), projectId)
+            .orElseThrow(() -> new IllegalStateException("marketing content missing"));
+    }
+
+    private boolean bound(MarketingContent content) {
+        Source current = currentConcepts.currentOrNull(content.getProjectId());
+        MarketingSourceSnapshot source = sources.findById(content.getMarketingSourceSnapshotId()).orElse(null);
+        return current != null && source != null
+            && content.getSourceSnapshotHash().equals(source.getSnapshotHash())
+            && source.getSourceSelectionRevision() != null
+            && source.getSourceBmPlanRevision() != null
+            && source.getSourceMarketSeedSnapshotId().equals(current.seed().getId())
+            && source.getPortfolioSelectionId().equals(current.selection().getId())
+            && source.getSourceSelectionRevision() == current.selection().getHypothesisRevision()
+            && source.getSourceBmPlanRevision() == current.bm().revision();
     }
 
     private void validateArtifact(String artifactRef) {

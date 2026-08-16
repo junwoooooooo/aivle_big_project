@@ -120,6 +120,14 @@ export default function useMarketingGeneration({
       if (!mounted.current || epoch !== requestEpoch.current) return detail;
       return applyDetail(detail, { forceSelect: true });
     } catch (error) {
+      try {
+        const recovered = await api.current(projectId);
+        if (recovered?.content && mounted.current && epoch === requestEpoch.current) {
+          return applyDetail(recovered, { forceSelect: true });
+        }
+      } catch {
+        // The original mutation is never resent; fall through to a safe failed state.
+      }
       if (mounted.current && epoch === requestEpoch.current) {
         setState((value) => ({
           ...value,
@@ -131,7 +139,7 @@ export default function useMarketingGeneration({
       }
       throw error;
     }
-  }, [applyDetail]);
+  }, [api, applyDetail, projectId]);
 
   return {
     ...state,
@@ -140,5 +148,6 @@ export default function useMarketingGeneration({
     refreshDetail,
     create: (request) => begin((key) => api.create(projectId, request, key)),
     regenerate: (contentId) => begin((key) => api.regenerate(projectId, contentId, key)),
+    retry: (contentId) => begin((key) => api.retry(projectId, contentId, key)),
   };
 }

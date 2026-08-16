@@ -403,6 +403,7 @@ public class ProjectModuleStatusService {
             case RUNNING -> PipelineModuleStatus.RUNNING;
             case COMPLETED, FINALIZED -> PipelineModuleStatus.COMPLETED;
             case FAILED -> PipelineModuleStatus.FAILED;
+            case STALE -> PipelineModuleStatus.STALE;
         };
         if (visualTask == null || contentStatus != PipelineModuleStatus.COMPLETED) return contentStatus;
         return switch (visualTask.getState()) {

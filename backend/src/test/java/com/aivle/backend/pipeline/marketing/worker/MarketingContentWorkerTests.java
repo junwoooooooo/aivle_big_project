@@ -40,7 +40,7 @@ class MarketingContentWorkerTests {
 
         assertThat(worker.processOne()).isTrue();
 
-        verify(completion).start("content-1", 9L);
+        verify(completion).start("task-1", 9L);
         verify(completion).complete(claim, context, response);
         ArgumentCaptor<JobEventPublisher.Command> published = ArgumentCaptor.forClass(JobEventPublisher.Command.class);
         verify(events, org.mockito.Mockito.times(5)).publish(published.capture());

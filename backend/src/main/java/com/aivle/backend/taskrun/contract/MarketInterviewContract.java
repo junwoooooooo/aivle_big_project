@@ -60,7 +60,7 @@ public final class MarketInterviewContract {
 
     private static void rejectStatisticalClaims(JsonNode value) {
         if (value.isTextual() && STATISTICAL.matcher(value.asText()).find()) invalid();
-        else if (value.isContainerNode()) value.forEach(MarketInterviewContract::rejectStatisticalClaims);
+        else if (value.isObject() || value.isArray()) value.forEach(MarketInterviewContract::rejectStatisticalClaims);
     }
     private static JsonNode array(JsonNode root, String field, int min, int max) {
         JsonNode value = root.get(field);

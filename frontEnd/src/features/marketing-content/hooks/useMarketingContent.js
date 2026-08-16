@@ -79,11 +79,12 @@ export default function useMarketingContent(projectId) {
   };
   const create = async (request) => { const detail = await generation.create(request); await refresh(); return detail; };
   const regenerate = async () => { if (!state.selected) return null; const detail = await generation.regenerate(state.selected.content.contentId); await refresh(); return detail; };
+  const retry = async () => { if (!state.selected) return null; const detail = await generation.retry(state.selected.content.contentId); await refresh(); return detail; };
   const save = async (result, revisionType = 'USER_EDITED') => {
     if (!state.selected) return null; setState((value) => ({ ...value, saving: true, error: null }));
     try { const detail = await api.update(projectId, state.selected.content.contentId, { revisionType, result }); updateSelected(detail); await refresh(); setState((value) => ({ ...value, saving: false })); return detail; }
     catch (error) { setState((value) => ({ ...value, saving: false, error })); throw error; }
   };
   const finalize = async () => { if (!state.selected) return null; const detail = await api.finalize(projectId, state.selected.content.contentId); updateSelected(detail); await refresh(); return detail; };
-  return { ...state, ...generation, refresh, open, create, regenerate, save, finalize, uploadReference };
+  return { ...state, ...generation, refresh, open, create, regenerate, retry, save, finalize, uploadReference };
 }

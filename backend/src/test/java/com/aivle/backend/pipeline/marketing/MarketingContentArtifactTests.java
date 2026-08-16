@@ -14,6 +14,9 @@ import com.aivle.backend.file.object.ObjectStoragePort;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.marketing.api.MarketingApiModels;
 import com.aivle.backend.pipeline.marketing.application.MarketingContentCompletionService;
 import com.aivle.backend.pipeline.marketing.application.MarketingContentService;
@@ -28,6 +31,9 @@ import com.aivle.backend.pipeline.marketing.domain.MarketingContentType;
 import com.aivle.backend.pipeline.marketing.repository.MarketingAssetRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRevisionRepository;
+import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
+import com.aivle.backend.pipeline.marketing.domain.MarketingSourceSnapshot;
+import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
@@ -115,7 +121,8 @@ class MarketingContentArtifactTests {
 
     private MarketingContentService contentService(ProjectRepository projects,
             ProjectEvidenceArtifactService evidence, MarketingSourceSnapshotService sources) {
-        return new MarketingContentService(projects, evidence, mock(ObjectStoragePort.class), sources,
+        return new MarketingContentService(projects, evidence, mock(ObjectStoragePort.class),
+            mock(CurrentConceptSourceResolver.class), sources, mock(MarketingSourceSnapshotRepository.class),
             mock(MarketingContentRepository.class), mock(MarketingContentRevisionRepository.class),
             mock(MarketingAssetRepository.class), new MarketingResultContract(), new MarketingLegalGuard(mapper),
             mock(TaskRunService.class), mock(CanonicalInputHasher.class), mock(JobEventPublisher.class), mapper);
@@ -124,23 +131,36 @@ class MarketingContentArtifactTests {
     private final class CompletionHarness {
         private final String artifactRef = "ai-artifacts/00000000-0000-4000-8000-000000000001.jpg";
         private final MarketingContentRepository contents = mock(MarketingContentRepository.class);
+        private final MarketingSourceSnapshotRepository sources = mock(MarketingSourceSnapshotRepository.class);
+        private final CurrentConceptSourceResolver currentConcepts = mock(CurrentConceptSourceResolver.class);
         private final MarketingContentRevisionRepository revisions = mock(MarketingContentRevisionRepository.class);
         private final MarketingAssetRepository assets = mock(MarketingAssetRepository.class);
         private final TaskRunService taskRuns = mock(TaskRunService.class);
         private final ObjectStoragePort storage = mock(ObjectStoragePort.class);
         private final MarketingContent content = MarketingContent.queued("content-1", 41L, "source-1",
             "sha256:" + "a".repeat(64), "{\"prohibitedClaims\":[],\"requiredDisclosures\":[]}", "{}",
-            MarketingContentType.EMAIL, "email", "title", 7L);
+            MarketingContentType.EMAIL, "email", "title", 7L, 1, null);
         private final TaskRunService.Claim claim = new TaskRunService.Claim("task-1", "attempt-1", "token-1");
         private final TaskRunWorkerContext context = new TaskRunWorkerContext("task-1", 41L, 7L,
             TaskType.MARKETING_CONTENT_GENERATION, "MARKETING_CONTENT", "content-1", "{}",
             "sha256:" + "b".repeat(64), "idem", "correlation", "1.0", "1.0", "ko-KR", 1, 2);
         private final MarketingContentCompletionService service = new MarketingContentCompletionService(
-            contents, revisions, assets, new MarketingResultContract(), new MarketingLegalGuard(mapper),
+            contents, sources, currentConcepts, revisions, assets, new MarketingResultContract(), new MarketingLegalGuard(mapper),
             taskRuns, storage, mapper);
 
         private CompletionHarness() {
             content.start();
+            MarketingSourceSnapshot source = MarketingSourceSnapshot.createPortfolio("source-1", 41L,
+                "market-seed-1", 8L, "concept-1", 2, 3, "2.1",
+                "sha256:" + "a".repeat(64), "{}", 7L, java.time.Instant.EPOCH);
+            ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
+            when(selection.getId()).thenReturn(8L); when(selection.getHypothesisRevision()).thenReturn(2);
+            MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+            when(seed.getId()).thenReturn("market-seed-1");
+            when(currentConcepts.currentOrNull(41L)).thenReturn(new CurrentConceptSourceResolver.Source(
+                selection, seed, new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 3)));
+            when(sources.findById("source-1")).thenReturn(Optional.of(source));
+            when(contents.findByTaskRunIdAndDeletedAtIsNull("task-1")).thenReturn(Optional.of(content));
             when(contents.findLocked("content-1", 41L)).thenReturn(Optional.of(content));
             when(revisions.save(any(MarketingContentRevision.class))).thenAnswer(call -> call.getArgument(0));
             when(assets.save(any(MarketingAsset.class))).thenAnswer(call -> call.getArgument(0));

@@ -21,6 +21,6 @@ export default function MarketingSetupPanel({ value, onChange, onSubmit, disable
     <Field label="제외 문구"><textarea value={value.excludedPhrases} onChange={set('excludedPhrases')} rows="3" /></Field>
     <Field label="추가 요청"><textarea value={value.additionalInstruction} onChange={set('additionalInstruction')} rows="4" /></Field>
     </div>
-    <button className="mk-primary" type="button" disabled={disabled || busy || !setupIsValid(value)} onClick={onSubmit}>{busy ? '생성 요청 중…' : '콘텐츠 생성'}</button>
+    <button className="mk-primary" type="button" disabled={disabled || busy || !setupIsValid(value)} onClick={onSubmit}>{busy ? '초안 요청 중…' : '마케팅 초안 만들기'}</button>
   </section>;
 }

@@ -22,7 +22,8 @@ public final class MarketingApiModels {
     public record EditRequest(@NotNull MarketingRevisionType revisionType, @NotNull JsonNode result) {}
     public record ContentSummary(String contentId, String marketingSourceSnapshotId, String sourceSnapshotHash,
         MarketingContentType contentType, String channel, String title, String status,
-        int currentRevisionNumber, String taskRunId, String activeJobId, String sourceSnapshotId,
+        int currentRevisionNumber, int attempt, boolean retryable, String previousContentId,
+        String taskRunId, String activeJobId, String sourceSnapshotId,
         LocalDateTime updatedAt, Instant finalizedAt) {}
     public record RevisionView(String revisionId, int revisionNumber, MarketingRevisionType revisionType,
         MarketingRevisionOrigin origin, JsonNode result) {}

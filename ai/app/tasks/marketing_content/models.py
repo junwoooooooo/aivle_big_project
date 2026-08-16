@@ -56,9 +56,22 @@ class OfficialEvidenceReference(StrictModel):
     registryVersion: Annotated[str, Field(min_length=0, max_length=80)] = ""
 
 
+class BusinessModel(StrictModel):
+    key_activities: list[FeatureText] = Field(default_factory=list, max_length=30)
+    key_resources: list[FeatureText] = Field(default_factory=list, max_length=30)
+    key_partners: list[FeatureText] = Field(default_factory=list, max_length=30)
+    customer_relationship: Annotated[str, Field(min_length=0, max_length=500)] = ""
+
+
+class BusinessConstraints(StrictModel):
+    budget_krw: int | None = Field(default=None, ge=0)
+    months: int | None = Field(default=None, ge=0)
+    team: int | None = Field(default=None, ge=0)
+
+
 class MarketingSourceSnapshot(StrictModel):
     contract: Literal["marketing-source-snapshot-v1"]
-    schemaVersion: Literal["2.0"]
+    schemaVersion: Literal["2.0", "2.1"]
     snapshotId: Annotated[str, Field(min_length=1, max_length=64)]
     hash: HashText
     createdAt: Annotated[str, Field(min_length=1, max_length=50)]
@@ -89,6 +102,10 @@ class MarketingSourceSnapshot(StrictModel):
     communicationRequiredControls: list[ClaimText] = Field(max_length=30)
     officialEvidenceReferences: list[OfficialEvidenceReference] = Field(max_length=200)
     sourceSnapshotHash: HashText
+    selectionRevision: int | None = Field(default=None, ge=0)
+    bmPlanRevision: int | None = Field(default=None, ge=0)
+    businessModel: BusinessModel | None = None
+    businessConstraints: BusinessConstraints | None = None
 
 
 class MarketingContentRequest(StrictModel):
@@ -107,9 +124,16 @@ class MarketingContentRequest(StrictModel):
     )] | None = None
 
 
+class GenerationContext(StrictModel):
+    operation: Literal["START", "RETRY", "REGENERATE"]
+    attempt: int = Field(ge=1, le=3)
+    designVersion: Literal["marketing-draft-v1"]
+
+
 class MarketingContentInput(StrictModel):
     source: MarketingSourceSnapshot
     request: MarketingContentRequest
+    generation: GenerationContext | None = None
 
 
 class LegalReview(StrictModel):

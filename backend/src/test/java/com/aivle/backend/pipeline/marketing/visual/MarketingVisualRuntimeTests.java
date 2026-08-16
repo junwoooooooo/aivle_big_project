@@ -49,7 +49,7 @@ class MarketingVisualRuntimeTests {
         CanonicalInputHasher hasher = mock(CanonicalInputHasher.class);
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(mock(Project.class)));
         MarketingContent content = MarketingContent.queued("content-1", 41L, "source-1", hash,
-            "{\"conceptName\":\"상품\"}", "{}", MarketingContentType.BANNER, "social", "title", 7L);
+            "{\"conceptName\":\"상품\"}", "{}", MarketingContentType.BANNER, "social", "title", 7L, 1, null);
         MarketingContentRevision revision = MarketingContentRevision.create("content-1", 1,
             MarketingRevisionType.USER_EDITED, MarketingRevisionOrigin.USER,
             "{\"contract\":\"marketing-content-result-v1\",\"contentType\":\"BANNER\"}", 7L);

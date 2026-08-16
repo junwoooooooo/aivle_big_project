@@ -99,6 +99,7 @@ function createHook(overrides = {}) {
     save: vi.fn(),
     finalize: vi.fn(),
     regenerate: vi.fn(),
+    retry: vi.fn(),
     ...overrides,
   };
 }
@@ -125,6 +126,14 @@ describe('MarketingContentPage 단계형 화면', () => {
     vi.clearAllMocks();
   });
 
+  it('공식 명칭과 게시 전 AI 초안 안내를 눈에 보이게 제공한다', () => {
+    useMarketingContent.mockReturnValue(createHook());
+    renderPage();
+    expect(screen.getByText('마케팅 실행')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '현재 확정된 컨셉으로 마케팅 초안을 만드세요' })).toBeInTheDocument();
+    expect(screen.getByText(/AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다/)).toBeInTheDocument();
+  });
+
   it('컨셉 확인 후 생성 설정 단계로 이동한다', () => {
     useMarketingContent.mockReturnValue(createHook());
 
@@ -144,7 +153,7 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 사업안으로 콘텐츠 만들기',
+        name: '이 사업안으로 마케팅 초안 만들기',
       }),
     );
 
@@ -217,7 +226,7 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 사업안으로 콘텐츠 만들기',
+        name: '이 사업안으로 마케팅 초안 만들기',
       }),
     );
 
@@ -241,7 +250,7 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '콘텐츠 생성',
+        name: '마케팅 초안 만들기',
       }),
     );
 
@@ -276,5 +285,45 @@ describe('MarketingContentPage 단계형 화면', () => {
         name: '생성 결과를 확인하세요',
       }),
     ).toBeInTheDocument();
+  });
+
+  it('실패한 실행은 같은 source 재시도 CTA만 제공한다', async () => {
+    const retry = vi.fn();
+    const failed = { ...completedDetail, content: { ...completedDetail.content,
+      contentId: 'failed-1', status: 'FAILED', retryable: true }, revisions: [] };
+    useMarketingContent.mockReturnValue(createHook({ list: [failed.content], selected: failed,
+      open: vi.fn().mockResolvedValue(failed), retry }));
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /프레시락 미니 콘텐츠/ }));
+    fireEvent.click(await screen.findByRole('button', { name: '다시 시도' }));
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('TaskRun')).not.toBeInTheDocument();
+    expect(screen.queryByText('MODULE_INPUT_STALE')).not.toBeInTheDocument();
+  });
+
+  it('이전 컨셉의 결과를 보존해 열람하고 현재 컨셉 신규 생성 CTA를 제공한다', async () => {
+    const regenerate = vi.fn();
+    const stale = { ...completedDetail, content: { ...completedDetail.content,
+      contentId: 'stale-1', status: 'STALE' } };
+    useMarketingContent.mockReturnValue(createHook({ list: [stale.content], selected: stale,
+      open: vi.fn().mockResolvedValue(stale), regenerate }));
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /프레시락 미니 콘텐츠/ }));
+    expect(await screen.findByText(/이전 컨셉을 기준으로 만든 결과입니다/)).toBeInTheDocument();
+    expect(screen.getByText('버리는 날까지 산뜻하게')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '현재 컨셉으로 새 초안 만들기' }));
+    expect(regenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it('성공 결과에서 검토와 다른 초안 만들기를 명시적으로 선택하며 자동 이동하지 않는다', async () => {
+    const regenerate = vi.fn();
+    useMarketingContent.mockReturnValue(createHook({ list: [completedDetail.content], selected: completedDetail,
+      open: vi.fn().mockResolvedValue(completedDetail), regenerate }));
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /프레시락 미니 콘텐츠/ }));
+    expect(await screen.findByRole('heading', { name: '생성 결과를 확인하세요' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '다른 초안 만들기' }));
+    expect(regenerate).toHaveBeenCalledTimes(1);
+    expect(window.location.pathname).not.toContain('marketing-test');
   });
 });

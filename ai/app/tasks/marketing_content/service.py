@@ -20,9 +20,12 @@ async def execute_marketing_content(task_input: dict) -> dict:
     schema = MarketingContentResult.model_json_schema()
     if lint_provider_schema(schema):
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False)
+    # Lineage/attempt metadata is validated but is not persuasive prompt material.
+    prompt_input = {"source": value.source.model_dump(mode="json"),
+                    "request": value.request.model_dump(mode="json")}
     raw = await execute_structured_prompt(
         SYSTEM_PROMPT,
-        json.dumps(value.model_dump(mode="json"), ensure_ascii=False, sort_keys=True),
+        json.dumps(prompt_input, ensure_ascii=False, sort_keys=True),
         response_schema=schema,
         schema_name="marketing_content_result_v1",
         task_type="MARKETING_CONTENT_GENERATION",

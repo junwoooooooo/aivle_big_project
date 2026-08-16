@@ -62,6 +62,7 @@ export default function MarketingContentPage() {
   const selectedContentId = hook.selected?.content.contentId;
   const selectedStatus = hook.selected?.content.status;
   const editable = selectedStatus === 'COMPLETED';
+  const historical = selectedStatus === 'STALE';
 
   const generationStatus = hook.status === 'IDLE' ? selectedStatus : hook.status;
   const progressEvents = (hook.jobEvents?.events ?? []).filter(isUserVisibleJobEvent);
@@ -180,9 +181,13 @@ export default function MarketingContentPage() {
 
   return (
     <ProjectWorkspace mode="review" className="mk-page">
-      <ProjectStageHeader step={6} eyebrow="마케팅 실행" title="확정한 사업안을 고객에게 보여줄 콘텐츠로 만드세요"
-        description="컨셉 확인, 생성 설정, 결과 확인의 세 단계로 문구와 시각 표현을 완성합니다."
+      <ProjectStageHeader step={6} eyebrow="마케팅 실행" title="현재 확정된 컨셉으로 마케팅 초안을 만드세요"
+        description="컨셉 확인, 생성 설정, 결과 검토의 세 단계로 게시 전 초안을 준비합니다."
         actions={<button type="button" onClick={() => void hook.refresh()}>새로고침</button>} />
+
+      <div className="mk-alert" role="note">
+        AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다. 게시 전에 내용과 표현을 직접 확인하세요.
+      </div>
 
       {hook.error && (
         <div
@@ -213,7 +218,7 @@ export default function MarketingContentPage() {
             <span>
               사업안 선택과 검증 조건 확인을 완료하면
               마케팅에 사용할 기획 자료가 자동으로 준비됩니다.
-              Market Result나 Finalized Planning은 필요하지 않습니다.
+              현재 확정된 컨셉이 준비되면 마케팅 초안을 만들 수 있습니다.
             </span>
           </div>
 
@@ -235,7 +240,7 @@ export default function MarketingContentPage() {
 
       <nav
         className="mk-steps"
-        aria-label="마케팅 콘텐츠 제작 단계"
+        aria-label="마케팅 초안 제작 단계"
       >
         <ol>
           {STEP_ITEMS.map((item) => {
@@ -293,7 +298,7 @@ export default function MarketingContentPage() {
                 컨셉 정보를 확인하세요
               </h2>
               <span>
-                콘텐츠 생성에 사용될 고객, 가치 제안과
+                초안 생성에 사용될 고객, 가치 제안과
                 법률 조건을 확인합니다.
               </span>
             </div>
@@ -315,7 +320,7 @@ export default function MarketingContentPage() {
               disabled={!hook.source}
               onClick={() => moveToStep(2)}
             >
-              이 사업안으로 콘텐츠 만들기
+              이 사업안으로 마케팅 초안 만들기
             </button>
           </div>
         </section>
@@ -371,7 +376,7 @@ export default function MarketingContentPage() {
                 생성 결과를 확인하세요
               </h2>
               <span>
-                생성된 이미지와 문구를 확인하고 필요한
+                AI가 생성한 이미지와 문구를 확인하고 필요한
                 부분을 편집합니다.
               </span>
             </div>
@@ -388,6 +393,23 @@ export default function MarketingContentPage() {
           {(generationBusy ||
             generationStatus === 'FAILED') &&
             progressPanel}
+
+          {selectedStatus === 'FAILED' && hook.selected?.content.retryable && (
+            <div className="mk-step__actions">
+              <span>같은 컨셉과 설정으로 기술적 실패를 다시 시도합니다.</span>
+              <button className="mk-primary" type="button" disabled={hook.active}
+                onClick={() => void hook.retry()}>
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {historical && (
+            <div className="mk-alert mk-alert--warning" role="status">
+              이전 컨셉을 기준으로 만든 결과입니다. 과거 초안은 그대로 열람할 수 있으며,
+              현재 컨셉으로 사용하려면 새 초안을 만들어 주세요.
+            </div>
+          )}
 
           <div className="mk-result-workspace">
             <main className="mk-result-workspace__preview">
@@ -515,12 +537,12 @@ export default function MarketingContentPage() {
 
               <button
                 type="button"
-                disabled={!editable || hook.active}
+                disabled={(!editable && selectedStatus !== 'FINALIZED' && !historical) || hook.active}
                 onClick={() =>
                   void hook.regenerate()
                 }
               >
-                새 초안 생성
+                {historical ? '현재 컨셉으로 새 초안 만들기' : '다른 초안 만들기'}
               </button>
 
               <button
