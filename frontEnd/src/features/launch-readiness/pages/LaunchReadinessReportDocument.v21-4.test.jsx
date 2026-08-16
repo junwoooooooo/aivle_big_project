@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FinanceReadinessReportDocument } from '../components/FinanceReadinessReportDocument.jsx';
 import { IntegratedLaunchReadinessReportDocument } from '../components/IntegratedLaunchReadinessReportDocument.jsx';
 import { LaunchReadinessReportDocument } from '../components/LaunchReadinessReportDocument.jsx';
-import { launchReadinessReportTitle, printLaunchReadinessReport } from '../model/reportDocumentPresentation.js';
+import { launchReadinessReportTitle, printLaunchReadinessReport, reportModulesFromQuery } from '../model/reportDocumentPresentation.js';
 import { FinanceModule, ProfessionalModule, ReportDownload } from './LaunchReadinessPage.jsx';
 import { LaunchReadinessReportPageView } from './LaunchReadinessReportPage.jsx';
 
@@ -76,8 +76,8 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(onViewReport).toHaveBeenCalledWith(['technology', 'finance']);
   });
 
-  it('Technology 문서는 Backend PDF의 8개 의미 section과 점수 투명성·disclaimer를 보존한다', () => {
-    render(<LaunchReadinessReportDocument module="technology" current={professionalCurrent()} projectName="테스트 프로젝트" />);
+  it('Technology 문서는 3개 summary와 8개 의미 section, 점수 투명성·disclaimer를 보존한다', () => {
+    const { container } = render(<LaunchReadinessReportDocument module="technology" current={professionalCurrent()} projectName="테스트 프로젝트" />);
     ['1. 경영진 요약', '2. 평가에 사용한 입력 근거', '3. 영역별 준비도와 판단 근거', '4. 핵심 위험',
       '5. 출시 전 확인 기준', '6. 우선 실행 과제', '7. 사업 적용 결론', '8. 외부 참고 출처']
       .forEach((title) => expect(screen.getByRole('heading', { name: title })).toBeInTheDocument());
@@ -86,6 +86,11 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(screen.getByText('독립 AI 검증 통과')).toBeInTheDocument();
     expect(screen.queryByText('94')).not.toBeInTheDocument();
     expect(screen.getByText(/인증 또는 성과를 보장하지 않습니다/)).toBeInTheDocument();
+    expect(container.querySelectorAll('.launch-report-document__summary > div')).toHaveLength(3);
+    expect(container.querySelectorAll('.launch-report-table--dimensions tbody tr')).toHaveLength(1);
+    expect(container.querySelectorAll('.launch-report-table--risks tbody tr')).toHaveLength(1);
+    expect(container.querySelectorAll('.launch-report-table--gates tbody tr')).toHaveLength(1);
+    expect(container.querySelectorAll('.launch-report-table--actions tbody tr')).toHaveLength(1);
   });
 
   it('quality 미통과 결과를 독립 AI 검증 통과로 표시하지 않는다', () => {
@@ -112,6 +117,23 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(screen.getByRole('heading', { name: '재무 출시 준비 보고서' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '통합 외부 참고 출처' })).toBeInTheDocument();
     expect(screen.getAllByText('OWASP ASVS')).toHaveLength(1);
+  });
+
+  it('통합 문서는 전달 순서와 무관하게 기술→운영→재무 순서를 사용한다', () => {
+    const { container } = render(<IntegratedLaunchReadinessReportDocument projectName="테스트" completedAt="2026-08-16T10:30:00Z"
+      documents={[{ module: 'finance', current: financeCurrent }, { module: 'operations', current: professionalCurrent('OPERATIONS') }, { module: 'technology', current: professionalCurrent() }]} />);
+    const modules = [...container.querySelectorAll('.launch-integrated-report > [data-report-document]')]
+      .map((element) => element.dataset.reportDocument).filter((module) => module !== 'integrated');
+    expect(modules).toEqual(['technology', 'operations', 'finance']);
+    expect(screen.getByText('기술 분석 보고서 · 운영 분석 보고서 · 재무 분석 보고서')).toBeInTheDocument();
+  });
+
+  it('통합 report query도 클릭 순서를 무시하고 canonical order로 정렬한다', () => {
+    const params = new URLSearchParams();
+    params.append('modules', 'finance');
+    params.append('modules', 'technology');
+    params.append('modules', 'operations');
+    expect(reportModulesFromQuery('integrated', params)).toEqual(['technology', 'operations', 'finance']);
   });
 
   it('Report Page의 PDF 저장은 같은 DOM에서 window.print만 1회 호출하고 title을 복원한다', () => {

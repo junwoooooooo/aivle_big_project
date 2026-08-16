@@ -5,6 +5,7 @@ const page = readFileSync('src/features/launch-readiness/pages/LaunchReadinessRe
 const css = readFileSync('src/features/launch-readiness/styles/launch-readiness.css', 'utf8');
 const professional = readFileSync('src/features/launch-readiness/components/LaunchReadinessReportDocument.jsx', 'utf8');
 const finance = readFileSync('src/features/launch-readiness/components/FinanceReadinessReportDocument.jsx', 'utf8');
+const launchPage = readFileSync('src/features/launch-readiness/pages/LaunchReadinessPage.jsx', 'utf8');
 
 describe('V21.4 report page source contract', () => {
   it('화면과 print는 동일한 사용자-facing document component를 사용한다', () => {
@@ -36,5 +37,22 @@ describe('V21.4 report page source contract', () => {
       .forEach((section) => expect(finance).toContain(section));
     expect(finance).toContain('<svg');
     expect(finance).toContain('result.cashFlowChart');
+  });
+
+  it('V21.5 메인은 독립 분석 3열 IA와 세로 workflow를 사용하고 sticky section nav를 제거한다', () => {
+    expect(launchPage).toContain('className="launch-analysis-grid"');
+    expect(launchPage).toContain('launch-workflow launch-workflow--vertical');
+    expect(launchPage).toContain('서로 독립적으로 사용할 수 있습니다');
+    expect(launchPage).toContain('선택형 · 독립 문서 분석');
+    expect(launchPage).not.toContain('className="launch-readiness-nav"');
+    expect(css).toContain('grid-template-columns:repeat(3,minmax(0,1fr))');
+  });
+
+  it('전문 보고서의 핵심 정보는 정형 표이고 deep blue header를 사용한다', () => {
+    ['launch-report-table--inputs', 'launch-report-table--dimensions', 'launch-report-table--risks',
+      'launch-report-table--gates', 'launch-report-table--actions']
+      .forEach((className) => expect(professional).toContain(className));
+    expect(css).toContain('background:#2e4e73');
+    expect(css).toContain('display:table-header-group');
   });
 });

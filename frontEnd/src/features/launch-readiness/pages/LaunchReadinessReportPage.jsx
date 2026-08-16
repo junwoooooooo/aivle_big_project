@@ -8,11 +8,10 @@ import { createLaunchReadinessApi } from '../api/launchReadinessApi.js';
 import { FinanceReadinessReportDocument } from '../components/FinanceReadinessReportDocument.jsx';
 import { IntegratedLaunchReadinessReportDocument } from '../components/IntegratedLaunchReadinessReportDocument.jsx';
 import { LaunchReadinessReportDocument } from '../components/LaunchReadinessReportDocument.jsx';
-import { printLaunchReadinessReport } from '../model/reportDocumentPresentation.js';
+import { printLaunchReadinessReport, reportModulesFromQuery } from '../model/reportDocumentPresentation.js';
 import '../styles/launch-readiness.css';
 
 const REPORT_TYPES = new Set(['technology', 'operations', 'finance', 'integrated']);
-const MODULES = new Set(['technology', 'operations', 'finance']);
 
 function hasCurrentReport(module, current) {
   if (current?.stale) return false;
@@ -45,9 +44,7 @@ export default function LaunchReadinessReportPage() {
   const { project } = useProjectContext();
   const client = useApiClient();
   const api = useMemo(() => createLaunchReadinessApi(client), [client]);
-  const integratedModules = useMemo(() => [...new Set(searchParams.getAll('modules'))]
-    .filter((module) => MODULES.has(module)), [searchParams]);
-  const modules = reportType === 'integrated' ? integratedModules : [reportType];
+  const modules = useMemo(() => reportModulesFromQuery(reportType, searchParams), [reportType, searchParams]);
   const moduleKey = modules.join(',');
   const requestKey = `${reportType}:${moduleKey}`;
   const selectionValid = REPORT_TYPES.has(reportType) && (reportType !== 'integrated' || modules.length >= 2);

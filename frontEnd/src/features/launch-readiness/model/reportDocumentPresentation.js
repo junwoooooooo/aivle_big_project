@@ -5,6 +5,55 @@ const REPORT_LABELS = Object.freeze({
   integrated: '통합',
 });
 
+export const REPORT_ORDER = Object.freeze(['technology', 'operations', 'finance']);
+
+export function canonicalizeReportModules(modules = []) {
+  const selected = new Set(Array.isArray(modules) ? modules : []);
+  return REPORT_ORDER.filter((module) => selected.has(module));
+}
+
+export function reportModulesFromQuery(reportType, searchParams) {
+  return reportType === 'integrated'
+    ? canonicalizeReportModules(searchParams.getAll('modules'))
+    : canonicalizeReportModules([reportType]);
+}
+
+function compactKoreanUnit(value, unit, shortUnit, divisor) {
+  if (!value) return null;
+  if (value % divisor === 0) return `${value / divisor}${shortUnit}${unit}`;
+  return `${value.toLocaleString('ko-KR')}${unit}`;
+}
+
+export function formatKrwAmount(value) {
+  const numeric = Number(value ?? 0);
+  const safeNumber = Number.isFinite(numeric) ? numeric : 0;
+  if (!Number.isInteger(safeNumber)) {
+    const formatted = safeNumber.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+    return { raw: `${formatted} KRW`, readable: `${formatted}원` };
+  }
+  const integer = safeNumber;
+  const sign = integer < 0 ? '-' : '';
+  const absolute = Math.abs(integer);
+  const raw = `${integer.toLocaleString('ko-KR')} KRW`;
+  if (absolute === 0) return { raw, readable: '0원' };
+
+  const billion = Math.floor(absolute / 100_000_000);
+  const remainderAfterBillion = absolute % 100_000_000;
+  const tenThousands = Math.floor(remainderAfterBillion / 10_000);
+  const won = remainderAfterBillion % 10_000;
+  const parts = [];
+  if (billion) parts.push(`${billion.toLocaleString('ko-KR')}억`);
+  if (tenThousands) {
+    const compact = tenThousands < 1_000
+      ? compactKoreanUnit(tenThousands, '만', '백', 100)
+      : compactKoreanUnit(tenThousands, '만', '천', 1_000);
+    parts.push(compact);
+  }
+  if (won) parts.push(`${won.toLocaleString('ko-KR')}원`);
+  else parts[parts.length - 1] = `${parts.at(-1)} 원`;
+  return { raw, readable: `${sign}${parts.join(' ')}` };
+}
+
 function compactTimestamp(value) {
   const match = String(value ?? '').match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
   if (match) return `${match[1]}${match[2]}${match[3]}_${match[4]}${match[5]}`;
