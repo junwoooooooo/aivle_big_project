@@ -97,18 +97,18 @@ public class ConceptRefinementFinalizationService {
         if(value!=null)return view(ownerId,projectId,value,rounds.findById(value.getRoundId()).orElse(null));
         return view(ownerId,projectId,null,rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null));}
     private FinalView view(Long ownerId,Long projectId,ConceptRefinementFinal value,ConceptRefinementRound round){
-        if(value==null){if(round==null)return new FinalView("NOT_STARTED",null,false,null);
+        if(value==null){if(round==null)return new FinalView(null,"NOT_STARTED",null,false,null);
             boolean stale=switch(round.getState()){
                 case STALE,FINALIZED -> true;
                 case KEEP_CURRENT,NO_CHANGES -> !lineage.preApplyCurrent(ownerId,projectId,round);
                 default -> round.postApplyState()?!lineage.postApplyCurrent(projectId,round):!lineage.preApplyCurrent(ownerId,projectId,round);};
-            return new FinalView(round.getState().name(),null,stale,null);}
+            return new FinalView(round.getBusinessValidationSessionId(),round.getState().name(),null,stale,null);}
         boolean bound=round!=null&&!round.isDeleted()&&Objects.equals(value.getProjectId(),projectId)
             &&Objects.equals(round.getProjectId(),value.getProjectId())&&Objects.equals(round.getSelectionId(),value.getSelectionId())
             &&Objects.equals(round.getFinalId(),value.getId())&&Objects.equals(round.getFinalMarketSeedSnapshotId(),value.getFinalMarketSeedSnapshotId());
         boolean stale=!bound||!lineage.postApplyCurrent(projectId,round)||seeds
             .findByIdAndStaleAtIsNullAndDeletedAtIsNull(value.getFinalMarketSeedSnapshotId()).isEmpty();
-        return new FinalView("FINALIZED",value.getOutcome().name(),stale,mapper.readTree(value.getFinalJson()));}
+        return new FinalView(round==null?null:round.getBusinessValidationSessionId(),"FINALIZED",value.getOutcome().name(),stale,mapper.readTree(value.getFinalJson()));}
     private OutcomePlan outcome(ConceptRefinementRound round){
         if(round.getState()==ConceptRefinementRound.State.KEEP_CURRENT)return new OutcomePlan(ConceptRefinementFinal.Outcome.KEEP_CURRENT,true,false,false,mapper.createObjectNode(),mapper.createArrayNode());
         if(round.getState()==ConceptRefinementRound.State.NO_CHANGES)return new OutcomePlan(ConceptRefinementFinal.Outcome.NO_CHANGES,true,false,false,mapper.createObjectNode(),mapper.createArrayNode());
@@ -129,5 +129,5 @@ public class ConceptRefinementFinalizationService {
     private String validKey(String k){if(k==null||k.isBlank()||k.strip().length()>128)throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);return k.strip();}
     private BusinessException unavailable(){return new BusinessException(ErrorCode.INVALID_REQUEST,"finalization unavailable");}
     private record OutcomePlan(ConceptRefinementFinal.Outcome outcome,boolean resolved,boolean hypotheses,boolean overlay,ObjectNode overlayNode,ArrayNode selectedChanges){boolean newSeed(){return hypotheses||overlay;}}
-    public record FinalView(String state,String outcome,boolean stale,JsonNode value){}
+    public record FinalView(String sourceBusinessValidationSessionId,String state,String outcome,boolean stale,JsonNode value){}
 }

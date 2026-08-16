@@ -54,8 +54,8 @@ class ConceptRefinementServiceTests {
         service = new ConceptRefinementService(projects, validations, selections, seeds, rounds,
             materials, tasks, inputHasher, mapper, decisions, lineage);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
-        when(project.getOwner()).thenReturn(owner);
-        when(owner.getId()).thenReturn(7L);
+        lenient().when(project.getOwner()).thenReturn(owner);
+        lenient().when(owner.getId()).thenReturn(7L);
         lenient().when(projects.findByIdForUpdate(41L)).thenReturn(Optional.of(project));
         lenient().when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
         lenient().when(validations.requireCurrentCompletedSource(7L, 41L)).thenReturn(source);
@@ -89,6 +89,7 @@ class ConceptRefinementServiceTests {
         var view = service.start(7L, 41L, "start-1", "request-1");
 
         assertThat(view.state()).isEqualTo("PROPOSING");
+        assertThat(view.sourceBusinessValidationSessionId()).isEqualTo("session-1");
         ArgumentCaptor<ConceptRefinementRound> saved = ArgumentCaptor.forClass(ConceptRefinementRound.class);
         verify(rounds).save(saved.capture());
         assertThat(saved.getValue().getBusinessValidationSessionId()).isEqualTo("session-1");
@@ -105,6 +106,13 @@ class ConceptRefinementServiceTests {
         assertThatThrownBy(() -> service.start(7L, 41L, "start-1", "request-1"))
             .isInstanceOf(BusinessException.class);
         verify(tasks, never()).create(anyLong(), any(), anyString(), any(), anyString(), anyString());
+    }
+
+    @Test
+    void notStartedHasNoSourceBusinessValidationSessionIdentity() {
+        var view = service.current(7L, 41L);
+        assertThat(view.state()).isEqualTo("NOT_STARTED");
+        assertThat(view.sourceBusinessValidationSessionId()).isNull();
     }
 
     @Test

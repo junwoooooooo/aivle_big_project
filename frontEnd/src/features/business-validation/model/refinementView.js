@@ -51,3 +51,27 @@ export function validProposals(proposals) {
   return (Array.isArray(proposals) ? proposals : []).filter((proposal) =>
     fieldLabel(proposal?.fieldKey) && typeof proposal?.proposalKey === 'string');
 }
+
+const notStartedRefinement = (source) => ({
+  state: 'NOT_STARTED', stale: false, round: 0, policy: source?.policy,
+  proposals: [], retry: { available: false }, proposalSetHash: null, decision: null,
+  sourceBusinessValidationSessionId: null,
+});
+const notStartedFinal = () => ({
+  state: 'NOT_STARTED', outcome: null, stale: false, value: null,
+  sourceBusinessValidationSessionId: null,
+});
+
+export function resolveRefinementCycle({ validation, refinement, finalView }) {
+  const sessionId = validation?.businessValidationSessionId;
+  const validSession = typeof sessionId === 'string' && sessionId.length > 0;
+  const refinementCurrent = validSession
+    && refinement?.sourceBusinessValidationSessionId === sessionId;
+  const finalCurrent = validSession
+    && finalView?.sourceBusinessValidationSessionId === sessionId;
+  return {
+    effectiveRefinement: refinement?.state === 'UNAVAILABLE' || refinementCurrent
+      ? refinement : notStartedRefinement(refinement),
+    effectiveFinal: finalCurrent ? finalView : notStartedFinal(),
+  };
+}

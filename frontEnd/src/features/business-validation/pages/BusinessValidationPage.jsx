@@ -13,6 +13,7 @@ import { normalizeMarketResult } from '../../market/marketResult.js';
 import useCellFocus from '../../market/useCellFocus.js';
 import { createBusinessValidationApi } from '../api/businessValidationApi.js';
 import ConceptRefinementPanel from '../components/ConceptRefinementPanel.jsx';
+import { resolveRefinementCycle } from '../model/refinementView.js';
 import '../styles/business-validation.css';
 
 const RUNNING = new Set(['MARKET_RUNNING', 'MARKET_COMPLETED', 'BM_RUNNING']);
@@ -133,11 +134,15 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   const marketFocus = useCellFocus('sec-');
   const running = RUNNING.has(state);
   const started = state !== 'NOT_STARTED' && state !== 'STALE';
-  const refinementStarted = refinement?.state && !['NOT_STARTED', 'UNAVAILABLE'].includes(refinement.state);
-  const finalStarted = refinementFinal?.state && refinementFinal.state !== 'NOT_STARTED';
-  const healthyRefinement = (refinementStarted && !refinement?.stale)
-    || (finalStarted && !refinementFinal?.stale);
-  const actualRefinementStale = refinement?.stale || refinementFinal?.stale;
+  const { effectiveRefinement, effectiveFinal } = resolveRefinementCycle({
+    validation: current, refinement, finalView: refinementFinal,
+  });
+  const refinementStarted = effectiveRefinement?.state
+    && !['NOT_STARTED', 'UNAVAILABLE'].includes(effectiveRefinement.state);
+  const finalStarted = effectiveFinal?.state && effectiveFinal.state !== 'NOT_STARTED';
+  const healthyRefinement = (refinementStarted && !effectiveRefinement?.stale)
+    || (finalStarted && !effectiveFinal?.stale);
+  const actualRefinementStale = effectiveRefinement?.stale || effectiveFinal?.stale;
   const showRefinement = (state === 'COMPLETED' && !current?.stale) || refinementStarted || finalStarted;
   const deferValidationRerun = state === 'STALE' && healthyRefinement && !actualRefinementStale;
 
@@ -175,7 +180,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
       <BusinessModelResultBody result={bmResult} />
     </section> : null}
 
-    {showRefinement ? <ConceptRefinementPanel refinement={refinement} finalView={refinementFinal}
+    {showRefinement ? <ConceptRefinementPanel refinement={effectiveRefinement} finalView={effectiveFinal}
       busy={refinementBusy} error={refinementError} onStart={onStartRefinement}
       onRetry={onRetryRefinement} onDecideAndApply={onDecideAndApply}
       onKeepCurrent={onKeepCurrent} onApply={onApplyRefinement}

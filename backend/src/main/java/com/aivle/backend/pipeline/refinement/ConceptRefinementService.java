@@ -166,7 +166,7 @@ public class ConceptRefinementService {
             && round.getAttempt() < ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND;
         ConceptRefinementDecisionContract.ProposalSet proposalSet = round.getProposalJson() == null
             ? null : decisions.proposalSet(round);
-        return new CurrentView(state, stale, round.getRoundNumber(), policy(),
+        return new CurrentView(round.getBusinessValidationSessionId(), state, stale, round.getRoundNumber(), policy(),
             proposalSet == null ? jsonArray(null) : proposalSet.projected(),
             jsonArray(round.getDriftRejectionsJson()),
             round.getLastErrorCode(), new RetryView(retryAvailable, round.getAttempt(),
@@ -206,12 +206,12 @@ public class ConceptRefinementService {
     public record PolicyView(String version, int maxRounds, int maxProposals,
                              int priceChangePercent, int listChangeAllowance) { }
     public record RetryView(boolean available, int attempts, int maxAttempts) { }
-    public record CurrentView(String state, boolean stale, int round, PolicyView policy,
+    public record CurrentView(String sourceBusinessValidationSessionId, String state, boolean stale, int round, PolicyView policy,
                               JsonNode proposals, JsonNode rejected, String errorCode,
                               RetryView retry, String proposalSetHash,
                               ConceptRefinementDecisionContract.DecisionView decision) {
         static CurrentView notStarted() {
-            return new CurrentView("NOT_STARTED", false, 0,
+            return new CurrentView(null, "NOT_STARTED", false, 0,
                 new PolicyView(ConceptRefinementPolicy.VERSION,
                     ConceptRefinementPolicy.MAX_ROUNDS, ConceptRefinementPolicy.MAX_PROPOSALS,
                     (int) (ConceptRefinementPolicy.PRICE_TOLERANCE * 100),

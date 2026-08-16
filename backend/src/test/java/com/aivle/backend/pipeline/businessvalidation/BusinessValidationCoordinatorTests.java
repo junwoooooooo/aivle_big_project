@@ -211,9 +211,17 @@ class BusinessValidationCoordinatorTests {
 
         var result = coordinator.current(7L, 41L);
 
+        assertThat(result.businessValidationSessionId()).isEqualTo("session-1");
         assertThat(result.state()).isEqualTo("STALE");
         assertThat(result.market().result()).isNotNull();
         assertThat(result.businessModel().result()).isNotNull();
+    }
+
+    @Test
+    void notStartedHasNoBusinessValidationSessionIdentity() {
+        var result = coordinator.current(7L, 41L);
+        assertThat(result.state()).isEqualTo("NOT_STARTED");
+        assertThat(result.businessValidationSessionId()).isNull();
     }
 
     private MarketResearchRun marketRun(String taskId) {

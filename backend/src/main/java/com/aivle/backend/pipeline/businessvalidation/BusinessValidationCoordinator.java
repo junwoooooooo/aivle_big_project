@@ -159,7 +159,7 @@ public class BusinessValidationCoordinator {
         boolean stale = session.getState() == BusinessValidationSession.State.STALE
             || stale(session, marketView, bmView);
         String state = effectiveState(marketView, bmView, stale);
-        return new CurrentView(state, stale, stage(marketView), stage(bmView), actions(state));
+        return new CurrentView(session.getId(), state, stale, stage(marketView), stage(bmView), actions(state));
     }
 
     private static String effectiveState(MarketResearchService.CurrentView marketView,
@@ -251,10 +251,10 @@ public class BusinessValidationCoordinator {
                                   String marketSeedSnapshotId, Long selectionId,
                                   Integer selectionRevision, Integer bmPlanRevision,
                                   String canonicalInputHash) { }
-    public record CurrentView(String state, boolean stale, StageView market,
+    public record CurrentView(String businessValidationSessionId, String state, boolean stale, StageView market,
                               StageView businessModel, List<String> actions) {
         static CurrentView notStarted() {
-            return new CurrentView("NOT_STARTED", false, stage(null), stage(null), List.of("START"));
+            return new CurrentView(null, "NOT_STARTED", false, stage(null), stage(null), List.of("START"));
         }
     }
 }

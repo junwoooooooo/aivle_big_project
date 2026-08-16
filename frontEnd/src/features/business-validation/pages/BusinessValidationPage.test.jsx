@@ -14,8 +14,8 @@ vi.mock('../../market/useCellFocus.js', () => ({
 }));
 
 const stage = (state, result = null) => ({ state, result });
-const view = (state, market = stage('WAITING'), businessModel = stage('WAITING')) => ({
-  state, stale: state === 'STALE', market, businessModel, actions: [],
+const view = (state, market = stage('WAITING'), businessModel = stage('WAITING'), session = 'session-B') => ({
+  businessValidationSessionId: session, state, stale: state === 'STALE', market, businessModel, actions: [],
 });
 const api = {
   currentCompetitorSeeds: vi.fn().mockResolvedValue({ seeds: [] }),
@@ -23,9 +23,9 @@ const api = {
 };
 const policy = { priceChangePercent: 30, listChangeAllowance: 1, maxProposals: 6, maxRounds: 3 };
 const refinement = (state, extra = {}) => ({ state, stale: false, round: 1, policy,
-  proposals: [], retry: { available: false }, ...extra });
-const finalView = (outcome = 'REFINED', stale = false) => ({
-  state: 'FINALIZED', outcome, stale,
+  proposals: [], retry: { available: false }, sourceBusinessValidationSessionId: 'session-B', ...extra });
+const finalView = (outcome = 'REFINED', stale = false, session = 'session-B') => ({
+  sourceBusinessValidationSessionId: session, state: 'FINALIZED', outcome, stale,
   value: {
     outcome,
     selectedConcept: { identity: { conceptName: '지역 연결', targetUsers: '지역 상점', coreValue: '폐기 절감' },
@@ -162,5 +162,47 @@ describe('BusinessValidationContent', () => {
     rerender(<BusinessValidationContent current={view('STALE')} refinement={refinement('FINALIZED')}
       refinementFinal={finalView('REFINED', true)} api={api} />);
     expect(screen.getByText(/이후 사업안이 변경되어 이 다듬기 결과는 현재 기준이 아닙니다/)).toBeInTheDocument();
+  });
+
+  it('새 완료 cycle에서는 과거 refinement/final 대신 새 다듬기 시작 CTA를 보여준다', () => {
+    render(<BusinessValidationContent current={view('COMPLETED')}
+      refinement={refinement('FINALIZED', { sourceBusinessValidationSessionId: 'session-A' })}
+      refinementFinal={finalView('REFINED', false, 'session-A')} api={api} />);
+    expect(screen.getByRole('button', { name: '다듬기 제안 받기' })).toBeInTheDocument();
+    expect(screen.queryByText('다듬기 완료')).not.toBeInTheDocument();
+  });
+
+  it('새 validation 진행 중에는 과거 Final이 현재 진행 화면을 덮지 않는다', () => {
+    render(<BusinessValidationContent current={view('MARKET_RUNNING', stage('RUNNING'))}
+      refinement={refinement('FINALIZED', { sourceBusinessValidationSessionId: 'session-A' })}
+      refinementFinal={finalView('REFINED', false, 'session-A')} api={api} />);
+    expect(screen.getByText('사업 검증 진행 중')).toBeInTheDocument();
+    expect(screen.queryByText('다듬어진 컨셉')).not.toBeInTheDocument();
+  });
+
+  it('현재 cycle PROPOSING이 과거 FINALIZED보다 우선한다', () => {
+    render(<BusinessValidationContent current={view('COMPLETED')} refinement={refinement('PROPOSING')}
+      refinementFinal={finalView('REFINED', false, 'session-A')} api={api} />);
+    expect(screen.getByText('검증 결과를 읽고 개선 제안을 만들고 있습니다.')).toBeInTheDocument();
+    expect(screen.queryByText('다듬어진 컨셉')).not.toBeInTheDocument();
+  });
+
+  it('현재 cycle AWAITING_DECISION이 과거 FINALIZED 대신 proposal 선택을 제공한다', () => {
+    const proposal = { proposalKey: 'sha256:current', fieldKey: 'targetUsers', currentValue: '기존 고객',
+      proposedValue: '핵심 고객', source: 'MARKET', evidenceIds: [] };
+    render(<BusinessValidationContent current={view('COMPLETED')}
+      refinement={refinement('AWAITING_DECISION', { proposals: [proposal], proposalSetHash: 'sha256:set-B' })}
+      refinementFinal={finalView('REFINED', false, 'session-A')} api={api} />);
+    expect(screen.getByRole('checkbox', { name: '타깃 고객 변경안 반영' })).toBeInTheDocument();
+    expect(screen.queryByText('다듬어진 컨셉')).not.toBeInTheDocument();
+  });
+
+  it('현재 cycle의 건강한 refinement는 과거 stale Final에 오염되지 않는다', () => {
+    render(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('APPLIED_PENDING_FINALIZATION')}
+      refinementFinal={finalView('REFINED', true, 'session-A')} api={api} />);
+    expect(screen.getByText(/이전 검증 결과는 기준 결과로 보존/)).toBeInTheDocument();
+    expect(screen.queryByText(/사업안이 추가로 변경되어 이 다듬기 결과/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/이후 사업안이 변경되어 이 다듬기 결과/)).not.toBeInTheDocument();
   });
 });
