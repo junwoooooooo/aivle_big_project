@@ -23,9 +23,11 @@ describe('Launch Readiness product contract', () => {
     expect(page).not.toMatch(/사용자 문서 Snapshot|입력 Snapshot|TaskRun으로/);
   });
 
-  it('완료 보고서는 포털 기반 PDF 미리보기 후 다운로드할 수 있다', () => {
-    expect(page).toContain('<Dialog open={Boolean(preview)}');
-    expect(page).toContain('useBodyScrollLock(Boolean(preview))');
-    expect(page).toContain('PDF 다운로드');
+  it('미리보기는 current JSON 문서를 열고 PDF.js 또는 binary preview를 사용하지 않는다', () => {
+    expect(page).toContain('<ReportPreviewDialog key=');
+    expect(page).toContain('preview={preview}');
+    expect(page).toContain('documents: [{ module, current: state.current }]');
+    expect(page).not.toContain('PdfCanvasViewer');
+    expect(page).not.toContain('usePdfPreview');
   });
 });

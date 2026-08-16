@@ -120,7 +120,8 @@ public class LaunchReadinessService {
         return new ProfessionalAnalysisView(type.name(), status, latest != null && latest.isRetryable(),
             latest == null ? null : latest.getLastErrorCode(), latest == null ? null : latest.getId(),
             latest == null ? null : latest.getId(), snapshot.getId(), snapshot.getSourceDocumentName(),
-            snapshot.getSourceDocumentHash(), snapshot.getSnapshotHash(), reportMatches ? report.getId() : null,
+            mapper.readTree(snapshot.getParsedInputJson()), snapshot.getSourceDocumentHash(), snapshot.getSnapshotHash(),
+            reportMatches ? report.getId() : null,
             reportMatches ? report.getResultHash() : null,
             reportMatches ? mapper.readTree(report.getAnalysisJson()) : null,
             reportMatches ? mapper.readTree(report.getQualityJson()) : null,
@@ -182,7 +183,7 @@ public class LaunchReadinessService {
     }
     private ProfessionalAnalysisView empty(ModuleType type) {
         return new ProfessionalAnalysisView(type.name(), "NOT_STARTED", false, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, false, false);
+            null, null, null, null, null, null, null, null, null, null, null, false, false);
     }
     private TaskType taskType(ModuleType type) { return type == ModuleType.TECHNOLOGY
         ? TaskType.LAUNCH_TECHNOLOGY_READINESS : TaskType.LAUNCH_OPERATIONS_READINESS; }

@@ -6,13 +6,15 @@ const validPdf = () => new Blob(['%PDF-1.4\n', 'x'.repeat(80)], { type: 'applica
 describe('launch readiness PDF byte contract', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('application/pdf, 최소 크기, %PDF- magic을 모두 확인한다', async () => {
+  it('최소 크기와 %PDF- magic을 확인하며 MIME은 참고값으로만 사용한다', async () => {
     await expect(validatePdfBlob(validPdf())).resolves.toBeInstanceOf(Blob);
+    await expect(validatePdfBlob(new Blob(['%PDF-1.4\n', 'x'.repeat(80)], { type: 'application/octet-stream' })))
+      .resolves.toBeInstanceOf(Blob);
     await expect(validatePdfBlob(new Blob(['%PDF-'], { type: 'application/pdf' })))
       .rejects.toBeInstanceOf(InvalidPdfError);
     await expect(validatePdfBlob(new Blob(['not-pdf'.repeat(20)], { type: 'application/pdf' })))
       .rejects.toBeInstanceOf(InvalidPdfError);
-    await expect(validatePdfBlob(new Blob(['%PDF-1.4\n', 'x'.repeat(80)], { type: 'text/html' })))
+    await expect(validatePdfBlob(new Blob(['<html>', 'x'.repeat(80)], { type: 'application/pdf' })))
       .rejects.toBeInstanceOf(InvalidPdfError);
   });
 

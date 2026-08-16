@@ -16,7 +16,7 @@ describe('launch readiness api', () => {
   it('완료 보고서 조합을 중복 없는 modules query로 요청한다', async () => {
     const client = { download: vi.fn(async () => ({ blob: new Blob(['pdf']) })) };
     const api = createLaunchReadinessApi(client);
-    await api.reports('7', ['technology', 'finance']);
+    await api.downloadReports('7', ['technology', 'finance']);
     expect(client.download.mock.calls[0][0]).toBe('/api/v3/projects/7/reports/download?modules=technology&modules=finance');
   });
 
@@ -25,21 +25,18 @@ describe('launch readiness api', () => {
     const client = { download: vi.fn(async () => ({ blob })) };
     const api = createLaunchReadinessApi(client);
     await expect(api.professionalTemplate('7', 'technology')).resolves.toBe(blob);
-    await expect(api.professionalReport('7', 'operations')).resolves.toBe(blob);
+    await expect(api.downloadProfessionalReport('7', 'operations')).resolves.toBe(blob);
     await expect(api.financeTemplate('7')).resolves.toBe(blob);
-    await expect(api.financeReport('7')).resolves.toBe(blob);
+    await expect(api.downloadFinanceReport('7')).resolves.toBe(blob);
     expect(client.download).toHaveBeenCalledTimes(4);
   });
 
-  it('PDF 미리보기 요청의 취소 signal을 인증 다운로드에 전달한다', async () => {
+  it('명시적 PDF 다운로드만 인증 binary endpoint를 호출한다', async () => {
     const client = { download: vi.fn(async () => ({ blob: new Blob(['pdf']) })) };
     const api = createLaunchReadinessApi(client);
-    const controller = new AbortController();
-    await api.professionalReport('7', 'technology', controller.signal);
-    await api.financeReport('7', controller.signal);
-    await api.reports('7', ['technology', 'finance'], controller.signal);
-    expect(client.download.mock.calls.map((call) => call[1].signal)).toEqual([
-      controller.signal, controller.signal, controller.signal,
-    ]);
+    await api.downloadProfessionalReport('7', 'technology');
+    await api.downloadFinanceReport('7');
+    await api.downloadReports('7', ['technology', 'finance']);
+    expect(client.download).toHaveBeenCalledTimes(3);
   });
 });

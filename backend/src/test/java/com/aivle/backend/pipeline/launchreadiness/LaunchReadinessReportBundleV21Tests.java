@@ -68,7 +68,7 @@ class LaunchReadinessReportBundleV21Tests {
         evidence.addObject().put("title", "공통 공식 출처")
             .put("url", "https://example.com/official");
         return new ProfessionalAnalysisView("TECHNOLOGY", "SUCCEEDED", false, null, "run", "run",
-            "snapshot", "input.docx", hash('a'), hash('b'), id, hash('c'), mapper.createObjectNode(),
+            "snapshot", "input.docx", mapper.createObjectNode(), hash('a'), hash('b'), id, hash('c'), mapper.createObjectNode(),
             mapper.createObjectNode().put("passed", true), evidence, Instant.parse("2026-08-16T00:00:00Z"), true, false);
     }
 

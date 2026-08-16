@@ -91,12 +91,20 @@ class LaunchReadinessAsyncV21Tests {
 
         assertThat(response.status()).isEqualTo("QUEUED");
         assertThat(response.inputSnapshotHash()).startsWith("sha256:");
-        verify(snapshots).save(argThat(value -> value.getSourceDocumentArtifactId().equals("artifact-1")
-            && value.getParsedInputJson().contains("3계층 구조") && value.isCurrent()));
+        var savedSnapshot = org.mockito.ArgumentCaptor.forClass(LaunchReadinessInputSnapshot.class);
+        verify(snapshots).save(savedSnapshot.capture());
+        assertThat(savedSnapshot.getValue().getSourceDocumentArtifactId()).isEqualTo("artifact-1");
+        assertThat(savedSnapshot.getValue().getParsedInputJson()).contains("3계층 구조");
+        assertThat(savedSnapshot.getValue().isCurrent()).isTrue();
         verify(taskRuns).createWithDisposition(eq(7L), eq(41L),
             eq(TaskType.LAUNCH_TECHNOLOGY_READINESS), eq("LAUNCH_READINESS_INPUT"),
             eq(response.inputSnapshotId()), anyString(), anyString(), eq("command-1"), eq("request-1"), eq(2));
         verify(events).publish(any());
+
+        when(snapshots.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            41L, ModuleType.TECHNOLOGY)).thenReturn(Optional.of(savedSnapshot.getValue()));
+        var current = service.current(7L, 41L, ModuleType.TECHNOLOGY);
+        assertThat(current.professionalInput().path("systemArchitecture").asText()).contains("3계층 구조");
     }
 
     @Test

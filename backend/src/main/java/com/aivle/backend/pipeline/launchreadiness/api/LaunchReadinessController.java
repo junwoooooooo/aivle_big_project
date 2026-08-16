@@ -42,7 +42,7 @@ public class LaunchReadinessController {
     public ResponseEntity<ByteArrayResource> report(@PathVariable Long projectId, @PathVariable String module) {
         byte[] body = pdf.create(user.currentUserId(), projectId, type(module), true);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + module + "-readiness-report.pdf\"")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + module + "-readiness-report.pdf\"")
             .body(new ByteArrayResource(body));
     }
     private ModuleType type(String value) { return switch (value.toLowerCase()) {

@@ -70,7 +70,7 @@ class LaunchReadinessPdfHttpV21_1Tests {
     }
 
     @Test
-    void reportResponsesAreInlineWhileDocxTemplatesRemainAttachments() throws Exception {
+    void pdfDownloadsAndDocxTemplatesUseAttachmentDisposition() throws Exception {
         MockMvc professionalMvc = MockMvcBuilders.standaloneSetup(
             new LaunchReadinessController(readiness, professionalPdf, user)).build();
         professionalMvc.perform(get("/api/v3/projects/41/launch-readiness/technology/template"))
@@ -135,8 +135,7 @@ class LaunchReadinessPdfHttpV21_1Tests {
     private void assertPdf(MvcResult result) throws Exception {
         byte[] body = result.getResponse().getContentAsByteArray();
         assertThat(result.getResponse().getHeader("Content-Disposition"))
-            .startsWith("inline; filename=\"")
-            .doesNotContain("attachment");
+            .startsWith("attachment; filename=\"");
         assertThat(body.length).isGreaterThan(64);
         assertThat(body).startsWith("%PDF-".getBytes(StandardCharsets.US_ASCII));
         PdfReader reader = new PdfReader(body);
@@ -154,8 +153,10 @@ class LaunchReadinessPdfHttpV21_1Tests {
              "externalEvidence":[],"quality":{"passed":true,"reviewScore":92,"attempts":1,"feedback":[],"unsupportedClaims":[]}}
             """);
         return new ProfessionalAnalysisView(type.name(), "SUCCEEDED", false, null, "run-" + type,
-            "run-" + type, "snapshot-" + type, type.name().toLowerCase() + ".docx", hash('a'), hash('b'),
-            "report-" + type, hash('c'), analysis, analysis.path("quality"), analysis.path("externalEvidence"),
+            "run-" + type, "snapshot-" + type, type.name().toLowerCase() + ".docx",
+            mapper.createObjectNode().put("systemArchitecture", "웹·API·DB 구조"), hash('a'), hash('b'),
+            "report-" + type, hash('c'),
+            analysis, analysis.path("quality"), analysis.path("externalEvidence"),
             Instant.parse("2026-08-16T00:00:00Z"), true, false);
     }
 

@@ -10,7 +10,7 @@ export class InvalidPdfError extends Error {
 }
 
 export async function validatePdfBlob(blob) {
-  if (!(blob instanceof Blob) || blob.size < MIN_PDF_BYTES || blob.type.toLowerCase() !== 'application/pdf') {
+  if (!(blob instanceof Blob) || blob.size < MIN_PDF_BYTES) {
     throw new InvalidPdfError();
   }
   const signature = new Uint8Array(await blob.slice(0, PDF_MAGIC.length).arrayBuffer());

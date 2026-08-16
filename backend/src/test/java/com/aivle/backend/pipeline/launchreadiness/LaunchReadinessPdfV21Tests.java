@@ -54,6 +54,7 @@ class LaunchReadinessPdfV21Tests {
         Instant completedAt = Instant.parse("2026-08-14T00:00:00Z");
         when(readiness.current(7L, 41L, ModuleType.TECHNOLOGY)).thenReturn(new ProfessionalAnalysisView(
             "TECHNOLOGY", "SUCCEEDED", false, null, "run-1", "run-1", "snapshot-1", "technology.docx",
+            mapper.createObjectNode().put("systemArchitecture", "웹·API·데이터베이스 3계층 구조"),
             hash('a'), hash('b'), "report-1", hash('c'), analysis, quality, evidence, completedAt, true, false));
         var snapshot = LaunchReadinessInputSnapshot.create("snapshot-1", 41L, ModuleType.TECHNOLOGY,
             "artifact-1", hash('a'), "technology.docx",

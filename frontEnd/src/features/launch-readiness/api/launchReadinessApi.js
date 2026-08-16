@@ -14,13 +14,13 @@ export const createLaunchReadinessApi = (client) => Object.freeze({
     const form = new FormData(); form.append('file', file);
     return (await client.upload(`${professional(projectId, module)}/analysis-runs`, form, commandOptions())).data;
   },
-  professionalReport: (projectId, module, signal) => downloadBlob(client.download(`${professional(projectId, module)}/report`, { timeoutMs: 60000, signal })),
+  downloadProfessionalReport: (projectId, module) => downloadBlob(client.download(`${professional(projectId, module)}/report`, { timeoutMs: 60000 })),
   financeTemplate: (projectId) => downloadBlob(client.download(`${root(projectId)}/finance/preparation/template`)),
   financeCurrent: async (projectId) => (await client.get(`${root(projectId)}/finance/analysis/current`)).data,
   startFinance: async (projectId, file) => {
     const form = new FormData(); form.append('file', file);
     return (await client.upload(`${root(projectId)}/finance/preparation/import`, form, commandOptions())).data;
   },
-  financeReport: (projectId, signal) => downloadBlob(client.download(`${root(projectId)}/finance/analysis/report`, { timeoutMs: 60000, signal })),
-  reports: (projectId, modules, signal) => downloadBlob(client.download(`${root(projectId)}/reports/download?${modules.map((module) => `modules=${encodeURIComponent(module)}`).join('&')}`, { timeoutMs: 120000, signal })),
+  downloadFinanceReport: (projectId) => downloadBlob(client.download(`${root(projectId)}/finance/analysis/report`, { timeoutMs: 60000 })),
+  downloadReports: (projectId, modules) => downloadBlob(client.download(`${root(projectId)}/reports/download?${modules.map((module) => `modules=${encodeURIComponent(module)}`).join('&')}`, { timeoutMs: 120000 })),
 });
