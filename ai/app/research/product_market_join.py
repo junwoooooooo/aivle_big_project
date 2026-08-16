@@ -15,18 +15,14 @@ from .bm.contracts import (
 
 
 CHANNEL_METRIC = "채널·유통 조건"
-CHANNEL_ID_PREFIX = "C-SEC-"
+CHANNEL_ID_PREFIX = "C-SEC-CH-"
 
 
 def _channel_evidence(evidence: list[dict]) -> list[dict]:
-    """exact FULL evidence 중 server-generated CHANNEL passage만 BM 비교 재료로 쓴다."""
-    from .research2.runlog import load_rules
-
-    anchors = list((load_rules().get("section_recall") or {}).get("channel_anchors") or [])
+    """FULL 생성 시 eligibility가 ID에 고정된 CHANNEL passage만 재판정 없이 쓴다."""
     return [item for item in evidence
             if str(item.get("id") or "").startswith(CHANNEL_ID_PREFIX)
-            and item.get("metric") == CHANNEL_METRIC
-            and any(anchor in str(item.get("quote") or "") for anchor in anchors)]
+            and item.get("metric") == CHANNEL_METRIC]
 
 
 def _evidence(item: dict) -> dict:

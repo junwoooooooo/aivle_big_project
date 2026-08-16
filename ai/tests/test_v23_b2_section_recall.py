@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import copy
 import inspect
 import json
 import os
@@ -171,6 +172,57 @@ def test_deadline_guard_starts_no_provider_call_and_returns_soft_degradation():
     assert any(row["code"] == "SECTION_RECALL_TIMEOUT" for row in result["degradations"])
 
 
+def test_hanging_batch_returns_at_one_timeout_and_starts_no_reask():
+    rules = copy.deepcopy(RULES)
+    rules["section_recall"].update({
+        "per_call_timeout_sec": 0.08,
+        "max_wall_sec": 0.20,
+    })
+    called = []
+
+    def hangs(doc, _sections, reask):
+        called.append((doc.trace_id, reask))
+        time.sleep(0.5)
+        return {}
+
+    started = time.monotonic()
+    result = section.execute(
+        docs={doc.trace_id: doc for doc in [_doc(index) for index in range(4)]},
+        ledger=SimpleNamespace(rows=[]), coverage=[], rules=rules,
+        call_budget=10, provider=hangs)
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 0.30
+    assert result["attempts"] == 4 and result["base_attempts"] == 4
+    assert result["reasks"] == 0 and len(called) == 4
+    assert result["cards"] == [] and result["timeouts"] == 4
+    assert any(row["code"] == "SECTION_RECALL_TIMEOUT"
+               for row in result["degradations"])
+
+
+def test_task_deadline_allows_first_batch_but_prevents_the_next_batch():
+    rules = copy.deepcopy(RULES)
+    rules["section_recall"].update({
+        "per_call_timeout_sec": 0.08,
+        "max_wall_sec": 0.30,
+    })
+    called = []
+
+    def finite(doc, _sections, reask):
+        called.append((doc.trace_id, reask))
+        time.sleep(0.06)
+        return {}
+
+    result = section.execute(
+        docs={doc.trace_id: doc for doc in [_doc(index) for index in range(5)]},
+        ledger=SimpleNamespace(rows=[]), coverage=[], rules=rules,
+        call_budget=10, provider=finite,
+        deadline_monotonic=time.monotonic() + 30.10)
+
+    assert result["attempts"] == 4 and len(called) == 4
+    assert result["reasks"] == 0
+
+
 def test_provider_bad_json_and_failure_do_not_destroy_base_result():
     bad = _run([_doc(1)], lambda *_args: "not json", budget=1)
     assert bad["cards"] == []
@@ -189,7 +241,7 @@ def _full_with_channel_evidence():
     return {
         "mode": "FULL", "market": {},
         "evidence": [{
-            "id": "C-SEC-channel", "kind": "관측", "metric": "채널·유통 조건",
+            "id": "C-SEC-CH-channel", "kind": "관측", "metric": "채널·유통 조건",
             "subject": "채널·유통 조건", "period": None, "value": None, "unit": None,
             "grade": "실무 신뢰", "gradeReason": "source kind", "sourceUrl": "https://x.com",
             "sourceKind": "press", "retrievedAt": "2026-08-17",
@@ -205,15 +257,27 @@ def _concept():
 
 def test_bm_uses_exact_full_channel_evidence_without_new_section_call():
     joined = product_market_join.build(_full_with_channel_evidence(), _concept(), "c")
-    assert [item["id"] for item in joined.channel_analysis] == ["C-SEC-channel"]
+    assert [item["id"] for item in joined.channel_analysis] == ["C-SEC-CH-channel"]
     assert joined.channel_analysis[0] in joined.evidence_list
 
 
-def test_channel_anchor_guard_excludes_irrelevant_promoted_evidence():
+def test_noneligible_channel_identity_is_not_rejudged_from_current_quote():
     value = _full_with_channel_evidence()
-    value["evidence"][0]["quote"] = "일반적인 회사 소개 문장이다."
+    value["evidence"][0]["id"] = "C-SEC-channel"
     joined = product_market_join.build(value, _concept(), "c")
     assert joined.channel_analysis == []
+
+
+def test_same_full_version_keeps_channel_material_when_current_rules_change(monkeypatch):
+    from app.research.research2 import runlog
+
+    value = _full_with_channel_evidence()
+    before = product_market_join.build(value, _concept(), "c").channel_analysis
+    monkeypatch.setattr(runlog, "load_rules", lambda: {
+        "section_recall": {"channel_anchors": ["완전히-다른-현재-규칙"]}})
+    after = product_market_join.build(value, _concept(), "c").channel_analysis
+
+    assert before == after
 
 
 def test_unknown_market_evidence_id_cannot_enter_bm_canvas():
@@ -221,7 +285,7 @@ def test_unknown_market_evidence_id_cannot_enter_bm_canvas():
     cells = [BMCanvasItem(
         canvas_cell=cell, content=["x"] if cell == CanvasCell.CHANNELS else [],
         source_labels=["channel_analysis"] if cell == CanvasCell.CHANNELS else [],
-        market_evidence_ids=["C-SEC-channel", "C-SEC-fake"] if cell == CanvasCell.CHANNELS else [],
+        market_evidence_ids=["C-SEC-CH-channel", "C-SEC-fake"] if cell == CanvasCell.CHANNELS else [],
         status=CanvasStatus.PARTIAL, reason="test") for cell in CanvasCell]
     result = BMAnalysisResult(
         concept_id="c", concept_name="n", canvas=cells,
@@ -229,7 +293,7 @@ def test_unknown_market_evidence_id_cannot_enter_bm_canvas():
         market_fit_summary="", consistency_summary="")
     guarded = validate_market_evidence_ids(result, joined)
     channels = next(item for item in guarded.canvas if item.canvas_cell == CanvasCell.CHANNELS)
-    assert channels.market_evidence_ids == ["C-SEC-channel"]
+    assert channels.market_evidence_ids == ["C-SEC-CH-channel"]
 
 
 def test_channel_source_label_has_ai_java_parity():

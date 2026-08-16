@@ -172,8 +172,12 @@ def _promote(document, source: dict, parsed: dict, rules: dict,
             digest = hashlib.sha256(
                 json.dumps([source_identity, section, _norm(quote)], ensure_ascii=False,
                            separators=(",", ":")).encode("utf-8")).hexdigest()[:24]
+            channel_eligible = section == "CHANNEL" and any(
+                _norm(anchor) in _norm(quote)
+                for anchor in (cfg.get("channel_anchors") or []) if _norm(anchor))
+            card_prefix = "C-SEC-CH-" if channel_eligible else "C-SEC-"
             cards.append({
-                "카드_id": "C-SEC-" + digest,
+                "카드_id": card_prefix + digest,
                 "종류": "관측",
                 "칸": mappings[section],
                 "계량": mappings[section],
@@ -196,7 +200,7 @@ def _promote(document, source: dict, parsed: dict, rules: dict,
     return cards, rejected
 
 
-def _dedup_and_cap(cards: list[dict], cfg: dict) -> tuple[list[dict], list[dict]]:
+def _dedup_and_cap(cards: list[dict], cfg: dict) -> tuple[list[dict], list[dict], int]:
     unique = {}
     for card in cards:
         key = (card["_source_identity"], card["_section"], _norm(card["인용"]))
@@ -218,7 +222,7 @@ def _dedup_and_cap(cards: list[dict], cfg: dict) -> tuple[list[dict], list[dict]
         for key in tuple(card):
             if key.startswith("_"):
                 card.pop(key)
-    return kept, sampled
+    return kept, sampled, len(unique)
 
 
 def execute(*, docs: dict, ledger, coverage: list, rules: dict, meter=None,
@@ -227,6 +231,8 @@ def execute(*, docs: dict, ledger, coverage: list, rules: dict, meter=None,
     cfg = rules["section_recall"]
     degradations, all_cards = [], []
     attempts, quote_rejected = 0, 0
+    base_attempts = successful_responses = provider_failures = timeouts = bad_json = 0
+    candidate_passages = quote_verified = 0
     if not cfg.get("enabled"):
         return {"cards": [], "attempts": 0, "degradations": []}
     hard_cap = int(cfg.get("max_attempts") or 10)
@@ -252,56 +258,90 @@ def execute(*, docs: dict, ledger, coverage: list, rules: dict, meter=None,
         guard = float(cfg.get("deadline_guard_sec") or 30)
         return deadline_monotonic is None or deadline_monotonic - clock() >= guard + call_timeout
 
-    def run_batch(batch, sections: list[str], reask: bool):
-        nonlocal attempts, quote_rejected
+    def run_batch(batch, sections: list[str], reask: bool) -> bool:
+        nonlocal attempts, base_attempts, quote_rejected, quote_verified
+        nonlocal successful_responses, provider_failures, timeouts, bad_json
+        nonlocal candidate_passages
         if not batch or not can_start():
-            return
+            return False
         batch = batch[:max(0, allowance - attempts)]
         attempts += len(batch)  # 실패도 attempt budget을 소비한다.
+        if not reask:
+            base_attempts += len(batch)
         workers = min(4, max(1, int(cfg.get("workers") or 1)), len(batch))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-            future_rows = [(row, executor.submit(caller, row["document"], sections, reask))
-                           for row in batch]
+        call_timeout = float(cfg.get("per_call_timeout_sec") or 30)
+        wall_remaining = max(0.0, float(cfg.get("max_wall_sec") or 120)
+                             - (clock() - started))
+        task_remaining = float("inf") if deadline_monotonic is None else max(
+            0.0, deadline_monotonic - clock()
+            - float(cfg.get("deadline_guard_sec") or 30))
+        batch_timeout = min(call_timeout, wall_remaining, task_remaining)
+        if batch_timeout <= 0:
+            return False
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=workers)
+        future_rows = [(row, executor.submit(caller, row["document"], sections, reask))
+                       for row in batch]
+        try:
+            done, pending = concurrent.futures.wait(
+                [future for _row, future in future_rows], timeout=batch_timeout)
             for row, future in future_rows:
-                try:
-                    raw = future.result(timeout=float(cfg.get("per_call_timeout_sec") or 30) + 1)
-                except concurrent.futures.TimeoutError:
-                    degradations.append({"stage": "collect", "code": "SECTION_RECALL_TIMEOUT",
-                                         "detail": "section provider call timeout"})
+                if future not in done:
                     continue
+                try:
+                    raw = future.result()
                 except Exception as error:  # noqa: BLE001 - 기존 collect를 살리는 soft path
+                    provider_failures += 1
                     degradations.append({"stage": "collect", "code": "SECTION_RECALL_FAILED",
                                          "detail": f"section provider 실패: {type(error).__name__}"})
                     continue
                 parsed = _parse(raw, known)
                 if parsed is None:
+                    bad_json += 1
                     degradations.append({"stage": "collect", "code": "SECTION_RECALL_BAD_JSON",
                                          "detail": "section provider JSON 계약 불일치"})
                     continue
+                successful_responses += 1
+                candidate_passages += sum(len(parsed.get(section) or []) for section in known)
                 promoted, rejected = _promote(
                     row["document"], row["source"], parsed, rules, selected.index(row))
                 quote_rejected += rejected
+                quote_verified += len(promoted)
                 all_cards.extend(promoted)
                 for section in known:
                     counts[section] += sum(1 for card in promoted
                                            if card.get("_section") == section)
+            if pending:
+                timeouts += len(pending)
+                degradations.append({"stage": "collect", "code": "SECTION_RECALL_TIMEOUT",
+                                     "detail": f"section provider batch timeout: {len(pending)}건"})
+                for future in pending:
+                    future.cancel()
+            return bool(pending)
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
     batch_size = min(4, max(1, int(cfg.get("workers") or 1)))
+    timed_out = False
     for offset in range(0, len(selected), batch_size):
         if not can_start():
             break
-        run_batch(selected[offset:offset + batch_size], list(cfg["sections"]), False)
+        timed_out = run_batch(
+            selected[offset:offset + batch_size], list(cfg["sections"]), False)
+        if timed_out:
+            break
 
     missing = [section for section in (cfg.get("reask_priority") or [])
                if counts.get(section, 0) < int(cfg.get("thin_below") or 1)]
     for row in selected:
-        if not missing or len(reasked_sources) >= int(cfg.get("max_reasks") or 2) or not can_start():
+        if (timed_out or not missing
+                or len(reasked_sources) >= int(cfg.get("max_reasks") or 2)
+                or not can_start()):
             break
         source_id = str(getattr(row["document"], "trace_id", ""))
         if source_id in reasked_sources:
             continue
         reasked_sources.add(source_id)
-        run_batch([row], missing, True)
+        timed_out = run_batch([row], missing, True)
         missing = [section for section in missing
                    if counts.get(section, 0) < int(cfg.get("thin_below") or 1)]
 
@@ -316,11 +356,26 @@ def execute(*, docs: dict, ledger, coverage: list, rules: dict, meter=None,
         degradations.append({"stage": "collect", "code": "SECTION_RECALL_TIMEOUT",
                              "detail": "Task deadline guard로 새 section call 중단"})
 
-    cards, sampled = _dedup_and_cap(all_cards, cfg)
+    cards, sampled, promoted_before_cap = _dedup_and_cap(all_cards, cfg)
     degradations.extend(sampled)
+    section_counts = {section: sum(
+        1 for card in cards
+        if card.get("계량") == (cfg.get("sections") or {}).get(section))
+        for section in (cfg.get("sections") or {})}
     return {"cards": cards, "attempts": attempts, "degradations": degradations,
             "selected_documents": len(selected), "reasks": len(reasked_sources),
-            "quote_rejected": quote_rejected}
+            "base_attempts": base_attempts,
+            "successful_responses": successful_responses,
+            "provider_failures": provider_failures,
+            "timeouts": timeouts,
+            "bad_json": bad_json,
+            "candidate_passages": candidate_passages,
+            "quote_verified": quote_verified,
+            "quote_rejected": quote_rejected,
+            "promoted_before_cap": promoted_before_cap,
+            "promoted_after_cap": len(cards),
+            "section_counts": section_counts,
+            "wall_seconds": round(clock() - started, 3)}
 
 
 def load(run_id: str) -> dict:
