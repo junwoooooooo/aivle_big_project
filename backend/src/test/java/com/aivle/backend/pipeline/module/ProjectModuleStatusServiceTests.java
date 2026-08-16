@@ -31,6 +31,7 @@ import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
 import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputPreparation;
@@ -63,6 +64,7 @@ class ProjectModuleStatusServiceTests {
     private final MarketResearchVersionRepository marketVersions = mock(MarketResearchVersionRepository.class);
     private final TwinSurveyRunRepository twinRuns = mock(TwinSurveyRunRepository.class);
     private final TwinSurveyVersionRepository twinVersions = mock(TwinSurveyVersionRepository.class);
+    private final MarketInterviewRunRepository interviewRuns = mock(MarketInterviewRunRepository.class);
     private final MarketingContentRepository marketing = mock(MarketingContentRepository.class);
     private final MarketingSourceSnapshotRepository marketingSources = mock(MarketingSourceSnapshotRepository.class);
     private final TechOpsInputPreparationRepository techOpsPreparations = mock(TechOpsInputPreparationRepository.class);
@@ -73,7 +75,7 @@ class ProjectModuleStatusServiceTests {
     private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
         projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs,
-        marketRuns, marketVersions, twinRuns, twinVersions, marketing, marketingSources,
+        marketRuns, marketVersions, twinRuns, twinVersions, interviewRuns, marketing, marketingSources,
         techOpsPreparations, techOpsSnapshots, techOpsAdvisories, financialPreparations, financialSnapshots, taskRuns);
 
     @Test
@@ -100,7 +102,8 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
             PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
-            PipelineModuleType.FINANCE, PipelineModuleType.TWIN_SURVEY, PipelineModuleType.MARKETING);
+            PipelineModuleType.FINANCE, PipelineModuleType.MARKET_INTERVIEW,
+            PipelineModuleType.TWIN_SURVEY, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.RUNNING);
@@ -121,6 +124,7 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(8).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
     }
 
     @Test

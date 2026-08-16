@@ -9,6 +9,7 @@ public enum PipelineModuleType {
     BUSINESS_MODEL,
     TECH_OPS,
     FINANCE,
+    MARKET_INTERVIEW,
     TWIN_SURVEY,
     MARKETING
 }

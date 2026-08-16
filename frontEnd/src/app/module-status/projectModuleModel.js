@@ -21,6 +21,7 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'market', label: '3. 시장 분석', shortLabel: '시장 분석', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'businessModel', label: '4. 사업 모델', shortLabel: '사업 모델', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'launchReadiness', label: '5. 출시 준비 분석', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'marketInterview', label: '6. 시장 인터뷰', shortLabel: '시장 인터뷰', routeKey: 'marketInterview', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'twinSurvey', label: '7. 트윈 패널 조사', shortLabel: '트윈 패널', routeKey: 'twinSurvey', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'marketing', label: '8. 마케팅 콘텐츠 제작', shortLabel: '마케팅 콘텐츠', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'settings', label: '프로젝트 설정', shortLabel: '설정', routeKey: 'settings', defaultStatus: MODULE_STATUS.READY },
@@ -29,7 +30,7 @@ export const PROJECT_MODULES = Object.freeze([
 const API_MODULE_IDS = Object.freeze({
   IDEA: 'idea', CONCEPT_PORTFOLIO: 'concepts', CONCEPT_FACTORY: 'concepts',
   CONCEPT_SELECTION: 'concepts', MARKET_ANALYSIS: 'market', BUSINESS_MODEL: 'businessModel',
-  TWIN_SURVEY: 'twinSurvey',
+  MARKET_INTERVIEW: 'marketInterview', TWIN_SURVEY: 'twinSurvey',
   TECH_OPS: 'launchReadiness', FINANCE: 'launchReadiness', MARKETING: 'marketing',
 });
 

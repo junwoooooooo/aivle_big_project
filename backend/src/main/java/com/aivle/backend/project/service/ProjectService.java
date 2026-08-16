@@ -95,7 +95,8 @@ public class ProjectService {
             journey("사업 기획", statuses, PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO),
             journey("사업 검증", statuses, PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL),
             journey("출시 준비", statuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
-            journey("가상 인터뷰", statuses, PipelineModuleType.TWIN_SURVEY),
+            journey("시장 인터뷰", statuses, PipelineModuleType.MARKET_INTERVIEW),
+            journey("트윈 패널 조사", statuses, PipelineModuleType.TWIN_SURVEY),
             journey("마케팅 전략", statuses, PipelineModuleType.MARKETING));
         FinalReportApiModels.State reportState = finalReports.state(userId, p.getId());
         boolean reportCurrent = reportState == FinalReportApiModels.State.CURRENT;
@@ -108,7 +109,7 @@ public class ProjectService {
             .toList();
         int attentionCount = attentionModules.size() + (reportStale ? 1 : 0);
         boolean started = statuses.stream().anyMatch(this::hasStartedWork) || reportCurrent || reportStale;
-        String presentationState = completed == 6 ? "COMPLETED"
+        String presentationState = completed == 7 ? "COMPLETED"
             : attentionCount > 0 ? "NEEDS_ATTENTION"
             : started ? "IN_PROGRESS" : "NOT_STARTED";
         String attentionReason = !attentionModules.isEmpty()

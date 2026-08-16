@@ -25,7 +25,7 @@ function GettingStartedRail({ projects, newest, location, writeRestriction }) {
     { label: '사업 기획', route: newest ? projectRoutes.idea(newest.projectId) : null },
     { label: '사업 검증', route: newest ? projectRoutes.market(newest.projectId) : null },
     { label: '출시 준비', route: newest ? projectRoutes.techOps(newest.projectId) : null },
-    { label: '가상 인터뷰', route: newest ? projectRoutes.twinSurvey(newest.projectId) : null },
+    { label: '시장 인터뷰', route: newest ? projectRoutes.marketInterview(newest.projectId) : null },
     { label: '마케팅 전략과 최종 보고서', route: newest ? projectRoutes.marketing(newest.projectId) : null },
   ];
   return <aside className="getting-started-rail" aria-labelledby="workspace-getting-started-title"><p>6단계 업무 흐름</p><h2 id="workspace-getting-started-title">사업 검증 여정을 시작하세요</h2><ol>{items.map((item, index) => {

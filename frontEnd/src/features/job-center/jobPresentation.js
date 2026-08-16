@@ -13,8 +13,9 @@ export const JOB_TASK_LABELS = Object.freeze({
   CONCEPT_DELTA_LEGAL_REVIEW: '사업가설 변경 법률 검토',
   TECH_OPS_PROPOSAL: '기술·운영 계획 만들기',
   TECH_OPS_ADVISORY: '기술·운영 자문',
-  TWIN_STIMULUS_DRAFT: '가상 인터뷰 질문 준비',
-  TWIN_SURVEY: '가상 고객 인터뷰',
+  MARKET_INTERVIEW: '시장 인터뷰',
+  TWIN_STIMULUS_DRAFT: '트윈 비교안 준비',
+  TWIN_SURVEY: '트윈 패널 조사',
   FINANCE_ESTIMATE: '재무 입력값 준비',
   FINANCE_ANALYSIS_REPORT: '재무 분석 보고서',
   LAUNCH_TECHNOLOGY_READINESS: '기술 출시 준비 분석',
@@ -34,6 +35,6 @@ export function jobModuleLabel(module) {
   return ({
     IDEA: '사업 기획', CONCEPT_PORTFOLIO: '사업 기획', CONCEPT_FACTORY: '사업 기획',
     CONCEPT_SELECTION: '사업 기획', MARKET: '사업 검증', BUSINESS_MODEL: '사업 검증',
-    TECH_OPS: '출시 준비', FINANCE: '출시 준비', LAUNCH_READINESS: '출시 준비', TWIN: '가상 인터뷰', MARKETING: '마케팅 전략',
+    TECH_OPS: '출시 준비', FINANCE: '출시 준비', LAUNCH_READINESS: '출시 준비', MARKET_INTERVIEW: '시장 인터뷰', TWIN: '트윈 패널 조사', MARKETING: '마케팅 전략',
   })[module] ?? '프로젝트';
 }

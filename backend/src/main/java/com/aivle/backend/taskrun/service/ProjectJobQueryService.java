@@ -153,13 +153,14 @@ public class ProjectJobQueryService {
             case MARKETING_CONTENT_GENERATION, MARKETING_VISUAL_GENERATION -> JobModule.MARKETING;
             case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
                 ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
+            case MARKET_INTERVIEW -> JobModule.MARKET_INTERVIEW;
             case TWIN_SURVEY, TWIN_STIMULUS_DRAFT -> JobModule.TWIN;
         };
     }
 
     private enum JobModule {
         IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
-        MARKET("/market"), BUSINESS_MODEL("/business-model"), TWIN("/twin-survey"),
+        MARKET("/market"), BUSINESS_MODEL("/business-model"), MARKET_INTERVIEW("/market-interview"), TWIN("/twin-survey"),
         TECH_OPS("/tech-ops"), FINANCE("/finance"), LAUNCH_READINESS("/launch-readiness"), MARKETING("/marketing");
         private final String route;
         JobModule(String route) { this.route = route; }

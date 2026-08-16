@@ -13,6 +13,7 @@ import { BusinessProposalWorkspace } from '../../features/concept-portfolio/inde
 import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
 import BusinessValidationPage from '../../features/business-validation/pages/BusinessValidationPage.jsx';
 import TwinSurveyPage from '../../features/twin-survey/TwinSurveyPage.jsx';
+import MarketInterviewPage from '../../features/market-interview/pages/MarketInterviewPage.jsx';
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import LaunchReadinessReportPage from '../../features/launch-readiness/pages/LaunchReadinessReportPage.jsx';
@@ -79,6 +80,8 @@ export default function AppRouter() {
             <Route path="business-validation" element={<BusinessValidationPage />} />
             <Route path="market" element={<ProjectRedirect routeKey="businessValidation" />} />
             <Route path="business-model" element={<ProjectRedirect routeKey="businessValidation" />} />
+            <Route path="market-interview" element={<MarketInterviewPage />} />
+            <Route path="virtual-interview" element={<ProjectRedirect routeKey="marketInterview" />} />
             <Route path="twin-survey" element={<TwinSurveyPage />} />
             <Route path="launch-readiness" element={<LaunchReadinessPage />} />
             <Route path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />} />

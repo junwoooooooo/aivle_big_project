@@ -8,7 +8,7 @@ describe('project journey model', () => {
     ['/business-model', 'validation'], ['/launch-readiness', 'launch'], ['/technology', 'launch'],
     ['/launch-readiness/reports/technology', 'launch'],
     ['/operations', 'launch'], ['/tech-ops', 'launch'], ['/finance', 'launch'],
-    ['/twin-survey', 'interview'], ['/marketing', 'marketingStrategy'], ['/final-report', 'finalReport'],
+    ['/market-interview', 'interview'], ['/virtual-interview', 'interview'], ['/twin-survey', 'twinSurvey'], ['/marketing', 'marketingStrategy'], ['/final-report', 'finalReport'],
   ])('%s 경로를 %s Journey로 연결한다', (path, journey) => {
     expect(getJourneyByPath(`/app/projects/41${path}`).id).toBe(journey);
   });
@@ -29,5 +29,14 @@ describe('project journey model', () => {
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').href)
       .toBe('/app/projects/41/business-validation');
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').children).toHaveLength(1);
+  });
+
+  it('시장 인터뷰와 트윈 패널 조사를 서로 다른 Journey와 route로 유지한다', () => {
+    const modules = getProjectModules('41', {
+      marketInterview: { status: MODULE_STATUS.READY }, twinSurvey: { status: MODULE_STATUS.NOT_READY },
+    });
+    const journeys = getProjectJourneys('41', modules);
+    expect(journeys.find(({ id }) => id === 'interview').href).toBe('/app/projects/41/market-interview');
+    expect(journeys.find(({ id }) => id === 'twinSurvey').href).toBe('/app/projects/41/twin-survey');
   });
 });

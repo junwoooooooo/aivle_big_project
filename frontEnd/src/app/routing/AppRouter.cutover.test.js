@@ -33,4 +33,10 @@ describe('project route cutover', () => {
     expect(routerSource).toContain('path="market" element={<ProjectRedirect routeKey="businessValidation" />}');
     expect(routerSource).toContain('path="business-model" element={<ProjectRedirect routeKey="businessValidation" />}');
   });
+
+  it('시장 인터뷰 canonical route와 이전 Virtual Interview redirect를 제공하고 Twin Survey를 분리한다', () => {
+    expect(routerSource).toContain('path="market-interview" element={<MarketInterviewPage />}');
+    expect(routerSource).toContain('path="virtual-interview" element={<ProjectRedirect routeKey="marketInterview" />}');
+    expect(routerSource).toContain('path="twin-survey" element={<TwinSurveyPage />}');
+  });
 });

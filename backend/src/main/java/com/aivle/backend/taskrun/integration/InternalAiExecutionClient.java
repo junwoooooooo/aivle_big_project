@@ -180,7 +180,8 @@ public class InternalAiExecutionClient {
         if (taskType == TaskType.MARKET_RESEARCH) {
             return marketResearchClient;
         }
-        if (taskType == TaskType.MARKETING_CONTENT_GENERATION
+        if (taskType == TaskType.MARKET_INTERVIEW
+            || taskType == TaskType.MARKETING_CONTENT_GENERATION
             || taskType == TaskType.TECH_OPS_ADVISORY
             || taskType == TaskType.LAUNCH_TECHNOLOGY_READINESS
             || taskType == TaskType.LAUNCH_OPERATIONS_READINESS) {

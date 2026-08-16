@@ -36,6 +36,7 @@ TASK_TYPES = {
     "MARKETING_CONTENT_GENERATION",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
+    "MARKET_INTERVIEW",
     "TWIN_SURVEY",
     "TWIN_STIMULUS_DRAFT",
 }
@@ -355,6 +356,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "TWIN_STIMULUS_DRAFT":
             from app.twin.stimulus_draft import execute_twin_stimulus_draft
             result = await execute_twin_stimulus_draft(body.input)
+        elif body.taskType == "MARKET_INTERVIEW":
+            from app.tasks.market_interview import execute_market_interview
+            result = await execute_market_interview(body.input)
         elif body.taskType == "TWIN_SURVEY":
             from app.twin import execute_twin_survey
             from app.progress.safe_task_progress import progress_sender_from_environment

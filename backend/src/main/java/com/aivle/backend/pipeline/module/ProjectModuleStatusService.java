@@ -26,6 +26,8 @@ import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyRun;
 import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewRun;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
@@ -57,6 +59,7 @@ public class ProjectModuleStatusService {
     private final MarketResearchVersionRepository marketResearchVersionRepository;
     private final TwinSurveyRunRepository twinSurveyRunRepository;
     private final TwinSurveyVersionRepository twinSurveyVersionRepository;
+    private final MarketInterviewRunRepository marketInterviewRunRepository;
     private final MarketingContentRepository marketingRepository;
     private final MarketingSourceSnapshotRepository marketingSourceRepository;
     private final TechOpsInputPreparationRepository techOpsPreparationRepository;
@@ -102,6 +105,8 @@ public class ProjectModuleStatusService {
             || !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()) ? null
             : marketResearchVersionRepository.findBySourceRunIdAndDeletedAtIsNull(businessRun.getId()).orElse(null);
         TwinSurveyRun twinRun = twinSurveyRunRepository
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
+        MarketInterviewRun interviewRun = marketInterviewRunRepository
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         TaskRun twinDraftTask = latestTask(projectId, "TWIN_STIMULUS_DRAFT",
             String.valueOf(projectId), TaskType.TWIN_STIMULUS_DRAFT);
@@ -169,6 +174,15 @@ public class ProjectModuleStatusService {
         TaskRun activeTwinTask = activeTwinSurveyTask != null ? activeTwinSurveyTask : activeTask(twinDraftTask);
         PipelineModuleStatus twinStatus = activeTwinSurveyTask != null ? twinBaseStatus
             : activeOverlay(twinBaseStatus, twinDraftTask);
+        boolean interviewStale = interviewRun != null && (selectedSnapshot == null || portfolioSelection == null
+            || !selectedSnapshot.getId().equals(interviewRun.getSourceMarketSeedSnapshotId())
+            || !portfolioSelection.getId().equals(interviewRun.getSourceSelectionId())
+            || portfolioSelection.getHypothesisRevision() != interviewRun.getSourceSelectionRevision());
+        PipelineModuleStatus interviewStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : interviewRun == null ? PipelineModuleStatus.READY
+            : interviewStale || interviewRun.getState() == MarketInterviewRun.State.STALE
+                ? PipelineModuleStatus.STALE : taskStatus(interviewRun.getTaskRun().getState());
+        TaskRun activeInterviewTask = interviewRun == null ? null : activeTask(interviewRun.getTaskRun());
         PipelineModuleStatus marketingStatus = marketingStatus(marketing,
             marketingSource == null ? null : marketingSource.getId(), marketingVisualTask);
         boolean techOpsAdvisoryStale = techOpsAdvisory != null && (techOpsSnapshot == null
@@ -228,6 +242,13 @@ public class ProjectModuleStatusService {
                 activeFinancialTask == null ? null : activeFinancialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
                 financialTask == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialTask.getUpdatedAt()),
+            response(projectId, PipelineModuleType.MARKET_INTERVIEW, interviewStatus,
+                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
+                new NextAction("시장 인터뷰", "/market-interview"),
+                interviewRun == null ? null : String.valueOf(interviewRun.getId()),
+                activeInterviewTask == null ? null : activeInterviewTask.getId(),
+                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
+                interviewRun == null ? null : interviewRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.TWIN_SURVEY, twinStatus,
                 selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
                 new NextAction("트윈 패널 조사", "/twin-survey"),

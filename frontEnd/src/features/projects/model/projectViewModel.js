@@ -22,7 +22,7 @@ export function toProjectViewModel(project) {
     statusLabel: statusView.label,
     statusTone: statusView.tone,
     stageLabel: project.currentJourneyLabel ?? (project.status === 'COMPLETED' ? '최종 보고서' : '사업 기획'),
-    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? 6 : 0),
+    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? 7 : 0),
     journeyTotal: 6,
     area: 'PIPELINE',
     nextAction: null,
