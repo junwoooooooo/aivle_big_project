@@ -267,6 +267,47 @@ public class ConceptPortfolioSelectionService {
         return new ActionAccepted(selectionId, "BUILD_HANDOFF", task.getId(), selection.getStatus().name());
     }
 
+    @Transactional
+    public TaskRun finalizeMarketSeedFromRefinement(Long ownerId,Long projectId,Long selectionId,
+            String sourceSeedId,ObjectNode overlay,ObjectNode refinementBinding,String key,String snapshotId) {
+        ConceptPortfolioSelection selection=lockedCurrent(ownerId,projectId,selectionId);
+        Set<String> overlayFields=Set.of("targetUsers","featureSet");
+        if(overlay==null||overlay.propertyNames().stream().anyMatch(field->!overlayFields.contains(field)))
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        ConceptLegalRegulatoryReport report=reports.findBySelectionIdAndStatusAndDeletedAtIsNull(selectionId,"CURRENT")
+            .orElseThrow(()->new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        ConceptPortfolioRun run=runs.findLocked(selection.getRunId()).orElseThrow();
+        ConceptPortfolioConcept concept=concept(selection);
+        ObjectNode input=baseInput("BUILD_HANDOFF",run,concept);
+        input.set("hypotheses",hypothesisArray(latestRequired(selectionId)));
+        ArrayNode approved=input.putArray("approvedDeltaLegalResults");
+        deltas.findFirstBySelectionIdAndHypothesisRevisionAndApprovedTrueAndDeletedAtIsNullOrderByCreatedAtDesc(
+            selectionId,selection.getHypothesisRevision()).ifPresent(value->approved.add(
+                mapper.readTree(value.getLegalReviewJson()).path("deltaLegalResult")));
+        MarketAnalysisSeedSnapshot sourceSeed=marketSeeds.findByIdAndDeletedAtIsNull(sourceSeedId)
+            .filter(value->Objects.equals(value.getProjectId(),projectId)
+                &&Objects.equals(value.getPortfolioSelectionId(),selectionId)
+                &&"CONCEPT_PORTFOLIO_V2".equals(value.getSourceType()))
+            .orElseThrow(()->new BusinessException(ErrorCode.MODULE_INPUT_STALE));
+        JsonNode seedJson=mapper.readTree(sourceSeed.getSnapshotJson());
+        if(seedJson.at("/selectedConcept/identity/targetUsers").isMissingNode()
+                ||seedJson.at("/selectedConcept/identity/targetUsers").isNull()
+                ||seedJson.at("/selectedConcept/solution/featureSet").isMissingNode()
+                ||seedJson.at("/selectedConcept/solution/featureSet").isNull()
+                ||!input.path("selectedCandidate").path("candidate").isObject())
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        ObjectNode candidate=(ObjectNode)input.path("selectedCandidate").path("candidate");
+        candidate.set("targetUsers",seedJson.at("/selectedConcept/identity/targetUsers").deepCopy());
+        candidate.set("featureSet",seedJson.at("/selectedConcept/solution/featureSet").deepCopy());
+        for(String field:overlayFields) if(overlay.has(field))
+            candidate.set(field,overlay.get(field).deepCopy());
+        ObjectNode production=input.putObject("productionBinding");
+        production.put("projectId",projectId);production.put("portfolioSelectionId",selectionId);
+        production.put("portfolioConceptId",concept.getId());production.put("marketSeedSnapshotId",snapshotId);
+        input.set("refinementFinalization",refinementBinding.deepCopy());
+        return tasks.createAuxiliary(ownerId,selection,"BUILD_HANDOFF",input,key,null);
+    }
+
     @Transactional(readOnly=true)
     public MarketSeedView currentMarketSeed(Long ownerId, Long projectId, Long selectionId) {
         requireSelection(ownerId, projectId, selectionId);

@@ -55,6 +55,10 @@ public class ConceptRefinementLineageGuard {
                 && Objects.equals(value.getHypothesisRevision(), round.getAppliedSelectionRevision()))
             .isPresent();
         if (!selectionCurrent) return false;
+        if (round.getState() == ConceptRefinementRound.State.FINALIZED
+                && (round.getFinalMarketSeedSnapshotId() == null || seeds
+                    .findByIdAndStaleAtIsNullAndDeletedAtIsNull(round.getFinalMarketSeedSnapshotId()).isEmpty()))
+            return false;
         try { return bmPlans.current(projectId).revision() == round.getAppliedBmPlanRevision(); }
         catch (BusinessException unavailable) { return false; }
     }

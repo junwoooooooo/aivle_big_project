@@ -16,6 +16,7 @@ public class ConceptRefinementController {
     private final ConceptRefinementService refinement;
     private final ConceptRefinementDecisionService decisions;
     private final ConceptRefinementApplicationService applications;
+    private final ConceptRefinementFinalizationService finalization;
     private final CurrentUserProvider currentUser;
 
     @PostMapping("/start")
@@ -63,6 +64,13 @@ public class ConceptRefinementController {
             request.getHeader("Idempotency-Key"), body.expectedRound(), body.expectedDecisionHash()), id(request));
     }
 
+    @PostMapping("/finalize")
+    public ApiResponse<ConceptRefinementFinalizationService.FinalView> finalizeRound(
+            @PathVariable Long projectId,@RequestBody FinalizeRequest body,HttpServletRequest request){
+        return ApiResponse.success(finalization.finalizeRound(currentUser.currentUserId(),projectId,
+            request.getHeader("Idempotency-Key"),body.expectedRound(),body.expectedDecisionHash()),id(request));
+    }
+
     private ResponseEntity<ApiResponse<ConceptRefinementService.CurrentView>> accepted(
             ConceptRefinementService.CurrentView value, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(value, id(request)));
@@ -73,4 +81,5 @@ public class ConceptRefinementController {
     public record DecisionRequest(Integer expectedRound, String proposalSetHash,
                                   List<String> selectedProposalKeys, boolean keepCurrent) { }
     public record ApplyRequest(Integer expectedRound, String expectedDecisionHash) { }
+    public record FinalizeRequest(Integer expectedRound,String expectedDecisionHash) { }
 }

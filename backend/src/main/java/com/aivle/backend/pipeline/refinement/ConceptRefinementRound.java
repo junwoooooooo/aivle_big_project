@@ -18,7 +18,7 @@ public class ConceptRefinementRound extends BaseEntity {
         PROPOSING, AWAITING_DECISION, NO_CHANGES, FAILED, STALE,
         DECISION_RECORDED, KEEP_CURRENT, APPLYING_HYPOTHESES, APPLY_FAILED,
         LEGAL_REVIEW_PENDING, LEGAL_REVIEW_FAILED, LEGAL_BLOCKED,
-        APPLIED_PENDING_FINALIZATION
+        APPLIED_PENDING_FINALIZATION, FINALIZING, FINALIZATION_FAILED, FINALIZED
     }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
@@ -59,6 +59,14 @@ public class ConceptRefinementRound extends BaseEntity {
     @Column(name = "application_error_code", length = 80) private String applicationErrorCode;
     @Column(name = "application_started_at") private Instant applicationStartedAt;
     @Column(name = "application_applied_at") private Instant applicationAppliedAt;
+    @Column(name="finalization_idempotency_key",length=128) private String finalizationIdempotencyKey;
+    @Column(name="finalization_hash",length=71) private String finalizationHash;
+    @Column(name="finalization_task_run_id",length=64) private String finalizationTaskRunId;
+    @Column(name="finalization_attempt") private Integer finalizationAttempt;
+    @Column(name="finalization_error_code",length=80) private String finalizationErrorCode;
+    @Column(name="final_market_seed_snapshot_id",length=64) private String finalMarketSeedSnapshotId;
+    @Column(name="final_id") private Long finalId;
+    @Column(name="finalized_at") private Instant finalizedAt;
 
     public static ConceptRefinementRound start(Long projectId, CompletedSource source,
             String taskRunId, String commandKey, String canonicalMaterialHash) {
@@ -208,7 +216,42 @@ public class ConceptRefinementRound extends BaseEntity {
 
     public boolean postApplyState() {
         return java.util.Set.of(State.LEGAL_REVIEW_PENDING, State.LEGAL_REVIEW_FAILED,
-            State.LEGAL_BLOCKED, State.APPLIED_PENDING_FINALIZATION).contains(state);
+            State.LEGAL_BLOCKED, State.APPLIED_PENDING_FINALIZATION, State.FINALIZING,
+            State.FINALIZATION_FAILED, State.FINALIZED).contains(state);
+    }
+
+    public void recordResolvedLineage(int selectionRevision, int bmRevision) {
+        if (!java.util.Set.of(State.KEEP_CURRENT, State.NO_CHANGES).contains(state))
+            throw new IllegalStateException("resolved lineage unavailable");
+        appliedSelectionRevision=selectionRevision; appliedBmPlanRevision=bmRevision;
+    }
+    public void startFinalization(String key,String hash,String taskId,Instant now) {
+        if (!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES).contains(state))
+            throw new IllegalStateException("finalization unavailable");
+        requireFinalization(key,hash,now); finalizationAttempt=1; finalizationTaskRunId=taskId;
+        state=taskId==null?state:State.FINALIZING;
+    }
+    public void retryFinalization(String key,String hash,String taskId,Instant now) {
+        if(state!=State.FINALIZATION_FAILED||finalizationAttempt==null||finalizationAttempt>=3)
+            throw new IllegalStateException("finalization retry unavailable");
+        requireFinalization(key,hash,now); finalizationAttempt++; finalizationTaskRunId=taskId;
+        finalizationErrorCode=null; state=State.FINALIZING;
+    }
+    public void finalizationFailed(String taskId,String code) {
+        if(state!=State.FINALIZING||!java.util.Objects.equals(finalizationTaskRunId,taskId))
+            throw new IllegalStateException("stale finalization failure");
+        finalizationErrorCode=code; state=State.FINALIZATION_FAILED;
+    }
+    public void finalized(Long finalId,String seedId,Instant now) {
+        if(!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES,State.FINALIZING).contains(state)
+                ||finalId==null||seedId==null||now==null) throw new IllegalStateException("finalization unavailable");
+        this.finalId=finalId; this.finalMarketSeedSnapshotId=seedId; finalizedAt=now;
+        finalizationErrorCode=null; state=State.FINALIZED;
+    }
+    private void requireFinalization(String key,String hash,Instant now){
+        if(key==null||key.isBlank()||hash==null||!hash.matches("sha256:[0-9a-f]{64}")||now==null)
+            throw new IllegalArgumentException("finalization identity invalid");
+        finalizationIdempotencyKey=key; finalizationHash=hash;
     }
 
     private void requireApplicationStart(State expected, String key, String hash, Instant now) {

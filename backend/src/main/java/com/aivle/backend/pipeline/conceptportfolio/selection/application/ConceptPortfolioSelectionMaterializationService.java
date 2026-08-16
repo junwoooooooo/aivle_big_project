@@ -7,6 +7,7 @@ import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementMaterializationService;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementApplicationMaterializationService;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementFinalizationMaterializationService;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.*;
 import java.time.*;
@@ -28,6 +29,7 @@ public class ConceptPortfolioSelectionMaterializationService {
     private final TaskRunService taskRuns;
     private final ConceptRefinementMaterializationService refinement;
     private final ConceptRefinementApplicationMaterializationService refinementApplication;
+    private final ConceptRefinementFinalizationMaterializationService refinementFinalization;
     private final ObjectMapper mapper;
     private final Clock clock;
 
@@ -39,11 +41,13 @@ public class ConceptPortfolioSelectionMaterializationService {
             ConceptPortfolioSelectionService selectionService, ConceptPortfolioJsonHasher hasher,
             TaskRunService taskRuns, ConceptRefinementMaterializationService refinement,
             ConceptRefinementApplicationMaterializationService refinementApplication,
+            ConceptRefinementFinalizationMaterializationService refinementFinalization,
             ObjectMapper mapper, Clock clock) {
         this.selections=selections; this.hypotheses=hypotheses; this.deltas=deltas;
         this.reports=reports; this.marketSeeds=marketSeeds; this.selectionService=selectionService;
         this.hasher=hasher; this.taskRuns=taskRuns; this.refinement=refinement;
         this.refinementApplication=refinementApplication;
+        this.refinementFinalization=refinementFinalization;
         this.mapper=mapper; this.clock=clock;
     }
 
@@ -54,6 +58,8 @@ public class ConceptPortfolioSelectionMaterializationService {
         String action=result.path("action").asText();
         JsonNode input=mapper.readTree(context.inputSnapshot());
         require(action.equals(input.path("action").asText()));
+        if(input.path("refinementFinalization").isObject()&&"BUILD_HANDOFF".equals(action)){
+            refinementFinalization.complete(claim,context,response,result,input);return action;}
         if (input.path("refinementApplication").isObject()
                 && Set.of("CONFIRM_HYPOTHESES", "DELTA_LEGAL").contains(action)) {
             refinementApplication.complete(claim, context, response, result, input);
@@ -133,6 +139,8 @@ public class ConceptPortfolioSelectionMaterializationService {
         taskRuns.assertActiveClaim(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken());
         String action=mapper.readTree(context.inputSnapshot()).path("action").asText();
         JsonNode input=mapper.readTree(context.inputSnapshot());
+        if(input.path("refinementFinalization").isObject()&&"BUILD_HANDOFF".equals(action)){
+            refinementFinalization.fail(claim,context,code,reason,retryable,input);return;}
         if (input.path("refinementApplication").isObject()
                 && Set.of("CONFIRM_HYPOTHESES", "DELTA_LEGAL").contains(action)) {
             refinementApplication.fail(claim, context, code, reason, retryable, input);return;

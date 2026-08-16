@@ -44,5 +44,18 @@ public class ConceptPortfolioSelectionTaskFactory {
         }
         return task;
     }
+    public TaskRun createAuxiliary(Long ownerId, ConceptPortfolioSelection selection, String action,
+            JsonNode input, String idempotencyKey, String correlationId) {
+        String json=mapper.writeValueAsString(input);
+        String hash=inputHasher.hash(TYPE,"1.0","ko-KR",json);
+        TaskRunService.CreateResult creation=taskRuns.createWithDisposition(ownerId,selection.getProjectId(),TYPE,
+            "CONCEPT_PORTFOLIO_SELECTION",selection.getId().toString(),json,hash,idempotencyKey,
+            blank(correlationId)?UUID.randomUUID().toString():correlationId,2);
+        TaskRun task=creation.taskRun();
+        if(creation.createdNew()) selection.attachAuxiliaryTask(task.getId(),action);
+        else if(!task.getId().equals(selection.getActiveTaskRunId()))
+            throw new IllegalStateException("Selection auxiliary replay authority mismatch");
+        return task;
+    }
     private boolean blank(String value) { return value == null || value.isBlank(); }
 }

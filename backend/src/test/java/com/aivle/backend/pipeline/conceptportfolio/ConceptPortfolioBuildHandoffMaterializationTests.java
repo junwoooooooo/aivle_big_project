@@ -12,6 +12,7 @@ import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementMaterializationService;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementApplicationMaterializationService;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementFinalizationMaterializationService;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.*;
@@ -39,10 +40,12 @@ class ConceptPortfolioBuildHandoffMaterializationTests {
         ConceptRefinementMaterializationService refinement = mock(ConceptRefinementMaterializationService.class);
         ConceptRefinementApplicationMaterializationService refinementApplication =
             mock(ConceptRefinementApplicationMaterializationService.class);
+        ConceptRefinementFinalizationMaterializationService refinementFinalization =
+            mock(ConceptRefinementFinalizationMaterializationService.class);
         Clock clock = Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"), ZoneOffset.UTC);
         var service = new ConceptPortfolioSelectionMaterializationService(selections, hypotheses, deltas,
             reports, marketSeeds, selectionService, hasher, taskRuns, refinement,
-            refinementApplication, mapper, clock);
+            refinementApplication, refinementFinalization, mapper, clock);
 
         ConceptPortfolioSelection selection = ConceptPortfolioSelection.create(42L, "run", "concept-1",
             "candidate-1", HASH, HASH, "명시적 사용자 선택", HASH, "selection-key", 7L, clock.instant());

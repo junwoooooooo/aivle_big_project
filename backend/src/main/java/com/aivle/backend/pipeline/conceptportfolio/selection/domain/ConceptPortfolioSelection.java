@@ -61,6 +61,12 @@ public class ConceptPortfolioSelection extends BaseEntity {
         };
     }
 
+    public void attachAuxiliaryTask(String taskRunId, String action) {
+        if (!isCurrent || blank(taskRunId) || blank(action) || activeTaskRunId != null)
+            throw new IllegalStateException("Selection auxiliary action cannot start");
+        activeTaskRunId=taskRunId; activeAction=action;
+    }
+
     public void completeTask(String taskRunId, ConceptPortfolioSelectionStatus next, boolean hypothesisChanged) {
         requireActive(taskRunId);
         activeTaskRunId = null; activeAction = null; failureCode = null; status = next;
