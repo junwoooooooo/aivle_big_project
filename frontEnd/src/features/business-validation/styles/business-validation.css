@@ -35,8 +35,12 @@
 .concept-refinement__intro,
 .concept-refinement__status { margin-top: 1rem; padding: 1.25rem; border: 1px solid var(--color-border-default); border-radius: 12px; background: var(--color-surface); }
 .concept-refinement__policy,
+.concept-refinement__next-help,
 .refinement-proposal__evidence,
 .refined-concept__empty { color: var(--color-text-muted); font-size: .9rem; }
+.concept-refinement__round { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: .7rem .9rem; border-radius: 10px; background: var(--color-bg-subtle); }
+.concept-refinement__round span { color: var(--color-text-muted); font-size: .9rem; }
+.concept-refinement__next-help { margin: .55rem 0 0; text-align: right; }
 .concept-refinement__proposals { display: grid; gap: 1rem; margin-top: 1.25rem; }
 .refinement-proposal { display: grid; gap: 1rem; }
 .refinement-proposal__heading,
@@ -69,7 +73,9 @@
   .refined-concept__values { grid-template-columns: 1fr; }
   .refined-concept__values > div:nth-child(odd) { padding-right: 0; }
   .concept-refinement__actions,
+  .concept-refinement__round,
   .business-validation__secondary-rerun { align-items: stretch; flex-direction: column; }
+  .concept-refinement__next-help { text-align: left; }
   .concept-refinement__actions .ui-button,
   .business-validation__secondary-rerun .ui-button { width: 100%; }
 }

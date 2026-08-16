@@ -1,7 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BusinessValidationContent } from './BusinessValidationPage.jsx';
+import BusinessValidationPage, { BusinessValidationContent } from './BusinessValidationPage.jsx';
+
+const { pageClient } = vi.hoisted(() => ({
+  pageClient: { get: vi.fn(), post: vi.fn(), put: vi.fn() },
+}));
+
+vi.mock('react-router-dom', () => ({
+  useParams: () => ({ projectId: '41' }),
+  useOutletContext: () => ({ liveRevision: 0 }),
+}));
+vi.mock('../../../shared/api/ApiClientProvider.jsx', () => ({
+  useApiClient: () => pageClient,
+}));
 
 vi.mock('../../market/MarketResearchPage.jsx', () => ({
   MarketResultBody: () => <div>시장 결과 본문</div>,
@@ -22,8 +34,9 @@ const api = {
   saveCompetitorSeeds: vi.fn(),
 };
 const policy = { priceChangePercent: 30, listChangeAllowance: 1, maxProposals: 6, maxRounds: 3 };
-const refinement = (state, extra = {}) => ({ state, stale: false, round: 1, policy,
-  proposals: [], retry: { available: false }, sourceBusinessValidationSessionId: 'session-B', ...extra });
+const refinement = (state, extra = {}) => ({ state, stale: false, round: state === 'NOT_STARTED' ? 0 : 1, policy,
+  proposals: [], retry: { available: false }, nextRound: { available: false, currentRound: 1, maxRounds: 3 },
+  sourceBusinessValidationSessionId: 'session-B', ...extra });
 const finalView = (outcome = 'REFINED', stale = false, session = 'session-B') => ({
   sourceBusinessValidationSessionId: session, state: 'FINALIZED', outcome, stale,
   value: {
@@ -44,6 +57,7 @@ const finalView = (outcome = 'REFINED', stale = false, session = 'session-B') =>
 });
 
 describe('BusinessValidationContent', () => {
+  beforeEach(() => vi.clearAllMocks());
   it('준비 정보와 하나의 사업 검증 시작 명령을 보여준다', async () => {
     render(<BusinessValidationContent current={view('NOT_STARTED')} plan={{ revision: 1 }} api={api} />);
     expect(screen.getByRole('button', { name: '사업 검증 시작' })).toBeInTheDocument();
@@ -99,7 +113,8 @@ describe('BusinessValidationContent', () => {
     const proposal = { proposalKey: 'sha256:proposal', fieldKey: 'price', currentValue: '10,000원',
       proposedValue: '12,500원', rationale: '수익성을 보완합니다.', source: 'MARKET', evidenceIds: ['e1'] };
     render(<BusinessValidationContent current={view('COMPLETED')}
-      refinement={refinement('AWAITING_DECISION', { proposals: [proposal], proposalSetHash: 'sha256:set' })}
+      refinement={refinement('AWAITING_DECISION', { proposals: [proposal], proposalSetHash: 'sha256:set',
+        nextRound: { available: true, currentRound: 1, maxRounds: 3 } })}
       api={api} onDecideAndApply={onDecideAndApply} />);
     expect(screen.getByText('가격')).toBeInTheDocument();
     expect(screen.getByText('10,000원')).toBeInTheDocument();
@@ -107,10 +122,50 @@ describe('BusinessValidationContent', () => {
     expect(screen.getByText(/아직 사업안에는 반영되지 않았습니다/)).toBeInTheDocument();
     expect(screen.queryByText('price')).not.toBeInTheDocument();
     const action = screen.getByRole('button', { name: '선택한 변경 반영' });
+    const next = screen.getByRole('button', { name: '다른 제안 받기' });
     expect(action).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: '가격 변경안 반영' }));
-    expect(action).toBeEnabled(); fireEvent.click(action);
+    expect(action).toBeEnabled(); expect(next).toBeDisabled();
+    expect(screen.getByText(/선택한 변경을 먼저 해제/)).toBeInTheDocument(); fireEvent.click(action);
     expect(onDecideAndApply).toHaveBeenCalledWith(['sha256:proposal']);
+  });
+
+  it('적용 완료 후 확정과 현재 변경을 유지하는 다음 제안 action을 함께 제공한다', () => {
+    const onNext = vi.fn();
+    render(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('APPLIED_PENDING_FINALIZATION', {
+        nextRound: { available: true, currentRound: 1, maxRounds: 3 },
+        decision: { decisionHash: 'sha256:decision' },
+      })} api={api} onNextRefinement={onNext} />);
+    expect(screen.getByRole('button', { name: '이 컨셉으로 확정하기' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '다른 제안 더 받기' }));
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/지금까지 반영한 변경은 그대로 유지/)).toBeInTheDocument();
+  });
+
+  it('Round 2 proposal을 그대로 표시하고 Round 3에서는 마지막 안내와 함께 next를 숨긴다', () => {
+    const proposal = { proposalKey: 'sha256:r2', fieldKey: 'channels', currentValue: ['앱'],
+      proposedValue: ['앱', '파트너'], source: 'MARKET', evidenceIds: ['e1'] };
+    const { rerender } = render(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('AWAITING_DECISION', { round: 2, proposals: [proposal],
+        proposalSetHash: 'sha256:set-2', nextRound: { available: true, currentRound: 2, maxRounds: 3 } })}
+      api={api} />);
+    expect(screen.getByText('제안 2 / 3')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: '고객 접점·채널 변경안 반영' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다른 제안 받기' })).toBeInTheDocument();
+    rerender(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('AWAITING_DECISION', { round: 3, proposals: [proposal],
+        proposalSetHash: 'sha256:set-3', nextRound: { available: false, currentRound: 3, maxRounds: 3 } })}
+      api={api} />);
+    expect(screen.getByText('제안 3 / 3')).toBeInTheDocument();
+    expect(screen.getByText('마지막 제안입니다.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '다른 제안 받기' })).not.toBeInTheDocument();
+    rerender(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('APPLIED_PENDING_FINALIZATION', { round: 3,
+        decision: { decisionHash: 'sha256:decision-3' },
+        nextRound: { available: false, currentRound: 3, maxRounds: 3 } })} api={api} />);
+    expect(screen.getByRole('button', { name: '이 컨셉으로 확정하기' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '다른 제안 더 받기' })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -132,6 +187,7 @@ describe('BusinessValidationContent', () => {
     rerender(<BusinessValidationContent current={view('STALE')} refinement={refinement('LEGAL_BLOCKED')} api={api} />);
     expect(screen.getByText(/법률 검토를 통과하지 못해/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /확정/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /다른 제안/ })).not.toBeInTheDocument();
     expect(screen.queryByText('다듬기 완료')).not.toBeInTheDocument();
   });
 
@@ -204,5 +260,56 @@ describe('BusinessValidationContent', () => {
     expect(screen.getByText(/이전 검증 결과는 기준 결과로 보존/)).toBeInTheDocument();
     expect(screen.queryByText(/사업안이 추가로 변경되어 이 다듬기 결과/)).not.toBeInTheDocument();
     expect(screen.queryByText(/이후 사업안이 변경되어 이 다듬기 결과/)).not.toBeInTheDocument();
+  });
+});
+
+describe('BusinessValidationPage multi-round command', () => {
+  const currentResponse = view('COMPLETED');
+  const finalResponse = { sourceBusinessValidationSessionId: 'session-B', state: 'NOT_STARTED',
+    outcome: null, stale: false, value: null };
+  const proposal = { proposalKey: 'sha256:proposal', fieldKey: 'price', currentValue: '10,000원',
+    proposedValue: '12,500원', rationale: '수익성 보완', source: 'MARKET', evidenceIds: ['e1'] };
+
+  const arrangeGets = (refinementResponse) => pageClient.get.mockImplementation((url) => {
+    if (url.endsWith('/business-validation/current')) return Promise.resolve({ data: currentResponse });
+    if (url.endsWith('/business-model/plan')) return Promise.resolve({ data: { revision: 3 } });
+    if (url.endsWith('/refinement/current')) return Promise.resolve({ data: refinementResponse });
+    if (url.endsWith('/refinement/final')) return Promise.resolve({ data: finalResponse });
+    return Promise.reject(new Error('unexpected GET'));
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('AWAITING next는 proposalSetHash만 보내고 network ambiguity 시 current/final만 각 1회 복구 조회한다', async () => {
+    const awaiting = refinement('AWAITING_DECISION', { proposals: [proposal], proposalSetHash: 'sha256:set',
+      nextRound: { available: true, currentRound: 1, maxRounds: 3 } });
+    arrangeGets(awaiting); pageClient.post.mockRejectedValueOnce(new Error('network ambiguous'));
+    render(<BusinessValidationPage />);
+    fireEvent.click(await screen.findByRole('button', { name: '다른 제안 받기' }));
+    await waitFor(() => expect(pageClient.post).toHaveBeenCalledTimes(1));
+    expect(pageClient.post.mock.calls[0][0]).toMatch(/\/refinement\/next$/);
+    expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
+      expectedProposalSetHash: 'sha256:set', expectedDecisionHash: null });
+    await waitFor(() => {
+      expect(pageClient.get.mock.calls.filter(([url]) => url.endsWith('/refinement/current'))).toHaveLength(2);
+      expect(pageClient.get.mock.calls.filter(([url]) => url.endsWith('/refinement/final'))).toHaveLength(2);
+    });
+    expect(pageClient.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('APPLIED next는 decisionHash만 보내고 성공한 Round 2 PROPOSING을 즉시 표시한다', async () => {
+    const applied = refinement('APPLIED_PENDING_FINALIZATION', {
+      decision: { decisionHash: 'sha256:decision' },
+      nextRound: { available: true, currentRound: 1, maxRounds: 3 },
+    });
+    arrangeGets(applied);
+    pageClient.post.mockResolvedValueOnce({ data: refinement('PROPOSING', { round: 2,
+      nextRound: { available: false, currentRound: 2, maxRounds: 3 } }) });
+    render(<BusinessValidationPage />);
+    fireEvent.click(await screen.findByRole('button', { name: '다른 제안 더 받기' }));
+    await screen.findByText('제안 2 / 3');
+    expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
+      expectedProposalSetHash: null, expectedDecisionHash: 'sha256:decision' });
+    expect(screen.getByText('앞선 선택을 바탕으로 다른 개선안을 만들고 있습니다.')).toBeInTheDocument();
   });
 });

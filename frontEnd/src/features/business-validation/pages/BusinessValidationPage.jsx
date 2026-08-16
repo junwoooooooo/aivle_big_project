@@ -92,6 +92,14 @@ export default function BusinessValidationPage() {
 
   const startRefinement = () => refine(async () => setRefinement(await api.startRefinement()));
   const retryRefinement = () => refine(async () => setRefinement(await api.retryRefinement()));
+  const nextRefinement = () => refine(async () => {
+    const awaiting = refinement?.state === 'AWAITING_DECISION';
+    setRefinement(await api.nextRefinement({
+      expectedRound: refinement?.round,
+      expectedProposalSetHash: awaiting ? refinement?.proposalSetHash : null,
+      expectedDecisionHash: awaiting ? null : refinement?.decision?.decisionHash ?? null,
+    }));
+  });
   const decideAndApply = (selectedProposalKeys) => refine(async () => {
     const decided = await api.decideRefinement({ expectedRound: refinement.round,
       proposalSetHash: refinement.proposalSetHash, selectedProposalKeys, keepCurrent: false });
@@ -118,6 +126,7 @@ export default function BusinessValidationPage() {
     onStart={() => act(() => api.start(today()))}
     onRetryBm={() => act(api.retryBusinessModel)}
     onStartRefinement={startRefinement} onRetryRefinement={retryRefinement}
+    onNextRefinement={nextRefinement}
     onDecideAndApply={decideAndApply} onKeepCurrent={keepCurrent}
     onApplyRefinement={applyRefinement} onRetryLegal={retryLegal}
     onFinalizeRefinement={finalizeRefinement} />;
@@ -127,6 +136,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   busy = false, refinementBusy = false, error, refinementError,
   onStart = () => {}, onRetryBm = () => {}, onStartRefinement = () => {},
   onRetryRefinement = () => {}, onDecideAndApply = () => {}, onKeepCurrent = () => {},
+  onNextRefinement = () => {},
   onApplyRefinement = () => {}, onRetryLegal = () => {}, onFinalizeRefinement = () => {} }) {
   const state = current?.state ?? 'NOT_STARTED';
   const marketResult = normalizeMarketResult(current?.market?.result);
@@ -183,6 +193,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
     {showRefinement ? <ConceptRefinementPanel refinement={effectiveRefinement} finalView={effectiveFinal}
       busy={refinementBusy} error={refinementError} onStart={onStartRefinement}
       onRetry={onRetryRefinement} onDecideAndApply={onDecideAndApply}
+      onNext={onNextRefinement}
       onKeepCurrent={onKeepCurrent} onApply={onApplyRefinement}
       onRetryLegal={onRetryLegal} onFinalize={onFinalizeRefinement} /> : null}
 
