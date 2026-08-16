@@ -52,6 +52,8 @@ PROMPT = """너는 시장조사 결과를 **사실 그대로 요약**한다.
    이것은 선택이 아니다 — 빠지면 기계 검사가 요약 전체를 버린다.
 6. **그 수가 무엇인지는 `계량`·`주제` 가 말한다.** `칸` 이름을 계량으로 착각하지 마라 —
    예컨대 칸이 「GROWTH」라도 `계량` 이 「거래액」이면 그 수는 **거래액**이지 성장률이 아니다.
+7. 숫자가 없는 exact passage도 카드에 있으면 사실 그대로 쓸 수 있다. 평가·처방으로 바꾸지 마라.
+8. 카드에 `기간`·`연도`가 있으면 숨기지 말고, 근거가 없는 칸은 없다고 말하라.
 
 칸별로 1~2문장. JSON 으로만 답하라:
 {{"요약": [{{"칸": "고객 세그먼트", "문장": "...", "카드_id": ["C-F001"]}}]}}
@@ -84,8 +86,9 @@ def _call(prompt: str) -> tuple:
                                    "out": getattr(u, "output_tokens", 0) or 0}
 
 
-def summarize(run: str, concept: str, max_retry: int = 3) -> dict:
-    doc = CARDS.build(run, concept)
+def summarize(run: str, concept: str, max_retry: int = 3,
+              cards_doc: dict | None = None) -> dict:
+    doc = cards_doc if cards_doc is not None else CARDS.build(run, concept)
     cs = doc["카드"]
     if not cs:
         return {**doc, "요약": [], "_요약_없음": "카드 0장 — 요약할 관측이 없다"}

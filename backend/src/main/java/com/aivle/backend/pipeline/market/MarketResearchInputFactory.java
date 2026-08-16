@@ -19,7 +19,7 @@ import tools.jackson.databind.node.ObjectNode;
 @Component
 public class MarketResearchInputFactory {
     private static final int CHUNK_CHARACTERS = 16_000;
-    private static final int LLM_BUDGET_FULL = 90;
+    private static final int LLM_BUDGET_FULL = 96;
     private static final java.util.regex.Pattern SAFE_LABEL =
         java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1,64}");
     private static final List<String> CONSTRAINT_KEYS = List.of("budget_krw", "months", "team");

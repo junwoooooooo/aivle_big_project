@@ -347,8 +347,8 @@ class Run:
 class Meter:
     """호출을 세기만 하고 응답은 손대지 않는다."""
 
-    def __init__(self, client, run: Run):
-        self._c, self._run = client, run
+    def __init__(self, client, run: Run, *, safe_errors: bool = False):
+        self._c, self._run, self._safe_errors = client, run, safe_errors
 
     def create(self, node: str, *, tag: dict | None = None, **kw):
         """`tag` 는 **API 로 안 나간다.** `**kw` 는 그대로 `responses.create` 로 흘러가므로
@@ -364,7 +364,8 @@ class Meter:
             r = self._c.responses.create(**kw)
         except Exception as e:
             self._run.count(f"llm.{node}.error")
-            self._run.log(f"{node}.llm_error", {"error": f"{type(e).__name__}: {e}"},
+            detail = type(e).__name__ if self._safe_errors else f"{type(e).__name__}: {e}"
+            self._run.log(f"{node}.llm_error", {"error": detail},
                           status="error")
             raise
         self._run.count("llm.calls")

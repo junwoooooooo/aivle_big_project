@@ -63,6 +63,7 @@ class MarketJoinData(BaseModel):
     competitor_analysis: list[dict[str, Any]]
     price_analysis: PriceAnalysisData
     demand_evidence: list[dict[str, Any]]
+    channel_analysis: list[dict[str, Any]] = Field(default_factory=list)
     market_size_calculation: dict[str, Any]
     missing_items: list[dict[str, Any]] = Field(default_factory=list)
     evidence_list: list[dict[str, Any]] = Field(default_factory=list)

@@ -63,6 +63,7 @@ def main() -> None:
     parser.add_argument("--concept-id", required=True)
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--llm-budget", type=int, default=3)
+    parser.add_argument("--timeout-seconds", type=float, default=20 * 60)
     parser.add_argument("--runtime-input", default="")
     parser.add_argument("--progress-jsonl", default="")
     args = parser.parse_args()
@@ -103,7 +104,8 @@ def main() -> None:
             task_input["sourceRun"] = runtime_input["sourceRun"]
         if isinstance(runtime_input.get("recollect"), dict):
             task_input["recollect"] = runtime_input["recollect"]
-        result = asyncio.run(run_market_research(task_input, args.run_id, 24 * 60 * 60))
+        result = asyncio.run(run_market_research(
+            task_input, args.run_id, max(1.0, args.timeout_seconds)))
         result = _fail_closed_unverified_product_assumptions(result)
     except Exception:
         heartbeat.stop()

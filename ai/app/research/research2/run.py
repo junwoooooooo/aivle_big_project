@@ -232,6 +232,10 @@ class CollectOptions:
     search_prompt: str = ""
     #: 슬롯당 검색 표본 수. 0 이면 규칙값(기본 2). **검색어가 아니라 뽑기 횟수다.**
     search_samples: int = 0
+    # Product orchestration이 summary reserve를 뺀 뒤 허용한 section provider attempt 수.
+    section_call_budget: int = 0
+    # Task deadline의 monotonic 절대시각. CLI는 없으며 Product 호출에서만 전달한다.
+    deadline_monotonic: float | None = None
 
     def __post_init__(self):
         # CLI 기본값과 같은 자리. 서버에서 부를 때 안 채워도 CLI 와 같게 돈다.
@@ -453,6 +457,7 @@ def collect(a: CollectOptions) -> dict:
               f"{sum(1 for r in ledger.rows if r.label == '확인됨')} · "
               f"격리 {sum(1 for r in ledger.rows if r.label in ('off_slot', '미검증'))} · "
               f"충족 슬롯 {sum(1 for c in coverage if c.status == '충족')}/{len(coverage)}")
+        _run_section_recall(a, docs, ledger, coverage, rules, run)
         return _finish(a, run, concept, slots, formulas, [], [],
                        {"_note": f"--from {a.from_stage} (A1 은 원본 {a.source_run} 것)"},
                        ledger, coverage, rules, as_of_year, [],
@@ -609,10 +614,35 @@ def collect(a: CollectOptions) -> dict:
     capped = _capped_docs(findings)
     if capped:
         print(f"    발췌 상한으로 안 물어본 문서 {len(capped)}건 → §7 extract_capped")
+    _run_section_recall(a, docs, ledger, coverage, rules, run)
     return _finish(a, run, concept, slots, formulas, rejected, unguarded, audit,
                    ledger, coverage, rules, as_of_year, unknown_codes,
                    url_filtered=url_filtered, injected_diag=injected_diag,
                    extract_capped=capped, fetch_empty=empties)
+
+
+def _run_section_recall(a: CollectOptions, docs: dict, ledger, coverage: list,
+                        rules: dict, run) -> dict:
+    """A3 저장 본문만 읽는 collect 내부 soft substage. 실패해도 A4 결과는 유지한다."""
+    import section_recall as SECTION
+
+    cfg = rules.get("section_recall") or {}
+    section_meter = None
+    if int(a.section_call_budget or 0) > 0 and cfg.get("enabled"):
+        from openai import OpenAI
+        section_meter = Meter(
+            OpenAI(max_retries=0, timeout=float(cfg.get("per_call_timeout_sec") or 30)),
+            run, safe_errors=True)
+    result = SECTION.execute(
+        docs=docs, ledger=ledger, coverage=coverage, rules=rules, meter=section_meter,
+        call_budget=int(a.section_call_budget or 0),
+        deadline_monotonic=a.deadline_monotonic)
+    run.count("section_recall.attempts", int(result.get("attempts") or 0))
+    run.count("section_recall.reasks", int(result.get("reasks") or 0))
+    run.count("section_recall.cards", len(result.get("cards") or []))
+    run.log_many("section_evidence", result.get("cards") or [])
+    run.snapshot("section_recall", result)
+    return result
 
 
 def _seen_direct(docs: dict) -> dict:

@@ -36,6 +36,14 @@ class MarketResearchContractTests {
         assertThatThrownBy(() -> MarketResearchContract.validate(node)).isInstanceOf(ExecutionFailure.class);
     }
 
+    @Test
+    void channelAnalysisSourceLabelIsAccepted() throws Exception {
+        ObjectNode node = payload("bm.json");
+        ((ArrayNode) node.path("canvas").path("cells").path(0).path("sourceLabels"))
+            .add("channel_analysis");
+        assertThatCode(() -> MarketResearchContract.validate(node)).doesNotThrowAnyException();
+    }
+
     private static ObjectNode payload(String name) throws Exception {
         ObjectNode node = (ObjectNode) fixture("market_research/" + name);
         node.propertyNames().stream().filter(key -> key.startsWith("_")).toList().forEach(node::remove);

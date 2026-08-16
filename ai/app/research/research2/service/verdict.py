@@ -502,7 +502,7 @@ def _market_observations(led: dict) -> list[dict]:
 
 def _observed_market_estimate(observations: list[dict], claim_type: str) -> dict | None:
     money = [item for item in observations
-             if claim_type in (item.get("claim_types") or [])
+             if set(item.get("claim_types") or []) == {claim_type}
              and (item.get("unit") or "") in _MONEY_UNITS]
     if not money:
         return None

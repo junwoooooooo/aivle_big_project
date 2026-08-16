@@ -154,6 +154,24 @@ def test_market_observations_deduplicate_slot_copies_but_keep_independent_source
     assert copied["slot_ids"] == ["S1", "S2"]
     assert set(copied["claim_types"]) == {"TAM", "SAM"}
 
+    result = verdict.judge_market(_market_ledger(rows[:2]), {}, {})
+    assert result["TAM_추정"] is None and result["SAM_추정"] is None
+
+
+def test_shared_market_observation_does_not_hide_exclusive_tam(monkeypatch):
+    rows = [
+        {"slot_id": "S1", "claim_type": "TAM", "fact_id": "F1", "trace_id": "T1",
+         "metric": "시장규모", "value": 100, "unit": "원", "period": "2025", "source_url": "u1"},
+        {"slot_id": "S2", "claim_type": "SAM", "fact_id": "F1", "trace_id": "T1",
+         "metric": "시장규모", "value": 100, "unit": "원", "period": "2025", "source_url": "u1"},
+        {"slot_id": "S3", "claim_type": "TAM", "fact_id": "F2", "trace_id": "T2",
+         "metric": "시장규모", "value": 120, "unit": "원", "period": "2025", "source_url": "u2"},
+    ]
+    monkeypatch.setattr(verdict, "_confirmed", lambda led, _types: led["confirmed"])
+    result = verdict.judge_market(_market_ledger(rows), {}, {})
+    assert result["TAM_추정"]["값"] == 120
+    assert result["SAM_추정"] is None
+
 
 def test_market_without_money_observation_does_not_invent_tam_or_sam(monkeypatch):
     count = [{"slot_id": "S1", "claim_type": "TAM", "fact_id": "F1", "trace_id": "T1",

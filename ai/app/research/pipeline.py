@@ -113,6 +113,7 @@ class Budget:
 
     total: int
     spent: int = 0
+    deadline_monotonic: float | None = None
 
     def remaining(self) -> int:
         return max(0, self.total - self.spent)
@@ -333,8 +334,10 @@ async def run_market_research(task_input: dict, run_id: str,
     if not concept_path:
         raise _fail("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", "컨셉 파일을 못 찾았다")
 
-    budget = Budget(total=int(task_input.get("llmBudget") or 0))
     started = time.monotonic()
+    budget = Budget(
+        total=int(task_input.get("llmBudget") or 0),
+        deadline_monotonic=started + timeout_seconds)
 
     # 사용자가 BM 앞 단계에서 채운 실행 계획. **컨셉 계약이 주지 않는 것들**이라
     # (입구계약서 §1 의 선택 필드에 활동·자원·파트너·고객 관계가 없다) 화면이 따로 받는다.
@@ -499,7 +502,7 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         # **원장이 없다 — 만든다.** 이 갈래가 붙기 전에는 견본 원장 셋 위에서만 돌았다.
         # 재수집 지시가 있으면 같은 갈래를 타되 **일부 슬롯만** 새로 사서 합친다.
         _collect(ledger, budget, concept_path, source_run, as_of or _now()[:10],
-                 recollect or {})
+                 recollect or {}, budget.deadline_monotonic)
     else:
         # 저장된 수집 위에서 재채점한다. 「안 돌았다」를 값으로 남긴다 —
         # 안 돈 것을 안 돌았다고 적는 것이 「조용한 실패」를 막는 유일한 방법이다.
@@ -513,7 +516,17 @@ def _full(source_run: str, concept_path: str, concept_id: str,
     score = _timed(ledger, "scorecard",
                    lambda: SCORECARD.build(source_run, concept_path, verdict=verdict))
 
-    cards = cards_doc.get("카드") or []
+    cards = list(cards_doc.get("카드") or [])
+    import section_recall as SECTION                              # noqa: PLC0415
+    existing_ids = {card.get("카드_id") for card in cards}
+    for promoted in SECTION.load_cards(source_run):
+        if promoted.get("카드_id") in existing_ids:
+            ledger.degrade("collect", "SECTION_EVIDENCE_ID_COLLISION",
+                           f"promoted evidence id 충돌: {promoted.get('카드_id')}")
+            continue
+        existing_ids.add(promoted.get("카드_id"))
+        cards.append(promoted)
+    merged_cards_doc = {**cards_doc, "카드": cards}
     evidence = serialize.evidence(cards)
     evidence_ids = {item["id"] for item in evidence}
 
@@ -525,7 +538,8 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         # 슬롯 정의 — 「S2」를 사람이 읽는 문구로 옮기는 데 쓴다. 원장에 이미 있어 새 I/O 는 없다.
         slots=((result.get("input") or {}).get("slots") or []))
 
-    summary = _summary(ledger, budget, source_run, concept_path, evidence_ids, rescore)
+    summary = _summary(ledger, budget, source_run, concept_path, evidence_ids, rescore,
+                       merged_cards_doc)
 
     return serialize.envelope(
         runId=run_id, conceptId=concept_id,
@@ -540,7 +554,8 @@ def _full(source_run: str, concept_path: str, concept_id: str,
 
 
 def _summary(ledger: Run, budget: Budget, source_run: str, concept_path: str,
-             evidence_ids: set[str], rescore: bool) -> list[dict] | None:
+             evidence_ids: set[str], rescore: bool,
+             cards_doc: dict | None = None) -> list[dict] | None:
     """SOFT 단계. 없으면 문장이 없을 뿐 **값·등급·경계는 카드가 이미 들고 있다.**"""
     stage = ledger.stage("summary")
     if rescore:
@@ -555,7 +570,8 @@ def _summary(ledger: Run, budget: Budget, source_run: str, concept_path: str,
     import summary as SUMMARY                                      # noqa: PLC0415
     began = time.monotonic()
     try:
-        doc = SUMMARY.summarize(source_run, concept_path, max_retry=minimum)
+        doc = SUMMARY.summarize(source_run, concept_path, max_retry=minimum,
+                                cards_doc=cards_doc)
     except Exception as error:                      # noqa: BLE001 — SOFT 다. 판을 죽이지 않는다
         stage.status = "FAILED"
         stage.seconds = int(time.monotonic() - began)
@@ -580,10 +596,13 @@ def _summary(ledger: Run, budget: Budget, source_run: str, concept_path: str,
 HARNESS_CALLS = 3
 #: 수집 한 판의 실측 상한. 실측 근거는 A3 슬롯별 발췌 + 교차확인이다.
 COLLECT_CALLS = 80
+SUMMARY_RESERVE = 3
+SECTION_ATTEMPT_CAP = 10
 
 
 def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of: str,
-             recollect: dict | None = None) -> None:
+             recollect: dict | None = None,
+             deadline_monotonic: float | None = None) -> None:
     """**새 원장을 만든다.** 예전에 이 자리는 `SKIPPED` + `NOT_WIRED` 였다.
 
     세 단계를 순서대로 돌리고, **어디서 멈췄든 그 사실을 값으로 남긴다.**
@@ -658,11 +677,24 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
     # 나머지는 원본 결과를 그대로 쓴다 — 그래야 이미 확보한 확인됨이 안 사라진다.
     # 지시가 없으면 아래 네 칸은 기본값이라 **종전 호출과 한 글자도 다르지 않다.**
     rc = recollect or {}
-    _timed(ledger, "collect", lambda: ENGINE.collect(ENGINE.CollectOptions(
+    section_budget = min(
+        SECTION_ATTEMPT_CAP,
+        max(0, budget.remaining() - COLLECT_CALLS - SUMMARY_RESERVE))
+    collection = _timed(ledger, "collect", lambda: ENGINE.collect(ENGINE.CollectOptions(
         id=run_id, concept=_abs(concept_path), as_of=as_of,
         slots=snapshot["slots"], formulas=snapshot["formulas"],
         from_stage=rc.get("from", ""), source_run=(run_id if rc else ""),
-        collect_slots=rc.get("slots", ""), slots_from=rc.get("slotsFrom", "source"))))
+        collect_slots=rc.get("slots", ""), slots_from=rc.get("slotsFrom", "source"),
+        section_call_budget=section_budget,
+        deadline_monotonic=deadline_monotonic)))
+    metrics = collection.get("metrics") or {}
+    section_attempts = int(metrics.get("section_recall.attempts") or 0)
+    section_errors = int(metrics.get("llm.section_recall.error") or 0)
+    ledger.stages[-1].llm_calls = int(metrics.get("llm.calls") or 0) + section_errors
+    import section_recall as SECTION                              # noqa: PLC0415
+    for degradation in SECTION.load(run_id).get("degradations") or []:
+        ledger.degrade("collect", str(degradation.get("code") or "SECTION_RECALL_FAILED"),
+                       str(degradation.get("detail") or "section recall 저하")[:200])
     if rc:
         # **무엇을 다시 샀는지 값으로 남긴다.** 안 남기면 「왜 이 슬롯만 새 값인가」를
         # 나중에 코드로 추론해야 하고, 그건 기록이 아니다.
@@ -670,7 +702,7 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
                        f"재수집 — 슬롯 {rc.get('slots') or '(전체)'} 만 새로 샀다 "
                        f"(복원 {rc.get('from')} · 사람칸 {rc.get('slotsFrom')}). "
                        "나머지 슬롯은 원본 수집 결과를 그대로 쓴다")
-    budget.charge(COLLECT_CALLS)
+    budget.charge(COLLECT_CALLS + section_attempts)
 
 
 def _timed(ledger: Run, name: str, work):

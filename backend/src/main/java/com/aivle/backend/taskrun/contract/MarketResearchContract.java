@@ -54,7 +54,7 @@ public final class MarketResearchContract {
     /** AI 쪽 {@code ALLOWED_CANVAS_SOURCE_LABELS} 와 같은 목록이어야 한다. */
     private static final Set<String> SOURCE_LABELS = Set.of(
         "concept_snapshot", "market_size", "growth_rate", "competitor_analysis",
-        "price_analysis", "demand_evidence", "execution_constraints");
+        "price_analysis", "demand_evidence", "channel_analysis", "execution_constraints");
 
     private static final Set<String> DECISIONS = Set.of(
         "PASS", "CONDITIONAL", "REVISION_REQUIRED", "BLOCKED");

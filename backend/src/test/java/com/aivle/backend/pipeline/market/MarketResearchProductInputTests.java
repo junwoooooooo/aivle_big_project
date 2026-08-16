@@ -52,7 +52,7 @@ class MarketResearchProductInputTests {
         assertThat(concept.path("hypotheses")).isEmpty();
         assertThat(concept.path("_계열").path("계열").asText()).isEqualTo("C");
         assertThat(concept.path("_다듬기5").path("4_업종_분류").has("코드")).isFalse();
-        assertThat(input.path("llmBudget").asInt()).isEqualTo(90);
+        assertThat(input.path("llmBudget").asInt()).isEqualTo(96);
     }
 
     @Test
@@ -102,6 +102,25 @@ class MarketResearchProductInputTests {
 
         assertThat(concept.path("_경쟁_씨앗").path("seeds").path(0).path("이름").asText())
             .isEqualTo("공비서");
+    }
+
+    @Test
+    void bmKeepsOneCallBudgetAndExactFullVersionResult() {
+        MarketResearchVersion version = mock(MarketResearchVersion.class);
+        MarketResearchRun run = mock(MarketResearchRun.class);
+        String exact = "{\"mode\":\"FULL\",\"asOf\":\"2026-08-17\",\"evidence\":[]}";
+        when(version.getId()).thenReturn(91L);
+        when(version.getResultJson()).thenReturn(exact);
+        when(version.getSourceRun()).thenReturn(run);
+        when(run.getId()).thenReturn(11L);
+        JsonNode fullInput = mapper.readTree(factory.full(
+            seed("seed-bm"), selection("concept-bm"), "2026-08-17"));
+
+        JsonNode input = mapper.readTree(factory.bm(version, fullInput, null, null, 3));
+
+        assertThat(input.path("llmBudget").asInt()).isEqualTo(1);
+        assertThat(input.path("marketResultJson").asText()).isEqualTo(exact);
+        assertThat(input.path("source").path("marketResearchVersionId").asLong()).isEqualTo(91L);
     }
 
     private ConceptPortfolioSelection selection(String conceptId) {

@@ -37,7 +37,8 @@ BM_ANALYSIS_PROMPT = """
 
 4. CHANNELS
 - 입력에 채널 정보가 있으면 해당 내용을 Canvas에 정리한다.
-- 관련 시장 근거가 존재하는 경우에만 참고하여 적합성을 확인한다.
+- market_join_data.channel_analysis의 관측된 채널 조건이 존재하는 경우에만 비교 재료로 사용한다.
+- channel_analysis는 사용자가 확정한 채널 가설 자체가 아니며 자동으로 검증됨으로 승격하지 않는다.
 - 입력에 채널 정보가 없으면 content=[]로 두고 UNVERIFIED로 표시할 수 있다.
 - 새로운 채널을 임의로 제안하지 않는다.
 - 채널 정보 부족만으로 market_fit_status 또는 consistency_status를 낮추지 않는다.
@@ -118,6 +119,7 @@ source_labels에는 각 Canvas content의 직접 출처를 다음 값 중 하나
 - competitor_analysis
 - price_analysis
 - demand_evidence
+- channel_analysis
 - execution_constraints
 content가 비어 있지 않으면 source_labels도 비어 있을 수 없다.
 목록에 없는 출처 라벨을 만들지 않는다.
@@ -135,5 +137,6 @@ ALLOWED_CANVAS_SOURCE_LABELS = {
     "competitor_analysis",
     "price_analysis",
     "demand_evidence",
+    "channel_analysis",
     "execution_constraints",
 }

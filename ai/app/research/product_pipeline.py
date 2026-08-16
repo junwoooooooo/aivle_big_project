@@ -376,6 +376,7 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             "--concept-id", concept_id, "--as-of", as_of,
             "--runtime-input", runtime_path,
             "--llm-budget", str(max(0, llm_budget)),
+            "--timeout-seconds", str(max(1.0, timeout_seconds)),
         ]
         if event_sink is not None:
             command.extend(["--progress-jsonl", progress_path])
