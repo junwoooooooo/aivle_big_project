@@ -241,6 +241,8 @@ public class FinancialService {
             field.put("decision", FinancialPreparationFactory.present(value) ? "LOCKED" : "OPEN");
             field.put("readOnly", false); field.put("sourceDocumentArtifactId", artifactId);
             field.put("provenance", "uploaded-finance-document." + key);
+            JsonNode userNote = normalizedValues.path(FinancialInputDocumentService.INPUT_NOTES).path(key);
+            if (userNote.isTextual() && !userNote.asText().isBlank()) field.put("userNote", userNote.asText());
         }
         if (calculator.calculateCac(fields) == null)
             throw invalid("마케팅비·영업비와 신규 고객 수를 확인해 주세요.");

@@ -20,6 +20,7 @@ public class LaunchReadinessReportController {
         byte[] body = reports.create(user.currentUserId(), projectId, distinct);
         String filename = distinct.size() > 1 ? "launch-readiness-integrated-report.pdf" : distinct.get(0) + "-readiness-report.pdf";
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename).body(new ByteArrayResource(body));
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+            .body(new ByteArrayResource(body));
     }
 }

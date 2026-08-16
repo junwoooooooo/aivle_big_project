@@ -77,7 +77,7 @@ public class FinancialController {
             com.aivle.backend.common.exception.ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY);
         FinancialModuleResponse result = mapper.readValue(mapper.writeValueAsString(view.result()), FinancialModuleResponse.class);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
-            .header("Content-Disposition", "attachment; filename=finance-readiness-report.pdf")
+            .header("Content-Disposition", "inline; filename=\"finance-readiness-report.pdf\"")
             .body(new ByteArrayResource(pdf.create(result)));
     }
 

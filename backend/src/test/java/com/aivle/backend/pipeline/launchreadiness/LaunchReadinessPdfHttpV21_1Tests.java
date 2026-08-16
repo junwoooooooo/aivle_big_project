@@ -52,6 +52,7 @@ class LaunchReadinessPdfHttpV21_1Tests {
         professionalPdf = new LaunchReadinessPdfService(readiness, snapshots,
             new LaunchReadinessDocumentService(), mapper);
         when(user.currentUserId()).thenReturn(7L);
+        when(readiness.template(any())).thenReturn(new byte[] {1, 2, 3});
         when(readiness.current(eq(7L), eq(41L), any())).thenAnswer(invocation ->
             professionalView(invocation.getArgument(2)));
         when(snapshots.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(
@@ -66,6 +67,22 @@ class LaunchReadinessPdfHttpV21_1Tests {
             .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn());
         assertPdf(mvc.perform(get("/api/v3/projects/41/launch-readiness/operations/report"))
             .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn());
+    }
+
+    @Test
+    void reportResponsesAreInlineWhileDocxTemplatesRemainAttachments() throws Exception {
+        MockMvc professionalMvc = MockMvcBuilders.standaloneSetup(
+            new LaunchReadinessController(readiness, professionalPdf, user)).build();
+        professionalMvc.perform(get("/api/v3/projects/41/launch-readiness/technology/template"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Disposition", "attachment; filename=technology-readiness-input.docx"));
+
+        FinancialController financeController = new FinancialController(mock(FinancialService.class), finance, user,
+            new FinancialInputDocumentService(mapper), mock(FinancialDocumentImportService.class), financialPdf, mapper);
+        MockMvc financeMvc = MockMvcBuilders.standaloneSetup(financeController).build();
+        financeMvc.perform(get("/api/v3/projects/41/finance/preparation/template"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Disposition", "attachment; filename=finance-readiness-input.docx"));
     }
 
     @Test
@@ -117,6 +134,9 @@ class LaunchReadinessPdfHttpV21_1Tests {
 
     private void assertPdf(MvcResult result) throws Exception {
         byte[] body = result.getResponse().getContentAsByteArray();
+        assertThat(result.getResponse().getHeader("Content-Disposition"))
+            .startsWith("inline; filename=\"")
+            .doesNotContain("attachment");
         assertThat(body.length).isGreaterThan(64);
         assertThat(body).startsWith("%PDF-".getBytes(StandardCharsets.US_ASCII));
         PdfReader reader = new PdfReader(body);

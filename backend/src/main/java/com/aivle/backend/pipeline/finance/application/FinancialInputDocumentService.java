@@ -29,6 +29,8 @@ public class FinancialInputDocumentService {
     private static final String NUMBER = "(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?";
     private static final Pattern THREE_TARGETS = Pattern.compile(
         "^\\s*(" + NUMBER + ")\\s*[,/]\\s*(" + NUMBER + ")\\s*[,/]\\s*(" + NUMBER + ")\\s*$");
+    private static final Pattern TRAILING_NOTE = Pattern.compile("(?s)^(.+?)\\s*\\((.+)\\)\\s*$");
+    public static final String INPUT_NOTES = "inputNotes";
     private static final Set<String> EMPTY_OPTIONAL = Set.of("해당 없음", "없음", "미정", "n/a", "na", "-");
     private final ObjectMapper mapper;
 
@@ -50,10 +52,12 @@ public class FinancialInputDocumentService {
                 }
                 paragraph(doc, (field.required() ? "[필수] " : "[선택] ") + field.label(), true, 11, "1F2937", 100, 30);
                 paragraph(doc, field.description() + " · 입력 예시: " + field.example(), false, 9, "52657D", 0, 50);
-                XWPFTable table = doc.createTable(3, 1);
+                XWPFTable table = doc.createTable(5, 1);
                 table.getRow(0).getCell(0).setText("fieldKey: " + field.key());
                 table.getRow(1).getCell(0).setText("입력값 · " + (field.required() ? "필수" : "선택"));
                 table.getRow(2).getCell(0).setText("\n\n\n");
+                table.getRow(3).getCell(0).setText("산정 근거 · 선택");
+                table.getRow(4).getCell(0).setText("\n\n\n");
                 style(table);
             }
             doc.write(out); return out.toByteArray();
@@ -70,6 +74,7 @@ public class FinancialInputDocumentService {
         }
         Map<String, InputField> fields = fieldMap();
         ObjectNode values = mapper.createObjectNode();
+        ObjectNode notes = mapper.createObjectNode();
         Set<String> seen = new HashSet<>();
         Set<String> invalid = new HashSet<>();
         List<ValidationIssue> issues = new ArrayList<>();
@@ -92,18 +97,31 @@ public class FinancialInputDocumentService {
                     continue;
                 }
                 String raw = table.getRow(2).getCell(0).getText().trim();
-                if (raw.isBlank() || emptyOptional(raw)) {
+                String separateNote = table.getRows().size() >= 5
+                    ? table.getRow(4).getCell(0).getText().trim() : "";
+                ParsedCell parsed = splitCell(field, raw, separateNote);
+                if (parsed.note().length() > 2_000) {
+                    invalid.add(key);
+                    issues.add(new ValidationIssue(key, field.label(),
+                        "산정 근거는 2,000자 이내로 작성해 주세요.", safe(parsed.note())));
+                    continue;
+                }
+                if (parsed.value().isBlank() || emptyOptional(parsed.value())) {
                     if (field.required()) {
                         invalid.add(key);
                         issues.add(new ValidationIssue(key, field.label(),
-                            "필수 값을 입력해 주세요.", safe(raw)));
+                            "필수 값을 입력해 주세요.", safe(parsed.value())));
                     }
+                    if (!parsed.note().isBlank()) notes.put(key, parsed.note());
                     continue;
                 }
-                try { put(values, field, raw); }
+                try {
+                    put(values, field, parsed.value());
+                    if (!parsed.note().isBlank()) notes.put(key, parsed.note());
+                }
                 catch (FieldFormatException exception) {
                     invalid.add(key);
-                    issues.add(new ValidationIssue(key, field.label(), exception.getMessage(), safe(raw)));
+                    issues.add(new ValidationIssue(key, field.label(), exception.getMessage(), safe(parsed.value())));
                 }
             }
         } catch (IOException exception) {
@@ -116,7 +134,23 @@ public class FinancialInputDocumentService {
             }
         }
         if (!issues.isEmpty()) throw new FinancialInputDocumentException(issues);
+        if (!notes.isEmpty()) values.set(INPUT_NOTES, notes);
         return values;
+    }
+
+    private ParsedCell splitCell(InputField field, String raw, String separateNote) {
+        String value = Optional.ofNullable(raw).orElse("").strip();
+        String note = Optional.ofNullable(separateNote).orElse("").strip();
+        Matcher matcher = TRAILING_NOTE.matcher(value);
+        if (!matcher.matches()) return new ParsedCell(value, note);
+        String primary = matcher.group(1).strip();
+        String parenthetical = matcher.group(2).strip();
+        if ("revenueModel".equals(field.key()) && Set.of("one_time", "subscription", "hybrid")
+                .contains(parenthetical.toLowerCase(Locale.ROOT))) {
+            return new ParsedCell(value, note);
+        }
+        String combinedNote = note.isBlank() ? parenthetical : parenthetical + "\n" + note;
+        return new ParsedCell(primary, combinedNote);
     }
 
     private void put(ObjectNode values, InputField field, String raw) {
@@ -224,9 +258,9 @@ public class FinancialInputDocumentService {
         table.setBottomBorder(XWPFTable.XWPFBorderType.SINGLE, 8, 0, BORDER);
         for (int row = 0; row < table.getRows().size(); row++) for (XWPFTableCell cell : table.getRow(row).getTableCells()) {
             cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
-            cell.setColor(row == 0 ? "F5F7FA" : row == 1 ? "D9E2F3" : "F8FBFF");
+            cell.setColor(row == 0 ? "F5F7FA" : row == 1 || row == 3 ? "D9E2F3" : "F8FBFF");
             for (XWPFParagraph paragraph : cell.getParagraphs()) for (XWPFRun run : paragraph.getRuns()) {
-                run.setFontFamily("Malgun Gothic"); run.setFontSize(10); run.setBold(row == 1);
+                run.setFontFamily("Malgun Gothic"); run.setFontSize(10); run.setBold(row == 1 || row == 3);
             }
         }
     }
@@ -243,6 +277,7 @@ public class FinancialInputDocumentService {
 
     private record InputField(String section, String key, String label, String description,
         String example, boolean required) {}
+    private record ParsedCell(String value, String note) {}
     public record ValidationIssue(String field, String label, String message, String rawSafeSummary) {}
     public static final class FinancialInputDocumentException extends IllegalArgumentException {
         private final List<ValidationIssue> issues;

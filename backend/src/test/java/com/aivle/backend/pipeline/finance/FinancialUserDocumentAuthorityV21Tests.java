@@ -48,6 +48,8 @@ class FinancialUserDocumentAuthorityV21Tests {
             mock(JobEventPublisher.class));
 
         ObjectNode values = completeValues(mapper, 987_654_321);
+        values.putObject(FinancialInputDocumentService.INPUT_NOTES)
+            .put("annualFixedLaborCost", "개발자 2명, 초기 3~4인 기준");
         var result = service.importUserDocument(7L, 41L, "artifact-1", hash('d'), values);
 
         assertThat(result.sourceMarketResearchVersionId()).isNull();
@@ -56,6 +58,11 @@ class FinancialUserDocumentAuthorityV21Tests {
         assertThat(result.snapshot().path("sourceDocumentArtifactId").asText()).isEqualTo("artifact-1");
         assertThat(result.snapshot().path("values").path("annualFixedLaborCost").path("amount").asLong())
             .isEqualTo(987_654_321L);
+        assertThat(result.snapshot().path("valueProvenance").path("annualFixedLaborCost")
+            .path("userNote").asText()).isEqualTo("개발자 2명, 초기 3~4인 기준");
+        assertThat(result.snapshot().path("upstreamReferences").path("userDocument")
+            .path("normalizedValues").path(FinancialInputDocumentService.INPUT_NOTES)
+            .path("annualFixedLaborCost").asText()).isEqualTo("개발자 2명, 초기 3~4인 기준");
         verifyNoInteractions(marketSeeds, marketResearch, marketVersions);
     }
 

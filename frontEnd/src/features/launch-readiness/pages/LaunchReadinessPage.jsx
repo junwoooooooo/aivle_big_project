@@ -7,7 +7,7 @@ import { AppIcon, Dialog, ProjectStageHeader, ProjectWorkspace, useBodyScrollLoc
 import { createLaunchReadinessApi } from '../api/launchReadinessApi.js';
 import { PdfCanvasViewer } from '../components/PdfCanvasViewer.jsx';
 import { downloadPdfBlob } from '../model/pdfBlob.js';
-import { usePdfPreview } from '../model/usePdfPreview.js';
+import { PDF_PREVIEW_FAILURE, usePdfPreview } from '../model/usePdfPreview.js';
 import '../styles/launch-readiness.css';
 
 const MODULES = {
@@ -22,14 +22,19 @@ function downloadDocumentBlob(blob, filename) {
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30_000); }
 }
 
-function PdfPreviewDialog({ preview, onClose, onViewerError }) {
+export function PdfPreviewDialog({ preview, onClose, onViewerError }) {
   useBodyScrollLock(Boolean(preview));
+  const errorCopy = {
+    [PDF_PREVIEW_FAILURE.FETCH]: '보고서를 불러오지 못했습니다.',
+    [PDF_PREVIEW_FAILURE.INVALID_BYTES]: '생성된 보고서 형식을 확인할 수 없습니다.',
+    [PDF_PREVIEW_FAILURE.RENDER]: '보고서는 생성되었지만 미리보기를 표시하지 못했습니다.',
+  }[preview?.failure];
   return <Dialog open={Boolean(preview)} onClose={onClose} title={preview?.title ?? 'PDF 보고서 미리보기'} variant="pdf-preview">
     <div className="launch-pdf-preview">
       <div className="launch-pdf-preview__body">
         {preview?.status === 'LOADING' && <div className="launch-pdf-preview__state" role="status"><AppIcon name="sparkles" size={20} /><strong>보고서를 준비하고 있습니다.</strong><span>완료되면 이 화면에서 바로 확인할 수 있습니다.</span></div>}
         {preview?.status === 'READY' && <PdfCanvasViewer blob={preview.blob} onError={onViewerError} />}
-        {preview?.status === 'ERROR' && <div className="launch-pdf-preview__state is-error" role="alert"><strong>PDF 보고서를 만들지 못했습니다.</strong><span>{preview.blob ? '이 브라우저에서 미리보기를 표시하지 못했습니다. 파일을 내려받아 확인할 수 있습니다.' : getUserErrorMessage(preview.error)}</span></div>}
+        {preview?.status === 'ERROR' && <div className="launch-pdf-preview__state is-error" role="alert"><strong>{errorCopy}</strong>{preview.failure === PDF_PREVIEW_FAILURE.RENDER && <span>파일은 정상적으로 생성되었습니다. 아래 다운로드 버튼으로 확인할 수 있습니다.</span>}</div>}
       </div>
       <footer>{preview?.blob && <button type="button" className="launch-button is-primary" onClick={() => void downloadPdfBlob(preview.blob, preview.filename).catch(onViewerError)}><AppIcon name="download" size={16} />PDF 다운로드</button>}</footer>
     </div>

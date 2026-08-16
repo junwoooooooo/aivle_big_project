@@ -30,9 +30,12 @@ import com.aivle.backend.taskrun.repository.TaskResultRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -97,6 +100,44 @@ class FinancialDocumentImportV21_1Tests {
         assertThat(response.analysis().status()).isEqualTo("QUEUED");
         verify(finance).importUserDocument(eq(7L), eq(41L), anyString(), anyString(), any());
         verify(analysis).start(7L, 41L, "command-new", "request-new");
+    }
+
+    @Test
+    void actualUserDocumentFlowsThroughImportAndStartWithExactSemanticValues() throws Exception {
+        ProjectEvidenceArtifactService artifacts = mock(ProjectEvidenceArtifactService.class);
+        FinancialService finance = mock(FinancialService.class);
+        FinancialAnalysisService analysis = mock(FinancialAnalysisService.class);
+        var documents = new FinancialInputDocumentService(mapper);
+        var service = new FinancialDocumentImportService(artifacts, documents, finance, analysis);
+        var file = new MockMultipartFile("file", "finance-readiness-input.docx",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", userFixture());
+        String documentHash = "sha256:" + "d".repeat(64);
+        var snapshot = snapshot(documentHash);
+        var action = new FinancialApiModels.AnalysisActionResponse("task-user", "task-user", "QUEUED",
+            snapshot.snapshotId(), snapshot.snapshotHash());
+        when(artifacts.fingerprint(file)).thenReturn(new ProjectEvidenceArtifactService.UploadFingerprint(
+            documentHash, file.getSize(), file.getContentType()));
+        when(analysis.replayImport(7L, 41L, "command-user", documentHash)).thenReturn(Optional.empty());
+        when(artifacts.upload(7L, 41L, file)).thenReturn(new ArtifactView("artifact-user", 41L,
+            file.getOriginalFilename(), file.getContentType(), file.getSize(), documentHash, null));
+        when(finance.importUserDocument(eq(7L), eq(41L), eq("artifact-user"), eq(documentHash), any()))
+            .thenReturn(snapshot);
+        when(finance.preparation(7L, 41L, "preparation-1")).thenReturn(preparation());
+        when(analysis.start(7L, 41L, "command-user", "request-user")).thenReturn(action);
+
+        var response = service.importAndStart(7L, 41L, file, "command-user", "request-user");
+
+        var normalized = org.mockito.ArgumentCaptor.forClass(tools.jackson.databind.JsonNode.class);
+        verify(finance).importUserDocument(eq(7L), eq(41L), eq("artifact-user"), eq(documentHash),
+            normalized.capture());
+        assertThat(response.analysis().status()).isEqualTo("QUEUED");
+        assertThat(normalized.getValue().path("annualFixedLaborCost").path("amount").decimalValue())
+            .isEqualByComparingTo("160000000");
+        assertThat(normalized.getValue().path("revenueModel").asText()).isEqualTo("HYBRID");
+        assertThat(normalized.getValue().path("threeYearTargets").path("years").get(2)
+            .path("value").decimalValue()).isEqualByComparingTo("900");
+        assertThat(normalized.getValue().path(FinancialInputDocumentService.INPUT_NOTES)
+            .path("annualFixedLaborCost").asText()).contains("2명", "3~4인");
     }
 
     @Test
@@ -205,5 +246,14 @@ class FinancialDocumentImportV21_1Tests {
         return new FinancialApiModels.PreparationView("FINANCIAL_PREPARATION", "1.0", "preparation-1", 41L,
             null, null, null, null, null, false, 1, mapper.createObjectNode(), mapper.createObjectNode(),
             mapper.createObjectNode(), mapper.createObjectNode(), List.of(), true, "snapshot-1", null);
+    }
+
+    private byte[] userFixture() throws Exception {
+        try (var input = getClass().getResourceAsStream(
+                "/fixtures/finance/user-finance-readiness-input.docx.b64")) {
+            Assertions.assertNotNull(input);
+            return Base64.getMimeDecoder().decode(
+                new String(input.readAllBytes(), StandardCharsets.US_ASCII));
+        }
     }
 }
