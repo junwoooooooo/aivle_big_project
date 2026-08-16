@@ -19,7 +19,7 @@ public class ConceptRefinementRound extends BaseEntity {
         DECISION_RECORDED, KEEP_CURRENT, APPLYING_HYPOTHESES, APPLY_FAILED,
         LEGAL_REVIEW_PENDING, LEGAL_REVIEW_FAILED, LEGAL_BLOCKED,
         APPLIED_PENDING_FINALIZATION, FINALIZING, FINALIZATION_FAILED, FINALIZED,
-        DECLINED, CONTINUED
+        DECLINED, CONTINUED, RECOVERED
     }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
@@ -65,6 +65,11 @@ public class ConceptRefinementRound extends BaseEntity {
     @Column(name = "application_error_code", length = 80) private String applicationErrorCode;
     @Column(name = "application_started_at") private Instant applicationStartedAt;
     @Column(name = "application_applied_at") private Instant applicationAppliedAt;
+    @Column(name = "application_before_json", columnDefinition = "TEXT") private String applicationBeforeJson;
+    @Column(name = "application_before_hash", length = 71) private String applicationBeforeHash;
+    @Column(name = "recovery_idempotency_key", length = 128) private String recoveryIdempotencyKey;
+    @Column(name = "recovery_hash", length = 71) private String recoveryHash;
+    @Column(name = "recovered_at") private Instant recoveredAt;
     @Column(name="finalization_idempotency_key",length=128) private String finalizationIdempotencyKey;
     @Column(name="finalization_hash",length=71) private String finalizationHash;
     @Column(name="finalization_task_run_id",length=64) private String finalizationTaskRunId;
@@ -135,7 +140,7 @@ public class ConceptRefinementRound extends BaseEntity {
     }
 
     public void continued() {
-        if (state != State.APPLIED_PENDING_FINALIZATION)
+        if (state != State.APPLIED_PENDING_FINALIZATION && state != State.RECOVERED)
             throw new IllegalStateException("Round cannot be continued");
         state = State.CONTINUED;
     }
@@ -214,6 +219,14 @@ public class ConceptRefinementRound extends BaseEntity {
         state = State.APPLYING_HYPOTHESES;
     }
 
+    public void captureApplicationBefore(String json, String hash) {
+        if (state != State.DECISION_RECORDED || applicationBeforeJson != null || applicationBeforeHash != null
+                || json == null || json.isBlank() || hash == null || !hash.matches("sha256:[0-9a-f]{64}"))
+            throw new IllegalStateException("application-before snapshot is unavailable");
+        applicationBeforeJson = json;
+        applicationBeforeHash = hash;
+    }
+
     public void startLocalApplication(String key, String hash, Instant now) {
         requireApplicationStart(State.DECISION_RECORDED, key, hash, now);
         applicationAttempt = 1;
@@ -274,6 +287,21 @@ public class ConceptRefinementRound extends BaseEntity {
         state = State.LEGAL_BLOCKED;
     }
 
+    public void recovered(int selectionRevision, int bmPlanRevision, String key, String hash, Instant now) {
+        if (state != State.LEGAL_BLOCKED || selectionRevision < 0 || bmPlanRevision < 0
+                || key == null || key.isBlank() || key.length() > 128
+                || hash == null || !hash.matches("sha256:[0-9a-f]{64}") || now == null)
+            throw new IllegalStateException("legal recovery is unavailable");
+        appliedSelectionRevision = selectionRevision;
+        appliedBmPlanRevision = bmPlanRevision;
+        recoveryIdempotencyKey = key;
+        recoveryHash = hash;
+        recoveredAt = now;
+        seedRebuildRequired = true;
+        applicationErrorCode = null;
+        state = State.RECOVERED;
+    }
+
     public void readyForFinalization() {
         if (appliedSelectionRevision == null || appliedBmPlanRevision == null
                 || !java.util.Set.of(State.DECISION_RECORDED, State.APPLYING_HYPOTHESES,
@@ -286,7 +314,7 @@ public class ConceptRefinementRound extends BaseEntity {
     public boolean postApplyState() {
         return java.util.Set.of(State.LEGAL_REVIEW_PENDING, State.LEGAL_REVIEW_FAILED,
             State.LEGAL_BLOCKED, State.APPLIED_PENDING_FINALIZATION, State.FINALIZING,
-            State.FINALIZATION_FAILED, State.FINALIZED).contains(state);
+            State.FINALIZATION_FAILED, State.FINALIZED, State.RECOVERED).contains(state);
     }
 
     public void recordResolvedLineage(int selectionRevision, int bmRevision) {
@@ -295,7 +323,7 @@ public class ConceptRefinementRound extends BaseEntity {
         appliedSelectionRevision=selectionRevision; appliedBmPlanRevision=bmRevision;
     }
     public void startFinalization(String key,String hash,String taskId,Instant now) {
-        if (!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES).contains(state))
+        if (!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES,State.RECOVERED).contains(state))
             throw new IllegalStateException("finalization unavailable");
         requireFinalization(key,hash,now); finalizationAttempt=1; finalizationTaskRunId=taskId;
         state=taskId==null?state:State.FINALIZING;
@@ -312,7 +340,7 @@ public class ConceptRefinementRound extends BaseEntity {
         finalizationErrorCode=code; state=State.FINALIZATION_FAILED;
     }
     public void finalized(Long finalId,String seedId,Instant now) {
-        if(!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES,State.FINALIZING).contains(state)
+        if(!java.util.Set.of(State.APPLIED_PENDING_FINALIZATION,State.KEEP_CURRENT,State.NO_CHANGES,State.RECOVERED,State.FINALIZING).contains(state)
                 ||finalId==null||seedId==null||now==null) throw new IllegalStateException("finalization unavailable");
         this.finalId=finalId; this.finalMarketSeedSnapshotId=seedId; finalizedAt=now;
         finalizationErrorCode=null; state=State.FINALIZED;

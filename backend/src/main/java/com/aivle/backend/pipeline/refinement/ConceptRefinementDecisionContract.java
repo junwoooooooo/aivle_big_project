@@ -154,6 +154,20 @@ public class ConceptRefinementDecisionContract {
         return (ObjectNode) plan.deepCopy();
     }
 
+    public ObjectNode rollbackBmPatch(ConceptRefinementRound round) {
+        ObjectNode decision = decisionSnapshot(round);
+        JsonNode selected = decision.path("selectedProposals");
+        if (!selected.isArray()) throw staleContract();
+        ObjectNode patch = mapper.createObjectNode();
+        for (JsonNode proposal : selected) {
+            String storageField = BM_FIELDS.get(proposal.path("fieldKey").asText());
+            if (storageField == null) continue;
+            if (!proposal.has("currentValue")) throw staleContract();
+            patch.set(storageField, proposal.get("currentValue").deepCopy());
+        }
+        return patch;
+    }
+
     public String applicationHash(ConceptRefinementRound round) {
         ObjectNode identity = mapper.createObjectNode();
         identity.put("contract", "concept-refinement-application-v1");

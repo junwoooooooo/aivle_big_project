@@ -40,6 +40,7 @@ class ConceptRefinementServiceTests {
     @Mock CanonicalInputHasher inputHasher;
     @Mock ConceptRefinementDecisionContract decisions;
     @Mock ConceptRefinementLineageGuard lineage;
+    @Mock ConceptRefinementApplicationBeforeContract applicationBefore;
     @Mock Project project;
     @Mock User owner;
     @Mock ConceptPortfolioSelection selection;
@@ -52,7 +53,7 @@ class ConceptRefinementServiceTests {
     @BeforeEach
     void setUp() {
         service = new ConceptRefinementService(projects, validations, selections, seeds, rounds,
-            materials, tasks, inputHasher, mapper, decisions, lineage);
+            materials, tasks, inputHasher, mapper, decisions, lineage, applicationBefore);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
         lenient().when(project.getOwner()).thenReturn(owner);
         lenient().when(owner.getId()).thenReturn(7L);

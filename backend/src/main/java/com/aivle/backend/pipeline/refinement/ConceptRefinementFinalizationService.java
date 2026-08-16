@@ -111,9 +111,11 @@ public class ConceptRefinementFinalizationService {
         return new FinalView(round==null?null:round.getBusinessValidationSessionId(),"FINALIZED",value.getOutcome().name(),stale,mapper.readTree(value.getFinalJson()));}
     OutcomePlan outcome(ConceptRefinementRound round){
         boolean resolved=java.util.Set.of(ConceptRefinementRound.State.KEEP_CURRENT,ConceptRefinementRound.State.NO_CHANGES).contains(round.getState());
-        boolean currentApplied=java.util.Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
+        boolean recovered=round.getRecoveredAt()!=null&&java.util.Set.of(ConceptRefinementRound.State.RECOVERED,
             ConceptRefinementRound.State.FINALIZATION_FAILED,ConceptRefinementRound.State.FINALIZING).contains(round.getState());
-        if(!resolved&&!currentApplied)throw unavailable();
+        boolean currentApplied=!recovered&&java.util.Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
+            ConceptRefinementRound.State.FINALIZATION_FAILED,ConceptRefinementRound.State.FINALIZING).contains(round.getState());
+        if(!resolved&&!currentApplied&&!recovered)throw unavailable();
         List<ConceptRefinementRound> history=new ArrayList<>(rounds
             .findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(
                 round.getProjectId(),round.getBusinessValidationSessionId()));
@@ -122,7 +124,7 @@ public class ConceptRefinementFinalizationService {
         ObjectNode overlay=readOverlay(round.baselineOverlayJson());ArrayNode changes=mapper.createArrayNode();
         boolean hypotheses=false;boolean priorApplied=false;
         for(ConceptRefinementRound item:history){
-            boolean applied=item.getState()==ConceptRefinementRound.State.CONTINUED
+            boolean applied=item.getState()==ConceptRefinementRound.State.CONTINUED&&item.getRecoveredAt()==null
                 ||Objects.equals(item.getId(),round.getId())&&currentApplied;
             if(!applied)continue;
             priorApplied=true;ObjectNode plan=decisions.applicationPlan(item);
@@ -132,9 +134,10 @@ public class ConceptRefinementFinalizationService {
             if(selected.isArray())selected.forEach(value->changes.add(value.deepCopy()));
         }
         ConceptRefinementFinal.Outcome finalOutcome=priorApplied?ConceptRefinementFinal.Outcome.REFINED:
+            recovered?ConceptRefinementFinal.Outcome.KEEP_CURRENT:
             round.getState()==ConceptRefinementRound.State.KEEP_CURRENT?ConceptRefinementFinal.Outcome.KEEP_CURRENT:
             ConceptRefinementFinal.Outcome.NO_CHANGES;
-        boolean seedRequired=round.isSeedRebuildRequired()||(currentApplied&&
+        boolean seedRequired=recovered||round.isSeedRebuildRequired()||(currentApplied&&
             (hypotheses||!decisions.applicationPlan(round).path("overlay").isEmpty()));
         return new OutcomePlan(finalOutcome,resolved,hypotheses,!overlay.isEmpty(),seedRequired,overlay,changes);}
     private String finalizationHash(ConceptRefinementRound r,OutcomePlan o){ObjectNode n=mapper.createObjectNode();n.put("roundId",r.getId());n.put("outcome",o.outcome.name());

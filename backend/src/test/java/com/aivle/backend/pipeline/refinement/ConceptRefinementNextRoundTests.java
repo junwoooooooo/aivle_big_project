@@ -35,6 +35,7 @@ class ConceptRefinementNextRoundTests {
     @Mock ConceptRefinementRoundRepository rounds; @Mock ConceptRefinementMaterialFactory materials;
     @Mock ConceptPortfolioSelectionTaskFactory tasks; @Mock CanonicalInputHasher inputHasher;
     @Mock ConceptRefinementDecisionContract decisions; @Mock ConceptRefinementLineageGuard lineage;
+    @Mock ConceptRefinementApplicationBeforeContract applicationBefore;
     @Mock Project project; @Mock User owner; @Mock ConceptPortfolioSelection selection; @Mock TaskRun task;
     private final ObjectMapper mapper = new ObjectMapper();
     private ConceptRefinementService service;
@@ -43,7 +44,7 @@ class ConceptRefinementNextRoundTests {
 
     @BeforeEach void setUp() {
         service = new ConceptRefinementService(projects, validations, selections, seeds, rounds,
-            materials, tasks, inputHasher, mapper, decisions, lineage);
+            materials, tasks, inputHasher, mapper, decisions, lineage, applicationBefore);
         lenient().when(project.getOwner()).thenReturn(owner); lenient().when(owner.getId()).thenReturn(OWNER);
         lenient().when(projects.findByIdForUpdate(PROJECT)).thenReturn(Optional.of(project));
         lenient().when(selection.getId()).thenReturn(31L); lenient().when(selection.getHypothesisRevision()).thenReturn(4);
@@ -110,6 +111,41 @@ class ConceptRefinementNextRoundTests {
         assertThatThrownBy(() -> service.next(OWNER,PROJECT,"next-4","request",3,HASH,null))
             .isInstanceOf(BusinessException.class);
         verify(tasks,never()).create(anyLong(),any(),anyString(),any(),anyString(),anyString());
+    }
+
+    @Test void recoveredRoundContinuesFromRecoveredRevisionsWithoutBlockedOverlay() {
+        ConceptRefinementRound parent=appliedRound();
+        ReflectionTestUtils.setField(parent,"state",ConceptRefinementRound.State.RECOVERED);
+        ReflectionTestUtils.setField(parent,"recoveredAt",Instant.parse("2026-08-17T00:03:00Z"));
+        ReflectionTestUtils.setField(parent,"appliedSelectionRevision",6);
+        ReflectionTestUtils.setField(parent,"appliedBmPlanRevision",5);
+        ReflectionTestUtils.setField(parent,"baselineOverlayJson","{\"targetUsers\":\"baseline\"}");
+        ReflectionTestUtils.setField(parent,"seedRebuildRequired",true);
+        when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT)).thenReturn(Optional.of(parent));
+        when(rounds.findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(PROJECT,"session-1"))
+            .thenReturn(List.of(parent));
+        when(lineage.postApplyCurrent(PROJECT,parent)).thenReturn(true);
+        when(selection.getHypothesisRevision()).thenReturn(6);
+
+        service.next(OWNER,PROJECT,"next-recovered","request",1,null,HASH);
+
+        ArgumentCaptor<ConceptRefinementRound> saved=ArgumentCaptor.forClass(ConceptRefinementRound.class);
+        verify(rounds).save(saved.capture());
+        assertThat(saved.getValue().baselineSelectionRevision()).isEqualTo(6);
+        assertThat(saved.getValue().baselineBmPlanRevision()).isEqualTo(5);
+        assertThat(mapper.readTree(saved.getValue().baselineOverlayJson()).path("targetUsers").asText()).isEqualTo("baseline");
+        assertThat(saved.getValue().isSeedRebuildRequired()).isTrue();
+        verify(decisions,never()).applicationPlan(parent);
+    }
+
+    @Test void recoveryProjectionAndRoundThreeNextAvailabilityAreStateBound() {
+        ConceptRefinementRound blocked=appliedRound();ReflectionTestUtils.setField(blocked,"state",ConceptRefinementRound.State.LEGAL_BLOCKED);
+        when(applicationBefore.available(blocked)).thenReturn(true);when(decisions.proposalSet(blocked)).thenReturn(
+            new ConceptRefinementDecisionContract.ProposalSet(HASH,mapper.createArrayNode(),Map.of(),List.of()));
+        assertThat(service.view(blocked,false).recovery().available()).isTrue();
+        ReflectionTestUtils.setField(blocked,"state",ConceptRefinementRound.State.RECOVERED);
+        ReflectionTestUtils.setField(blocked,"roundNumber",3);ReflectionTestUtils.setField(blocked,"recoveredAt",Instant.now());
+        var view=service.view(blocked,false);assertThat(view.nextRound().available()).isFalse();
     }
 
     @Test void sameNextIdempotencyKeyReplaysItsChildEvenAfterALaterRoundExists() {

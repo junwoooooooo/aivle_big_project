@@ -95,6 +95,22 @@ class ConceptRefinementFinalizationTests {
   service.finalizeRound(OWNER,PROJECT,"retry-3",1,f.round.getDecisionHash());assertThat(f.round.getFinalizationAttempt()).isEqualTo(3);f.round.finalizationFailed("handoff-task","FAILED");
   assertThatThrownBy(()->service.finalizeRound(OWNER,PROJECT,"retry-4",1,f.round.getDecisionHash())).isInstanceOf(BusinessException.class);}
 
+ @Test void recoveredFinalizationKeepsCurrentOutcomeAndAlwaysRequiresNewSeed(){ConceptRefinementRound r=appliedRound(proposal("price","10","12"),6,5);
+  ReflectionTestUtils.setField(r,"state",ConceptRefinementRound.State.RECOVERED);ReflectionTestUtils.setField(r,"recoveredAt",clock.instant());
+  ReflectionTestUtils.setField(r,"seedRebuildRequired",true);when(rounds.findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(PROJECT,"session"))
+   .thenReturn(List.of(r));var outcome=service.outcome(r);assertThat(outcome.outcome()).isEqualTo(ConceptRefinementFinal.Outcome.KEEP_CURRENT);
+  assertThat(outcome.newSeed()).isTrue();assertThat(outcome.selectedChanges()).isEmpty();}
+
+ @Test void recoveredFinalizationRetainsPriorAppliedHistoryButExcludesBlockedCurrentSelection(){ConceptRefinementRound prior=appliedRound(proposal("targetUsers","old","kept"),5,3);prior.continued();
+  ConceptRefinementRound current=ConceptRefinementRound.next(prior,5,3,"{\"targetUsers\":\"kept\"}",true,"proposal-2","next",HASH);ReflectionTestUtils.setField(current,"id",202L);
+  ObjectNode blocked=proposal("price","10","12");current.materialize("["+blocked+"]","[]",true);var set=contract.proposalSet(current);var decision=contract.decision(current,set,set.orderedKeys(),false);
+  current.recordDecision(decision.snapshot().toString(),decision.hash(),"d2",OWNER,clock.instant(),false);ReflectionTestUtils.setField(current,"state",ConceptRefinementRound.State.RECOVERED);
+  ReflectionTestUtils.setField(current,"recoveredAt",clock.instant());ReflectionTestUtils.setField(current,"appliedSelectionRevision",6);ReflectionTestUtils.setField(current,"appliedBmPlanRevision",3);
+  when(rounds.findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(PROJECT,"session")).thenReturn(List.of(prior,current));
+  var outcome=service.outcome(current);assertThat(outcome.outcome()).isEqualTo(ConceptRefinementFinal.Outcome.REFINED);
+  assertThat(outcome.selectedChanges()).hasSize(1);assertThat(outcome.selectedChanges().get(0).path("fieldKey").asText()).isEqualTo("targetUsers");
+  assertThat(outcome.overlayNode().path("targetUsers").asText()).isEqualTo("kept");}
+
  void stub(ConceptRefinementRound r){when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT)).thenReturn(Optional.of(r));}
  ConceptRefinementRound base(){ConceptRefinementRound r=ConceptRefinementRound.start(PROJECT,source,"proposal","start",HASH);ReflectionTestUtils.setField(r,"id",101L);return r;}
  ConceptRefinementRound keepRound(){ConceptRefinementRound r=base();r.materialize("["+proposal("price","10","12")+"]","[]",true);var set=contract.proposalSet(r);var d=contract.decision(r,set,List.of(),true);r.recordDecision(d.snapshot().toString(),d.hash(),"d",OWNER,clock.instant(),true);return r;}

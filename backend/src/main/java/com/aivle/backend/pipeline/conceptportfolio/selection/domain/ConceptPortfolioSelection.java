@@ -96,6 +96,16 @@ public class ConceptPortfolioSelection extends BaseEntity {
         status = ConceptPortfolioSelectionStatus.LEGAL_REPORT_READY;
     }
 
+    public void recoverBlockedRefinement() {
+        if (!isCurrent || status != ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED
+                || activeTaskRunId != null)
+            throw new IllegalStateException("Blocked refinement cannot be recovered");
+        status = ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT;
+        activeAction = null;
+        failureCode = null;
+        hypothesisRevision++;
+    }
+
     public void markStale() {
         isCurrent = false; status = ConceptPortfolioSelectionStatus.STALE;
         activeTaskRunId = null; activeAction = null;

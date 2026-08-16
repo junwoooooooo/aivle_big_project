@@ -25,6 +25,7 @@ public class ConceptRefinementApplicationService {
     private final ProjectRepository projects;
     private final ConceptRefinementRoundRepository rounds;
     private final ConceptRefinementDecisionContract contract;
+    private final ConceptRefinementApplicationBeforeContract applicationBefore;
     private final ConceptRefinementLineageGuard lineage;
     private final ConceptPortfolioSelectionRepository selections;
     private final ConceptPortfolioSelectionService selectionService;
@@ -36,11 +37,13 @@ public class ConceptRefinementApplicationService {
 
     public ConceptRefinementApplicationService(ProjectRepository projects,
             ConceptRefinementRoundRepository rounds, ConceptRefinementDecisionContract contract,
+            ConceptRefinementApplicationBeforeContract applicationBefore,
             ConceptRefinementLineageGuard lineage, ConceptPortfolioSelectionRepository selections,
             ConceptPortfolioSelectionService selectionService, BmPlanPreparationService bmPlans,
             MarketAnalysisSeedSnapshotRepository seeds, ConceptRefinementService refinement,
             ObjectMapper mapper, Clock clock) {
         this.projects = projects; this.rounds = rounds; this.contract = contract;
+        this.applicationBefore = applicationBefore;
         this.lineage = lineage; this.selections = selections; this.selectionService = selectionService;
         this.bmPlans = bmPlans; this.seeds = seeds; this.refinement = refinement;
         this.mapper = mapper; this.clock = clock;
@@ -83,6 +86,12 @@ public class ConceptRefinementApplicationService {
             .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
 
         if (!hypotheses.isEmpty()) {
+            if (round.getState() == ConceptRefinementRound.State.APPLY_FAILED) {
+                applicationBefore.validate(round);
+            } else {
+                ConceptRefinementApplicationBeforeContract.Snapshot snapshot = applicationBefore.capture(round);
+                round.captureApplicationBefore(snapshot.json(), snapshot.hash());
+            }
             ObjectNode binding = binding(round, applicationHash,
                 round.baselineSelectionRevision(), round.baselineBmPlanRevision());
             TaskRun task = selectionService.confirmFromRefinement(ownerId, projectId,

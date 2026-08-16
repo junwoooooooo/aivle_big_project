@@ -116,6 +116,8 @@ export default function BusinessValidationPage() {
     setRefinement(await api.applyRefinement(applyBody())));
   const retryLegal = () => refine(async () =>
     setRefinement(await api.retryRefinementLegal(applyBody())));
+  const recoverLegalBlocked = () => refine(async () =>
+    setRefinement(await api.recoverLegalBlocked(applyBody())));
   const finalizeRefinement = () => refine(async () =>
     setRefinementFinal(await api.finalizeRefinement(applyBody())));
 
@@ -129,6 +131,7 @@ export default function BusinessValidationPage() {
     onNextRefinement={nextRefinement}
     onDecideAndApply={decideAndApply} onKeepCurrent={keepCurrent}
     onApplyRefinement={applyRefinement} onRetryLegal={retryLegal}
+    onRecoverLegalBlocked={recoverLegalBlocked}
     onFinalizeRefinement={finalizeRefinement} />;
 }
 
@@ -137,7 +140,8 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   onStart = () => {}, onRetryBm = () => {}, onStartRefinement = () => {},
   onRetryRefinement = () => {}, onDecideAndApply = () => {}, onKeepCurrent = () => {},
   onNextRefinement = () => {},
-  onApplyRefinement = () => {}, onRetryLegal = () => {}, onFinalizeRefinement = () => {} }) {
+  onApplyRefinement = () => {}, onRetryLegal = () => {}, onRecoverLegalBlocked = () => {},
+  onFinalizeRefinement = () => {} }) {
   const state = current?.state ?? 'NOT_STARTED';
   const marketResult = normalizeMarketResult(current?.market?.result);
   const bmResult = normalizeMarketResult(current?.businessModel?.result);
@@ -195,7 +199,8 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
       onRetry={onRetryRefinement} onDecideAndApply={onDecideAndApply}
       onNext={onNextRefinement}
       onKeepCurrent={onKeepCurrent} onApply={onApplyRefinement}
-      onRetryLegal={onRetryLegal} onFinalize={onFinalizeRefinement} /> : null}
+      onRetryLegal={onRetryLegal} onRecoverLegalBlocked={onRecoverLegalBlocked}
+      onFinalize={onFinalizeRefinement} /> : null}
 
     {deferValidationRerun ? <div className="business-validation__secondary-rerun">
       <p>새 기준으로 전체 시장·사업 모델 검증이 필요한 경우 다시 실행할 수 있습니다.</p>

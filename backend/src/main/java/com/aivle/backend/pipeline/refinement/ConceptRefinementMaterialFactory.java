@@ -204,6 +204,10 @@ public class ConceptRefinementMaterialFactory {
             if (round.getState() == ConceptRefinementRound.State.DECLINED) {
                 append(out, readArray(round.getProposalJson()));
             } else if (round.getState() == ConceptRefinementRound.State.CONTINUED) {
+                if (round.getRecoveredAt() != null) {
+                    append(out, readArray(round.getProposalJson()));
+                    return;
+                }
                 ConceptRefinementDecisionContract.ProposalSet set = decisions.proposalSet(round);
                 Set<String> selected = new HashSet<>();
                 JsonNode decision = mapper.readTree(round.getDecisionJson());

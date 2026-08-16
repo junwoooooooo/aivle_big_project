@@ -17,7 +17,8 @@ function Action({ children, busy, disabled, variant, onClick }) {
 }
 
 export default function ConceptRefinementPanel({ refinement, finalView, busy = false, error,
-  onStart, onRetry, onNext, onDecideAndApply, onKeepCurrent, onApply, onRetryLegal, onFinalize }) {
+  onStart, onRetry, onNext, onDecideAndApply, onKeepCurrent, onApply, onRetryLegal,
+  onRecoverLegalBlocked, onFinalize }) {
   const proposals = useMemo(() => validProposals(refinement?.proposals), [refinement?.proposals]);
   const proposalIdentity = `${refinement?.round ?? 0}:${refinement?.proposalSetHash ?? ''}`;
   const [selection, setSelection] = useState(() => ({ identity: proposalIdentity, keys: new Set() }));
@@ -90,13 +91,26 @@ export default function ConceptRefinementPanel({ refinement, finalView, busy = f
       <Action busy={busy} disabled={stale} onClick={onApply}>변경 반영 다시 시도</Action></div> : null}
     {state === 'LEGAL_REVIEW_FAILED' ? <div className="concept-refinement__status"><p>법률 영향 확인을 완료하지 못했습니다.</p>
       <Action busy={busy} onClick={onRetryLegal}>법률 검토 다시 시도</Action></div> : null}
-    {state === 'LEGAL_BLOCKED' ? <Alert tone="warning">선택한 변경은 법률 검토를 통과하지 못해 현재 컨셉으로 확정할 수 없습니다.</Alert> : null}
+    {state === 'LEGAL_BLOCKED' ? <div className="concept-refinement__status">
+      <Alert tone="warning">선택한 변경은 법률 검토를 통과하지 못해 현재 컨셉으로 확정할 수 없습니다.</Alert>
+      {refinement?.recovery?.available === true ? <>
+        <p>법률 검토에 막힌 이번 변경을 취소하고 변경 전 상태로 돌아갈 수 있습니다.</p>
+        <Action busy={busy} disabled={stale} onClick={onRecoverLegalBlocked}>차단된 변경 취소</Action>
+      </> : <p>이 결과는 자동으로 되돌릴 수 없어 사업 검증을 다시 진행해야 합니다.</p>}
+    </div> : null}
     {state === 'APPLIED_PENDING_FINALIZATION' ? <div className="concept-refinement__status"><p>선택한 변경을 반영했습니다. 최종 컨셉으로 확정하면 다음 단계에서 이 내용을 사용합니다.</p>
       {nextAvailable ? <p>지금까지 반영한 변경은 그대로 유지한 채 한 번 더 개선 제안을 받을 수 있습니다.</p> : null}
       <div className="concept-refinement__actions">
         <Action busy={busy} disabled={stale} onClick={onFinalize}>이 컨셉으로 확정하기</Action>
         {nextAvailable ? <Action busy={busy} variant="secondary" onClick={onNext}>다른 제안 더 받기</Action> : null}
       </div></div> : null}
+    {state === 'RECOVERED' ? <div className="concept-refinement__status">
+      <p>법률 검토에 막힌 변경을 취소하고, 이전 검증값으로 복구했습니다.</p>
+      <div className="concept-refinement__actions">
+        <Action busy={busy} disabled={stale} onClick={onFinalize}>현재 상태로 확정</Action>
+        {nextAvailable ? <Action busy={busy} variant="secondary" onClick={onNext}>다른 제안 받기</Action> : null}
+      </div>
+    </div> : null}
     {state === 'FINALIZATION_FAILED' ? <div className="concept-refinement__status"><p>최종 컨셉을 정리하지 못했습니다.</p>
       <Action busy={busy} onClick={onFinalize}>최종 확정 다시 시도</Action></div> : null}
     {state === 'KEEP_CURRENT' ? <div className="concept-refinement__status"><p>현재 사업안을 유지하는 결정이 저장되었습니다.</p>

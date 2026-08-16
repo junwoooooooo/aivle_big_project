@@ -46,6 +46,7 @@ class ConceptRefinementApplicationTests {
     @Mock BmPlanPreparationService bmPlans;
     @Mock MarketAnalysisSeedSnapshotRepository seeds;
     @Mock ConceptRefinementService refinement;
+    @Mock ConceptRefinementApplicationBeforeContract applicationBefore;
     @Mock ConceptPortfolioHypothesisDecisionRepository hypotheses;
     @Mock ConceptPortfolioDeltaLegalReviewRepository deltas;
     @Mock ConceptLegalRegulatoryReportRepository reports;
@@ -68,7 +69,7 @@ class ConceptRefinementApplicationTests {
     @BeforeEach
     void setUp() {
         contract = new ConceptRefinementDecisionContract(mapper, new ConceptPortfolioJsonHasher(mapper));
-        application = new ConceptRefinementApplicationService(projects, rounds, contract, lineage,
+        application = new ConceptRefinementApplicationService(projects, rounds, contract, applicationBefore, lineage,
             selections, selectionService, bmPlans, seeds, refinement, mapper, clock);
         materialization = new ConceptRefinementApplicationMaterializationService(rounds, selections,
             hypotheses, deltas, reports, seeds, bmPlans, selectionService, contract,
@@ -88,6 +89,8 @@ class ConceptRefinementApplicationTests {
         lenient().when(selections.findLocked(31L)).thenReturn(Optional.of(selection));
         lenient().when(selections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(PROJECT_ID))
             .thenReturn(Optional.of(selection));
+        lenient().when(applicationBefore.capture(any())).thenReturn(
+            new ConceptRefinementApplicationBeforeContract.Snapshot(mapper.createObjectNode(), "{}", HASH, List.of()));
         lenient().when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1"))
             .thenReturn(Optional.of(seed));
         lenient().when(seeds.findByIdAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
@@ -194,10 +197,12 @@ class ConceptRefinementApplicationTests {
         assertThat(round.getState()).isEqualTo(ConceptRefinementRound.State.APPLYING_HYPOTHESES);
         assertThat(round.getApplicationTaskRunId()).isEqualTo("confirm-task");
         assertThat(round.getApplicationAttempt()).isEqualTo(1);
+        assertThat(round.getApplicationBeforeJson()).isEqualTo("{}");
         assertThat(seed.getStaleAt()).isNull();
         assertThat(selection.getHypothesisRevision()).isEqualTo(4);
         verify(selectionService, times(1)).confirmFromRefinement(eq(OWNER_ID), eq(PROJECT_ID), eq(31L),
             any(), any(), eq("apply-h"));
+        verify(applicationBefore, times(1)).capture(round);
         verify(bmPlans, never()).patchForRefinement(anyLong(), anyLong(), anyInt(), any());
     }
 

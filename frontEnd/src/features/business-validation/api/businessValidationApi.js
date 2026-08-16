@@ -43,6 +43,7 @@ export function createBusinessValidationApi(client, projectId) {
     decideRefinement(body) { return command('/decision', body); },
     applyRefinement(body) { return command('/apply', body); },
     retryRefinementLegal(body) { return command('/apply/retry-legal', body); },
+    recoverLegalBlocked(body) { return command('/recover-legal-blocked', body); },
     finalizeRefinement(body) { return command('/finalize', body); },
   };
 }

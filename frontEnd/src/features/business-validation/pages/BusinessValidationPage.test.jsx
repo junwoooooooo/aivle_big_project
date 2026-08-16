@@ -191,6 +191,38 @@ describe('BusinessValidationContent', () => {
     expect(screen.queryByText('다듬기 완료')).not.toBeInTheDocument();
   });
 
+  it('안전한 snapshot이 있는 LEGAL_BLOCKED에서만 명시적 복구 action을 제공한다', () => {
+    const onRecover = vi.fn();
+    const { rerender } = render(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('LEGAL_BLOCKED', { recovery: { available: true },
+        decision: { decisionHash: 'sha256:decision' } })} api={api}
+      onRecoverLegalBlocked={onRecover} />);
+    fireEvent.click(screen.getByRole('button', { name: '차단된 변경 취소' }));
+    expect(onRecover).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/변경 전 상태로 돌아갈 수 있습니다/)).toBeInTheDocument();
+    rerender(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('LEGAL_BLOCKED', { recovery: { available: false } })} api={api} />);
+    expect(screen.queryByRole('button', { name: '차단된 변경 취소' })).not.toBeInTheDocument();
+    expect(screen.getByText(/사업 검증을 다시 진행해야 합니다/)).toBeInTheDocument();
+  });
+
+  it('RECOVERED는 현재 상태 확정과 허용된 다음 제안을 제공하고 마지막 Round에서는 next를 숨긴다', () => {
+    const onNext = vi.fn(); const onFinalize = vi.fn();
+    const { rerender } = render(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('RECOVERED', { decision: { decisionHash: 'sha256:decision' },
+        nextRound: { available: true, currentRound: 1, maxRounds: 3 } })} api={api}
+      onNextRefinement={onNext} onFinalizeRefinement={onFinalize} />);
+    expect(screen.getByText(/이전 검증값으로 복구했습니다/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '현재 상태로 확정' }));
+    fireEvent.click(screen.getByRole('button', { name: '다른 제안 받기' }));
+    expect(onFinalize).toHaveBeenCalledTimes(1); expect(onNext).toHaveBeenCalledTimes(1);
+    rerender(<BusinessValidationContent current={view('STALE')}
+      refinement={refinement('RECOVERED', { round: 3, decision: { decisionHash: 'sha256:decision' },
+        nextRound: { available: false, currentRound: 3, maxRounds: 3 } })} api={api} />);
+    expect(screen.getByRole('button', { name: '현재 상태로 확정' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '다른 제안 받기' })).not.toBeInTheDocument();
+  });
+
   it('최종 structured authority로 컨셉·가설·BM·실제 변경을 표시한다', () => {
     render(<BusinessValidationContent current={view('STALE')} refinement={refinement('FINALIZED')}
       refinementFinal={finalView()} api={api} />);
@@ -311,5 +343,33 @@ describe('BusinessValidationPage multi-round command', () => {
     expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
       expectedProposalSetHash: null, expectedDecisionHash: 'sha256:decision' });
     expect(screen.getByText('앞선 선택을 바탕으로 다른 개선안을 만들고 있습니다.')).toBeInTheDocument();
+  });
+
+  it('LEGAL_BLOCKED 복구는 round와 decisionHash만 보내고 ambiguity에서 command를 재전송하지 않는다', async () => {
+    const blocked = refinement('LEGAL_BLOCKED', { recovery: { available: true },
+      decision: { decisionHash: 'sha256:decision' } });
+    arrangeGets(blocked); pageClient.post.mockRejectedValueOnce(new Error('network ambiguous'));
+    render(<BusinessValidationPage />);
+    fireEvent.click(await screen.findByRole('button', { name: '차단된 변경 취소' }));
+    await waitFor(() => expect(pageClient.post).toHaveBeenCalledTimes(1));
+    expect(pageClient.post.mock.calls[0][0]).toMatch(/\/refinement\/recover-legal-blocked$/);
+    expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
+      expectedDecisionHash: 'sha256:decision' });
+    await waitFor(() => {
+      expect(pageClient.get.mock.calls.filter(([url]) => url.endsWith('/refinement/current'))).toHaveLength(2);
+      expect(pageClient.get.mock.calls.filter(([url]) => url.endsWith('/refinement/final'))).toHaveLength(2);
+    });
+    expect(pageClient.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('RECOVERED next는 decisionHash를 사용한다', async () => {
+    const recovered = refinement('RECOVERED', { decision: { decisionHash: 'sha256:decision' },
+      nextRound: { available: true, currentRound: 1, maxRounds: 3 } });
+    arrangeGets(recovered); pageClient.post.mockResolvedValueOnce({ data: refinement('PROPOSING', { round: 2 }) });
+    render(<BusinessValidationPage />);
+    fireEvent.click(await screen.findByRole('button', { name: '다른 제안 받기' }));
+    await waitFor(() => expect(pageClient.post).toHaveBeenCalledTimes(1));
+    expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
+      expectedProposalSetHash: null, expectedDecisionHash: 'sha256:decision' });
   });
 });

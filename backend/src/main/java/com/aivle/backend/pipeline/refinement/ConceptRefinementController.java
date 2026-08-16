@@ -17,6 +17,7 @@ public class ConceptRefinementController {
     private final ConceptRefinementDecisionService decisions;
     private final ConceptRefinementApplicationService applications;
     private final ConceptRefinementFinalizationService finalization;
+    private final ConceptRefinementLegalRecoveryService legalRecovery;
     private final CurrentUserProvider currentUser;
 
     @PostMapping("/start")
@@ -79,6 +80,13 @@ public class ConceptRefinementController {
             request.getHeader("Idempotency-Key"),body.expectedRound(),body.expectedDecisionHash()),id(request));
     }
 
+    @PostMapping("/recover-legal-blocked")
+    public ApiResponse<ConceptRefinementService.CurrentView> recoverLegalBlocked(
+            @PathVariable Long projectId,@RequestBody RecoveryRequest body,HttpServletRequest request){
+        return ApiResponse.success(legalRecovery.recover(currentUser.currentUserId(),projectId,
+            request.getHeader("Idempotency-Key"),body.expectedRound(),body.expectedDecisionHash()),id(request));
+    }
+
     @GetMapping("/final")
     public ApiResponse<ConceptRefinementFinalizationService.FinalView> currentFinal(
             @PathVariable Long projectId,HttpServletRequest request){
@@ -96,6 +104,7 @@ public class ConceptRefinementController {
                                   List<String> selectedProposalKeys, boolean keepCurrent) { }
     public record ApplyRequest(Integer expectedRound, String expectedDecisionHash) { }
     public record FinalizeRequest(Integer expectedRound,String expectedDecisionHash) { }
+    public record RecoveryRequest(Integer expectedRound,String expectedDecisionHash) { }
     public record NextRequest(Integer expectedRound, String expectedProposalSetHash,
                               String expectedDecisionHash) { }
 }

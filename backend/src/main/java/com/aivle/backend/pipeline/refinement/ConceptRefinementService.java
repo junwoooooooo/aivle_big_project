@@ -32,6 +32,7 @@ public class ConceptRefinementService {
     private final ObjectMapper mapper;
     private final ConceptRefinementDecisionContract decisions;
     private final ConceptRefinementLineageGuard lineage;
+    private final ConceptRefinementApplicationBeforeContract applicationBefore;
 
     public ConceptRefinementService(ProjectRepository projects, BusinessValidationCoordinator validations,
             ConceptPortfolioSelectionRepository selections,
@@ -39,12 +40,14 @@ public class ConceptRefinementService {
             ConceptRefinementRoundRepository rounds, ConceptRefinementMaterialFactory materials,
             ConceptPortfolioSelectionTaskFactory tasks, CanonicalInputHasher inputHasher,
             ObjectMapper mapper, ConceptRefinementDecisionContract decisions,
-            ConceptRefinementLineageGuard lineage) {
+            ConceptRefinementLineageGuard lineage,
+            ConceptRefinementApplicationBeforeContract applicationBefore) {
         this.projects = projects; this.validations = validations; this.selections = selections;
         this.marketSeeds = marketSeeds; this.rounds = rounds; this.materials = materials;
         this.tasks = tasks; this.inputHasher = inputHasher; this.mapper = mapper;
         this.decisions = decisions;
         this.lineage = lineage;
+        this.applicationBefore = applicationBefore;
     }
 
     @Transactional
@@ -144,7 +147,8 @@ public class ConceptRefinementService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "최대 refinement round에 도달했습니다.");
         boolean declining = parent.getState() == ConceptRefinementRound.State.AWAITING_DECISION;
         boolean continuing = parent.getState() == ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION;
-        if (!declining && !continuing)
+        boolean recovered = parent.getState() == ConceptRefinementRound.State.RECOVERED;
+        if (!declining && !continuing && !recovered)
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "현재 상태에서는 다음 제안을 요청할 수 없습니다.");
         boolean current = declining
             ? lineage.proposalBaselineCurrent(ownerId, projectId, parent)
@@ -161,6 +165,9 @@ public class ConceptRefinementService {
             ObjectNode plan = decisions.applicationPlan(parent);
             mergeOverlay(overlay, plan.path("overlay"));
             seedRequired = seedRequired || !plan.path("hypotheses").isEmpty() || !plan.path("overlay").isEmpty();
+            parent.continued();
+        } else if (recovered) {
+            seedRequired = true;
             parent.continued();
         } else parent.declined();
         ConceptRefinementRound draft = ConceptRefinementRound.next(parent, selectionRevision, bmRevision,
@@ -229,7 +236,7 @@ public class ConceptRefinementService {
         boolean declined = Set.of(ConceptRefinementRound.State.AWAITING_DECISION,
             ConceptRefinementRound.State.DECLINED).contains(parent.getState());
         boolean continued = Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
-            ConceptRefinementRound.State.CONTINUED).contains(parent.getState());
+            ConceptRefinementRound.State.CONTINUED, ConceptRefinementRound.State.RECOVERED).contains(parent.getState());
         if (declined) {
             String actual = decisions.proposalSet(parent).hash();
             if (expectedDecisionHash != null || !Objects.equals(actual, expectedProposalSetHash))
@@ -279,7 +286,10 @@ public class ConceptRefinementService {
             ? null : decisions.proposalSet(round);
         boolean nextAvailable = !stale && round.getRoundNumber() < ConceptRefinementPolicy.MAX_ROUNDS
             && Set.of(ConceptRefinementRound.State.AWAITING_DECISION,
-                ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION).contains(round.getState());
+                ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
+                ConceptRefinementRound.State.RECOVERED).contains(round.getState());
+        boolean legalRecoveryAvailable = !stale && round.getState() == ConceptRefinementRound.State.LEGAL_BLOCKED
+            && applicationBefore.available(round);
         String nextReason = nextAvailable ? null
             : round.getRoundNumber() >= ConceptRefinementPolicy.MAX_ROUNDS ? "MAX_ROUNDS" : "STATE_UNAVAILABLE";
         return new CurrentView(round.getBusinessValidationSessionId(), state, stale, round.getRoundNumber(), policy(),
@@ -288,7 +298,8 @@ public class ConceptRefinementService {
             round.getLastErrorCode(), new RetryView(retryAvailable, round.getAttempt(),
                 ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
             proposalSet == null ? null : proposalSet.hash(), decisions.decisionView(round),
-            new NextRoundView(nextAvailable, round.getRoundNumber(), ConceptRefinementPolicy.MAX_ROUNDS, nextReason));
+            new NextRoundView(nextAvailable, round.getRoundNumber(), ConceptRefinementPolicy.MAX_ROUNDS, nextReason),
+            new LegalRecoveryView(legalRecoveryAvailable));
     }
 
     private PolicyView policy() {
@@ -324,11 +335,12 @@ public class ConceptRefinementService {
                              int priceChangePercent, int listChangeAllowance) { }
     public record RetryView(boolean available, int attempts, int maxAttempts) { }
     public record NextRoundView(boolean available, int currentRound, int maxRounds, String reason) { }
+    public record LegalRecoveryView(boolean available) { }
     public record CurrentView(String sourceBusinessValidationSessionId, String state, boolean stale, int round, PolicyView policy,
                               JsonNode proposals, JsonNode rejected, String errorCode,
                               RetryView retry, String proposalSetHash,
                               ConceptRefinementDecisionContract.DecisionView decision,
-                              NextRoundView nextRound) {
+                              NextRoundView nextRound, LegalRecoveryView recovery) {
         static CurrentView notStarted() {
             return new CurrentView(null, "NOT_STARTED", false, 0,
                 new PolicyView(ConceptRefinementPolicy.VERSION,
@@ -337,7 +349,8 @@ public class ConceptRefinementService {
                     ConceptRefinementPolicy.LIST_CHANGE_ALLOWANCE),
                 JsonNodeFactory.instance.arrayNode(), JsonNodeFactory.instance.arrayNode(),
                 null, new RetryView(false, 0, ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
-                null, null, new NextRoundView(false, 0, ConceptRefinementPolicy.MAX_ROUNDS, "NOT_STARTED"));
+                null, null, new NextRoundView(false, 0, ConceptRefinementPolicy.MAX_ROUNDS, "NOT_STARTED"),
+                new LegalRecoveryView(false));
         }
     }
 }
