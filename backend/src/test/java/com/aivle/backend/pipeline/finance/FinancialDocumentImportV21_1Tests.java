@@ -17,6 +17,7 @@ import com.aivle.backend.finance.service.FinancialSnapshotAnalysisService;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.artifact.api.ProjectEvidenceArtifactApiModels.ArtifactView;
+import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
 import com.aivle.backend.pipeline.finance.api.FinancialApiModels;
 import com.aivle.backend.pipeline.finance.api.FinancialController;
 import com.aivle.backend.pipeline.finance.application.*;
@@ -179,7 +180,7 @@ class FinancialDocumentImportV21_1Tests {
         when(finance.snapshot(7L, 41L, "snapshot-1")).thenReturn(snapshot("sha256:" + "d".repeat(64)));
         var service = new FinancialAnalysisService(finance, mock(FinancialSnapshotAnalysisService.class),
             taskRuns, runs, mock(TaskResultRepository.class), mock(CanonicalInputHasher.class),
-            mock(JobEventPublisher.class), mapper);
+            mock(JobEventPublisher.class), mock(ProjectEvidenceArtifactRepository.class), mapper);
 
         assertThat(service.replayImport(7L, 41L, "command-1", "sha256:" + "d".repeat(64)))
             .isPresent();

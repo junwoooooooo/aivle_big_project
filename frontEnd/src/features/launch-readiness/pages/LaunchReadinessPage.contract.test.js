@@ -12,7 +12,16 @@ describe('Launch Readiness product contract', () => {
     expect(page).toContain('<ProfessionalModule module="technology"');
     expect(page).toContain('<ProfessionalModule module="operations"');
     expect(page).toContain('<FinanceModule');
-    expect(page).toContain('<ReportDownload');
+    expect(page).toContain('<ReportToolbar');
+  });
+
+  it('독립성 설명은 상단 한 번뿐이고 compact 보고서 toolbar를 분석 카드 위에 둔다', () => {
+    expect(page.match(/필요한 분석만 선택해 사용할 수 있습니다/g)).toHaveLength(1);
+    expect(page).not.toContain('독립 사용 가능');
+    expect(page).not.toContain('선택형 · 독립 문서 분석');
+    expect(page).not.toContain('앞 단계의 분석 결과');
+    expect(page.indexOf('<ReportToolbar')).toBeLessThan(page.indexOf('className="launch-analysis-grid"'));
+    expect(page).not.toContain('className="launch-module launch-reports"');
   });
 
   it('가짜 진행률 없이 실제 작업 이벤트와 작업센터 상세 연결을 사용한다', () => {

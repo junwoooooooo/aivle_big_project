@@ -50,7 +50,7 @@ export function FinanceReadinessReportDocument({ current, projectName, embedded 
     <header className="launch-report-document__cover">
       <p>VENTURE VERIFY · LAUNCH READINESS</p><h1>재무 출시 준비 보고서</h1>
       <span>사용자 재무 입력 문서의 authoritative 계산 결과와 AI 해석을 그대로 정리했습니다.</span>
-      <dl><div><dt>프로젝트명</dt><dd>{projectName || '자료 없음'}</dd></div><div><dt>분석 기준일</dt><dd>{formatReportDate(current.completedAt)}</dd></div><div><dt>입력 기준</dt><dd>사용자 재무 입력 문서</dd></div><div><dt>금액 단위</dt><dd>KRW</dd></div></dl>
+      <dl><div><dt>프로젝트명</dt><dd>{projectName || '자료 없음'}</dd></div><div><dt>분석 기준일</dt><dd>{formatReportDate(current.completedAt)}</dd></div><div><dt>입력 문서</dt><dd>{current.sourceDocumentName || '사용자 재무 입력 문서'}</dd></div><div><dt>금액 단위</dt><dd>KRW</dd></div></dl>
     </header>
     {current.fallback && <p className="launch-report-document__notice">AI 해석을 완료하지 못해 계산 결과와 기본 설명을 표시합니다.</p>}
 

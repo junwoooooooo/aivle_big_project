@@ -39,13 +39,18 @@ describe('V21.4 report page source contract', () => {
     expect(finance).toContain('result.cashFlowChart');
   });
 
-  it('V21.5 메인은 독립 분석 3열 IA와 세로 workflow를 사용하고 sticky section nav를 제거한다', () => {
+  it('V21.6 메인은 3열 IA와 세로 workflow, compact report toolbar를 사용한다', () => {
     expect(launchPage).toContain('className="launch-analysis-grid"');
     expect(launchPage).toContain('launch-workflow launch-workflow--vertical');
-    expect(launchPage).toContain('서로 독립적으로 사용할 수 있습니다');
-    expect(launchPage).toContain('선택형 · 독립 문서 분석');
+    expect(launchPage).toContain('필요한 분석만 선택해 사용할 수 있습니다');
+    expect(launchPage).toContain('<ReportToolbar');
+    expect(launchPage).not.toContain('독립 사용 가능');
+    expect(launchPage).not.toContain('선택형 · 독립 문서 분석');
     expect(launchPage).not.toContain('className="launch-readiness-nav"');
     expect(css).toContain('grid-template-columns:repeat(3,minmax(0,1fr))');
+    expect(css).toContain('.launch-workflow li:not(:last-child)::after');
+    expect(css).toContain('.launch-report-toolbar');
+    expect(css).toContain('flex-wrap:wrap');
   });
 
   it('전문 보고서의 핵심 정보는 정형 표이고 deep blue header를 사용한다', () => {

@@ -13,12 +13,22 @@ const MODULES = {
   technology: {
     eyebrow: '기술 분석',
     title: '기술 출시 준비도를 확인하세요',
-    description: '앞 단계의 분석 결과를 자동으로 가져오지 않습니다. 템플릿에 실제 기술 계획을 작성해 업로드하면 제출한 문서를 1차 기준으로 독립 분석합니다.',
+    description: '기술 구조, 보안, 성능, 테스트와 출시 계획을 분석합니다.',
+    workflow: [
+      ['템플릿 받기', '작성할 기술 항목을 확인합니다.'],
+      ['실제 계획 작성·업로드', '현재 기술 계획을 문서에 작성합니다.'],
+      ['분석 결과 확인', '제출한 문서를 기준으로 결과를 확인합니다.'],
+    ],
   },
   operations: {
     eyebrow: '운영 분석',
     title: '운영 실행 준비도를 확인하세요',
-    description: '앞 단계 결과 없이 사용할 수 있습니다. 실제 운영 계획을 템플릿에 작성해 업로드하면 해당 문서를 기준으로 운영 준비도를 분석합니다.',
+    description: '운영 프로세스, 고객 지원, 품질 기준과 확장 계획을 분석합니다.',
+    workflow: [
+      ['템플릿 받기', '작성할 운영 항목을 확인합니다.'],
+      ['실제 계획 작성·업로드', '현재 운영 계획을 문서에 작성합니다.'],
+      ['분석 결과 확인', '제출한 문서를 기준으로 결과를 확인합니다.'],
+    ],
   },
 };
 const REPORTS = [
@@ -143,8 +153,8 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
   };
 
   return <section id={`launch-${module}`} className="launch-module" aria-labelledby={`launch-${module}-title`}>
-    <div className="launch-module__heading"><div><p>{meta.eyebrow}</p><h2 id={`launch-${module}-title`}>{meta.title}</h2><span>{meta.description}</span></div><div className="launch-module__badges"><span className="launch-independence-badge">독립 사용 가능</span>{state.current?.analysis && !state.current.stale && <span className="launch-status is-complete"><AppIcon name="check" size={14} />완료</span>}</div></div>
-    <ol className="launch-workflow launch-workflow--vertical"><li><b>1</b><span>템플릿 받기<small>작성 항목을 확인합니다.</small></span></li><li><b>2</b><span>실제 계획 작성·업로드<small>현재 계획을 직접 작성합니다.</small></span></li><li><b>3</b><span>독립 분석 결과 확인<small>제출한 문서를 1차 근거로 평가합니다.</small></span></li></ol>
+    <div className="launch-module__heading"><div><p>{meta.eyebrow}</p><h2 id={`launch-${module}-title`}>{meta.title}</h2><span>{meta.description}</span></div>{state.current?.analysis && !state.current.stale && <span className="launch-status is-complete"><AppIcon name="check" size={14} />완료</span>}</div>
+    <ol className="launch-workflow launch-workflow--vertical">{meta.workflow.map(([title, helper], index) => <li key={title}><b>{index + 1}</b><span>{title}<small>{helper}</small></span></li>)}</ol>
     <div className="launch-actions">
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.professionalTemplate(projectId, module), `${module}-readiness-input.docx`)}><AppIcon name="download" size={16} />입력 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
@@ -160,7 +170,7 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
 
 export function FinanceModule({ api, projectId, onReady, onDetail, onViewReport }) {
   const input = useRef(null);
-  const [state, setState] = useState({ current: null, busy: false, error: null, filename: null });
+  const [state, setState] = useState({ current: null, busy: false, error: null, optimisticFilename: null });
   const activeJobId = ACTIVE.has(state.current?.status) ? state.current?.taskRunId : null;
   const job = useJobEvents(activeJobId);
 
@@ -180,7 +190,7 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onViewReport 
   const start = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setState((value) => ({ ...value, busy: true, error: null, filename: file.name }));
+    setState((value) => ({ ...value, busy: true, error: null, optimisticFilename: file.name }));
     try {
       const response = await api.startFinance(projectId, file);
       setState((value) => ({ ...value, busy: false, current: response.analysis, error: null }));
@@ -193,15 +203,15 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onViewReport 
     ?? state.current?.result?.calculation?.scenarios?.[0];
 
   return <section id="launch-finance" className="launch-module" aria-labelledby="launch-finance-title">
-    <div className="launch-module__heading"><div><p>재무 분석</p><h2 id="launch-finance-title">사용자 재무 문서로 사업 지속 가능성을 확인하세요</h2><span>시장 분석이나 사업 모델 결과 없이도 사용할 수 있습니다. 업로드한 재무 값만 계산 기준으로 사용합니다.</span></div><div className="launch-module__badges"><span className="launch-independence-badge">독립 사용 가능</span>{state.current?.result && !state.current.stale && <span className="launch-status is-complete"><AppIcon name="check" size={14} />완료</span>}</div></div>
-    <ol className="launch-workflow launch-workflow--vertical"><li><b>1</b><span>재무 템플릿 받기<small>작성할 재무 항목을 확인합니다.</small></span></li><li><b>2</b><span>재무 값과 산정 근거 작성·업로드<small>실제 계획의 값과 근거를 직접 작성합니다.</small></span></li><li><b>3</b><span>손익·현금흐름 독립 분석<small>업로드한 재무 값만 계산 기준으로 사용합니다.</small></span></li></ol>
+    <div className="launch-module__heading"><div><p>재무 분석</p><h2 id="launch-finance-title">사용자 재무 문서로 사업 지속 가능성을 확인하세요</h2><span>입력한 비용·매출·성장 계획을 바탕으로 손익과 현금흐름을 분석합니다.</span></div>{state.current?.result && !state.current.stale && <span className="launch-status is-complete"><AppIcon name="check" size={14} />완료</span>}</div>
+    <ol className="launch-workflow launch-workflow--vertical"><li><b>1</b><span>재무 템플릿 받기<small>작성할 재무 항목을 확인합니다.</small></span></li><li><b>2</b><span>재무 값과 산정 근거 작성·업로드<small>실제 계획의 값과 근거를 문서에 작성합니다.</small></span></li><li><b>3</b><span>손익·현금흐름 분석 결과 확인<small>제출한 문서를 기준으로 결과를 확인합니다.</small></span></li></ol>
     <div className="launch-actions">
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.financeTemplate(projectId), 'finance-readiness-input.docx')}><AppIcon name="download" size={16} />재무 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
       <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 검증하고 있습니다…' : '작성한 DOCX로 재무 분석 시작'}</button>
       {state.current?.result && !state.current.stale && <button type="button" className="launch-button is-tertiary" onClick={() => onViewReport(['finance'])}>보고서 보기</button>}
     </div>
-    {state.filename && <p className="launch-document"><AppIcon name="file" size={15} />{state.filename}</p>}
+    {(state.current?.sourceDocumentName ?? state.optimisticFilename) && <p className="launch-document"><AppIcon name="file" size={15} />{state.current?.sourceDocumentName ?? state.optimisticFilename}</p>}
     {ACTIVE.has(state.current?.status) && <ExecutionStatus jobId={state.current?.taskRunId} events={job} onDetail={onDetail} />}
     {state.error && <FinanceInputError error={state.error} />}
     {state.current?.result && <div className="launch-result"><div><span>재무 분석 결론</span><strong>{base && Number(base.totalOperatingProfit) >= 0 ? '사업 지속 가능성 확인' : '손실 구조 개선 필요'}</strong><small>업로드한 재무 문서를 기준으로 계산한 최신 결과입니다.</small></div><p>{state.current.result.report?.headline}</p><ul><li><b>매출</b><span>{formatKrwInline(base?.totalRevenue)}</span></li><li><b>영업이익</b><span>{formatKrwInline(base?.totalOperatingProfit)}</span></li><li><b>운전자금</b><span>{formatKrwInline(base?.requiredWorkingCapital)}</span></li></ul>{state.current.stale && <p className="launch-warning">이전 입력 기준 결과입니다.</p>}</div>}
@@ -213,15 +223,16 @@ function reportReady(module, current) {
   return module === 'finance' ? Boolean(current?.result) : Boolean(current?.analysis);
 }
 
-export function ReportDownload({ reports, onViewReport }) {
+export function ReportToolbar({ reports, onViewReport }) {
   const [selected, setSelected] = useState([]);
   const available = REPORTS.filter((item) => reportReady(item.id, reports[item.id]));
   const toggle = (id) => setSelected((value) => value.includes(id)
     ? value.filter((item) => item !== id) : [...value, id]);
-  return <section id="launch-reports" className="launch-module launch-reports">
-    <div className="launch-module__heading"><div><p>보고서 확인</p><h2>완료된 분석을 선택해 개별 또는 통합 보고서로 확인하세요</h2><span>화면에서 확인한 동일한 문서를 브라우저 인쇄 기능으로 PDF에 저장할 수 있습니다.</span></div></div>
-    <div className="launch-report-picker">{available.length ? available.map((item) => <label key={item.id} className={selected.includes(item.id) ? 'is-selected' : ''}><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /><AppIcon name={selected.includes(item.id) ? 'check' : 'file'} size={16} /><span>{item.label}</span></label>) : <p>완료된 분석 보고서가 없습니다.</p>}</div>
-    <button className="launch-button is-primary" type="button" disabled={!selected.length} onClick={() => onViewReport(selected)}>{selected.length > 1 ? `${selected.length}개 통합 보고서 보기` : '선택한 보고서 보기'}</button>
+  return <section className="launch-report-toolbar" aria-label="출시 준비 보고서">
+    <strong>보고서</strong>
+    {available.length ? <><div className="launch-report-toolbar__picker">{available.map((item) => <label key={item.id} className={selected.includes(item.id) ? 'is-selected' : ''}><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /><AppIcon name={selected.includes(item.id) ? 'check' : 'file'} size={15} /><span>{item.label}</span></label>)}</div>
+      <button className="launch-button is-primary" type="button" disabled={!selected.length} onClick={() => onViewReport(selected)}>{selected.length > 1 ? `${selected.length}개 통합 보고서 보기` : '보고서 보기'}</button></>
+      : <span className="launch-report-toolbar__empty">완료된 보고서가 생기면 여기에서 확인할 수 있습니다.</span>}
   </section>;
 }
 
@@ -245,13 +256,12 @@ export default function LaunchReadinessPage({ initialFocus }) {
   }, [navigate, projectId]);
 
   return <ProjectWorkspace as="div" mode="data" className="launch-readiness-page">
-    <ProjectStageHeader step={5} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="기술·운영·재무 분석은 서로 독립적으로 사용할 수 있습니다. 필요한 분석만 선택해 템플릿을 내려받고 실제 계획을 작성해 업로드하면, 앞 단계의 분석 결과를 자동으로 가져오지 않고 사용자가 제출한 문서를 기준으로 분석합니다." status="선택형 · 독립 문서 분석" />
-    <p className="launch-independence-note">기술·운영은 공개 참고자료를 보조적으로 확인할 수 있으며, 재무는 업로드한 재무 입력값만 계산 기준으로 사용합니다.</p>
+    <ProjectStageHeader step={5} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="기술·운영·재무는 필요한 분석만 선택해 사용할 수 있습니다. 각 템플릿에 현재 계획을 작성해 업로드하면 제출한 문서를 기준으로 분석합니다." />
+    <ReportToolbar reports={reports} onViewReport={viewReport} />
     <div className="launch-analysis-grid">
       <ProfessionalModule module="technology" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
       <ProfessionalModule module="operations" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
       <FinanceModule api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
     </div>
-    <ReportDownload reports={reports} onViewReport={viewReport} />
   </ProjectWorkspace>;
 }

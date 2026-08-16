@@ -7,6 +7,8 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.finance.service.FinancialSnapshotAnalysisService;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.pipeline.artifact.domain.ProjectEvidenceArtifact;
+import com.aivle.backend.pipeline.artifact.repository.ProjectEvidenceArtifactRepository;
 import com.aivle.backend.taskrun.domain.TaskResult;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -38,14 +40,16 @@ public class FinancialAnalysisService {
     private final TaskResultRepository resultRepository;
     private final CanonicalInputHasher hasher;
     private final JobEventPublisher events;
+    private final ProjectEvidenceArtifactRepository artifacts;
     private final ObjectMapper mapper;
 
     public FinancialAnalysisService(FinancialService finance, FinancialSnapshotAnalysisService calculation,
             TaskRunService taskRuns, TaskRunRepository runRepository, TaskResultRepository resultRepository,
-            CanonicalInputHasher hasher, JobEventPublisher events, ObjectMapper mapper) {
+            CanonicalInputHasher hasher, JobEventPublisher events,
+            ProjectEvidenceArtifactRepository artifacts, ObjectMapper mapper) {
         this.finance = finance; this.calculation = calculation; this.taskRuns = taskRuns;
         this.runRepository = runRepository; this.resultRepository = resultRepository;
-        this.hasher = hasher; this.events = events; this.mapper = mapper;
+        this.hasher = hasher; this.events = events; this.artifacts = artifacts; this.mapper = mapper;
     }
 
     @Transactional
@@ -75,6 +79,7 @@ public class FinancialAnalysisService {
     @Transactional(readOnly = true)
     public AnalysisView current(Long ownerId, Long projectId) {
         SnapshotView snapshot = finance.currentSnapshot(ownerId, projectId);
+        String sourceDocumentName = resolveSourceDocumentName(projectId, snapshot);
         String subjectId = USER_DOCUMENT_SUBJECT.equals(snapshot.snapshot().path("sourceMode").asText())
             ? USER_DOCUMENT_SUBJECT : snapshot.snapshotId();
         TaskRun task = runRepository
@@ -83,14 +88,23 @@ public class FinancialAnalysisService {
             .filter(value -> snapshot.snapshotId().equals(
                 mapper.readTree(value.getInputSnapshot()).path("snapshotId").asText())).orElse(null);
         if (task == null) return new AnalysisView(null, null, "NOT_STARTED", false, null,
-            snapshot.snapshotId(), snapshot.snapshotHash(), null, false, snapshot.stale(), null);
+            snapshot.snapshotId(), snapshot.snapshotHash(), null, false, snapshot.stale(),
+            null, sourceDocumentName);
         JsonNode result = task.getFinalResultId() == null ? null : resultRepository.findById(task.getFinalResultId())
             .map(TaskResult::getResultJson).map(mapper::readTree).orElse(null);
         boolean fallback = result != null && "SYSTEM_CALCULATION_FALLBACK".equals(
             result.path("report").path("source").asText());
         return new AnalysisView(task.getId(), task.getId(), task.getState().name(), task.isRetryable(),
             task.getLastErrorCode(), snapshot.snapshotId(), snapshot.snapshotHash(), result, fallback,
-            snapshot.stale(), task.getFinishedAt());
+            snapshot.stale(), task.getFinishedAt(), sourceDocumentName);
+    }
+
+    private String resolveSourceDocumentName(Long projectId, SnapshotView snapshot) {
+        String artifactId = snapshot.snapshot().path("sourceDocumentArtifactId").asText(null);
+        if (artifactId == null || artifactId.isBlank()) return null;
+        return artifacts.findByIdAndProjectIdAndDeletedAtIsNull(artifactId, projectId)
+            .map(ProjectEvidenceArtifact::getOriginalFilename)
+            .orElse(null);
     }
 
     @Transactional(readOnly = true)

@@ -5,7 +5,7 @@ import { FinanceReadinessReportDocument } from '../components/FinanceReadinessRe
 import { IntegratedLaunchReadinessReportDocument } from '../components/IntegratedLaunchReadinessReportDocument.jsx';
 import { LaunchReadinessReportDocument } from '../components/LaunchReadinessReportDocument.jsx';
 import { launchReadinessReportTitle, printLaunchReadinessReport, reportModulesFromQuery } from '../model/reportDocumentPresentation.js';
-import { FinanceModule, ProfessionalModule, ReportDownload } from './LaunchReadinessPage.jsx';
+import { FinanceModule, ProfessionalModule, ReportToolbar } from './LaunchReadinessPage.jsx';
 import { LaunchReadinessReportPageView } from './LaunchReadinessReportPage.jsx';
 
 vi.mock('../../../shared/async-events/index.js', () => ({ useJobEvents: () => ({ events: [], terminal: false }) }));
@@ -29,6 +29,7 @@ const professionalCurrent = (moduleType = 'TECHNOLOGY', passed = true) => ({
 
 const financeCurrent = {
   status: 'SUCCEEDED', stale: false, fallback: false, completedAt: '2026-08-16T10:30:00',
+  sourceDocumentName: 'my-finance-plan.docx',
   result: {
     calculation: { scenarios: [{ code: 'BASE', totalRevenue: 36000000, totalOperatingProfit: 9000000,
       requiredWorkingCapital: 4000000, breakEvenMonth: 8, paybackMonth: 14 }], summary: { headline: '기준 시나리오의 사업 지속 가능성을 확인했습니다.' } },
@@ -67,9 +68,19 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(onViewReport).toHaveBeenCalledWith(['finance']);
   });
 
+  it('Finance는 로컬 업로드 상태 없이 current 재조회만으로 입력 문서명을 복원한다', async () => {
+    const api = { financeCurrent: vi.fn().mockResolvedValue(financeCurrent) };
+    const first = render(<FinanceModule api={api} projectId="7" onReady={vi.fn()} />);
+    expect(await screen.findByText('my-finance-plan.docx')).toBeInTheDocument();
+    first.unmount();
+    render(<FinanceModule api={api} projectId="7" onReady={vi.fn()} />);
+    expect(await screen.findByText('my-finance-plan.docx')).toBeInTheDocument();
+    expect(api.financeCurrent).toHaveBeenCalledTimes(2);
+  });
+
   it('통합 보고서 선택은 Backend bundle 요청 없이 선택 module route command를 만든다', () => {
     const onViewReport = vi.fn();
-    render(<ReportDownload reports={{ technology: professionalCurrent(), finance: financeCurrent }} onViewReport={onViewReport} />);
+    render(<ReportToolbar reports={{ technology: professionalCurrent(), finance: financeCurrent }} onViewReport={onViewReport} />);
     fireEvent.click(screen.getByText('기술 분석 보고서'));
     fireEvent.click(screen.getByText('재무 분석 보고서'));
     fireEvent.click(screen.getByRole('button', { name: '2개 통합 보고서 보기' }));
@@ -107,6 +118,7 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(screen.getByRole('img', { name: '월별 매출, 영업이익, 누적 현금흐름 추이' })).toBeInTheDocument();
     expect(screen.getByText('매출 근거 확인')).toBeInTheDocument();
     expect(screen.getByText('기준 시나리오의 사업 지속 가능성을 확인했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('my-finance-plan.docx')).toBeInTheDocument();
   });
 
   it('통합 문서는 같은 개별 component와 URL 기준 통합 source를 사용한다', () => {
