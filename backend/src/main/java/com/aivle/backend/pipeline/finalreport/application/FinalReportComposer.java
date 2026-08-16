@@ -22,8 +22,11 @@ public class FinalReportComposer {
 
     public String hash(JsonNode manifest) { return hasher.hash(manifest); }
 
-    public ArrayNode manifest(List<ReportSource> sources) {
-        ArrayNode result = mapper.createArrayNode();
+    public ObjectNode manifest(JsonNode currentConceptBinding, List<ReportSource> sources) {
+        ObjectNode manifest = mapper.createObjectNode();
+        manifest.put("schemaVersion", 2);
+        manifest.set("currentConcept", currentConceptBinding == null ? mapper.nullNode() : currentConceptBinding.deepCopy());
+        ArrayNode result = manifest.putArray("sources");
         sources.stream().sorted(java.util.Comparator.comparing(ReportSource::type)).forEach(source -> {
             ObjectNode item = result.addObject();
             item.put("type", source.type());
@@ -33,7 +36,11 @@ public class FinalReportComposer {
             if (source.hash() != null) item.put("resultHash", source.hash());
             if (source.generatedAt() != null) item.put("generatedAt", source.generatedAt().toString());
         });
-        return result;
+        return manifest;
+    }
+
+    public ArrayNode manifest(List<ReportSource> sources) {
+        return (ArrayNode) manifest(null, sources).path("sources");
     }
 
     public ObjectNode compose(Project project, int version, Instant generatedAt, List<ReportSource> sources) {
@@ -48,18 +55,18 @@ public class FinalReportComposer {
         metadata.put("version", version);
 
         ArrayNode sections = report.putArray("sections");
-        section(sections, "1", "Executive Summary", sources, "PROJECT", "IDEA", "SELECTED_CONCEPT");
-        section(sections, "2", "사업 개요 및 기획", sources, "IDEA", "SELECTED_CONCEPT", "LEGAL");
-        section(sections, "3", "시장 및 사업성 검증", sources, "MARKET", "BUSINESS_MODEL");
-        section(sections, "4", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS",
-            "TECH_OPS", "FINANCE", "FINANCE_REPORT");
-        section(sections, "5", "가상 인터뷰 결과", sources, "TWIN_SURVEY");
-        section(sections, "6", "마케팅 전략", sources, "MARKETING", "MARKETING_ASSETS");
-        section(sections, "7", "주요 위험 및 대응", sources, "LEGAL", "MARKET", "LAUNCH_TECHNOLOGY",
-            "LAUNCH_OPERATIONS", "TECH_OPS", "FINANCE");
-        section(sections, "8", "종합 판단 및 권고사항", sources, "MARKET", "BUSINESS_MODEL",
-            "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "TWIN_SURVEY");
-        report.put("caveat", "이 문서는 각 업무 단계의 저장된 정본 결과를 결정적으로 편집한 것입니다. 자료가 없는 항목은 추정하지 않습니다.");
+        section(sections, "1", "핵심 요약", sources, "PROJECT", "CURRENT_CONCEPT");
+        section(sections, "2", "현재 확정 사업안", sources, "CURRENT_CONCEPT");
+        section(sections, "3", "사업성 검증", sources, "MARKET", "BUSINESS_MODEL");
+        section(sections, "4", "시장 인터뷰", sources, "MARKET_INTERVIEW");
+        section(sections, "5", "트윈 패널 조사", sources, "TWIN_SURVEY");
+        section(sections, "6", "마케팅 실행", sources, "MARKETING", "MARKETING_ASSETS");
+        section(sections, "7", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
+        section(sections, "8", "주요 위험·근거·주의사항", sources, "MARKET", "MARKET_INTERVIEW",
+            "TWIN_SURVEY", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
+        section(sections, "9", "종합 판단 및 다음 행동", sources, "CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL",
+            "MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
+        report.put("caveat", "이 보고서는 현재 확정된 사업안과 각 단계의 현재 유효 결과를 종합한 의사결정 지원 자료입니다. 시장 인터뷰와 트윈 패널 조사는 AI 가상 참여자를 활용한 탐색·시뮬레이션이며 실제 소비자 조사 결과를 의미하지 않습니다. 실행하지 않은 단계의 내용은 추정하여 채우지 않습니다.");
         return report;
     }
 
@@ -74,13 +81,24 @@ public class FinalReportComposer {
             item.put("type", type);
             if (source == null) {
                 item.put("status", "MISSING");
-                item.put("label", "자료 없음 · 미완료");
+                item.put("label", missingLabel(type));
             } else {
                 item.put("status", "AVAILABLE");
-                item.put("sourceId", source.id());
                 item.set("data", source.data());
             }
         }
+    }
+
+    private String missingLabel(String type) {
+        return switch (type) {
+            case "MARKET_INTERVIEW" -> "아직 시장 인터뷰를 진행하지 않았습니다.";
+            case "TWIN_SURVEY" -> "트윈 패널 조사를 진행하지 않았습니다.";
+            case "MARKETING", "MARKETING_ASSETS" -> "마케팅 콘텐츠가 아직 확정되지 않았습니다.";
+            case "LAUNCH_TECHNOLOGY" -> "기술 준비 분석이 아직 없습니다.";
+            case "LAUNCH_OPERATIONS" -> "운영 준비 분석이 아직 없습니다.";
+            case "FINANCE", "FINANCE_REPORT" -> "현재 유효한 재무 분석 결과가 없습니다.";
+            default -> "현재 유효한 결과가 없습니다.";
+        };
     }
 
     public record ReportSource(String type, String id, Integer version, Integer revision,

@@ -25,6 +25,10 @@ public interface BusinessValidationSessionRepository
     Optional<BusinessValidationSession> findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(
         Long projectId, String commandIdempotencyKey);
 
+    Optional<BusinessValidationSession> findFirstByProjectIdAndSourceMarketSeedSnapshotIdAndSourcePortfolioSelectionIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndStateAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, String sourceMarketSeedSnapshotId, Long sourcePortfolioSelectionId,
+        Integer sourceSelectionRevision, Integer sourceBmPlanRevision, BusinessValidationSession.State state);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select session from BusinessValidationSession session

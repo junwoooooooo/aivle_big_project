@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 public interface MarketingContentRepository extends JpaRepository<MarketingContent, String> {
     List<MarketingContent> findAllByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long projectId);
     Optional<MarketingContent> findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long projectId);
+    Optional<MarketingContent> findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByFinalizedAtDesc(
+        Long projectId, String marketingSourceSnapshotId,
+        com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus status);
     Optional<MarketingContent> findByIdAndProjectIdAndDeletedAtIsNull(String id, Long projectId);
     Optional<MarketingContent> findByTaskRunIdAndDeletedAtIsNull(String taskRunId);
     @Lock(LockModeType.PESSIMISTIC_WRITE)

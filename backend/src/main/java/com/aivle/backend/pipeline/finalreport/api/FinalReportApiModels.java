@@ -7,7 +7,7 @@ import java.util.List;
 public final class FinalReportApiModels {
     private FinalReportApiModels() {}
 
-    public enum State { CURRENT, STALE, NOT_READY }
+    public enum State { CURRENT, STALE, READY, NOT_READY }
 
     public record ReadinessItem(String journeyId, String label, String status) {}
 
@@ -20,6 +20,8 @@ public final class FinalReportApiModels {
         JsonNode sourceManifest,
         JsonNode report,
         List<ReadinessItem> readiness,
-        List<String> missingSources
+        List<String> missingSources,
+        List<String> blockingSources,
+        List<String> omittedSources
     ) {}
 }

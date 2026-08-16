@@ -29,11 +29,10 @@ class FinalReportLaunchReadinessV21Tests {
             source(mapper, "FINANCE", "finance-1", now),
             source(mapper, "FINANCE_REPORT", "finance-report-1", now)));
 
-        var launch = report.path("sections").get(3).path("sources");
+        var launch = report.path("sections").get(6).path("sources");
         assertThat(values(launch, "type")).contains(
             "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
-        assertThat(values(launch, "sourceId")).contains(
-            "technology-1", "operations-1", "finance-1", "finance-report-1");
+        assertThat(launch.toString()).doesNotContain("technology-1", "operations-1", "finance-1", "finance-report-1");
     }
 
     private ReportSource source(ObjectMapper mapper, String type, String id, Instant now) {

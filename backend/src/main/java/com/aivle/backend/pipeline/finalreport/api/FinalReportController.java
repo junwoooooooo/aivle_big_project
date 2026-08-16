@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,7 +27,8 @@ public class FinalReportController {
 
     @PostMapping("/generate")
     public ApiResponse<FinalReportApiModels.FinalReportView> generate(@PathVariable Long projectId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             HttpServletRequest request) {
-        return ApiResponse.success(reports.generate(users.currentUserId(), projectId), request.getHeader("X-Request-Id"));
+        return ApiResponse.success(reports.generate(users.currentUserId(), projectId, idempotencyKey), request.getHeader("X-Request-Id"));
     }
 }
