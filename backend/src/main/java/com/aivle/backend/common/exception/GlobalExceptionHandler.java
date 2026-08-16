@@ -74,7 +74,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException exception, HttpServletRequest request) {
         ErrorCode code = exception.getErrorCode();
         return ResponseEntity.status(code.getHttpStatus()).body(ApiResponse.failure(
-                code.name(), exception.getSafeMessage(), List.of(), code.isRetryable(), requestId(request)));
+                code.name(), exception.getSafeMessage(), exception.getFieldErrors(),
+                code.isRetryable(), requestId(request)));
     }
 
     @ExceptionHandler(TaskRunFailure.class)

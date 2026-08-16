@@ -99,12 +99,55 @@ class LaunchReadinessAsyncV21Tests {
         verify(events).publish(any());
     }
 
+    @Test
+    void operationsStartsFromProjectAndProfessionalDocumentWithoutMarketOrBusinessModel() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ProjectRepository projects = mock(ProjectRepository.class); Project project = mock(Project.class);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
+        ProjectEvidenceArtifactService artifacts = mock(ProjectEvidenceArtifactService.class);
+        when(artifacts.upload(eq(7L), eq(41L), any())).thenReturn(new ArtifactView("artifact-operations", 41L,
+            "operations.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            1024, hash('a'), LocalDateTime.now()));
+        LaunchReadinessInputSnapshotRepository snapshots = mock(LaunchReadinessInputSnapshotRepository.class);
+        when(snapshots.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            41L, ModuleType.OPERATIONS)).thenReturn(Optional.empty());
+        LaunchReadinessReportRepository reports = mock(LaunchReadinessReportRepository.class);
+        when(reports.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByCompletedAtDesc(
+            41L, ModuleType.OPERATIONS)).thenReturn(Optional.empty());
+        TaskRunService taskRuns = mock(TaskRunService.class);
+        TaskRun task = TaskRun.create(project, TaskType.LAUNCH_OPERATIONS_READINESS,
+            "LAUNCH_READINESS_INPUT", "snapshot", "{}", hash('b'), "command-ops", "request-ops", 2);
+        when(taskRuns.createWithDisposition(eq(7L), eq(41L), eq(TaskType.LAUNCH_OPERATIONS_READINESS),
+            eq("LAUNCH_READINESS_INPUT"), anyString(), anyString(), anyString(), eq("command-ops"),
+            eq("request-ops"), eq(2))).thenReturn(new TaskRunService.CreateResult(task, true, false));
+        CanonicalInputHasher inputHasher = mock(CanonicalInputHasher.class);
+        when(inputHasher.hash(eq(TaskType.LAUNCH_OPERATIONS_READINESS), eq("1.0"), eq("ko-KR"), anyString()))
+            .thenReturn(hash('b'));
+        LaunchReadinessDocumentService documents = new LaunchReadinessDocumentService();
+        LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents, snapshots,
+            reports, mock(TaskRunRepository.class), taskRuns, inputHasher, new SnapshotHasher(mapper),
+            mock(JobEventPublisher.class), mapper);
+
+        var response = service.start(7L, 41L, ModuleType.OPERATIONS,
+            completedDocument(documents, ModuleType.OPERATIONS, "operations.docx"), "command-ops", "request-ops");
+
+        assertThat(response.status()).isEqualTo("QUEUED");
+        verify(taskRuns).createWithDisposition(eq(7L), eq(41L), eq(TaskType.LAUNCH_OPERATIONS_READINESS),
+            eq("LAUNCH_READINESS_INPUT"), anyString(), anyString(), anyString(), eq("command-ops"),
+            eq("request-ops"), eq(2));
+    }
+
     private MockMultipartFile completedDocument(LaunchReadinessDocumentService documents) throws Exception {
-        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(documents.template(ModuleType.TECHNOLOGY)));
+        return completedDocument(documents, ModuleType.TECHNOLOGY, "technology.docx");
+    }
+
+    private MockMultipartFile completedDocument(LaunchReadinessDocumentService documents,
+            ModuleType type, String filename) throws Exception {
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(documents.template(type)));
                 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             document.getTables().get(0).getRow(2).getCell(0).setText("API와 데이터베이스를 분리한 3계층 구조");
             document.write(output);
-            return new MockMultipartFile("file", "technology.docx",
+            return new MockMultipartFile("file", filename,
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document", output.toByteArray());
         }
     }

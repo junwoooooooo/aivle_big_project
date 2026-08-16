@@ -264,6 +264,12 @@ public class FinancialService {
         return snapshotView(snapshot);
     }
 
+    /** 동일 프로젝트의 Finance import command를 artifact 생성 전부터 직렬화한다. */
+    @Transactional
+    public void lockImportCommand(Long ownerId, Long projectId) {
+        requireOwnedForUpdate(ownerId, projectId);
+    }
+
     @Transactional
     public PreparationView reopenPreparation(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
@@ -286,6 +292,24 @@ public class FinancialService {
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
                 projectId, source.market().getId(), source.businessModel().getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY)));
+    }
+
+    @Transactional(readOnly = true)
+    public SnapshotView snapshot(Long ownerId, Long projectId, String snapshotId) {
+        requireOwned(ownerId, projectId);
+        FinancialInputSnapshot snapshot = snapshots.findById(snapshotId)
+            .filter(value -> value.getProjectId().equals(projectId) && value.getDeletedAt() == null)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY));
+        return snapshotView(snapshot);
+    }
+
+    @Transactional(readOnly = true)
+    public PreparationView preparation(Long ownerId, Long projectId, String preparationId) {
+        requireOwned(ownerId, projectId);
+        FinancialInputPreparation preparation = preparations.findById(preparationId)
+            .filter(value -> value.getProjectId().equals(projectId) && value.getDeletedAt() == null)
+            .orElseThrow(() -> new BusinessException(ErrorCode.FINANCIAL_PREPARATION_REQUIRED));
+        return view(preparation);
     }
 
     private PreparationView view(FinancialInputPreparation value) {

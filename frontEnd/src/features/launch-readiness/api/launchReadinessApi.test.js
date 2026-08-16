@@ -30,4 +30,16 @@ describe('launch readiness api', () => {
     await expect(api.financeReport('7')).resolves.toBe(blob);
     expect(client.download).toHaveBeenCalledTimes(4);
   });
+
+  it('PDF 미리보기 요청의 취소 signal을 인증 다운로드에 전달한다', async () => {
+    const client = { download: vi.fn(async () => ({ blob: new Blob(['pdf']) })) };
+    const api = createLaunchReadinessApi(client);
+    const controller = new AbortController();
+    await api.professionalReport('7', 'technology', controller.signal);
+    await api.financeReport('7', controller.signal);
+    await api.reports('7', ['technology', 'finance'], controller.signal);
+    expect(client.download.mock.calls.map((call) => call[1].signal)).toEqual([
+      controller.signal, controller.signal, controller.signal,
+    ]);
+  });
 });

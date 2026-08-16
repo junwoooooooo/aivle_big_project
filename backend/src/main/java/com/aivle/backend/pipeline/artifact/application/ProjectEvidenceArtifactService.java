@@ -30,6 +30,17 @@ public class ProjectEvidenceArtifactService {
     private final ObjectStoragePort storage;
     private final ObjectKeyGenerator keys;
 
+    /** 저장 전에 동일한 upload policy로 파일을 검증하고 command replay용 hash를 계산한다. */
+    public UploadFingerprint fingerprint(MultipartFile file) {
+        try {
+            ValidatedUpload validated = policy.validate(file == null ? null : file.getOriginalFilename(),
+                file == null ? null : file.getContentType(), file == null ? null : file.getInputStream());
+            return new UploadFingerprint("sha256:" + validated.checksumSha256(), validated.sizeBytes(),
+                validated.contentType());
+        } catch (BusinessException exception) { throw exception; }
+        catch (IOException | RuntimeException exception) { throw new BusinessException(ErrorCode.FILE_STORAGE_FAILED); }
+    }
+
     @Transactional
     public ArtifactView upload(Long ownerId, Long projectId, MultipartFile file) {
         requireOwned(ownerId, projectId);
@@ -173,4 +184,5 @@ public class ProjectEvidenceArtifactService {
 
     public record Download(ArtifactView artifact, InputStream content) {}
     public record ResolvedArtifact(ArtifactView artifact, byte[] content) {}
+    public record UploadFingerprint(String sha256, long sizeBytes, String contentType) {}
 }

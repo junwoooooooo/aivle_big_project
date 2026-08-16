@@ -64,12 +64,10 @@ public class FinancialController {
     public ResponseEntity<ApiResponse<DocumentImportResponse>> importDocument(@PathVariable Long projectId,
             @RequestPart("file") MultipartFile file, @RequestHeader("Idempotency-Key") String idempotencyKey,
             HttpServletRequest request) {
-        SnapshotView snapshot = documentImports.importDocument(user.currentUserId(), projectId, file);
-        AnalysisActionResponse action = analysis.start(user.currentUserId(), projectId, idempotencyKey,
-            request.getHeader("X-Request-Id"));
-        PreparationView preparation = service.current(user.currentUserId(), projectId);
+        DocumentImportResponse result = documentImports.importAndStart(user.currentUserId(), projectId,
+            file, idempotencyKey, request.getHeader("X-Request-Id"));
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
-            new DocumentImportResponse(preparation, snapshot, action), request.getHeader("X-Request-Id")));
+            result, request.getHeader("X-Request-Id")));
     }
 
     @GetMapping(value = "/analysis/report", produces = MediaType.APPLICATION_PDF_VALUE)
