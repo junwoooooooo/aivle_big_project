@@ -138,6 +138,24 @@ public class MarketResearchService {
                 projectId,MarketResearchRun.Kind.FULL)
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                 "완료된 Market Research 결과가 필요합니다."));
+        return startBm(ownerId, project, source, idempotencyKey, correlationId);
+    }
+
+    @Transactional
+    public RunView startBmFromVersion(Long ownerId, Long projectId, Long sourceVersionId,
+            String idempotencyKey, String correlationId) {
+        Project project = owned(ownerId, projectId);
+        MarketResearchVersion source = versions
+            .findByIdAndProjectIdAndKindAndDeletedAtIsNull(
+                sourceVersionId, projectId, MarketResearchRun.Kind.FULL)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                "완료된 Market Research 결과가 필요합니다."));
+        return startBm(ownerId, project, source, idempotencyKey, correlationId);
+    }
+
+    private RunView startBm(Long ownerId, Project project, MarketResearchVersion source,
+            String idempotencyKey, String correlationId) {
+        Long projectId = project.getId();
         ConceptPortfolioSelection selection=readySelection(projectId);
         MarketAnalysisSeedSnapshot seed=seeds
             .findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(selection.getId())
@@ -184,6 +202,22 @@ public class MarketResearchService {
     @Transactional(readOnly=true)
     public CurrentView current(Long ownerId, Long projectId, MarketResearchRun.Kind kind) {
         owned(ownerId,projectId);
+        MarketResearchRun run=runs
+            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId,kind)
+            .orElse(null);
+        return currentView(projectId,run);
+    }
+
+    @Transactional(readOnly=true)
+    public CurrentView currentForTaskRun(Long ownerId, Long projectId, String taskRunId) {
+        owned(ownerId,projectId);
+        MarketResearchRun run=runs.findByTaskRunIdAndDeletedAtIsNull(taskRunId)
+            .filter(value -> Objects.equals(value.getProject().getId(),projectId))
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        return currentView(projectId,run);
+    }
+
+    private CurrentView currentView(Long projectId, MarketResearchRun run) {
         ConceptPortfolioSelection selection=selections
             .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
         MarketAnalysisSeedSnapshot seed=selection==null?null:seeds
@@ -192,13 +226,10 @@ public class MarketResearchService {
             seed==null?null:mapper.readTree(seed.getSnapshotJson()).path("selectedConcept")
                 .path("identity").path("conceptName").asText(null),
             selection.getId(),selection.getHypothesisRevision(),seed==null?null:seed.getId());
-        MarketResearchRun run=runs
-            .findTopByProjectIdAndKindAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId,kind)
-            .orElse(null);
         if(run==null)return new CurrentView(null,null,source,false);
         MarketResearchVersion version=versions.findBySourceRunIdAndDeletedAtIsNull(run.getId()).orElse(null);
         boolean stale;
-        if(kind==MarketResearchRun.Kind.FULL){
+        if(run.getKind()==MarketResearchRun.Kind.FULL){
             stale=seed==null||!Objects.equals(seed.getId(),run.getSourceMarketSeedSnapshotId());
         }else{
             MarketResearchVersion currentMarket=versions

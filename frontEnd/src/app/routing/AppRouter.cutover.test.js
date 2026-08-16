@@ -27,4 +27,10 @@ describe('project route cutover', () => {
     expect(routerSource).not.toContain('element={<TechOpsPage />}');
     expect(routerSource).not.toContain('element={<FinancePage />}');
   });
+
+  it('사업 검증 canonical route와 Market/BM 호환 redirect를 함께 유지한다', () => {
+    expect(routerSource).toContain('path="business-validation" element={<BusinessValidationPage />}');
+    expect(routerSource).toContain('path="market" element={<ProjectRedirect routeKey="businessValidation" />}');
+    expect(routerSource).toContain('path="business-model" element={<ProjectRedirect routeKey="businessValidation" />}');
+  });
 });

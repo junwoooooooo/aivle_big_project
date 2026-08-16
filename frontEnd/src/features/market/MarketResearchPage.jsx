@@ -133,7 +133,7 @@ export default function MarketResearchPage() {
       {!result ? (
         !active ? <Card><p>아직 조사한 적이 없다. 「시장조사 실행」을 눌러라.</p></Card> : null
       ) : (
-        <ResultBody result={result} activeId={focus.active} onJump={focus.jump} onNext={() =>
+        <MarketResultBody result={result} activeId={focus.active} onJump={focus.jump} onNext={() =>
           navigate(projectRoutes.businessModel(projectId))} />
       )}
     </ProjectWorkspace>
@@ -146,7 +146,7 @@ export function MarketProgress({ events = [] }) {
   return detail ? <span className="market-page__live-progress">{detail}</span> : null;
 }
 
-function ResultBody({ result, activeId, onJump, onNext }) {
+export function MarketResultBody({ result, activeId, onJump, onNext }) {
   const market = result.market ?? {};
   const bag = bucketEvidence(result);
   const score = Object.fromEntries((result.scorecard ?? []).map((row) => [row.subject, row]));
@@ -200,9 +200,9 @@ function ResultBody({ result, activeId, onJump, onNext }) {
           「못 찾은 것」은 이 조사에서 **항상 나가는 칸**이라 더더욱 그렇다. */}
       {section(7, '못 찾은 것', 'NOT_FOUND', <NotFoundBody blocks={market.notFound} />)}
 
-      <div className="mr-actions">
+      {onNext ? <div className="mr-actions">
         <Button onClick={onNext}>다음 — 사업 모델 검토</Button>
-      </div>
+      </div> : null}
     </>
   );
 }

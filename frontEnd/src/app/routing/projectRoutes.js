@@ -15,8 +15,9 @@ export const projectRoutes = Object.freeze({
   concepts: (projectId) => `${projectBase(projectId)}/concepts`,
   conceptCompare: (projectId) => `${projectBase(projectId)}/concepts/compare`,
   legalReport: (projectId) => `${projectBase(projectId)}/concepts/legal-report`,
-  market: (projectId) => `${projectBase(projectId)}/market`,
-  businessModel: (projectId) => `${projectBase(projectId)}/business-model`,
+  businessValidation: (projectId) => `${projectBase(projectId)}/business-validation`,
+  market: (projectId) => `${projectBase(projectId)}/business-validation`,
+  businessModel: (projectId) => `${projectBase(projectId)}/business-validation`,
   twinSurvey: (projectId) => `${projectBase(projectId)}/twin-survey`,
   launchReadiness: (projectId) => `${projectBase(projectId)}/launch-readiness`,
   launchReadinessReport: (projectId, reportType, modules = []) => {

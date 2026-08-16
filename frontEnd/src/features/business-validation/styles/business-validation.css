@@ -1,0 +1,32 @@
+.business-validation { max-width: 86rem; margin-inline: auto; }
+.business-validation__preparation,
+.business-validation__progress,
+.business-validation__failure,
+.business-validation__result { margin-top: 2rem; }
+.business-validation__preparation > section,
+.business-validation__progress,
+.business-validation__failure { padding: 1.5rem; border: 1px solid var(--color-border-default); border-radius: 12px; background: var(--color-surface); }
+.business-validation__preparation header > span,
+.business-validation__progress header > span,
+.business-validation__result > header > span { color: var(--color-text-muted); font-size: .78rem; font-weight: 700; }
+.business-validation__preparation h2,
+.business-validation__progress h2,
+.business-validation__failure h2,
+.business-validation__result h2 { margin: .3rem 0 .5rem; }
+.business-validation__preparation details { padding-block: 1rem; border-top: 1px solid var(--color-border-default); }
+.business-validation__preparation details:first-of-type { margin-top: 1.25rem; }
+.business-validation__preparation summary { cursor: pointer; font-weight: 700; }
+.business-validation__primary-action { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.business-validation__progress ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.25rem 0; padding: 0; list-style: none; }
+.business-validation__progress li { display: flex; align-items: center; gap: .75rem; min-width: 0; padding: 1rem; border-radius: 10px; background: var(--color-bg-subtle); }
+.business-validation__progress li > span { display: grid; place-items: center; width: 2rem; height: 2rem; flex: 0 0 auto; border: 1px solid var(--color-border-default); border-radius: 50%; font-weight: 800; }
+.business-validation__progress li[data-state='active'] > span { color: #fff; border-color: var(--color-action-primary); background: var(--color-action-primary); }
+.business-validation__progress li[data-state='complete'] > span { color: var(--color-status-success); background: #fff; }
+.business-validation__progress li div { display: grid; gap: .2rem; }
+.business-validation__progress small { color: var(--color-text-muted); }
+.business-validation__result > header { padding: 1rem 0; border-bottom: 1px solid var(--color-border-default); }
+.business-validation__failure { border-color: color-mix(in srgb, var(--color-status-danger) 30%, transparent); }
+@media (max-width: 44rem) {
+  .business-validation__progress ol { grid-template-columns: 1fr; }
+  .business-validation__primary-action .ui-button { width: 100%; }
+}

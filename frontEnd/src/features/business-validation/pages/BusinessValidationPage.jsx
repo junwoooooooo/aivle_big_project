@@ -1,0 +1,135 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useOutletContext, useParams } from 'react-router-dom';
+
+import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
+import { getUserErrorMessage } from '../../../shared/api/apiError.js';
+import { Alert, Button, LoadingState, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui';
+import { MarketResultBody } from '../../market/MarketResearchPage.jsx';
+import { BusinessModelResultBody } from '../../market/BmCanvasPage.jsx';
+import CompetitorSeedForm from '../../market/CompetitorSeedForm.jsx';
+import { BmPlanReview } from '../../market/BmPlanForm.jsx';
+import { draftFrom } from '../../market/bmPlan.js';
+import { normalizeMarketResult } from '../../market/marketResult.js';
+import useCellFocus from '../../market/useCellFocus.js';
+import { createBusinessValidationApi } from '../api/businessValidationApi.js';
+import '../styles/business-validation.css';
+
+const RUNNING = new Set(['MARKET_RUNNING', 'MARKET_COMPLETED', 'BM_RUNNING']);
+const today = () => new Date().toISOString().slice(0, 10);
+
+export default function BusinessValidationPage() {
+  const { projectId } = useParams();
+  const { liveRevision = 0 } = useOutletContext() ?? {};
+  const client = useApiClient();
+  const api = useMemo(() => createBusinessValidationApi(client, projectId), [client, projectId]);
+  const [current, setCurrent] = useState(null);
+  const [plan, setPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const [next, nextPlan] = await Promise.all([api.current(), api.currentBmPlan()]);
+      setCurrent(next);
+      setPlan(nextPlan);
+      setError(null);
+    } catch (failure) {
+      setError(getUserErrorMessage(failure));
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    const timer = setTimeout(refresh, 0);
+    return () => clearTimeout(timer);
+  }, [refresh, liveRevision]);
+
+  const act = useCallback(async (action) => {
+    setBusy(true);
+    setError(null);
+    try { setCurrent(await action()); }
+    catch (failure) { setError(getUserErrorMessage(failure)); }
+    finally { setBusy(false); }
+  }, []);
+
+  if (loading) return <LoadingState label="사업 검증 상태를 불러오는 중" />;
+  return <BusinessValidationContent current={current} plan={plan} api={api}
+    busy={busy} error={error}
+    onStart={() => act(() => api.start(today()))}
+    onRetryBm={() => act(api.retryBusinessModel)} />;
+}
+
+export function BusinessValidationContent({ current, plan, api, busy = false, error,
+  onStart = () => {}, onRetryBm = () => {} }) {
+  const state = current?.state ?? 'NOT_STARTED';
+  const marketResult = normalizeMarketResult(current?.market?.result);
+  const bmResult = normalizeMarketResult(current?.businessModel?.result);
+  const marketFocus = useCellFocus('sec-');
+  const running = RUNNING.has(state);
+  const started = state !== 'NOT_STARTED' && state !== 'STALE';
+
+  return <ProjectWorkspace as="section" mode="analyze" className="business-validation">
+    <ProjectStageHeader step={3} eyebrow="사업 검증" title="시장성과 사업 모델을 함께 검증하세요"
+      description="한 번 시작하면 시장 분석을 완료한 뒤 같은 결과를 근거로 비즈니스 모델 분석을 이어갑니다." />
+
+    {error ? <Alert tone="danger">{error}</Alert> : null}
+    {state === 'STALE' ? <Alert tone="warning">사업안이 변경되어 다시 검증이 필요합니다. 기존 결과는 보존되어 있습니다.</Alert> : null}
+
+    {!started ? <BusinessValidationPreparation api={api} plan={plan} disabled={busy}
+      actionLabel={state === 'STALE' ? '사업 검증 다시 실행' : '사업 검증 시작'} onStart={onStart} /> : null}
+
+    {running ? <BusinessValidationProgress state={state} /> : null}
+
+    {state === 'MARKET_FAILED' ? <FailurePanel title="시장 분석을 완료하지 못했습니다"
+      message="비즈니스 모델 분석은 시작하지 않았습니다. 입력을 확인한 뒤 시장 분석부터 다시 실행할 수 있습니다."
+      action="사업 검증 다시 실행" busy={busy} onAction={onStart} /> : null}
+
+    {marketResult ? <section className="business-validation__result" aria-labelledby="market-result-title">
+      <header><span>시장 분석 완료</span><h2 id="market-result-title">시장 분석 결과</h2></header>
+      <MarketResultBody result={marketResult} activeId={marketFocus.active} onJump={marketFocus.jump} />
+    </section> : null}
+
+    {state === 'BM_FAILED' ? <FailurePanel title="비즈니스 모델 분석을 완료하지 못했습니다"
+      message="완료된 시장 분석 결과는 그대로 보존되어 있습니다. 같은 시장 결과로 비즈니스 모델만 다시 실행합니다."
+      action="BM 다시 시도" busy={busy} onAction={onRetryBm} /> : null}
+
+    {bmResult ? <section className="business-validation__result" aria-labelledby="bm-result-title">
+      <header><span>비즈니스 모델 분석 완료</span><h2 id="bm-result-title">비즈니스 모델 결과</h2></header>
+      <BusinessModelResultBody result={bmResult} />
+    </section> : null}
+  </ProjectWorkspace>;
+}
+
+function BusinessValidationPreparation({ api, plan, disabled, actionLabel, onStart }) {
+  return <div className="business-validation__preparation">
+    <section>
+      <header><span>사업 검증 준비</span><h2>현재 검증 기준을 확인하세요</h2>
+        <p>저장한 경쟁 정보와 운영 계획을 그대로 사용합니다.</p></header>
+      <details><summary>경쟁·대체재 정보</summary><CompetitorSeedForm api={api} disabled={disabled} /></details>
+      <details><summary>사업 운영 정보</summary><BmPlanReview draft={draftFrom(plan)} /></details>
+    </section>
+    <div className="business-validation__primary-action">
+      <Button onClick={onStart} disabled={disabled}>{disabled ? '시작하는 중…' : actionLabel}</Button>
+    </div>
+  </div>;
+}
+
+export function BusinessValidationProgress({ state }) {
+  const marketDone = ['MARKET_COMPLETED', 'BM_RUNNING', 'COMPLETED'].includes(state);
+  const bmRunning = state === 'BM_RUNNING';
+  return <section className="business-validation__progress" aria-live="polite">
+    <header><span>사업 검증 진행 중</span><h2>두 분석을 순서대로 진행하고 있습니다</h2></header>
+    <ol>
+      <li data-state={marketDone ? 'complete' : 'active'}><span>1</span><div><strong>시장 분석</strong><small>{marketDone ? '완료' : '진행 중'}</small></div></li>
+      <li data-state={bmRunning ? 'active' : marketDone ? 'waiting' : 'waiting'}><span>2</span><div><strong>비즈니스 모델</strong><small>{bmRunning ? '진행 중' : '대기'}</small></div></li>
+    </ol>
+    <p>상세 실행 기록은 작업센터에서 확인할 수 있습니다.</p>
+  </section>;
+}
+
+function FailurePanel({ title, message, action, busy, onAction }) {
+  return <section className="business-validation__failure"><h2>{title}</h2><p>{message}</p>
+    <Button onClick={onAction} disabled={busy}>{busy ? '요청 중…' : action}</Button></section>;
+}

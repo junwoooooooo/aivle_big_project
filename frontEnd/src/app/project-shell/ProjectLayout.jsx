@@ -75,6 +75,7 @@ function ProjectLayoutContent() {
     if (currentJourney.id === 'finalReport') return { id: 'finalReport', label: '최종 보고서', shortLabel: '최종 보고서', href: projectRoutes.finalReport(projectId), status: MODULE_STATUS.NOT_READY };
     const normalized = location.pathname.replace(/\/+$/, '');
     if (normalized.endsWith('/concepts/compare') || normalized.endsWith('/concepts/legal-report')) return modules.find(({ id }) => id === 'concepts');
+    if (/\/(business-validation|market|business-model)$/.test(normalized)) return modules.find(({ id }) => id === 'market');
     if (/\/(launch-readiness|technology|operations|tech-ops|finance)$/.test(normalized)
         || normalized.includes('/launch-readiness/reports/')) return modules.find(({ id }) => id === 'launchReadiness');
     return modules.find(({ href }) => href === normalized) ?? modules[0];

@@ -36,7 +36,6 @@ export default function BmCanvasPage() {
   const start = useCallback(() => api.startBusinessModel(), [api]);
   const { run, result, stale, error, busy, loading, active, elapsed, trigger } =
     useMarketLiveState(load, start, liveRevision);
-  const focus = useCellFocus('bm-');
   const [editingPlan, setEditingPlan] = useState(false);
   const plan = useBmPlan(api, trigger, () => setEditingPlan(false));
 
@@ -60,9 +59,6 @@ export default function BmCanvasPage() {
     return <PreparedPlanPhase projectId={projectId} navigate={navigate} plan={plan} error={error}
       onEdit={() => setEditingPlan(true)} onCreate={trigger} busy={busy} />;
   }
-
-  const bm = result?.bm ?? null;
-  const decision = bm ? DECISION_VIEW[bm.decision] : null;
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="market-page">
@@ -90,50 +86,44 @@ export default function BmCanvasPage() {
         <Alert tone="danger">수익 구조 결과를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.</Alert>
       ) : null}
 
-      {!result ? null : (
-        <>
-          {bm ? (
-            <div className="ui-card bm-verdict">
-              <h3>판정</h3>
-              {decision ? <Badge tone={decision.tone}>{decision.label}</Badge> : null}
-              <Badge tone="neutral">{CONFIDENCE_VIEW[bm.confidence] ?? bm.confidence ?? '신뢰도 미기재'}</Badge>
-              <p>{bm.summary ?? ''}</p>
-              <dl className="bm-verdict__details">
-                <div><dt>시장 적합성</dt><dd>{bm.marketFitStatus || '미기재'} · {bm.marketFitSummary || '요약 없음'}</dd></div>
-                <div><dt>내부 일관성</dt><dd>{bm.consistencyStatus || '미기재'} · {bm.consistencySummary || '요약 없음'}</dd></div>
-              </dl>
-            </div>
-          ) : (
-            <Alert tone="warning">
-              수익 구조 판정을 받지 못했습니다. 시장 분석 결과는 유지되며 다시 만들 수 있습니다.
-            </Alert>
-          )}
-
-          {result.canvas ? <BmCanvas cells={result.canvas} onJump={focus.jump} /> : null}
-
-          {bm ? (
-            <div className="bm-swr">
-              <SwrBox title="강점" items={bm.strengths} tone="var(--color-status-success)" />
-              <SwrBox title="약점" items={bm.weaknesses} tone="var(--color-status-warning)" />
-              <SwrBox title="위험" items={bm.risks} tone="var(--color-status-danger)" />
-            </div>
-          ) : null}
-
-          {bm?.legal ? <Card title="법률 결과 반영">
-            <p>사용 여부: <strong>{bm.legal.used ? '사용함' : '사용하지 않음'}</strong></p>
-            <p>상태: <strong>{bm.legal.status || 'UNVERIFIED'}</strong></p>
-            <p>{bm.legal.summary || '법률 요약 없음'}</p>
-            <SwrBox title="법률 위험" items={bm.legal.risks} tone="var(--color-status-danger)" />
-            <SwrBox title="필수 조치" items={bm.legal.requiredActions} tone="var(--color-status-warning)" />
-          </Card> : null}
-
-          {bm?.financialHandoff ? <FinancialHandoff value={bm.financialHandoff} /> : null}
-
-          {result.canvas ? <BmCellDetails cells={result.canvas} active={focus.active} /> : null}
-        </>
-      )}
+      {result ? <BusinessModelResultBody result={result} /> : null}
     </ProjectWorkspace>
   );
+}
+
+export function BusinessModelResultBody({ result }) {
+  const focus = useCellFocus('bm-');
+  const bm = result?.bm ?? null;
+  const decision = bm ? DECISION_VIEW[bm.decision] : null;
+  return <>
+    {bm ? (
+      <div className="ui-card bm-verdict">
+        <h3>판정</h3>
+        {decision ? <Badge tone={decision.tone}>{decision.label}</Badge> : null}
+        <Badge tone="neutral">{CONFIDENCE_VIEW[bm.confidence] ?? bm.confidence ?? '신뢰도 미기재'}</Badge>
+        <p>{bm.summary ?? ''}</p>
+        <dl className="bm-verdict__details">
+          <div><dt>시장 적합성</dt><dd>{bm.marketFitStatus || '미기재'} · {bm.marketFitSummary || '요약 없음'}</dd></div>
+          <div><dt>내부 일관성</dt><dd>{bm.consistencyStatus || '미기재'} · {bm.consistencySummary || '요약 없음'}</dd></div>
+        </dl>
+      </div>
+    ) : <Alert tone="warning">수익 구조 판정을 받지 못했습니다. 시장 분석 결과는 유지되며 다시 만들 수 있습니다.</Alert>}
+    {result.canvas ? <BmCanvas cells={result.canvas} onJump={focus.jump} /> : null}
+    {bm ? <div className="bm-swr">
+      <SwrBox title="강점" items={bm.strengths} tone="var(--color-status-success)" />
+      <SwrBox title="약점" items={bm.weaknesses} tone="var(--color-status-warning)" />
+      <SwrBox title="위험" items={bm.risks} tone="var(--color-status-danger)" />
+    </div> : null}
+    {bm?.legal ? <Card title="법률 결과 반영">
+      <p>사용 여부: <strong>{bm.legal.used ? '사용함' : '사용하지 않음'}</strong></p>
+      <p>상태: <strong>{bm.legal.status || 'UNVERIFIED'}</strong></p>
+      <p>{bm.legal.summary || '법률 요약 없음'}</p>
+      <SwrBox title="법률 위험" items={bm.legal.risks} tone="var(--color-status-danger)" />
+      <SwrBox title="필수 조치" items={bm.legal.requiredActions} tone="var(--color-status-warning)" />
+    </Card> : null}
+    {bm?.financialHandoff ? <FinancialHandoff value={bm.financialHandoff} /> : null}
+    {result.canvas ? <BmCellDetails cells={result.canvas} active={focus.active} /> : null}
+  </>;
 }
 
 function FinancialHandoff({ value }) {

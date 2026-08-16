@@ -10,6 +10,7 @@ describe('project module model', () => {
     expect(getProjectModules('41').filter((item) => item.id === 'concepts')).toHaveLength(1);
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/compare').id).toBe('concepts');
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/legal-report').id).toBe('concepts');
+    expect(getProjectModuleByPath('41', '/app/projects/41/business-validation').id).toBe('market');
   });
 
   it('기술·운영과 재무 상태를 하나의 출시 준비 상태로 보수적으로 집계한다', () => {

@@ -4,7 +4,7 @@ import { aggregateJourneyStatus, getJourneyByPath, getProjectJourneys, JOURNEY_S
 
 describe('project journey model', () => {
   it.each([
-    ['/idea', 'planning'], ['/concepts', 'planning'], ['/concepts/legal-report', 'planning'], ['/market', 'validation'],
+    ['/idea', 'planning'], ['/concepts', 'planning'], ['/concepts/legal-report', 'planning'], ['/business-validation', 'validation'], ['/market', 'validation'],
     ['/business-model', 'validation'], ['/launch-readiness', 'launch'], ['/technology', 'launch'],
     ['/launch-readiness/reports/technology', 'launch'],
     ['/operations', 'launch'], ['/tech-ops', 'launch'], ['/finance', 'launch'],
@@ -21,12 +21,13 @@ describe('project journey model', () => {
     expect(aggregateJourneyStatus([MODULE_STATUS.STALE])).toBe(JOURNEY_STATUS.STALE);
   });
 
-  it('첫 미완료 substep을 상위 Journey 진입 경로로 사용한다', () => {
+  it('사업 검증 Journey는 시장과 BM 상태를 묶어 canonical route 하나를 사용한다', () => {
     const modules = getProjectModules('41', {
       market: { status: MODULE_STATUS.COMPLETED },
       businessModel: { status: MODULE_STATUS.READY },
     });
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').href)
-      .toBe('/app/projects/41/business-model');
+      .toBe('/app/projects/41/business-validation');
+    expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').children).toHaveLength(1);
   });
 });

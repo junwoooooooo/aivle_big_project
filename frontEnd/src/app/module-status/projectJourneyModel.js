@@ -31,7 +31,7 @@ export const PROJECT_JOURNEYS = Object.freeze([
 ]);
 
 const PATH_TO_JOURNEY = Object.freeze({
-  overview: 'overview', idea: 'planning', concepts: 'planning', market: 'validation',
+  overview: 'overview', idea: 'planning', concepts: 'planning', 'business-validation': 'validation', market: 'validation',
   'business-model': 'validation', 'launch-readiness': 'launch', technology: 'launch', operations: 'launch', 'tech-ops': 'launch', finance: 'launch',
   'twin-survey': 'interview', marketing: 'marketingStrategy', 'final-report': 'finalReport',
 });
@@ -77,8 +77,12 @@ export function getJourneyByPath(pathname) {
 
 export function getProjectJourneys(projectId, modules = [], finalReportStatus = JOURNEY_STATUS.NOT_STARTED) {
   return PROJECT_JOURNEYS.map((journey) => {
-    const children = journey.moduleIds.map((id) => modules.find((module) => module.id === id)).filter(Boolean);
-    const status = journey.id === 'finalReport' ? finalReportStatus : aggregateJourneyStatus(children);
+    const sourceChildren = journey.moduleIds.map((id) => modules.find((module) => module.id === id)).filter(Boolean);
+    const status = journey.id === 'finalReport' ? finalReportStatus : aggregateJourneyStatus(sourceChildren);
+    const children = journey.id === 'validation' ? [{
+      id: 'businessValidation', label: '사업 검증', shortLabel: '사업 검증',
+      href: projectRoutes.businessValidation(projectId), status,
+    }] : sourceChildren;
     return {
       ...journey,
       children,
@@ -90,6 +94,7 @@ export function getProjectJourneys(projectId, modules = [], finalReportStatus = 
 
 export function getJourneyEntryRoute(projectId, journey, children = []) {
   if (journey.id === 'finalReport') return projectRoutes.finalReport(projectId);
+  if (journey.id === 'validation') return projectRoutes.businessValidation(projectId);
   const next = children.find((module) => module.status !== MODULE_STATUS.COMPLETED) ?? children.at(-1);
   return next?.href ?? projectRoutes.overview(projectId);
 }
