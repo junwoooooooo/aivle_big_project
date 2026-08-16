@@ -5,6 +5,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
 import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
 import com.aivle.backend.pipeline.market.MarketResearchService;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.nio.charset.StandardCharsets;
@@ -28,22 +29,30 @@ public class BusinessValidationCoordinator {
     private final BusinessValidationSessionRepository sessions;
     private final MarketResearchRunRepository marketRuns;
     private final MarketResearchService market;
+    private final BmPlanPreparationService bmPlans;
 
     @Transactional
     public CurrentView start(Long ownerId, Long projectId, String asOf,
             String commandKey, String correlationId) {
-        Project project = owned(ownerId, projectId);
+        Project project = ownedForUpdate(ownerId, projectId);
         String normalizedCommandKey = validCommandKey(commandKey);
+        BusinessValidationSession replay = sessions
+            .findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(projectId, normalizedCommandKey)
+            .orElse(null);
+        if (replay != null) return view(ownerId, replay);
+        BusinessValidationSession active = sessions
+            .findTopByProjectIdAndStateInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, ACTIVE_STATES).orElse(null);
+        if (active != null) {
+            if (stale(ownerId, active)) active.markStale();
+            else return view(ownerId, active);
+        }
+        int sourceBmPlanRevision = bmPlans.current(projectId).revision();
         String marketKey = derivedKey("market", normalizedCommandKey);
         MarketResearchService.RunView started = market.startFull(
             ownerId, projectId, asOf, marketKey, correlationId);
-        BusinessValidationSession session = sessions
-            .findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(projectId, normalizedCommandKey)
-            .orElseGet(() -> sessions.save(BusinessValidationSession.start(project,
-                exactRun(projectId, started.taskRunId()), normalizedCommandKey)));
-        if (!Objects.equals(session.getMarketTaskRunId(), started.taskRunId())) {
-            throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
-        }
+        BusinessValidationSession session = sessions.save(BusinessValidationSession.start(project,
+            exactRun(projectId, started.taskRunId()), sourceBmPlanRevision, normalizedCommandKey));
         return view(ownerId, session);
     }
 
@@ -66,9 +75,13 @@ public class BusinessValidationCoordinator {
         BusinessValidationSession session = sessions.findByIdForUpdate(latest.getId())
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
         if (Objects.equals(normalizedCommandKey, session.getBmCommandIdempotencyKey())) return view(ownerId, session);
-        if (session.getState() != BusinessValidationSession.State.BM_FAILED || stale(ownerId, session)) {
+        if (session.getState() != BusinessValidationSession.State.BM_FAILED) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST,
                 "현재 시장 분석 결과를 기준으로 BM만 다시 실행할 수 없습니다.");
+        }
+        if (stale(ownerId, session)) {
+            session.markStale();
+            return view(ownerId, session);
         }
         startBm(ownerId, session, normalizedCommandKey, correlationId);
         return view(ownerId, session);
@@ -79,7 +92,10 @@ public class BusinessValidationCoordinator {
         BusinessValidationSession session = sessions.findByIdForUpdate(sessionId).orElse(null);
         if (session == null || !ACTIVE_STATES.contains(session.getState())) return;
         Long ownerId = session.getProject().getOwner().getId();
-        if (stale(ownerId, session)) return;
+        if (stale(ownerId, session)) {
+            session.markStale();
+            return;
+        }
         MarketResearchService.CurrentView marketView = market.currentForTaskRun(
             ownerId, session.getProject().getId(), session.getMarketTaskRunId());
         if (marketView.run().state().equals("FAILED")) {
@@ -102,10 +118,14 @@ public class BusinessValidationCoordinator {
 
     private void startBm(Long ownerId, BusinessValidationSession session,
             String commandKey, String correlationId) {
-        MarketResearchService.RunView bm = market.startBmFromVersion(ownerId,
+        var bm = market.startBmFromVersionAtPlanRevision(ownerId,
             session.getProject().getId(), session.getMarketVersionId(),
-            derivedKey("bm", commandKey), correlationId);
-        session.bmStarted(bm.taskRunId(), commandKey);
+            session.getSourceBmPlanRevision(), derivedKey("bm", commandKey), correlationId);
+        if (bm.isEmpty()) {
+            session.markStale();
+            return;
+        }
+        session.bmStarted(bm.get().taskRunId(), commandKey);
     }
 
     private CurrentView view(Long ownerId, BusinessValidationSession session) {
@@ -113,7 +133,8 @@ public class BusinessValidationCoordinator {
             ownerId, session.getProject().getId(), session.getMarketTaskRunId());
         MarketResearchService.CurrentView bmView = session.getBmTaskRunId() == null ? null
             : market.currentForTaskRun(ownerId, session.getProject().getId(), session.getBmTaskRunId());
-        boolean stale = stale(session, marketView, bmView);
+        boolean stale = session.getState() == BusinessValidationSession.State.STALE
+            || stale(session, marketView, bmView);
         String state = effectiveState(marketView, bmView, stale);
         return new CurrentView(state, stale, stage(marketView), stage(bmView), actions(state));
     }
@@ -144,7 +165,14 @@ public class BusinessValidationCoordinator {
         return marketView.stale() || (bmView != null && bmView.stale()) || source == null
             || !Objects.equals(source.marketSeedSnapshotId(), session.getSourceMarketSeedSnapshotId())
             || !Objects.equals(source.portfolioSelectionId(), session.getSourcePortfolioSelectionId())
-            || !Objects.equals(source.selectionRevision(), session.getSourceSelectionRevision());
+            || !Objects.equals(source.selectionRevision(), session.getSourceSelectionRevision())
+            || bmPlanChanged(session);
+    }
+
+    private boolean bmPlanChanged(BusinessValidationSession session) {
+        Integer pinnedRevision = session.getSourceBmPlanRevision();
+        return pinnedRevision != null
+            && bmPlans.current(session.getProject().getId()).revision() != pinnedRevision;
     }
 
     private static StageView stage(MarketResearchService.CurrentView value) {
@@ -165,6 +193,12 @@ public class BusinessValidationCoordinator {
 
     private Project owned(Long ownerId, Long projectId) {
         return projects.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, ownerId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    private Project ownedForUpdate(Long ownerId, Long projectId) {
+        return projects.findByIdForUpdate(projectId)
+            .filter(value -> value.getOwner().getId().equals(ownerId))
             .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
     }
 

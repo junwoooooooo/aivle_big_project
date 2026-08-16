@@ -20,6 +20,7 @@ import com.aivle.backend.taskrun.service.TaskRunService;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -153,8 +154,28 @@ public class MarketResearchService {
         return startBm(ownerId, project, source, idempotencyKey, correlationId);
     }
 
+    @Transactional
+    public Optional<RunView> startBmFromVersionAtPlanRevision(Long ownerId, Long projectId,
+            Long sourceVersionId, Integer expectedPlanRevision,
+            String idempotencyKey, String correlationId) {
+        Project project = owned(ownerId, projectId);
+        MarketResearchVersion source = versions
+            .findByIdAndProjectIdAndKindAndDeletedAtIsNull(
+                sourceVersionId, projectId, MarketResearchRun.Kind.FULL)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                "완료된 Market Research 결과가 필요합니다."));
+        return startBm(ownerId, project, source, expectedPlanRevision,
+            idempotencyKey, correlationId);
+    }
+
     private RunView startBm(Long ownerId, Project project, MarketResearchVersion source,
             String idempotencyKey, String correlationId) {
+        return startBm(ownerId, project, source, null, idempotencyKey, correlationId)
+            .orElseThrow(() -> new IllegalStateException("Unpinned BM start cannot reject plan revision"));
+    }
+
+    private Optional<RunView> startBm(Long ownerId, Project project, MarketResearchVersion source,
+            Integer expectedPlanRevision, String idempotencyKey, String correlationId) {
         Long projectId = project.getId();
         ConceptPortfolioSelection selection=readySelection(projectId);
         MarketAnalysisSeedSnapshot seed=seeds
@@ -168,14 +189,17 @@ public class MarketResearchService {
                 "Current Market source changed; rerun Market Research before Business Model.");
         }
         var plan=bmPlans.forExecution(projectId).orElseGet(() -> bmPlans.current(projectId));
+        if (expectedPlanRevision != null && plan.revision() != expectedPlanRevision) {
+            return Optional.empty();
+        }
         JsonNode fullInput=mapper.readTree(source.getSourceRun().getTaskRun().getInputSnapshot());
         String input=inputs.bm(source,fullInput,plan.plan(),plan.constraints(),plan.revision());
         String conceptId=fullInput.path("conceptId").asText();
-        return start(ownerId,project,MarketResearchRun.Kind.BM,source.getSourceRun(),input,conceptId,
+        return Optional.of(start(ownerId,project,MarketResearchRun.Kind.BM,source.getSourceRun(),input,conceptId,
             idempotencyKey,correlationId,source.getId(),
             source.getSourceRun().getSourceMarketSeedSnapshotId(),
             source.getSourceRun().getSourcePortfolioSelectionId(),
-            source.getSourceRun().getSourceSelectionRevision(),plan.revision());
+            source.getSourceRun().getSourceSelectionRevision(),plan.revision()));
     }
 
     private RunView start(Long ownerId, Project project, MarketResearchRun.Kind kind,

@@ -18,6 +18,10 @@ public interface BusinessValidationSessionRepository
         Long projectId);
 
     @EntityGraph(attributePaths = {"project", "project.owner"})
+    Optional<BusinessValidationSession> findTopByProjectIdAndStateInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, Collection<BusinessValidationSession.State> states);
+
+    @EntityGraph(attributePaths = {"project", "project.owner"})
     Optional<BusinessValidationSession> findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(
         Long projectId, String commandIdempotencyKey);
 

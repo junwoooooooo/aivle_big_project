@@ -7,14 +7,17 @@ import static org.mockito.Mockito.*;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
 import com.aivle.backend.pipeline.market.MarketResearchRunRepository;
 import com.aivle.backend.pipeline.market.MarketResearchService;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.user.entity.User;
 import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -28,15 +31,21 @@ class BusinessValidationCoordinatorTests {
     @Mock BusinessValidationSessionRepository sessions;
     @Mock MarketResearchRunRepository runs;
     @Mock MarketResearchService market;
+    @Mock BmPlanPreparationService bmPlans;
     private BusinessValidationCoordinator coordinator;
     private Project project;
 
     @BeforeEach
     void setUp() {
-        coordinator = new BusinessValidationCoordinator(projects, sessions, runs, market);
+        coordinator = new BusinessValidationCoordinator(projects, sessions, runs, market, bmPlans);
         project = mock(Project.class);
+        User owner = mock(User.class);
         when(project.getId()).thenReturn(41L);
+        when(project.getOwner()).thenReturn(owner);
+        when(owner.getId()).thenReturn(7L);
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
+        when(projects.findByIdForUpdate(41L)).thenReturn(Optional.of(project));
+        when(bmPlans.current(41L)).thenReturn(plan(3));
     }
 
     @Test
@@ -47,6 +56,8 @@ class BusinessValidationCoordinatorTests {
         when(runs.findByTaskRunIdAndDeletedAtIsNull("market-task")).thenReturn(Optional.of(run));
         when(sessions.findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(41L, "command-1"))
             .thenReturn(Optional.empty());
+        when(sessions.findTopByProjectIdAndStateInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            eq(41L), anyCollection())).thenReturn(Optional.empty());
         when(sessions.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(market.currentForTaskRun(7L, 41L, "market-task")).thenReturn(current("QUEUED", null, false));
 
@@ -55,6 +66,9 @@ class BusinessValidationCoordinatorTests {
         assertThat(result.state()).isEqualTo("MARKET_RUNNING");
         verify(market).startFull(eq(7L), eq(41L), eq("2026-08-16"), startsWith("bv-market-"), eq("request-1"));
         verify(market, never()).startBmFromVersion(anyLong(), anyLong(), anyLong(), anyString(), anyString());
+        var saved = ArgumentCaptor.forClass(BusinessValidationSession.class);
+        verify(sessions).save(saved.capture());
+        assertThat(saved.getValue().getSourceBmPlanRevision()).isEqualTo(3);
     }
 
     @Test
@@ -64,8 +78,8 @@ class BusinessValidationCoordinatorTests {
         when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
         when(market.currentForTaskRun(7L, 41L, "market-task"))
             .thenReturn(current("SUCCEEDED", 91L, false));
-        when(market.startBmFromVersion(eq(7L), eq(41L), eq(91L), anyString(), eq("session-1")))
-            .thenReturn(runView("bm-task", "QUEUED"));
+        when(market.startBmFromVersionAtPlanRevision(eq(7L), eq(41L), eq(91L), eq(3),
+            anyString(), eq("session-1"))).thenReturn(Optional.of(runView("bm-task", "QUEUED")));
 
         coordinator.reconcile("session-1");
 
@@ -108,13 +122,83 @@ class BusinessValidationCoordinatorTests {
         when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(latest));
         when(market.currentForTaskRun(7L, 41L, "market-task")).thenReturn(current("SUCCEEDED", 91L, false));
         when(market.currentForTaskRun(7L, 41L, "old-bm")).thenReturn(current("FAILED", null, false));
-        when(market.startBmFromVersion(eq(7L), eq(41L), eq(91L), anyString(), eq("request-2")))
-            .thenReturn(runView("new-bm", "QUEUED"));
+        when(market.startBmFromVersionAtPlanRevision(eq(7L), eq(41L), eq(91L), eq(3),
+            anyString(), eq("request-2"))).thenReturn(Optional.of(runView("new-bm", "QUEUED")));
         coordinator.retryBm(7L, 41L, "retry-1", "request-2");
 
         verify(market, never()).startFull(anyLong(), anyLong(), any(), anyString(), anyString());
-        verify(market).startBmFromVersion(eq(7L), eq(41L), eq(91L), anyString(), eq("request-2"));
+        verify(market).startBmFromVersionAtPlanRevision(eq(7L), eq(41L), eq(91L), eq(3),
+            anyString(), eq("request-2"));
         verify(latest).bmStarted("new-bm", "retry-1");
+    }
+
+    @Test
+    void staleActiveSessionIsPersistedAndExcludedFromFutureActiveScans() {
+        BusinessValidationSession session = session(BusinessValidationSession.State.MARKET_RUNNING, null, null);
+        when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
+        when(market.currentForTaskRun(7L, 41L, "market-task"))
+            .thenReturn(current("RUNNING", null, true));
+        when(sessions.findActiveIds(anyCollection())).thenReturn(List.of());
+
+        coordinator.reconcile("session-1");
+        coordinator.activeSessionIds();
+
+        verify(session).markStale();
+        verify(sessions).findActiveIds(argThat(states ->
+            !states.contains(BusinessValidationSession.State.STALE)));
+    }
+
+    @Test
+    void differentCommandReturnsExistingActiveSessionWithoutNewMarketRun() {
+        BusinessValidationSession active = session(BusinessValidationSession.State.MARKET_RUNNING, null, null);
+        when(sessions.findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(41L, "command-2"))
+            .thenReturn(Optional.empty());
+        when(sessions.findTopByProjectIdAndStateInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            eq(41L), anyCollection())).thenReturn(Optional.of(active));
+        when(market.currentForTaskRun(7L, 41L, "market-task"))
+            .thenReturn(current("RUNNING", null, false));
+
+        var result = coordinator.start(7L, 41L, "2026-08-16", "command-2", "request-2");
+
+        assertThat(result.state()).isEqualTo("MARKET_RUNNING");
+        verify(projects).findByIdForUpdate(41L);
+        verify(market, never()).startFull(anyLong(), anyLong(), any(), anyString(), anyString());
+        verify(sessions, never()).save(any());
+    }
+
+    @Test
+    void changedBmPlanStopsContinuationAndPersistsStale() {
+        BusinessValidationSession session = session(BusinessValidationSession.State.MARKET_RUNNING, null, null);
+        when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
+        when(bmPlans.current(41L)).thenReturn(plan(4));
+        when(market.currentForTaskRun(7L, 41L, "market-task"))
+            .thenReturn(current("SUCCEEDED", 91L, false));
+
+        coordinator.reconcile("session-1");
+
+        verify(session).markStale();
+        verify(market, never()).startBmFromVersionAtPlanRevision(
+            anyLong(), anyLong(), anyLong(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void changedBmPlanStopsBmOnlyRetryAndPersistsStale() {
+        BusinessValidationSession session = session(BusinessValidationSession.State.BM_FAILED, 91L, "old-bm");
+        when(sessions.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(session));
+        when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
+        when(bmPlans.current(41L)).thenReturn(plan(4));
+        when(market.currentForTaskRun(7L, 41L, "market-task"))
+            .thenReturn(current("SUCCEEDED", 91L, false));
+        when(market.currentForTaskRun(7L, 41L, "old-bm"))
+            .thenReturn(current("FAILED", null, false));
+
+        var result = coordinator.retryBm(7L, 41L, "retry-2", "request-3");
+
+        assertThat(result.state()).isEqualTo("STALE");
+        verify(session).markStale();
+        verify(market, never()).startBmFromVersionAtPlanRevision(
+            anyLong(), anyLong(), anyLong(), anyInt(), anyString(), anyString());
     }
 
     @Test
@@ -160,7 +244,13 @@ class BusinessValidationCoordinatorTests {
         when(session.getSourceMarketSeedSnapshotId()).thenReturn("seed-1");
         when(session.getSourcePortfolioSelectionId()).thenReturn(31L);
         when(session.getSourceSelectionRevision()).thenReturn(4);
+        when(session.getSourceBmPlanRevision()).thenReturn(3);
         return session;
+    }
+
+    private static BmPlanPreparationService.PlanView plan(int revision) {
+        var factory = tools.jackson.databind.node.JsonNodeFactory.instance;
+        return new BmPlanPreparationService.PlanView(factory.objectNode(), factory.objectNode(), revision);
     }
 
     private static MarketResearchService.RunView runView(String taskId, String state) {
