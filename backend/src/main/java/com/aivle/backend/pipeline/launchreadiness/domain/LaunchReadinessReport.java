@@ -30,15 +30,16 @@ public class LaunchReadinessReport extends BaseEntity {
 
     public static LaunchReadinessReport create(String id, Long projectId, ModuleType moduleType,
             String snapshotId, String taskRunId, String analysis, String quality, String evidence,
-            String resultHash, Long userId, Instant now) {
+            String resultHash, boolean current, boolean stale, Long userId, Instant now) {
         LaunchReadinessReport value = new LaunchReadinessReport();
         value.id = id; value.projectId = projectId; value.moduleType = moduleType;
         value.inputSnapshotId = snapshotId; value.taskRunId = taskRunId; value.resultSchemaVersion = "1.0";
         value.analysisJson = analysis; value.qualityJson = quality; value.externalEvidenceJson = evidence;
-        value.resultHash = resultHash; value.current = true; value.stale = false;
+        value.resultHash = resultHash; value.current = current; value.stale = stale;
         value.completedAt = now; value.createdByUserId = userId;
         return value;
     }
 
     public void supersede() { current = false; stale = true; }
+    public void markStale() { stale = true; }
 }

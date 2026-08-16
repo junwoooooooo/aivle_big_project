@@ -13,6 +13,15 @@ describe('launch readiness api', () => {
     expect(options.headers['Idempotency-Key']).toBeTruthy();
   });
 
+  it('실패한 전문 분석은 새 idempotency key로 명시적 retry command를 보낸다', async () => {
+    const client = { post: vi.fn(async () => ({ data: { status: 'QUEUED' } })) };
+    await createLaunchReadinessApi(client).retryProfessional('7', 'operations');
+    const [path, body, options] = client.post.mock.calls[0];
+    expect(path).toBe('/api/v3/projects/7/launch-readiness/operations/retry');
+    expect(body).toEqual({});
+    expect(options.headers['Idempotency-Key']).toBeTruthy();
+  });
+
   it('완료 보고서 조합을 중복 없는 modules query로 요청한다', async () => {
     const client = { download: vi.fn(async () => ({ blob: new Blob(['pdf']) })) };
     const api = createLaunchReadinessApi(client);

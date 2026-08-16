@@ -162,10 +162,24 @@ class MarketingExecutionServiceTests {
         MarketingContent drifted = content(MarketingContentStatus.FAILED, 1);
         when(contents.findLocked(drifted.getId(), 41L)).thenReturn(Optional.of(drifted));
         when(seed.getId()).thenReturn("new-seed");
-        assertThatThrownBy(() -> service.retry(7L, 41L, drifted.getId(), "key-2", "corr"))
-            .isInstanceOfSatisfying(BusinessException.class,
-                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.MODULE_INPUT_STALE));
+        var stale = service.retry(7L, 41L, drifted.getId(), "key-2", "corr");
+        assertThat(stale.content().status()).isEqualTo("STALE");
         assertThat(drifted.getStatus()).isEqualTo(MarketingContentStatus.STALE);
+    }
+
+    @Test
+    void staleEditAndFinalizeReturnHistoricalViewWithoutRollingBackOrDeletingHistory() {
+        MarketingContent editable = content(MarketingContentStatus.COMPLETED, 1);
+        MarketingContent finalizable = content(MarketingContentStatus.COMPLETED, 1);
+        when(contents.findLocked(editable.getId(), 41L)).thenReturn(Optional.of(editable));
+        when(contents.findLocked(finalizable.getId(), 41L)).thenReturn(Optional.of(finalizable));
+        when(seed.getId()).thenReturn("new-seed");
+
+        assertThat(service.edit(7L, 41L, editable.getId(), null).content().status()).isEqualTo("STALE");
+        assertThat(service.finalizeContent(7L, 41L, finalizable.getId()).content().status()).isEqualTo("STALE");
+        assertThat(editable.getStatus()).isEqualTo(MarketingContentStatus.STALE);
+        assertThat(finalizable.getStatus()).isEqualTo(MarketingContentStatus.STALE);
+        verify(contents, never()).delete(any());
     }
 
     @Test

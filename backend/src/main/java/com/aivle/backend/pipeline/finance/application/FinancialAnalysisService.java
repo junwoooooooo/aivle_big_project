@@ -55,12 +55,15 @@ public class FinancialAnalysisService {
     @Transactional
     public AnalysisActionResponse start(Long ownerId, Long projectId, String idempotencyKey, String correlationId) {
         SnapshotView snapshot = finance.currentSnapshot(ownerId, projectId);
+        if (snapshot.stale()) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+            "현재 사업안 기준으로 재무 입력 문서를 다시 준비해 주세요.");
         JsonNode deterministic = mapper.valueToTree(calculation.analyze(snapshot.snapshot()));
         ObjectNode input = mapper.createObjectNode();
         input.put("snapshotId", snapshot.snapshotId());
         input.put("snapshotHash", snapshot.snapshotHash());
         input.put("sourceMarketResearchVersionId", snapshot.sourceMarketResearchVersionId());
         input.put("sourceBusinessModelVersionId", snapshot.sourceBusinessModelVersionId());
+        input.set("sourceBinding", sourceBinding(snapshot.snapshot()));
         input.set("deterministicResult", deterministic);
         String json = mapper.writeValueAsString(input);
         String hash = hasher.hash(TaskType.FINANCE_ANALYSIS_REPORT, "1.0", "ko-KR", json);
@@ -68,7 +71,7 @@ public class FinancialAnalysisService {
             ? USER_DOCUMENT_SUBJECT : snapshot.snapshotId();
         var created = taskRuns.createWithDisposition(ownerId, projectId, TaskType.FINANCE_ANALYSIS_REPORT,
             SUBJECT, subjectId, json, hash, requiredKey(idempotencyKey),
-            correlationId == null || correlationId.isBlank() ? requiredKey(idempotencyKey) : correlationId, 2);
+            correlationId == null || correlationId.isBlank() ? requiredKey(idempotencyKey) : correlationId, 1);
         if (created.createdNew()) publish(projectId, created.taskRun().getId(), "QUEUED",
             "job.finance.analysis.queued", JobEvent.Status.QUEUED, null);
         TaskRun task = created.taskRun();
@@ -87,16 +90,18 @@ public class FinancialAnalysisService {
                 projectId, SUBJECT, subjectId)
             .filter(value -> snapshot.snapshotId().equals(
                 mapper.readTree(value.getInputSnapshot()).path("snapshotId").asText())).orElse(null);
-        if (task == null) return new AnalysisView(null, null, "NOT_STARTED", false, null,
+        if (task == null) return new AnalysisView(null, null, snapshot.stale() ? "STALE" : "NOT_STARTED", false, null,
             snapshot.snapshotId(), snapshot.snapshotHash(), null, false, snapshot.stale(),
-            null, sourceDocumentName);
+            null, sourceDocumentName, sourceBinding(snapshot.snapshot()),
+            snapshot.stale() ? "CONCEPT_CHANGED" : null);
         JsonNode result = task.getFinalResultId() == null ? null : resultRepository.findById(task.getFinalResultId())
             .map(TaskResult::getResultJson).map(mapper::readTree).orElse(null);
         boolean fallback = result != null && "SYSTEM_CALCULATION_FALLBACK".equals(
             result.path("report").path("source").asText());
-        return new AnalysisView(task.getId(), task.getId(), task.getState().name(), task.isRetryable(),
+        return new AnalysisView(task.getId(), task.getId(), snapshot.stale() ? "STALE" : task.getState().name(), task.isRetryable(),
             task.getLastErrorCode(), snapshot.snapshotId(), snapshot.snapshotHash(), result, fallback,
-            snapshot.stale(), task.getFinishedAt(), sourceDocumentName);
+            snapshot.stale(), task.getFinishedAt(), sourceDocumentName, sourceBinding(snapshot.snapshot()),
+            snapshot.stale() ? "CONCEPT_CHANGED" : null);
     }
 
     private String resolveSourceDocumentName(Long projectId, SnapshotView snapshot) {
@@ -118,7 +123,7 @@ public class FinancialAnalysisService {
         taskRuns.getOwned(ownerId, projectId, task.getId());
         String snapshotId = mapper.readTree(task.getInputSnapshot()).path("snapshotId").asText();
         SnapshotView snapshot = finance.snapshot(ownerId, projectId, snapshotId);
-        if (!sourceDocumentHash.equals(snapshot.snapshot().path("sourceDocumentHash").asText())) {
+        if (snapshot.stale() || !sourceDocumentHash.equals(snapshot.snapshot().path("sourceDocumentHash").asText())) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
         }
         AnalysisActionResponse action = new AnalysisActionResponse(task.getId(), task.getId(),
@@ -162,6 +167,17 @@ public class FinancialAnalysisService {
                 || !report.path("recommendedActions").isArray() || report.path("recommendedActions").isEmpty()) {
             throw new IllegalStateException("finance report contract invalid");
         }
+    }
+
+    private ObjectNode sourceBinding(JsonNode snapshot) {
+        ObjectNode value = mapper.createObjectNode();
+        value.put("marketSeedSnapshotId", snapshot.path("sourceCurrentMarketSeedSnapshotId").asText(null));
+        value.put("selectionId", snapshot.path("sourceSelectionId").asText(null));
+        if (snapshot.path("sourceSelectionRevision").canConvertToInt())
+            value.put("selectionRevision", snapshot.path("sourceSelectionRevision").asInt());
+        if (snapshot.path("sourceBmPlanRevision").canConvertToInt())
+            value.put("bmPlanRevision", snapshot.path("sourceBmPlanRevision").asInt());
+        return value;
     }
 
     private String requiredKey(String value) {

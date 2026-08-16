@@ -34,6 +34,15 @@ public class LaunchReadinessController {
         var result = service.start(user.currentUserId(), projectId, type(module), file, idempotencyKey, request.getHeader("X-Request-Id"));
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
     }
+    @PostMapping("/retry")
+    public ResponseEntity<ApiResponse<AnalysisActionResponse>> retry(@PathVariable Long projectId,
+            @PathVariable String module, @RequestHeader("Idempotency-Key") String idempotencyKey,
+            HttpServletRequest request) {
+        var result = service.retry(user.currentUserId(), projectId, type(module), idempotencyKey,
+            request.getHeader("X-Request-Id"));
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(ApiResponse.success(result, request.getHeader("X-Request-Id")));
+    }
     @GetMapping("/current")
     public ApiResponse<ProfessionalAnalysisView> current(@PathVariable Long projectId, @PathVariable String module, HttpServletRequest request) {
         return ApiResponse.success(service.current(user.currentUserId(), projectId, type(module)), request.getHeader("X-Request-Id"));

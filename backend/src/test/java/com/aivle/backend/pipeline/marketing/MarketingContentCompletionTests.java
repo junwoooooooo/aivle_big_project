@@ -77,6 +77,14 @@ class MarketingContentCompletionTests {
     }
 
     @Test
+    void workerStartPersistsStaleAndDeclinesProviderExecution() {
+        current("new-seed");
+
+        assertThat(service.start("task-1", 41L)).isFalse();
+        assertThat(content.getStatus()).isEqualTo(MarketingContentStatus.STALE);
+    }
+
+    @Test
     void sameSourceFailureRemainsRetryableDomainFailure() {
         current("seed-1");
 

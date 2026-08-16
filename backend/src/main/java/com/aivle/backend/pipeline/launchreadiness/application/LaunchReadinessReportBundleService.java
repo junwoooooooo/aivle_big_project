@@ -47,15 +47,22 @@ public class LaunchReadinessReportBundleService {
         for (String module : modules) {
             if ("finance".equals(module)) {
                 var view = financialAnalysis.current(ownerId, projectId);
-                if (view.result() == null || view.stale()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY);
+                if (view.result() == null || view.stale()) throw new BusinessException(ErrorCode.FINANCIAL_SNAPSHOT_NOT_READY,
+                    "현재 사업안 기준으로 재무 분석이 필요합니다.");
                 documents.add(financialPdf.create(mapper.readValue(mapper.writeValueAsString(view.result()), FinancialModuleResponse.class)));
-                sources.addObject().put("module", module).put("taskRunId", view.taskRunId()).put("snapshotHash", view.snapshotHash());
+                sources.addObject().put("module", module).put("taskRunId", view.taskRunId())
+                    .put("inputSnapshotId", view.snapshotId()).put("inputSnapshotHash", view.snapshotHash())
+                    .set("sourceBinding", view.sourceBinding().deepCopy());
             } else {
                 ModuleType type = "technology".equals(module) ? ModuleType.TECHNOLOGY : ModuleType.OPERATIONS;
                 var view = readiness.current(ownerId, projectId, type);
-                if (view.analysis() == null || view.stale()) throw new IllegalArgumentException(module + " 분석 보고서가 준비되지 않았습니다.");
+                if (view.analysis() == null || view.stale()) throw new IllegalArgumentException(
+                    "현재 사업안 기준으로 " + module + " 분석이 필요합니다.");
                 documents.add(professionalPdf.create(ownerId, projectId, type, !integrated));
-                sources.addObject().put("module", module).put("resultId", view.resultId()).put("resultHash", view.resultHash()).put("snapshotHash", view.inputSnapshotHash());
+                sources.addObject().put("module", module).put("resultId", view.resultId())
+                    .put("resultHash", view.resultHash()).put("inputSnapshotId", view.inputSnapshotId())
+                    .put("inputSnapshotHash", view.inputSnapshotHash())
+                    .set("sourceBinding", view.sourceBinding().deepCopy());
                 if (integrated) for (var item : view.externalEvidence()) {
                     String url = item.path("url").asText("").trim(); String title = item.path("title").asText("").trim();
                     if (!url.isBlank()) external.putIfAbsent(url, new Source(title, url));

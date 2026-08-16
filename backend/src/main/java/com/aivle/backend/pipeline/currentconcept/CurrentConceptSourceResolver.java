@@ -39,6 +39,14 @@ public class CurrentConceptSourceResolver {
         return seed == null ? null : new Source(selection, seed, bmPlans.current(projectId));
     }
 
+    public Binding binding(Source source) {
+        if (source == null) return null;
+        return new Binding(source.seed().getId(), source.selection().getId(),
+            source.selection().getHypothesisRevision(), source.bm().revision());
+    }
+
     public record Source(ConceptPortfolioSelection selection, MarketAnalysisSeedSnapshot seed,
                          BmPlanPreparationService.PlanView bm) { }
+    public record Binding(String marketSeedSnapshotId, Long selectionId,
+                          int selectionRevision, int bmPlanRevision) { }
 }

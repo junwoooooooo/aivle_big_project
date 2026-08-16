@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LaunchReadinessReportRepository extends JpaRepository<LaunchReadinessReport, String> {
     Optional<LaunchReadinessReport> findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByCompletedAtDesc(Long projectId, ModuleType moduleType);
+    Optional<LaunchReadinessReport> findFirstByProjectIdAndModuleTypeAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(
+        Long projectId, ModuleType moduleType, String inputSnapshotId);
     Optional<LaunchReadinessReport> findByTaskRunIdAndDeletedAtIsNull(String taskRunId);
 }

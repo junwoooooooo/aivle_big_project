@@ -11,7 +11,21 @@ public final class LaunchReadinessApiModels {
         String safeErrorCode, String taskRunId, String jobId, String inputSnapshotId,
         String sourceDocumentName, JsonNode professionalInput, String sourceDocumentHash, String inputSnapshotHash,
         String resultId, String resultHash, JsonNode analysis, JsonNode quality,
-        JsonNode externalEvidence, Instant completedAt, boolean current, boolean stale) {}
+        JsonNode externalEvidence, Instant completedAt, boolean current, boolean stale,
+        boolean retryAvailable, String staleReason, String sourceBasis, JsonNode sourceBinding) {
+        public ProfessionalAnalysisView(String moduleType, String status, boolean retryable,
+                String safeErrorCode, String taskRunId, String jobId, String inputSnapshotId,
+                String sourceDocumentName, JsonNode professionalInput, String sourceDocumentHash,
+                String inputSnapshotHash, String resultId, String resultHash, JsonNode analysis,
+                JsonNode quality, JsonNode externalEvidence, Instant completedAt,
+                boolean current, boolean stale) {
+            this(moduleType, status, retryable, safeErrorCode, taskRunId, jobId, inputSnapshotId,
+                sourceDocumentName, professionalInput, sourceDocumentHash, inputSnapshotHash,
+                resultId, resultHash, analysis, quality, externalEvidence, completedAt,
+                current, stale, retryable && !stale, stale ? "HISTORICAL_INPUT" : null,
+                "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT", null);
+        }
+    }
     public record LaunchReadinessSummary(ProfessionalAnalysisView technology,
         ProfessionalAnalysisView operations, JsonNode finance) {}
 }

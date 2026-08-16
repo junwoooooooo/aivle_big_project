@@ -40,7 +40,11 @@ public class MarketingContentWorker {
         try {
             publish(context,"STARTED","job.marketing.started",JobEvent.Status.RUNNING,null);
             taskRuns.startExecution(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken());
-            completion.start(claim.taskRunId(),context.projectId());
+            if (!completion.start(claim.taskRunId(),context.projectId())) {
+                completion.fail(claim,context,"EXECUTION_FAILED","STALE_ACTION_RESULT",false);
+                publish(context,"STALE","job.marketing.stale",JobEvent.Status.FAILED,"STALE_ACTION_RESULT");
+                return true;
+            }
             publish(context,"SOURCE_PREPARED","job.marketing.source_prepared",JobEvent.Status.RUNNING,null);
             publish(context,"COPY_GENERATING","job.marketing.copy_generating",JobEvent.Status.RUNNING,null);
             ExecutionResponse response=ai.executeWorker(context,claim.taskAttemptId(),LocalDateTime.now().plusMinutes(5));

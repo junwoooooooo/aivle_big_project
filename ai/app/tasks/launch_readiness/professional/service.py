@@ -71,7 +71,7 @@ def _analysis_system(module_type: str) -> str:
         else "프로세스, 인력·책임, 공급·파트너, 고객지원·품질, 파일럿·확장"
     )
     return f"""당신은 기업 출시심사위원회의 {subject} 전문 분석가입니다.
-사용자가 작성한 전문입력을 1차 근거로 사용하고, 외부 검색 결과는 검증 보조자료로만 사용하십시오.
+현재 확정 사업안은 분석 범위를 정하는 맥락이며, 사용자가 작성한 전문입력을 사실 판단의 1차 근거로 사용하십시오. 외부 검색 결과는 검증 보조자료로만 사용하십시오.
 입력에 없는 사실이나 수치를 만들어내지 마십시오. 미확정 내용은 OPEN 게이트로 남기십시오.
 {dimensions} 관점에서 서로 중복되지 않는 평가를 작성하십시오.
 각 평가의 finding에는 반드시 (1) 사용자가 입력한 구체적 사실 또는 빈칸, (2) 그 사실이 출시 준비도에 미치는 영향, (3) 점수·상태를 부여한 이유를 한 문단으로 담으십시오.
@@ -82,7 +82,8 @@ def _analysis_system(module_type: str) -> str:
 async def _generate(request: ProfessionalAnalysisRequest, evidence: list[dict[str, str]], feedback: list[str]) -> ProfessionalAnalysis:
     raw = await execute_structured_prompt(
         _analysis_system(request.moduleType),
-        json.dumps({"moduleType": request.moduleType, "professionalInput": request.input,
+        json.dumps({"moduleType": request.moduleType, "currentConcept": request.currentConcept,
+                    "professionalInput": request.input,
                     "externalEvidence": evidence, "reviewFeedback": feedback}, ensure_ascii=False),
         response_schema=ProfessionalAnalysis.model_json_schema(),
         schema_name="professional_readiness_analysis_v1",
@@ -99,7 +100,8 @@ async def _review(request: ProfessionalAnalysisRequest, analysis: ProfessionalAn
 하나라도 어기면 passed=false로 하고 재분석에 바로 쓸 수 있는 한국어 피드백을 반환하십시오."""
     raw = await execute_structured_prompt(
         system,
-        json.dumps({"moduleType": request.moduleType, "professionalInput": request.input,
+        json.dumps({"moduleType": request.moduleType, "currentConcept": request.currentConcept,
+                    "professionalInput": request.input,
                     "analysis": analysis.model_dump(mode="json")}, ensure_ascii=False),
         response_schema=AnalysisReview.model_json_schema(),
         schema_name="professional_readiness_review_v1",

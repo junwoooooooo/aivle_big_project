@@ -41,7 +41,7 @@ public class LaunchReadinessPdfService {
             Font body = KoreanPdfFonts.font(9, Font.NORMAL, new Color(31, 41, 55));
             Font small = KoreanPdfFonts.font(8, Font.NORMAL, new Color(82, 101, 125));
             document.add(new Paragraph(label(type) + " 분석 보고서", title));
-            document.add(new Paragraph("사용자 전문 입력 문서 기반 · " + view.completedAt(), small));
+            document.add(new Paragraph("현재 확정 사업안과 제출한 전문 입력 문서 기반 · " + view.completedAt(), small));
             document.add(spacer());
             PdfPTable metrics = new PdfPTable(new float[] {1, 1, 1}); metrics.setWidthPercentage(100);
             metric(metrics, "종합 준비도", result.path("score").asText() + "점", body, small);

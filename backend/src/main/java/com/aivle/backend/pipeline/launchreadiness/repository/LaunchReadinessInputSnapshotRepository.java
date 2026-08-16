@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LaunchReadinessInputSnapshotRepository extends JpaRepository<LaunchReadinessInputSnapshot, String> {
     Optional<LaunchReadinessInputSnapshot> findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(Long projectId, ModuleType moduleType);
+    Optional<LaunchReadinessInputSnapshot> findByIdAndProjectIdAndDeletedAtIsNull(String id, Long projectId);
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FinanceReadinessReportDocument } from '../components/FinanceReadinessReportDocument.jsx';
@@ -57,6 +57,28 @@ describe('V21.4 단일 보고서 문서', () => {
     fireEvent.click(await screen.findByRole('button', { name: '보고서 보기' }));
     expect(api.downloadProfessionalReport).not.toHaveBeenCalled();
     expect(onViewReport).toHaveBeenCalledWith([module]);
+  });
+
+  it('사업안 변경 결과를 열람 가능하게 유지하고 새 분석 CTA를 제공한다', async () => {
+    const current = { ...professionalCurrent(), stale: true, current: false,
+      status: 'STALE', staleReason: 'CONCEPT_CHANGED' };
+    const api = { professionalCurrent: vi.fn().mockResolvedValue(current) };
+    render(<ProfessionalModule module="technology" api={api} projectId="7" onReady={vi.fn()} />);
+    expect(await screen.findByText('사업안이 변경되어 이 결과는 이전 사업안 기준입니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '현재 사업안으로 다시 분석' })).toBeInTheDocument();
+    expect(screen.getByText(current.analysis.summary)).toBeInTheDocument();
+  });
+
+  it('FAILED만 명시적으로 retry하고 응답 모호성은 POST 재전송 없이 current GET 한 번으로 회복한다', async () => {
+    const failed = { ...professionalCurrent(), analysis: null, status: 'FAILED', retryAvailable: true };
+    const api = {
+      professionalCurrent: vi.fn().mockResolvedValueOnce(failed).mockResolvedValue({ ...failed, status: 'QUEUED' }),
+      retryProfessional: vi.fn().mockRejectedValue(new Error('network ambiguity')),
+    };
+    render(<ProfessionalModule module="operations" api={api} projectId="7" onReady={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: '다시 시도' }));
+    await waitFor(() => expect(api.professionalCurrent).toHaveBeenCalledTimes(2));
+    expect(api.retryProfessional).toHaveBeenCalledTimes(1);
   });
 
   it('Finance 보고서 보기도 binary fetch 없이 route command만 전달한다', async () => {

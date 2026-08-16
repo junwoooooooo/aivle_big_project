@@ -14,6 +14,8 @@ export const createLaunchReadinessApi = (client) => Object.freeze({
     const form = new FormData(); form.append('file', file);
     return (await client.upload(`${professional(projectId, module)}/analysis-runs`, form, commandOptions())).data;
   },
+  retryProfessional: async (projectId, module) => (await client.post(
+    `${professional(projectId, module)}/retry`, {}, commandOptions())).data,
   downloadProfessionalReport: (projectId, module) => downloadBlob(client.download(`${professional(projectId, module)}/report`, { timeoutMs: 60000 })),
   financeTemplate: (projectId) => downloadBlob(client.download(`${root(projectId)}/finance/preparation/template`)),
   financeCurrent: async (projectId) => (await client.get(`${root(projectId)}/finance/analysis/current`)).data,

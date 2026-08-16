@@ -12,6 +12,8 @@ import com.aivle.backend.pipeline.finance.api.FinancialApiModels.EstimateDecisio
 import com.aivle.backend.pipeline.finance.application.*;
 import com.aivle.backend.pipeline.finance.domain.FinancialInputPreparation;
 import com.aivle.backend.pipeline.finance.repository.*;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService.PlanView;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
@@ -173,6 +175,7 @@ class FinancialServiceAsyncTests {
         final ObjectMapper mapper = new ObjectMapper();
         final String hash = "sha256:" + "a".repeat(64);
         final ProjectRepository projects = mock(ProjectRepository.class);
+        final CurrentConceptSourceResolver currentConcepts = mock(CurrentConceptSourceResolver.class);
         final ConceptPortfolioSelectionRepository portfolioSelections = mock(ConceptPortfolioSelectionRepository.class);
         final ConceptSelectionRepository selections = mock(ConceptSelectionRepository.class);
         final MarketAnalysisSeedSnapshotRepository marketSeeds = mock(MarketAnalysisSeedSnapshotRepository.class);
@@ -195,7 +198,7 @@ class FinancialServiceAsyncTests {
             101L, "FULL", 1, mapper.createObjectNode(), 0, 0, null, null, 0, 0, 0);
         final MarketResearchService.VersionView bmView = new MarketResearchService.VersionView(
             201L, "BM", 1, mapper.createObjectNode(), 0, 0, "GO", "HIGH", null, null, null);
-        final FinancialService service = new FinancialService(projects, marketSeeds,
+        final FinancialService service = new FinancialService(projects, currentConcepts, marketSeeds,
             marketResearch, marketVersions, preparations, snapshots, factory, snapshotFactory,
             readiness, calculator, mapper, taskRuns, hasher, snapshotHasher, events);
         final TechOpsInputSnapshot source;
@@ -204,6 +207,17 @@ class FinancialServiceAsyncTests {
             Project project = mock(Project.class); User owner = mock(User.class);
             when(owner.getId()).thenReturn(7L); when(project.getOwner()).thenReturn(owner);
             when(projects.findByIdForUpdate(41L)).thenReturn(Optional.of(project));
+            ConceptPortfolioSelection portfolioSelection = mock(ConceptPortfolioSelection.class);
+            MarketAnalysisSeedSnapshot currentSeed = mock(MarketAnalysisSeedSnapshot.class);
+            when(portfolioSelection.getId()).thenReturn(8L);
+            when(portfolioSelection.getHypothesisRevision()).thenReturn(3);
+            when(currentSeed.getId()).thenReturn("seed-1");
+            var current = new CurrentConceptSourceResolver.Source(portfolioSelection, currentSeed,
+                new PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4));
+            when(currentConcepts.require(eq(41L), anyString())).thenReturn(current);
+            when(currentConcepts.currentOrNull(41L)).thenReturn(current);
+            when(currentConcepts.binding(current)).thenReturn(
+                new CurrentConceptSourceResolver.Binding("seed-1", 8L, 3, 4));
             ConceptSelection selection = mock(ConceptSelection.class); when(selection.getId()).thenReturn(9L);
             when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L))
                 .thenReturn(Optional.of(selection));

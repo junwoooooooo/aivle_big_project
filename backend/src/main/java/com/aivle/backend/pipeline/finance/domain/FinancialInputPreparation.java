@@ -29,6 +29,11 @@ public class FinancialInputPreparation extends BaseEntity {
     @Column(name = "source_mode", length = 40) private String sourceMode;
     @Column(name = "source_document_artifact_id", length = 64) private String sourceDocumentArtifactId;
     @Column(name = "source_document_hash", length = 71) private String sourceDocumentHash;
+    @Column(name = "source_current_market_seed_snapshot_id", length = 64) private String sourceCurrentMarketSeedSnapshotId;
+    @Column(name = "source_selection_id") private Long sourceSelectionId;
+    @Column(name = "source_selection_revision") private Integer sourceSelectionRevision;
+    @Column(name = "source_bm_plan_revision") private Integer sourceBmPlanRevision;
+    @Column(name = "current_concept_binding_hash", length = 71) private String currentConceptBindingHash;
 
     public static FinancialInputPreparation createFromUserDocument(String id, Long projectId,
             String artifactId, String documentHash, String sourceHash, String fieldsJson,
@@ -112,6 +117,13 @@ public class FinancialInputPreparation extends BaseEntity {
         if (blank(json) || userId == null) throw new IllegalArgumentException("재무 AI 추정값이 올바르지 않습니다.");
         assistanceJson = json;
         updatedByUserId = userId;
+    }
+
+    public void bindCurrentConcept(String seedId, Long selectionId, int selectionRevision,
+            int bmPlanRevision, String bindingHash) {
+        sourceCurrentMarketSeedSnapshotId = seedId; sourceSelectionId = selectionId;
+        sourceSelectionRevision = selectionRevision; sourceBmPlanRevision = bmPlanRevision;
+        currentConceptBindingHash = bindingHash;
     }
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }

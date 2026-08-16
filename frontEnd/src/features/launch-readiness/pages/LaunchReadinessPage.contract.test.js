@@ -4,6 +4,11 @@ import { describe, expect, it } from 'vitest';
 const page = readFileSync('src/features/launch-readiness/pages/LaunchReadinessPage.jsx', 'utf8');
 
 describe('Launch Readiness product contract', () => {
+  it('현재 journey의 7단계와 current concept + professional input 기준을 명시한다', () => {
+    expect(page).toContain('step={7}');
+    expect(page).toContain('현재 확정 사업안과 제출한 전문 입력 문서');
+  });
+
   it('기술·운영·재무·보고서를 한 사용자 화면에 함께 제공한다', () => {
     expect(page).toContain('기술 분석');
     expect(page).toContain('운영 분석');

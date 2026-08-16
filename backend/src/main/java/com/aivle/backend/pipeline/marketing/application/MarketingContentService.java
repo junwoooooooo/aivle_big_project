@@ -75,13 +75,12 @@ public class MarketingContentService {
         if (previous.getStatus() != MarketingContentStatus.FAILED || previous.getAttempt() >= MAX_ATTEMPTS) {
             throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED);
         }
-        Source authority = requireAuthority(projectId);
+        Source authority = currentConcepts.currentOrNull(projectId);
         MarketingSourceSnapshot source = sourceRepository.findById(previous.getMarketingSourceSnapshotId())
-            .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
-        if (!bound(previous, source, authority)) {
+            .orElse(null);
+        if (authority == null || source == null || !bound(previous, source, authority)) {
             previous.markStale();
-            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
-                "사업안이 변경되어 이전 마케팅 초안을 재시도할 수 없습니다.");
+            return view(previous, authority);
         }
         CreateRequest request = mapper.readValue(previous.getRequestJson(), CreateRequest.class);
         validateReference(ownerId, projectId, request.referenceArtifactId());
@@ -139,7 +138,7 @@ public class MarketingContentService {
         requireOwned(ownerId, projectId);
         MarketingContent content = findLocked(projectId, id);
         Source authority = currentConcepts.currentOrNull(projectId);
-        if (markIfStale(content, authority)) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        if (markIfStale(content, authority)) return view(content, authority);
         if (!Set.of(MarketingRevisionType.TONE_EDITED, MarketingRevisionType.SHORTENED,
                 MarketingRevisionType.LEGAL_NOTICE_APPLIED, MarketingRevisionType.USER_EDITED)
                 .contains(request.revisionType())) throw new BusinessException(ErrorCode.INVALID_REQUEST);
@@ -159,8 +158,8 @@ public class MarketingContentService {
     public ContentView finalizeContent(Long ownerId, Long projectId, String id) {
         requireOwned(ownerId, projectId);
         MarketingContent content = findLocked(projectId, id);
-        Source authority = requireAuthority(projectId);
-        if (markIfStale(content, authority)) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        Source authority = currentConcepts.currentOrNull(projectId);
+        if (markIfStale(content, authority)) return view(content, authority);
         MarketingContentRevision latest = revisions.findFirstByContentIdAndDeletedAtIsNullOrderByRevisionNumberDesc(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
         try {

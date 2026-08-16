@@ -18,6 +18,7 @@ import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.Execution
 import com.aivle.backend.taskrun.service.TaskRunService;
 import com.aivle.backend.taskrun.service.TaskRunWorkerContext;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentCaptor;
 
 class MarketingContentWorkerTests {
@@ -30,6 +31,9 @@ class MarketingContentWorkerTests {
     private final TaskRunWorkerContext context = new TaskRunWorkerContext(
         "task-1", 9L, 7L, TaskType.MARKETING_CONTENT_GENERATION, "MARKETING_CONTENT", "content-1",
         "{}", "sha256:" + "0".repeat(64), "key", "correlation", "1.0", "1.0", "ko-KR", 1, 2);
+
+    @BeforeEach
+    void currentSourceStarts() { when(completion.start("task-1", 9L)).thenReturn(true); }
 
     @Test
     void queuedTaskCompletesWithRealProgressEvents() {
@@ -77,5 +81,17 @@ class MarketingContentWorkerTests {
         ArgumentCaptor<JobEventPublisher.Command> published = ArgumentCaptor.forClass(JobEventPublisher.Command.class);
         verify(events, org.mockito.Mockito.times(4)).publish(published.capture());
         assertThat(published.getAllValues().get(3).technicalCode()).isEqualTo("MARKETING_PROHIBITED_CLAIM");
+    }
+
+    @Test
+    void staleWorkerCommitsTerminalStateWithoutCallingProvider() {
+        when(taskRuns.claimNext(eq(TaskType.MARKETING_CONTENT_GENERATION), anyString(), any(), any())).thenReturn(claim);
+        when(taskRuns.workerContext("task-1")).thenReturn(context);
+        when(completion.start("task-1", 9L)).thenReturn(false);
+
+        assertThat(worker.processOne()).isTrue();
+
+        verify(completion).fail(claim, context, "EXECUTION_FAILED", "STALE_ACTION_RESULT", false);
+        verify(ai, org.mockito.Mockito.never()).executeWorker(any(), anyString(), any());
     }
 }

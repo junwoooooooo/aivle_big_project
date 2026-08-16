@@ -328,6 +328,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             result = await analyze_professional_readiness({
                 "moduleType": "TECHNOLOGY" if body.taskType == "LAUNCH_TECHNOLOGY_READINESS" else "OPERATIONS",
                 "input": body.input.get("professionalInput", {}),
+                "currentConcept": body.input.get("currentConcept", {}),
             })
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content

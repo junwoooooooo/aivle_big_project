@@ -29,5 +29,14 @@ public final class FinancialApiModels {
         String snapshotId, String snapshotHash) {}
     public record AnalysisView(String taskRunId, String jobId, String status, boolean retryable,
         String safeErrorCode, String snapshotId, String snapshotHash, JsonNode result,
-        boolean fallback, boolean stale, LocalDateTime completedAt, String sourceDocumentName) {}
+        boolean fallback, boolean stale, LocalDateTime completedAt, String sourceDocumentName,
+        JsonNode sourceBinding, String staleReason) {
+        public AnalysisView(String taskRunId, String jobId, String status, boolean retryable,
+                String safeErrorCode, String snapshotId, String snapshotHash, JsonNode result,
+                boolean fallback, boolean stale, LocalDateTime completedAt, String sourceDocumentName) {
+            this(taskRunId, jobId, status, retryable, safeErrorCode, snapshotId, snapshotHash,
+                result, fallback, stale, completedAt, sourceDocumentName, null,
+                stale ? "HISTORICAL_INPUT" : null);
+        }
+    }
 }

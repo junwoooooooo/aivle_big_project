@@ -1,8 +1,6 @@
 package com.aivle.backend.pipeline.marketing.application;
 
 import com.aivle.backend.file.object.ObjectStoragePort;
-import com.aivle.backend.common.exception.BusinessException;
-import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
 import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.marketing.domain.*;
@@ -30,14 +28,14 @@ public class MarketingContentCompletionService {
     private final ObjectMapper mapper;
 
     @Transactional
-    public void start(String taskRunId, Long projectId) {
+    public boolean start(String taskRunId, Long projectId) {
         MarketingContent content = lockedByTask(taskRunId, projectId);
         if (!bound(content)) {
             content.markStale();
-            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
-                "사업안이 변경되어 이 마케팅 초안을 계속 만들 수 없습니다.");
+            return false;
         }
         content.start();
+        return true;
     }
 
     @Transactional

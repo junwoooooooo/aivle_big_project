@@ -31,6 +31,11 @@ public class FinancialInputSnapshotFactory {
         body.put("sourceMarketResearchVersionId", preparation.getSourceMarketResearchVersionId());
         body.put("sourceBusinessModelVersionId", preparation.getSourceBusinessModelVersionId());
         body.put("sourceSnapshotHash", preparation.getSourceSnapshotHash());
+        body.put("sourceCurrentMarketSeedSnapshotId", preparation.getSourceCurrentMarketSeedSnapshotId());
+        body.put("sourceSelectionId", preparation.getSourceSelectionId());
+        body.put("sourceSelectionRevision", preparation.getSourceSelectionRevision());
+        body.put("sourceBmPlanRevision", preparation.getSourceBmPlanRevision());
+        body.put("currentConceptBindingHash", preparation.getCurrentConceptBindingHash());
         body.put("createdAt", createdAt.toString());
         ObjectNode values = body.putObject("values");
         ObjectNode provenance = body.putObject("valueProvenance");

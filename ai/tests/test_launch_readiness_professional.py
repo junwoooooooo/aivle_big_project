@@ -2,7 +2,9 @@ import asyncio
 
 from app.providers.schema_compatibility import strict_schema_failures
 from app.tasks.launch_readiness.professional import service
-from app.tasks.launch_readiness.professional.models import AnalysisReview, ProfessionalAnalysis
+from app.tasks.launch_readiness.professional.models import (
+    AnalysisReview, ProfessionalAnalysis, ProfessionalAnalysisRequest,
+)
 
 
 def _analysis():
@@ -49,3 +51,16 @@ def test_failed_independent_review_causes_one_bounded_regeneration(monkeypatch):
     assert result["quality"]["attempts"] == 2
     assert result["quality"]["passed"] is True
     assert result["externalEvidence"][0]["url"] == "https://example.com/guide"
+
+
+def test_current_concept_context_is_accepted_without_replacing_professional_facts():
+    request = ProfessionalAnalysisRequest.model_validate({
+        "moduleType": "OPERATIONS",
+        "input": {"supportProcess": "평일 09~18시 담당자 2명"},
+        "currentConcept": {"target": "소형 반려동물 사업자", "businessModel": {"channels": ["온라인"]}},
+    })
+
+    assert request.currentConcept["target"] == "소형 반려동물 사업자"
+    system = service._analysis_system("OPERATIONS")
+    assert "전문입력을 사실 판단의 1차 근거" in system
+    assert "입력에 없는 사실이나 수치를 만들어내지" in system

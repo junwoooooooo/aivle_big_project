@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,6 +10,7 @@ class StrictModel(BaseModel):
 class ProfessionalAnalysisRequest(StrictModel):
     moduleType: Literal["TECHNOLOGY", "OPERATIONS"]
     input: dict[str, str]
+    currentConcept: dict[str, Any] = Field(default_factory=dict)
 
 
 class Dimension(StrictModel):

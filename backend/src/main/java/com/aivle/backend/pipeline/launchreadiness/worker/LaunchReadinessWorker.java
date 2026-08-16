@@ -2,7 +2,6 @@ package com.aivle.backend.pipeline.launchreadiness.worker;
 
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessService;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessService.StaleInputException;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
@@ -41,7 +40,7 @@ public class LaunchReadinessWorker {
         var context = taskRuns.workerContext(claim.taskRunId());
         taskRuns.startExecution(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken());
         if (!readiness.currentInput(context)) {
-            readiness.fail(claim, "EXECUTION_FAILED", "STALE_ACTION_RESULT", false);
+            readiness.fail(claim, context, "EXECUTION_FAILED", "STALE_ACTION_RESULT");
             readiness.publish(context.projectId(), context.taskRunId(), "FAILED", "job.launch-readiness.stale", JobEvent.Status.FAILED, "STALE_ACTION_RESULT");
             return true;
         }
@@ -50,11 +49,8 @@ public class LaunchReadinessWorker {
             var response = ai.executeWorker(context, claim.taskAttemptId(), LocalDateTime.now().plusMinutes(7));
             readiness.complete(claim, context, response);
             readiness.publish(context.projectId(), context.taskRunId(), "COMPLETED", "job.launch-readiness.completed", JobEvent.Status.COMPLETED, null);
-        } catch (StaleInputException stale) {
-            readiness.fail(claim, "EXECUTION_FAILED", "STALE_ACTION_RESULT", false);
-            readiness.publish(context.projectId(), context.taskRunId(), "FAILED", "job.launch-readiness.stale", JobEvent.Status.FAILED, "STALE_ACTION_RESULT");
         } catch (ExecutionFailure failure) {
-            readiness.fail(claim, failure.code(), failure.reason(), failure.retryable());
+            readiness.fail(claim, context, failure.code(), failure.reason());
             readiness.publish(context.projectId(), context.taskRunId(), "FAILED", "job.launch-readiness.failed", JobEvent.Status.FAILED, safeCode(failure));
         } catch (RuntimeException failure) {
             log.warn("Launch readiness worker rejected result taskRunId={} type={}", claim.taskRunId(), failure.getClass().getSimpleName());
