@@ -29,5 +29,5 @@ public final class FinancialApiModels {
         String snapshotId, String snapshotHash) {}
     public record AnalysisView(String taskRunId, String jobId, String status, boolean retryable,
         String safeErrorCode, String snapshotId, String snapshotHash, JsonNode result,
-        boolean fallback, boolean stale) {}
+        boolean fallback, boolean stale, LocalDateTime completedAt) {}
 }

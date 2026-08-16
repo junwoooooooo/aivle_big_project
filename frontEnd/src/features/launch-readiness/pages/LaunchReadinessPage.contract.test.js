@@ -8,7 +8,7 @@ describe('Launch Readiness product contract', () => {
     expect(page).toContain('기술 분석');
     expect(page).toContain('운영 분석');
     expect(page).toContain('재무 분석');
-    expect(page).toContain('보고서 다운로드');
+    expect(page).toContain('보고서 보기');
     expect(page).toContain('<ProfessionalModule module="technology"');
     expect(page).toContain('<ProfessionalModule module="operations"');
     expect(page).toContain('<FinanceModule');
@@ -23,10 +23,13 @@ describe('Launch Readiness product contract', () => {
     expect(page).not.toMatch(/사용자 문서 Snapshot|입력 Snapshot|TaskRun으로/);
   });
 
-  it('미리보기는 current JSON 문서를 열고 PDF.js 또는 binary preview를 사용하지 않는다', () => {
-    expect(page).toContain('<ReportPreviewDialog key=');
-    expect(page).toContain('preview={preview}');
-    expect(page).toContain('documents: [{ module, current: state.current }]');
+  it('보고서 보기는 report route command만 사용하고 PDF.js 또는 binary preview를 사용하지 않는다', () => {
+    expect(page).toContain('projectRoutes.launchReadinessReport');
+    expect(page).toContain('onViewReport={viewReport}');
+    expect(page).not.toContain('downloadProfessionalReport');
+    expect(page).not.toContain('downloadFinanceReport');
+    expect(page).not.toContain('downloadReports');
+    expect(page).not.toContain('ReportPreviewDialog');
     expect(page).not.toContain('PdfCanvasViewer');
     expect(page).not.toContain('usePdfPreview');
   });

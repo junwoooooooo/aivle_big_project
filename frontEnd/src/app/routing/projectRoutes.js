@@ -19,6 +19,11 @@ export const projectRoutes = Object.freeze({
   businessModel: (projectId) => `${projectBase(projectId)}/business-model`,
   twinSurvey: (projectId) => `${projectBase(projectId)}/twin-survey`,
   launchReadiness: (projectId) => `${projectBase(projectId)}/launch-readiness`,
+  launchReadinessReport: (projectId, reportType, modules = []) => {
+    const route = `${projectBase(projectId)}/launch-readiness/reports/${encodeURIComponent(reportType)}`;
+    if (reportType !== 'integrated' || modules.length === 0) return route;
+    return `${route}?${modules.map((module) => `modules=${encodeURIComponent(module)}`).join('&')}`;
+  },
   technology: (projectId) => `${projectBase(projectId)}/technology`,
   operations: (projectId) => `${projectBase(projectId)}/operations`,
   techOps: (projectId) => `${projectBase(projectId)}/launch-readiness`,

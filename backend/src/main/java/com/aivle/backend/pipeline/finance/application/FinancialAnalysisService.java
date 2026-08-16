@@ -83,13 +83,14 @@ public class FinancialAnalysisService {
             .filter(value -> snapshot.snapshotId().equals(
                 mapper.readTree(value.getInputSnapshot()).path("snapshotId").asText())).orElse(null);
         if (task == null) return new AnalysisView(null, null, "NOT_STARTED", false, null,
-            snapshot.snapshotId(), snapshot.snapshotHash(), null, false, snapshot.stale());
+            snapshot.snapshotId(), snapshot.snapshotHash(), null, false, snapshot.stale(), null);
         JsonNode result = task.getFinalResultId() == null ? null : resultRepository.findById(task.getFinalResultId())
             .map(TaskResult::getResultJson).map(mapper::readTree).orElse(null);
         boolean fallback = result != null && "SYSTEM_CALCULATION_FALLBACK".equals(
             result.path("report").path("source").asText());
         return new AnalysisView(task.getId(), task.getId(), task.getState().name(), task.isRetryable(),
-            task.getLastErrorCode(), snapshot.snapshotId(), snapshot.snapshotHash(), result, fallback, snapshot.stale());
+            task.getLastErrorCode(), snapshot.snapshotId(), snapshot.snapshotHash(), result, fallback,
+            snapshot.stale(), task.getFinishedAt());
     }
 
     @Transactional(readOnly = true)

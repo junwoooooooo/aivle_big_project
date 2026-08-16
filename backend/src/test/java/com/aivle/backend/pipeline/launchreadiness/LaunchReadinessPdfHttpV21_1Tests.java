@@ -98,7 +98,7 @@ class LaunchReadinessPdfHttpV21_1Tests {
     void pdfGenerationFailureIsNon2xxJsonInsteadOfFakePdf() throws Exception {
         FinancialAnalysisService unavailable = mock(FinancialAnalysisService.class);
         when(unavailable.current(7L, 41L)).thenReturn(new AnalysisView(null, null, "NOT_STARTED", false,
-            null, "finance-snapshot", hash('f'), null, false, false));
+            null, "finance-snapshot", hash('f'), null, false, false, null));
         FinancialController controller = new FinancialController(mock(FinancialService.class), unavailable, user,
             mock(FinancialInputDocumentService.class), mock(FinancialDocumentImportService.class), financialPdf, mapper);
         MockMvc mvc = MockMvcBuilders.standaloneSetup(controller)
@@ -168,7 +168,8 @@ class LaunchReadinessPdfHttpV21_1Tests {
 
     private AnalysisView financialView() {
         return new AnalysisView("finance-run", "finance-run", "SUCCEEDED", false, null,
-            "finance-snapshot", hash('f'), mapper.valueToTree(financialResult()), false, false);
+            "finance-snapshot", hash('f'), mapper.valueToTree(financialResult()), false, false,
+            java.time.LocalDateTime.of(2026, 8, 16, 9, 0));
     }
 
     private FinancialModuleResponse financialResult() {

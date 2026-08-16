@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { useJobEvents } from '../../../shared/async-events/index.js';
 import { AppIcon, ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import { createLaunchReadinessApi } from '../api/launchReadinessApi.js';
-import { ReportPreviewDialog } from '../components/ReportPreviewDialog.jsx';
 import '../styles/launch-readiness.css';
 
 const MODULES = {
@@ -103,7 +103,7 @@ function ResultSummary({ module, current }) {
   </div>;
 }
 
-export function ProfessionalModule({ module, api, projectId, onReady, onDetail, onPreview }) {
+export function ProfessionalModule({ module, api, projectId, onReady, onDetail, onViewReport }) {
   const meta = MODULES[module];
   const input = useRef(null);
   const [state, setState] = useState({ current: null, busy: false, error: null });
@@ -136,13 +136,6 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
     } finally { event.target.value = ''; }
   };
 
-  const preview = () => onPreview({
-    title: `${meta.eyebrow} 보고서`,
-    filename: `${module}-readiness-report.pdf`,
-    documents: [{ module, current: state.current }],
-    loadPdf: () => api.downloadProfessionalReport(projectId, module),
-  });
-
   return <section id={`launch-${module}`} className="launch-module" aria-labelledby={`launch-${module}-title`}>
     <div className="launch-module__heading"><div><p>{meta.eyebrow}</p><h2 id={`launch-${module}-title`}>{meta.title}</h2><span>{meta.description}</span></div>{state.current?.analysis && !state.current.stale && <span className="launch-status is-complete"><AppIcon name="check" size={14} />완료</span>}</div>
     <ol className="launch-workflow"><li><b>1</b><span>템플릿 다운로드<small>안내에 맞춰 실제 계획을 작성합니다.</small></span></li><li><b>2</b><span>DOCX 업로드<small>원본 문서와 입력 내용을 안전하게 보존합니다.</small></span></li><li><b>3</b><span>전문 분석<small>품질 검토를 거쳐 현재 결과를 만듭니다.</small></span></li></ol>
@@ -150,7 +143,7 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.professionalTemplate(projectId, module), `${module}-readiness-input.docx`)}><AppIcon name="download" size={16} />입력 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
       <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 확인하고 있습니다…' : '작성한 DOCX로 분석 시작'}</button>
-      {state.current?.analysis && <button type="button" className="launch-button is-tertiary" onClick={preview}>보고서 미리보기</button>}
+      {state.current?.analysis && !state.current.stale && <button type="button" className="launch-button is-tertiary" onClick={() => onViewReport([module])}>보고서 보기</button>}
     </div>
     {state.current?.sourceDocumentName && <p className="launch-document"><AppIcon name="file" size={15} />{state.current.sourceDocumentName}</p>}
     {ACTIVE.has(state.current?.status) && <ExecutionStatus jobId={state.current?.taskRunId} events={job} onDetail={onDetail} />}
@@ -159,7 +152,7 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
   </section>;
 }
 
-export function FinanceModule({ api, projectId, onReady, onDetail, onPreview }) {
+export function FinanceModule({ api, projectId, onReady, onDetail, onViewReport }) {
   const input = useRef(null);
   const [state, setState] = useState({ current: null, busy: false, error: null, filename: null });
   const activeJobId = ACTIVE.has(state.current?.status) ? state.current?.taskRunId : null;
@@ -190,12 +183,6 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onPreview }) 
     } finally { event.target.value = ''; }
   };
 
-  const preview = () => onPreview({
-    title: '재무 분석 보고서',
-    filename: 'finance-readiness-report.pdf',
-    documents: [{ module: 'finance', current: state.current }],
-    loadPdf: () => api.downloadFinanceReport(projectId),
-  });
   const base = state.current?.result?.calculation?.scenarios?.find((item) => item.code === 'BASE')
     ?? state.current?.result?.calculation?.scenarios?.[0];
 
@@ -206,7 +193,7 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onPreview }) 
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.financeTemplate(projectId), 'finance-readiness-input.docx')}><AppIcon name="download" size={16} />재무 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
       <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 검증하고 있습니다…' : '작성한 DOCX로 재무 분석 시작'}</button>
-      {state.current?.result && <button type="button" className="launch-button is-tertiary" onClick={preview}>보고서 미리보기</button>}
+      {state.current?.result && !state.current.stale && <button type="button" className="launch-button is-tertiary" onClick={() => onViewReport(['finance'])}>보고서 보기</button>}
     </div>
     {state.filename && <p className="launch-document"><AppIcon name="file" size={15} />{state.filename}</p>}
     {ACTIVE.has(state.current?.status) && <ExecutionStatus jobId={state.current?.taskRunId} events={job} onDetail={onDetail} />}
@@ -216,54 +203,46 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onPreview }) 
 }
 
 function reportReady(module, current) {
+  if (current?.stale) return false;
   return module === 'finance' ? Boolean(current?.result) : Boolean(current?.analysis);
 }
 
-export function ReportDownload({ api, projectId, reports, onPreview }) {
+export function ReportDownload({ reports, onViewReport }) {
   const [selected, setSelected] = useState([]);
   const available = REPORTS.filter((item) => reportReady(item.id, reports[item.id]));
   const toggle = (id) => setSelected((value) => value.includes(id)
     ? value.filter((item) => item !== id) : [...value, id]);
-  const preview = () => {
-    const filename = selected.length > 1
-      ? 'launch-readiness-integrated-report.pdf' : `${selected[0]}-readiness-report.pdf`;
-    onPreview({
-      title: selected.length > 1 ? '출시 준비 통합 보고서' : available.find((item) => item.id === selected[0])?.label,
-      filename,
-      documents: selected.map((module) => ({ module, current: reports[module] })),
-      loadPdf: () => api.downloadReports(projectId, selected),
-    });
-  };
   return <section id="launch-reports" className="launch-module launch-reports">
-    <div className="launch-module__heading"><div><p>보고서 다운로드</p><h2>완료된 분석을 선택해 보고서로 받으세요</h2><span>미리보기는 현재 결과를 바로 보여주며, PDF는 명시적으로 다운로드할 때만 생성합니다.</span></div></div>
+    <div className="launch-module__heading"><div><p>보고서 보기</p><h2>완료된 분석을 선택해 보고서로 확인하세요</h2><span>화면에서 확인한 동일한 문서를 브라우저 인쇄 기능으로 PDF에 저장할 수 있습니다.</span></div></div>
     <div className="launch-report-picker">{available.length ? available.map((item) => <label key={item.id} className={selected.includes(item.id) ? 'is-selected' : ''}><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggle(item.id)} /><AppIcon name={selected.includes(item.id) ? 'check' : 'file'} size={16} /><span>{item.label}</span></label>) : <p>완료된 분석 보고서가 없습니다.</p>}</div>
-    <button className="launch-button is-primary" type="button" disabled={!selected.length} onClick={preview}>{selected.length > 1 ? `${selected.length}개 통합 보고서 미리보기` : '선택한 보고서 미리보기'}</button>
+    <button className="launch-button is-primary" type="button" disabled={!selected.length} onClick={() => onViewReport(selected)}>{selected.length > 1 ? `${selected.length}개 통합 보고서 보기` : '선택한 보고서 보기'}</button>
   </section>;
 }
 
-export { ReportPreviewDialog };
-
 export default function LaunchReadinessPage({ initialFocus }) {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const outlet = useOutletContext();
   const client = useApiClient();
   const api = useMemo(() => createLaunchReadinessApi(client), [client]);
   const [reports, setReports] = useState({});
-  const [preview, setPreview] = useState(null);
   const onReady = useCallback((module, current) => setReports((value) => value[module] === current
     ? value : { ...value, [module]: current }), []);
   useEffect(() => {
     if (!initialFocus) return;
     requestAnimationFrame(() => document.getElementById(`launch-${initialFocus}`)?.scrollIntoView({ block: 'start' }));
   }, [initialFocus]);
+  const viewReport = useCallback((modules) => {
+    const reportType = modules.length > 1 ? 'integrated' : modules[0];
+    navigate(projectRoutes.launchReadinessReport(projectId, reportType, modules));
+  }, [navigate, projectId]);
 
   return <ProjectWorkspace as="div" mode="data" className="launch-readiness-page">
     <ProjectStageHeader step={5} eyebrow="출시 준비" title="기술·운영·재무 준비를 한 흐름에서 확인하세요" description="각 전문 입력 문서를 작성해 분석하고, 완료된 결과는 개별 또는 통합 보고서로 확인하고 내려받을 수 있습니다." status="사용자 문서 기준" />
     <nav className="launch-readiness-nav" aria-label="출시 준비 분석 바로가기"><a href="#launch-technology">기술</a><a href="#launch-operations">운영</a><a href="#launch-finance">재무</a><a href="#launch-reports">보고서</a></nav>
-    <ProfessionalModule module="technology" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onPreview={setPreview} />
-    <ProfessionalModule module="operations" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onPreview={setPreview} />
-    <FinanceModule api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onPreview={setPreview} />
-    <ReportDownload api={api} projectId={projectId} reports={reports} onPreview={setPreview} />
-    <ReportPreviewDialog key={preview ? `${preview.title}-${preview.filename}` : 'closed'} preview={preview} onClose={() => setPreview(null)} />
+    <ProfessionalModule module="technology" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
+    <ProfessionalModule module="operations" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
+    <FinanceModule api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />
+    <ReportDownload reports={reports} onViewReport={viewReport} />
   </ProjectWorkspace>;
 }

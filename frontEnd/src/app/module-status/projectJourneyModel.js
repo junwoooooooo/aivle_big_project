@@ -68,7 +68,8 @@ export function aggregateJourneyStatus(moduleStatuses = []) {
 
 export function getJourneyByPath(pathname) {
   const segments = pathname.replace(/\/+$/, '').split('/');
-  const routeSegment = ['compare', 'legal-report'].includes(segments.at(-1)) ? 'concepts' : segments.at(-1);
+  const routeSegment = segments.includes('launch-readiness') ? 'launch-readiness'
+    : ['compare', 'legal-report'].includes(segments.at(-1)) ? 'concepts' : segments.at(-1);
   const id = PATH_TO_JOURNEY[routeSegment] ?? 'overview';
   return id === 'overview' ? { id: 'overview', label: '프로젝트 개요', shortLabel: '프로젝트 개요', moduleIds: [] }
     : PROJECT_JOURNEYS.find((journey) => journey.id === id);
