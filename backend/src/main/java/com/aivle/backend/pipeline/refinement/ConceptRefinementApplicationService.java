@@ -75,7 +75,8 @@ public class ConceptRefinementApplicationService {
         ObjectNode plan = contract.applicationPlan(round);
         ObjectNode hypotheses = object(plan, "hypotheses");
         ObjectNode bmPatch = object(plan, "bmPlan");
-        validateOverlay(object(plan, "overlay"));
+        ObjectNode overlay = object(plan, "overlay");
+        validateOverlay(overlay);
         ConceptPortfolioSelection selection = selections.findLocked(round.getSelectionId())
             .filter(value -> value.isCurrent()
                 && Objects.equals(value.getHypothesisRevision(), round.getSourceSelectionRevision()))
@@ -95,7 +96,7 @@ public class ConceptRefinementApplicationService {
         round.startLocalApplication(key, applicationHash, Instant.now(clock));
         BmPlanPreparationService.PlanView patched = bmPlans.patchForRefinement(projectId, ownerId,
             round.getSourceBmPlanRevision(), bmPatch);
-        exactSeed(round, projectId).markStale(Instant.now(clock));
+        if (!overlay.isEmpty()) exactSeed(round, projectId).markStale(Instant.now(clock));
         round.recordAppliedLineage(selection.getHypothesisRevision(), patched.revision(), Instant.now(clock));
         round.readyForFinalization();
         return refinement.view(round, false);

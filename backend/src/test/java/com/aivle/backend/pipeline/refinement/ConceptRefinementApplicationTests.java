@@ -133,7 +133,7 @@ class ConceptRefinementApplicationTests {
     }
 
     @Test
-    void bmOnlyAndOverlayOnlyApplyWithoutTaskAndStaleOnlyExactSeed() {
+    void localOnlyInvalidationFollowsBmAndOverlayDependenciesExactly() {
         ConceptRefinementRound bmRound = decidedRound(proposal("keyActivities", List.of("A"), List.of("A2")));
         when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT_ID))
             .thenReturn(Optional.of(bmRound));
@@ -145,9 +145,9 @@ class ConceptRefinementApplicationTests {
         assertThat(bmRound.getState()).isEqualTo(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION);
         assertThat(bmRound.getAppliedSelectionRevision()).isEqualTo(4);
         assertThat(bmRound.getAppliedBmPlanRevision()).isEqualTo(4);
-        assertThat(seed.getStaleAt()).isEqualTo(clock.instant());
+        assertThat(seed.getStaleAt()).isNull();
+        verify(seeds, never()).findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1");
         verify(selectionService, never()).confirmFromRefinement(anyLong(), anyLong(), anyLong(), any(), any(), anyString());
-        verifyNoInteractions(reports);
 
         seed = freshSeed();
         when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
@@ -160,6 +160,22 @@ class ConceptRefinementApplicationTests {
         assertThat(overlayRound.getAppliedBmPlanRevision()).isEqualTo(3);
         assertThat(overlayRound.getState()).isEqualTo(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION);
         assertThat(seed.getStaleAt()).isEqualTo(clock.instant());
+
+        seed = freshSeed();
+        when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
+        ConceptRefinementRound combinedRound = decidedRound(
+            proposal("keyActivities", List.of("A"), List.of("A2")),
+            proposal("targetUsers", "기존", "신규"));
+        when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT_ID))
+            .thenReturn(Optional.of(combinedRound));
+        when(bmPlans.patchForRefinement(eq(PROJECT_ID), eq(OWNER_ID), eq(3), any()))
+            .thenReturn(new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4));
+        application.apply(OWNER_ID, PROJECT_ID, "apply-combined", 1, combinedRound.getDecisionHash());
+        assertThat(combinedRound.getAppliedBmPlanRevision()).isEqualTo(4);
+        assertThat(combinedRound.getState()).isEqualTo(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION);
+        assertThat(seed.getStaleAt()).isEqualTo(clock.instant());
+        verify(seeds, times(2)).findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1");
+        verifyNoInteractions(reports);
     }
 
     @Test
@@ -335,8 +351,8 @@ class ConceptRefinementApplicationTests {
     }
 
     @Test
-    void postApplyLineageAcceptsSelfChangeAndRejectsLaterBmOrSelectionMutation() {
-        ConceptRefinementRound round = decidedRound(proposal("targetUsers", "기존", "신규"));
+    void bmOnlyPostApplyLineageAcceptsSelfChangeAndRejectsLaterBmOrSelectionMutation() {
+        ConceptRefinementRound round = decidedRound(proposal("keyActivities", List.of("A"), List.of("A2")));
         round.startLocalApplication("apply", contract.applicationHash(round), clock.instant());
         round.recordAppliedLineage(5, 4, clock.instant()); round.readyForFinalization();
         ConceptRefinementLineageGuard guard = new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans);
