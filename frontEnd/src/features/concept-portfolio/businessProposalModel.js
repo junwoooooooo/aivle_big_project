@@ -249,6 +249,16 @@ export function businessDecisionStage(selection) {
   return 'LEGAL_REVIEW';
 }
 
+export function businessDecisionReachability({ concepts = [], selection, report, validationPrepReached = false } = {}) {
+  const stage = businessDecisionStage(selection);
+  return {
+    PROPOSAL_SELECTION: concepts.length > 0,
+    BUSINESS_BASIS: Boolean(selection),
+    LEGAL_REVIEW: Boolean(report) || ['LEGAL_REVIEW', 'VALIDATION_PREP'].includes(stage),
+    VALIDATION_PREP: validationPrepReached || ['MARKET_SEED_FINALIZING', 'READY_FOR_MARKET'].includes(selection?.status),
+  };
+}
+
 export function canChangeSelection(selection) {
   return Boolean(selection) && selection.status !== 'STALE';
 }

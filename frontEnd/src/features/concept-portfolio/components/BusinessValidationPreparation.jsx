@@ -5,7 +5,7 @@ import { projectRoutes } from '../../../app/routing/projectRoutes.js';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { getUserErrorMessage } from '../../../shared/api/apiError.js';
 import { AppIcon, scrollPageToTop } from '../../../shared/ui/index.js';
-import BmPlanForm from '../../market/BmPlanForm.jsx';
+import BmPlanForm, { BmPlanReview } from '../../market/BmPlanForm.jsx';
 import { buildConceptPlanSuggestions, draftFrom, emptyDraft, toPayload } from '../../market/bmPlan.js';
 import { createMarketApi } from '../../market/marketApi.js';
 import '../styles/business-validation-preparation.css';
@@ -54,9 +54,12 @@ export default function BusinessValidationPreparation({ projectId, portfolio, on
   };
 
   if (portfolio.selection.status === 'READY_FOR_MARKET') {
-    return <section className="business-validation-prep business-validation-prep--ready">
-      <div className="business-validation-prep__complete"><AppIcon name="check" size={18} /><div><h2>사업 검증 준비를 마쳤습니다.</h2><p>선택한 사업안, 분석 기준, 법률·규제 결과와 운영 정보를 저장했습니다.</p></div></div>
-      <Link className="bp-button bp-button--primary" to={projectRoutes.market(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>시장 분석 시작하기<AppIcon name="arrowRight" size={16} /></Link>
+    return <section className="business-validation-prep business-validation-prep--ready" aria-labelledby="business-validation-ready-title">
+      <div className="business-validation-prep__complete"><AppIcon name="check" size={18} /><div><h2 id="business-validation-ready-title">사업 검증 준비를 마쳤습니다.</h2><p>선택한 사업안, 분석 기준, 법률·규제 결과와 운영 정보를 저장했습니다.</p></div></div>
+      <div className="business-validation-prep__actions"><button type="button" className="bp-button bp-button--tertiary" onClick={onBack}><AppIcon name="chevronLeft" size={16} />법률·규제 결과로 돌아가기</button><Link className="bp-button bp-button--primary" to={projectRoutes.market(projectId)} onClick={() => scrollPageToTop({ smooth: false })}>시장 분석 시작하기<AppIcon name="arrowRight" size={16} /></Link></div>
+      {state.loading && <p className="business-validation-prep__status" role="status">저장한 운영 정보를 불러오고 있습니다.</p>}
+      {state.error && <div className="business-validation-prep__error" role="alert"><span>{getUserErrorMessage(state.error)}</span><button type="button" className="bp-button bp-button--secondary" onClick={load}>다시 불러오기</button></div>}
+      {state.loaded && <BmPlanReview draft={state.draft} />}
     </section>;
   }
 

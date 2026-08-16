@@ -10,6 +10,21 @@ const DETAILS = Object.freeze({
   key_partners: { why: '외부 협력 없이는 수행하기 어려운 역할과 자격을 정리할 때 사용합니다.', example: '예: 결제 대행사, 물류 파트너, 전문 자격 보유 업체' },
 });
 
+const reviewLines = (value) => String(value ?? '').split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+
+export function BmPlanReview({ draft }) {
+  return <section className="bm-plan-review" aria-labelledby="bm-plan-review-title">
+    <header><h3 id="bm-plan-review-title">저장한 운영 정보</h3><p>사업 검증을 준비할 때 저장한 내용을 조회하고 있습니다.</p></header>
+    <div className="bm-plan-review__operations">{PLAN_FIELDS.map(([key, question]) => {
+      const values = reviewLines(draft[key]);
+      return <article key={key}><strong>{question}</strong>{values.length === 0
+        ? <p data-empty="true">입력하지 않음</p>
+        : LIST_FIELDS.includes(key) ? <ul>{values.map((value) => <li key={value}>{value}</li>)}</ul> : <p>{values[0]}</p>}</article>;
+    })}</div>
+    <section className="bm-plan-review__resources"><h3>저장한 자원 제약</h3><dl>{CONSTRAINT_FIELDS.map(([key, label, unit]) => <div key={key}><dt>{label}</dt><dd data-empty={!String(draft[key] ?? '').trim()}>{String(draft[key] ?? '').trim() ? `${draft[key]} ${unit}` : '입력하지 않음'}</dd></div>)}</dl></section>
+  </section>;
+}
+
 export default function BmPlanForm({ draft, suggestions = {}, onChange, onSubmit, busy, formId, showSubmit = true, submitLabel = '저장하고 캔버스 만들기' }) {
   const [editing, setEditing] = useState({});
   const set = (key) => (event) => onChange(key, event.target.value);

@@ -35,6 +35,10 @@ describe('법률·규제 전용 문서', () => {
     expect(css).toContain('.skip-link');
     expect(css).toContain('.legal-report-print-actions { display: none !important; }');
     expect(css).toContain('break-inside: avoid-page');
+    expect(css).toContain('.legal-document__execution table');
+    expect(css).toContain('border-collapse: collapse');
+    expect(css).not.toContain('.legal-document__execution dl');
+    expect(viewSource()).not.toContain('repeat(4, minmax(0, 1fr))');
   });
 
   it('사업안명과 generatedAt으로 Windows 유효 기본 파일명을 만든다', () => {
@@ -59,7 +63,7 @@ describe('법률·규제 전용 문서', () => {
       finalLegalConclusion: { status: 'IMPLEMENTABLE' },
       requiredControls: ['개인정보 동의', ' 개인정보   동의 '],
       requiredDisclosures: ['판매 주체 표시'],
-      partnerRequirements: ['전문 파트너'], qualificationRequirements: ['전문 파트너'], requiredPartnersAndQualifications: ['전문  파트너'],
+      partnerRequirements: ['전문 파트너'], qualificationRequirements: ['전문 파트너가 필요함.'], requiredPartnersAndQualifications: ['전문 파트너'],
       advertisingExpressionCautions: { requiredDisclosures: ['판매 주체 표시', '광고 조건 표시'] },
     } }} />);
     expect(view.container.textContent).toContain('필요한 조치1건');
@@ -67,5 +71,10 @@ describe('법률·규제 전용 문서', () => {
     expect(screen.getAllByText('전문 파트너')).toHaveLength(1);
     expect(screen.getAllByText('판매 주체 표시')).toHaveLength(1);
     expect(screen.getByText('광고 조건 표시')).toBeInTheDocument();
+    expect(view.container.querySelector('.legal-document__execution table')).not.toBeNull();
   });
 });
+
+function viewSource() {
+  return readFileSync('src/features/concept-portfolio/styles/legal-regulatory-report.css', 'utf8');
+}

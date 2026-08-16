@@ -90,4 +90,17 @@ describe('사업 검증 준비', () => {
     expect(css).toContain('.bm-plan__editor .ui-input');
     expect(css).toContain('background: #fff');
   });
+
+  it('시장 준비 완료 후에도 저장한 BM Plan과 자원 제약을 read mode로 보여준다', async () => {
+    api.currentBmPlan.mockResolvedValue({
+      plan: { customer_relationship: '정기 안내', key_activities: ['예약 운영'], key_resources: ['운영 시스템'], key_partners: ['결제 대행사'] },
+      constraints: { budget_krw: 50000000, months: 6, team: 4 },
+      revision: 3,
+    });
+    renderPrep(portfolio({ selection: { status: 'READY_FOR_MARKET', conceptId: 'c1' } }));
+    expect(await screen.findByRole('heading', { name: '저장한 운영 정보' })).toBeInTheDocument();
+    for (const text of ['정기 안내', '예약 운영', '운영 시스템', '결제 대행사', '50000000 원', '6 개월', '4 명']) expect(screen.getByText(text)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /시장 분석 시작하기/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '저장하고 계속' })).not.toBeInTheDocument();
+  });
 });

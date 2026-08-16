@@ -68,14 +68,32 @@
 .business-validation-prep__empty span,
 .business-validation-prep__complete p,
 .business-validation-prep--progress p { margin: 0; color: var(--color-text-secondary); font-size: .82rem; }
-.business-validation-prep--ready { display: flex; align-items: center; justify-content: space-between; }
+.business-validation-prep--ready { display: grid; }
 .business-validation-prep__complete { justify-content: start; }
 .business-validation-prep__complete svg { color: var(--color-action-primary); }
 .business-validation-prep__complete h2,
 .business-validation-prep--progress h2 { margin: 0; font-size: 1.05rem; }
+.business-validation-prep .bm-plan-review { display: grid; gap: 1rem; min-width: 0; }
+.business-validation-prep .bm-plan-review > header { display: grid; gap: .25rem; }
+.business-validation-prep .bm-plan-review h3,
+.business-validation-prep .bm-plan-review p { margin: 0; }
+.business-validation-prep .bm-plan-review > header p { color: var(--color-text-secondary); font-size: .8rem; }
+.business-validation-prep .bm-plan-review__operations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; min-width: 0; }
+.business-validation-prep .bm-plan-review__operations article { min-width: 0; padding: .85rem; border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent); border-radius: .65rem; background: color-mix(in srgb, var(--color-bg-subtle) 55%, var(--color-surface)); }
+.business-validation-prep .bm-plan-review__operations strong { font-size: .8rem; }
+.business-validation-prep .bm-plan-review__operations p,
+.business-validation-prep .bm-plan-review__operations ul { margin: .45rem 0 0; color: var(--color-text-primary); font-size: .84rem; line-height: 1.55; white-space: pre-line; }
+.business-validation-prep .bm-plan-review [data-empty="true"] { color: var(--color-text-secondary); }
+.business-validation-prep .bm-plan-review__resources { padding: 1rem; border-radius: .7rem; background: color-mix(in srgb, var(--color-bg-subtle) 72%, var(--color-surface)); }
+.business-validation-prep .bm-plan-review__resources h3 { font-size: .9rem; }
+.business-validation-prep .bm-plan-review__resources dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: .75rem 0 0; }
+.business-validation-prep .bm-plan-review__resources dl > div { min-width: 0; }
+.business-validation-prep .bm-plan-review__resources dt { color: var(--color-text-secondary); font-size: .72rem; }
+.business-validation-prep .bm-plan-review__resources dd { margin: .2rem 0 0; overflow-wrap: anywhere; font-size: .86rem; font-weight: 700; }
 
 @media (max-width: 56.25rem) {
   .business-validation-prep .bm-plan__nums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .business-validation-prep .bm-plan-review__resources dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 48rem) {
@@ -87,6 +105,8 @@
   .business-validation-prep--ready > a,
   .business-validation-prep__empty > button { width: 100%; }
   .business-validation-prep .bm-plan__nums { grid-template-columns: 1fr; }
+  .business-validation-prep .bm-plan-review__operations,
+  .business-validation-prep .bm-plan-review__resources dl { grid-template-columns: 1fr; }
   .business-validation-prep .bm-plan__row > header { display: grid; }
   .business-validation-prep .bm-plan__text-action { justify-self: start; }
 }

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
-  buildProposalPreview, businessDecisionStage, canOpenComparison, candidateFieldOptions,
+    buildProposalPreview, businessDecisionReachability, businessDecisionStage, canOpenComparison, candidateFieldOptions,
   candidateRequests, comparisonRows, hypothesisDecisionLabel, createCandidateDraft,
   formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
   serializeCandidateFacts, toggleComparedConcept,
@@ -107,6 +107,12 @@ describe('decision flow and legal grouping', () => {
     expect(businessDecisionStage({ status: 'READY_FOR_LEGAL_REPORT' })).toBe('BUSINESS_BASIS');
     expect(businessDecisionStage({ status: 'LEGAL_REPORT_READY' })).toBe('LEGAL_REVIEW');
     expect(businessDecisionStage({ status: 'READY_FOR_MARKET' })).toBe('VALIDATION_PREP');
+  });
+  it('서버 데이터에서 조회 가능한 Decision 단계를 결정한다', () => {
+    expect(businessDecisionReachability({ concepts: [{}] })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: false, LEGAL_REVIEW: false, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'PENDING_HYPOTHESIS_CONFIRMATION' } })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: false, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'LEGAL_REPORT_READY' }, report: {} })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: true, VALIDATION_PREP: false });
+    expect(businessDecisionReachability({ concepts: [{}], selection: { status: 'READY_FOR_MARKET' }, report: {} })).toEqual({ PROPOSAL_SELECTION: true, BUSINESS_BASIS: true, LEGAL_REVIEW: true, VALIDATION_PREP: true });
   });
   it('maps every legal status without exposing raw enums', () => {
     expect(['IMPLEMENTABLE', 'IMPLEMENTABLE_WITH_CONTROLS', 'NEEDS_FACTS', 'REDESIGNABLE', 'REJECTED'].map(legalStatusLabel)).toEqual([
