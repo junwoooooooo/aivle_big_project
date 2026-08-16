@@ -27,6 +27,8 @@ public class ConceptRefinementDecisionContract {
         "keyResources", "key_resources",
         "keyPartners", "key_partners",
         "customerRelationships", "customer_relationship");
+    private static final Set<String> BM_LIST_FIELDS = Set.of(
+        "keyActivities", "keyResources", "keyPartners");
     private static final Set<String> OVERLAY_FIELDS = Set.of("targetUsers", "featureSet");
 
     private final ObjectMapper mapper;
@@ -160,10 +162,25 @@ public class ConceptRefinementDecisionContract {
         if (!selected.isArray()) throw staleContract();
         ObjectNode patch = mapper.createObjectNode();
         for (JsonNode proposal : selected) {
-            String storageField = BM_FIELDS.get(proposal.path("fieldKey").asText());
+            String field = proposal.path("fieldKey").asText();
+            String storageField = BM_FIELDS.get(field);
             if (storageField == null) continue;
             if (!proposal.has("currentValue")) throw staleContract();
-            patch.set(storageField, proposal.get("currentValue").deepCopy());
+            JsonNode current = proposal.get("currentValue");
+            if (BM_LIST_FIELDS.contains(field)) {
+                if (current.isNull()) patch.set(storageField, mapper.createArrayNode());
+                else {
+                    if (!current.isArray()) throw staleContract();
+                    for (JsonNode value : current) if (!value.isTextual()) throw staleContract();
+                    patch.set(storageField, current.deepCopy());
+                }
+            } else {
+                if (current.isNull()) patch.put(storageField, "");
+                else {
+                    if (!current.isTextual()) throw staleContract();
+                    patch.set(storageField, current.deepCopy());
+                }
+            }
         }
         return patch;
     }

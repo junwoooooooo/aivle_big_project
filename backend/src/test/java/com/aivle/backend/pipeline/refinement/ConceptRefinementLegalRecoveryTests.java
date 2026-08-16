@@ -9,7 +9,7 @@ import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioJ
 import com.aivle.backend.pipeline.conceptportfolio.selection.application.ConceptPortfolioSelectionService;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.*;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.*;
-import com.aivle.backend.pipeline.market.BmPlanPreparationService;
+import com.aivle.backend.pipeline.market.*;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.user.entity.User;
@@ -108,6 +108,46 @@ class ConceptRefinementLegalRecoveryTests {
         verify(hypotheses,never()).saveAll(any());
     }
 
+    @Test void absentBmBaselinesRecoverAsTypedRemovalsAndPreserveConstraints(){
+        round=decidedRoundWithBm(proposal("keyActivities",null,List.of("B")),
+            proposal("customerRelationships",null,"정기 상담"));prior=priorDecision();
+        when(hypotheses.findFirstBySelectionIdAndHypothesisTypeAndDeletedAtIsNullOrderByProposalVersionDesc(
+            31L,PortfolioHypothesisType.PRICE)).thenReturn(Optional.of(prior));
+        var snapshot=before.capture(round);round.captureApplicationBefore(snapshot.json(),snapshot.hash());blocked(round);
+        selection=ConceptPortfolioSelection.create(PROJECT,"run","concept","candidate",HASH,HASH,"선택",HASH,"select",OWNER,clock.instant());
+        ReflectionTestUtils.setField(selection,"id",31L);ReflectionTestUtils.setField(selection,"status",ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED);
+        ReflectionTestUtils.setField(selection,"hypothesisRevision",5);
+        when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT)).thenReturn(Optional.of(round));
+        when(lineage.postApplyCurrent(PROJECT,round)).thenReturn(true);when(selections.findLocked(31L)).thenReturn(Optional.of(selection));
+        BmPlanPreparationRepository repository=mock(BmPlanPreparationRepository.class);
+        BmPlanPreparation entity=BmPlanPreparation.create("bm",PROJECT,
+            "{\"key_activities\":[\"B\"],\"customer_relationship\":\"정기 상담\",\"key_resources\":[\"R\"]}",
+            "{\"budget_krw\":1000,\"months\":6,\"team\":3}",OWNER);
+        ReflectionTestUtils.setField(entity,"revision",4);
+        when(repository.findByProjectIdForUpdate(PROJECT)).thenReturn(Optional.of(entity));
+        BmPlanPreparationService actualBm=new BmPlanPreparationService(repository,mapper);
+        ConceptRefinementLegalRecoveryService actualRecovery=new ConceptRefinementLegalRecoveryService(projects,rounds,lineage,
+            before,decisions,selections,hypotheses,reports,actualBm,selectionService,refinement,hasher,mapper,clock);
+
+        actualRecovery.recover(OWNER,PROJECT,"recover-empty",1,round.getDecisionHash());
+
+        assertThat(round.getState()).isEqualTo(ConceptRefinementRound.State.RECOVERED);
+        assertThat(round.getAppliedBmPlanRevision()).isEqualTo(5);
+        assertThat(mapper.readTree(entity.getPlanJson()).has("key_activities")).isFalse();
+        assertThat(mapper.readTree(entity.getPlanJson()).has("customer_relationship")).isFalse();
+        assertThat(mapper.readTree(entity.getPlanJson()).path("key_resources").get(0).asText()).isEqualTo("R");
+        assertThat(entity.getConstraintJson()).isEqualTo("{\"budget_krw\":1000,\"months\":6,\"team\":3}");
+    }
+
+    @Test void rollbackRejectsStoredBmBaselineWithWrongType(){
+        ConceptRefinementRound invalidList=decidedRoundWithBm(proposal("keyActivities","not-a-list",List.of("B")));
+        assertThatThrownBy(()->decisions.rollbackBmPatch(invalidList)).isInstanceOf(com.aivle.backend.common.exception.BusinessException.class)
+            .satisfies(error->assertThat(((com.aivle.backend.common.exception.BusinessException)error).getErrorCode())
+                .isEqualTo(com.aivle.backend.common.exception.ErrorCode.MODULE_INPUT_STALE));
+        ConceptRefinementRound invalidSentence=decidedRoundWithBm(proposal("customerRelationships",List.of("bad"),"상담"));
+        assertThatThrownBy(()->decisions.rollbackBmPatch(invalidSentence)).isInstanceOf(com.aivle.backend.common.exception.BusinessException.class);
+    }
+
     private void fixture(){
         round=decidedRound();prior=priorDecision();
         when(hypotheses.findFirstBySelectionIdAndHypothesisTypeAndDeletedAtIsNullOrderByProposalVersionDesc(31L,PortfolioHypothesisType.PRICE))
@@ -122,10 +162,13 @@ class ConceptRefinementLegalRecoveryTests {
     }
 
     private ConceptRefinementRound decidedRound(){
+        return decidedRoundWithBm(proposal("keyActivities",List.of("A"),List.of("B")));
+    }
+    private ConceptRefinementRound decidedRoundWithBm(ObjectNode... bmProposals){
         CompletedSource source=new CompletedSource("session",91L,92L,"seed-1",31L,4,3,HASH);
         ConceptRefinementRound value=ConceptRefinementRound.start(PROJECT,source,"proposal","start",HASH);
         ReflectionTestUtils.setField(value,"id",101L);ArrayNode proposals=mapper.createArrayNode();
-        proposals.add(proposal("price","10000","12500"));proposals.add(proposal("keyActivities",List.of("A"),List.of("B")));
+        proposals.add(proposal("price","10000","12500"));for(ObjectNode proposal:bmProposals)proposals.add(proposal);
         value.materialize(proposals.toString(),"[]",true);var set=decisions.proposalSet(value);
         var decision=decisions.decision(value,set,set.orderedKeys(),false);
         value.recordDecision(decision.snapshot().toString(),decision.hash(),"decision",OWNER,clock.instant(),false);return value;

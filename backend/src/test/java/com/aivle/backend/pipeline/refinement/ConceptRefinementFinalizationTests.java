@@ -71,6 +71,11 @@ class ConceptRefinementFinalizationTests {
  @Test void finalizedCurrentUsesFinalSeedNotStaleSource(){ConceptRefinementRound r=appliedRound(proposal("targetUsers","old","new"),4,3);ConceptRefinementFinal value=finalValue(r,"seed-new");when(finals.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT)).thenReturn(Optional.of(value));when(rounds.findById(101L)).thenReturn(Optional.of(r));when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-new")).thenReturn(Optional.of(seed));
   assertThat(service.current(OWNER,PROJECT).stale()).isFalse();when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-new")).thenReturn(Optional.empty());assertThat(service.current(OWNER,PROJECT).stale()).isTrue();}
 
+ @Test void finalizationLineageMismatchPersistsStaleProjectionWithoutCreatingFinalOrTask(){ConceptRefinementRound r=appliedRound(proposal("keyActivities",List.of("A"),List.of("B")),4,4);stub(r);
+  when(lineage.postApplyCurrent(PROJECT,r)).thenReturn(false);var view=service.finalizeRound(OWNER,PROJECT,"stale-final",1,r.getDecisionHash());
+  assertThat(r.getState()).isEqualTo(ConceptRefinementRound.State.STALE);assertThat(view.state()).isEqualTo("STALE");assertThat(view.stale()).isTrue();
+  verify(finals,never()).save(any());verify(selectionService,never()).finalizeMarketSeedFromRefinement(anyLong(),anyLong(),anyLong(),anyString(),any(),any(),anyString(),anyString());}
+
  @Test void taggedHandoffPersistsNewSeedAndFinalizesWithoutReplacingSelectionWithFailedState(){Tagged f=tagged("targetUsers","old","new");
   f.materializer.complete(f.claim,f.context,f.response,f.result,f.input);
   verify(f.seedRepo).save(any(MarketAnalysisSeedSnapshot.class));verify(f.finalizer).createFinal(eq(OWNER),eq(PROJECT),eq(f.round),eq(ConceptRefinementFinal.Outcome.REFINED),eq("seed-new"),eq(4),eq(3),any(),any());

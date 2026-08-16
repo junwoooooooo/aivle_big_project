@@ -50,7 +50,7 @@ public class ConceptRefinementFinalizationService {
                 throw unavailable();}
         boolean current=java.util.Set.of(ConceptRefinementRound.State.KEEP_CURRENT,ConceptRefinementRound.State.NO_CHANGES)
             .contains(round.getState())?lineage.proposalBaselineCurrent(ownerId,projectId,round):lineage.postApplyCurrent(projectId,round);
-        if(!current){round.markStale();throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);}
+        if(!current){round.markStale();return view(ownerId,projectId,null,round);}
         if(outcome.hypotheses&&!hasCurrentReport(ownerId,projectId,round.getSelectionId()))
             selectionService.finalizeReport(ownerId,projectId,round.getSelectionId());
         else if(outcome.overlay&&!hasCurrentReport(ownerId,projectId,round.getSelectionId()))
