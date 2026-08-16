@@ -39,6 +39,14 @@ public class ConceptRefinementController {
             request.getHeader("Idempotency-Key"), id(request)), request);
     }
 
+    @PostMapping("/next")
+    public ResponseEntity<ApiResponse<ConceptRefinementService.CurrentView>> next(
+            @PathVariable Long projectId, @RequestBody NextRequest body, HttpServletRequest request) {
+        return accepted(refinement.next(currentUser.currentUserId(), projectId,
+            request.getHeader("Idempotency-Key"), id(request), body.expectedRound(),
+            body.expectedProposalSetHash(), body.expectedDecisionHash()), request);
+    }
+
     @PostMapping("/decision")
     public ApiResponse<ConceptRefinementService.CurrentView> decision(
             @PathVariable Long projectId, @RequestBody DecisionRequest body,
@@ -88,4 +96,6 @@ public class ConceptRefinementController {
                                   List<String> selectedProposalKeys, boolean keepCurrent) { }
     public record ApplyRequest(Integer expectedRound, String expectedDecisionHash) { }
     public record FinalizeRequest(Integer expectedRound,String expectedDecisionHash) { }
+    public record NextRequest(Integer expectedRound, String expectedProposalSetHash,
+                              String expectedDecisionHash) { }
 }

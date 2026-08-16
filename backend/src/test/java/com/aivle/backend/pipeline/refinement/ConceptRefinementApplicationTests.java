@@ -51,6 +51,7 @@ class ConceptRefinementApplicationTests {
     @Mock ConceptLegalRegulatoryReportRepository reports;
     @Mock TaskRunService taskRuns;
     @Mock BusinessValidationCoordinator validations;
+    @Mock MarketResearchVersionRepository marketVersions;
     @Mock Project project;
     @Mock User owner;
     @Mock ConceptPortfolioSelection selection;
@@ -78,7 +79,7 @@ class ConceptRefinementApplicationTests {
         lenient().when(project.getOwner()).thenReturn(owner);
         lenient().when(owner.getId()).thenReturn(OWNER_ID);
         lenient().when(projects.findByIdForUpdate(PROJECT_ID)).thenReturn(Optional.of(project));
-        lenient().when(lineage.preApplyCurrent(eq(OWNER_ID), eq(PROJECT_ID), any())).thenReturn(true);
+        lenient().when(lineage.proposalBaselineCurrent(eq(OWNER_ID), eq(PROJECT_ID), any())).thenReturn(true);
         lenient().when(lineage.postApplyCurrent(eq(PROJECT_ID), any())).thenReturn(true);
         lenient().when(selection.getId()).thenReturn(31L);
         lenient().when(selection.getProjectId()).thenReturn(PROJECT_ID);
@@ -89,6 +90,7 @@ class ConceptRefinementApplicationTests {
             .thenReturn(Optional.of(selection));
         lenient().when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1"))
             .thenReturn(Optional.of(seed));
+        lenient().when(seeds.findByIdAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
         lenient().when(task.getId()).thenReturn("confirm-task");
         lenient().when(refinement.view(any(), anyBoolean())).thenReturn(null);
     }
@@ -146,11 +148,11 @@ class ConceptRefinementApplicationTests {
         assertThat(bmRound.getAppliedSelectionRevision()).isEqualTo(4);
         assertThat(bmRound.getAppliedBmPlanRevision()).isEqualTo(4);
         assertThat(seed.getStaleAt()).isNull();
-        verify(seeds, never()).findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1");
+        verify(seeds, never()).findByIdAndDeletedAtIsNull("seed-1");
         verify(selectionService, never()).confirmFromRefinement(anyLong(), anyLong(), anyLong(), any(), any(), anyString());
 
         seed = freshSeed();
-        when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
+        when(seeds.findByIdAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
         ConceptRefinementRound overlayRound = decidedRound(proposal("targetUsers", "기존", "신규"));
         when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT_ID))
             .thenReturn(Optional.of(overlayRound));
@@ -162,7 +164,7 @@ class ConceptRefinementApplicationTests {
         assertThat(seed.getStaleAt()).isEqualTo(clock.instant());
 
         seed = freshSeed();
-        when(seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
+        when(seeds.findByIdAndDeletedAtIsNull("seed-1")).thenReturn(Optional.of(seed));
         ConceptRefinementRound combinedRound = decidedRound(
             proposal("keyActivities", List.of("A"), List.of("A2")),
             proposal("targetUsers", "기존", "신규"));
@@ -174,7 +176,7 @@ class ConceptRefinementApplicationTests {
         assertThat(combinedRound.getAppliedBmPlanRevision()).isEqualTo(4);
         assertThat(combinedRound.getState()).isEqualTo(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION);
         assertThat(seed.getStaleAt()).isEqualTo(clock.instant());
-        verify(seeds, times(2)).findByIdAndStaleAtIsNullAndDeletedAtIsNull("seed-1");
+        verify(seeds, times(2)).findByIdAndDeletedAtIsNull("seed-1");
         verifyNoInteractions(reports);
     }
 
@@ -204,7 +206,7 @@ class ConceptRefinementApplicationTests {
         ConceptRefinementRound round = decidedRound(proposal("price", "10,000원", "12,500원"));
         when(rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(PROJECT_ID))
             .thenReturn(Optional.of(round));
-        when(lineage.preApplyCurrent(OWNER_ID, PROJECT_ID, round)).thenReturn(false);
+        when(lineage.proposalBaselineCurrent(OWNER_ID, PROJECT_ID, round)).thenReturn(false);
 
         application.apply(OWNER_ID, PROJECT_ID, "apply-stale", 1, round.getDecisionHash());
 
@@ -355,7 +357,7 @@ class ConceptRefinementApplicationTests {
         ConceptRefinementRound round = decidedRound(proposal("keyActivities", List.of("A"), List.of("A2")));
         round.startLocalApplication("apply", contract.applicationHash(round), clock.instant());
         round.recordAppliedLineage(5, 4, clock.instant()); round.readyForFinalization();
-        ConceptRefinementLineageGuard guard = new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans);
+        ConceptRefinementLineageGuard guard = new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans, marketVersions);
         when(selection.getHypothesisRevision()).thenReturn(5, 5, 6);
         when(bmPlans.current(PROJECT_ID)).thenReturn(
             new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4),

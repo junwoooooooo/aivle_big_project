@@ -39,14 +39,14 @@ public class ConceptRefinementFinalizationMaterializationService {
         require("PASS".equals(handoff.path("compatibility").asText()));require("market-analysis-seed-snapshot-v1".equals(market.path("contract").asText()));
         require("2.0".equals(market.path("schemaVersion").asText()));require(binding.path("finalMarketSeedSnapshotId").asText().equals(market.path("snapshotId").asText()));
         String snapshotHash=result.path("marketSeedSnapshotHash").asText();require(snapshotHash.equals(hasher.productionCompatibleHash(market)));
-        validateOverlay(round,market);
+        ConceptRefinementFinalizationService.OutcomePlan finalPlan=finalization.outcome(round);
+        validateOverlay(round,market,finalPlan.overlayNode());
         validateHypotheses(selection.getId(),market);
         ConceptLegalRegulatoryReport report=reports.findBySelectionIdAndStatusAndDeletedAtIsNull(selection.getId(),"CURRENT").orElseThrow(ContractViolation::new);
         MarketAnalysisSeedSnapshot saved=seeds.save(MarketAnalysisSeedSnapshot.createPortfolio(market.path("snapshotId").asText(),context.projectId(),selection.getId(),
             selection.getConceptId(),report.getId(),"2.0",market.path("sourceSnapshotHash").asText(),snapshotHash,mapper.writeValueAsString(market),context.ownerId(),Instant.now(clock)));
-        ObjectNode plan=decisions.applicationPlan(round);ArrayNode changes=(ArrayNode)mapper.readTree(round.getDecisionJson()).path("selectedProposals").deepCopy();
-        ConceptRefinementFinal value=finalization.createFinal(context.ownerId(),context.projectId(),round,ConceptRefinementFinal.Outcome.REFINED,
-            saved.getId(),round.getAppliedSelectionRevision(),round.getAppliedBmPlanRevision(),(ObjectNode)plan.path("overlay"),changes);
+        ConceptRefinementFinal value=finalization.createFinal(context.ownerId(),context.projectId(),round,finalPlan.outcome(),
+            saved.getId(),round.getAppliedSelectionRevision(),round.getAppliedBmPlanRevision(),finalPlan.overlayNode(),finalPlan.selectedChanges());
         selection.completeTask(context.taskRunId(),ConceptPortfolioSelectionStatus.READY_FOR_MARKET,false);
         round.finalized(value.getId(),saved.getId(),Instant.now(clock));taskRuns.adopt(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken(),
             mapper.writeValueAsString(result),context.inputHash(),response.resultSchemaVersion());}
@@ -54,7 +54,7 @@ public class ConceptRefinementFinalizationMaterializationService {
         ConceptRefinementRound round=locked(input.path("refinementFinalization"));ConceptPortfolioSelection selection=selections.findLocked(Long.valueOf(context.subjectId())).orElseThrow(ContractViolation::new);
         selection.clearAuxiliaryTaskIfActive(context.taskRunId());round.finalizationFailed(context.taskRunId(),code);
         taskRuns.fail(claim.taskRunId(),claim.taskAttemptId(),claim.claimToken(),code,reason,retryable);}
-    private void validateOverlay(ConceptRefinementRound round,JsonNode market){ObjectNode overlay=(ObjectNode)decisions.applicationPlan(round).path("overlay");
+    private void validateOverlay(ConceptRefinementRound round,JsonNode market,ObjectNode overlay){
         MarketAnalysisSeedSnapshot source=seeds.findByIdAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId()).orElseThrow(ContractViolation::new);
         JsonNode baseline=mapper.readTree(source.getSnapshotJson()).path("selectedConcept");
         for(String field:List.of("targetUsers","featureSet")){JsonNode expected=overlay.has(field)?overlay.get(field):

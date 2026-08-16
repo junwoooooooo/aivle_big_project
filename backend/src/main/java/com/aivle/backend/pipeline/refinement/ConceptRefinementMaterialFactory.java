@@ -5,7 +5,11 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
 import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
 import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptPortfolioConceptRepository;
+import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioJsonHasher;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioHypothesisDecision;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.PortfolioHypothesisType;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioHypothesisDecisionRepository;
 import com.aivle.backend.pipeline.market.*;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
@@ -23,21 +27,49 @@ public class ConceptRefinementMaterialFactory {
     private final ConceptPortfolioConceptRepository concepts;
     private final MarketAnalysisSeedSnapshotRepository seeds;
     private final BmPlanPreparationService bmPlans;
+    private final ConceptPortfolioHypothesisDecisionRepository hypotheses;
+    private final ConceptRefinementDecisionContract decisions;
+    private final ConceptPortfolioJsonHasher hasher;
     private final ObjectMapper mapper;
 
     public ConceptRefinementMaterialFactory(MarketResearchVersionRepository marketVersions,
             ConceptPortfolioConceptRepository concepts,
             MarketAnalysisSeedSnapshotRepository seeds, BmPlanPreparationService bmPlans,
+            ConceptPortfolioHypothesisDecisionRepository hypotheses,
+            ConceptRefinementDecisionContract decisions, ConceptPortfolioJsonHasher hasher,
             ObjectMapper mapper) {
         this.marketVersions = marketVersions;
         this.concepts = concepts;
         this.seeds = seeds;
         this.bmPlans = bmPlans;
+        this.hypotheses = hypotheses;
+        this.decisions = decisions;
+        this.hasher = hasher;
         this.mapper = mapper;
     }
 
     public ObjectNode input(Long projectId, ConceptPortfolioSelection selection,
             CompletedSource source, int attempt) {
+        return input(projectId, selection, source, 1, attempt, source.selectionRevision(),
+            source.bmPlanRevision(), mapper.createObjectNode(), List.of(), true);
+    }
+
+    public ObjectNode inputForRound(Long projectId, ConceptPortfolioSelection selection,
+            ConceptRefinementRound round, int attempt, List<ConceptRefinementRound> history) {
+        CompletedSource source = new CompletedSource(round.getBusinessValidationSessionId(),
+            round.getSourceMarketVersionId(), round.getSourceBmVersionId(),
+            round.getSourceMarketSeedSnapshotId(), round.getSelectionId(),
+            round.getSourceSelectionRevision(), round.getSourceBmPlanRevision(), null);
+        ObjectNode overlay = object(round.baselineOverlayJson(), "누적 overlay baseline을 읽을 수 없습니다.");
+        return input(projectId, selection, source, round.getRoundNumber(), attempt,
+            round.baselineSelectionRevision(), round.baselineBmPlanRevision(), overlay, history,
+            round.getRoundNumber() == 1);
+    }
+
+    private ObjectNode input(Long projectId, ConceptPortfolioSelection selection,
+            CompletedSource source, int roundNumber, int attempt, int baselineSelectionRevision,
+            int baselineBmPlanRevision, ObjectNode baselineOverlay,
+            List<ConceptRefinementRound> history, boolean requireCurrentSeed) {
         MarketResearchVersion market = exact(projectId, source.marketVersionId(), MarketResearchRun.Kind.FULL);
         MarketResearchVersion bm = exact(projectId, source.bmVersionId(), MarketResearchRun.Kind.BM);
         ConceptPortfolioConcept concept = concepts
@@ -46,10 +78,11 @@ public class ConceptRefinementMaterialFactory {
         JsonNode marketResult = mapper.readTree(market.getResultJson());
         JsonNode bmResult = mapper.readTree(bm.getResultJson());
         JsonNode selectedCandidate = mapper.readTree(concept.getCandidateSnapshotJson());
-        JsonNode sourceSeed = exactSeed(projectId, source);
+        JsonNode sourceSeed = exactSeed(projectId, source, requireCurrentSeed);
         BmPlanPreparationService.PlanView bmPlan = bmPlans.current(projectId);
-        if (!Objects.equals(bmPlan.revision(), source.bmPlanRevision())) {
-            throw stale("BM Plan revision이 사업 검증 source와 다릅니다.");
+        if (!Objects.equals(selection.getHypothesisRevision(), baselineSelectionRevision)
+                || !Objects.equals(bmPlan.revision(), baselineBmPlanRevision)) {
+            throw stale("현재 사업안 revision이 refinement baseline과 다릅니다.");
         }
 
         ObjectNode input = mapper.createObjectNode();
@@ -59,7 +92,7 @@ public class ConceptRefinementMaterialFactory {
         input.set("baseLegalReview", mapper.readTree(concept.getLegalReviewJson()));
 
         ObjectNode material = input.putObject("refinementMaterial");
-        material.put("round", 1);
+        material.put("round", roundNumber);
         material.put("attempt", attempt);
         material.put("policyVersion", ConceptRefinementPolicy.VERSION);
         material.put("maxProposals", ConceptRefinementPolicy.MAX_PROPOSALS);
@@ -73,6 +106,10 @@ public class ConceptRefinementMaterialFactory {
         binding.put("selectionId", source.selectionId());
         putNullable(binding, "selectionRevision", source.selectionRevision());
         putNullable(binding, "bmPlanRevision", source.bmPlanRevision());
+        ObjectNode baselineBinding = material.putObject("baselineBinding");
+        baselineBinding.put("selectionRevision", baselineSelectionRevision);
+        baselineBinding.put("bmPlanRevision", baselineBmPlanRevision);
+        baselineBinding.put("overlayHash", hasher.hash(baselineOverlay));
 
         ArrayNode frozen = material.putArray("frozenFields");
         ConceptRefinementPolicy.FROZEN_FIELDS.stream().sorted().forEach(frozen::add);
@@ -85,12 +122,20 @@ public class ConceptRefinementMaterialFactory {
         material.set("gateReasons", gateReasons(bmResult));
         material.set("canvas", bmResult.path("canvas").deepCopy());
         material.set("marketEvidence", evidence(marketResult.path("evidence"), bmResult.path("canvas")));
-        material.set("currentEditableValues", currentEditableValues(sourceSeed, bmPlan.plan()));
+        ObjectNode editable = roundNumber == 1
+            ? currentEditableValues(sourceSeed, bmPlan.plan())
+            : currentEditableValuesFromCurrentHypotheses(selection.getId(), sourceSeed, bmPlan.plan());
+        baselineOverlay.propertyNames().forEach(field -> {
+            if (!Set.of("targetUsers", "featureSet").contains(field))
+                throw stale("지원하지 않는 누적 overlay field입니다.");
+            editable.set(field, baselineOverlay.get(field).deepCopy());
+        });
+        material.set("currentEditableValues", editable);
         material.set("frozenValues", frozenValues(sourceSeed.path("selectedConcept")));
         material.set("legalFindings", legalFindings(sourceSeed.path("legalResult")));
         material.set("allowedLegalRefs", allowedLegalRefs(sourceSeed.path("legalResult")));
-        material.set("driftRejections", mapper.createArrayNode());
-        material.set("userDeclined", mapper.createArrayNode());
+        material.set("driftRejections", previousDrift(history));
+        material.set("userDeclined", previousDeclined(history));
         return input;
     }
 
@@ -100,9 +145,10 @@ public class ConceptRefinementMaterialFactory {
                 "사업 검증 결과 lineage를 찾을 수 없습니다."));
     }
 
-    private JsonNode exactSeed(Long projectId, CompletedSource source) {
-        MarketAnalysisSeedSnapshot seed = seeds
-            .findByIdAndStaleAtIsNullAndDeletedAtIsNull(source.marketSeedSnapshotId())
+    private JsonNode exactSeed(Long projectId, CompletedSource source, boolean requireCurrent) {
+        MarketAnalysisSeedSnapshot seed = (requireCurrent
+            ? seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull(source.marketSeedSnapshotId())
+            : seeds.findByIdAndDeletedAtIsNull(source.marketSeedSnapshotId()))
             .filter(value -> Objects.equals(value.getId(), source.marketSeedSnapshotId())
                 && Objects.equals(value.getProjectId(), projectId)
                 && Objects.equals(value.getPortfolioSelectionId(), source.selectionId())
@@ -120,6 +166,67 @@ public class ConceptRefinementMaterialFactory {
             throw stale("Market Seed 계약이 사업 검증 baseline 요구사항과 다릅니다.");
         }
         return snapshot;
+    }
+
+    private ObjectNode currentEditableValuesFromCurrentHypotheses(Long selectionId,
+            JsonNode seed, ObjectNode plan) {
+        ObjectNode out = currentEditableValues(seed, plan);
+        Map<PortfolioHypothesisType, String> fields = new EnumMap<>(PortfolioHypothesisType.class);
+        fields.put(PortfolioHypothesisType.TARGET_REGION, "targetRegion");
+        fields.put(PortfolioHypothesisType.REVENUE_MODEL, "revenueModel");
+        fields.put(PortfolioHypothesisType.PRICE, "price");
+        fields.put(PortfolioHypothesisType.CHANNELS, "channels");
+        fields.put(PortfolioHypothesisType.DIFFERENTIATORS, "differentiators");
+        fields.put(PortfolioHypothesisType.PRE_MARKET_SOM_SHARE, "preMarketSomShare");
+        fields.put(PortfolioHypothesisType.PRE_MARKET_SOM, "preMarketSom");
+        Map<PortfolioHypothesisType, ConceptPortfolioHypothesisDecision> latest = new EnumMap<>(PortfolioHypothesisType.class);
+        hypotheses.findAllBySelectionIdAndDeletedAtIsNullOrderByHypothesisTypeAscProposalVersionDesc(selectionId)
+            .forEach(value -> latest.putIfAbsent(value.getHypothesisType(), value));
+        fields.forEach((type, field) -> {
+            ConceptPortfolioHypothesisDecision value = latest.get(type);
+            if (value == null || !value.ready() || value.getFinalValueJson() == null)
+                throw stale("현재 확정 가설 baseline이 불완전합니다: " + field);
+            out.set(field, mapper.readTree(value.getFinalValueJson()));
+        });
+        return out;
+    }
+
+    private ArrayNode previousDrift(List<ConceptRefinementRound> history) {
+        ArrayNode out = mapper.createArrayNode();
+        history.stream().sorted(Comparator.comparingInt(ConceptRefinementRound::getRoundNumber))
+            .forEach(round -> append(out, readArray(round.getDriftRejectionsJson())));
+        return out;
+    }
+
+    private ArrayNode previousDeclined(List<ConceptRefinementRound> history) {
+        ArrayNode out = mapper.createArrayNode();
+        history.stream().sorted(Comparator.comparingInt(ConceptRefinementRound::getRoundNumber)).forEach(round -> {
+            if (round.getState() == ConceptRefinementRound.State.DECLINED) {
+                append(out, readArray(round.getProposalJson()));
+            } else if (round.getState() == ConceptRefinementRound.State.CONTINUED) {
+                ConceptRefinementDecisionContract.ProposalSet set = decisions.proposalSet(round);
+                Set<String> selected = new HashSet<>();
+                JsonNode decision = mapper.readTree(round.getDecisionJson());
+                decision.path("selectedProposalKeys").forEach(value -> selected.add(value.asText()));
+                set.orderedKeys().stream().filter(key -> !selected.contains(key))
+                    .map(set.byKey()::get).forEach(value -> out.add(value.deepCopy()));
+            }
+        });
+        return out;
+    }
+
+    private ArrayNode readArray(String json) {
+        if (json == null) return mapper.createArrayNode();
+        JsonNode value = mapper.readTree(json);
+        return value != null && value.isArray() ? (ArrayNode) value : mapper.createArrayNode();
+    }
+
+    private ObjectNode object(String json, String message) {
+        try {
+            JsonNode value = mapper.readTree(json);
+            if (value != null && value.isObject()) return (ObjectNode) value;
+        } catch (RuntimeException ignored) { }
+        throw stale(message);
     }
 
     private ObjectNode currentEditableValues(JsonNode seed, ObjectNode plan) {

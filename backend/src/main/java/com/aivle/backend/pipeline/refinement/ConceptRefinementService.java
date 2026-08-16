@@ -84,26 +84,13 @@ public class ConceptRefinementService {
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
         if (key.equals(round.getCommandIdempotencyKey())) {
-            CompletedSource replaySource;
-            try { replaySource = validations.requireCurrentCompletedSource(ownerId, projectId); }
-            catch (BusinessException unavailable) {
+            if (!lineage.proposalBaselineCurrent(ownerId, projectId, round)) {
                 round.markStale();
                 return view(round, true);
             }
-            if (!round.boundTo(replaySource)) {
-                round.markStale();
-                return view(round, true);
-            }
-            return replay(projectId, replaySource,
-                requireLineage(projectId, replaySource), round);
+            return replayRound(projectId, requireBaselineSelection(projectId, round), round);
         }
-        CompletedSource source;
-        try { source = validations.requireCurrentCompletedSource(ownerId, projectId); }
-        catch (BusinessException unavailable) {
-            round.markStale();
-            return view(round, true);
-        }
-        if (!round.boundTo(source)) {
+        if (!lineage.proposalBaselineCurrent(ownerId, projectId, round)) {
             round.markStale();
             return view(round, true);
         }
@@ -111,11 +98,80 @@ public class ConceptRefinementService {
                 || round.getAttempt() >= ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "다듬기 제안 재시도를 사용할 수 없습니다.");
         }
-        ConceptPortfolioSelection selection = requireLineage(projectId, source);
-        ObjectNode input = materials.input(projectId, selection, source, round.getAttempt() + 1);
+        ConceptPortfolioSelection selection = requireBaselineSelection(projectId, round);
+        ObjectNode input = materials.inputForRound(projectId, selection, round, round.getAttempt() + 1,
+            history(round));
         TaskRun task = tasks.create(ownerId, selection, "REFINE_FROM_MARKET", input, key, correlationId);
         round.retry(task.getId(), key, task.getInputHash());
         return view(round, false);
+    }
+
+    @Transactional
+    public CurrentView next(Long ownerId, Long projectId, String commandKey, String correlationId,
+            Integer expectedRound, String expectedProposalSetHash, String expectedDecisionHash) {
+        ownedForUpdate(ownerId, projectId);
+        String key = validKey(commandKey);
+        if (expectedRound == null || expectedRound < 1 || expectedRound > ConceptRefinementPolicy.MAX_ROUNDS)
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "expectedRound가 올바르지 않습니다.");
+        ConceptRefinementRound latest = rounds
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        ConceptRefinementRound parent;
+        ConceptRefinementRound child = null;
+        if (latest.getRoundNumber() == expectedRound) parent = latest;
+        else if (latest.getRoundNumber() == expectedRound + 1 && latest.getParentRoundId() != null) {
+            child = latest;
+            parent = rounds.findByIdForUpdate(latest.getParentRoundId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
+        } else {
+            List<ConceptRefinementRound> cycle = rounds
+                .findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(
+                    projectId, latest.getBusinessValidationSessionId());
+            parent = cycle.stream().filter(value -> value.getRoundNumber() == expectedRound)
+                .findFirst().orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST,
+                    "현재 refinement round와 일치하지 않습니다."));
+            child = rounds.findByParentRoundIdAndDeletedAtIsNull(parent.getId()).orElse(null);
+            if (child == null) throw new BusinessException(ErrorCode.INVALID_REQUEST,
+                "현재 refinement round와 일치하지 않습니다.");
+        }
+        validateNextTokens(parent, expectedProposalSetHash, expectedDecisionHash);
+        if (child != null) {
+            if (key.equals(child.getCommandIdempotencyKey()))
+                return replayRound(projectId, requireBaselineSelection(projectId, child), child);
+            return view(child, !lineage.proposalBaselineCurrent(ownerId, projectId, child));
+        }
+        if (parent.getRoundNumber() >= ConceptRefinementPolicy.MAX_ROUNDS)
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "최대 refinement round에 도달했습니다.");
+        boolean declining = parent.getState() == ConceptRefinementRound.State.AWAITING_DECISION;
+        boolean continuing = parent.getState() == ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION;
+        if (!declining && !continuing)
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "현재 상태에서는 다음 제안을 요청할 수 없습니다.");
+        boolean current = declining
+            ? lineage.proposalBaselineCurrent(ownerId, projectId, parent)
+            : lineage.postApplyCurrent(projectId, parent);
+        if (!current) {
+            parent.markStale();
+            return view(parent, true);
+        }
+        int selectionRevision = declining ? parent.baselineSelectionRevision() : parent.getAppliedSelectionRevision();
+        int bmRevision = declining ? parent.baselineBmPlanRevision() : parent.getAppliedBmPlanRevision();
+        ObjectNode overlay = overlay(parent.baselineOverlayJson());
+        boolean seedRequired = parent.isSeedRebuildRequired();
+        if (continuing) {
+            ObjectNode plan = decisions.applicationPlan(parent);
+            mergeOverlay(overlay, plan.path("overlay"));
+            seedRequired = seedRequired || !plan.path("hypotheses").isEmpty() || !plan.path("overlay").isEmpty();
+            parent.continued();
+        } else parent.declined();
+        ConceptRefinementRound draft = ConceptRefinementRound.next(parent, selectionRevision, bmRevision,
+            mapper.writeValueAsString(overlay), seedRequired, "pending", key, "sha256:" + "0".repeat(64));
+        ConceptPortfolioSelection selection = requireBaselineSelection(projectId, draft);
+        List<ConceptRefinementRound> history = history(draft);
+        ObjectNode input = materials.inputForRound(projectId, selection, draft, 1, history);
+        TaskRun task = tasks.create(ownerId, selection, "REFINE_FROM_MARKET", input, key, correlationId);
+        ConceptRefinementRound saved = rounds.save(ConceptRefinementRound.next(parent, selectionRevision, bmRevision,
+            mapper.writeValueAsString(overlay), seedRequired, task.getId(), key, task.getInputHash()));
+        return view(saved, false);
     }
 
     @Transactional
@@ -129,7 +185,7 @@ public class ConceptRefinementService {
     private CurrentView currentView(Long ownerId, Long projectId, ConceptRefinementRound round) {
         boolean stale = round.postApplyState()
             ? !lineage.postApplyCurrent(projectId, round)
-            : !lineage.preApplyCurrent(ownerId, projectId, round);
+            : !lineage.proposalBaselineCurrent(ownerId, projectId, round);
         if (stale && round.getState() != ConceptRefinementRound.State.STALE) round.markStale();
         return view(round, stale);
     }
@@ -142,6 +198,61 @@ public class ConceptRefinementService {
         if (!Objects.equals(hash, round.getCanonicalMaterialHash()))
             throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
         return view(round, false);
+    }
+
+    private CurrentView replayRound(Long projectId, ConceptPortfolioSelection selection,
+            ConceptRefinementRound round) {
+        ObjectNode input = materials.inputForRound(projectId, selection, round, round.getAttempt(), history(round));
+        String hash = inputHasher.hash(ConceptPortfolioSelectionTaskFactory.TYPE,
+            "1.0", "ko-KR", mapper.writeValueAsString(input));
+        if (!Objects.equals(hash, round.getCanonicalMaterialHash()))
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
+        return view(round, false);
+    }
+
+    private List<ConceptRefinementRound> history(ConceptRefinementRound round) {
+        return rounds.findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(
+            round.getProjectId(), round.getBusinessValidationSessionId()).stream()
+            .filter(value -> value.getRoundNumber() < round.getRoundNumber())
+            .toList();
+    }
+
+    private ConceptPortfolioSelection requireBaselineSelection(Long projectId, ConceptRefinementRound round) {
+        return selections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId)
+            .filter(value -> Objects.equals(value.getId(), round.getSelectionId())
+                && value.getHypothesisRevision() == round.baselineSelectionRevision())
+            .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
+    }
+
+    private void validateNextTokens(ConceptRefinementRound parent,
+            String expectedProposalSetHash, String expectedDecisionHash) {
+        boolean declined = Set.of(ConceptRefinementRound.State.AWAITING_DECISION,
+            ConceptRefinementRound.State.DECLINED).contains(parent.getState());
+        boolean continued = Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
+            ConceptRefinementRound.State.CONTINUED).contains(parent.getState());
+        if (declined) {
+            String actual = decisions.proposalSet(parent).hash();
+            if (expectedDecisionHash != null || !Objects.equals(actual, expectedProposalSetHash))
+                throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
+        } else if (continued) {
+            if (expectedProposalSetHash != null || !Objects.equals(parent.getDecisionHash(), expectedDecisionHash))
+                throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
+        }
+    }
+
+    private ObjectNode overlay(String json) {
+        JsonNode value = mapper.readTree(json);
+        if (value == null || !value.isObject()) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        return (ObjectNode) value.deepCopy();
+    }
+
+    private void mergeOverlay(ObjectNode target, JsonNode addition) {
+        if (!addition.isObject()) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        addition.propertyNames().forEach(field -> {
+            if (!Set.of("targetUsers", "featureSet").contains(field))
+                throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+            target.set(field, addition.get(field).deepCopy());
+        });
     }
 
     private ConceptPortfolioSelection requireLineage(Long projectId, CompletedSource source) {
@@ -166,12 +277,18 @@ public class ConceptRefinementService {
             && round.getAttempt() < ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND;
         ConceptRefinementDecisionContract.ProposalSet proposalSet = round.getProposalJson() == null
             ? null : decisions.proposalSet(round);
+        boolean nextAvailable = !stale && round.getRoundNumber() < ConceptRefinementPolicy.MAX_ROUNDS
+            && Set.of(ConceptRefinementRound.State.AWAITING_DECISION,
+                ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION).contains(round.getState());
+        String nextReason = nextAvailable ? null
+            : round.getRoundNumber() >= ConceptRefinementPolicy.MAX_ROUNDS ? "MAX_ROUNDS" : "STATE_UNAVAILABLE";
         return new CurrentView(round.getBusinessValidationSessionId(), state, stale, round.getRoundNumber(), policy(),
             proposalSet == null ? jsonArray(null) : proposalSet.projected(),
             jsonArray(round.getDriftRejectionsJson()),
             round.getLastErrorCode(), new RetryView(retryAvailable, round.getAttempt(),
                 ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
-            proposalSet == null ? null : proposalSet.hash(), decisions.decisionView(round));
+            proposalSet == null ? null : proposalSet.hash(), decisions.decisionView(round),
+            new NextRoundView(nextAvailable, round.getRoundNumber(), ConceptRefinementPolicy.MAX_ROUNDS, nextReason));
     }
 
     private PolicyView policy() {
@@ -206,10 +323,12 @@ public class ConceptRefinementService {
     public record PolicyView(String version, int maxRounds, int maxProposals,
                              int priceChangePercent, int listChangeAllowance) { }
     public record RetryView(boolean available, int attempts, int maxAttempts) { }
+    public record NextRoundView(boolean available, int currentRound, int maxRounds, String reason) { }
     public record CurrentView(String sourceBusinessValidationSessionId, String state, boolean stale, int round, PolicyView policy,
                               JsonNode proposals, JsonNode rejected, String errorCode,
                               RetryView retry, String proposalSetHash,
-                              ConceptRefinementDecisionContract.DecisionView decision) {
+                              ConceptRefinementDecisionContract.DecisionView decision,
+                              NextRoundView nextRound) {
         static CurrentView notStarted() {
             return new CurrentView(null, "NOT_STARTED", false, 0,
                 new PolicyView(ConceptRefinementPolicy.VERSION,
@@ -218,7 +337,7 @@ public class ConceptRefinementService {
                     ConceptRefinementPolicy.LIST_CHANGE_ALLOWANCE),
                 JsonNodeFactory.instance.arrayNode(), JsonNodeFactory.instance.arrayNode(),
                 null, new RetryView(false, 0, ConceptRefinementPolicy.MAX_ATTEMPTS_PER_ROUND),
-                null, null);
+                null, null, new NextRoundView(false, 0, ConceptRefinementPolicy.MAX_ROUNDS, "NOT_STARTED"));
         }
     }
 }

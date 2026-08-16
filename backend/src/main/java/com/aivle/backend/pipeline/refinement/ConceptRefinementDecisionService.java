@@ -64,7 +64,7 @@ public class ConceptRefinementDecisionService {
             throw unavailable();
         }
         if (round.getState() != ConceptRefinementRound.State.AWAITING_DECISION) throw unavailable();
-        if (!lineage.preApplyCurrent(ownerId, projectId, round)) {
+        if (!lineage.proposalBaselineCurrent(ownerId, projectId, round)) {
             round.markStale();
             return refinement.view(round, true);
         }

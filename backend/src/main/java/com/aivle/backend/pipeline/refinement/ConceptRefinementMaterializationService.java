@@ -1,8 +1,6 @@
 package com.aivle.backend.pipeline.refinement;
 
-import com.aivle.backend.common.exception.BusinessException;
-import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
-import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
+import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioJsonHasher;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.*;
@@ -15,29 +13,33 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class ConceptRefinementMaterializationService {
     private final ConceptRefinementRoundRepository rounds;
-    private final BusinessValidationCoordinator validations;
+    private final ConceptRefinementLineageGuard lineage;
+    private final ConceptPortfolioJsonHasher hasher;
     private final TaskRunService taskRuns;
     private final ObjectMapper mapper;
 
     public ConceptRefinementMaterializationService(ConceptRefinementRoundRepository rounds,
-            BusinessValidationCoordinator validations, TaskRunService taskRuns, ObjectMapper mapper) {
-        this.rounds = rounds; this.validations = validations; this.taskRuns = taskRuns; this.mapper = mapper;
+            ConceptRefinementLineageGuard lineage, ConceptPortfolioJsonHasher hasher,
+            TaskRunService taskRuns, ObjectMapper mapper) {
+        this.rounds = rounds; this.lineage = lineage; this.hasher = hasher;
+        this.taskRuns = taskRuns; this.mapper = mapper;
     }
 
     public void complete(TaskRunService.Claim claim, TaskRunWorkerContext context,
             ExecutionResponse response, JsonNode result, JsonNode input,
             ConceptPortfolioSelection selection) {
         ConceptRefinementRound round = exact(context.taskRunId());
-        if (!inputBindingMatches(round, input.path("refinementMaterial").path("sourceBinding")))
-            throw new ContractViolation();
-        if (!selectionMatches(round, context, input, selection) || !sourceCurrent(round, context)) {
+        JsonNode material = input.path("refinementMaterial");
+        if (!inputBindingMatches(round, material.path("sourceBinding"))) throw new ContractViolation();
+        if (!baselineBindingMatches(round, material.path("baselineBinding"))
+                || !selectionMatches(round, context, input, selection) || !sourceCurrent(round, context)) {
             stale(claim, context, response, round, selection);
         }
         JsonNode proposals = result.path("refinementProposals");
         JsonNode rejected = result.path("driftRejections");
         require(proposals.isArray() && proposals.size() <= ConceptRefinementPolicy.MAX_PROPOSALS);
         require(rejected.isArray());
-        validateProposals(proposals, input.path("refinementMaterial"));
+        validateProposals(proposals, material);
         round.materialize(mapper.writeValueAsString(proposals), mapper.writeValueAsString(rejected),
             !proposals.isEmpty());
         selection.completeAuxiliaryTask(context.taskRunId());
@@ -64,12 +66,7 @@ public class ConceptRefinementMaterializationService {
     }
 
     private boolean sourceCurrent(ConceptRefinementRound round, TaskRunWorkerContext context) {
-        try {
-            CompletedSource source = validations.requireCurrentCompletedSource(context.ownerId(), context.projectId());
-            return round.boundTo(source);
-        } catch (BusinessException unavailable) {
-            return false;
-        }
+        return lineage.proposalBaselineCurrent(context.ownerId(), context.projectId(), round);
     }
 
     private static boolean selectionMatches(ConceptRefinementRound round, TaskRunWorkerContext context,
@@ -93,6 +90,16 @@ public class ConceptRefinementMaterializationService {
             && binding.path("selectionId").asLong(Long.MIN_VALUE) == round.getSelectionId()
             && nullableInt(binding.get("selectionRevision"), round.getSourceSelectionRevision())
             && nullableInt(binding.get("bmPlanRevision"), round.getSourceBmPlanRevision());
+    }
+
+    private boolean baselineBindingMatches(ConceptRefinementRound round, JsonNode binding) {
+        JsonNode overlay;
+        try { overlay = mapper.readTree(round.baselineOverlayJson()); }
+        catch (RuntimeException invalid) { return false; }
+        return binding.isObject() && overlay != null && overlay.isObject()
+            && binding.path("selectionRevision").asInt(-1) == round.baselineSelectionRevision()
+            && binding.path("bmPlanRevision").asInt(-1) == round.baselineBmPlanRevision()
+            && Objects.equals(binding.path("overlayHash").asText(null), hasher.hash(overlay));
     }
 
     private void validateProposals(JsonNode proposals, JsonNode material) {

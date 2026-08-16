@@ -64,7 +64,7 @@ public class ConceptRefinementApplicationMaterializationService {
             staleDependents(selection.getId());
             ObjectNode bmPatch = (ObjectNode) decisions.applicationPlan(round).path("bmPlan");
             BmPlanPreparationService.PlanView patched = bmPlans.patchForRefinement(context.projectId(),
-                context.ownerId(), round.getSourceBmPlanRevision(), bmPatch);
+                context.ownerId(), round.baselineBmPlanRevision(), bmPatch);
             boolean deltaRequired = latestRequired(selection.getId()).stream()
                 .anyMatch(value -> value.isDeltaLegalRequired() && "PENDING".equals(value.getLegalReviewStatus()));
             selection.completeTask(context.taskRunId(), deltaRequired
@@ -126,9 +126,9 @@ public class ConceptRefinementApplicationMaterializationService {
             TaskRunWorkerContext context, JsonNode binding) {
         return confirmIdentity(round, context, binding) && selection.isCurrent()
             && Objects.equals(selection.getId(), round.getSelectionId())
-            && selection.getHypothesisRevision() == round.getSourceSelectionRevision()
-            && bmPlans.current(context.projectId()).revision() == round.getSourceBmPlanRevision()
-            && exactSeedCurrent(round, context.projectId());
+            && selection.getHypothesisRevision() == round.baselineSelectionRevision()
+            && bmPlans.current(context.projectId()).revision() == round.baselineBmPlanRevision()
+            && exactSeedExists(round, context.projectId());
     }
 
     private boolean deltaCurrent(ConceptRefinementRound round, ConceptPortfolioSelection selection,
@@ -142,7 +142,7 @@ public class ConceptRefinementApplicationMaterializationService {
     private boolean confirmIdentity(ConceptRefinementRound round, TaskRunWorkerContext context, JsonNode binding) {
         return round.getState() == ConceptRefinementRound.State.APPLYING_HYPOTHESES
             && Objects.equals(round.getApplicationTaskRunId(), context.taskRunId())
-            && bound(binding, round, round.getSourceSelectionRevision(), round.getSourceBmPlanRevision());
+            && bound(binding, round, round.baselineSelectionRevision(), round.baselineBmPlanRevision());
     }
 
     private boolean deltaIdentity(ConceptRefinementRound round, TaskRunWorkerContext context, JsonNode binding) {
@@ -174,8 +174,10 @@ public class ConceptRefinementApplicationMaterializationService {
             .orElseThrow(ContractViolation::new);
     }
 
-    private boolean exactSeedCurrent(ConceptRefinementRound round, Long projectId) {
-        return seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId())
+    private boolean exactSeedExists(ConceptRefinementRound round, Long projectId) {
+        return (round.getRoundNumber() == 1
+            ? seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId())
+            : seeds.findByIdAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId()))
             .filter(value -> Objects.equals(value.getProjectId(), projectId)
                 && Objects.equals(value.getPortfolioSelectionId(), round.getSelectionId()))
             .isPresent();

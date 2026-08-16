@@ -68,6 +68,9 @@ class ConceptRefinementServiceTests {
             .thenReturn(Optional.of(seed));
         lenient().when(materials.input(anyLong(), same(selection), eq(source), anyInt()))
             .thenReturn(mapper.createObjectNode().put("action", "REFINE_FROM_MARKET"));
+        lenient().when(materials.inputForRound(anyLong(), same(selection), any(), anyInt(), anyList()))
+            .thenReturn(mapper.createObjectNode().put("action", "REFINE_FROM_MARKET"));
+        lenient().when(lineage.proposalBaselineCurrent(eq(7L), eq(41L), any())).thenReturn(true);
         lenient().when(inputHasher.hash(any(), eq("1.0"), eq("ko-KR"), anyString())).thenReturn(HASH);
         lenient().when(task.getId()).thenReturn("refine-task-1");
         lenient().when(task.getInputHash()).thenReturn(HASH);
@@ -166,7 +169,7 @@ class ConceptRefinementServiceTests {
         assertThat(view.state()).isEqualTo("PROPOSING");
         assertThat(round.getAttempt()).isEqualTo(2);
         assertThat(round.getTaskRunId()).isEqualTo("retry-task");
-        verify(materials).input(41L, selection, source, 2);
+        verify(materials).inputForRound(eq(41L), same(selection), same(round), eq(2), anyList());
     }
 
     @Test

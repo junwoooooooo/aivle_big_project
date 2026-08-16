@@ -14,6 +14,7 @@ import com.aivle.backend.pipeline.conceptportfolio.selection.application.Concept
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
+import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.project.entity.Project;
@@ -41,6 +42,7 @@ class ConceptRefinementDecisionTests {
     @Mock ConceptPortfolioSelectionRepository selections;
     @Mock MarketAnalysisSeedSnapshotRepository seeds;
     @Mock BmPlanPreparationService bmPlans;
+    @Mock MarketResearchVersionRepository marketVersions;
     @Mock ConceptRefinementRoundRepository rounds;
     @Mock ConceptRefinementService refinement;
     @Mock ConceptPortfolioSelectionService selectionCommands;
@@ -61,7 +63,7 @@ class ConceptRefinementDecisionTests {
         contract = new ConceptRefinementDecisionContract(mapper,
             new ConceptPortfolioJsonHasher(mapper));
         service = new ConceptRefinementDecisionService(projects,
-            new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans),
+            new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans, marketVersions),
             rounds, contract, refinement);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
         seed = MarketAnalysisSeedSnapshot.createPortfolio("seed-1", PROJECT_ID, 31L,

@@ -2,6 +2,7 @@ package com.aivle.backend.pipeline.refinement;
 
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +11,9 @@ import org.springframework.data.repository.query.Param;
 public interface ConceptRefinementRoundRepository extends JpaRepository<ConceptRefinementRound, Long> {
     Optional<ConceptRefinementRound> findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(Long projectId);
     Optional<ConceptRefinementRound> findTopByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberDescIdDesc(
+        Long projectId, String businessValidationSessionId);
+    Optional<ConceptRefinementRound> findByParentRoundIdAndDeletedAtIsNull(Long parentRoundId);
+    List<ConceptRefinementRound> findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(
         Long projectId, String businessValidationSessionId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

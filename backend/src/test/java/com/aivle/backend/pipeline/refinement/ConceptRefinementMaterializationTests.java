@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
+import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioJsonHasher;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
@@ -22,6 +23,7 @@ class ConceptRefinementMaterializationTests {
     private static final String HASH = "sha256:" + "b".repeat(64);
     @Mock ConceptRefinementRoundRepository rounds;
     @Mock BusinessValidationCoordinator validations;
+    @Mock ConceptRefinementLineageGuard lineage;
     @Mock TaskRunService taskRuns;
     @Mock ConceptPortfolioSelection selection;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -33,7 +35,8 @@ class ConceptRefinementMaterializationTests {
 
     @BeforeEach
     void setUp() {
-        service = new ConceptRefinementMaterializationService(rounds, validations, taskRuns, mapper);
+        service = new ConceptRefinementMaterializationService(rounds, lineage,
+            new ConceptPortfolioJsonHasher(mapper), taskRuns, mapper);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
         round = ConceptRefinementRound.start(41L, source, "task-1", "start-key", HASH);
         claim = new TaskRunService.Claim("task-1", "attempt-1", "claim-1");
@@ -41,7 +44,7 @@ class ConceptRefinementMaterializationTests {
             TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION, "CONCEPT_PORTFOLIO_SELECTION", "31",
             "{}", HASH, "start-key", "request-1", "1.0", "1.0", "ko-KR", 1, 2);
         when(rounds.findByTaskRunIdForUpdate("task-1")).thenReturn(Optional.of(round));
-        when(validations.requireCurrentCompletedSource(7L, 41L)).thenReturn(source);
+        lenient().when(lineage.proposalBaselineCurrent(7L, 41L, round)).thenReturn(true);
         lenient().when(selection.isCurrent()).thenReturn(true);
         lenient().when(selection.getId()).thenReturn(31L);
         lenient().when(selection.getProjectId()).thenReturn(41L);
@@ -79,11 +82,25 @@ class ConceptRefinementMaterializationTests {
 
     @Test
     void lateResultFromChangedValidationIsRejectedAndRoundBecomesStale() {
-        CompletedSource newer = new CompletedSource("session-2", 101L, 102L, "seed-2", 31L, 4, 4, HASH);
-        when(validations.requireCurrentCompletedSource(7L, 41L)).thenReturn(newer);
+        when(lineage.proposalBaselineCurrent(7L, 41L, round)).thenReturn(false);
         JsonNode result = result();
 
         assertThatThrownBy(() -> service.complete(claim, context, response(result), result, input(), selection))
+            .isInstanceOf(ConceptRefinementMaterializationService.StaleResult.class);
+        assertThat(round.getState()).isEqualTo(ConceptRefinementRound.State.STALE);
+        verify(taskRuns).rejectAndFail(eq("task-1"), eq("attempt-1"), eq("claim-1"),
+            anyString(), eq("1.0"), eq("SOURCE_STALE"));
+        verify(taskRuns, never()).adopt(anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void lateResultWithChangedBaselineBindingIsRejectedAndRoundBecomesStale() {
+        JsonNode input = input();
+        ((tools.jackson.databind.node.ObjectNode) input.path("refinementMaterial").path("baselineBinding"))
+            .put("bmPlanRevision", 99);
+        JsonNode result = result();
+
+        assertThatThrownBy(() -> service.complete(claim, context, response(result), result, input, selection))
             .isInstanceOf(ConceptRefinementMaterializationService.StaleResult.class);
         assertThat(round.getState()).isEqualTo(ConceptRefinementRound.State.STALE);
         verify(taskRuns).rejectAndFail(eq("task-1"), eq("attempt-1"), eq("claim-1"),
@@ -110,6 +127,9 @@ class ConceptRefinementMaterializationTests {
         binding.put("businessValidationSessionId", "session-1"); binding.put("marketVersionId", 91);
         binding.put("bmVersionId", 92); binding.put("marketSeedSnapshotId", "seed-1");
         binding.put("selectionId", 31); binding.put("selectionRevision", 4); binding.put("bmPlanRevision", 3);
+        var baseline = material.putObject("baselineBinding");
+        baseline.put("selectionRevision", 4); baseline.put("bmPlanRevision", 3);
+        baseline.put("overlayHash", new ConceptPortfolioJsonHasher(mapper).hash(mapper.createObjectNode()));
         material.putArray("marketEvidence").addObject().put("id", "E-1");
         material.putArray("legalFindings").addObject().put("reference", "법률 제1조");
         material.putObject("currentEditableValues").put("price", "10,000원");

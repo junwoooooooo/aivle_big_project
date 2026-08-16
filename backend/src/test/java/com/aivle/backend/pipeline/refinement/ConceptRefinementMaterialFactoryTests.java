@@ -6,8 +6,10 @@ import static org.mockito.Mockito.*;
 import com.aivle.backend.common.exception.*;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
 import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
+import com.aivle.backend.pipeline.conceptportfolio.application.ConceptPortfolioJsonHasher;
 import com.aivle.backend.pipeline.conceptportfolio.repository.ConceptPortfolioConceptRepository;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioHypothesisDecisionRepository;
 import com.aivle.backend.pipeline.market.*;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
@@ -153,13 +155,16 @@ class ConceptRefinementMaterialFactoryTests {
         final ConceptPortfolioConceptRepository concepts = mock(ConceptPortfolioConceptRepository.class);
         final MarketAnalysisSeedSnapshotRepository seeds = mock(MarketAnalysisSeedSnapshotRepository.class);
         final BmPlanPreparationService bmPlans = mock(BmPlanPreparationService.class);
+        final ConceptPortfolioHypothesisDecisionRepository hypotheses = mock(ConceptPortfolioHypothesisDecisionRepository.class);
         final ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
         final MarketResearchVersion market = mock(MarketResearchVersion.class);
         final MarketResearchVersion bm = mock(MarketResearchVersion.class);
         final ConceptPortfolioConcept concept = mock(ConceptPortfolioConcept.class);
         final MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
         final CompletedSource source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
+        final ConceptPortfolioJsonHasher hasher = new ConceptPortfolioJsonHasher(mapper);
+        final ConceptRefinementDecisionContract decisions = new ConceptRefinementDecisionContract(mapper, hasher);
         final ConceptRefinementMaterialFactory factory = new ConceptRefinementMaterialFactory(
-            versions, concepts, seeds, bmPlans, mapper);
+            versions, concepts, seeds, bmPlans, hypotheses, decisions, hasher, mapper);
     }
 }

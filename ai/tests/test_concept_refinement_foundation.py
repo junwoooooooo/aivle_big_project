@@ -42,6 +42,10 @@ def _material():
             "bmVersionId": 92, "marketSeedSnapshotId": "seed-1", "selectionId": 31,
             "selectionRevision": 4, "bmPlanRevision": 3,
         },
+        "baselineBinding": {
+            "selectionRevision": 4, "bmPlanRevision": 3,
+            "overlayHash": "sha256:" + "0" * 64,
+        },
         "frozenFields": list(drift.FROZEN_FIELDS),
         "refinableFields": {**drift.REFINABLE_FIELDS, "keyActivities": "FREE_BM"},
         "currentEditableValues": {

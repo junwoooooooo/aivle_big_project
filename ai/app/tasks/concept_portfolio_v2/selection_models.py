@@ -55,6 +55,12 @@ class RefinementSourceBinding(StrictModel):
     bmPlanRevision: int | None = Field(default=None, ge=0)
 
 
+class RefinementBaselineBinding(StrictModel):
+    selectionRevision: int = Field(ge=0)
+    bmPlanRevision: int = Field(ge=0)
+    overlayHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
 class RefinementMaterial(StrictModel):
     round: int = Field(ge=1, le=3)
     attempt: int = Field(ge=1, le=3)
@@ -63,6 +69,7 @@ class RefinementMaterial(StrictModel):
     priceTolerance: float = Field(ge=0.0, le=1.0)
     listChangeAllowance: Literal[1]
     sourceBinding: RefinementSourceBinding
+    baselineBinding: RefinementBaselineBinding
     frozenFields: list[str]
     refinableFields: dict[str, str]
     gateReasons: list[Any] = Field(default_factory=list)

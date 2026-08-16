@@ -18,7 +18,8 @@ public class ConceptRefinementRound extends BaseEntity {
         PROPOSING, AWAITING_DECISION, NO_CHANGES, FAILED, STALE,
         DECISION_RECORDED, KEEP_CURRENT, APPLYING_HYPOTHESES, APPLY_FAILED,
         LEGAL_REVIEW_PENDING, LEGAL_REVIEW_FAILED, LEGAL_BLOCKED,
-        APPLIED_PENDING_FINALIZATION, FINALIZING, FINALIZATION_FAILED, FINALIZED
+        APPLIED_PENDING_FINALIZATION, FINALIZING, FINALIZATION_FAILED, FINALIZED,
+        DECLINED, CONTINUED
     }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
@@ -32,6 +33,11 @@ public class ConceptRefinementRound extends BaseEntity {
     private String sourceMarketSeedSnapshotId;
     @Column(name = "source_selection_revision", nullable = false) private Integer sourceSelectionRevision;
     @Column(name = "source_bm_plan_revision", nullable = false) private Integer sourceBmPlanRevision;
+    @Column(name = "parent_round_id") private Long parentRoundId;
+    @Column(name = "baseline_selection_revision") private Integer baselineSelectionRevision;
+    @Column(name = "baseline_bm_plan_revision") private Integer baselineBmPlanRevision;
+    @Column(name = "baseline_overlay_json", columnDefinition = "TEXT") private String baselineOverlayJson;
+    @Column(name = "seed_rebuild_required", nullable = false) private boolean seedRebuildRequired;
     @Column(name = "round_number", nullable = false) private int roundNumber;
     @Column(name = "policy_version", nullable = false, length = 40) private String policyVersion;
     @Column(name = "task_run_id", nullable = false, length = 64) private String taskRunId;
@@ -79,6 +85,10 @@ public class ConceptRefinementRound extends BaseEntity {
         value.sourceMarketSeedSnapshotId = source.marketSeedSnapshotId();
         value.sourceSelectionRevision = source.selectionRevision();
         value.sourceBmPlanRevision = source.bmPlanRevision();
+        value.baselineSelectionRevision = source.selectionRevision();
+        value.baselineBmPlanRevision = source.bmPlanRevision();
+        value.baselineOverlayJson = "{}";
+        value.seedRebuildRequired = false;
         value.roundNumber = 1;
         value.policyVersion = ConceptRefinementPolicy.VERSION;
         value.taskRunId = taskRunId;
@@ -87,6 +97,65 @@ public class ConceptRefinementRound extends BaseEntity {
         value.commandIdempotencyKey = commandKey;
         value.canonicalMaterialHash = canonicalMaterialHash;
         return value;
+    }
+
+    public static ConceptRefinementRound next(ConceptRefinementRound parent,
+            int baselineSelectionRevision, int baselineBmPlanRevision,
+            String baselineOverlayJson, boolean seedRebuildRequired,
+            String taskRunId, String commandKey, String canonicalMaterialHash) {
+        if (parent == null || parent.id == null || parent.roundNumber >= ConceptRefinementPolicy.MAX_ROUNDS)
+            throw new IllegalStateException("Next refinement round is unavailable");
+        ConceptRefinementRound value = new ConceptRefinementRound();
+        value.projectId = parent.projectId;
+        value.selectionId = parent.selectionId;
+        value.businessValidationSessionId = parent.businessValidationSessionId;
+        value.sourceMarketVersionId = parent.sourceMarketVersionId;
+        value.sourceBmVersionId = parent.sourceBmVersionId;
+        value.sourceMarketSeedSnapshotId = parent.sourceMarketSeedSnapshotId;
+        value.sourceSelectionRevision = parent.sourceSelectionRevision;
+        value.sourceBmPlanRevision = parent.sourceBmPlanRevision;
+        value.parentRoundId = parent.id;
+        value.baselineSelectionRevision = baselineSelectionRevision;
+        value.baselineBmPlanRevision = baselineBmPlanRevision;
+        value.baselineOverlayJson = baselineOverlayJson;
+        value.seedRebuildRequired = seedRebuildRequired;
+        value.roundNumber = parent.roundNumber + 1;
+        value.policyVersion = ConceptRefinementPolicy.VERSION;
+        value.taskRunId = taskRunId;
+        value.attempt = 1;
+        value.state = State.PROPOSING;
+        value.commandIdempotencyKey = commandKey;
+        value.canonicalMaterialHash = canonicalMaterialHash;
+        return value;
+    }
+
+    public void declined() {
+        if (state != State.AWAITING_DECISION) throw new IllegalStateException("Round cannot be declined");
+        state = State.DECLINED;
+    }
+
+    public void continued() {
+        if (state != State.APPLIED_PENDING_FINALIZATION)
+            throw new IllegalStateException("Round cannot be continued");
+        state = State.CONTINUED;
+    }
+
+    public int baselineSelectionRevision() {
+        if (baselineSelectionRevision != null) return baselineSelectionRevision;
+        if (roundNumber == 1 && sourceSelectionRevision != null) return sourceSelectionRevision;
+        throw new IllegalStateException("Refinement baseline selection revision is unavailable");
+    }
+
+    public int baselineBmPlanRevision() {
+        if (baselineBmPlanRevision != null) return baselineBmPlanRevision;
+        if (roundNumber == 1 && sourceBmPlanRevision != null) return sourceBmPlanRevision;
+        throw new IllegalStateException("Refinement baseline BM revision is unavailable");
+    }
+
+    public String baselineOverlayJson() {
+        if (baselineOverlayJson != null) return baselineOverlayJson;
+        if (roundNumber == 1) return "{}";
+        throw new IllegalStateException("Refinement baseline overlay is unavailable");
     }
 
     public void retry(String taskRunId, String commandKey, String canonicalMaterialHash) {

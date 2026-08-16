@@ -49,16 +49,16 @@ public class ConceptRefinementFinalizationService {
             if(round.getState()!=ConceptRefinementRound.State.FINALIZATION_FAILED||round.getFinalizationAttempt()>=3)
                 throw unavailable();}
         boolean current=java.util.Set.of(ConceptRefinementRound.State.KEEP_CURRENT,ConceptRefinementRound.State.NO_CHANGES)
-            .contains(round.getState())?lineage.preApplyCurrent(ownerId,projectId,round):lineage.postApplyCurrent(projectId,round);
+            .contains(round.getState())?lineage.proposalBaselineCurrent(ownerId,projectId,round):lineage.postApplyCurrent(projectId,round);
         if(!current){round.markStale();throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);}
         if(outcome.hypotheses&&!hasCurrentReport(ownerId,projectId,round.getSelectionId()))
             selectionService.finalizeReport(ownerId,projectId,round.getSelectionId());
         else if(outcome.overlay&&!hasCurrentReport(ownerId,projectId,round.getSelectionId()))
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        int selectionRevision=outcome.resolved?round.baselineSelectionRevision():round.getAppliedSelectionRevision();
+        int bmRevision=outcome.resolved?round.baselineBmPlanRevision():round.getAppliedBmPlanRevision();
+        if(outcome.resolved)round.recordResolvedLineage(selectionRevision,bmRevision);
         if(!outcome.newSeed()){
-            int selectionRevision=outcome.resolved?round.getSourceSelectionRevision():round.getAppliedSelectionRevision();
-            int bmRevision=outcome.resolved?round.getSourceBmPlanRevision():round.getAppliedBmPlanRevision();
-            if(outcome.resolved)round.recordResolvedLineage(selectionRevision,bmRevision);
             round.startFinalization(key,identity,null,Instant.now(clock));
             ConceptRefinementFinal saved=createFinal(ownerId,projectId,round,outcome.outcome,
                 round.getSourceMarketSeedSnapshotId(),selectionRevision,bmRevision,outcome.overlayNode,outcome.selectedChanges);
@@ -100,8 +100,8 @@ public class ConceptRefinementFinalizationService {
         if(value==null){if(round==null)return new FinalView(null,"NOT_STARTED",null,false,null);
             boolean stale=switch(round.getState()){
                 case STALE,FINALIZED -> true;
-                case KEEP_CURRENT,NO_CHANGES -> !lineage.preApplyCurrent(ownerId,projectId,round);
-                default -> round.postApplyState()?!lineage.postApplyCurrent(projectId,round):!lineage.preApplyCurrent(ownerId,projectId,round);};
+                case KEEP_CURRENT,NO_CHANGES -> !lineage.proposalBaselineCurrent(ownerId,projectId,round);
+                default -> round.postApplyState()?!lineage.postApplyCurrent(projectId,round):!lineage.proposalBaselineCurrent(ownerId,projectId,round);};
             return new FinalView(round.getBusinessValidationSessionId(),round.getState().name(),null,stale,null);}
         boolean bound=round!=null&&!round.isDeleted()&&Objects.equals(value.getProjectId(),projectId)
             &&Objects.equals(round.getProjectId(),value.getProjectId())&&Objects.equals(round.getSelectionId(),value.getSelectionId())
@@ -109,25 +109,52 @@ public class ConceptRefinementFinalizationService {
         boolean stale=!bound||!lineage.postApplyCurrent(projectId,round)||seeds
             .findByIdAndStaleAtIsNullAndDeletedAtIsNull(value.getFinalMarketSeedSnapshotId()).isEmpty();
         return new FinalView(round==null?null:round.getBusinessValidationSessionId(),"FINALIZED",value.getOutcome().name(),stale,mapper.readTree(value.getFinalJson()));}
-    private OutcomePlan outcome(ConceptRefinementRound round){
-        if(round.getState()==ConceptRefinementRound.State.KEEP_CURRENT)return new OutcomePlan(ConceptRefinementFinal.Outcome.KEEP_CURRENT,true,false,false,mapper.createObjectNode(),mapper.createArrayNode());
-        if(round.getState()==ConceptRefinementRound.State.NO_CHANGES)return new OutcomePlan(ConceptRefinementFinal.Outcome.NO_CHANGES,true,false,false,mapper.createObjectNode(),mapper.createArrayNode());
-        if(!java.util.Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,ConceptRefinementRound.State.FINALIZATION_FAILED).contains(round.getState()))throw unavailable();
-        ObjectNode plan=decisions.applicationPlan(round);ObjectNode overlay=(ObjectNode)plan.path("overlay");boolean hypotheses=!plan.path("hypotheses").isEmpty();
-        ArrayNode changes=(ArrayNode)mapper.readTree(round.getDecisionJson()).path("selectedProposals").deepCopy();
-        return new OutcomePlan(ConceptRefinementFinal.Outcome.REFINED,false,hypotheses,!overlay.isEmpty(),overlay,changes);}
+    OutcomePlan outcome(ConceptRefinementRound round){
+        boolean resolved=java.util.Set.of(ConceptRefinementRound.State.KEEP_CURRENT,ConceptRefinementRound.State.NO_CHANGES).contains(round.getState());
+        boolean currentApplied=java.util.Set.of(ConceptRefinementRound.State.APPLIED_PENDING_FINALIZATION,
+            ConceptRefinementRound.State.FINALIZATION_FAILED,ConceptRefinementRound.State.FINALIZING).contains(round.getState());
+        if(!resolved&&!currentApplied)throw unavailable();
+        List<ConceptRefinementRound> history=new ArrayList<>(rounds
+            .findAllByProjectIdAndBusinessValidationSessionIdAndDeletedAtIsNullOrderByRoundNumberAscIdAsc(
+                round.getProjectId(),round.getBusinessValidationSessionId()));
+        if(history.stream().noneMatch(item->Objects.equals(item.getId(),round.getId())))history.add(round);
+        history.sort(Comparator.comparingInt(ConceptRefinementRound::getRoundNumber));
+        ObjectNode overlay=readOverlay(round.baselineOverlayJson());ArrayNode changes=mapper.createArrayNode();
+        boolean hypotheses=false;boolean priorApplied=false;
+        for(ConceptRefinementRound item:history){
+            boolean applied=item.getState()==ConceptRefinementRound.State.CONTINUED
+                ||Objects.equals(item.getId(),round.getId())&&currentApplied;
+            if(!applied)continue;
+            priorApplied=true;ObjectNode plan=decisions.applicationPlan(item);
+            hypotheses=hypotheses||!plan.path("hypotheses").isEmpty();
+            if(Objects.equals(item.getId(),round.getId()))mergeOverlay(overlay,plan.path("overlay"));
+            JsonNode selected=mapper.readTree(item.getDecisionJson()).path("selectedProposals");
+            if(selected.isArray())selected.forEach(value->changes.add(value.deepCopy()));
+        }
+        ConceptRefinementFinal.Outcome finalOutcome=priorApplied?ConceptRefinementFinal.Outcome.REFINED:
+            round.getState()==ConceptRefinementRound.State.KEEP_CURRENT?ConceptRefinementFinal.Outcome.KEEP_CURRENT:
+            ConceptRefinementFinal.Outcome.NO_CHANGES;
+        boolean seedRequired=round.isSeedRebuildRequired()||(currentApplied&&
+            (hypotheses||!decisions.applicationPlan(round).path("overlay").isEmpty()));
+        return new OutcomePlan(finalOutcome,resolved,hypotheses,!overlay.isEmpty(),seedRequired,overlay,changes);}
     private String finalizationHash(ConceptRefinementRound r,OutcomePlan o){ObjectNode n=mapper.createObjectNode();n.put("roundId",r.getId());n.put("outcome",o.outcome.name());
         if(r.getDecisionHash()!=null)n.put("decisionHash",r.getDecisionHash());if(r.getApplicationHash()!=null)n.put("applicationHash",r.getApplicationHash());
-        n.put("sourceSeed",r.getSourceMarketSeedSnapshotId());n.put("sourceSelectionRevision",r.getSourceSelectionRevision());n.put("sourceBmPlanRevision",r.getSourceBmPlanRevision());
-        if(r.getAppliedSelectionRevision()!=null)n.put("finalSelectionRevision",r.getAppliedSelectionRevision());if(r.getAppliedBmPlanRevision()!=null)n.put("finalBmPlanRevision",r.getAppliedBmPlanRevision());n.set("overlay",o.overlayNode);return hasher.hash(n);}
+        n.put("sourceSeed",r.getSourceMarketSeedSnapshotId());n.put("baselineSelectionRevision",r.baselineSelectionRevision());n.put("baselineBmPlanRevision",r.baselineBmPlanRevision());
+        n.put("finalSelectionRevision",o.resolved?r.baselineSelectionRevision():r.getAppliedSelectionRevision());
+        n.put("finalBmPlanRevision",o.resolved?r.baselineBmPlanRevision():r.getAppliedBmPlanRevision());
+        n.set("overlay",o.overlayNode);n.set("selectedChanges",o.selectedChanges);n.put("seedRebuildRequired",o.seedRequired);return hasher.hash(n);}
     private ObjectNode binding(ConceptRefinementRound r,String hash,String snapshotId){ObjectNode n=mapper.createObjectNode();n.put("roundId",r.getId());n.put("finalizationHash",hash);
         n.put("decisionHash",r.getDecisionHash());n.put("applicationHash",r.getApplicationHash());n.put("expectedSelectionRevision",r.getAppliedSelectionRevision());n.put("expectedBmPlanRevision",r.getAppliedBmPlanRevision());n.put("sourceMarketSeedSnapshotId",r.getSourceMarketSeedSnapshotId());n.put("finalMarketSeedSnapshotId",snapshotId);return n;}
     private boolean hasCurrentReport(Long owner,Long project,Long selection){try{selectionService.currentReport(owner,project,selection);return true;}catch(BusinessException e){return false;}}
+    private ObjectNode readOverlay(String json){JsonNode value=mapper.readTree(json);if(value==null||!value.isObject())throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);return (ObjectNode)value.deepCopy();}
+    private void mergeOverlay(ObjectNode target,JsonNode addition){if(!addition.isObject())throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
+        addition.propertyNames().forEach(field->{if(!Set.of("targetUsers","featureSet").contains(field))throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);target.set(field,addition.get(field).deepCopy());});}
     private ConceptRefinementRound currentRound(Long project){return rounds.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(project).orElseThrow(()->new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));}
     private void owned(Long u,Long p){projects.findByIdForUpdate(p).filter(v->v.getOwner().getId().equals(u)).orElseThrow(()->new BusinessException(ErrorCode.PROJECT_NOT_FOUND));}
     private void ownedRead(Long u,Long p){projects.findByIdAndOwnerIdAndDeletedAtIsNull(p,u).orElseThrow(()->new BusinessException(ErrorCode.PROJECT_NOT_FOUND));}
     private String validKey(String k){if(k==null||k.isBlank()||k.strip().length()>128)throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);return k.strip();}
     private BusinessException unavailable(){return new BusinessException(ErrorCode.INVALID_REQUEST,"finalization unavailable");}
-    private record OutcomePlan(ConceptRefinementFinal.Outcome outcome,boolean resolved,boolean hypotheses,boolean overlay,ObjectNode overlayNode,ArrayNode selectedChanges){boolean newSeed(){return hypotheses||overlay;}}
+    record OutcomePlan(ConceptRefinementFinal.Outcome outcome,boolean resolved,boolean hypotheses,boolean overlay,
+                       boolean seedRequired,ObjectNode overlayNode,ArrayNode selectedChanges){boolean newSeed(){return seedRequired;}}
     public record FinalView(String sourceBusinessValidationSessionId,String state,String outcome,boolean stale,JsonNode value){}
 }

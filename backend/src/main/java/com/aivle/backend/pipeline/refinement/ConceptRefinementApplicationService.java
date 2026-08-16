@@ -68,7 +68,7 @@ public class ConceptRefinementApplicationService {
             throw unavailable();
         }
 
-        if (!lineage.preApplyCurrent(ownerId, projectId, round)) {
+        if (!lineage.proposalBaselineCurrent(ownerId, projectId, round)) {
             round.markStale();
             return refinement.view(round, true);
         }
@@ -79,12 +79,12 @@ public class ConceptRefinementApplicationService {
         validateOverlay(overlay);
         ConceptPortfolioSelection selection = selections.findLocked(round.getSelectionId())
             .filter(value -> value.isCurrent()
-                && Objects.equals(value.getHypothesisRevision(), round.getSourceSelectionRevision()))
+                && value.getHypothesisRevision() == round.baselineSelectionRevision())
             .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
 
         if (!hypotheses.isEmpty()) {
             ObjectNode binding = binding(round, applicationHash,
-                round.getSourceSelectionRevision(), round.getSourceBmPlanRevision());
+                round.baselineSelectionRevision(), round.baselineBmPlanRevision());
             TaskRun task = selectionService.confirmFromRefinement(ownerId, projectId,
                 round.getSelectionId(), hypotheses, binding, key);
             if (round.getState() == ConceptRefinementRound.State.APPLY_FAILED)
@@ -95,7 +95,7 @@ public class ConceptRefinementApplicationService {
 
         round.startLocalApplication(key, applicationHash, Instant.now(clock));
         BmPlanPreparationService.PlanView patched = bmPlans.patchForRefinement(projectId, ownerId,
-            round.getSourceBmPlanRevision(), bmPatch);
+            round.baselineBmPlanRevision(), bmPatch);
         if (!overlay.isEmpty()) exactSeed(round, projectId).markStale(Instant.now(clock));
         round.recordAppliedLineage(selection.getHypothesisRevision(), patched.revision(), Instant.now(clock));
         round.readyForFinalization();
@@ -144,7 +144,7 @@ public class ConceptRefinementApplicationService {
             ConceptRefinementRound round) {
         boolean current = round.postApplyState()
             ? lineage.postApplyCurrent(projectId, round)
-            : lineage.preApplyCurrent(ownerId, projectId, round);
+            : lineage.proposalBaselineCurrent(ownerId, projectId, round);
         if (!current) round.markStale();
         return refinement.view(round, !current);
     }
@@ -181,7 +181,7 @@ public class ConceptRefinementApplicationService {
     }
 
     private MarketAnalysisSeedSnapshot exactSeed(ConceptRefinementRound round, Long projectId) {
-        return seeds.findByIdAndStaleAtIsNullAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId())
+        return seeds.findByIdAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId())
             .filter(value -> Objects.equals(value.getProjectId(), projectId)
                 && Objects.equals(value.getPortfolioSelectionId(), round.getSelectionId()))
             .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
