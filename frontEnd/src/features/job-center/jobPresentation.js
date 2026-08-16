@@ -35,6 +35,6 @@ export function jobModuleLabel(module) {
   return ({
     IDEA: '사업 기획', CONCEPT_PORTFOLIO: '사업 기획', CONCEPT_FACTORY: '사업 기획',
     CONCEPT_SELECTION: '사업 기획', MARKET: '사업 검증', BUSINESS_MODEL: '사업 검증',
-    TECH_OPS: '출시 준비', FINANCE: '출시 준비', LAUNCH_READINESS: '출시 준비', MARKET_INTERVIEW: '시장 인터뷰', TWIN: '트윈 패널 조사', MARKETING: '마케팅 전략',
+    TECH_OPS: '출시 준비', FINANCE: '출시 준비', LAUNCH_READINESS: '출시 준비', MARKET_INTERVIEW: '시장 인터뷰', TWIN: '트윈 패널 조사', MARKETING: '마케팅 실행',
   })[module] ?? '프로젝트';
 }

@@ -19,7 +19,7 @@ export default function SampleSizePicker({ pairs = [], value, onChange, disabled
   return (
     <div className="twin-sample">
       <label className="twin-sample__label" htmlFor="twin-sample-size">
-        가상 페르소나 수
+        가상 패널 규모
       </label>
 
       <output className="twin-sample__value" htmlFor="twin-sample-size">
@@ -49,6 +49,12 @@ export default function SampleSizePicker({ pairs = [], value, onChange, disabled
           : '비교안을 먼저 정하면 응답 수와 시간을 계산한다'}
       </p>
 
+      <p className="twin-sample__choice">
+        {SAMPLE_SIZES[index] === 50 ? '빠른 탐색 · 방향 확인'
+          : SAMPLE_SIZES[index] === 100 ? '권장 · 일반적인 비교'
+            : '더 세밀한 탐색'}
+      </p>
+
       {/* ⚠ 표본이 부족할 때만 말한다. 늘 떠 있으면 읽히지 않고, 정작 «못 잼»으로 끝난 뒤에
           사용자는 그 결과를 «차이 없음»으로 읽는다 — 있지도 않은 결론이 생긴다. */}
       {plan.warnings.map((warning) => (
@@ -58,6 +64,9 @@ export default function SampleSizePicker({ pairs = [], value, onChange, disabled
       <p className="twin-sample__note">
         응답 수 = 표본 × 자극쌍 × 2방향 × 반복. 양방향 제시는 옵션이 아니라 설계다 —
         한 방향만 물으면 위치편향 때문에 답이 뒤집힌다.
+      </p>
+      <p className="twin-sample__note">
+        표본 수는 가상 패널 시뮬레이션의 정밀도 설정입니다. 실제 모집단 대표성이나 오차 범위를 보장하지 않습니다.
       </p>
     </div>
   );

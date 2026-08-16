@@ -6,10 +6,9 @@ import static org.mockito.Mockito.*;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
-import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
-import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -32,9 +31,7 @@ import tools.jackson.databind.ObjectMapper;
 class MarketInterviewServiceTests {
     private static final String HASH = "sha256:" + "a".repeat(64);
     @Mock ProjectRepository projects;
-    @Mock ConceptPortfolioSelectionRepository selections;
-    @Mock MarketAnalysisSeedSnapshotRepository seeds;
-    @Mock BmPlanPreparationService bmPlans;
+    @Mock CurrentConceptSourceResolver sources;
     @Mock MarketInterviewInputFactory inputs;
     @Mock MarketInterviewRunRepository runs;
     @Mock TaskRunService taskRuns;
@@ -48,19 +45,19 @@ class MarketInterviewServiceTests {
 
     @BeforeEach
     void setUp() {
-        service = new MarketInterviewService(projects, selections, seeds, bmPlans, inputs, runs,
+        service = new MarketInterviewService(projects, sources, inputs, runs,
             taskRuns, hasher, mapper);
         lenient().when(project.getId()).thenReturn(41L);
         lenient().when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
         lenient().when(selection.getId()).thenReturn(31L);
         lenient().when(selection.getHypothesisRevision()).thenReturn(4);
-        lenient().when(selections.findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
         lenient().when(seed.getId()).thenReturn("seed-1");
         lenient().when(seed.getProjectId()).thenReturn(41L);
         lenient().when(seed.getSourceType()).thenReturn("CONCEPT_PORTFOLIO_V2");
-        lenient().when(seeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(31L)).thenReturn(Optional.of(seed));
-        lenient().when(bmPlans.current(41L)).thenReturn(new BmPlanPreparationService.PlanView(
-            mapper.createObjectNode(), mapper.createObjectNode(), 3));
+        var source = new CurrentConceptSourceResolver.Source(selection, seed,
+            new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 3));
+        lenient().when(sources.require(eq(41L), anyString())).thenReturn(source);
+        lenient().when(sources.currentOrNull(41L)).thenReturn(source);
         lenient().when(inputs.build(any(), any(), any())).thenReturn("{\"contract\":\"market-interview-input-v1\"}");
         lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "1.0", "ko-KR", "{\"contract\":\"market-interview-input-v1\"}"))
             .thenReturn(HASH);
@@ -153,8 +150,8 @@ class MarketInterviewServiceTests {
     @Test void bmRevisionChangeAlsoInvalidatesCurrentRun() {
         MarketInterviewRun run = run(MarketInterviewRun.State.SUCCEEDED, 1);
         when(runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L)).thenReturn(Optional.of(run));
-        when(bmPlans.current(41L)).thenReturn(new BmPlanPreparationService.PlanView(
-            mapper.createObjectNode(), mapper.createObjectNode(), 4));
+        when(sources.currentOrNull(41L)).thenReturn(new CurrentConceptSourceResolver.Source(selection, seed,
+            new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4)));
         assertThat(service.current(7L, 41L).stale()).isTrue();
     }
 

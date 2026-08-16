@@ -13,6 +13,7 @@ public final class MarketInterviewContract {
     private static final Set<String> INTERVIEW = Set.of("participantId", "questions", "concerns", "purchaseTriggers", "objections", "unmetNeeds");
     private static final Set<String> ANSWER = Set.of("question", "answer", "uncertainty");
     private static final Set<String> THEME = Set.of("title", "description", "participantIds");
+    private static final Pattern PARTICIPANT_ID = Pattern.compile("P[1-5]");
     private static final Pattern STATISTICAL = Pattern.compile("(?i)(\\d+(?:\\.\\d+)?\\s*%|퍼센트|구매\\s*전환율|전국\\s*소비자|대부분의\\s*(시장|고객|소비자)|실제\\s*(사용자|고객)(들)?은)");
 
     private MarketInterviewContract() { }
@@ -22,16 +23,16 @@ public final class MarketInterviewContract {
         if (!"market-interview-result-v1".equals(text(result, "contract"))
                 || !"1.0".equals(text(result, "schemaVersion"))
                 || !result.path("synthetic").isBoolean() || !result.path("synthetic").asBoolean()) invalid();
-        JsonNode participants = array(result, "participants", 2, 6);
+        JsonNode participants = array(result, "participants", 3, 5);
         Set<String> participantIds = new HashSet<>();
         for (JsonNode participant : participants) {
             exact(participant, PARTICIPANT);
             String id = text(participant, "participantId");
-            if (!participantIds.add(id)) invalid();
+            if (!PARTICIPANT_ID.matcher(id).matches() || !participantIds.add(id)) invalid();
             text(participant, "label"); text(participant, "profile"); text(participant, "context");
             stringArray(participant.get("needs"), false, 8);
         }
-        JsonNode interviews = array(result, "interviews", 2, 6);
+        JsonNode interviews = array(result, "interviews", 3, 5);
         Set<String> interviewed = new HashSet<>();
         for (JsonNode interview : interviews) {
             exact(interview, INTERVIEW);
@@ -44,6 +45,7 @@ public final class MarketInterviewContract {
             for (String field : Set.of("concerns", "purchaseTriggers", "objections", "unmetNeeds"))
                 stringArray(interview.get(field), true, 8);
         }
+        if (interviews.size() != participants.size() || !interviewed.equals(participantIds)) invalid();
         JsonNode themes = array(result, "themes", 1, 12);
         for (JsonNode theme : themes) {
             exact(theme, THEME); text(theme, "title"); text(theme, "description");

@@ -27,7 +27,7 @@ import tools.jackson.databind.JsonNode;
 public final class TwinSurveyContract {
 
     private static final Set<String> ENVELOPE = Set.of(
-        "situation", "sampleSize", "sampling", "pairs", "telemetry", "notes");
+        "synthetic", "situation", "sampleSize", "sampling", "pairs", "telemetry", "notes");
 
     private static final Set<String> PAIR = Set.of(
         "pairId", "taskType", "taskTypeReason", "labels", "profiles",
@@ -71,6 +71,7 @@ public final class TwinSurveyContract {
 
     public static void validate(JsonNode result) {
         exact(result, ENVELOPE);
+        if (!result.path("synthetic").isBoolean() || !result.path("synthetic").asBoolean()) invalid();
         text(result, "situation");
         JsonNode sampleSize = result.get("sampleSize");
         if (sampleSize == null || !sampleSize.isIntegralNumber()

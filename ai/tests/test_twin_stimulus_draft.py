@@ -146,6 +146,13 @@ def test_golden_draft_is_runnable_as_a_survey_without_a_single_edit():
     golden = json.loads(GOLDEN.read_text(encoding="utf-8"))
 
     survey = TwinSurveyInput.model_validate({
+        "contract": "twin-panel-survey-input-v1", "schemaVersion": "1.0", "synthetic": True,
+        "source": {"marketSeedSnapshotId": "seed-1", "selectionId": 31,
+                   "selectionRevision": 4, "marketSeedSnapshotHash": "sha256:" + "a" * 64,
+                   "bmPlanRevision": 3},
+        "concept": {"selectedConcept": {"name": "현재 사업안"},
+                    "validatedHypotheses": {}, "businessModel": {"plan": {}, "constraints": {}}},
+        "boundaries": ["AI 가상 패널", "실제 소비자 설문 아님", "모집단 일반화 금지"],
         "situation": golden["situation"],
         "pairs": [{k: v for k, v in pair.items() if k in {"pairId", "X", "Y"}}
                   for pair in golden["pairs"]],

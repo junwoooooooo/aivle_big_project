@@ -68,20 +68,24 @@ export default function useTwinSurveyLiveState(load, start, refreshKey = 0) {
     return () => { clearInterval(timer); setElapsed(0); };
   }, [active]);
 
-  const trigger = useCallback(async () => {
+  const trigger = useCallback(async (action = start) => {
     setBusy(true);
     setError(null);
     try {
-      setRun(await start());
+      setRun(await action());
       startedAt.current = Date.now();
     } catch (failure) {
-      const message = getUserErrorMessage(failure);
-      setError(String(message).includes('SAME_INPUT_ACTIVE')
-        ? '같은 자극으로 이미 실행 중이다.' : message);
+      try {
+        apply(await load());
+      } catch {
+        const message = getUserErrorMessage(failure);
+        setError(String(message).includes('SAME_INPUT_ACTIVE')
+          ? '같은 설정으로 이미 조사가 진행 중입니다.' : message);
+      }
     } finally {
       setBusy(false);
     }
-  }, [start]);
+  }, [start, load, apply]);
 
   return { run, result, stale, error, busy, loading, active, elapsed, trigger, refresh };
 }

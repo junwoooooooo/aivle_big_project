@@ -108,6 +108,7 @@ export function composition(pair) {
   const trail = leadIsX ? count('content_Y') : count('content_X');
   const percent = (value) => (total > 0 ? Math.round((value / total) * 100) : 0);
   return {
+    synthetic: raw.synthetic === true,
     total,
     leadLabel: leadIsX ? (pair?.labels?.X ?? 'A안') : (pair?.labels?.Y ?? 'B안'),
     trailLabel: leadIsX ? (pair?.labels?.Y ?? 'B안') : (pair?.labels?.X ?? 'A안'),
@@ -218,7 +219,10 @@ export function normalizeTwinSurvey(raw) {
     telemetry: raw.telemetry ?? {},
     notes: asArray(raw.notes),
     // 화면 상단에 띄울 구조적 경고. 하나라도 있으면 결과를 그대로 인용하면 안 된다.
-    warnings: pairs.filter((pair) => pair.caveatsMissing)
-      .map((pair) => `${pair.pairId}: 경계 문구 없음`),
+    warnings: [
+      ...(raw.synthetic === true ? [] : ['시뮬레이션 성격 표기 없음']),
+      ...pairs.filter((pair) => pair.caveatsMissing)
+        .map((pair) => `${pair.pairId}: 경계 문구 없음`),
+    ],
   };
 }

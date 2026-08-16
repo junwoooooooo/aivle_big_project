@@ -57,6 +57,14 @@ public class TwinSurveyController {
                 request.getHeader("Idempotency-Key"), id(request)), id(request)));
     }
 
+    @PostMapping("/twin-survey/retry")
+    public ResponseEntity<ApiResponse<TwinSurveyService.RunView>> retry(
+            @PathVariable Long projectId, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
+            service.retry(currentUser.currentUserId(), projectId,
+                request.getHeader("Idempotency-Key"), id(request)), id(request)));
+    }
+
     @GetMapping("/twin-survey/current")
     public ApiResponse<TwinSurveyService.CurrentView> current(
             @PathVariable Long projectId, HttpServletRequest request) {

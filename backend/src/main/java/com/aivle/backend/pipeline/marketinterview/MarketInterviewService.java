@@ -2,11 +2,8 @@ package com.aivle.backend.pipeline.marketinterview;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
-import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
-import com.aivle.backend.pipeline.market.BmPlanPreparationService;
-import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
-import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -25,9 +22,7 @@ public class MarketInterviewService {
     static final int MAX_ATTEMPTS = 3;
 
     private final ProjectRepository projects;
-    private final ConceptPortfolioSelectionRepository selections;
-    private final MarketAnalysisSeedSnapshotRepository seeds;
-    private final BmPlanPreparationService bmPlans;
+    private final CurrentConceptSourceResolver sources;
     private final MarketInterviewInputFactory inputs;
     private final MarketInterviewRunRepository runs;
     private final TaskRunService taskRuns;
@@ -35,11 +30,10 @@ public class MarketInterviewService {
     private final ObjectMapper mapper;
 
     public MarketInterviewService(ProjectRepository projects,
-            ConceptPortfolioSelectionRepository selections,
-            MarketAnalysisSeedSnapshotRepository seeds, BmPlanPreparationService bmPlans,
+            CurrentConceptSourceResolver sources,
             MarketInterviewInputFactory inputs, MarketInterviewRunRepository runs,
             TaskRunService taskRuns, CanonicalInputHasher hasher, ObjectMapper mapper) {
-        this.projects = projects; this.selections = selections; this.seeds = seeds; this.bmPlans = bmPlans;
+        this.projects = projects; this.sources = sources;
         this.inputs = inputs; this.runs = runs; this.taskRuns = taskRuns; this.hasher = hasher; this.mapper = mapper;
     }
 
@@ -123,22 +117,11 @@ public class MarketInterviewService {
     }
 
     private Source currentSource(Long projectId) {
-        Source value = currentSourceOrNull(projectId);
-        if (value == null) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
-            "현재 확정된 사업안으로 시장 인터뷰를 시작할 수 없습니다.");
-        return value;
+        return sources.require(projectId, "현재 확정된 사업안으로 시장 인터뷰를 시작할 수 없습니다.");
     }
 
     private Source currentSourceOrNull(Long projectId) {
-        ConceptPortfolioSelection selection = selections
-            .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
-        if (selection == null) return null;
-        MarketAnalysisSeedSnapshot seed = seeds
-            .findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(selection.getId())
-            .filter(value -> value.getProjectId().equals(projectId))
-            .filter(value -> "CONCEPT_PORTFOLIO_V2".equals(value.getSourceType()))
-            .orElse(null);
-        return seed == null ? null : new Source(selection, seed, bmPlans.current(projectId));
+        return sources.currentOrNull(projectId);
     }
 
     private boolean bound(MarketInterviewRun run, Source source) {
@@ -161,9 +144,6 @@ public class MarketInterviewService {
             run.getSourceMarketSeedSnapshotId(), run.getSourceSelectionRevision(), run.getAttempt(),
             result, failure, run.getStartedAt(), run.getCompletedAt());
     }
-
-    private record Source(ConceptPortfolioSelection selection, MarketAnalysisSeedSnapshot seed,
-                          BmPlanPreparationService.PlanView bm) { }
 
     public record CurrentView(String state, boolean stale, String sourceMarketSeedSnapshotId,
             Integer sourceSelectionRevision, Integer attempt, JsonNode result, String failure,

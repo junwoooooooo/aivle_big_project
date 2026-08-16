@@ -1,5 +1,8 @@
 package com.aivle.backend.pipeline.market;
 
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
+import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -26,11 +29,44 @@ public class TwinSurveyInputFactory {
         this.mapper = mapper;
     }
 
-    public String build(String situation, JsonNode pairs, int sampleSize) {
+    public String build(Source source, String situation, JsonNode pairs, int sampleSize) {
+        JsonNode snapshot;
+        try { snapshot = mapper.readTree(source.seed().getSnapshotJson()); }
+        catch (RuntimeException invalidJson) {
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "현재 Market Seed를 트윈 패널 조사 입력으로 읽을 수 없습니다.");
+        }
+        if (snapshot == null || !snapshot.isObject()
+                || !"market-analysis-seed-snapshot-v1".equals(snapshot.path("contract").asText())
+                || !"2.0".equals(snapshot.path("schemaVersion").asText())
+                || !snapshot.path("selectedConcept").isObject()
+                || !snapshot.path("finalHypotheses").isObject()) {
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "현재 Market Seed의 트윈 패널 조사 입력 계약이 올바르지 않습니다.");
+        }
         ObjectNode root = mapper.createObjectNode();
+        root.put("contract", "twin-panel-survey-input-v1");
+        root.put("schemaVersion", "1.0");
+        root.put("synthetic", true);
+        ObjectNode binding = root.putObject("source");
+        binding.put("marketSeedSnapshotId", source.seed().getId());
+        binding.put("selectionId", source.selection().getId());
+        binding.put("selectionRevision", source.selection().getHypothesisRevision());
+        binding.put("marketSeedSnapshotHash", source.seed().getSnapshotHash());
+        binding.put("bmPlanRevision", source.bm().revision());
+        ObjectNode concept = root.putObject("concept");
+        concept.set("selectedConcept", snapshot.get("selectedConcept"));
+        concept.set("validatedHypotheses", snapshot.get("finalHypotheses"));
+        ObjectNode businessModel = concept.putObject("businessModel");
+        businessModel.set("plan", source.bm().plan());
+        businessModel.set("constraints", source.bm().constraints());
         root.put("situation", situation);
         root.set("pairs", pairs);
         root.put("sampleSize", sampleSize);
+        root.putArray("boundaries")
+            .add("AI 가상 패널의 정량 시뮬레이션이며 실제 소비자 설문조사 결과가 아니다.")
+            .add("가상 패널 내 비교를 실제 시장 모집단의 비율이나 대표성으로 일반화하지 않는다.")
+            .add("결과는 사업안이나 시장 근거를 자동으로 변경하지 않는다.");
         MarketResearchInputFactory.assertNoFloatingPoint(root, "input");
         return root.toString();
     }

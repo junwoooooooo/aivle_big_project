@@ -5,7 +5,7 @@
 정수, 표본 크기는 정수, 나머지는 문자열이다.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -17,6 +17,20 @@ class StrictModel(BaseModel):
 # 화면이 고르는 세 값. 임의 정수를 받지 않는 이유는 MDE 표를 이 세 값으로만 실측·표기하기
 # 때문이다 — 표에 없는 n 을 받으면 화면이 못 보여준 측정 한계로 답하게 된다.
 SampleSize = Literal[50, 100, 300]
+
+
+class SourceBinding(StrictModel):
+    marketSeedSnapshotId: str = Field(min_length=1, max_length=64)
+    selectionId: int = Field(strict=True, ge=1)
+    selectionRevision: int = Field(strict=True, ge=0)
+    marketSeedSnapshotHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    bmPlanRevision: int = Field(strict=True, ge=0)
+
+
+class ConceptContext(StrictModel):
+    selectedConcept: dict[str, Any]
+    validatedHypotheses: dict[str, Any]
+    businessModel: dict[str, Any]
 
 
 class Side(StrictModel):
@@ -68,9 +82,15 @@ class Pair(StrictModel):
 
 
 class TwinSurveyInput(StrictModel):
+    contract: Literal["twin-panel-survey-input-v1"]
+    schemaVersion: Literal["1.0"]
+    synthetic: Literal[True]
+    source: SourceBinding
+    concept: ConceptContext
     situation: str = Field(min_length=5, max_length=300)
     pairs: list[Pair] = Field(min_length=1, max_length=4)
     sampleSize: SampleSize
+    boundaries: list[str] = Field(min_length=3, max_length=6)
 
     @model_validator(mode="after")
     def pair_ids_unique(self):

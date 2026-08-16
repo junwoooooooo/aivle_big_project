@@ -11,6 +11,10 @@ export function createTwinSurveyApi(client, projectId) {
         { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
     },
     async currentSurvey() { return (await client.get(`${root}/twin-survey/current`)).data; },
+    async retrySurvey() {
+      return (await client.post(`${root}/twin-survey/retry`, {},
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
     // 자극 초안도 202 TaskRun이며 결과는 SSE 뒤 canonical current에서 읽는다.
     // 공식 source는 Backend가 검증한 current selected Concept다.
     async draftStimulus() {

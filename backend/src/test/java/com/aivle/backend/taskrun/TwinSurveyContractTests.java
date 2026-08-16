@@ -34,6 +34,18 @@ class TwinSurveyContractTests {
         assertThatThrownBy(() -> TwinSurveyContract.validate(result)).isInstanceOf(ExecutionFailure.class);
     }
 
+    @Test
+    void resultMustDeclareSyntheticAuthority() throws Exception {
+        ObjectNode result = payload(); result.put("synthetic", false);
+        assertThatThrownBy(() -> TwinSurveyContract.validate(result)).isInstanceOf(ExecutionFailure.class);
+    }
+
+    @Test
+    void unsupportedSampleSizeIsRejected() throws Exception {
+        ObjectNode result = payload(); result.put("sampleSize", 80);
+        assertThatThrownBy(() -> TwinSurveyContract.validate(result)).isInstanceOf(ExecutionFailure.class);
+    }
+
     private static ObjectNode payload() throws Exception {
         Path root = Paths.get("").toAbsolutePath();
         for (int depth = 0; depth < 5 && root != null; depth++, root = root.getParent()) {

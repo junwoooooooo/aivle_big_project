@@ -4,7 +4,7 @@ import { aggregateJourneyStatus, getJourneyByPath, getProjectJourneys, JOURNEY_S
 
 describe('project journey model', () => {
   it.each([
-    ['/idea', 'planning'], ['/concepts', 'planning'], ['/concepts/legal-report', 'planning'], ['/business-validation', 'validation'], ['/market', 'validation'],
+    ['/idea', 'diagnosis'], ['/concepts', 'planning'], ['/concepts/legal-report', 'planning'], ['/business-validation', 'validation'], ['/market', 'validation'],
     ['/business-model', 'validation'], ['/launch-readiness', 'launch'], ['/technology', 'launch'],
     ['/launch-readiness/reports/technology', 'launch'],
     ['/operations', 'launch'], ['/tech-ops', 'launch'], ['/finance', 'launch'],
@@ -38,5 +38,8 @@ describe('project journey model', () => {
     const journeys = getProjectJourneys('41', modules);
     expect(journeys.find(({ id }) => id === 'interview').href).toBe('/app/projects/41/market-interview');
     expect(journeys.find(({ id }) => id === 'twinSurvey').href).toBe('/app/projects/41/twin-survey');
+    expect(journeys.map(({ id }) => id)).toEqual([
+      'diagnosis', 'planning', 'validation', 'interview', 'twinSurvey', 'marketingStrategy', 'launch', 'finalReport',
+    ]);
   });
 });

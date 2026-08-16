@@ -15,7 +15,14 @@ from app.twin.task_type import DOMINANCE, PRICE, SERVICEABLE
 
 
 def request_payload(x_attrs, y_attrs, x_price=None, y_price=None, size=50):
-    return {"situation": "가게에서 하나를 고릅니다. 아래 두 상품이 있습니다.",
+    return {"contract": "twin-panel-survey-input-v1", "schemaVersion": "1.0", "synthetic": True,
+            "source": {"marketSeedSnapshotId": "seed-1", "selectionId": 31,
+                       "selectionRevision": 4, "marketSeedSnapshotHash": "sha256:" + "a" * 64,
+                       "bmPlanRevision": 3},
+            "concept": {"selectedConcept": {"name": "현재 사업안"},
+                        "validatedHypotheses": {}, "businessModel": {"plan": {}, "constraints": {}}},
+            "boundaries": ["AI 가상 패널", "실제 소비자 설문 아님", "모집단 일반화 금지"],
+            "situation": "가게에서 하나를 고릅니다. 아래 두 상품이 있습니다.",
             "sampleSize": size,
             "pairs": [{"pairId": "P1",
                        "X": {"label": "A안", "attrs": x_attrs, "priceKrw": x_price},
@@ -115,7 +122,7 @@ def test_caveats_always_carry_the_mandated_disclosures():
     notes = " / ".join(caveats.for_pair(DOMINANCE))
     assert "외적 타당성 시험 종합 미달" in notes
     assert "한국미디어패널조사(KISDI)" in notes
-    assert "실존 인물 인터뷰가 아니다" in notes
+    assert "실제 소비자 설문 응답이 아니다" in notes
     assert "시장 점유율도 실제 구매확률도 아니다" in notes
     assert "차이의 크기는 이 설계가 답하지 못한다" in notes
 
@@ -138,3 +145,25 @@ def test_forbidden_phrasings_never_appear():
     for task_type in (DOMINANCE, PRICE):
         notes = " / ".join(caveats.for_pair(task_type))
         assert "부분 검증됨" not in notes
+
+
+def test_input_is_current_concept_bound_without_market_interview_output():
+    payload = request_payload({"형태": "신선"}, {"형태": "냉동"}, size=100)
+    value = TwinSurveyInput.model_validate(payload)
+    assert value.synthetic is True
+    assert value.source.selectionRevision == 4
+    assert "marketInterview" not in payload
+
+
+def test_qualitative_market_interview_output_is_not_a_survey_input():
+    payload = request_payload({"형태": "신선"}, {"형태": "냉동"}, size=100)
+    payload["marketInterview"] = {"themes": ["정성 탐색 결과"]}
+    with pytest.raises(ValidationError):
+        TwinSurveyInput.model_validate(payload)
+
+
+def test_product_language_never_claims_real_respondents_or_population_representation():
+    notes = " / ".join(caveats.for_pair(DOMINANCE))
+    assert "실제 소비자 설문 응답이 아니다" in notes
+    assert "모집단 대표" not in notes
+    assert "실제 고객이 응답" not in notes

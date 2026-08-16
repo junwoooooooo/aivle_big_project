@@ -80,6 +80,8 @@ class MarketInterviewResult(StrictModel):
             raise ValueError("participant IDs must be unique")
         if {interview.participantId for interview in self.interviews} != set(ids):
             raise ValueError("every participant must have exactly one interview")
+        if len(self.interviews) != len(ids):
+            raise ValueError("every participant must have exactly one interview")
         if any(not set(theme.participantIds).issubset(set(ids)) for theme in self.themes):
             raise ValueError("theme participant reference is invalid")
         return self

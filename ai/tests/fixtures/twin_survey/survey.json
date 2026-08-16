@@ -1,4 +1,5 @@
 {
+  "synthetic": true,
   "situation": "가게에서 연어를 하나 고릅니다. 진열대에 아래 두 상품이 있습니다.",
   "sampleSize": 100,
   "sampling": {

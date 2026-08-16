@@ -37,7 +37,8 @@ class MarketTwinControllerSemanticsTests {
         when(draft.start(any(), any(), any(), any())).thenReturn(
             new TwinSurveyStimulusDraftService.DraftRunView("d-1", "QUEUED", null, false, null, "c-1", "Concept"));
         when(twin.start(any(), any(), any(), any(), anyInt(), any(), any())).thenReturn(
-            new TwinSurveyService.RunView(3L, "QUEUED", 50, "t-1", "QUEUED", null, false));
+            new TwinSurveyService.RunView(3L, "QUEUED", 50, 1, "seed-1", 31L, 4, 3,
+                "t-1", "QUEUED", null, false));
         TwinSurveyController twinController = new TwinSurveyController(twin, draft, currentUser);
         ObjectMapper mapper = new ObjectMapper();
 

@@ -43,6 +43,13 @@ CARDS = {row["pid_hash"]: (
     for i, row in enumerate(FRAME)}
 
 PAYLOAD = {
+    "contract": "twin-panel-survey-input-v1", "schemaVersion": "1.0", "synthetic": True,
+    "source": {"marketSeedSnapshotId": "seed-1", "selectionId": 31,
+               "selectionRevision": 4, "marketSeedSnapshotHash": "sha256:" + "a" * 64,
+               "bmPlanRevision": 3},
+    "concept": {"selectedConcept": {"name": "현재 사업안"},
+                "validatedHypotheses": {}, "businessModel": {"plan": {}, "constraints": {}}},
+    "boundaries": ["AI 가상 패널", "실제 소비자 설문 아님", "모집단 일반화 금지"],
     "situation": "가게에서 연어를 하나 고릅니다. 진열대에 아래 두 상품이 있습니다.",
     "sampleSize": 100,
     "pairs": [
@@ -112,6 +119,12 @@ def test_result_matches_the_golden_fixture(monkeypatch):
     assert build(monkeypatch) == expected, (
         "결과 모양이 픽스처와 갈라졌다. 의도한 변경이면 픽스처를 다시 뜨고, "
         "프론트 twinSurveyResult 도 같이 고쳐라.")
+
+
+def test_result_is_explicitly_a_synthetic_panel_simulation(monkeypatch):
+    value = build(monkeypatch)
+    assert value["synthetic"] is True
+    assert any("시뮬레이션" in note for note in value["notes"])
 
 
 def test_every_pair_carries_caveats(monkeypatch):

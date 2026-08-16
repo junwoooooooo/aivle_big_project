@@ -238,6 +238,7 @@ async def execute_twin_survey(payload: dict, budget_seconds: float = 600.0,
                  f"집계 완료 {len(pairs_out)}/{len(stimuli)}")
 
     result = {
+        "synthetic": True,
         "situation": request.situation,
         "sampleSize": request.sampleSize,
         "sampling": sampling,

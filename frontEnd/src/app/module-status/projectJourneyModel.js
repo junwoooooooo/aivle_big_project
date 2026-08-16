@@ -22,17 +22,18 @@ export const JOURNEY_STATUS_VIEW = Object.freeze({
 });
 
 export const PROJECT_JOURNEYS = Object.freeze([
-  { id: 'planning', label: '1. 사업 기획', shortLabel: '사업 기획', moduleIds: ['idea', 'concepts'] },
-  { id: 'validation', label: '2. 사업 검증', shortLabel: '사업 검증', moduleIds: ['market', 'businessModel'] },
-  { id: 'launch', label: '3. 출시 준비', shortLabel: '출시 준비', moduleIds: ['launchReadiness'] },
+  { id: 'diagnosis', label: '1. 현황 점검', shortLabel: '현황 점검', moduleIds: ['idea'] },
+  { id: 'planning', label: '2. 문제 발굴', shortLabel: '문제 발굴', moduleIds: ['concepts'] },
+  { id: 'validation', label: '3. 사업성 검증', shortLabel: '사업성 검증', moduleIds: ['market', 'businessModel'] },
   { id: 'interview', label: '4. 시장 인터뷰', shortLabel: '시장 인터뷰', moduleIds: ['marketInterview'] },
   { id: 'twinSurvey', label: '5. 트윈 패널 조사', shortLabel: '트윈 패널', moduleIds: ['twinSurvey'] },
-  { id: 'marketingStrategy', label: '6. 마케팅 전략', shortLabel: '마케팅 전략', moduleIds: ['marketing'] },
-  { id: 'finalReport', label: '7. 최종 보고서', shortLabel: '최종 보고서', moduleIds: [] },
+  { id: 'marketingStrategy', label: '6. 마케팅 실행', shortLabel: '마케팅 실행', moduleIds: ['marketing'] },
+  { id: 'launch', label: '7. 출시 준비', shortLabel: '출시 준비', moduleIds: ['launchReadiness'] },
+  { id: 'finalReport', label: '8. 결과 보고서', shortLabel: '결과 보고서', moduleIds: [] },
 ]);
 
 const PATH_TO_JOURNEY = Object.freeze({
-  overview: 'overview', idea: 'planning', concepts: 'planning', 'business-validation': 'validation', market: 'validation',
+  overview: 'overview', idea: 'diagnosis', concepts: 'planning', 'business-validation': 'validation', market: 'validation',
   'business-model': 'validation', 'launch-readiness': 'launch', technology: 'launch', operations: 'launch', 'tech-ops': 'launch', finance: 'launch',
   'market-interview': 'interview', 'virtual-interview': 'interview', 'twin-survey': 'twinSurvey', marketing: 'marketingStrategy', 'final-report': 'finalReport',
 });
@@ -81,7 +82,7 @@ export function getProjectJourneys(projectId, modules = [], finalReportStatus = 
     const sourceChildren = journey.moduleIds.map((id) => modules.find((module) => module.id === id)).filter(Boolean);
     const status = journey.id === 'finalReport' ? finalReportStatus : aggregateJourneyStatus(sourceChildren);
     const children = journey.id === 'validation' ? [{
-      id: 'businessValidation', label: '사업 검증', shortLabel: '사업 검증',
+      id: 'businessValidation', label: '사업성 검증', shortLabel: '사업성 검증',
       href: projectRoutes.businessValidation(projectId), status,
     }] : sourceChildren;
     return {

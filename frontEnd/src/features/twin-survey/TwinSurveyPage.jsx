@@ -125,11 +125,17 @@ export default function TwinSurveyPage() {
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="twin-page">
-      <ProjectStageHeader step={7} eyebrow="트윈 패널 조사" title="두 사업안에 대한 반응을 비교하세요"
-        description="질문 준비, 대상 설정, 인터뷰 실행, 결과 확인 순서로 반응의 방향과 반복 패턴을 살펴봅니다." />
+      <ProjectStageHeader eyebrow="AI 가상 패널 기반 정량 시뮬레이션" title="트윈 패널 조사"
+        description="비교안 준비, 표본 설정, 시뮬레이션 실행 순서로 가상 응답의 분포와 불확실성을 살펴봅니다." />
+      <Alert tone="info" title="실제 소비자 설문조사가 아닙니다">
+        AI가 현재 사업안을 바탕으로 가상의 패널 응답을 시뮬레이션하여 정량적으로 비교·탐색하는 기능입니다. 실제 소비자 설문조사 결과는 아닙니다.
+      </Alert>
       {/* 모듈 이름은 셸(`ProjectLayout`)이 이미 그린다 — 여기서 다시 그리면 껍데기가 두 겹이다.
           그 자리에 산문 대신 «지금 어디까지 왔나»를 둔다. */}
       <TwinSteps pairCount={pairs.length} active={active} done={Boolean(result)} elapsed={elapsed} />
+      {active ? <Alert tone="info" title="트윈 패널 조사 진행 중">
+        가상 패널 응답을 시뮬레이션하고 있습니다. 실제 소비자에게 설문을 보내는 과정은 아닙니다.
+      </Alert> : null}
 
       <Card title="무엇을 비교할까">
         {pairs.length === 0 && !draft ? (
@@ -206,19 +212,26 @@ export default function TwinSurveyPage() {
 
           <div className="twin-page__actions">
             {active ? <span className="twin-page__elapsed">{elapsed}초 경과</span> : null}
-            <Button onClick={trigger} disabled={!canRun}>
-              {active ? '조사 중…' : result ? '다시 조사' : '조사 실행'}
+            <Button onClick={() => trigger()} disabled={!canRun}>
+              {active ? '조사 중…' : stale ? '현재 사업안으로 다시 조사'
+                : result ? '현재 설정으로 다시 조사' : '트윈 패널 조사 시작'}
             </Button>
           </div>
         </>
       ) : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
-      {stale ? <Alert tone="warning">선택한 사업안 또는 시장 입력이 바뀌었습니다. 최신 내용으로 다시 인터뷰해 주세요.</Alert> : null}
-      {result && !stale ? <Link className="ui-button ui-button--primary" to={`/app/projects/${projectId}/marketing`}>다음 - 8. 마케팅 콘텐츠 제작</Link> : null}
+      {stale ? <Alert tone="warning">사업안이 변경되어 이전 사업안 기준의 결과입니다. 현재 사업안으로 다시 조사해 주세요.</Alert> : null}
+      {stale && pairs.length === 0 ? <div className="twin-page__actions">
+        <Button onClick={makeDraft} disabled={drafting}>현재 사업안으로 다시 조사</Button>
+      </div> : null}
+      {result && !stale ? <Link className="ui-button ui-button--primary" to={`/app/projects/${projectId}/marketing`}>다음 · 마케팅 실행</Link> : null}
       {run?.state === 'FAILED' && run?.errorCode ? (
-        <Alert tone="danger">인터뷰를 완료하지 못했습니다. {failureText(run.errorCode)}</Alert>
+        <Alert tone="danger">트윈 패널 조사를 완료하지 못했습니다. {failureText(run.errorCode)}</Alert>
       ) : null}
+      {run?.state === 'FAILED' && run?.retryable ? <div className="twin-page__actions">
+        <Button onClick={() => trigger(api.retrySurvey)} disabled={busy}>다시 시도</Button>
+      </div> : null}
 
       {result ? <TwinResult result={result} /> : null}
 
@@ -239,6 +252,7 @@ export function TwinFootnote({ result }) {
   const notes = [...new Set((result?.pairs ?? []).flatMap((pair) => pair.caveats))];
   return (
     <footer className="twin-footnote">
+      <h2>불확실성 / 한계</h2>
       <p>
         이 결과는 실존 인물의 응답이 아니라 한국미디어패널조사(KISDI) 실측 프로파일로 만든
         디지털 트윈의 시뮬레이션이다. 답은 방향과 신뢰구간까지이며 크기·점유율·선택확률은
@@ -295,12 +309,14 @@ function failureText(code) {
   if (code === 'TWIN_BANK_UNAVAILABLE') return '카드 뱅크가 서버에 붙어 있지 않다(운영 설정 문제다).';
   if (code === 'TWIN_TASK_TYPE_NOT_SERVICEABLE') return '성적이 없는 유형이라 서버가 거절했다.';
   if (code === 'TASK_TIMEOUT') return '예산 안에 끝나지 않았다. 표본을 줄여 다시 해 보라.';
-  return code;
+  return '잠시 후 다시 시도해 주세요.';
 }
 
 function TwinResult({ result }) {
   return (
     <div className="twin-result">
+      <h2>가상 패널 시뮬레이션 결과</h2>
+      <p>표본 설정 {result.sampleSize}명 · 아래 비율과 점수는 이 가상 패널 안에서의 비교 결과입니다.</p>
       {result.warnings.length > 0 ? (
         <Alert tone="danger">
           경계 문구가 빠진 쌍이 있다 — 이 결과를 그대로 인용하지 마라: {result.warnings.join(', ')}
@@ -310,6 +326,10 @@ function TwinResult({ result }) {
       {result.pairs.map((pair) => (
         <PairPanel key={pair.pairId} pair={pair} result={result} />
       ))}
+      <section className="twin-result__next">
+        <h2>다음 판단에 참고할 포인트</h2>
+        <p>가상 패널에서 반복된 비교 방향과 측정 한계를 함께 보고, 실제 고객 확인이 필요한 항목을 정하세요. 이 결과만으로 사업안을 자동 변경하지 않습니다.</p>
+      </section>
     </div>
   );
 }
@@ -330,7 +350,7 @@ export function PairPanel({ pair, result }) {
           <p className="twin-panel__title">{pair.labels.X} ↔ {pair.labels.Y}</p>
           <p className="twin-panel__subtitle">{result.situation}</p>
         </div>
-        <span className="twin-panel__done">{result.sampling.drawn}명 완료</span>
+        <span className="twin-panel__done">가상 패널 {result.sampling.drawn}명</span>
       </header>
 
       {/* 무엇을 비교했는가. 뷰모델이 `profiles` 를 정규화해 두고도 화면이 한 번도 안 그려서,
@@ -368,7 +388,7 @@ export function PairPanel({ pair, result }) {
         <p className="twin-verdict__reason">{pair.decisionReason}</p>
       </div>
 
-      <p className="twin-panel__section">대표 응답자 인터뷰</p>
+      <p className="twin-panel__section">대표 가상 응답</p>
       {pair.interviews.length > 0 ? (
         pair.interviews.map((interview, index) => (
           <InterviewCard key={index} interview={interview} labels={pair.labels} />

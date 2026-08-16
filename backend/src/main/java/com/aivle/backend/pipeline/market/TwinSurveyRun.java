@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TwinSurveyRun extends BaseEntity {
 
-    public enum State { QUEUED, RUNNING, SUCCEEDED, FAILED }
+    public enum State { QUEUED, RUNNING, SUCCEEDED, FAILED, STALE }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "project_id", nullable = false) private Project project;
@@ -31,22 +31,28 @@ public class TwinSurveyRun extends BaseEntity {
     private Long sourcePortfolioSelectionId;
     @Column(name = "source_selection_revision", nullable = false)
     private Integer sourceSelectionRevision;
+    @Column(name = "source_bm_plan_revision", nullable = false)
+    private Integer sourceBmPlanRevision;
     @Column(nullable = false, length = 71) private String inputSnapshotHash;
     @Column(nullable = false) private Integer sampleSize;
+    @Column(nullable = false) private Integer attempt;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private State state;
     @Column(length = 80) private String errorCode;
     private LocalDateTime completedAt;
 
     public static TwinSurveyRun create(Project project, TaskRun taskRun, String inputHash, int sampleSize,
-                                       String sourceSeedId, Long sourceSelectionId, int sourceRevision) {
+                                       String sourceSeedId, Long sourceSelectionId, int sourceRevision,
+                                       int sourceBmRevision, int attempt) {
         TwinSurveyRun value = new TwinSurveyRun();
         value.project = project;
         value.taskRun = taskRun;
         value.sourceMarketSeedSnapshotId = sourceSeedId;
         value.sourcePortfolioSelectionId = sourceSelectionId;
         value.sourceSelectionRevision = sourceRevision;
+        value.sourceBmPlanRevision = sourceBmRevision;
         value.inputSnapshotHash = inputHash;
         value.sampleSize = sampleSize;
+        value.attempt = attempt;
         value.state = State.QUEUED;
         return value;
     }
@@ -58,4 +64,5 @@ public class TwinSurveyRun extends BaseEntity {
         this.errorCode = errorCode;
         completedAt = LocalDateTime.now();
     }
+    public void markStale() { state = State.STALE; }
 }

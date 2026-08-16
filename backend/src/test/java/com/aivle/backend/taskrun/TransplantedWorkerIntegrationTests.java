@@ -129,7 +129,7 @@ class TransplantedWorkerIntegrationTests {
         TaskRun survey = queue(context, TaskType.TWIN_SURVEY,
             "TWIN_SURVEY", String.valueOf(context.project.getId()), "{}");
         twinRuns.saveAndFlush(TwinSurveyRun.create(context.project, survey, survey.getInputHash(), 50,
-            "seed-lineage", 17L, 3));
+            "seed-lineage", 17L, 3, 0, 1));
         stub(fixture("twin_survey/survey.json"));
         assertThat(twinWorker.processOne()).isTrue();
 
