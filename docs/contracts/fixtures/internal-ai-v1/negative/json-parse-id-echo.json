@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "JSON_PARSE_FAILED"
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": false,
+    "taskAttemptId": "untrusted-task-attempt",
+    "taskRunId": "untrusted-task-run"
+  }
+}

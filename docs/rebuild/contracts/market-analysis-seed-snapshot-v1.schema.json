@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MarketAnalysisSeedSnapshotV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "schemaVersion", "snapshotId", "hash", "projectId", "selectionId", "conceptId", "createdAt", "sourceSnapshotHash", "originalSeed", "aiInterpretation", "selectedConcept", "finalHypotheses", "legalResult"],
+  "properties": {
+    "contract": { "const": "market-analysis-seed-snapshot-v1" },
+    "schemaVersion": { "const": "2.0" },
+    "snapshotId": { "type": "string", "minLength": 1 },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "hash 필드를 제외한 canonical JSON의 SHA-256" },
+    "projectId": { "type": "integer" },
+    "selectionId": { "type": "integer" },
+    "conceptId": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "sourceSnapshotHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "originalSeed": { "type": "object", "required": ["ideaOverview", "fields"] },
+    "aiInterpretation": { "type": "object", "required": ["industryCategory", "researchScope", "usageContext"] },
+    "selectedConcept": { "type": "object", "required": ["identity", "solution", "operation", "valueSemantics", "canonicalHash"] },
+    "finalHypotheses": {
+      "type": "object",
+      "required": ["targetRegion", "revenueModel", "price", "channels", "differentiators", "preMarketSomShare", "preMarketSom"]
+    },
+    "legalResult": {
+      "type": "object",
+      "required": ["legalStatus", "safeSummary", "requiredControls", "requiredPartnersAndQualifications", "prohibitedVariants", "requiredDisclosures", "officialEvidenceReferences", "deltaLegalReviews"]
+    }
+  }
+}

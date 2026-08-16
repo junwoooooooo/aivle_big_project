@@ -1,0 +1,16 @@
+{
+  "error": {
+    "code": "RATE_LIMITED",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "DEPENDENCY_RATE_LIMITED",
+        "retryAfterSeconds": 30
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": true,
+    "taskAttemptId": "task-attempt-error",
+    "taskRunId": "task-run-error"
+  }
+}

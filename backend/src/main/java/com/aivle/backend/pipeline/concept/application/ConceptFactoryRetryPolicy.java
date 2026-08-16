@@ -27,11 +27,12 @@ public class ConceptFactoryRetryPolicy {
         boolean retryableFailure = false;
         for (SlotState slot : slots) {
             if (slot.status() == ConceptSlotStatus.ELIGIBLE || slot.status() == ConceptSlotStatus.QUEUED) continue;
+            if (slot.status() == ConceptSlotStatus.FAILED && slot.error() == null) {retryableFailure = true; continue;}
             if (slot.error() == ConceptAttemptError.REQUEST_CONTRACT_INVALID) {
                 return new Decision(false, "FIX_SYSTEM_AND_START_NEW_RUN", slot.error().name());
             }
             if (slot.error() == ConceptAttemptError.PERMANENT_PROVIDER_FAILURE
-                    || DOMAIN_EXHAUSTION.contains(slot.error())) {
+                    || (slot.error() != null && DOMAIN_EXHAUSTION.contains(slot.error()))) {
                 return Decision.startNew(slot.error() == null ? "DOMAIN_EXHAUSTED" : slot.error().name());
             }
             if (slot.retryable()) retryableFailure = true;

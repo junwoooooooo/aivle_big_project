@@ -1,0 +1,189 @@
+{
+  "_설명": "BM 캔버스 9칸 — 배선 복구(계획서 compressed-nibbling-adleman) 적용 시 나올 모습.",
+  "_왜_별도_파일인가": [
+    "골든 픽스처 bm.json 은 배선이 끊긴 «지금»의 결과라 계획 5칸이 비어 있다.",
+    "9칸이 다 찬 화면을 확정하려면 «고친 뒤»의 모양이 필요하다.",
+    "값은 지어낸 것이 아니라 concept_beauty-noshow.json 에 이미 있는 서술을 옮긴 것이다:",
+    "  channel        ← _hypotheses_v2.7_채널.제안값",
+    "  differentiation ← _hypotheses_v2.8_차별점.비교축",
+    "  revenue_model  ← _hypotheses_v2.6_수익_가격",
+    "  cost           ← constraint{budget_krw 5000000, months 10, team 2}",
+    "  activities/resources/partners ← solution · _다듬기5.2_솔루션_정의"
+  ],
+  "_경계": "marketEvidenceIds 와 caveats 는 실측 그대로다. 경계는 인용한 근거에서 기계가 파생한 것만 싣는다 — 손으로 쓰지 않는다.",
+  "cells": [
+    {
+      "canvasCell": "CUSTOMER_SEGMENTS",
+      "status": "PARTIAL",
+      "content": [
+        "서울에서 시술자가 본인 1명인 미용실을 직접 운영하는 원장",
+        "2024년 서울 두발 미용업 사업체 수는 19,026개로 관측됨"
+      ],
+      "reason": "서울 두발 미용업 모집단 근거는 있으나, 국가통계에 종사자 1인 구간이 없어 목표인 「1인 운영」 규모를 직접 확인하지 못했다.",
+      "sourceLabels": [
+        "concept_snapshot",
+        "market_size"
+      ],
+      "marketEvidenceIds": [
+        "C-F007",
+        "C-F011"
+      ],
+      "missingEvidence": [
+        "1인 운영 사업체 수 직접 관측"
+      ],
+      "caveats": [
+        "외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."
+      ]
+    },
+    {
+      "canvasCell": "VALUE_PROPOSITIONS",
+      "status": "PARTIAL",
+      "content": [
+        "예약 채널을 하나의 일정으로 통합하고, 시술 중 자동응답으로 예약을 접수",
+        "예약 시 소액 예치금·확인 링크로 노쇼를 사전 차단 (경쟁 예상: 알림톡 발송까지)",
+        "취소 발생 시 대기자에게 자동 재제안 (경쟁 예상: 재배치는 수동)"
+      ],
+      "reason": "차별점 3축은 컨셉에 명시돼 있으나, 노쇼 문제는 인접 업종 근거만 있고 미용실 1인 운영자에 대한 직접 검증이 없다.",
+      "sourceLabels": [
+        "concept_snapshot",
+        "demand_evidence"
+      ],
+      "marketEvidenceIds": [
+        "C-F011"
+      ],
+      "missingEvidence": [
+        "미용업 직접 노쇼율",
+        "경쟁 3사 기능 목록"
+      ],
+      "caveats": [
+        "외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."
+      ]
+    },
+    {
+      "canvasCell": "CHANNELS",
+      "status": "PLAN",
+      "content": [
+        "네이버 예약·플레이스에 이미 등록된 1인 미용실 대상 아웃바운드 (주 채널 가정)",
+        "미용 원장 커뮤니티·오픈채팅 (네이버 카페, 인스타그램 해시태그)",
+        "미용 재료상·디자이너 교육기관 제휴"
+      ],
+      "reason": "채널 3종이 컨셉에 명시돼 있으나 CAC·전환율 관측이 없어 적합성을 판정하지 못했다.",
+      "sourceLabels": [
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [
+        "고객 획득 비용",
+        "전환율"
+      ],
+      "caveats": []
+    },
+    {
+      "canvasCell": "CUSTOMER_RELATIONSHIPS",
+      "status": "PLAN",
+      "content": [
+        "구독 유지 중심의 자동 알림 운영",
+        "예약 확인·리마인드 자동 발송으로 접점을 유지 (원장 개입 0)"
+      ],
+      "reason": "관측 근거 없이 컨셉 서술에서만 왔다.",
+      "sourceLabels": [
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [],
+      "caveats": []
+    },
+    {
+      "canvasCell": "REVENUE_STREAMS",
+      "status": "PARTIAL",
+      "content": [
+        "월 정액 구독 — 시술자 1인 기준 단일 요금제",
+        "월 구독료 15,000~30,000원 밴드가 관측됨",
+        "컨셉 제안가 39,000원/월은 관측 밴드 밖이다"
+      ],
+      "reason": "수익 방식은 컨셉에 확정돼 있고 가격 밴드는 관측됐으나, 제안가가 밴드 상단을 넘어 정합하지 않는다.",
+      "sourceLabels": [
+        "concept_snapshot",
+        "price_analysis"
+      ],
+      "marketEvidenceIds": [
+        "C-F001"
+      ],
+      "missingEvidence": [
+        "복수 판매처 가격"
+      ],
+      "caveats": []
+    },
+    {
+      "canvasCell": "KEY_RESOURCES",
+      "status": "PLAN",
+      "content": [
+        "예약 데이터 통합 처리",
+        "자동응답·알림 발송 경로",
+        "예치금 결제 연동"
+      ],
+      "reason": "관측 근거 없이 컨셉 서술에서만 왔다.",
+      "sourceLabels": [
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [],
+      "caveats": []
+    },
+    {
+      "canvasCell": "KEY_ACTIVITIES",
+      "status": "PLAN",
+      "content": [
+        "흩어진 예약 채널을 하나의 일정으로 통합 운영",
+        "시술 중 자동응답으로 예약 접수",
+        "취소 발생 시 대기자 자동 재배치"
+      ],
+      "reason": "관측 근거 없이 컨셉 서술에서만 왔다.",
+      "sourceLabels": [
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [],
+      "caveats": []
+    },
+    {
+      "canvasCell": "KEY_PARTNERS",
+      "status": "PLAN",
+      "content": [
+        "네이버 예약·플레이스 등 예약 플랫폼 — 연동 대상이자 주 채널",
+        "예치금·결제 처리 대행",
+        "미용 재료상·디자이너 교육기관 — 제휴 채널"
+      ],
+      "reason": "실행에 필요한 파트너 «유형»이다 — 계약된 상대가 아니다. 제휴 조건은 관측되지 않았다.",
+      "sourceLabels": [
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [
+        "예약 플랫폼 제휴 조건",
+        "결제 대행 수수료율"
+      ],
+      "caveats": []
+    },
+    {
+      "canvasCell": "COST_STRUCTURE",
+      "status": "PLAN",
+      "content": [
+        "예산 5,000,000원 · 기간 10개월 · 개발 인원 2명 (입력 제약)",
+        "개발·운영 인건비 중심",
+        "알림 발송·결제 처리 건당 변동비"
+      ],
+      "reason": "입력 제약(예산·팀·기간)에서 왔다. 단위 원가 관측은 입력에 없다.",
+      "sourceLabels": [
+        "execution_constraints",
+        "concept_snapshot"
+      ],
+      "marketEvidenceIds": [],
+      "missingEvidence": [
+        "단위 원가",
+        "알림 발송 단가"
+      ],
+      "caveats": []
+    }
+  ]
+}

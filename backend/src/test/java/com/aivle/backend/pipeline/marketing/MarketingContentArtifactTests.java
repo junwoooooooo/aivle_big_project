@@ -28,6 +28,7 @@ import com.aivle.backend.pipeline.marketing.domain.MarketingContentType;
 import com.aivle.backend.pipeline.marketing.repository.MarketingAssetRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRevisionRepository;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
@@ -108,14 +109,14 @@ class MarketingContentArtifactTests {
     }
 
     private MarketingApiModels.CreateRequest request() {
-        return new MarketingApiModels.CreateRequest("marketing-content-request-v1", "source-1",
+        return new MarketingApiModels.CreateRequest("marketing-content-request-v1", "source-1", null,
             MarketingContentType.EMAIL, "email", "launch", "clear", MarketingApiModels.Length.MEDIUM,
             List.of(), List.of(), null, "00000000-0000-4000-8000-000000000001");
     }
 
     private MarketingContentService contentService(ProjectRepository projects,
             ProjectEvidenceArtifactService evidence, MarketingSourceSnapshotService sources) {
-        return new MarketingContentService(projects, evidence, mock(ObjectStoragePort.class), sources,
+        return new MarketingContentService(projects, evidence, mock(ObjectStoragePort.class), sources, mock(MarketingStrategyService.class),
             mock(MarketingContentRepository.class), mock(MarketingContentRevisionRepository.class),
             mock(MarketingAssetRepository.class), new MarketingResultContract(), new MarketingLegalGuard(mapper),
             mock(TaskRunService.class), mock(CanonicalInputHasher.class), mock(JobEventPublisher.class), mapper);

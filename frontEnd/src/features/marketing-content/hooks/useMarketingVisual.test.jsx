@@ -7,7 +7,7 @@ let eventState;
 vi.mock('../../../shared/async-events/index.js', () => ({ useJobEvents: () => eventState }));
 
 describe('useMarketingVisual', () => {
-  beforeEach(() => { eventState = { events: [], terminal: false }; global.URL.createObjectURL = vi.fn(() => 'blob:generated'); global.URL.revokeObjectURL = vi.fn(); });
+  beforeEach(() => { eventState = { events: [], terminal: false }; globalThis.URL.createObjectURL = vi.fn(() => 'blob:generated'); globalThis.URL.revokeObjectURL = vi.fn(); });
 
   it('uses SSE terminal state to refresh the canonical visual REST result', async () => {
     const client = { get: vi.fn().mockResolvedValueOnce({ data: { taskRunId: 'task-1', state: 'RUNNING', activeJobId: 'task-1' } })

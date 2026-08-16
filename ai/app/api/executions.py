@@ -31,6 +31,7 @@ TASK_TYPES = {
     "TECH_OPS_ADVISORY",
     "FINANCE_ESTIMATE",
     "FINANCE_ANALYSIS_REPORT",
+    "MARKETING_STRATEGY_GENERATION",
     "MARKETING_CONTENT_GENERATION",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
@@ -165,6 +166,27 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     elif body.taskType in {"CONCEPT_CANDIDATE", "CONCEPT_DISTINCTNESS_JUDGE", "CONCEPT_LEGAL_REVIEW", "CONCEPT_REDESIGN", "CONCEPT_HYPOTHESIS_ALTERNATIVE", "CONCEPT_DELTA_LEGAL_REVIEW"}:
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = ["concept-factory-input"]
+    elif body.taskType == "MARKETING_STRATEGY_GENERATION":
+        text = json.dumps(
+            body.input,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        source_hash = body.input.get(
+            "sourceManifestHash",
+            "unknown",
+        )
+        source_keys = [
+            f"marketing-strategy-source:{source_hash}"
+        ]
+    elif body.taskType == "MARKETING_STRATEGY_GENERATION":
+        from app.tasks.marketing_strategy import (
+            execute_marketing_strategy,
+        )
+        result = await execute_marketing_strategy(
+            body.input
+        )
     elif body.taskType == "MARKETING_CONTENT_GENERATION":
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_hash = body.input.get("source", {}).get("hash", body.input.get("source", {}).get("sourceSnapshotHash", "unknown"))

@@ -8,8 +8,15 @@ import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.file.object.ObjectStoragePort;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentListView;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentSummary;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.ContentView;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.CreateRequest;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.EditRequest;
+import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.RevisionView;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
@@ -32,6 +39,7 @@ public class MarketingContentService {
     private final ProjectEvidenceArtifactService evidenceArtifacts;
     private final ObjectStoragePort objectStorage;
     private final MarketingSourceSnapshotService sourceSnapshots;
+    private final MarketingStrategyService marketingStrategies;
     private final MarketingContentRepository contents;
     private final MarketingContentRevisionRepository revisions;
     private final MarketingAssetRepository assets;
@@ -54,12 +62,13 @@ public class MarketingContentService {
         }
         MarketingSourceSnapshot source = sourceSnapshots.requireCurrent(projectId);
         if (!source.getId().equals(request.marketingSourceSnapshotId())) throw new BusinessException(ErrorCode.MODULE_INPUT_STALE);
-        String sourceJson = source.getSnapshotJson(); String requestJson = mapper.writeValueAsString(request);
+        var strategy = marketingStrategies.requireCurrent(ownerId, projectId, request.marketingStrategyReportId());
+        String sourceJson = source.getSnapshotJson(); String strategyJson = strategy.getResultJson(); String requestJson = mapper.writeValueAsString(request);
         String id = UUID.randomUUID().toString();
         String title = mapper.readTree(sourceJson).path("conceptName").asText("Marketing") + " - " + request.contentType().name();
         MarketingContent content = contents.save(MarketingContent.queued(id, projectId, source.getId(),
             source.getSnapshotHash(), sourceJson, requestJson, request.contentType(), request.channel(), title, ownerId));
-        String taskId = enqueue(ownerId, projectId, content, requestJson, sourceJson, idempotencyKey, correlationId);
+        String taskId = enqueue(ownerId, projectId, content, requestJson, sourceJson, strategyJson, idempotencyKey, correlationId);
         content.attachTaskRun(taskId);
         publish(projectId, taskId, "QUEUED", "job.marketing.queued", JobEvent.Status.QUEUED, null);
         return view(content, source);
@@ -100,8 +109,10 @@ public class MarketingContentService {
         MarketingSourceSnapshot source = sourceSnapshots.requireCurrent(projectId);
         ObjectNode request = (ObjectNode) mapper.readTree(content.getRequestJson());
         request.put("marketingSourceSnapshotId", source.getId());
-        String requestJson = mapper.writeValueAsString(request); String sourceJson = source.getSnapshotJson();
-        String taskId = enqueue(ownerId, projectId, content, requestJson, sourceJson, idempotencyKey, correlationId);
+        String strategyId = request.path("marketingStrategyReportId").asText();
+        var strategy = marketingStrategies.requireCurrent(ownerId, projectId, strategyId);
+        String requestJson = mapper.writeValueAsString(request); String sourceJson = source.getSnapshotJson(); String strategyJson = strategy.getResultJson();
+        String taskId = enqueue(ownerId, projectId, content, requestJson, sourceJson, strategyJson, idempotencyKey, correlationId);
         try { content.regenerate(source.getId(), source.getSnapshotHash(), sourceJson, requestJson, taskId); }
         catch (IllegalStateException invalid) { throw new BusinessException(ErrorCode.INVALID_REQUEST, invalid.getMessage()); }
         publish(projectId, taskId, "QUEUED", "job.marketing.queued", JobEvent.Status.QUEUED, null);
@@ -127,9 +138,10 @@ public class MarketingContentService {
     }
 
     private String enqueue(Long ownerId, Long projectId, MarketingContent content, String requestJson,
-            String sourceJson, String key, String correlation) {
+            String sourceJson, String strategyJson, String key, String correlation) {
         if (key == null || key.isBlank()) throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
         ObjectNode input = mapper.createObjectNode(); input.set("source", mapper.readTree(sourceJson));
+        input.set("strategy", mapper.readTree(strategyJson));
         input.set("request", mapper.readTree(requestJson));
         String json = mapper.writeValueAsString(input);
         String hash = inputHasher.hash(TaskType.MARKETING_CONTENT_GENERATION, "1.0", "ko-KR", json);

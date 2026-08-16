@@ -9,6 +9,6 @@ import {
 
 afterEach(() => {
   cleanup();
-  localStorage.clear();
-  sessionStorage.clear();
+  globalThis.localStorage?.clear?.();
+  globalThis.sessionStorage?.clear?.();
 });

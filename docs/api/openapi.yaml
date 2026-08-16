@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: New Pipeline API
+  version: 1.0.0-cutover
+  description: Active public routes for the six-stage project pipeline. Domain Query APIs are authoritative; Job Events are refresh signals.
+servers:
+  - url: /
+tags:
+  - name: Foundation
+  - name: Pipeline
+  - name: Jobs
+paths:
+  /api/v1/auth/signup:
+    post: {tags: [Foundation], summary: Register user, responses: {'201': {description: Created}}}
+  /api/v1/auth/login:
+    post: {tags: [Foundation], summary: Login, responses: {'200': {description: Authenticated}}}
+  /api/v1/projects:
+    get: {tags: [Foundation], summary: List owned projects, responses: {'200': {description: Projects}}}
+    post: {tags: [Foundation], summary: Create project, responses: {'201': {description: Created}}}
+  /api/v1/projects/{projectId}:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Foundation], summary: Get project, responses: {'200': {description: Project}}}
+    patch: {tags: [Foundation], summary: Update project metadata, responses: {'200': {description: Updated}}}
+    delete: {tags: [Foundation], summary: Delete project, responses: {'204': {description: Deleted}}}
+  /api/v2/jobs/{jobId}/events:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+      - name: after
+        in: query
+        required: false
+        schema: {type: integer, format: int64, minimum: 0}
+    get:
+      tags: [Jobs]
+      summary: Stream owned Job Events, or poll JSON events when after is supplied
+      responses:
+        '200': {description: text/event-stream without after; JSON event list with after}
+  /api/v3/projects/{projectId}/modules:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get authoritative module states, responses: {'200': {description: Six module states}}}
+  /api/v3/projects/{projectId}/active-jobs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Jobs], summary: List owned non-terminal jobs, responses: {'200': {description: Active jobs}}}
+  /api/v3/projects/{projectId}/recent-jobs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Jobs], summary: List owned recent terminal jobs, responses: {'200': {description: Recent jobs}}}
+  /api/v3/projects/{projectId}/idea-brief:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get canonical Idea Brief, responses: {'200': {description: Idea Brief}}}
+  /api/v3/projects/{projectId}/idea-brief/derive:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Start Idea Brief derivation, responses: {'200': {description: Task accepted}}}
+  /api/v3/projects/{projectId}/idea-brief/fields:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    patch: {tags: [Pipeline], summary: Edit canonical Idea Brief fields, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/idea-brief/answers:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Apply answers to canonical fields, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/idea-brief/confirm:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Confirm immutable Idea Brief snapshot, responses: {'200': {description: Confirmed}}}
+  /api/v3/projects/{projectId}/concept-factory-runs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Start five-slot concept generation and legal precheck, responses: {'200': {description: Run started}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current concept run, responses: {'200': {description: Current run}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get concept run, responses: {'200': {description: Concept run}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}/slots:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get five concept slots, responses: {'200': {description: Concept slots}}}
+  /api/v3/projects/{projectId}/concept-factory-runs/{runId}/retry:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    post: {tags: [Pipeline], summary: Retry a retryable terminal concept run, responses: {'200': {description: Retried}}}
+  /api/v3/projects/{projectId}/concepts:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List eligible concepts, responses: {'200': {description: Eligible concepts}}}
+  /api/v3/projects/{projectId}/concept-selections:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Select concept and create immutable snapshot, responses: {'200': {description: Selection created}}}
+  /api/v3/projects/{projectId}/concept-selections/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current selected concept snapshot, responses: {'200': {description: Current selection}}}
+  /api/v3/projects/{projectId}/module-handoffs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Create immutable external-module handoff, responses: {'200': {description: Handoff created}}}
+  /api/v3/projects/{projectId}/module-runs:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List external module runs, responses: {'200': {description: Module runs}}}
+  /api/v3/projects/{projectId}/module-runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/RunId'
+    get: {tags: [Pipeline], summary: Get external module run, responses: {'200': {description: Module run}}}
+  /api/v3/projects/{projectId}/market-result:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get external market result, responses: {'200': {description: Market result}}}
+  /api/v3/projects/{projectId}/planning/current:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: Get current planning state, responses: {'200': {description: Planning}}}
+  /api/v3/projects/{projectId}/planning/change-proposals:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List planning change proposals, responses: {'200': {description: Change proposals}}}
+  /api/v3/projects/{projectId}/planning/change-proposals/{proposalId}/decisions:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - name: proposalId
+        in: path
+        required: true
+        schema: {type: string}
+    post: {tags: [Pipeline], summary: Decide a planning change proposal, responses: {'200': {description: Planning updated}}}
+  /api/v3/projects/{projectId}/planning/finalize:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    post: {tags: [Pipeline], summary: Finalize planning snapshot, responses: {'200': {description: Finalized}}}
+  /api/v3/projects/{projectId}/marketing-contents:
+    parameters: [{$ref: '#/components/parameters/ProjectId'}]
+    get: {tags: [Pipeline], summary: List marketing contents, responses: {'200': {description: Contents}}}
+    post: {tags: [Pipeline], summary: Queue marketing content generation, responses: {'200': {description: Content task created}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/ContentId'
+    get: {tags: [Pipeline], summary: Get marketing content, responses: {'200': {description: Content}}}
+    patch: {tags: [Pipeline], summary: Create a user-edited content revision, responses: {'200': {description: Updated}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}/regenerate:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/ContentId'
+    post: {tags: [Pipeline], summary: Queue marketing content regeneration, responses: {'200': {description: Regeneration queued}}}
+  /api/v3/projects/{projectId}/marketing-contents/{contentId}/finalize:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/ContentId'
+    post: {tags: [Pipeline], summary: Finalize marketing content revision, responses: {'200': {description: Finalized}}}
+components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: {type: integer, format: int64}
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    ContentId:
+      name: contentId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+x-runtime-contract:
+  conceptLimits: {targetEligible: 5, maxInspected: 15, replacementRounds: 2}
+  providerTaskTypes:
+    - IDEA_BRIEF_DERIVATION
+    - CONCEPT_CANDIDATE
+    - CONCEPT_LEGAL_REVIEW
+    - CONCEPT_REDESIGN
+    - MARKETING_CONTENT_GENERATION
+  orchestrationTaskTypes: [IDEA_ATTACHMENT_PARSE, CONCEPT_FACTORY_RUN]
+  jobEventRegistry: frontEnd/src/shared/async-events/jobEventMessages.js
+  databaseBaseline: backend/src/main/resources/db/migration/V1__new_pipeline_baseline.sql
+  providerSmokes:
+    - python -m app.tools.idea_brief_provider_smoke
+    - python -m app.tools.concept_factory_provider_smoke
+    - python -m app.tools.marketing_content_provider_smoke

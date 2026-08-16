@@ -13,18 +13,21 @@ import { ASYNC_MESSAGES, createSetupModel, editableFromResult, latestRevision, l
 import { copyMarketingContent, downloadMarketingContent } from '../render/marketingRenderer.js';
 import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-events/index.js';
 import { ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
+import MarketingStrategyPanel from '../components/MarketingStrategyPanel.jsx';
+import useMarketingStrategy from '../hooks/useMarketingStrategy.js';
 import '../styles/marketing-content.css';
 
 const STEP_ITEMS = [
-  { id: 1, label: '컨셉 확인' },
-  { id: 2, label: '생성 설정' },
-  { id: 3, label: '결과 확인' },
+  { id: 1, label: '분석 자료' },
+  { id: 2, label: '마케팅 전략' },
+  { id: 3, label: '생성 설정' },
+  { id: 4, label: '결과 확인' },
 ];
 
 export default function MarketingContentPage() {
   const { projectId } = useParams();
   const hook = useMarketingContent(projectId);
-
+  const strategy = useMarketingStrategy(projectId);
   const [step, setStep] = useState(1);
   const [pendingContentId, setPendingContentId] = useState(null);
   const [setup, setSetup] = useState(createSetupModel());
@@ -69,19 +72,19 @@ export default function MarketingContentPage() {
   const generationBusy = hook.active || hook.uploading;
 
   const generatedResultReady =
-    step === 2 &&
+    step === 3 &&
     Boolean(pendingContentId) &&
     selectedContentId === pendingContentId &&
     selectedStatus === 'COMPLETED';
 
-  const activeStep = generatedResultReady ? 3 : step;
+  const activeStep = generatedResultReady ? 4 : step;
 
   function moveToStep(nextStep) {
     /*
      * 자동 이동한 결과 화면에서 2단계로 돌아가면
      * 자동 이동 조건을 해제합니다.
      */
-    if (nextStep !== 3) {
+    if (nextStep !== 4) {
       setPendingContentId(null);
     }
 
@@ -91,7 +94,7 @@ export default function MarketingContentPage() {
   async function create() {
     setNotice('');
       try { const reference = effectiveSetup.referenceImage ? await hook.uploadReference(effectiveSetup.referenceImage): null;
-        const detail = await hook.create(toCreateRequest(effectiveSetup, reference?.artifactId ?? null));
+        const detail = await hook.create(toCreateRequest(effectiveSetup, reference?.artifactId ?? null, strategy.view?.reportId ?? null));
         setPendingContentId(
           detail?.content?.contentId ?? null,
         );
@@ -107,7 +110,7 @@ export default function MarketingContentPage() {
 
     try {
       await hook.open(contentId);
-      setStep(3);
+      setStep(4);
     } catch (error) {
       setNotice(error.message);
     }
@@ -181,8 +184,8 @@ export default function MarketingContentPage() {
   return (
     <ProjectWorkspace mode="review" className="mk-page">
       <ProjectStageHeader step={8} eyebrow="마케팅 전략" title="확정한 사업안을 고객에게 보여줄 콘텐츠로 만드세요"
-        description="컨셉 확인, 생성 설정, 결과 확인의 세 단계로 문구와 시각 표현을 완성합니다."
-        actions={<button type="button" onClick={() => void hook.refresh()}>새로고침</button>} />
+        description="분석 자료 확인, 마케팅 전략, 생성 설정, 결과 확인의 네 단계로 콘텐츠를 완성합니다."
+        actions={<button type="button" onClick={() => void Promise.all([hook.refresh()])}>새로고침</button>} />
 
       {hook.error && (
         <div
@@ -242,11 +245,13 @@ export default function MarketingContentPage() {
             const available =
               item.id === 1 ||
               (item.id === 2 && Boolean(hook.source)) ||
-              (item.id === 3 && Boolean(draft));
+              (item.id === 3 && strategy.current)||
+              (item.id === 4 && Boolean(draft));
 
             const completed =
               item.id < activeStep ||
-              (item.id === 2 && Boolean(draft));
+              (item.id === 2 && strategy.current)||
+              (item.id === 3 && Boolean(draft));
 
             const state =
               activeStep === item.id
@@ -315,20 +320,55 @@ export default function MarketingContentPage() {
               disabled={!hook.source}
               onClick={() => moveToStep(2)}
             >
-              이 사업안으로 콘텐츠 만들기
+              분석 자료로 마케팅 전략 만들기
             </button>
           </div>
         </section>
       )}
-
       {activeStep === 2 && (
+        <section
+          className="mk-step"
+          aria-labelledby="mk-step-strategy-title"
+        >
+          <header className="mk-step__header">
+            <div>
+              <p>2단계</p>
+
+              <h2 id="mk-step-strategy-title">
+                분석 결과 기반 마케팅 전략을
+                확인하세요
+              </h2>
+
+              <span>
+                시장, BM, 기술운영, 재무 및 패널
+                조사 결과를 연결해 전략을 생성합니다.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              disabled={strategy.active}
+              onClick={() => moveToStep(1)}
+            >
+              분석 자료 다시 보기
+            </button>
+          </header>
+
+          <MarketingStrategyPanel
+            strategy={strategy}
+            onNext={() => moveToStep(3)}
+          />
+        </section>
+      )}
+
+      {activeStep === 3 && (
         <section
           className="mk-step"
           aria-labelledby="mk-step-setup-title"
         >
           <header className="mk-step__header">
             <div>
-              <p>2단계</p>
+              <p>3단계</p>
               <h2 id="mk-step-setup-title">
                 만들 콘텐츠를 설정하세요
               </h2>
@@ -341,9 +381,9 @@ export default function MarketingContentPage() {
             <button
               type="button"
               disabled={generationBusy}
-              onClick={() => moveToStep(1)}
+              onClick={() => moveToStep(2)}
             >
-              사업안 다시 보기
+              마케팅 전략 다시 보기
             </button>
           </header>
 
@@ -351,7 +391,7 @@ export default function MarketingContentPage() {
             value={effectiveSetup}
             onChange={setSetup}
             onSubmit={() => void create()}
-            disabled={!hook.source}
+            disabled={!hook.source || !strategy.current}
             busy={generationBusy}
           />
 
@@ -359,14 +399,14 @@ export default function MarketingContentPage() {
         </section>
       )}
 
-      {activeStep === 3 && (
+      {activeStep === 4 && (
         <section
           className="mk-step mk-step--result"
           aria-labelledby="mk-step-result-title"
         >
           <header className="mk-step__header">
             <div>
-              <p>3단계</p>
+              <p>4단계</p>
               <h2 id="mk-step-result-title">
                 생성 결과를 확인하세요
               </h2>
@@ -379,7 +419,7 @@ export default function MarketingContentPage() {
             <button
               type="button"
               disabled={generationBusy}
-              onClick={() => moveToStep(2)}
+              onClick={() => moveToStep(3)}
             >
               입력 수정하기
             </button>

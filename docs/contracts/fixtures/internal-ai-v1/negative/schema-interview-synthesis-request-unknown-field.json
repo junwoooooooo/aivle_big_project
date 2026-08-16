@@ -1,0 +1,70 @@
+{
+  "canonicalInputHash": "sha256:daa82e966c94066adbd0379b4dc82410263b37dda2ad30238db7e3d1632397de",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-8",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "excludedInterviewKeys": [],
+    "includedInterviews": [
+      {
+        "interviewKey": "interview-1",
+        "responses": [
+          {
+            "evidenceNeeds": [],
+            "interpretation": "해석 1",
+            "provenance": [
+              {
+                "category": "AI_PROPOSAL",
+                "externalSourceReferences": [],
+                "generatedAt": "2035-01-01T00:00:00Z",
+                "sourceKeys": [
+                  "source-1"
+                ],
+                "statementKey": "p-1",
+                "verificationNeeded": false
+              }
+            ],
+            "question": "질문 1",
+            "questionKey": "q-1",
+            "syntheticAnswer": "합성 답변 1"
+          }
+        ]
+      },
+      {
+        "interviewKey": "interview-2",
+        "responses": [
+          {
+            "evidenceNeeds": [],
+            "interpretation": "해석 2",
+            "provenance": [
+              {
+                "category": "AI_PROPOSAL",
+                "externalSourceReferences": [],
+                "generatedAt": "2035-01-01T00:00:00Z",
+                "sourceKeys": [
+                  "source-1"
+                ],
+                "statementKey": "p-2",
+                "verificationNeeded": false
+              }
+            ],
+            "question": "질문 2",
+            "questionKey": "q-2",
+            "syntheticAnswer": "합성 답변 2"
+          }
+        ]
+      }
+    ],
+    "personaStudyKey": "study-1",
+    "synthesisFocuses": [
+      "COMMON",
+      "CONFLICT"
+    ],
+    "unexpectedField": "invalid"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-8",
+  "taskRunId": "task-run-8",
+  "taskSchemaVersion": "1.0",
+  "taskType": "INTERVIEW_SYNTHESIS"
+}

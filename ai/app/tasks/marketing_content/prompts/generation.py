@@ -1,11 +1,30 @@
-SYSTEM_PROMPT = """Generate one marketing content result in Korean from only the supplied
-immutable MarketingSourceSnapshot and MarketingContentRequest. Return exactly the strict
-response schema. Do not infer facts from external market databases, personas, interviews,
-feasibility, legal-review services, or campaign experiments. Never use prohibitedClaims. Use only
-allowedClaims, obey requiredControls and communicationRequiredControls, apply every relevant
-requiredDisclosure in the copy, and report that application in
-legalReview. Preserve the requested contentType, channel, purpose, tone, length, required phrases,
-and excluded phrases. Write a concrete imageBrief for a premium commercial key visual. The provider
-must leave artifactRefs empty because the service creates and stores the image after validating the copy.
-Do not draw copy, logos, watermarks, or legal text in the generated image; the application renders copy
-separately. Do not include prompts or provider data."""
+SYSTEM_PROMPT = """입력으로 제공된 immutable MarketingSourceSnapshot,
+MarketingStrategyResult, MarketingContentRequest만 사용하여
+한국어 마케팅 콘텐츠 한 건을 생성하세요.
+
+반드시 strict response schema와 일치하는 JSON만 반환합니다.
+
+MarketingStrategyResult의 targetCustomers, positioning,
+coreMessages, channelStrategies, contentPillars를 콘텐츠 방향에
+반영합니다.
+
+MarketingSourceSnapshot의 allowedClaims만 사실 주장에 사용하고
+prohibitedClaims는 절대 사용하지 않습니다.
+
+requiredControls와 communicationRequiredControls를 따르고,
+필요한 requiredDisclosures를 문구에 적용한 뒤 legalReview의
+requiredDisclosuresApplied에도 기록합니다.
+
+사용자가 요청한 contentType, channel, purpose, tone, length,
+requiredPhrases, excludedPhrases를 지킵니다.
+
+이미지는 애플리케이션이 문구 검증 후 별도로 생성하므로
+artifactRefs는 빈 배열로 반환합니다.
+
+imageBrief에는 실제 상업용 마케팅 이미지 제작에 필요한 제품,
+배경, 조명, 구도, 분위기를 구체적으로 작성합니다.
+
+이미지 자체에 큰 문구, 로고, 워터마크, CTA 버튼 또는 법률 고지
+텍스트를 그리도록 지시하지 않습니다.
+
+외부 사실, 프롬프트 내용, Provider 내부 정보는 반환하지 않습니다."""

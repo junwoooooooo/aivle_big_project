@@ -45,13 +45,13 @@ export function parsePhrases(value) {
   return [...new Set(String(value || '').split(/[\n,]/).map((item) => item.trim()).filter(Boolean))].slice(0, 20);
 }
 
-export function toCreateRequest(setup, referenceArtifactId = null) {
+export function toCreateRequest(setup, referenceArtifactId = null, marketingStrategyReportId = null,) {
   const required = parsePhrases(setup.requiredPhrases);
   if (setup.callToAction?.trim()) required.unshift(setup.callToAction.trim());
   const instruction = [setup.additionalInstruction?.trim(), setup.callToAction?.trim() && `CTA는 '${setup.callToAction.trim()}'로 작성합니다.`]
     .filter(Boolean).join('\n');
   return {
-    contract: 'marketing-content-request-v1', marketingSourceSnapshotId: setup.marketingSourceSnapshotId,
+    contract: 'marketing-content-request-v1', marketingSourceSnapshotId: setup.marketingSourceSnapshotId, marketingStrategyReportId,
     contentType: setup.contentType, channel: setup.channel.trim(), purpose: setup.purpose.trim(),
     tone: setup.tone.trim(), length: setup.length, requiredPhrases: [...new Set(required)].slice(0, 20),
     excludedPhrases: parsePhrases(setup.excludedPhrases), additionalInstruction: instruction || null,

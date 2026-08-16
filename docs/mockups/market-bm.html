@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시장분석 · BM 분석 — UI 목업 (미용실 노쇼 관리)</title>
+<!--
+  UI 사양 목업 — **실제 서비스 톤을 그대로 쓴다.**
+
+  토큰·컴포넌트는 저장소에서 그대로 옮겼다. 여기서 새 색·새 여백을 만들지 않는다:
+    frontEnd/src/shared/styles/tokens.css     민트 강조 · 중성 녹색 · 상태 5색 · 여백/반경
+    frontEnd/src/shared/ui/ui.css             .ui-card · .ui-badge · .ui-alert · .ui-button
+    frontEnd/src/app/layouts/layouts.css      .app-shell(#fafbfb) · .app-topbar · .app-main
+    frontEnd/src/app/project-shell/…css       .pipeline-shell 헤더 · 좌측 네비 · 상태 칩
+    frontEnd/src/app/module-status/…Model.js  8단계 라벨 · 상태 라벨
+
+  데이터: docs/mockups/build.py 가 주입한다.
+    시장조사 ai/tests/fixtures/market_research/full.json  ← 골든 픽스처
+    BM 판정  ai/tests/fixtures/market_research/bm.json    ← 골든 픽스처
+    BM 9칸   docs/mockups/bm_canvas_projected.json        ← 배선 복구 후 예상치
+-->
+<style>
+/* ─── tokens.css 에서 그대로 ──────────────────────────────── */
+:root{
+  color-scheme:light;
+  --color-mint-50:#ecfbf7; --color-mint-500:#22b89a; --color-mint-700:#116f5f;
+  --color-neutral-50:#f7f9f8; --color-neutral-100:#edf1ef; --color-neutral-300:#cbd5d1;
+  --color-neutral-600:#5d6c66; --color-neutral-800:#26312d; --color-white:#fff;
+
+  --color-bg-default:var(--color-white); --color-bg-subtle:var(--color-neutral-50);
+  --color-surface:var(--color-white);
+  --color-text-primary:var(--color-neutral-800); --color-text-secondary:var(--color-neutral-600);
+  --color-border-default:var(--color-neutral-300); --color-border-strong:#93a49e;
+  --color-action-primary:var(--color-mint-500); --color-action-primary-hover:var(--color-mint-700);
+  --color-status-success:#2e7d4f; --color-status-warning:#b7791f;
+  --color-status-danger:#c23b3b;  --color-status-info:#316bcb; --color-status-neutral:#5d6c66;
+
+  --font-family-sans:Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Segoe UI",sans-serif;
+  --font-size-caption:.75rem; --font-size-small:.875rem; --font-size-body:1rem;
+  --font-size-h4:1.25rem; --font-size-h3:1.5rem;
+  --line-height-body:1.625; --line-height-heading:1.35;
+  --font-weight-medium:500; --font-weight-semibold:600; --font-weight-bold:700;
+
+  --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
+  --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem;
+  --radius-control:.5rem; --radius-card:.75rem; --radius-panel:1rem; --radius-pill:999px;
+  --border-width:1px; --shadow-raised:0 8px 24px rgb(38 49 45 / 10%);
+  --motion-fast:220ms; --ease-standard:cubic-bezier(.2,0,0,1);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:#fafbfb; color:#17363a;
+  font-family:var(--font-family-sans); font-size:var(--font-size-body);
+  line-height:var(--line-height-body); -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0; line-height:var(--line-height-heading); letter-spacing:-.02em}
+p{margin:0} ul,ol{margin:0; padding:0; list-style:none}
+a{color:var(--color-action-primary-hover); text-decoration:none}
+a:hover{text-decoration:underline}
+.num{font-variant-numeric:tabular-nums}
+
+/* ─── layouts.css — 앱 껍데기 ─────────────────────────────── */
+.app-topbar{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:1.4rem;
+  min-height:3.75rem; padding:0 clamp(1rem,4vw,3.25rem);
+  border-bottom:1px solid #e1e8e7; background:rgb(255 255 255 / .92); backdrop-filter:blur(12px);
+}
+.app-brand{display:inline-flex; align-items:center; gap:.55rem; color:#17363a;
+  font-size:.9rem; font-weight:800; letter-spacing:-.02em}
+.app-brand span{display:grid; place-items:center; width:1.55rem; height:1.55rem;
+  border-radius:.4rem; background:#0f8878; color:#fff; font-size:.75rem}
+.app-topbar__spacer{margin-left:auto; display:flex; align-items:center; gap:.6rem}
+.app-project-search{min-width:14rem; min-height:2.25rem; padding:.45rem .7rem;
+  border:1px solid #d7e2e0; border-radius:.45rem; background:#fff; color:#8fa3a0; font-size:.82rem}
+.profile-avatar{display:inline-grid; place-items:center; width:2rem; height:2rem;
+  border-radius:50%; background:#dff3ee; color:#087465; font-size:.78rem; font-weight:800}
+.app-main{width:min(100% - 2rem,78rem); margin:0 auto; padding:clamp(1.5rem,4vw,3.25rem) 0}
+
+/* ─── project-shell.css — 파이프라인 셸 ───────────────────── */
+.pipeline-shell{display:grid; gap:1.75rem; width:100%}
+.pipeline-shell__header{display:grid; grid-template-columns:minmax(0,1fr) minmax(14rem,.8fr) auto;
+  gap:1.5rem; align-items:end; padding-bottom:1.1rem; border-bottom:1px solid var(--color-border-default)}
+.pipeline-shell__project p,.pipeline-shell__module span,.pipeline-page-heading p{
+  margin:0; color:var(--color-text-secondary); font-size:.75rem; font-weight:700}
+.pipeline-shell__project h1{margin:.2rem 0 0; font-size:clamp(1.5rem,2.5vw,1.75rem); letter-spacing:-.035em}
+.pipeline-shell__module{display:flex; align-items:end; justify-content:space-between; gap:.75rem}
+.pipeline-shell__module h2{margin:.2rem 0 0; font-size:clamp(1.125rem,2vw,1.25rem)}
+.pipeline-shell__actions{display:flex; gap:.45rem}
+.pipeline-shell__actions a{display:inline-flex; align-items:center; min-height:2.75rem;
+  padding:.55rem .7rem; border:1px solid var(--color-border-default); border-radius:var(--radius-control);
+  color:var(--color-text-primary); font-size:.78rem; font-weight:750}
+.pipeline-status{display:inline-flex; align-items:center; min-height:1.6rem; padding:.2rem .5rem;
+  border-radius:999px; background:#edf1f1; color:#51676a; font-size:.7rem; font-weight:800; white-space:nowrap}
+.pipeline-status[data-tone="info"]{background:#e5f4f8; color:#176275}
+.pipeline-status[data-tone="warning"]{background:#fff3d2; color:#78570c}
+.pipeline-status[data-tone="success"]{background:#e2f5eb; color:#19613d}
+.pipeline-status[data-tone="danger"]{background:#fde8e6; color:#8b3028}
+
+.pipeline-shell__body{display:grid; grid-template-columns:15rem minmax(0,1fr);
+  gap:clamp(1.25rem,3vw,2.5rem); align-items:start}
+.pipeline-shell__sidebar{position:sticky; top:calc(3.75rem + 1rem); padding:.7rem;
+  border:1px solid var(--color-border-default); border-radius:var(--radius-card); background:var(--color-surface)}
+.pipeline-shell__sidebar ul{display:grid; gap:.2rem}
+.pipeline-shell__sidebar button{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.5rem;
+  align-items:center; width:100%; min-height:2.9rem; padding:.55rem .6rem; border:0; border-radius:.5rem;
+  background:transparent; color:var(--color-text-secondary); font:inherit; font-size:.78rem;
+  line-height:1.35; text-align:left; cursor:pointer}
+.pipeline-shell__sidebar button:hover{background:var(--color-neutral-50)}
+.pipeline-shell__sidebar button[aria-current="page"]{background:#e8f6f2; color:var(--color-mint-700); font-weight:800}
+.pipeline-shell__sidebar small{padding:.15rem .35rem; border-radius:999px; background:#edf1f1;
+  color:#51676a; font-size:.62rem; font-weight:800; white-space:nowrap}
+.pipeline-shell__sidebar small[data-tone="success"]{background:#e2f5eb; color:#19613d}
+.pipeline-shell__sidebar small[data-tone="info"]{background:#e5f4f8; color:#176275}
+.pipeline-shell__sidebar small[data-tone="warning"]{background:#fff3d2; color:#78570c}
+
+.pipeline-shell__main{display:grid; min-width:0; gap:1.75rem}
+/* 층 간격은 여기가 정한다 — 형제에게 margin 을 걸면 접히거나 겹친다. */
+.view{display:grid; align-content:start; gap:1.75rem}
+.view > .pipeline-page-heading{margin-bottom:-.5rem}   /* 머리글은 바로 아래와 한 덩이 */
+.pipeline-page-heading{display:grid; gap:.4rem}
+.pipeline-page-heading h2{margin:0; font-size:1.35rem}
+.pipeline-page-heading > span{color:var(--color-text-secondary); font-size:.82rem; line-height:1.7}
+.view[hidden]{display:none}
+
+/* ─── ui.css — 공용 컴포넌트 ──────────────────────────────── */
+.ui-card{padding:var(--space-6); border:var(--border-width) solid var(--color-border-default);
+  border-radius:var(--radius-card); background:var(--color-surface)}
+.ui-card__title{margin:0 0 var(--space-3); font-size:var(--font-size-h4); color:var(--color-text-primary)}
+.ui-badge{display:inline-flex; align-items:center; justify-content:center; width:max-content;
+  min-height:1.75rem; padding:0 var(--space-3); border-radius:var(--radius-pill);
+  font-size:var(--font-size-small); font-weight:var(--font-weight-semibold);
+  white-space:nowrap; line-height:1.2}
+.ui-badge--neutral{color:var(--color-status-neutral); background:var(--color-neutral-100)}
+.ui-badge--success{color:var(--color-status-success); background:rgb(46 125 79 / 10%)}
+.ui-badge--warning{color:var(--color-status-warning); background:rgb(183 121 31 / 12%)}
+.ui-badge--danger{color:var(--color-status-danger); background:rgb(194 59 59 / 10%)}
+.ui-badge--info{color:var(--color-status-info); background:rgb(49 107 203 / 10%)}
+.ui-alert{display:grid; gap:var(--space-1); padding:var(--space-4);
+  border:var(--border-width) solid var(--color-border-default); border-inline-start-width:4px;
+  border-radius:var(--radius-control); background:var(--color-surface); font-size:var(--font-size-small)}
+.ui-alert--info{border-inline-start-color:var(--color-status-info)}
+.ui-alert--warning{border-inline-start-color:var(--color-status-warning)}
+.ui-alert--danger{border-inline-start-color:var(--color-status-danger)}
+.ui-alert strong{font-weight:var(--font-weight-semibold)}
+.ui-button{display:inline-flex; align-items:center; justify-content:center; gap:var(--space-2);
+  min-height:2.75rem; padding:0 var(--space-4); border:var(--border-width) solid transparent;
+  border-radius:var(--radius-control); font:inherit; font-weight:var(--font-weight-semibold);
+  cursor:pointer; transition:background-color var(--motion-fast),border-color var(--motion-fast),color var(--motion-fast)}
+.ui-button--primary{background:var(--color-action-primary); color:var(--color-neutral-800)}
+.ui-button--primary:hover{background:var(--color-action-primary-hover); color:#fff}
+.ui-button--outline{border-color:var(--color-border-default); background:var(--color-surface);
+  color:var(--color-text-primary)}
+.ui-button--small{min-height:2.5rem; padding-inline:var(--space-3); font-size:var(--font-size-small)}
+.ui-accordion{border-block:var(--border-width) solid var(--color-border-default); background:var(--color-surface)}
+.ui-accordion summary{min-height:2.75rem; padding:var(--space-3) var(--space-4);
+  font-weight:var(--font-weight-semibold); font-size:var(--font-size-small); cursor:pointer;
+  list-style:none; display:flex; align-items:center; gap:var(--space-2)}
+.ui-accordion summary::-webkit-details-marker{display:none}
+.ui-accordion summary::before{content:"▸"; color:var(--color-border-strong); font-size:.7rem}
+.ui-accordion[open] summary::before{content:"▾"}
+.ui-accordion summary .n{margin-left:auto; color:var(--color-text-secondary);
+  font-weight:var(--font-weight-medium); font-size:var(--font-size-caption)}
+.ui-accordion > div{padding:0 var(--space-4) var(--space-4)}
+
+/* ─── 시장분석 · BM 분석 화면 ─────────────────────────────── */
+.mk-kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem}
+@media(max-width:840px){.mk-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mk-kpi{display:grid; gap:.4rem; align-content:start; padding:1.35rem 1.25rem;
+  border:1px solid var(--color-border-default); border-radius:var(--radius-card);
+  background:var(--color-surface); font:inherit; text-align:left; cursor:pointer;
+  transition:border-color var(--motion-fast),background-color var(--motion-fast)}
+.mk-kpi:hover{border-color:var(--color-action-primary); background:var(--color-mint-50)}
+.mk-kpi > span:first-child{color:var(--color-text-secondary); font-size:.75rem; font-weight:700}
+.mk-kpi b{font-size:1.5rem; font-weight:800; letter-spacing:-.03em; line-height:1.25}
+.mk-kpi small{color:var(--color-text-secondary); font-size:.75rem}
+.mk-kpi .ui-badge{margin-top:.5rem}
+
+.mk-limits{display:grid; gap:.65rem; padding:1.25rem 1.35rem; border:1px solid var(--color-border-default);
+  border-radius:var(--radius-card); background:var(--color-bg-subtle)}
+.mk-limits > span{color:var(--color-text-secondary); font-size:.72rem; font-weight:800; letter-spacing:.02em}
+.mk-limits ul{display:grid; gap:.5rem}
+.mk-limits li{position:relative; padding-left:1rem; color:var(--color-text-primary);
+  font-size:.84rem; line-height:1.75}
+.mk-limits li::before{content:""; position:absolute; left:0; top:.68rem; width:5px; height:5px;
+  border-radius:50%; background:var(--color-status-warning)}
+
+.mk-sec{border:1px solid var(--color-border-default); border-radius:var(--radius-card);
+  background:var(--color-surface); scroll-margin-top:5.5rem}
+.mk-sec.is-on{border-color:var(--color-action-primary); box-shadow:0 0 0 3px var(--color-mint-50)}
+.mk-sec__h{display:flex; align-items:center; gap:.7rem; padding:1.25rem 1.5rem}
+.mk-sec__n{display:grid; place-items:center; width:1.4rem; height:1.4rem; border-radius:.35rem;
+  background:var(--color-neutral-100); color:var(--color-text-secondary); font-size:.68rem; font-weight:800}
+.mk-sec__h h3{font-size:1rem}
+.mk-sec__h > span:last-child{margin-left:auto; color:var(--color-text-secondary);
+  font-size:.78rem; line-height:1.6; text-align:right}
+.mk-sec__b{padding:1.5rem; border-top:1px solid var(--color-neutral-100)}
+
+.mk-figs{display:flex; flex-wrap:wrap; gap:2.5rem; margin-bottom:1.35rem}
+.mk-figs > div > span{display:block; margin-bottom:.2rem; color:var(--color-text-secondary);
+  font-size:.72rem; font-weight:700}
+.mk-figs b{font-size:1.35rem; font-weight:800; letter-spacing:-.02em; line-height:1.3}
+.mk-figs small{display:block; margin-top:.15rem; color:var(--color-text-secondary); font-size:.76rem}
+
+table{width:100%; border-collapse:collapse}
+th,td{padding:.95rem 0; font-size:.87rem; line-height:1.65; text-align:left; vertical-align:top}
+thead th{padding-bottom:.6rem; border-bottom:1px solid var(--color-border-default);
+  color:var(--color-text-secondary); font-size:.7rem; font-weight:800; letter-spacing:.02em}
+tbody tr{border-top:1px solid var(--color-neutral-100)}
+tbody tr:first-child{border-top:0}
+td.v{padding-right:1.35rem; font-weight:700; white-space:nowrap}
+td.p{padding-right:1.1rem; color:var(--color-text-secondary); font-size:.79rem; white-space:nowrap}
+td.s{text-align:right; white-space:nowrap}
+td.s a::after{content:" ↗"; font-size:.65rem; color:var(--color-text-secondary)}
+
+/* 경계 — 값과 함께 옮겨야 하는 문장. 절대 접지 않는다. */
+.mk-caveat{margin-top:.5rem; color:var(--color-status-warning);
+  font-size:.8rem; font-style:italic; line-height:1.7}
+.mk-quote{margin-top:.4rem; color:var(--color-text-secondary); font-size:.82rem; line-height:1.7}
+.mk-note{margin-top:1.25rem; padding:.95rem 1.1rem; border-radius:var(--radius-control);
+  background:var(--color-bg-subtle); color:var(--color-text-primary); font-size:.82rem; line-height:1.75}
+.mk-note strong{font-weight:800}
+
+.mk-comps{display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.9rem}
+.mk-comp{padding:1.15rem 1.2rem; border:1px solid var(--color-border-default); border-radius:var(--radius-control)}
+.mk-comp h4{margin-bottom:.85rem; font-size:.9rem}
+.mk-comp div{display:flex; align-items:baseline; gap:.6rem; font-size:.82rem;
+  line-height:1.7; margin-bottom:.5rem}
+.mk-comp div > span:first-child{flex:1; color:var(--color-text-secondary)}
+.mk-comp b{font-weight:700}
+.mk-comp .none{color:var(--color-text-secondary); font-weight:400}
+.mk-comp__src{margin-top:.9rem; padding-top:.75rem; border-top:1px solid var(--color-neutral-100); font-size:.78rem}
+
+.mk-grp{margin-bottom:1.35rem}
+.mk-grp:last-child{margin-bottom:0}
+.mk-grp h4{margin-bottom:.6rem; color:var(--color-text-primary); font-size:.8rem; font-weight:700}
+.mk-grp ul{display:grid; gap:.4rem}
+.mk-grp li{position:relative; padding-left:.9rem; color:var(--color-text-secondary);
+  font-size:.8rem; line-height:1.75}
+.mk-grp li::before{content:"–"; position:absolute; left:0}
+
+/* BM 캔버스 */
+.bm-tally{display:flex; flex-wrap:wrap; gap:.75rem; color:var(--color-text-secondary); font-size:.78rem}
+.bm-tally span{display:inline-flex; align-items:center; gap:.4rem}
+.bm-tally b{color:var(--color-text-primary); font-weight:800}
+.bm-kind{padding:.15rem .45rem; border-radius:999px; font-size:.65rem; font-weight:800}
+.bm-kind--obs{background:#e5f4f8; color:#176275}
+.bm-kind--plan{background:#edf1f1; color:#51676a}
+
+/* 9칸을 «의미»로 세 묶음. 5열 포스터 배치는 웹 폭에서 칸당 195px 밖에 안 나와
+   한글이 10~12자마다 끊긴다. 4·3·2 로 나누면 칸당 280px 이상 나오고, 행 병합이
+   사라져 짧은 칸 옆의 빈 구멍도 없어진다. 묶음 순서 = 누구에게 · 어떻게 만들고 · 돈은. */
+.bm-band{display:grid; gap:.75rem; margin-bottom:1.75rem}
+.bm-band:last-of-type{margin-bottom:0}
+.bm-band__t{display:flex; align-items:center; gap:.6rem; color:var(--color-text-secondary);
+  font-size:.72rem; font-weight:800; letter-spacing:.06em}
+.bm-band__t::after{content:""; flex:1; height:1px; background:var(--color-neutral-100)}
+.bm-band__row{display:grid; gap:1rem; align-items:start}
+.bm-band--4 .bm-band__row{grid-template-columns:repeat(4,minmax(0,1fr))}
+.bm-band--3 .bm-band__row{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bm-band--2 .bm-band__row{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:1000px){.bm-band__row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){.bm-band__row{grid-template-columns:1fr!important}}
+
+.bm-cell{display:flex; flex-direction:column; gap:.85rem; padding:1.25rem 1.35rem 1.15rem;
+  border:1px solid var(--color-border-default); border-radius:var(--radius-card);
+  background:var(--color-surface); font:inherit; text-align:left; cursor:pointer;
+  transition:border-color var(--motion-fast),background-color var(--motion-fast)}
+.bm-cell:hover{border-color:var(--color-action-primary); background:var(--color-mint-50)}
+.bm-cell--plan{background:var(--color-bg-subtle)}
+.bm-cell__h{display:flex; align-items:center; gap:.45rem}
+.bm-cell__h h4{color:var(--color-text-primary); font-size:.84rem; font-weight:700}
+.bm-dot{margin-left:auto; flex:none; width:.45rem; height:.45rem; border-radius:50%}
+.bm-dot--ok{background:var(--color-status-success)}
+.bm-dot--mid{background:var(--color-status-warning)}
+.bm-dot--off{background:var(--color-border-strong)}
+.bm-dot--none{background:var(--color-neutral-300)}
+/* 줄 수를 자르지 않는다 — 3줄 클램프가 «주 채…» 처럼 말을 끊어 오히려 답답했다. */
+.bm-cell__lead{color:var(--color-text-primary); font-size:.86rem; line-height:1.75}
+.bm-cell__none{color:var(--color-text-secondary); font-size:.82rem; line-height:1.75}
+/* 구분선을 없앤다. 바닥에 고정된 줄이 짧은 카드 안에 빈 공간을 만들고 있었다. */
+.bm-cell__foot{display:flex; align-items:center; gap:.45rem;
+  color:var(--color-text-secondary); font-size:.73rem}
+
+.bm-swr{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; align-items:start}
+@media(max-width:800px){.bm-swr{grid-template-columns:1fr}}
+.bm-swr > div{padding:1.35rem 1.35rem 1.5rem; border:1px solid var(--color-border-default);
+  border-radius:var(--radius-card); background:var(--color-surface)}
+.bm-swr h4{margin-bottom:.85rem; font-size:.72rem; font-weight:800; letter-spacing:.02em}
+.bm-swr li{position:relative; margin-bottom:.6rem; padding-left:.9rem;
+  color:var(--color-text-primary); font-size:.84rem; line-height:1.75}
+.bm-swr li::before{content:""; position:absolute; left:.15rem; top:.6rem; width:4px; height:4px;
+  border-radius:50%; background:var(--color-border-strong)}
+
+.bm-dets{display:grid; gap:.9rem}
+.bm-det{border:1px solid var(--color-border-default); border-radius:var(--radius-card);
+  background:var(--color-surface); scroll-margin-top:5.5rem}
+.bm-det.is-on{border-color:var(--color-action-primary); box-shadow:0 0 0 3px var(--color-mint-50)}
+.bm-det__h{display:flex; align-items:center; gap:.6rem; padding:1.15rem 1.5rem}
+.bm-det__h h4{font-size:.95rem}
+.bm-det__h > span:last-child{margin-left:auto}
+.bm-det__o{color:var(--color-text-secondary); font-size:.73rem}
+.bm-det__b{padding:1.35rem 1.5rem 1.5rem; border-top:1px solid var(--color-neutral-100)}
+.bm-det__c{display:grid; gap:.5rem; margin-bottom:1rem}
+.bm-det__c li{position:relative; padding-left:.95rem; font-size:.88rem; line-height:1.8}
+.bm-det__c li::before{content:""; position:absolute; left:.15rem; top:.75rem; width:4px; height:4px;
+  border-radius:50%; background:var(--color-border-strong)}
+.bm-det__r{color:var(--color-text-secondary); font-size:.81rem; line-height:1.75}
+.bm-det__m{margin-top:1rem; color:var(--color-text-primary); font-size:.81rem; line-height:1.7}
+.bm-det__m b{margin-right:.4rem; color:var(--color-text-secondary); font-weight:700}
+.mk-actions{display:flex; justify-content:flex-end; gap:.5rem; margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<header class="app-topbar">
+  <a class="app-brand" href="#"><span aria-hidden="true">V</span>Venture Verify</a>
+  <div class="app-topbar__spacer">
+    <div class="app-project-search">프로젝트 검색</div>
+    <span class="profile-avatar">JU</span>
+  </div>
+</header>
+
+<main class="app-main">
+  <div class="pipeline-shell">
+    <div class="pipeline-shell__header">
+      <div class="pipeline-shell__project">
+        <p>프로젝트</p>
+        <h1>미용실 노쇼 관리</h1>
+      </div>
+      <div class="pipeline-shell__module">
+        <div>
+          <span>현재 모듈</span>
+          <h2 id="module-title">4. 시장분석·기획 확정</h2>
+        </div>
+        <span class="pipeline-status" data-tone="success" id="module-status">완료</span>
+      </div>
+      <div class="pipeline-shell__actions">
+        <a href="#">개요</a><a href="#">설정</a>
+      </div>
+    </div>
+
+    <div class="pipeline-shell__body">
+      <nav class="pipeline-shell__sidebar" aria-label="프로젝트 단계">
+        <ul id="steps"></ul>
+      </nav>
+      <div class="pipeline-shell__main">
+        <section class="view" id="view-market"></section>
+        <section class="view" id="view-bm" hidden></section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script id="fixture-data" type="application/json">{"full":{"runId":"beauty-13b","conceptId":"beauty-noshow","asOf":"2026-08-09","generatedAt":"2026-08-10T06:30:00Z","mode":"FULL","stages":[{"name":"harness","status":"OK","seconds":12,"llmCalls":3},{"name":"dryrun","status":"OK","seconds":2,"llmCalls":0},{"name":"collect","status":"OK","seconds":144,"llmCalls":56},{"name":"verdict","status":"OK","seconds":1,"llmCalls":0},{"name":"canvas","status":"OK","seconds":1,"llmCalls":0},{"name":"cards","status":"OK","seconds":1,"llmCalls":0},{"name":"summary","status":"SKIPPED","seconds":0,"llmCalls":0},{"name":"bm_adapter","status":"OK","seconds":1,"llmCalls":0}],"degradations":[{"stage":"summary","code":"BUDGET_EXHAUSTED","detail":"남은 예산이 최소 소요보다 적어 건너뛰었다"}],"scorecard":[{"subject":"MARKET_SIZE","state":"FILLED","detail":"전국 사업체 수 115,310개 · 확정"},{"subject":"GROWTH","state":"FILLED","detail":"+2.2823% (2023→2024) · 단순 증감률이며 CAGR 아님"},{"subject":"COMPETITOR","state":"PARTIAL","detail":"실명 1곳 · URL 1곳 (문턱은 2곳)"},{"subject":"PRICE","state":"FILLED","detail":"밴드 15,000~30,000원 · 표시가격 3건"},{"subject":"DEMAND","state":"FILLED","detail":"정량 1건 · 최고 등급 확정"},{"subject":"CALCULATION","state":"FILLED","detail":"TAM 1,025,336,520원 · 가정 6개 명시"},{"subject":"NOT_FOUND","state":"REPORTED","detail":"아직 못 채운 것 26건 · 가정으로 메운 변수 14건 · 걸러낸 것 2건 · 값이 갈린 것 5건 · 찾아도 없는 것 5건"}],"market":{"tam":{"value":1025336520.0,"unit":"KRW","grade":"추정","formula":"TAM(연) = 전국 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산","assumptions":["세그먼트비중 0.19 는 가정이다 — 국가통계에 「1인」 구간이 없다","침투율은 관측되지 않았다"],"caveats":[],"evidenceIds":["C-F006"]},"sam":{"value":169179192.0,"unit":"KRW","grade":"추정","formula":"SAM(연) = 서울 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산","assumptions":["세그먼트비중 0.19 는 가정이다"],"caveats":[],"evidenceIds":["C-F007"]},"som":null,"growth":{"value":2.2823,"unit":"PERCENT_PER_YEAR","grade":"확정","formula":"증감률 = (나중 해 값 − 이전 해 값) ÷ 이전 해 값","assumptions":["두 해의 관측을 직선으로 이었다 — 사이 해의 등락은 보지 않았다","이 값은 과거 관측이고 미래 성장을 뜻하지 않는다"],"caveats":[],"evidenceIds":["C-F008","C-F009"]},"price":{"min":15000.0,"base":19800.0,"max":30000.0,"currency":"KRW","baseKind":"MEDIAN_PROVISIONAL","baseNote":"잠정 대표값(관측 표시가격의 중앙값)이다. 확정 단가가 아니다. 관측 3건의 중앙값이라 분모를 보고 읽어야 한다.","grade":"실무 신뢰","caveats":[],"evidenceIds":["C-F001","C-F002","C-F003"]},"notFound":[{"item":"empty_slots","detail":"S2 — 두발 미용업 · 종사자 1인 사업체 비율 (2025, %)\nS3 — 두발 미용업 · 도입률 (2025, %)\nS4 — 미용실 예약 관리 SaaS · 월 구독료 (2025, 원)"},{"item":"thin_slots","detail":"S13 — 네이버 예약 · 매출액 (2025, 원) · 확인 1건 / 기준 2건\nS16 — 외식업 소상공인 · 노쇼 피해 경험률 (2025, %) · 확인 1건 / 기준 2건"},{"item":"retry_hints","detail":"S2: 수집 0건 — 검색·fetch 로그를 볼 것\nS13: 확인된 사실 1건 < 기준 2건 — 소스를 늘려 재조사 권고"},{"item":"unfilled_vars","detail":"V2 — 두발 미용업 · 종사자 1인 사업체 비율 (2025, %)\nV5 — 대응 슬롯 없음 (식의 계수)"},{"item":"independent_topdown_blocked","detail":"상위권이 비상장이다 — 6사 모두 DART 상장 0건(corpCode 전수 조회).\n보도에서 관측되는 것은 거래액(GMV)이지 매출이 아니다. GMV 는 플랫폼을 통과한 거래 총액이고 그 회사의 수익이 아니다. 창업자가 가장 흔하게 속는 숫자이므로 매출로 바꿔 쓰지 않는다."},{"item":"off_slot","detail":"단위 불일치 2건\n인용 미검증 1건"},{"item":"contradictions","detail":"S8 (F001) — 값 갈림 — 같은 대상·단위(원)에 값 3종: 15,000 · 19,800 · 30,000"},{"item":"unit_mismatch","detail":"F_TAM — V2: unit_mismatch: 슬롯 '%' vs 값 '비율' / **가정이다 — 관측이 아니다.** 관측된 부분은 상한뿐이다."}],"coverageCaveat":"수집 조건이 다른 원장과 한 표에 두지 않는다."},"evidence":[{"id":"C-F006","kind":"관측","metric":"사업체 수","subject":"두발 미용업","period":"2024","value":115310.0,"unit":"개","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://kosis.kr/statHtml/statHtml.do?orgId=101&tblId=DT_1K52F01","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:14:19","quote":"115,310","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F007","kind":"관측","metric":"사업체 수","subject":"두발 미용업","period":"2024","value":19026.0,"unit":"개","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=11","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:14:19","quote":"19,026","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F008","kind":"관측","metric":"사업체 수","subject":"두발 미용업","period":"2023","value":112737.0,"unit":"개","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=00&prdDe=2023","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:14:19","quote":"112,737","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F009","kind":"관측","metric":"사업체 수","subject":"두발 미용업","period":"2024","value":115310.0,"unit":"개","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=00&prdDe=2024","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:14:19","quote":"115,310","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F010","kind":"관측","metric":"매출액","subject":"네이버 예약","period":"2025","value":12035007218975.0,"unit":"원","grade":"확정","gradeReason":"등급표:public_filing","sourceUrl":"https://dart.fss.or.kr/dsab007/main.do?corpCode=00266961","sourceKind":"public_filing","retrievedAt":"2026-08-09T22:14:15","quote":"12,035,007,218,975","caveats":["전사 매출 — 시장 매출 아님. 용도는 DART 경로 검증이다."],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F011","kind":"관측","metric":"노쇼 피해 경험률","subject":"외식업 소상공인","period":"2025","value":65.0,"unit":"%","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://mss.go.kr/common/board/Download.do?bcIdx=1064466","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:51:26","quote":"응답자의 65%가 최근 3년 이내 노쇼 피해를 경험했다","caveats":["외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F001","kind":"관측","metric":"월 구독료","subject":"미용실 예약 관리 SaaS","period":"2025","value":19800.0,"unit":"원","grade":"실무 신뢰","gradeReason":"등급표:official_page","sourceUrl":"https://gongbiz.kr/landing-page/payment-plan","sourceKind":"official_page","retrievedAt":"2026-08-09T12:10:45","quote":"19,800원/월","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F003","kind":"관측","metric":"월 구독료","subject":"미용실 예약 관리 SaaS","period":"2025","value":15000.0,"unit":"원","grade":"실무 신뢰","gradeReason":"등급표:official_page","sourceUrl":"https://gongbiz.kr/landing-page/payment-plan","sourceKind":"official_page","retrievedAt":"2026-08-09T12:10:45","quote":"15,000원/월","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F002","kind":"관측","metric":"월 구독료","subject":"미용실 예약 관리 SaaS","period":"2025","value":30000.0,"unit":"원","grade":"실무 신뢰","gradeReason":"등급표:official_page","sourceUrl":"https://gongbiz.kr/landing-page/payment-plan","sourceKind":"official_page","retrievedAt":"2026-08-09T12:10:45","quote":"30,000원/월","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-CALC-TAM","kind":"계산","metric":"TAM","subject":"미용실 예약 관리 SaaS","period":"2024","value":1025336520.0,"unit":"원","grade":"추정","gradeReason":"약한 고리: ['추정', '확정'] → 추정 · 뒷받침 없는 입력 3개","sourceUrl":null,"sourceKind":null,"retrievedAt":null,"quote":null,"caveats":[],"formula":"TAM(연) = 전국 사업체 수 × 세그먼트비중 × 침투율 × 단가 × 연환산","inputs":{"전국 사업체 수":115310.0,"세그먼트비중":0.19},"materialIds":["C-F006"],"assumptions":["세그먼트비중 0.19 는 가정이다 — 국가통계에 「1인」 구간이 없다"]}],"canvas":null,"bm":null,"summary":null,"notes":["등급은 evidence[].grade 에 있다. 값만 떼어 쓰면 추정이 확정처럼 읽힌다.","caveats 를 떨어뜨리지 마라 — 값과 함께 옮겨야 하는 문장이다.","법률 결과는 반영되지 않았다.","SOM 은 이 파이프라인이 산출하지 않는다 — som:null 은 0 이 아니라 «안 쟀다»다."]},"bm":{"runId":"beauty-13b-bm","conceptId":"beauty-noshow","asOf":"2026-08-09","generatedAt":"2026-08-10T06:35:00Z","mode":"BM","stages":[{"name":"restore","status":"OK","seconds":1,"llmCalls":0},{"name":"bm_adapter","status":"OK","seconds":1,"llmCalls":0},{"name":"bm","status":"OK","seconds":18,"llmCalls":1}],"degradations":[],"scorecard":null,"market":null,"canvas":{"cells":[{"canvasCell":"CUSTOMER_SEGMENTS","status":"PARTIAL","content":["서울에서 시술자가 본인 1명인 미용실을 직접 운영하는 원장","2024년 서울 두발 미용업 사업체 수는 19,026개로 관측됨"],"reason":"서울 두발 미용업 모집단 근거는 있으나, 국가통계에 종사자 1인 구간이 없어 목표인 「1인 운영」 규모를 직접 확인하지 못했다.","sourceLabels":["concept_snapshot","market_size"],"marketEvidenceIds":["C-F007","C-F011"],"missingEvidence":["1인 운영 사업체 수 직접 관측"],"caveats":["외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."]},{"canvasCell":"VALUE_PROPOSITIONS","status":"PARTIAL","content":["예약 채널을 하나의 일정으로 통합하고, 시술 중 자동응답으로 예약을 접수","예약 시 소액 예치금·확인 링크로 노쇼를 사전 차단 (경쟁 예상: 알림톡 발송까지)","취소 발생 시 대기자에게 자동 재제안 (경쟁 예상: 재배치는 수동)"],"reason":"차별점 3축은 컨셉에 명시돼 있으나, 노쇼 문제는 인접 업종 근거만 있고 미용실 1인 운영자에 대한 직접 검증이 없다.","sourceLabels":["concept_snapshot","demand_evidence"],"marketEvidenceIds":["C-F011"],"missingEvidence":["미용업 직접 노쇼율","경쟁 3사 기능 목록"],"caveats":["외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."]},{"canvasCell":"CHANNELS","status":"PLAN","content":["네이버 예약·플레이스에 이미 등록된 1인 미용실 대상 아웃바운드 (주 채널 가정)","미용 원장 커뮤니티·오픈채팅 (네이버 카페, 인스타그램 해시태그)","미용 재료상·디자이너 교육기관 제휴"],"reason":"채널 3종이 컨셉에 명시돼 있으나 CAC·전환율 관측이 없어 적합성을 판정하지 못했다.","sourceLabels":["concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":["고객 획득 비용","전환율"],"caveats":[]},{"canvasCell":"CUSTOMER_RELATIONSHIPS","status":"PLAN","content":["구독 유지 중심의 자동 알림 운영","예약 확인·리마인드 자동 발송으로 접점을 유지 (원장 개입 0)"],"reason":"관측 근거 없이 컨셉 서술에서만 왔다.","sourceLabels":["concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":[],"caveats":[]},{"canvasCell":"REVENUE_STREAMS","status":"PARTIAL","content":["월 정액 구독 — 시술자 1인 기준 단일 요금제","월 구독료 15,000~30,000원 밴드가 관측됨","컨셉 제안가 39,000원/월은 관측 밴드 밖이다"],"reason":"수익 방식은 컨셉에 확정돼 있고 가격 밴드는 관측됐으나, 제안가가 밴드 상단을 넘어 정합하지 않는다.","sourceLabels":["concept_snapshot","price_analysis"],"marketEvidenceIds":["C-F001"],"missingEvidence":["복수 판매처 가격"],"caveats":[]},{"canvasCell":"KEY_RESOURCES","status":"PLAN","content":["예약 데이터 통합 처리","자동응답·알림 발송 경로","예치금 결제 연동"],"reason":"관측 근거 없이 컨셉 서술에서만 왔다.","sourceLabels":["concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":[],"caveats":[]},{"canvasCell":"KEY_ACTIVITIES","status":"PLAN","content":["흩어진 예약 채널을 하나의 일정으로 통합 운영","시술 중 자동응답으로 예약 접수","취소 발생 시 대기자 자동 재배치"],"reason":"관측 근거 없이 컨셉 서술에서만 왔다.","sourceLabels":["concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":[],"caveats":[]},{"canvasCell":"KEY_PARTNERS","status":"PLAN","content":["네이버 예약·플레이스 등 예약 플랫폼 — 연동 대상이자 주 채널","예치금·결제 처리 대행","미용 재료상·디자이너 교육기관 — 제휴 채널"],"reason":"실행에 필요한 파트너 «유형»이다 — 계약된 상대가 아니다. 제휴 조건은 관측되지 않았다.","sourceLabels":["concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":["예약 플랫폼 제휴 조건","결제 대행 수수료율"],"caveats":[]},{"canvasCell":"COST_STRUCTURE","status":"PLAN","content":["예산 5,000,000원 · 기간 10개월 · 개발 인원 2명 (입력 제약)","개발·운영 인건비 중심","알림 발송·결제 처리 건당 변동비"],"reason":"입력 제약(예산·팀·기간)에서 왔다. 단위 원가 관측은 입력에 없다.","sourceLabels":["execution_constraints","concept_snapshot"],"marketEvidenceIds":[],"missingEvidence":["단위 원가","알림 발송 단가"],"caveats":[]}]},"bm":{"decision":"CONDITIONAL","confidence":"MEDIUM","summary":"일부 시장 근거 또는 BM 구조의 추가 검증이 필요합니다.","marketFitStatus":"PARTIAL","marketFitSummary":"모집단과 가격 밴드는 관측됐으나 목표 세그먼트(1인 운영)의 직접 근거가 없다.","consistencyStatus":"PARTIAL","consistencySummary":"수익 방식과 가격 밴드가 어긋난다 — 제안가가 관측 밴드 상단을 넘는다.","strengths":["모집단이 국가통계로 확정됐다"],"weaknesses":["1인 운영 구간 직접 관측 부재","채널 3종이 계획 수준 — CAC·전환율 관측 0건","컨셉 제안가 39,000원이 관측 밴드 15,000~30,000원 밖"],"risks":["인접 업종 근거를 해당 업종 관측으로 오독할 위험","예약 플랫폼 제휴가 성립하지 않으면 주 채널과 핵심 파트너가 동시에 무너진다"],"legal":{"used":false,"status":"UNVERIFIED","summary":"법률 결과를 입력하지 않았다 — BM 판정에 반영되지 않았다.","risks":[],"requiredActions":[]}},"evidence":[{"id":"C-F007","kind":"관측","metric":"사업체 수","subject":"두발 미용업","period":"2024","value":19026.0,"unit":"개","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://kosis.kr/statHtml/statHtml.do?itmId=T1&objL1=11","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:14:19","quote":"19,026","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F011","kind":"관측","metric":"노쇼 피해 경험률","subject":"외식업 소상공인","period":"2025","value":65.0,"unit":"%","grade":"확정","gradeReason":"등급표:gov_stat","sourceUrl":"https://mss.go.kr/common/board/Download.do?bcIdx=1064466","sourceKind":"gov_stat","retrievedAt":"2026-08-09T22:51:26","quote":"응답자의 65%가 최근 3년 이내 노쇼 피해를 경험했다","caveats":["외식업 214곳 표본이다 — 미용업 직접 통계가 아니다. 문제 존재의 인접 업종 근거로만 읽을 것."],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]},{"id":"C-F001","kind":"관측","metric":"월 구독료","subject":"미용실 예약 관리 SaaS","period":"2025","value":19800.0,"unit":"원","grade":"실무 신뢰","gradeReason":"등급표:official_page","sourceUrl":"https://gongbiz.kr/landing-page/payment-plan","sourceKind":"official_page","retrievedAt":"2026-08-09T12:10:45","quote":"19,800원/월","caveats":[],"formula":null,"inputs":null,"materialIds":[],"assumptions":[]}],"summary":null,"notes":["칸의 caveats 는 인용한 근거에서 기계가 파생한 것이다 — 모델이 쓴 문장이 아니다.","content 만 떼어 쓰면 경계가 사라진다. 값과 같은 자리에 두어라.","법률 결과는 반영되지 않았다."]}}</script>
+<script>
+/* ─── 계약 어휘 — 저장소의 라벨을 그대로 쓴다 ─────────────── */
+const GRADE={'확정':['success','확정'],'실무 신뢰':['info','실무 신뢰'],
+  '추정':['warning','추정'],'근거 없음':['neutral','근거 없음']};
+const STATE={FILLED:['success','채워짐'],PARTIAL:['warning','부분'],
+  MISSING:['danger','미확보'],REPORTED:['neutral','보고됨']};
+const CELL_TONE={VERIFIED:'ok',PARTIAL:'mid',UNVERIFIED:'none',PLAN:'off',BLOCKED:'none'};
+const CELL_LABEL={VERIFIED:'확인됨',PARTIAL:'일부 확인',UNVERIFIED:'미확인',
+  PLAN:'계획(근거 없음)',BLOCKED:'진행 불가'};
+const DECISION={PASS:['success','통과'],CONDITIONAL:['warning','조건부'],
+  REVISION_REQUIRED:['danger','수정 필요'],BLOCKED:['danger','진행 불가']};
+const CONF={HIGH:'확신 높음',MEDIUM:'확신 중간',LOW:'확신 낮음'};
+const UNIT={KRW:'원',PERCENT_PER_YEAR:'%/년'};
+const SRC={gov_stat:'정부 통계',public_filing:'공시',official_page:'공식 페이지',news:'언론',web:'웹'};
+const NF_LABEL={
+  empty_slots:'근거를 못 찾은 항목', thin_slots:'근거가 기준에 못 미친 항목',
+  retry_hints:'재조사 권고', url_filtered:'열지 않고 거른 후보',
+  unfilled_vars:'가정으로 채운 변수', suspect_var:'재조사 1순위 변수',
+  independent_topdown_blocked:'다른 방식으로 재려다 막힌 것', adapters:'설정되지 않은 수집 경로',
+  '자료_부재_확정':'그 형태로 발행되지 않는 자료', off_slot:'규격 미달로 걸러낸 근거',
+  contradictions:'값이 갈린 것', unit_mismatch:'단위가 어긋나 멈춘 계산',
+  range_capped:'범위 상한에 부딪힌 추정', skipped_checks:'건너뛴 검사',
+};
+/**
+ * 9칸을 «의미»로 세 묶음으로 나눈 배치.
+ *
+ * ⚠ 표준 BMC 5열 배치는 **포스터 판형**이다. 본문 폭 1150px 에서 칸당 195px 밖에 안 나와
+ *   한글이 10~12자마다 끊기고, 2행을 차지하는 칸 옆에는 250px 짜리 빈 구멍이 생긴다.
+ *   4·3·2 는 칸당 280px 이상을 주고 행 병합을 없앤다.
+ *
+ * 순서는 장식이 아니다 — 누구에게(고객·가치) → 어떻게 만들고(실행) → 돈은(수익·비용).
+ */
+const BANDS=[
+  ['고객과 가치',[
+    ['CUSTOMER_SEGMENTS','고객 세그먼트'],['VALUE_PROPOSITIONS','가치 제안'],
+    ['CHANNELS','채널'],['CUSTOMER_RELATIONSHIPS','고객 관계']]],
+  ['실행 구조',[
+    ['KEY_ACTIVITIES','핵심 활동'],['KEY_RESOURCES','핵심 자원'],['KEY_PARTNERS','핵심 파트너']]],
+  ['수익과 비용',[
+    ['REVENUE_STREAMS','수익원'],['COST_STRUCTURE','비용 구조']]],
+];
+const LAYOUT=BANDS.flatMap(([,cells])=>cells.map(([key,label])=>[key,'',label]));
+
+/** 칸의 성격 — 정본은 research2/harness/vocab.json 의 canvas 라우팅 표다.
+ *  ⚠ 9칸을 전부 근거로 채우는 것은 설계가 아니다. 「계획」 칸은 슬롯이 «불필요»하고
+ *    컨셉 서술·입력 제약에서 온다. 화면이 이 구분을 안 하면 정상 결과가 미완성으로 읽힌다. */
+const CELL_KIND={
+  CUSTOMER_SEGMENTS:['관측','시장조사가 근거로 채운다'],
+  VALUE_PROPOSITIONS:['관측','시장조사가 근거로 채운다'],
+  CHANNELS:['관측','시장조사가 근거로 채운다'],
+  REVENUE_STREAMS:['관측','시장조사가 근거로 채운다'],
+  CUSTOMER_RELATIONSHIPS:['계획','컨셉 서술에서 온다'],
+  KEY_RESOURCES:['계획','컨셉 서술에서 온다'],
+  KEY_ACTIVITIES:['계획','컨셉 서술에서 온다'],
+  KEY_PARTNERS:['계획','컨셉 서술에서 온다'],
+  COST_STRUCTURE:['계획','입력 제약(예산·팀·기간)에서 온다'],
+};
+/** 경쟁사 지표로 취급하는 계량. ⚠ 임시 — 봉투에 과목 필드가 생기면 이 표는 없어진다. */
+const COMP_METRICS=['가입 매장 수','누적 가입자 수','매출액','이용 요금','월 활성 사용자'];
+
+/** projectModuleModel.js 의 8단계 — 라벨을 그대로 옮긴다. */
+const STEPS=[
+  ['overview','프로젝트 개요','완료','success'],
+  ['idea','1. 아이디어 정리','완료','success'],
+  ['concepts','2. 컨셉 생성·법률검토','완료','success'],
+  ['conceptCompare','3. 컨셉 비교·선택','완료','success'],
+  ['market','4. 시장분석·기획 확정','완료','success'],
+  ['businessModel','5. BM 분석','완료','success'],
+  ['techOps','6. 기술·운영 분석','준비 전',''],
+  ['finance','7. 재무 분석','준비 전',''],
+  ['marketing','8. 마케팅 콘텐츠 제작','준비 전',''],
+  ['settings','프로젝트 설정','시작 가능','info'],
+];
+
+const L=v=>Array.isArray(v)?v:[];
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const badge=(map,k,fb)=>{const v=map[k];
+  return v?`<span class="ui-badge ui-badge--${v[0]}">${v[1]}</span>`
+          :`<span class="ui-badge ui-badge--danger">${esc(fb??k??'표기 없음')}</span>`};
+/** ⚠ 등급 누락을 조용히 넘기지 않는다 — 빈 자리는 「확정」으로 읽힌다. */
+const grade=g=>badge(GRADE,g,'등급 표기 없음');
+/** 0 은 값이므로 살린다. 없으면 「미확보」. */
+const fmt=(v,u)=>(v===null||v===undefined||Number.isNaN(v))?'미확보'
+  :`${typeof v==='number'?v.toLocaleString('ko-KR'):v}${u?' '+(UNIT[u]??u):''}`;
+const krw=v=>{if(typeof v!=='number'||!Number.isFinite(v))return null;
+  for(const[n,s]of[[1e12,'조'],[1e8,'억'],[1e4,'만']])
+    if(Math.abs(v)>=n)return `${(v/n).toLocaleString('ko-KR',{maximumFractionDigits:2})}${s}원`;
+  return null};
+const host=u=>{try{return new URL(u).host.replace(/^www\./,'')}catch{return null}};
+const link=e=>e.sourceUrl
+  ?`<a href="${esc(e.sourceUrl)}" target="_blank" rel="noreferrer">${esc(host(e.sourceUrl))}</a>`
+  :'출처 없음';
+
+function normalize(raw){
+  const evidence=L(raw.evidence).map(e=>({...e,caveats:L(e.caveats),
+    materialIds:L(e.materialIds),assumptions:L(e.assumptions)}));
+  const canvas=raw.canvas?.cells?LAYOUT.map(([key,area,label])=>{
+    const f=raw.canvas.cells.find(c=>c?.canvasCell===key);
+    return{key,area,label,status:f?.status??'UNVERIFIED',content:L(f?.content),
+      reason:f?.reason??'사유가 오지 않았다',evidenceIds:L(f?.marketEvidenceIds),
+      missing:L(f?.missingEvidence),caveats:L(f?.caveats),absent:!f}}):null;
+  return{runId:raw.runId,conceptId:raw.conceptId,asOf:raw.asOf,mode:raw.mode,
+    stages:L(raw.stages),degradations:L(raw.degradations),scorecard:L(raw.scorecard),
+    market:raw.market,bm:raw.bm,canvas,evidence,byId:new Map(evidence.map(e=>[e.id,e]))};
+}
+
+/* ═══ 시장분석 — 성적표 7과목이 곧 목차 ═══════════════════ */
+function renderMarket(r){
+  const m=r.market??{};
+  const score=Object.fromEntries(r.scorecard.map(s=>[s.subject,s]));
+  const pick=ids=>L(ids).map(i=>r.byId.get(i)).filter(Boolean);
+
+  /* 근거를 과목으로 가른다. ⚠ 봉투에 과목 필드가 없어서 하는 임시 분류다. */
+  const sizeIds=new Set([...L(m.tam?.evidenceIds),...L(m.sam?.evidenceIds)]);
+  const growIds=new Set(L(m.growth?.evidenceIds));
+  const priceIds=new Set(L(m.price?.evidenceIds));
+  const obs=r.evidence.filter(e=>e.kind!=='계산');
+  const calc=r.evidence.filter(e=>e.kind==='계산');
+  const bag={size:[],grow:[],comp:[],price:[],demand:[]};
+  for(const e of obs){
+    if(COMP_METRICS.includes(e.metric)) bag.comp.push(e);
+    else if(priceIds.has(e.id)) bag.price.push(e);
+    else if(sizeIds.has(e.id)) bag.size.push(e);
+    else if(growIds.has(e.id)) bag.grow.push(e);
+    else bag.demand.push(e);
+  }
+
+  const tile=(label,fig,to,sub)=>{if(!fig)return'';
+    const short=fig.unit==='KRW'?krw(fig.value):null;
+    return `<button type="button" class="mk-kpi" data-jump="sec-${to}">
+      <span>${label}</span>
+      <b class="num">${esc(short??fmt(fig.value,fig.unit))}</b>
+      <small class="num">${esc(sub??(short?fmt(fig.value,fig.unit):''))}</small>
+      ${grade(fig.grade)}</button>`};
+  const p=m.price;
+  const kpis=`<div class="mk-kpis">
+    ${tile('TAM',m.tam,'CALCULATION')}${tile('SAM',m.sam,'CALCULATION')}
+    ${tile('연 성장률',m.growth,'GROWTH','2023 → 2024')}
+    ${p?`<button type="button" class="mk-kpi" data-jump="sec-PRICE"><span>가격대 (월)</span>
+      <b class="num">${esc(krw(p.min))}~${esc(krw(p.max))}</b>
+      <small class="num">${esc(fmt(p.min,p.currency))} ~ ${esc(fmt(p.max,p.currency))}</small>
+      ${grade(p.grade)}</button>`:''}</div>`;
+
+  /* 값을 오독하게 만드는 문장만. 규칙상 지울 수 없다. */
+  const limits=[];
+  if(L(m.tam?.assumptions).length) limits.push(`TAM·SAM 은 가정이 곱해진 추정이다 — ${m.tam.assumptions.join(' · ')}`);
+  if(p?.baseNote) limits.push(p.baseNote);
+  if(!m.som) limits.push('SOM 은 산출하지 않았다 — 0 이 아니라 «안 쟀다»다.');
+  if(L(m.growth?.assumptions).length) limits.push(m.growth.assumptions.at(-1));
+
+  const sec=(n,title,subject,body)=>{
+    const s=score[subject];
+    return `<section class="mk-sec" id="sec-${subject}"><div class="mk-sec__h">
+      <span class="mk-sec__n">${n}</span><h3>${title}</h3>
+      ${s?badge(STATE,s.state):''}
+      <span>${esc(s?.detail??'')}</span></div>
+      <div class="mk-sec__b">${body}</div></section>`;
+  };
+  const rows=(list,opt={})=>`<table>
+    <thead><tr><th>값</th><th>항목</th><th>기간</th><th>등급</th><th>출처</th></tr></thead>
+    <tbody>${list.map(e=>`<tr>
+      <td class="v num">${esc(fmt(e.value,e.unit))}</td>
+      <td>${esc(e.subject)} · ${esc(e.metric)}
+        ${opt.quote&&e.quote?`<div class="mk-quote">“${esc(e.quote)}”</div>`:''}
+        ${e.caveats.map(c=>`<div class="mk-caveat">${esc(c)}</div>`).join('')}</td>
+      <td class="p num">${esc(e.period??'—')}</td>
+      <td>${grade(e.grade)}</td>
+      <td class="s">${link(e)}<div class="p" style="text-align:right">${esc(SRC[e.sourceKind]??'')}</div></td>
+    </tr>`).join('')}</tbody></table>`;
+
+  // 큰 숫자 줄을 빼고 표만 둔다 — 둘이 **같은 두 값**을 그대로 반복하고 있었다.
+  const sizeBody=bag.size.length?rows(bag.size)
+    :'<p class="bm-cell__none">모집단 관측이 없다.</p>';
+
+  const g=m.growth;
+  const growBody=g?`<div class="mk-figs"><div><span>연 성장률</span>
+      <b class="num">${esc(fmt(g.value,g.unit))}</b><small>${esc(g.formula??'')}</small></div></div>
+    ${bag.grow.length?rows(bag.grow):''}
+    <div class="mk-note">${esc(g.assumptions.join(' · '))}</div>`
+    :'<p class="bm-cell__none">성장률을 산출하지 않았다.</p>';
+
+  /* 경쟁사 — 회사별. 못 찾은 슬롯도 같은 카드에 세운다. */
+  const gaps=[];
+  for(const b of L(m.notFound)){
+    if(b.item!=='empty_slots'&&b.item!=='thin_slots')continue;
+    for(const line of String(b.detail??'').split('\n')){
+      const mm=line.match(/^\S+\s+—\s+([^·]+)·\s*([^(]+)\(/);
+      if(mm&&COMP_METRICS.includes(mm[2].trim())) gaps.push([mm[1].trim(),mm[2].trim()]);
+    }
+  }
+  const names=[...new Set([...bag.comp.map(e=>e.subject),...gaps.map(x=>x[0])])];
+  const compBody=names.length?`
+    <div class="mk-comps">${names.map(name=>{
+      const mine=bag.comp.filter(e=>e.subject===name);
+      const miss=gaps.filter(x=>x[0]===name).map(x=>x[1]).filter(k=>!mine.some(e=>e.metric===k));
+      return `<div class="mk-comp"><h4>${esc(name)}</h4>
+        ${mine.map(e=>`<div><span>${esc(e.metric)}</span><b class="num">${esc(fmt(e.value,e.unit))}</b></div>`).join('')}
+        ${miss.map(k=>`<div><span>${esc(k)}</span><span class="none">못 찾음</span></div>`).join('')}
+        ${mine.length?`<div class="mk-comp__src">${link(mine[0])}</div>`:''}
+        ${mine.flatMap(e=>e.caveats).map(c=>`<div class="mk-caveat">${esc(c)}</div>`).join('')}</div>`;
+    }).join('')}</div>
+    <div class="mk-note">수집 대상은 가입 매장 수·매출액·요금 같은 숫자다. <strong>기능·차별점 비교는 조사 항목에 없다.</strong></div>`
+    :'<p class="bm-cell__none">경쟁사 관측이 없다.</p>';
+
+  const cited=pick(p?.evidenceIds);
+  const hosts=new Set(cited.map(e=>host(e.sourceUrl)).filter(Boolean));
+  const priceBody=p?`<div class="mk-figs">
+      <div><span>최저</span><b class="num">${esc(fmt(p.min,p.currency))}</b></div>
+      <div><span>대표값 (잠정)</span><b class="num">${esc(fmt(p.base,p.currency))}</b></div>
+      <div><span>최고</span><b class="num">${esc(fmt(p.max,p.currency))}</b></div></div>
+    ${rows(cited)}
+    ${(hosts.size===1&&cited.length>1)?`<div class="ui-alert ui-alert--warning" style="margin-top:.85rem">
+      ${cited.length}건이지만 출처 도메인은 <strong>${esc([...hosts][0])} 하나</strong>다 —
+      ${cited.length}중 확인이 아니라 <strong>1중 확인</strong>이다.</div>`:''}`
+    :'<p class="bm-cell__none">표시가격 관측이 없다.</p>';
+
+  const demandBody=bag.demand.length?rows(bag.demand,{quote:true})
+    :'<p class="bm-cell__none">수요를 뒷받침하는 관측이 없다.</p>';
+
+  const calcBody=(calc.length?calc.map(c=>{
+    const inputs=Object.entries(c.inputs??{});
+    return `<div class="mk-figs"><div><span>${esc(c.metric)}</span>
+        <b class="num">${esc(fmt(c.value,c.unit))}</b><small>${esc(c.formula??'')}</small></div></div>
+      <table><tbody>${inputs.map(([k,v],i)=>{
+        const backed=i<c.materialIds.length;
+        return `<tr><td class="v num">${esc(v.toLocaleString('ko-KR'))}</td><td>${esc(k)}</td>
+          <td class="s">${backed
+            ?`<span class="ui-badge ui-badge--success">${esc(c.materialIds[i])}</span>`
+            :'<span class="ui-badge ui-badge--warning">뒷받침 근거 없음</span>'}</td></tr>`}).join('')}</tbody></table>
+      <div class="mk-note">${c.assumptions.map(a=>esc(a)).join('<br>')}</div>`}).join('')
+    :'<p class="bm-cell__none">계산 카드가 없다.</p>');
+
+  const nf=L(m.notFound);
+  const nfTotal=nf.reduce((s,b)=>s+String(b.detail??'').split('\n').filter(Boolean).length,0);
+  const secs=parseInt(r.stages.reduce((s,x)=>s+(x.seconds??0),0));
+
+  return `
+    <div class="pipeline-page-heading">
+      <p>4. 시장분석·기획 확정</p>
+      <h2>시장조사 결과</h2>
+      <span>${esc(r.conceptId??'컨셉 미상')} · 기준일 ${esc(r.asOf??'미기재')} · run ${esc(r.runId??'—')}</span>
+    </div>
+    ${kpis}
+    ${limits.length?`<div class="mk-limits"><span>이 숫자를 읽는 조건</span>
+      <ul>${limits.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+
+    ${sec(1,'시장 크기','MARKET_SIZE',sizeBody)}
+    ${sec(2,'성장률','GROWTH',growBody)}
+    ${sec(3,'경쟁사','COMPETITOR',compBody)}
+    ${sec(4,'가격','PRICE',priceBody)}
+    ${sec(5,'수요 근거','DEMAND',demandBody)}
+    ${sec(6,'시장 규모 계산','CALCULATION',calcBody)}
+
+    <details class="ui-accordion"><summary>7. 못 찾은 것<span class="n">${nfTotal}건</span></summary>
+      <div>${nf.map(b=>`<div class="mk-grp"><h4>${esc(NF_LABEL[b.item]??b.item)}</h4>
+        <ul>${String(b.detail??'').split('\n').filter(Boolean)
+          .map(x=>`<li>${esc(x.trim())}</li>`).join('')}</ul></div>`).join('')}</div></details>
+    <details class="ui-accordion"><summary>실행 기록<span class="n">${r.stages.length}단계 · ${secs}초${
+      r.degradations.length?` · 건너뜀 ${r.degradations.length}`:''}</span></summary>
+      <div><table><tbody>${r.stages.map(s=>`<tr><td>${esc(s.name)}</td>
+        <td class="p">${esc(s.status)}</td><td class="s p">${s.seconds??'—'}초</td></tr>`).join('')}</tbody></table>
+        ${r.degradations.length?`<div class="mk-grp" style="margin-top:.8rem"><h4>건너뛴 단계</h4><ul>${
+          r.degradations.map(d=>`<li>${esc(d.stage)} — ${esc(d.detail)}</li>`).join('')}</ul></div>`:''}
+      </div></details>
+
+    <div class="mk-actions">
+      <button type="button" class="ui-button ui-button--primary" data-goto="businessModel">
+        다음 — BM 분석</button></div>`;
+}
+
+/* ═══ BM 분석 ═════════════════════════════════════════════ */
+function renderBm(r){
+  const b=r.bm;
+  const kindOf=c=>CELL_KIND[c.key]??['관측',''];
+  const empty=c=>kindOf(c)[0]==='계획'
+    ? '컨셉 서술에 이 칸 내용이 없다'      // 조사 실패가 아니다 — 입력이 없는 것이다
+    : '조사에서 근거를 못 찾았다';
+  /** 계획 칸에 「계획」 상태를 또 쓰면 같은 말이 두 번 나온다. 요건이 다르니 말도 다르게. */
+  const statusOf=c=>kindOf(c)[0]==='계획'
+    ? (c.content.length?'서술됨':'서술 없음')
+    : (CELL_LABEL[c.status]??c.status);
+
+  const byKey=new Map((r.canvas??[]).map(c=>[c.key,c]));
+  const cell=c=>{
+    const [kind]=kindOf(c);
+    return `<button type="button" class="bm-cell${c.content.length?'':' bm-cell--plan'}"
+        data-cell="${esc(c.key)}">
+      <span class="bm-cell__h"><h4>${esc(c.label)}</h4>
+        <span class="bm-dot bm-dot--${CELL_TONE[c.status]??'none'}"></span></span>
+      ${c.content.length?`<span class="bm-cell__lead">${esc(c.content[0])}</span>`
+        :`<span class="bm-cell__none">${esc(empty(c))}</span>`}
+      <span class="bm-cell__foot"><span class="bm-kind bm-kind--${kind==='관측'?'obs':'plan'}">${kind}</span>
+        ${esc(statusOf(c))}${c.evidenceIds.length?` · 근거 ${c.evidenceIds.length}`:''}</span>
+    </button>`};
+  const bands=BANDS.map(([title,list])=>`
+    <div class="bm-band bm-band--${list.length}">
+      <div class="bm-band__t">${title}</div>
+      <div class="bm-band__row">${list.map(([key])=>{
+        const c=byKey.get(key); return c?cell(c):''}).join('')}</div>
+    </div>`).join('');
+
+  /* 「3칸만 찼다」로 읽히지 않게, 두 종류를 따로 센다. */
+  const obsC=(r.canvas??[]).filter(c=>kindOf(c)[0]==='관측');
+  const planC=(r.canvas??[]).filter(c=>kindOf(c)[0]==='계획');
+  const tally=`<p class="bm-tally">
+    <span><b class="bm-kind bm-kind--obs">관측</b> ${obsC.length}칸 중
+      <b>${obsC.filter(c=>c.evidenceIds.length).length}칸</b> 근거 확보</span>
+    <span><b class="bm-kind bm-kind--plan">계획</b> ${planC.length}칸 중
+      <b>${planC.filter(c=>c.content.length).length}칸</b> 서술됨 — 이 칸들은 조사 대상이 아니다</span></p>`;
+
+  const details=(r.canvas??[]).map(c=>{
+    const [kind,origin]=kindOf(c);
+    const cited=c.evidenceIds.map(i=>r.byId.get(i)).filter(Boolean);
+    return `<section class="bm-det" id="bm-${esc(c.key)}">
+      <div class="bm-det__h"><span class="bm-dot bm-dot--${CELL_TONE[c.status]??'none'}"></span>
+        <h4>${esc(c.label)}</h4>
+        <span class="bm-kind bm-kind--${kind==='관측'?'obs':'plan'}">${kind}</span>
+        <span class="bm-det__o">${esc(origin)}</span>
+        ${badge({x:[CELL_TONE[c.status]==='ok'?'success':CELL_TONE[c.status]==='mid'?'warning':'neutral',
+                    statusOf(c)]},'x')}</div>
+      <div class="bm-det__b">
+        ${c.absent?`<p class="bm-cell__none">이 칸이 결과에 오지 않았다 — 「미확인」과 다른 사건이다.</p>`:''}
+        ${c.content.length?`<ul class="bm-det__c">${c.content.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`
+          :`<p class="bm-cell__none">${esc(empty(c))}</p>`}
+        <p class="bm-det__r">${esc(c.reason)}</p>
+        ${c.caveats.map(x=>`<p class="mk-caveat">${esc(x)}</p>`).join('')}
+        ${cited.length?`<table style="margin-top:.6rem"><tbody>${cited.map(e=>`<tr>
+          <td class="v num">${esc(fmt(e.value,e.unit))}</td>
+          <td>${esc(e.subject)} · ${esc(e.metric)}</td>
+          <td class="p num">${esc(e.period??'—')}</td>
+          <td>${grade(e.grade)}</td>
+          <td class="s">${link(e)}</td></tr>`).join('')}</tbody></table>`:''}
+        ${c.missing.length?`<p class="bm-det__m"><b>못 찾은 것</b>${esc(c.missing.join(' · '))}</p>`:''}
+      </div></section>`}).join('');
+
+  const box=(t,items,col)=>`<div><h4 style="color:${col}">${t}</h4><ul>${
+    items.length?items.map(x=>`<li>${esc(x)}</li>`).join('')
+                :'<li style="color:var(--color-text-secondary)">없음</li>'}</ul></div>`;
+
+  return `
+    <div class="pipeline-page-heading">
+      <p>5. BM 분석</p>
+      <h2>비즈니스 모델 캔버스</h2>
+      <span>${esc(r.conceptId??'컨셉 미상')} · 기준일 ${esc(r.asOf??'미기재')} · run ${esc(r.runId??'—')}</span>
+    </div>
+
+    ${b?`<div class="ui-card" style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; padding:1.1rem 1.25rem">
+      <h3 style="font-size:.95rem">판정</h3>
+      ${badge(DECISION,b.decision)}
+      <span class="ui-badge ui-badge--neutral">${esc(CONF[b.confidence]??b.confidence??'')}</span>
+      <p style="flex:1 1 16rem; color:var(--color-text-secondary); font-size:.85rem">${
+        esc(b.consistencySummary??b.marketFitSummary??b.summary??'')}</p></div>`:''}
+    ${tally}
+    <div>${bands}</div>
+    ${b?`<div class="bm-swr">${box('강점',L(b.strengths),'var(--color-status-success)')}
+      ${box('약점',L(b.weaknesses),'var(--color-status-warning)')}
+      ${box('위험',L(b.risks),'var(--color-status-danger)')}</div>`:''}
+
+    <h3 style="font-size:1rem; margin-top:.75rem">칸별 세부</h3>
+    <div class="bm-dets">${details}</div>`;
+}
+
+/* ═══ 배선 ════════════════════════════════════════════════ */
+const RAW=JSON.parse(document.getElementById('fixture-data').textContent);
+const MARKET=normalize(RAW.full), BM=normalize(RAW.bm);
+document.getElementById('view-market').innerHTML=renderMarket(MARKET);
+document.getElementById('view-bm').innerHTML=renderBm(BM);
+
+document.getElementById('steps').innerHTML=STEPS.map(([id,label,status,tone])=>
+  `<li><button type="button" data-step="${id}"${id==='market'?' aria-current="page"':''}>
+    <span>${label}</span><small${tone?` data-tone="${tone}"`:''}>${status}</small></button></li>`).join('');
+
+function show(step){
+  const isBm = step==='businessModel';
+  for(const el of document.querySelectorAll('[data-step]'))
+    el.toggleAttribute('aria-current', el.dataset.step===step);
+  for(const el of document.querySelectorAll('[data-step][aria-current]'))
+    el.setAttribute('aria-current','page');
+  document.getElementById('view-market').hidden = isBm;
+  document.getElementById('view-bm').hidden = !isBm;
+  document.getElementById('module-title').textContent =
+    isBm ? '5. BM 분석' : '4. 시장분석·기획 확정';
+  window.scrollTo({top:0});
+}
+
+/**
+ * 요약 → 세부로 착지.
+ *
+ * ⚠ 두 가지가 이 한 줄을 망가뜨렸다. 둘 다 **조용히** 실패한다:
+ *   1. 카드가 `<button>` 이라 클릭이 포커스를 만든다. 브라우저는 포커스 받은 요소를 화면
+ *      안으로 되돌리는데, 그게 우리 스크롤보다 나중에 일어나 **되감긴다.**
+ *      → 포커스를 떼고 다음 프레임에 움직인다.
+ *   2. 그 «다음 프레임»을 `requestAnimationFrame` 으로 잡으면 **숨은 탭에서 영영 안 온다**
+ *      (실측: `document.hidden` 일 때 rAF 콜백 0회). 그러면 착지가 통째로 사라진다.
+ *      → `setTimeout(…, 0)` 은 순서는 같고 가시성에 매이지 않는다.
+ */
+function jump(id){
+  const el=document.getElementById(id); if(!el)return;
+  for(const x of document.querySelectorAll('.is-on'))x.classList.remove('is-on');
+  el.classList.add('is-on');
+  document.activeElement?.blur?.();
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),0);
+}
+
+document.addEventListener('click',e=>{
+  const s=e.target.closest('[data-step]');
+  if(s) return ['market','businessModel'].includes(s.dataset.step) ? show(s.dataset.step) : null;
+  const g=e.target.closest('[data-goto]'); if(g)return show(g.dataset.goto);
+  const c=e.target.closest('[data-cell]'); if(c)return jump(`bm-${c.dataset.cell}`);
+  const k=e.target.closest('[data-jump]'); if(k)return jump(k.dataset.jump);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "canonicalInputHash": "sha256:d852d722c9ab36b96759b0c0bf41d78fa574e65eb383299bede7e4166fd829fa",
+  "contractVersion": "1.0",
+  "correlationId": "correlation-market",
+  "deadlineAt": "2035-01-01T00:00:00Z",
+  "input": {
+    "analysisType": "MARKET",
+    "conceptVersionKey": "concept-1",
+    "marketInput": {
+      "context": "시장 맥락",
+      "evidenceKeys": [
+        "evidence-1"
+      ]
+    },
+    "sharedEvidence": [
+      {
+        "category": "USER_INPUT",
+        "evidenceKey": "evidence-1",
+        "sourceKeys": [
+          "source-1"
+        ],
+        "summary": "검증된 입력 근거",
+        "verificationNeeded": false
+      }
+    ],
+    "shortlistDecisionKey": "shortlist-1"
+  },
+  "locale": "ko-KR",
+  "taskAttemptId": "task-attempt-market",
+  "taskRunId": "task-run-market",
+  "taskSchemaVersion": "1.0",
+  "taskType": "DETAILED_ANALYSIS"
+}

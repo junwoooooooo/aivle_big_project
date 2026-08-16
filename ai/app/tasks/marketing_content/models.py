@@ -2,6 +2,9 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.tasks.marketing_strategy.models import (
+    MarketingStrategyResult,
+)
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -94,6 +97,7 @@ class MarketingSourceSnapshot(StrictModel):
 class MarketingContentRequest(StrictModel):
     contract: Literal["marketing-content-request-v1"]
     marketingSourceSnapshotId: Annotated[str, Field(min_length=1, max_length=64)]
+    marketingStrategyReportId: Annotated[str, Field(min_length=1, max_length=64)]
     contentType: ContentType
     channel: Annotated[str, Field(min_length=1, max_length=120)]
     purpose: Annotated[str, Field(min_length=1, max_length=500)]
@@ -109,6 +113,7 @@ class MarketingContentRequest(StrictModel):
 
 class MarketingContentInput(StrictModel):
     source: MarketingSourceSnapshot
+    strategy: MarketingStrategyResult
     request: MarketingContentRequest
 
 

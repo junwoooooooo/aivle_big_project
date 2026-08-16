@@ -10,7 +10,7 @@ import tools.jackson.databind.JsonNode;
 public final class MarketingApiModels {
     private MarketingApiModels() {}
     public record CreateRequest(
-        @NotBlank String contract, @NotBlank String marketingSourceSnapshotId,
+        @NotBlank String contract, @NotBlank String marketingSourceSnapshotId,@NotBlank @Size(max = 64) String marketingStrategyReportId,
         @NotNull MarketingContentType contentType, @NotBlank @Size(max=120) String channel,
         @NotBlank @Size(max=500) String purpose, @NotBlank @Size(max=100) String tone,
         @NotNull Length length, @Size(max=20) List<@Size(max=200) String> requiredPhrases,

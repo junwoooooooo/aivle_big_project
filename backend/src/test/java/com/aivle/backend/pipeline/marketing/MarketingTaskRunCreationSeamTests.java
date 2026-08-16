@@ -1,6 +1,7 @@
 package com.aivle.backend.pipeline.marketing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.aivle.backend.pipeline.marketing.api.MarketingApiModels.CreateRequest;
@@ -9,6 +10,8 @@ import com.aivle.backend.pipeline.marketing.application.MarketingContentService;
 import com.aivle.backend.pipeline.marketing.application.MarketingSourceSnapshotService;
 import com.aivle.backend.pipeline.marketing.domain.MarketingContentType;
 import com.aivle.backend.pipeline.marketing.domain.MarketingSourceSnapshot;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
+import com.aivle.backend.pipeline.marketing.strategy.domain.MarketingStrategyReport;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -43,6 +46,7 @@ class MarketingTaskRunCreationSeamTests {
     @Autowired UserRepository users;
     @Autowired ProjectRepository projects;
     @MockitoBean MarketingSourceSnapshotService sourceSnapshots;
+    @MockitoBean MarketingStrategyService marketingStrategies;
 
     @Test
     void publicCreateBuildsAQueuedTaskRunWithTheExactCanonicalHashAndSchema() {
@@ -54,9 +58,16 @@ class MarketingTaskRunCreationSeamTests {
             owner.getId(), Instant.parse("2026-08-13T00:00:00Z")
         );
         when(sourceSnapshots.requireCurrent(project.getId())).thenReturn(source);
+        MarketingStrategyReport strategy = mock(MarketingStrategyReport.class);
+        when(strategy.getResultJson()).thenReturn("{}");
+        when(marketingStrategies.requireCurrent(
+            owner.getId(),
+            project.getId(),
+            "strategy-1"
+        )).thenReturn(strategy);
 
         var created = marketing.create(owner.getId(), project.getId(), new CreateRequest(
-            MarketingContentService.REQUEST_CONTRACT, source.getId(),
+            MarketingContentService.REQUEST_CONTRACT, source.getId(), "strategy-1",
             MarketingContentType.BLOG_INTRO, "blog", "출시 안내", "명확함",
             Length.SHORT, List.of("필수"), List.of("금지"), null, null
         ), "marketing-create-key", "marketing-correlation");

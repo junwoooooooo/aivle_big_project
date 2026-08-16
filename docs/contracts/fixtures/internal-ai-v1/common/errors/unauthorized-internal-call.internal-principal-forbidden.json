@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "UNAUTHORIZED_INTERNAL_CALL",
+    "correlationId": "correlation-error",
+    "details": [
+      {
+        "reason": "INTERNAL_PRINCIPAL_FORBIDDEN"
+      }
+    ],
+    "message": "안전한 내부 오류 요약",
+    "retryable": false,
+    "taskAttemptId": null,
+    "taskRunId": null
+  }
+}
