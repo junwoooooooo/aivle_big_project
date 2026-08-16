@@ -31,17 +31,20 @@ public class ConceptRefinementService {
     private final CanonicalInputHasher inputHasher;
     private final ObjectMapper mapper;
     private final ConceptRefinementDecisionContract decisions;
+    private final ConceptRefinementLineageGuard lineage;
 
     public ConceptRefinementService(ProjectRepository projects, BusinessValidationCoordinator validations,
             ConceptPortfolioSelectionRepository selections,
             MarketAnalysisSeedSnapshotRepository marketSeeds,
             ConceptRefinementRoundRepository rounds, ConceptRefinementMaterialFactory materials,
             ConceptPortfolioSelectionTaskFactory tasks, CanonicalInputHasher inputHasher,
-            ObjectMapper mapper, ConceptRefinementDecisionContract decisions) {
+            ObjectMapper mapper, ConceptRefinementDecisionContract decisions,
+            ConceptRefinementLineageGuard lineage) {
         this.projects = projects; this.validations = validations; this.selections = selections;
         this.marketSeeds = marketSeeds; this.rounds = rounds; this.materials = materials;
         this.tasks = tasks; this.inputHasher = inputHasher; this.mapper = mapper;
         this.decisions = decisions;
+        this.lineage = lineage;
     }
 
     @Transactional
@@ -124,9 +127,9 @@ public class ConceptRefinementService {
     }
 
     private CurrentView currentView(Long ownerId, Long projectId, ConceptRefinementRound round) {
-        boolean stale;
-        try { stale = !round.boundTo(validations.requireCurrentCompletedSource(ownerId, projectId)); }
-        catch (BusinessException unavailable) { stale = true; }
+        boolean stale = round.postApplyState()
+            ? !lineage.postApplyCurrent(projectId, round)
+            : !lineage.preApplyCurrent(ownerId, projectId, round);
         if (stale && round.getState() != ConceptRefinementRound.State.STALE) round.markStale();
         return view(round, stale);
     }

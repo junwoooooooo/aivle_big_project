@@ -64,5 +64,10 @@ public class BmPlanPreparation extends BaseEntity {
         this.revision++;
     }
 
+    /** Refinement patch는 기존 constraints를 byte-for-byte 보존한다. */
+    public void patchPlan(String planJson, Long userId) {
+        update(planJson, this.constraintJson, userId);
+    }
+
     private static boolean blank(String value) { return value == null || value.isBlank(); }
 }

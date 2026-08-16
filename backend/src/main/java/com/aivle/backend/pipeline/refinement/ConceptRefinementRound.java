@@ -16,7 +16,9 @@ import lombok.NoArgsConstructor;
 public class ConceptRefinementRound extends BaseEntity {
     public enum State {
         PROPOSING, AWAITING_DECISION, NO_CHANGES, FAILED, STALE,
-        DECISION_RECORDED, KEEP_CURRENT
+        DECISION_RECORDED, KEEP_CURRENT, APPLYING_HYPOTHESES, APPLY_FAILED,
+        LEGAL_REVIEW_PENDING, LEGAL_REVIEW_FAILED, LEGAL_BLOCKED,
+        APPLIED_PENDING_FINALIZATION
     }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
@@ -34,7 +36,7 @@ public class ConceptRefinementRound extends BaseEntity {
     @Column(name = "policy_version", nullable = false, length = 40) private String policyVersion;
     @Column(name = "task_run_id", nullable = false, length = 64) private String taskRunId;
     @Column(nullable = false) private int attempt;
-    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 24) private State state;
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 40) private State state;
     @Column(name = "command_idempotency_key", nullable = false, length = 128)
     private String commandIdempotencyKey;
     @Column(name = "canonical_material_hash", nullable = false, length = 71)
@@ -47,6 +49,16 @@ public class ConceptRefinementRound extends BaseEntity {
     @Column(name = "decision_idempotency_key", length = 128) private String decisionIdempotencyKey;
     @Column(name = "decided_by_user_id") private Long decidedByUserId;
     @Column(name = "decided_at") private Instant decidedAt;
+    @Column(name = "application_idempotency_key", length = 128) private String applicationIdempotencyKey;
+    @Column(name = "application_hash", length = 71) private String applicationHash;
+    @Column(name = "application_task_run_id", length = 64) private String applicationTaskRunId;
+    @Column(name = "delta_legal_task_run_id", length = 64) private String deltaLegalTaskRunId;
+    @Column(name = "application_attempt") private Integer applicationAttempt;
+    @Column(name = "applied_selection_revision") private Integer appliedSelectionRevision;
+    @Column(name = "applied_bm_plan_revision") private Integer appliedBmPlanRevision;
+    @Column(name = "application_error_code", length = 80) private String applicationErrorCode;
+    @Column(name = "application_started_at") private Instant applicationStartedAt;
+    @Column(name = "application_applied_at") private Instant applicationAppliedAt;
 
     public static ConceptRefinementRound start(Long projectId, CompletedSource source,
             String taskRunId, String commandKey, String canonicalMaterialHash) {
@@ -115,6 +127,106 @@ public class ConceptRefinementRound extends BaseEntity {
         this.decidedByUserId = userId;
         this.decidedAt = now;
         this.state = keepCurrent ? State.KEEP_CURRENT : State.DECISION_RECORDED;
+    }
+
+    public void startApplication(String key, String hash, String taskRunId, Instant now) {
+        requireApplicationStart(State.DECISION_RECORDED, key, hash, now);
+        if (taskRunId == null || taskRunId.isBlank()) throw new IllegalArgumentException("application task is required");
+        applicationTaskRunId = taskRunId;
+        applicationAttempt = 1;
+        state = State.APPLYING_HYPOTHESES;
+    }
+
+    public void startLocalApplication(String key, String hash, Instant now) {
+        requireApplicationStart(State.DECISION_RECORDED, key, hash, now);
+        applicationAttempt = 1;
+    }
+
+    public void retryApplication(String key, String hash, String taskRunId, Instant now) {
+        if (state != State.APPLY_FAILED || applicationAttempt == null || applicationAttempt >= 3)
+            throw new IllegalStateException("application retry is unavailable");
+        requireApplicationIdentity(key, hash, now);
+        if (taskRunId == null || taskRunId.isBlank()) throw new IllegalArgumentException("application task is required");
+        applicationTaskRunId = taskRunId;
+        applicationAttempt += 1;
+        applicationErrorCode = null;
+        state = State.APPLYING_HYPOTHESES;
+    }
+
+    public void applicationFailed(String taskRunId, String errorCode) {
+        if (state != State.APPLYING_HYPOTHESES || !java.util.Objects.equals(applicationTaskRunId, taskRunId))
+            throw new IllegalStateException("application failure is stale");
+        applicationErrorCode = errorCode;
+        state = State.APPLY_FAILED;
+    }
+
+    public void recordAppliedLineage(int selectionRevision, int bmPlanRevision, Instant now) {
+        if (state != State.APPLYING_HYPOTHESES && state != State.DECISION_RECORDED)
+            throw new IllegalStateException("application lineage is unavailable");
+        appliedSelectionRevision = selectionRevision;
+        appliedBmPlanRevision = bmPlanRevision;
+        applicationAppliedAt = now;
+        applicationErrorCode = null;
+    }
+
+    public void legalPending(String taskRunId) {
+        if (appliedSelectionRevision == null || appliedBmPlanRevision == null
+                || taskRunId == null || taskRunId.isBlank())
+            throw new IllegalStateException("legal review cannot start");
+        deltaLegalTaskRunId = taskRunId;
+        state = State.LEGAL_REVIEW_PENDING;
+    }
+
+    public void retryLegal(String taskRunId) {
+        if (state != State.LEGAL_REVIEW_FAILED || taskRunId == null || taskRunId.isBlank())
+            throw new IllegalStateException("legal retry is unavailable");
+        deltaLegalTaskRunId = taskRunId;
+        applicationErrorCode = null;
+        state = State.LEGAL_REVIEW_PENDING;
+    }
+
+    public void legalFailed(String taskRunId, String errorCode) {
+        requireDeltaTask(taskRunId);
+        applicationErrorCode = errorCode;
+        state = State.LEGAL_REVIEW_FAILED;
+    }
+
+    public void legalBlocked(String taskRunId) {
+        requireDeltaTask(taskRunId);
+        applicationErrorCode = null;
+        state = State.LEGAL_BLOCKED;
+    }
+
+    public void readyForFinalization() {
+        if (appliedSelectionRevision == null || appliedBmPlanRevision == null
+                || !java.util.Set.of(State.DECISION_RECORDED, State.APPLYING_HYPOTHESES,
+                    State.LEGAL_REVIEW_PENDING).contains(state))
+            throw new IllegalStateException("refinement is not applied");
+        applicationErrorCode = null;
+        state = State.APPLIED_PENDING_FINALIZATION;
+    }
+
+    public boolean postApplyState() {
+        return java.util.Set.of(State.LEGAL_REVIEW_PENDING, State.LEGAL_REVIEW_FAILED,
+            State.LEGAL_BLOCKED, State.APPLIED_PENDING_FINALIZATION).contains(state);
+    }
+
+    private void requireApplicationStart(State expected, String key, String hash, Instant now) {
+        if (state != expected) throw new IllegalStateException("application is unavailable");
+        requireApplicationIdentity(key, hash, now);
+    }
+
+    private void requireApplicationIdentity(String key, String hash, Instant now) {
+        if (key == null || key.isBlank() || hash == null || !hash.matches("sha256:[0-9a-f]{64}") || now == null)
+            throw new IllegalArgumentException("application identity is invalid");
+        applicationIdempotencyKey = key;
+        applicationHash = hash;
+        applicationStartedAt = now;
+    }
+
+    private void requireDeltaTask(String taskRunId) {
+        if (state != State.LEGAL_REVIEW_PENDING || !java.util.Objects.equals(deltaLegalTaskRunId, taskRunId))
+            throw new IllegalStateException("delta legal result is stale");
     }
 
     public boolean boundTo(CompletedSource source) {

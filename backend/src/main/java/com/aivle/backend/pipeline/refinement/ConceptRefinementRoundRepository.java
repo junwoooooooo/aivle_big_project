@@ -15,4 +15,8 @@ public interface ConceptRefinementRoundRepository extends JpaRepository<ConceptR
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from ConceptRefinementRound r where r.taskRunId=:taskRunId and r.deletedAt is null")
     Optional<ConceptRefinementRound> findByTaskRunIdForUpdate(@Param("taskRunId") String taskRunId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from ConceptRefinementRound r where r.id=:id and r.deletedAt is null")
+    Optional<ConceptRefinementRound> findByIdForUpdate(@Param("id") Long id);
 }

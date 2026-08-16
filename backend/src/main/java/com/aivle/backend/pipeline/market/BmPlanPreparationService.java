@@ -5,6 +5,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -64,6 +65,36 @@ public class BmPlanPreparationService {
             .orElseGet(() -> preparations.save(BmPlanPreparation.create(
                 UUID.randomUUID().toString(), projectId, planJson, constraintJson, userId)));
         return view(saved);
+    }
+
+    /** Expected-revision, non-destructive patch used only by refinement application. */
+    @Transactional
+    public PlanView patchForRefinement(Long projectId, Long userId, int expectedRevision,
+            ObjectNode patch) {
+        if (patch == null) throw invalidPatch("BM patch가 필요합니다.");
+        Set<String> allowed = Set.of("key_activities", "key_resources", "key_partners",
+            "customer_relationship");
+        for (String key : patch.propertyNames()) {
+            if (!allowed.contains(key)) throw invalidPatch("허용되지 않은 BM patch field입니다: " + key);
+        }
+        BmPlanPreparation current = preparations.findByProjectIdForUpdate(projectId).orElse(null);
+        int revision = current == null ? 0 : current.getRevision();
+        if (revision != expectedRevision) {
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "BM Plan revision이 refinement source와 다릅니다.");
+        }
+        ObjectNode before = current == null ? mapper.createObjectNode() : readObject(current.getPlanJson());
+        ObjectNode after = before.deepCopy();
+        for (String key : patch.propertyNames()) applyPatch(after, key, patch.get(key));
+        if (after.equals(before)) return current == null
+            ? new PlanView(after, mapper.createObjectNode(), 0) : view(current);
+        if (current == null) {
+            BmPlanPreparation created = preparations.save(BmPlanPreparation.create(
+                UUID.randomUUID().toString(), projectId, after.toString(), "{}", userId));
+            return view(created);
+        }
+        current.patchPlan(after.toString(), userId);
+        return view(current);
     }
 
     /** BM 실행이 읽는 자리. 준비가 없으면 {@code empty} — 그때는 기존 경로가 그대로 돈다. */
@@ -133,6 +164,29 @@ public class BmPlanPreparationService {
             out.put(key, number);
         }
         return out;
+    }
+
+    private void applyPatch(ObjectNode plan, String key, JsonNode value) {
+        if (LIST_KEYS.contains(key)) {
+            if (value == null || !value.isArray()) throw invalidPatch(key + " 는 문자열 배열이어야 합니다.");
+            var normalized = mapper.createArrayNode();
+            for (JsonNode item : value) {
+                if (!item.isTextual()) throw invalidPatch(key + " 는 문자열 배열이어야 합니다.");
+                String text = item.asText().trim();
+                if (!text.isEmpty()) normalized.add(text);
+            }
+            if (normalized.isEmpty()) plan.remove(key); else plan.set(key, normalized);
+            return;
+        }
+        if (!SENTENCE_KEY.equals(key) || value == null || !value.isTextual()) {
+            throw invalidPatch(key + " 는 문자열이어야 합니다.");
+        }
+        String normalized = value.asText().trim();
+        if (normalized.isEmpty()) plan.remove(key); else plan.put(key, normalized);
+    }
+
+    private BusinessException invalidPatch(String message) {
+        return new BusinessException(ErrorCode.VALIDATION_FAILED, message);
     }
 
     /** 화면·실행이 함께 쓰는 모양. {@code revision} 0 은 「아직 저장한 적 없다」다. */

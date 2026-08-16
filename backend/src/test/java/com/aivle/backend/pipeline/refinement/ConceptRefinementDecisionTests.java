@@ -60,8 +60,9 @@ class ConceptRefinementDecisionTests {
     void setUp() {
         contract = new ConceptRefinementDecisionContract(mapper,
             new ConceptPortfolioJsonHasher(mapper));
-        service = new ConceptRefinementDecisionService(projects, validations, selections, seeds,
-            bmPlans, rounds, contract, refinement);
+        service = new ConceptRefinementDecisionService(projects,
+            new ConceptRefinementLineageGuard(validations, selections, seeds, bmPlans),
+            rounds, contract, refinement);
         source = new CompletedSource("session-1", 91L, 92L, "seed-1", 31L, 4, 3, HASH);
         seed = MarketAnalysisSeedSnapshot.createPortfolio("seed-1", PROJECT_ID, 31L,
             "concept-1", "legal-1", "2.0", HASH, HASH, "{}", OWNER_ID, Instant.parse("2026-08-16T00:00:00Z"));

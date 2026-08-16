@@ -128,6 +128,28 @@ public class ConceptPortfolioSelectionService {
         return new ActionAccepted(selectionId, "CONFIRM_HYPOTHESES", task.getId(), selection.getStatus().name());
     }
 
+    /** Reuses CONFIRM_HYPOTHESES without invalidating dependents before a successful result. */
+    @Transactional
+    public TaskRun confirmFromRefinement(Long ownerId, Long projectId, Long selectionId,
+            ObjectNode edits, ObjectNode refinementApplication, String idempotencyKey) {
+        ConceptPortfolioSelection selection = selections.findLocked(selectionId)
+            .filter(value -> value.isCurrent() && value.getProjectId().equals(projectId))
+            .orElseThrow(() -> new BusinessException(ErrorCode.MODULE_INPUT_STALE));
+        requireOwned(ownerId, projectId);
+        if (edits == null || edits.isEmpty() || edits.size() > 7
+                || refinementApplication == null || !refinementApplication.isObject())
+            throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
+        ObjectNode input = mapper.createObjectNode();
+        input.put("action", "CONFIRM_HYPOTHESES");
+        input.put("expectedHypothesisRevision", selection.getHypothesisRevision());
+        input.set("hypotheses", hypothesisArray(latestRequired(selectionId)));
+        input.set("edits", edits.deepCopy());
+        input.put("confirmAll", true);
+        input.set("refinementApplication", refinementApplication.deepCopy());
+        return tasks.create(ownerId, selection, "CONFIRM_HYPOTHESES", input,
+            idempotencyKey, null);
+    }
+
     @Transactional
     public ActionAccepted alternative(Long ownerId, Long projectId, Long selectionId,
             String typeText, ActionRequest body) {
@@ -258,6 +280,16 @@ public class ConceptPortfolioSelectionService {
     TaskRun queueDelta(Long ownerId, ConceptPortfolioSelection selection, String key) {
         ConceptPortfolioRun run=runs.findLocked(selection.getRunId()).orElseThrow(); ConceptPortfolioConcept concept=concept(selection);
         ObjectNode input=baseInput("DELTA_LEGAL", run, concept); input.set("hypotheses", hypothesisArray(latestRequired(selection.getId())));
+        return tasks.create(ownerId, selection, "DELTA_LEGAL", input, key, null);
+    }
+
+    @Transactional
+    public TaskRun queueDeltaFromRefinement(Long ownerId, ConceptPortfolioSelection selection,
+            String key, ObjectNode refinementApplication) {
+        ObjectNode input = baseInput("DELTA_LEGAL", runs.findLocked(selection.getRunId()).orElseThrow(),
+            concept(selection));
+        input.set("hypotheses", hypothesisArray(latestRequired(selection.getId())));
+        input.set("refinementApplication", refinementApplication.deepCopy());
         return tasks.create(ownerId, selection, "DELTA_LEGAL", input, key, null);
     }
     ObjectNode baseInput(String action, ConceptPortfolioRun run, ConceptPortfolioConcept concept) {

@@ -138,10 +138,36 @@ public class ConceptRefinementDecisionContract {
         List<String> selected = new ArrayList<>();
         decision.path("selectedProposalKeys").forEach(value -> selected.add(value.asText()));
         JsonNode plan = decision.path("plan");
-        return new DecisionView(round.getState().name(), List.copyOf(selected), selected.size(),
+        return new DecisionView(round.getState().name(), round.getDecisionHash(), List.copyOf(selected), selected.size(),
             decision.path("declinedProposalKeys").size(),
             new PlanSummary(plan.path("hypotheses").size(), plan.path("bmPlan").size(),
                 plan.path("overlay").size()));
+    }
+
+    public ObjectNode applicationPlan(ConceptRefinementRound round) {
+        ObjectNode decision = decisionSnapshot(round);
+        JsonNode plan = decision.path("plan");
+        if (!plan.isObject() || !plan.path("hypotheses").isObject()
+                || !plan.path("bmPlan").isObject() || !plan.path("overlay").isObject()) {
+            throw staleContract();
+        }
+        return (ObjectNode) plan.deepCopy();
+    }
+
+    public String applicationHash(ConceptRefinementRound round) {
+        ObjectNode identity = mapper.createObjectNode();
+        identity.put("contract", "concept-refinement-application-v1");
+        identity.set("round", roundIdentity(round));
+        identity.put("decisionHash", round.getDecisionHash());
+        return hasher.hash(identity);
+    }
+
+    private ObjectNode decisionSnapshot(ConceptRefinementRound round) {
+        if (round.getDecisionJson() == null || round.getDecisionHash() == null) throw staleContract();
+        JsonNode decision = mapper.readTree(round.getDecisionJson());
+        if (decision == null || !decision.isObject() || !hasher.hash(decision).equals(round.getDecisionHash()))
+            throw staleContract();
+        return (ObjectNode) decision;
     }
 
     private List<String> canonicalSelectedKeys(List<String> requestedKeys) {
@@ -210,7 +236,7 @@ public class ConceptRefinementDecisionContract {
                                    List<String> selectedKeys, int declinedCount,
                                    PlanSummary planSummary) { }
     public record PlanSummary(int hypotheses, int bmPlan, int overlay) { }
-    public record DecisionView(String state, List<String> selectedProposalKeys,
+    public record DecisionView(String state, String decisionHash, List<String> selectedProposalKeys,
                                int selectedCount, int declinedCount,
                                PlanSummary planSummary) { }
 }

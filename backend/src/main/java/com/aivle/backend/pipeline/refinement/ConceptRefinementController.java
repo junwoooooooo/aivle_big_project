@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class ConceptRefinementController {
     private final ConceptRefinementService refinement;
     private final ConceptRefinementDecisionService decisions;
+    private final ConceptRefinementApplicationService applications;
     private final CurrentUserProvider currentUser;
 
     @PostMapping("/start")
@@ -46,6 +47,22 @@ public class ConceptRefinementController {
             body.selectedProposalKeys(), body.keepCurrent()), id(request));
     }
 
+    @PostMapping("/apply")
+    public ApiResponse<ConceptRefinementService.CurrentView> apply(
+            @PathVariable Long projectId, @RequestBody ApplyRequest body,
+            HttpServletRequest request) {
+        return ApiResponse.success(applications.apply(currentUser.currentUserId(), projectId,
+            request.getHeader("Idempotency-Key"), body.expectedRound(), body.expectedDecisionHash()), id(request));
+    }
+
+    @PostMapping("/apply/retry-legal")
+    public ApiResponse<ConceptRefinementService.CurrentView> retryLegal(
+            @PathVariable Long projectId, @RequestBody ApplyRequest body,
+            HttpServletRequest request) {
+        return ApiResponse.success(applications.retryLegal(currentUser.currentUserId(), projectId,
+            request.getHeader("Idempotency-Key"), body.expectedRound(), body.expectedDecisionHash()), id(request));
+    }
+
     private ResponseEntity<ApiResponse<ConceptRefinementService.CurrentView>> accepted(
             ConceptRefinementService.CurrentView value, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(value, id(request)));
@@ -55,4 +72,5 @@ public class ConceptRefinementController {
 
     public record DecisionRequest(Integer expectedRound, String proposalSetHash,
                                   List<String> selectedProposalKeys, boolean keepCurrent) { }
+    public record ApplyRequest(Integer expectedRound, String expectedDecisionHash) { }
 }

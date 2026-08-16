@@ -2,11 +2,6 @@ package com.aivle.backend.pipeline.refinement;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
-import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator.CompletedSource;
-import com.aivle.backend.pipeline.conceptportfolio.selection.repository.ConceptPortfolioSelectionRepository;
-import com.aivle.backend.pipeline.market.BmPlanPreparationService;
-import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
 import com.aivle.backend.project.repository.ProjectRepository;
 import java.time.Instant;
 import java.util.List;
@@ -18,22 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ConceptRefinementDecisionService {
     private final ProjectRepository projects;
-    private final BusinessValidationCoordinator validations;
-    private final ConceptPortfolioSelectionRepository selections;
-    private final MarketAnalysisSeedSnapshotRepository seeds;
-    private final BmPlanPreparationService bmPlans;
+    private final ConceptRefinementLineageGuard lineage;
     private final ConceptRefinementRoundRepository rounds;
     private final ConceptRefinementDecisionContract contract;
     private final ConceptRefinementService refinement;
 
     public ConceptRefinementDecisionService(ProjectRepository projects,
-            BusinessValidationCoordinator validations,
-            ConceptPortfolioSelectionRepository selections,
-            MarketAnalysisSeedSnapshotRepository seeds, BmPlanPreparationService bmPlans,
+            ConceptRefinementLineageGuard lineage,
             ConceptRefinementRoundRepository rounds, ConceptRefinementDecisionContract contract,
             ConceptRefinementService refinement) {
-        this.projects = projects; this.validations = validations; this.selections = selections;
-        this.seeds = seeds; this.bmPlans = bmPlans; this.rounds = rounds;
+        this.projects = projects; this.lineage = lineage; this.rounds = rounds;
         this.contract = contract; this.refinement = refinement;
     }
 
@@ -75,7 +64,7 @@ public class ConceptRefinementDecisionService {
             throw unavailable();
         }
         if (round.getState() != ConceptRefinementRound.State.AWAITING_DECISION) throw unavailable();
-        if (!sourceCurrent(ownerId, projectId, round)) {
+        if (!lineage.preApplyCurrent(ownerId, projectId, round)) {
             round.markStale();
             return refinement.view(round, true);
         }
@@ -83,31 +72,6 @@ public class ConceptRefinementDecisionService {
         round.recordDecision(decision.snapshot().toString(), decision.hash(), key,
             ownerId, Instant.now(), keepCurrent);
         return refinement.view(round, false);
-    }
-
-    private boolean sourceCurrent(Long ownerId, Long projectId, ConceptRefinementRound round) {
-        CompletedSource source;
-        try { source = validations.requireCurrentCompletedSource(ownerId, projectId); }
-        catch (BusinessException unavailable) { return false; }
-        if (!round.boundTo(source)) return false;
-        boolean selectionCurrent = selections
-            .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId)
-            .filter(value -> Objects.equals(value.getId(), round.getSelectionId())
-                && Objects.equals(value.getHypothesisRevision(), round.getSourceSelectionRevision()))
-            .isPresent();
-        if (!selectionCurrent) return false;
-        boolean seedCurrent = seeds
-            .findByIdAndStaleAtIsNullAndDeletedAtIsNull(round.getSourceMarketSeedSnapshotId())
-            .filter(value -> Objects.equals(value.getProjectId(), projectId)
-                && Objects.equals(value.getPortfolioSelectionId(), round.getSelectionId())
-                && "CONCEPT_PORTFOLIO_V2".equals(value.getSourceType()))
-            .isPresent();
-        if (!seedCurrent) return false;
-        try {
-            return bmPlans.current(projectId).revision() == round.getSourceBmPlanRevision();
-        } catch (BusinessException unavailable) {
-            return false;
-        }
     }
 
     private void ownedForUpdate(Long ownerId, Long projectId) {
