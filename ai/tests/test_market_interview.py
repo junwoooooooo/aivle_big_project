@@ -125,6 +125,28 @@ def test_target_zero_fails_before_response_spend(monkeypatch):
     assert calls == ["market_interview_target_criteria_v2"]
 
 
+def test_targeting_uses_problem_context_and_actual_bank_taxonomy(monkeypatch):
+    seen = {}
+    real = provider()
+    async def tracked(system, user, **kwargs):
+        if kwargs["schema_name"] == "market_interview_target_criteria_v2":
+            seen["system"] = system
+            seen["user"] = json.loads(user)
+        return await real(system, user, **kwargs)
+
+    payload = request_payload()
+    payload["selectedConcept"]["solution"]["problemScenario"] = "예약 누락으로 반복 업무가 생긴다"
+    monkeypatch.setattr(deep_engine, "load_bank", lambda: bank())
+    monkeypatch.setattr(service, "execute_market_interview_prompt", tracked)
+
+    asyncio.run(service.execute_market_interview(payload))
+
+    assert seen["user"] == {"targetUsers": "서울 소규모 매장",
+                             "problemScenario": "예약 누락으로 반복 업무가 생긴다"}
+    assert "실제 shipped profile bank 광역지역 어휘" in seen["system"]
+    assert "서울" in seen["system"] and "전업주부" in seen["system"]
+
+
 def test_two_pass_coding_retains_identity_and_derives_mentions(monkeypatch):
     result = execute(monkeypatch)
     sampled = {item["participantId"] for item in result["transcriptProvenance"]}

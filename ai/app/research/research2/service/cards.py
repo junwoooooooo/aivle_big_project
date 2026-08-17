@@ -97,6 +97,9 @@ def build(run: str, concept: str) -> dict:
             "카드_id": f"C-{row['fact_id']}",
             "종류": "관측",
             "칸": s.get("_canvas_cell") or s.get("claim_type") or "",
+            # 캔버스 칸과 조사 claim type은 다른 축이다. 가격·경쟁·수요 정책이
+            # "수익원"을 PRICE로 다시 추측하지 않도록 원래 축을 내부에 보존한다.
+            "_claim_type": s.get("claim_type") or "",
             # **이 수가 무엇인가** — 판 ㉛ 실측으로 추가했다.
             #   처음엔 `칸`(= claim_type 폴백)만 줬더니 모델이 「GROWTH」를 읽고
             #   **거래액 2조를 「2024년 성장률」이라고 썼다.** 숫자 출처는 맞아서

@@ -15,6 +15,7 @@ from __future__ import annotations
 import fillaxis as _fx
 
 import re
+from decimal import Decimal, InvalidOperation
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from schema import (QUARANTINE_LABELS, Coverage, Document, Fact, Finding,
@@ -83,7 +84,7 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
         s = s.replace(t, "")
     s = s.replace("₩", "").replace("$", "").replace("＄", "")
 
-    total, matched, rest = 0.0, False, s
+    total, matched, rest = Decimal(0), False, s
     for tok in sorted(mult, key=lambda k: -mult[k]):        # 조 → 억 → 만 → 천
         if tok in rest:
             head, _, rest = rest.partition(tok)
@@ -91,8 +92,8 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
             if not head_num:
                 return None, None, False
             try:
-                total += float(head_num.group(0).replace(",", "")) * mult[tok]
-            except ValueError:
+                total += Decimal(head_num.group(0).replace(",", "")) * Decimal(str(mult[tok]))
+            except InvalidOperation:
                 return None, None, False
             matched = True
 
@@ -100,8 +101,14 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
         tail = _NUM.search(rest)
         if tail:
             try:
-                total += float(tail.group(0).replace(",", ""))
-            except ValueError:
+                tail_value = Decimal(tail.group(0).replace(",", ""))
+                # Extractors may split a compound Korean amount at the field boundary:
+                # number_raw="272조 398", unit_raw="억원".  The trailing 398 still belongs
+                # to the 억 scale; treating it as 398 won produced 272,000,000,000,398.
+                _, tail_scale = normalize_unit(unit_raw, units_rules)
+                scale_value = tail_scale if isinstance(tail_scale, (int, float)) else 1
+                total += tail_value * Decimal(str(scale_value))
+            except InvalidOperation:
                 pass
         value = total
     else:
@@ -109,8 +116,8 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
         if not m:
             return None, None, False
         try:
-            value = float(m.group(0).replace(",", ""))
-        except ValueError:
+            value = Decimal(m.group(0).replace(",", ""))
+        except InvalidOperation:
             return None, None, False
 
     unit_norm, scale = normalize_unit(unit_raw, units_rules)
@@ -121,7 +128,10 @@ def parse_number(number_raw: str, unit_raw: str, units_rules: dict) -> tuple:
     # '120' + '억원' 처럼 단위에 배수가 들어 있으면 곱한다.
     # 단, 숫자 쪽에서 이미 한국어 단위를 먹었으면(matched) 이중 계상 금지.
     if scale and not matched:
-        value *= scale
+        value *= Decimal(str(scale))
+    # Money and other integral counts stay exact across JSON serialization. Decimal fractions
+    # remain floats only where the existing Fact contract genuinely represents a ratio.
+    value = int(value) if value == value.to_integral_value() else float(value)
     return value, unit_norm, approx
 
 

@@ -17,7 +17,8 @@ import tools.jackson.databind.ObjectMapper;
 
 class MarketResearchProductInputTests {
     private final ObjectMapper mapper = new ObjectMapper();
-    private final MarketResearchInputFactory factory = new MarketResearchInputFactory(mapper);
+    private final MarketResearchInputFactory factory =
+        new MarketResearchInputFactory(mapper, new MarketStrategySelector());
 
     @Test
     void arbitrarySelectedConceptBuildsProductInputWithoutSavedLedger() {
@@ -41,6 +42,25 @@ class MarketResearchProductInputTests {
     }
 
     @Test
+    void exerciseMatchingAdapterSelectsPopulationInsteadOfTransactionSeries() {
+        MarketAnalysisSeedSnapshot snapshot = seed("seed-exercise");
+        String exercise = snapshot.getSnapshotJson()
+            .replace("Arbitrary Selected Business", "동네 운동 파트너 매칭")
+            .replace("small merchants", "운동 부족 직장인과 활동량이 적은 지역 주민")
+            .replace("retail software", "피트니스 커뮤니티")
+            .replace("repetitive work", "혼자서는 운동을 지속하기 어렵다")
+            .replace("automation", "가까운 운동 파트너 매칭");
+        when(snapshot.getSnapshotJson()).thenReturn(exercise);
+
+        JsonNode input = mapper.readTree(factory.full(snapshot, selection("exercise"), "2026-08-17"));
+        JsonNode concept = mapper.readTree(input.path("conceptSnapshotJson").asText());
+
+        assertThat(concept.path("_계열").path("계열").asText()).isEqualTo("B");
+        assertThat(concept.path("_계열").path("전략").asText()).isEqualTo("POPULATION_UNIT");
+        assertThat(concept.path("_계열").path("왜").asText()).contains("대상 인구", "단가");
+    }
+
+    @Test
     void donorConceptPreservesEngineShapeAndDoesNotInjectConfirmedHypothesesIntoCollection() {
         JsonNode input = mapper.readTree(factory.full(seed("seed-contract"), selection("concept-contract"), "2026-08-11"));
         JsonNode concept = mapper.readTree(input.path("conceptSnapshotJson").asText());
@@ -50,7 +70,8 @@ class MarketResearchProductInputTests {
         assertThat(plain).containsExactlyInAnyOrder("concept_id", "name", "problem", "target", "solution",
             "region", "hypotheses", "price_hypothesis_krw", "constraint");
         assertThat(concept.path("hypotheses")).isEmpty();
-        assertThat(concept.path("_계열").path("계열").asText()).isEqualTo("C");
+        assertThat(concept.path("_계열").path("계열").asText()).isEqualTo("A");
+        assertThat(concept.path("_계열").path("전략").asText()).isEqualTo("ORGANIZATION_UNIT");
         assertThat(concept.path("_다듬기5").path("4_업종_분류").has("코드")).isFalse();
         assertThat(input.path("llmBudget").asInt()).isEqualTo(96);
     }

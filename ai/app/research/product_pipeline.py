@@ -574,8 +574,22 @@ def _full(source_run: str, concept_path: str, concept_id: str,
     _observe(event_sink, "MARKET_VERDICT", "COMPLETED", "시장 판정 계산 완료")
     cards_doc = _timed(ledger, "cards", lambda: CARDS.build(source_run, concept_path))
     _observe(event_sink, "MARKET_CARDS", "COMPLETED", "시장 결과 카드 구성 완료")
+    from .semantic_relevance import filter_market_material
+    concept_doc = json.load(io.open(os.path.join(RESEARCH_HOME, concept_path), encoding="utf-8"))
+    verdict, cards_doc, relevance = filter_market_material(concept_doc, verdict, cards_doc)
+    if relevance["rejected"]:
+        price_rejected = any(item.get("slot") == "PRICE" and
+                             item.get("reason") in {"CONTRADICTORY_BUSINESS_CATEGORY",
+                                                    "PRICE_WITHOUT_SEMANTIC_LINK"}
+                             for item in relevance["rejected"])
+        detail = f"사업안 의미와 맞지 않는 근거 {len(relevance['rejected'])}건을 대표 근거에서 제외했다."
+        if price_rejected:
+            detail += " 직접 비교 가능한 외부 가격 근거가 부족하면 가격 대표값을 만들지 않는다."
+        ledger.degrade("relevance", "EVIDENCE_RELEVANCE_REJECTED", detail)
     score = _timed(ledger, "scorecard",
                    lambda: SCORECARD.build(source_run, concept_path, verdict=verdict))
+    from .semantic_relevance import align_scorecard
+    score = align_scorecard(score, cards_doc)
     _observe(event_sink, "MARKET_SCORECARD", "COMPLETED", "시장 점수표 계산 완료")
 
     cards = cards_doc.get("카드") or []
@@ -823,6 +837,8 @@ def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: st
     def adapt():
         concept = json.load(io.open(os.path.join(RESEARCH_HOME, concept_path),
                                     encoding="utf-8"))
+        from .semantic_relevance import filter_market_material
+        safe_verdict, safe_cards_doc, _ = filter_market_material(concept, verdict, cards_doc)
         # 사용자가 쓴 것이 **이긴다.** 견본의 `_bm_plan` 은 컨셉 계약 밖의 손으로 쓴
         # 스텁이라, 사용자가 같은 칸을 채웠는데 그것이 이기면 입력이 조용히 무시된다.
         if plan_material:
@@ -831,8 +847,9 @@ def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: st
             concept = {**concept, "constraint": {**(concept.get("constraint") or {}),
                                                  **plan_constraints}}
         held["constraints"] = ADAPTER.execution_constraints_of(concept)
-        return ADAPTER.build_from(CANVAS.build(source_run, concept_path), verdict,
-                                  cards_doc, concept, source_run, concept_id)
+        held["cards"] = safe_cards_doc
+        return ADAPTER.build_from(CANVAS.build(source_run, concept_path), safe_verdict,
+                                  safe_cards_doc, concept, source_run, concept_id)
 
     market_join = _timed(ledger, "bm_adapter", adapt)
-    return cards_doc.get("카드") or [], market_join, held.get("constraints") or {}
+    return (held.get("cards") or cards_doc).get("카드") or [], market_join, held.get("constraints") or {}

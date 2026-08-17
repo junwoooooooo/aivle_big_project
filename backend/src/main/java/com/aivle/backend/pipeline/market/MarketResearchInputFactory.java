@@ -24,7 +24,11 @@ public class MarketResearchInputFactory {
         java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1,64}");
     private static final List<String> CONSTRAINT_KEYS = List.of("budget_krw", "months", "team");
     private final ObjectMapper mapper;
-    public MarketResearchInputFactory(ObjectMapper mapper) { this.mapper = mapper; }
+    private final MarketStrategySelector strategySelector;
+    public MarketResearchInputFactory(ObjectMapper mapper, MarketStrategySelector strategySelector) {
+        this.mapper = mapper;
+        this.strategySelector = strategySelector;
+    }
 
     String full(MarketAnalysisSeedSnapshot snapshot, ConceptPortfolioSelection selection, String asOf) {
         return full(snapshot, selection, asOf, null);
@@ -136,10 +140,19 @@ public class MarketResearchInputFactory {
         if (price == null) out.putNull("price_hypothesis_krw"); else out.put("price_hypothesis_krw", price);
         out.set("constraint", constraints(constraints));
 
+        MarketStrategySelector.Selection strategy = strategySelector.select(
+            name,
+            text(identity.path("targetUsers")),
+            text(identity.path("industryCategory")),
+            text(solution.path("problemScenario")),
+            text(solution.path("solutionMechanism")),
+            text(hypotheses.path("revenueModel").path("value")),
+            operation.toString());
         ObjectNode series = out.putObject("_계열");
-        series.put("계열", "C");
-        series.put("왜", "시장 거래액 × 점유율로 TAM을 산정한다.");
-        series.put("_고정_사유", "채울 수 있는 구조를 기준으로 C를 고정한다. 개인 대상 서비스는 거래액 통계가 없어 TAM이 미확보될 수 있고, 거래액은 매출과 다르다.");
+        series.put("계열", strategy.series());
+        series.put("전략", strategy.strategy());
+        series.put("분모", strategy.denominator());
+        series.put("왜", strategy.reason());
         ObjectNode refinement = out.putObject("_다듬기5");
         refinement.put("3_핵심_가치", text(identity.path("coreValue")));
         ObjectNode industry = refinement.putObject("4_업종_분류");

@@ -13,7 +13,9 @@ from app.tasks.market_interview.models import (
     AXES, AXIS_SOURCE, CodebookResult, CodingResult, MarketInterviewInput,
     MarketInterviewResult, PanelAnswerResult, TargetingResult,
 )
-from app.tasks.market_interview.panel_sampling import criteria_text, draw_panel, public_profile
+from app.tasks.market_interview.panel_sampling import (
+    TARGETING_POLICY, draw_panel, profile_taxonomy, public_profile,
+)
 from app.tasks.market_interview.provider import RESPONDENT_WORKLOAD, interview_concurrency
 from app.tasks.market_interview.questions import QUESTIONS, build_prompt, concept_board
 from app.twin.bank import load as load_bank
@@ -32,7 +34,8 @@ COMMON_BOUNDARY = """이 작업은 실제 고객 조사가 아니라 실측 prof
 TARGETING_PROMPT = COMMON_BOUNDARY + """
 사업안의 targetUsers 자유문장을 아래 패널 필드로 표현 가능한 좁은 조건으로만 옮긴다.
 나이, 성별, 가구원수, 광역지역, 개인소득 문자열, 직업 문자열, 자녀 동거, 가구 지위 외 조건은 만들지 않는다.
-표현할 수 없는 행동·태도 조건은 비운다. 0과 빈 배열은 제한 없음이다. LLM은 조건만 만들고 실제 판정·표집은 코드가 한다."""
+표현할 수 없는 행동·태도 조건은 비운다. 0과 빈 배열은 제한 없음이다. LLM은 조건만 만들고 실제 판정·표집은 코드가 한다.
+""" + TARGETING_POLICY
 
 TRANSCRIPT_PROMPT = COMMON_BOUNDARY + """
 주어진 profile card 한 명의 관점에서 동일 상품 설명과 고정 9문항에 답한다.
@@ -69,9 +72,14 @@ async def _call(call: StructuredCall, system: str, value: Any, model, name: str,
                       schema_name=name, task_type="MARKET_INTERVIEW", workload=workload)
 
 
-def _target_text(value: MarketInterviewInput) -> str:
+def _target_context(value: MarketInterviewInput) -> dict[str, str]:
     identity = value.selectedConcept.get("identity") or {}
-    return str(identity.get("targetUsers") or value.selectedConcept.get("targetUsers") or "")
+    solution = value.selectedConcept.get("solution") or {}
+    return {
+        "targetUsers": str(identity.get("targetUsers") or value.selectedConcept.get("targetUsers") or ""),
+        "problemScenario": str(solution.get("problemScenario")
+                               or value.selectedConcept.get("problemScenario") or ""),
+    }
 
 
 def _transcript_payload(answer) -> dict:
@@ -124,11 +132,13 @@ def _representatives(panel: list[dict], assignments) -> list[str]:
 
 async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCall) -> dict[str, Any]:
     try:
-        targeting = TargetingResult.model_validate(await _call(
-            call, TARGETING_PROMPT, {"targetUsers": _target_text(value)}, TargetingResult,
-            "market_interview_target_criteria_v2"))
         cards, frame = load_bank()
-        panel, sampling = draw_panel(cards, frame, targeting.criteria, value.sampleSize)
+        target_context = _target_context(value)
+        target_text = "\n".join(text for text in target_context.values() if text)
+        targeting = TargetingResult.model_validate(await _call(
+            call, TARGETING_PROMPT + "\n" + profile_taxonomy(cards), target_context, TargetingResult,
+            "market_interview_target_criteria_v2"))
+        panel, sampling = draw_panel(cards, frame, targeting.criteria, value.sampleSize, target_text)
         board = concept_board(value)
         semaphore = asyncio.Semaphore(interview_concurrency())
 
@@ -270,8 +280,8 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         result = {
             "contract": "market-interview-result-v2", "schemaVersion": "2.0", "synthetic": True,
             "source": value.source.model_dump(mode="json"),
-            "targeting": {"criteria": targeting.criteria.model_dump(mode="json"),
-                          "criteriaText": criteria_text(targeting.criteria, sampling["matched"], sampling["total"]),
+            "targeting": {"criteria": sampling["criteria"].model_dump(mode="json"),
+                          "criteriaText": sampling["criteriaText"],
                           "requestedSampleSize": value.sampleSize, "drawnSampleSize": len(panel),
                           "attemptedCount": len(panel), "usableCount": len(usable),
                           "failedCount": len(failures),

@@ -421,11 +421,12 @@ def _price(cards: list[dict]) -> dict | None:
 
     ⚠ **대표값의 성격은 일급 필드다**(`baseKind`·`baseNote`). 자유 dict 안 문자열로 두면
       언젠가 안 그려지고, 그러면 **잠정 대표값이 확정 단가로 읽힌다**.
-    ⚠ 종류로 거른다 — `칸 == "PRICE"`. 단위(「원」)로 거르면 **전사 매출 12조**가 밴드에
+    ⚠ 종류로 거른다 — `_claim_type == "PRICE"`. 단위(「원」)로 거르면 **전사 매출 12조**가 밴드에
       들어와 가격 가설에 도장을 찍던 사고가 돌아온다(판 ⑩ 실측 · 백로그 60).
     """
     rows = [card for card in cards
-            if card.get("칸") == "PRICE" and isinstance(card.get("값"), (int, float))]
+            if (card.get("_claim_type") or card.get("칸")) == "PRICE"
+            and isinstance(card.get("값"), (int, float))]
     if not rows:
         return None
     rows.sort(key=lambda card: float(card["값"]))

@@ -300,6 +300,7 @@ def build_from(cv: dict, vd: dict, cd: dict, con: dict,
     서버는 이 경로를 쓴다 — 파이프라인이 canvas·verdict·cards 를 이미 메모리에 들고 있다.
     """
     cards = cd["카드"]
+    claim = lambda card: card.get("_claim_type") or card.get("칸")
     by_ct = {}
     for c in cards:
         by_ct.setdefault(c.get("칸") or "", []).append(c)
@@ -311,11 +312,11 @@ def build_from(cv: dict, vd: dict, cd: dict, con: dict,
 
     # ── 경쟁·수요·가격 — **카드에서만** 온다(값을 새로 만들지 않는다) ──────
     comp = [_evidence(c) for c in cards
-            if (c.get("칸") in ("COMP", "COMPARABLE") or c.get("계량") in ("매출액", "가입 매장 수"))]
+            if (claim(c) in ("COMP", "COMPARABLE") or c.get("계량") in ("매출액", "가입 매장 수"))]
     demand = [_evidence(c) for c in cards
-              if c.get("칸") == "PAIN" or c.get("계량") == "문제 경험률"]
+              if claim(c) == "PAIN" or c.get("계량") == "문제 경험률"]
     prices = sorted(float(c["값"]) for c in cards
-                    if c.get("칸") == "PRICE" and isinstance(c.get("값"), (int, float)))
+                    if claim(c) == "PRICE" and isinstance(c.get("값"), (int, float)))
     pa = PriceAnalysisData(currency="KRW")
     if prices:
         mid = prices[len(prices) // 2] if len(prices) % 2 else \
