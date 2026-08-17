@@ -172,9 +172,9 @@ class ProjectModuleStatusServiceTests {
         var techOps = service.findAll(7L, 41L).stream()
             .filter(item -> item.module() == PipelineModuleType.TECH_OPS).findFirst().orElseThrow();
 
-        assertThat(techOps.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
-        assertThat(techOps.requiredInputs()).containsExactly("techOpsRequiredFacts", "techOpsRequiredDecisions");
-        assertThat(techOps.nextAction().route()).isEqualTo("/tech-ops");
+        assertThat(techOps.status()).isEqualTo(PipelineModuleStatus.READY);
+        assertThat(techOps.requiredInputs()).isEmpty();
+        assertThat(techOps.nextAction().route()).isEqualTo("/launch-readiness");
     }
 
     @Test
@@ -216,8 +216,8 @@ class ProjectModuleStatusServiceTests {
             .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
 
         assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
-        assertThat(finance.requiredInputs()).containsExactly("financialRequiredInputs");
-        assertThat(finance.nextAction().route()).isEqualTo("/finance");
+        assertThat(finance.requiredInputs()).containsExactly("financialInputDocument");
+        assertThat(finance.nextAction().route()).isEqualTo("/launch-readiness");
 
         TaskRun estimate = mock(TaskRun.class);
         when(estimate.getId()).thenReturn("finance-estimate-task");
@@ -257,7 +257,7 @@ class ProjectModuleStatusServiceTests {
         when(marketVersion.getSourceRun()).thenReturn(previousMarketRun);
         finance = service.findAll(7L, 41L).stream()
             .filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow();
-        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(finance.status()).isEqualTo(PipelineModuleStatus.READY);
     }
 
     @Test

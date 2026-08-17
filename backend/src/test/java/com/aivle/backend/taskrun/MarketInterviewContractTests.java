@@ -92,6 +92,23 @@ class MarketInterviewContractTests {
         assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
     }
 
+    @Test void duplicateThemeRespondentIdIsRejected() {
+        ObjectNode value = valid();
+        ObjectNode theme = (ObjectNode) value.path("themes").path(0);
+        ((ArrayNode) theme.path("participantIds")).removeAll().add("R001").add("R001");
+        theme.put("mentionCount", 2).put("targetCount", 2).put("nonTargetCount", 0);
+        assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
+    }
+
+    @Test void duplicateCrossRelationshipRespondentIdIsRejected() {
+        ObjectNode value = valid();
+        ObjectNode relation = ((ArrayNode) value.path("crossRelationships")).addObject()
+            .put("suggestionTitle", "설명 보완").put("relatedAxis", "CONCERN")
+            .put("relatedTitle", "가격 조건").put("overlapCount", 2);
+        relation.putArray("respondentIds").add("R001").add("R001");
+        assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
+    }
+
     private ObjectNode valid() {
         return valid(20, 20);
     }

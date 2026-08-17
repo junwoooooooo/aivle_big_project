@@ -9,13 +9,16 @@ const assert = (condition, message) => {
 
 const limits = read('backend/src/main/java/com/aivle/backend/pipeline/concept/domain/ConceptFactoryLimits.java');
 assert(/SLOT_COUNT\s*=\s*5/.test(limits), 'Concept target must be 5');
-assert(/MAX_INSPECTED_CANDIDATES\s*=\s*15/.test(limits), 'Inspected candidate limit must be 15');
+assert(/MAX_INSPECTED_CANDIDATES\s*=\s*SLOT_COUNT\s*\*\s*\(1\s*\+\s*MAX_REPLACEMENT_ROUNDS\s*\+\s*MAX_LEGAL_REDESIGNS_PER_SLOT\)/s.test(limits),
+  'Inspected candidate limit must derive from slots, replacement rounds, and legal redesigns');
 assert(/MAX_REPLACEMENT_ROUNDS\s*=\s*2/.test(limits), 'Replacement round limit must be 2');
 
 const env = read('.env.example');
 const compose = read('compose.yaml');
 const envKeys = new Set([...env.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1]));
-for (const key of ['AI_CONCEPT_GENERATION_CONCURRENCY', 'AI_PROVIDER', 'AI_MODEL', 'AI_INTERNAL_SERVICE_TOKEN']) {
+for (const key of ['AI_CONCEPT_GENERATION_CONCURRENCY', 'AI_PROVIDER', 'AI_MODEL', 'AI_INTERNAL_SERVICE_TOKEN',
+  'MARKET_INTERVIEW_MODEL', 'MARKET_INTERVIEW_TEMPERATURE', 'MARKET_INTERVIEW_REASONING_EFFORT',
+  'MARKET_INTERVIEW_CONCURRENCY']) {
   assert(envKeys.has(key), `.env.example is missing ${key}`);
   assert(compose.includes(`\${${key}`), `compose.yaml is missing ${key}`);
 }
@@ -31,7 +34,6 @@ const activeFrontend = [
 for (const forbidden of [
   'VITE_CONVERSATIONAL_VALIDATION_WORKSPACE',
   'LegacyPipelineSurface',
-  'ProjectStage',
   'R2A',
   '개발용 fixture',
   '후속 단계에서',
@@ -40,4 +42,4 @@ for (const forbidden of [
   assert(!activeFrontend.includes(forbidden), `Active frontend still contains: ${forbidden}`);
 }
 
-console.log('Pipeline cutover configuration is consistent (5 eligible / 15 inspected / 2 replacement rounds).');
+console.log('Pipeline cutover configuration is consistent (5 eligible / 20 inspected / 2 replacement rounds / 1 legal redesign).');

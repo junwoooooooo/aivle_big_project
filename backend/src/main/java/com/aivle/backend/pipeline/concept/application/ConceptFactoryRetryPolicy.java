@@ -31,7 +31,7 @@ public class ConceptFactoryRetryPolicy {
                 return new Decision(false, "FIX_SYSTEM_AND_START_NEW_RUN", slot.error().name());
             }
             if (slot.error() == ConceptAttemptError.PERMANENT_PROVIDER_FAILURE
-                    || DOMAIN_EXHAUSTION.contains(slot.error())) {
+                    || slot.error() != null && DOMAIN_EXHAUSTION.contains(slot.error())) {
                 return Decision.startNew(slot.error() == null ? "DOMAIN_EXHAUSTED" : slot.error().name());
             }
             if (slot.retryable()) retryableFailure = true;

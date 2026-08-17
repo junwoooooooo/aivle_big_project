@@ -14,6 +14,7 @@ from app.concept_portfolio_v2.models import LegalReview, LegalRoute
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
 from app.providers import ProviderFailure
 from app.tasks.concept_portfolio_v2.service import execute_concept_portfolio_v2
+from app.tasks.concept_portfolio_v2.observer import ProductionObservedConceptPortfolioEngine
 
 
 SCENARIOS = json.loads((Path(__file__).resolve().parents[2] / "fixtures" /
@@ -252,9 +253,11 @@ def test_current_legal_adapter_preserves_unknown_facts(monkeypatch):
     (GlobalLegalFailureProvider(), "FAILED", 0),
 ])
 def test_production_entrypoint_keeps_run_full_status_contract(provider, expected_status, expected_count):
-    engine = ConceptPortfolioEngine(gateway=ProviderGateway(provider=provider))
-    result = run(execute_concept_portfolio_v2({"seed": payload(SCENARIOS[1]), "maxConcepts": 5}, engine=engine))
-    assert result["runStatus"] == expected_status
+    engine = ProductionObservedConceptPortfolioEngine(gateway=ProviderGateway(provider=provider))
+    canonical_seed = engine.seed_adapter.adapt(payload(SCENARIOS[1]))
+    result = run(execute_concept_portfolio_v2(
+        {"seed": canonical_seed, "maxConcepts": 5}, engine=engine))
+    assert result["engineStatus"] == expected_status
     assert result["producedConceptCount"] == expected_count
     if expected_status != "FAILED":
         assert result["downstreamReadiness"] == "PENDING_HYPOTHESIS_CONFIRMATION"

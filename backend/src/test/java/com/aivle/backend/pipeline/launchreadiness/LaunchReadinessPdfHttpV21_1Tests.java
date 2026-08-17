@@ -157,7 +157,10 @@ class LaunchReadinessPdfHttpV21_1Tests {
             mapper.createObjectNode().put("systemArchitecture", "웹·API·DB 구조"), hash('a'), hash('b'),
             "report-" + type, hash('c'),
             analysis, analysis.path("quality"), analysis.path("externalEvidence"),
-            Instant.parse("2026-08-16T00:00:00Z"), true, false);
+            Instant.parse("2026-08-16T00:00:00Z"), true, false, false, null,
+            "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT",
+            mapper.createObjectNode().put("marketSeedSnapshotId", "seed-1")
+                .put("selectionId", 11L).put("selectionRevision", 3).put("bmPlanRevision", 4));
     }
 
     private LaunchReadinessInputSnapshot snapshot(ModuleType type) {
@@ -169,7 +172,9 @@ class LaunchReadinessPdfHttpV21_1Tests {
     private AnalysisView financialView() {
         return new AnalysisView("finance-run", "finance-run", "SUCCEEDED", false, null,
             "finance-snapshot", hash('f'), mapper.valueToTree(financialResult()), false, false,
-            java.time.LocalDateTime.of(2026, 8, 16, 9, 0), "finance-plan.docx");
+            java.time.LocalDateTime.of(2026, 8, 16, 9, 0), "finance-plan.docx",
+            mapper.createObjectNode().put("marketSeedSnapshotId", "seed-1")
+                .put("selectionId", 11L).put("selectionRevision", 3).put("bmPlanRevision", 4), null);
     }
 
     private FinancialModuleResponse financialResult() {

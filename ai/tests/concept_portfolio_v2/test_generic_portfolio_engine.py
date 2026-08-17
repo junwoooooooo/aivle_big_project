@@ -11,6 +11,7 @@ from app.concept_portfolio_v2.mechanics import GENERIC_CODE_SETS, GenericConcept
 from app.concept_portfolio_v2.models import FailureCode, PortfolioPlanDraft
 from app.concept_portfolio_v2.providers import MockPortfolioProvider
 from app.tasks.concept_portfolio_v2.service import execute_concept_portfolio_v2
+from app.tasks.concept_portfolio_v2.observer import ProductionObservedConceptPortfolioEngine
 
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "concept_portfolio_v2" / "generic_domains.json"
@@ -165,9 +166,11 @@ def test_same_family_preference_is_soft_not_hard_rejection():
 def test_production_entrypoint_uses_same_engine_and_contract():
     payload = GENERIC_DOMAINS[4]
     direct = run(ConceptPortfolioEngine().run_full(payload))
-    injected_engine = ConceptPortfolioEngine()
-    task = run(execute_concept_portfolio_v2({"seed": payload, "maxConcepts": 5}, engine=injected_engine))
-    assert task["runStatus"] == direct.runStatus.value
+    injected_engine = ProductionObservedConceptPortfolioEngine()
+    canonical_seed = injected_engine.seed_adapter.adapt(payload)
+    task = run(execute_concept_portfolio_v2(
+        {"seed": canonical_seed, "maxConcepts": 5}, engine=injected_engine))
+    assert task["engineStatus"] == direct.runStatus.value
     assert task["producedConceptCount"] == direct.producedConceptCount
     assert [item["descriptor"] for item in task["concepts"]] == [
         item.descriptor.model_dump(mode="json") for item in direct.concepts]

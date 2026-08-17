@@ -232,6 +232,23 @@ def test_result_contract_rejects_theme_counts_not_derived_from_membership(monkey
         MarketInterviewResult.model_validate(result)
 
 
+def test_result_contract_rejects_duplicate_theme_respondent_id(monkeypatch):
+    result = execute(monkeypatch)
+    result["themes"][0].update({
+        "participantIds": ["R001", "R001"], "mentionCount": 2,
+        "targetCount": 2, "nonTargetCount": 0,
+    })
+    with pytest.raises(ValidationError):
+        MarketInterviewResult.model_validate(result)
+
+
+def test_result_contract_rejects_duplicate_cross_relationship_respondent_id(monkeypatch):
+    result = execute(monkeypatch)
+    result["crossRelationships"][0].update({"respondentIds": ["R001", "R001"], "overlapCount": 2})
+    with pytest.raises(ValidationError):
+        MarketInterviewResult.model_validate(result)
+
+
 def test_transient_respondent_failure_retries_once_then_succeeds(monkeypatch):
     base = provider()
     attempts = Counter()

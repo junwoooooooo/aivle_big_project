@@ -14,9 +14,10 @@ describe('BusinessModelPage', () => {
     render(<MemoryRouter initialEntries={['/app/projects/1/business-model']}><Routes>
       <Route path="/app/projects/:projectId/business-model" element={<BusinessModelPage />} />
     </Routes></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: 'BM 분석' })).toBeInTheDocument();
-    expect(screen.getByText(/market-seed-1/)).toBeInTheDocument();
-    expect(screen.getByText(/외부 BM 분석 알고리즘은 아직 연결되지 않았습니다/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '수익 구조 분석' })).toBeInTheDocument();
+    expect(screen.getByText('확정된 시장 입력')).toBeInTheDocument();
+    expect(screen.queryByText(/market-seed-1/)).not.toBeInTheDocument();
+    expect(screen.getByText(/분석 기능을 준비하고 있습니다/)).toBeInTheDocument();
     expect(screen.queryByText(/최종 확정 기획/)).not.toBeInTheDocument();
     expect(screen.queryByText(/페르소나 응답/)).not.toBeInTheDocument();
   });

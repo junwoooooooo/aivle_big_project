@@ -191,8 +191,10 @@ public class ProjectModuleStatusService {
             || !currentMarketVersion.getId().equals(techOpsAdvisory.getSourceMarketResearchVersionId())
             || !currentBusinessVersion.getId().equals(techOpsAdvisory.getSourceBusinessModelVersionId())
             || !portfolioSelection.getId().equals(techOpsAdvisory.getSourcePortfolioSelectionId()));
-        PipelineModuleStatus techOpsStatus = aggregateLaunchStatus(launchTechnologyTask, launchOperationsTask);
-        PipelineModuleStatus financialBaseStatus = financialPreparation == null ? PipelineModuleStatus.READY
+        PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : aggregateLaunchStatus(launchTechnologyTask, launchOperationsTask);
+        PipelineModuleStatus financialBaseStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+            : financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
         TaskRun activeFinancialReportTask = activeTask(financialTask);

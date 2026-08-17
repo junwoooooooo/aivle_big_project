@@ -170,7 +170,7 @@ class MarketingExecutionServiceTests {
     @Test
     void staleEditAndFinalizeReturnHistoricalViewWithoutRollingBackOrDeletingHistory() {
         MarketingContent editable = content(MarketingContentStatus.COMPLETED, 1);
-        MarketingContent finalizable = content(MarketingContentStatus.COMPLETED, 1);
+        MarketingContent finalizable = content(MarketingContentStatus.COMPLETED, 2);
         when(contents.findLocked(editable.getId(), 41L)).thenReturn(Optional.of(editable));
         when(contents.findLocked(finalizable.getId(), 41L)).thenReturn(Optional.of(finalizable));
         when(seed.getId()).thenReturn("new-seed");

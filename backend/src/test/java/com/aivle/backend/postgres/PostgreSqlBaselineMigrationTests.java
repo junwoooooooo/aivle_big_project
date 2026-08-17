@@ -25,7 +25,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(23);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(40);
         flyway.validate();
 
         var appliedVersions = Arrays.stream(flyway.info().applied())
@@ -35,8 +35,9 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
 
         assertThat(appliedVersions).containsExactly(
             "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
-            "18", "19", "20", "21", "22", "23", "24");
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("24");
+            "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+            "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("41");
 
         try (Connection connection = DriverManager.getConnection(
                  POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -103,7 +104,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(16);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(33);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
@@ -124,7 +125,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(14);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(32);
         latest.validate();
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
@@ -163,7 +164,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         Flyway latest = Flyway.configure()
             .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isEqualTo(9);
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(27);
         latest.validate();
 
         try (Connection connection = DriverManager.getConnection(
@@ -232,6 +233,26 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
             statement.execute("SET search_path TO " + schema);
             statement.execute("SET session_replication_role = replica");
             statement.execute("""
+                INSERT INTO concepts (
+                    id, run_id, slot_id, project_id, source_idea_brief_snapshot_id, source_snapshot_hash,
+                    title, summary, canonical_hash, major_field_hash, legal_status, published,
+                    created_at, updated_at, version
+                ) VALUES ('legacy-concept', 'legacy-run', 'legacy-slot', 41, 'legacy-brief',
+                    'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                    'legacy', 'legacy',
+                    'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+                    'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+                    'IMPLEMENTABLE', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("""
+                INSERT INTO concept_selections (
+                    id, project_id, concept_id, selection_reason, request_hash, selected_by_user_id,
+                    selected_at, is_current, created_at, updated_at, version
+                ) VALUES (13, 41, 'legacy-concept', 'legacy authority',
+                    'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+                    7, CURRENT_TIMESTAMP, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0)
+                """);
+            statement.execute("""
                 INSERT INTO marketing_source_snapshots (
                     id, project_id, source_market_seed_snapshot_id, selection_id, concept_id,
                     schema_version, snapshot_hash, snapshot_json, created_by_user_id, finalized_at,
@@ -244,7 +265,7 @@ class PostgreSqlBaselineMigrationTests extends PostgreSqlIntegrationTestSupport 
         }
         Flyway latest = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
             .defaultSchema(schema).schemas(schema).locations("classpath:db/migration").load();
-        assertThat(latest.migrate().migrationsExecuted).isOne();
+        assertThat(latest.migrate().migrationsExecuted).isEqualTo(21);
         try (Connection connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
              var statement = connection.createStatement()) {

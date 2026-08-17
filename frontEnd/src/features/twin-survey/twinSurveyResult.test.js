@@ -41,7 +41,8 @@ describe('normalizeTwinSurvey', () => {
     const notes = result.pairs[0].caveats.join(' / ');
     expect(notes).toContain('외적 타당성 시험 종합 미달');
     expect(notes).toContain('한국미디어패널조사(KISDI)');
-    expect(notes).toContain('실존 인물 인터뷰가 아니다');
+    expect(notes).toContain('실측 프로파일 기반 가상 패널 시뮬레이션');
+    expect(notes).toContain('실제 소비자 설문 응답이 아니다');
   });
 
   it('0단계 판정 전이므로 성적 미전이 문구가 붙어 있다', () => {
@@ -105,7 +106,7 @@ describe('빠진 값은 조용히 넘어가지 않는다', () => {
     const pair = result.pairs[0];
     expect(pair.caveatsMissing).toBe(true);
     expect(pair.caveats[0]).toContain('인용하지 마라');
-    expect(result.warnings).toEqual(['P1: 경계 문구 없음']);
+    expect(result.warnings).toEqual(['시뮬레이션 성격 표기 없음', 'P1: 경계 문구 없음']);
   });
 
   it('모르는 유형·판정은 «표기 없음» 으로 드러난다', () => {

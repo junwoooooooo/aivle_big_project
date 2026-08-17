@@ -90,8 +90,11 @@ class ConceptFactoryReplacementIntegrationTests {
         run.transitionTo(ConceptFactoryRunStatus.FAILED);
         runs.saveAndFlush(run);
         var failedSlots = slots.findAllByRunIdAndProjectIdAndDeletedAtIsNullOrderBySlotNumber(run.getId(), project.getId());
-        failedSlots.forEach(ConceptSlot::fail);
-        slots.saveAllAndFlush(failedSlots);
+        failedSlots.forEach(slot -> {
+            String attemptId = execution.beginAttempt(slot.getId(), ConceptAttemptPhase.INITIAL, failedTaskId);
+            execution.failSlot(run.getId(), slot.getId(), attemptId,
+                ConceptAttemptError.TRANSIENT_PROVIDER_FAILURE, true, false);
+        });
 
         var retried = factory.retry(user.getId(), project.getId(), run.getId(), "retry-key");
         var replay = factory.retry(user.getId(), project.getId(), run.getId(), "retry-key");

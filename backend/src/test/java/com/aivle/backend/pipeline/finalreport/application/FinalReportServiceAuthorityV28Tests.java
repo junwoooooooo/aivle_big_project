@@ -78,8 +78,8 @@ class FinalReportServiceAuthorityV28Tests {
         assertThat(view.state().name()).isEqualTo("CURRENT");
         assertThat(view.blockingSources()).isEmpty();
         assertThat(view.omittedSources()).contains("MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING");
-        verify(marketVersions).findByIdAndProjectIdAndKindAndDeletedAtIsNull(101L, 41L, MarketResearchRun.Kind.FULL);
-        verify(marketVersions).findByIdAndProjectIdAndKindAndDeletedAtIsNull(202L, 41L, MarketResearchRun.Kind.BM);
+        verify(marketVersions, times(2)).findByIdAndProjectIdAndKindAndDeletedAtIsNull(101L, 41L, MarketResearchRun.Kind.FULL);
+        verify(marketVersions, times(2)).findByIdAndProjectIdAndKindAndDeletedAtIsNull(202L, 41L, MarketResearchRun.Kind.BM);
         verify(marketVersions, never()).findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(anyLong(), any());
     }
 

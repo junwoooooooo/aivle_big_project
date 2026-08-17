@@ -6,7 +6,7 @@ import SampleSizePicker, { SAMPLE_SIZES } from './SampleSizePicker.jsx';
 const dominance = [{ taskType: 'DOMINANCE' }];
 const price = [{ taskType: 'PRICE' }];
 
-const slider = () => screen.getByLabelText('가상 페르소나 수');
+const slider = () => screen.getByLabelText('가상 패널 규모');
 
 describe('SampleSizePicker — 슬라이더지만 잰 값만 준다', () => {
   it('고른 값을 크게 보여준다', () => {

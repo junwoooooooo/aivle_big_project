@@ -26,7 +26,7 @@ describe('AnalysisReport', () => {
     expect(screen.getByText('필요 운전자금')).toBeInTheDocument();
     expect(screen.getAllByRole('table').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('img', { name: '월별 매출 및 영업이익' })).toBeInTheDocument();
-    expect(screen.getByText(/Seed 20260810/)).toBeInTheDocument();
+    expect(screen.getByText(/재현 기준 20260810/)).toBeInTheDocument();
     expect(screen.getByText('손실 확률 주의')).toBeInTheDocument();
     expect(screen.getByText('가격 검증')).toBeInTheDocument();
     expect(screen.getByText(/AI_GENERATED_REPORT/)).toBeInTheDocument();

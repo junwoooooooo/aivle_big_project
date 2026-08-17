@@ -14,12 +14,14 @@ export const heroSlides = [
 ];
 
 export const workflowSteps = [
-  { number: '01', title: '사업 기획', description: '아이디어를 정리하고 법률 검토가 포함된 사업안을 확정합니다.', kind: 'project' },
-  { number: '02', title: '사업 검증', description: '시장 근거를 수집하고 실행 가능한 사업 모델을 검증합니다.', kind: 'structure' },
-  { number: '03', title: '출시 준비', description: '기술·운영 구성과 재무 전망을 확정해 출시를 준비합니다.', kind: 'review' },
+  { number: '01', title: '현황 점검', description: '아이디어의 현재 상태와 필요한 입력을 확인합니다.', kind: 'project' },
+  { number: '02', title: '문제 발굴', description: '문제와 고객, 해결 방향을 정리하고 사업안 후보를 비교합니다.', kind: 'structure' },
+  { number: '03', title: '사업성 검증', description: '시장 근거를 수집하고 실행 가능한 사업 모델을 검증합니다.', kind: 'review' },
   { number: '04', title: '시장 인터뷰', description: 'AI 가상 고객 관점에서 우려와 미충족 요구, 실제로 확인할 질문을 탐색합니다.', kind: 'summary' },
-  { number: '05', title: '마케팅 전략', description: '확정된 근거를 기반으로 메시지와 콘텐츠를 제작합니다.', kind: 'project' },
-  { number: '06', title: '최종 보고서', description: '각 업무 단계의 정본 결과와 출처를 실무 문서로 정리합니다.', kind: 'summary' },
+  { number: '05', title: '트윈 패널 조사', description: 'AI 가상 패널의 정량 시뮬레이션으로 사업안을 비교·탐색합니다.', kind: 'review' },
+  { number: '06', title: '마케팅 실행', description: '확정된 사업안을 기반으로 검토 가능한 마케팅 초안을 만듭니다.', kind: 'project' },
+  { number: '07', title: '출시 준비', description: '기술·운영 계획과 재무 전망을 바탕으로 준비 상태를 확인합니다.', kind: 'review' },
+  { number: '08', title: '결과 보고서', description: '각 업무 단계의 현재 유효 결과와 출처를 실무 문서로 정리합니다.', kind: 'summary' },
 ];
 
 export const featureItems = [

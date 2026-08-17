@@ -65,7 +65,7 @@ describe('auth and project integration flow', () => {
     });
     fireEvent.submit(screen.getByRole('button', { name: '로그인' }).closest('form'));
 
-    fireEvent.click(await screen.findByRole('link', { name: 'Projects' }));
+    fireEvent.click(await screen.findByRole('link', { name: '프로젝트' }));
     fireEvent.click(await screen.findByRole('link', { name: '프로젝트 만들기' }));
     fireEvent.change(document.getElementById('project-title'), {
       target: { value: '통합 프로젝트' },

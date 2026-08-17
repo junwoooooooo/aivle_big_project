@@ -255,6 +255,8 @@ class MarketInterviewResult(StrictModel):
         if any(item.group != group_by_id.get(item.participantId) for item in self.codingTrace):
             raise ValueError("coding group must match transcript provenance")
         for theme in self.themes:
+            if len(theme.participantIds) != len(set(theme.participantIds)):
+                raise ValueError("theme respondent identities must be unique")
             target_count = sum(group_by_id.get(item) == "TARGET" for item in theme.participantIds)
             non_target_count = sum(group_by_id.get(item) == "COMPARISON" for item in theme.participantIds)
             if (not set(theme.participantIds).issubset(sampled_set)
@@ -263,6 +265,7 @@ class MarketInterviewResult(StrictModel):
                     or theme.nonTargetCount != non_target_count):
                 raise ValueError("theme mentionCount must be derived from respondentIds")
         if any(item.overlapCount != len(item.respondentIds)
+               or len(item.respondentIds) != len(set(item.respondentIds))
                or not set(item.respondentIds).issubset(sampled_set) for item in self.crossRelationships):
             raise ValueError("cross relationship must be derived from respondentIds")
         if (self.targeting.targetCount != sum(group == "TARGET" for group in group_by_id.values())

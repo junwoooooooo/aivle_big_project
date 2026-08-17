@@ -15,6 +15,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(properties = {
+    "app.scheduling.enabled=true",
     "app.task-run.idea-brief-poll-interval-ms=3600000",
     "app.task-run.idea-brief-recovery-interval-ms=3600000",
     "app.task-run.concept-factory-poll-interval-ms=3600000",

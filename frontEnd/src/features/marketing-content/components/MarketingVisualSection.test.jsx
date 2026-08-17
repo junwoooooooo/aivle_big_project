@@ -39,9 +39,9 @@ describe('MarketingVisualSection', () => {
     expect(screen.getAllByRole('option')).toHaveLength(10);
     expect(screen.getByDisplayValue('기존 콘텐츠 제목')).toBeInTheDocument();
     const file = new File(['image'], '상품.png', { type: 'image/png' });
-    fireEvent.change(screen.getByLabelText('상품 이미지 업로드'), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText(/상품 이미지를 끌어 놓거나 선택하세요/), { target: { files: [file] } });
     expect(screen.getByText('상품.png')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('제거'));
+    fireEvent.click(screen.getByRole('button', { name: '상품.png 제거' }));
     expect(screen.queryByText('상품.png')).not.toBeInTheDocument();
   });
 

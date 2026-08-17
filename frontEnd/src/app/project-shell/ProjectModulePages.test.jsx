@@ -19,6 +19,9 @@ describe('project overview journey map', () => {
   it('8개 업무를 카드 격자가 아닌 하나의 여정 지도와 행동형 CTA로 표시한다', () => {
     render(<MemoryRouter initialEntries={['/']}><Routes><Route element={<Host />}><Route path="/" element={<ProjectOverviewPage />} /></Route></Routes></MemoryRouter>);
     expect(screen.getByRole('list').children).toHaveLength(8);
+    expect(screen.getByText('8단계 사업 여정')).toBeInTheDocument();
+    expect(screen.getByText(/현재 아이디어와 준비 상태/)).toBeInTheDocument();
+    expect(screen.getByText(/AI 가상 패널의 정량 시뮬레이션/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '현황 점검 시작하기' })).toBeInTheDocument();
     expect(screen.queryByText('현황 점검 열기')).not.toBeInTheDocument();
     expect(document.querySelector('.journey-map')).toBeInTheDocument();

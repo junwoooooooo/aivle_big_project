@@ -108,7 +108,7 @@ export function composition(pair) {
   const trail = leadIsX ? count('content_Y') : count('content_X');
   const percent = (value) => (total > 0 ? Math.round((value / total) * 100) : 0);
   return {
-    synthetic: raw.synthetic === true,
+    synthetic: pair?.synthetic === true,
     total,
     leadLabel: leadIsX ? (pair?.labels?.X ?? 'A안') : (pair?.labels?.Y ?? 'B안'),
     trailLabel: leadIsX ? (pair?.labels?.Y ?? 'B안') : (pair?.labels?.X ?? 'A안'),

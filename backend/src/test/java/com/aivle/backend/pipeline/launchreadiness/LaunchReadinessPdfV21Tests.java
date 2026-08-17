@@ -55,7 +55,10 @@ class LaunchReadinessPdfV21Tests {
         when(readiness.current(7L, 41L, ModuleType.TECHNOLOGY)).thenReturn(new ProfessionalAnalysisView(
             "TECHNOLOGY", "SUCCEEDED", false, null, "run-1", "run-1", "snapshot-1", "technology.docx",
             mapper.createObjectNode().put("systemArchitecture", "웹·API·데이터베이스 3계층 구조"),
-            hash('a'), hash('b'), "report-1", hash('c'), analysis, quality, evidence, completedAt, true, false));
+            hash('a'), hash('b'), "report-1", hash('c'), analysis, quality, evidence, completedAt, true, false,
+            false, null, "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT",
+            mapper.createObjectNode().put("marketSeedSnapshotId", "seed-1")
+                .put("selectionId", 11L).put("selectionRevision", 3).put("bmPlanRevision", 4)));
         var snapshot = LaunchReadinessInputSnapshot.create("snapshot-1", 41L, ModuleType.TECHNOLOGY,
             "artifact-1", hash('a'), "technology.docx",
             "{\"systemArchitecture\":\"웹·API·데이터베이스 3계층 구조\",\"testPlan\":\"부하 및 장애 복구 테스트\"}",

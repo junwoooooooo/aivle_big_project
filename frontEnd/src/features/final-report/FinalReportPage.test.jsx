@@ -37,7 +37,7 @@ describe('final report page', () => {
 
   it('8단계와 synthetic 한계를 표시하고 raw provenance를 숨긴다', async () => {
     renderPage({ get: vi.fn(async () => ({ data: report })) });
-    expect(await screen.findByText(/8단계/)).toBeInTheDocument();
+    expect(await screen.findByLabelText('8단계')).toBeInTheDocument();
     expect(screen.getByText(/AI 가상 참여자/)).toBeInTheDocument();
     expect(screen.queryByText('internal-market-id')).not.toBeInTheDocument();
     expect(screen.queryByText(`sha256:${'2'.repeat(64)}`)).not.toBeInTheDocument();

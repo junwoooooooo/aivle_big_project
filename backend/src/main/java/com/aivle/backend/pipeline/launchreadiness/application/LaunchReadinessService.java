@@ -274,7 +274,7 @@ public class LaunchReadinessService {
         value.set("target", first(selected, seed, "target", "targetCustomers"));
         value.set("problem", first(selected, seed, "problem", "problemStatement"));
         value.set("solution", first(selected, seed, "solution", "valueProposition"));
-        value.set("finalHypotheses", seed.path("finalHypotheses").deepCopy());
+        value.set("finalHypotheses", copyOrNull(seed.path("finalHypotheses")));
         value.set("businessModel", authority.bm().plan().deepCopy());
         return value;
     }
@@ -283,7 +283,10 @@ public class LaunchReadinessService {
         if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = primary.path(second);
         if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = fallback.path(first);
         if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = fallback.path(second);
-        return value.deepCopy();
+        return copyOrNull(value);
+    }
+    private JsonNode copyOrNull(JsonNode value) {
+        return value == null || value.isMissingNode() ? mapper.nullNode() : value.deepCopy();
     }
     private ObjectNode taskInput(String snapshotId, String snapshotHash, ObjectNode snapshotBody,
             String operation, int attempt) {

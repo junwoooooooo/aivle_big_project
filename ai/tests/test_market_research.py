@@ -119,8 +119,8 @@ def test_rescore_returns_the_full_envelope_over_http(client, attempt_id):
     assert result["mode"] == "FULL"
     assert result["runId"] == attempt_id
     assert result["conceptId"] == "beauty-noshow"
-    # 7과목이 **전부** 있어야 한다. 빠진 과목은 「미확보」가 아니라 「안 쟀다」로 읽힌다.
-    assert len(result["scorecard"]) == 7
+    # 현재 10과목이 **전부** 있어야 한다. 빠진 과목은 「미확보」가 아니라 「안 쟀다」로 읽힌다.
+    assert len(result["scorecard"]) == 10
     assert result["canvas"] is None and result["bm"] is None
     # ⑦행을 절대 빼지 않는다(§4).
     assert result["market"]["notFound"]
