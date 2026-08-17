@@ -42,4 +42,48 @@ for (const forbidden of [
   assert(!activeFrontend.includes(forbidden), `Active frontend still contains: ${forbidden}`);
 }
 
+const dockerE2e = [
+  read('scripts/docker-e2e-smoke.ps1'),
+  read('scripts/docker-failure-e2e.ps1'),
+].join('\n');
+for (const forbidden of [
+  /\/api\/v1\/projects\/[^\s"']*\/ai-tasks\/(?:artifact-)?smoke/,
+  /\/api\/v1\/jobs\//,
+  /\/marketing-contents(?:\/|"|')/,
+  /\banalysis_jobs\b/,
+  /\bai_task_results\b/,
+  /\bai_task_artifacts\b/,
+  /\bmarketing_content_versions\b/,
+  /\[long\]\s*\$\w*(?:Job|TaskRun)Id/,
+]) {
+  assert(!forbidden.test(dockerE2e), `Docker E2E restored a removed contract: ${forbidden}`);
+}
+for (const required of [
+  '/api/v2/projects/$ProjectId/task-runs/$TaskRunId',
+  '/api/v3/projects/$projectId/evidence-artifacts/$storedArtifactId/download',
+  '/internal/e2e/projects/$ProjectId/task-runs',
+  'task_runs',
+  'task_results',
+  'project_evidence_artifacts',
+]) {
+  assert(dockerE2e.includes(required), `Docker E2E is missing current authority: ${required}`);
+}
+
+const e2eController = read(
+  'backend/src/main/java/com/aivle/backend/taskrun/e2e/E2eTaskRunController.java',
+);
+const e2eService = read(
+  'backend/src/main/java/com/aivle/backend/taskrun/e2e/E2eTaskRunService.java',
+);
+assert(e2eController.includes('@Profile("e2e")'), 'E2E controller must be profile isolated');
+assert(e2eService.includes('@Profile("e2e")'), 'E2E service must be profile isolated');
+assert(e2eController.includes('/internal/e2e/'), 'E2E seam must remain internal');
+for (const authority of [
+  'TaskRunService',
+  'TaskResultRepository',
+  'ProjectEvidenceArtifactService',
+]) {
+  assert(e2eService.includes(authority), `E2E seam bypasses current ${authority} authority`);
+}
+
 console.log('Pipeline cutover configuration is consistent (5 eligible / 20 inspected / 2 replacement rounds / 1 legal redesign).');
