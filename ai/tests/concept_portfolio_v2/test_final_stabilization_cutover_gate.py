@@ -10,7 +10,8 @@ from app.concept_portfolio_v2.models import (
     FailureCode, LegalFactCompletionRequirement, LegalFactDependencySemanticItem,
 )
 from app.concept_portfolio_v2.providers import (
-    MockPortfolioProvider, legal_fact_completion_schema,
+    BATCH_COMPLETENESS_RULE, LivePortfolioProvider, MockPortfolioProvider,
+    legal_fact_completion_schema,
 )
 from app.concept_portfolio_v2.schema_preflight import inspect_strict_schema
 from app.providers import ProviderFailure
@@ -69,6 +70,17 @@ class WrongCandidateProvider(MockPortfolioProvider):
         return result
 
 
+class PartialArchitectureProvider(MockPortfolioProvider):
+    async def classify_architectures(self, items):
+        return (await super().classify_architectures(items))[:1]
+
+
+class DuplicateArchitectureProvider(MockPortfolioProvider):
+    async def classify_architectures(self, items):
+        result = await super().classify_architectures(items)
+        return [result[0], *result[:-1]]
+
+
 def test_reordered_keyed_batches_are_accepted_and_canonicalized():
     gateway = ProviderGateway(provider=ReorderedBatchProvider())
     dependencies = run(gateway.classify_legal_fact_dependencies(DEPENDENCY_ITEMS))
@@ -97,6 +109,65 @@ def test_reordered_keyed_batches_are_accepted_and_canonicalized():
     } for item in prepared.candidates]
     architectures = run(gateway.classify_architectures(architecture_input))
     assert [item.entityId for item in architectures] == [item["entityId"] for item in architecture_input]
+
+
+def test_five_architecture_items_require_five_results_and_complete_batch_passes():
+    _, _, prepared = prepared_candidates(count=5)
+    items = [{"entityId": item.candidateId, "businessText": item.candidate.operatingModel,
+              "currentArchitecture": item.descriptor.architecture.model_dump(mode="json")}
+             for item in prepared.candidates]
+    complete = run(ProviderGateway(provider=MockPortfolioProvider()).classify_architectures(items))
+    assert len(complete) == len(items) == 5
+
+    with pytest.raises(ProviderFailure) as missing:
+        run(ProviderGateway(provider=PartialArchitectureProvider()).classify_architectures(items))
+    assert "ARCHITECTURE_BATCH_IDENTITY_MISMATCH" in missing.value.reason
+    assert "missing=" in missing.value.reason
+
+    with pytest.raises(ProviderFailure) as duplicate:
+        run(ProviderGateway(provider=DuplicateArchitectureProvider()).classify_architectures(items))
+    assert "ARCHITECTURE_BATCH_IDENTITY_MISMATCH" in duplicate.value.reason
+    assert "duplicate=" in duplicate.value.reason
+
+
+def test_all_live_keyed_batch_prompts_share_completeness_rule(monkeypatch):
+    prompts = []
+    mock = MockPortfolioProvider()
+
+    async def fake(system_prompt, user_prompt, *, schema_name, **_kwargs):
+        prompts.append((schema_name, system_prompt))
+        items = json.loads(user_prompt)["items"]
+        if schema_name == "concept_architecture_classifier_v2":
+            values = await mock.classify_architectures(items)
+        elif schema_name == "concept_hypothesis_semantic_v1":
+            values = await mock.classify_hypotheses(items)
+        elif schema_name == "concept_business_role_semantic_v2":
+            values = await mock.classify_business_roles(items)
+        else:
+            values = await mock.classify_legal_fact_dependencies(items)
+        return {"results": [value.model_dump(mode="json") for value in values]}
+
+    monkeypatch.setattr("app.concept_portfolio_v2.providers.execute_structured_prompt", fake)
+    live = LivePortfolioProvider()
+    _, _, prepared = prepared_candidates(count=1)
+    envelope = prepared.candidates[0]
+    run(live.classify_architectures([{
+        "entityId": envelope.candidateId, "businessText": envelope.candidate.operatingModel,
+        "currentArchitecture": envelope.descriptor.architecture.model_dump(mode="json"),
+    }]))
+    run(live.classify_hypotheses([{"hypothesisType": "CHANNELS", "value": "운영사 웹"}]))
+    run(live.classify_business_roles([{
+        "candidateId": "C1", "field": "sellerRole", "value": "운영사가 판매",
+    }]))
+    run(live.classify_legal_fact_dependencies([{
+        "candidateId": "C1", "dependencyType": "PERSONAL_DATA", "candidate": {}, "descriptor": {},
+    }]))
+
+    assert {name for name, _ in prompts} == {
+        "concept_architecture_classifier_v2", "concept_hypothesis_semantic_v1",
+        "concept_business_role_semantic_v2", "concept_legal_fact_dependency_v2",
+    }
+    assert all(BATCH_COMPLETENESS_RULE in prompt for _, prompt in prompts)
 
 
 @pytest.mark.parametrize("provider, marker", [

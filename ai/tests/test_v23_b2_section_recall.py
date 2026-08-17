@@ -20,7 +20,7 @@ for path in (AI_ROOT, R2, R2 / "adapters", R2 / "blocks", R2 / "service"):
 
 import section_recall as section  # noqa: E402
 from runlog import load_rules  # noqa: E402
-from app.research import pipeline, product_market_join, serialize  # noqa: E402
+from app.research import pipeline, product_market_join, product_pipeline, serialize  # noqa: E402
 from app.research.bm import prompt as bm_prompt  # noqa: E402
 from app.research.bm.analyze import validate_market_evidence_ids  # noqa: E402
 from app.research.bm.contracts import (  # noqa: E402
@@ -132,13 +132,14 @@ def test_public_cap_is_four_per_section_and_payload_bound_is_small():
     assert policy_bound < 2 * 1024 * 1024
 
 
-def test_promoted_card_uses_existing_evidence_allowlist_without_section_field():
+def test_promoted_card_uses_extended_evidence_allowlist_with_section_metadata():
     result = _run([_doc(1)], lambda *_args: {"CHANNEL": [{
         "quote": "온라인 플랫폼 입점 수수료는 10%이다.",
         "number_raw": "10", "unit_raw": "%"}]}, budget=1)
     public = serialize.evidence(result["cards"])[0]
     assert set(public) == set(serialize.evidence(result["cards"])[0])
-    assert "section" not in public and public["id"].startswith("C-SEC-")
+    assert public["section"] == "CHANNEL" and public["placement"] == "HEAD"
+    assert public["id"].startswith("C-SEC-")
     assert public["metric"] == "채널·유통 조건"
 
 
@@ -320,6 +321,54 @@ def test_summary_accepts_merged_cards_without_rebuilding_or_extra_allowance(monk
 def test_public_envelope_and_stage_contracts_remain_exact():
     assert serialize.ENVELOPE == (
         "runId", "conceptId", "asOf", "generatedAt", "mode", "stages", "degradations",
-        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes")
+        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes",
+        "judgment", "prescriptions", "synthesis", "report")
     assert pipeline.STAGES_FULL == (
-        "harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary")
+        "harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary",
+        "sections")
+
+
+def test_production_sections_stage_loads_promoted_cards_without_market_recalculation(monkeypatch):
+    promoted = [{"카드_id": "C-SEC-x"}]
+    monkeypatch.setattr(section, "load", lambda _run: {
+        "attempts": 2, "wall_seconds": 1.4, "cards": promoted, "degradations": []})
+    monkeypatch.setattr(section, "load_cards", lambda _run: promoted)
+    ledger = pipeline.Run()
+
+    assert pipeline._sections(ledger, "source-run") == promoted
+    assert ledger.stages[-1].as_contract() == {
+        "name": "sections", "status": "OK", "seconds": 1, "llmCalls": 2}
+
+
+def test_bm_promote_consumes_immutable_full_evidence_without_reclassification():
+    market = {"evidence": [
+        {"id": "C-SEC-CH-eligible", "metric": "채널·유통 조건", "quote": "stored"},
+        {"id": "C-SEC-other", "metric": "규제·인증 요건", "quote": "stored"},
+    ]}
+
+    assert product_pipeline._promote_for_bm(market) is market
+    joined = product_market_join.build(market, {
+        "concept_id": "c", "name": "n", "target": "t", "problem": "p", "solution": "s"},
+        "c")
+    assert {item["id"] for item in joined.evidence_list} == {
+        "C-SEC-CH-eligible", "C-SEC-other"}
+    assert [item["id"] for item in joined.channel_analysis] == ["C-SEC-CH-eligible"]
+
+
+def test_section_metadata_and_human_report_survive_allowlist_serialization():
+    card = {"카드_id": "C-SEC-x", "종류": "관측", "계량": "규제·인증 요건",
+            "주제": "규제·인증 요건", "등급": "실무 신뢰", "등급_근거": "official",
+            "출처_url": "https://agency.example/rule", "kind": "official_page",
+            "조회일": "2026-08-17", "인용": "인증 의무를 따라야 한다.",
+            "_절": "REGULATION", "_갈래": "HEAD", "_발행사": "agency.example",
+            "_표키": "table-1", "_원문값": "36,745억원"}
+    [item] = serialize.evidence([card])
+    assert {key: item[key] for key in ("section", "placement", "issuer", "tableKey", "raw")} == {
+        "section": "REGULATION", "placement": "HEAD", "issuer": "agency.example",
+        "tableKey": "table-1", "raw": "36,745억원"}
+
+    human = serialize.report({"쓴_모델": "market-report-model", "유령_수": 0,
+                              "컨셉_누출_수": 0, "머리말": "AI가 작성한 해설",
+                              "절": [{"section": "REGULATION", "본문": "규제 해설"}]})
+    assert human["sections"] == [{"subject": "REGULATION", "markdown": "규제 해설"}]
+    assert human["writtenBy"] == "market-report-model"

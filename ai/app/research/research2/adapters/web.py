@@ -15,6 +15,7 @@ from __future__ import annotations
 import concurrent.futures as cf
 import dataclasses
 import json, re
+import os
 from datetime import datetime
 
 import requests
@@ -28,8 +29,8 @@ from base import AdapterResult, load_env_key, make_document
 from schema import Candidate, Document, Finding, FindingItem, Slot
 
 NAME = "web"
-SEARCH_MODEL = "gpt-5.4-nano"
-EXTRACT_MODEL = "gpt-4o-mini"
+SEARCH_MODEL = (os.getenv("MARKET_SEARCH_MODEL") or "gpt-5.4-nano").strip()
+EXTRACT_MODEL = (os.getenv("MARKET_EXTRACT_MODEL") or "gpt-5.6-luna").strip()
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 

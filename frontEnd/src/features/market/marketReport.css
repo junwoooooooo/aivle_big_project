@@ -1,0 +1,16 @@
+.market-human-report { max-width: 900px; margin: 0 auto; color: var(--color-text); }
+.market-human-report > header { border-bottom: 2px solid currentColor; padding-bottom: 20px; }
+.market-human-report > header p { color: var(--color-text-secondary); font-weight: 700; }
+.market-human-report > header h2 { margin: 4px 0 8px; }
+.market-human-report__origin { margin: 24px 0; padding: 16px; border-left: 4px solid #a16207; background: #fff7df; }
+.market-human-report__origin small { display: block; margin-top: 6px; }
+.market-human-report__lead { color: var(--color-text-secondary); }
+.market-human-report > section { padding: 24px 0; border-top: 1px solid var(--color-border-default); }
+.market-human-report > section h3 { display: flex; align-items: center; gap: 10px; }
+.market-human-report > section h3 span { display: inline-grid; place-items: center; width: 24px; height: 24px; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; }
+.market-human-report__prose { white-space: pre-wrap; line-height: 1.75; }
+.market-human-report__facts { margin-top: 18px; padding: 14px; background: var(--color-surface-subtle); }
+.market-human-report__facts li { display: grid; grid-template-columns: minmax(90px, auto) 1fr auto; gap: 12px; margin-top: 8px; }
+.market-human-report__verify { margin-top: 32px; }
+.market-human-report__verify > summary { cursor: pointer; font-weight: 700; }
+@media (max-width: 640px) { .market-human-report__facts li { grid-template-columns: 1fr; } }

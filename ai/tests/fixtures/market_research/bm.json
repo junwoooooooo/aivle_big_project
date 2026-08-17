@@ -93,6 +93,7 @@
 
   "bm": {
     "decision": "CONDITIONAL",
+    "gateReasons": [],
     "confidence": "MEDIUM",
     "summary": "일부 시장 근거 또는 BM 구조의 추가 검증이 필요합니다.",
     "marketFitStatus": "PARTIAL",
@@ -153,5 +154,9 @@
     "칸의 caveats 는 인용한 근거에서 기계가 파생한 것이다 — 모델이 쓴 문장이 아니다.",
     "content 만 떼어 쓰면 경계가 사라진다. 값과 같은 자리에 두어라.",
     "법률 결과는 반영되지 않았다."
-  ]
+  ],
+  "judgment": null,
+  "prescriptions": null,
+  "synthesis": null,
+  "report": null
 }

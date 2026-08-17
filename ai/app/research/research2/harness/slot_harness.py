@@ -44,7 +44,7 @@ import gate as G                                                   # noqa: E402
 
 # 1차 초안에서 gpt-4o-mini 는 형식 예시를 그대로 베끼거나 통제 어휘를 어겼다(2회 폐기).
 # 이 일은 「빈칸 채우기」지만 빈칸이 서로 물려 있어서 작은 모델이 자리를 뒤섞는다.
-MODEL = "gpt-4o"
+MODEL = (os.getenv("MARKET_DESIGN_MODEL") or "gpt-5.6-luna").strip()
 
 # ══════════════════════════════════════════════════════════════
 # 무인 계측기 (판 ⑪ ①) — 엔진 `runlog.Run.decide/intervene` 와 **같은 어휘**

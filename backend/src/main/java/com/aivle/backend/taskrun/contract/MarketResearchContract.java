@@ -27,7 +27,12 @@ public final class MarketResearchContract {
     private static final Set<String> ENVELOPE = Set.of(
         "runId", "conceptId", "asOf", "generatedAt", "mode",
         "stages", "degradations",
-        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes");
+        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes",
+        "judgment", "prescriptions", "synthesis", "report");
+
+    private static final Set<String> REPORT_SUBJECTS = Set.of(
+        "MARKET_SIZE", "PRICE", "COMPETITOR", "CHANNEL", "DEMAND", "UNIT_ECONOMICS",
+        "REGULATION", "GAPS", "SYNTHESIS");
 
     private static final Set<String> MODES = Set.of("FULL", "BM");
     private static final Set<String> STAGE_STATES = Set.of("OK", "SKIPPED", "FAILED");
@@ -43,7 +48,8 @@ public final class MarketResearchContract {
     private static final Set<String> FACTOR_BASES = Set.of("관측", "가정", "가설");
 
     private static final Set<String> SUBJECTS = Set.of(
-        "MARKET_SIZE", "GROWTH", "COMPETITOR", "PRICE", "DEMAND", "CALCULATION", "NOT_FOUND");
+        "MARKET_SIZE", "GROWTH", "COMPETITOR", "PRICE", "DEMAND", "CALCULATION",
+        "CHANNEL", "UNIT_ECONOMICS", "REGULATION", "NOT_FOUND");
     private static final Set<String> SCORE_STATES = Set.of("FILLED", "PARTIAL", "MISSING", "REPORTED");
 
     private static final Set<String> CANVAS_CELLS = Set.of(
@@ -83,12 +89,16 @@ public final class MarketResearchContract {
             mustBeNull(result, "canvas");
             mustBeNull(result, "bm");
         } else {
-            mustBeNull(result, "scorecard");
+            if (result.get("scorecard") != null && !result.get("scorecard").isNull()) scorecard(result.get("scorecard"));
             mustBeNull(result, "market");
             canvas(result.get("canvas"), result.get("evidence"), evidenceIds);
             bm(result.get("bm"));
         }
         summary(result.get("summary"), evidenceIds);
+        report(result.get("report"));
+        judgment(result.get("judgment"));
+        prescriptions(result.get("prescriptions"));
+        synthesis(result.get("synthesis"));
     }
 
     // ── 공통 ────────────────────────────────────────────────────────────
@@ -116,15 +126,20 @@ public final class MarketResearchContract {
         if (items == null || !items.isArray()) invalid();
         Set<String> ids = new HashSet<>();
         for (JsonNode item : items) {
-            exact(item, Set.of("id", "kind", "metric", "subject", "period", "value", "unit",
+            Set<String> legacyFields = Set.of("id", "kind", "metric", "subject", "period", "value", "unit",
                 "grade", "gradeReason", "sourceUrl", "sourceKind", "retrievedAt", "quote",
-                "caveats", "formula", "inputs", "materialIds", "assumptions"));
+                "caveats", "formula", "inputs", "materialIds", "assumptions");
+            Set<String> currentFields = new HashSet<>(legacyFields);
+            currentFields.addAll(Set.of("section", "placement", "issuer", "tableKey", "raw"));
+            Set<String> actualFields = Set.copyOf(item.propertyNames());
+            if (!actualFields.equals(legacyFields) && !actualFields.equals(currentFields)) invalid();
             if (!ids.add(text(item, "id"))) invalid();
             if (!EVIDENCE_KINDS.contains(text(item, "kind"))) invalid();
             if (!GRADES.contains(text(item, "grade"))) invalid();
             text(item, "gradeReason");
             for (String field : List.of("metric", "subject", "period", "unit",
-                "sourceUrl", "sourceKind", "retrievedAt", "quote", "formula")) nullableText(item.get(field));
+                "sourceUrl", "sourceKind", "retrievedAt", "quote", "formula",
+                "section", "placement", "issuer", "tableKey", "raw")) nullableText(item.get(field));
             nullableNumber(item.get("value"));
             nullableObject(item.get("inputs"));
             // 경계는 **항상 배열**이다. 없으면 빈 배열 — null 로 두면 「없음」과 「안 실었음」이 같아진다.
@@ -267,15 +282,20 @@ public final class MarketResearchContract {
 
     private static void bm(JsonNode bm) {
         if (bm == null || bm.isNull()) return;      // BM 이 죽어도 시장조사 결과는 살린다
-        exact(bm, Set.of("decision", "confidence", "summary", "marketFitStatus", "marketFitSummary",
+        Set<String> legacyFields = Set.of("decision", "confidence", "summary", "marketFitStatus", "marketFitSummary",
             "consistencyStatus", "consistencySummary", "strengths", "weaknesses", "risks", "legal",
-            "financialHandoff"));
+            "financialHandoff");
+        Set<String> currentFields = new HashSet<>(legacyFields);
+        currentFields.add("gateReasons");
+        Set<String> actualFields = Set.copyOf(bm.propertyNames());
+        if (!actualFields.equals(legacyFields) && !actualFields.equals(currentFields)) invalid();
         if (!DECISIONS.contains(text(bm, "decision"))
             || !CONFIDENCES.contains(text(bm, "confidence"))
             || !FIT_STATES.contains(text(bm, "marketFitStatus"))
             || !FIT_STATES.contains(text(bm, "consistencyStatus"))) invalid();
         for (String field : List.of("summary", "marketFitSummary", "consistencySummary")) text(bm, field);
         for (String field : List.of("strengths", "weaknesses", "risks")) stringArray(bm.get(field));
+        if (bm.has("gateReasons")) gateReasons(bm.get("gateReasons"));
         JsonNode legal = bm.get("legal");
         exact(legal, Set.of("used", "status", "summary", "risks", "requiredActions"));
         if (legal.get("used") == null || !legal.get("used").isBoolean()
@@ -296,6 +316,18 @@ public final class MarketResearchContract {
         if (!Set.of("READY", "PARTIAL", "BLOCKED").contains(text(handoff, "handoffStatus"))) invalid();
     }
 
+    private static void gateReasons(JsonNode items) {
+        if (items == null || !items.isArray()) invalid();
+        for (JsonNode item : items) {
+            exact(item, Set.of("code", "cell", "message", "evidenceIds", "cause"));
+            if (!Set.of("G1", "G4", "G5").contains(text(item, "code"))) invalid();
+            nullableText(item.get("cell"));
+            text(item, "message");
+            stringArray(item.get("evidenceIds"));
+            if (!Set.of("UNCOLLECTED", "UNCITED", "UNMAPPED").contains(text(item, "cause"))) invalid();
+        }
+    }
+
     private static void summary(JsonNode summary, Set<String> evidenceIds) {
         if (summary == null || summary.isNull()) return;
         if (!summary.isArray()) invalid();
@@ -304,6 +336,68 @@ public final class MarketResearchContract {
             text(line, "cell");
             text(line, "sentence");
             references(line.get("cardIds"), evidenceIds);
+        }
+    }
+
+    private static void report(JsonNode node) {
+        if (node == null || node.isNull()) return;
+        exact(node, Set.of("writtenBy", "unverifiedNumbers", "conceptLeaks", "lead", "tail", "sections"));
+        text(node, "writtenBy");
+        nonNegativeInteger(node, "unverifiedNumbers");
+        nonNegativeInteger(node, "conceptLeaks");
+        nullableNonBlankText(node.get("lead"));
+        nullableNonBlankText(node.get("tail"));
+        JsonNode sections = node.get("sections");
+        if (sections == null || !sections.isArray()) invalid();
+        for (JsonNode section : sections) {
+            exact(section, Set.of("subject", "markdown"));
+            if (!REPORT_SUBJECTS.contains(text(section, "subject"))) invalid();
+            text(section, "markdown");
+        }
+    }
+
+    private static void judgment(JsonNode node) {
+        if (node == null || node.isNull()) return;
+        exact(node, Set.of("price", "lines", "conclusion"));
+        nullableNumber(node.get("price"));
+        nullableText(node.get("conclusion"));
+        JsonNode lines = node.get("lines");
+        if (lines == null || !lines.isArray()) invalid();
+        for (JsonNode line : lines) {
+            exact(line, Set.of("what", "sentence", "formula", "silentBecause", "sources"));
+            text(line, "what");
+            for (String field : List.of("sentence", "formula", "silentBecause")) nullableText(line.get(field));
+            JsonNode sources = line.get("sources");
+            if (sources == null || !sources.isArray()) invalid();
+            for (JsonNode source : sources) {
+                exact(source, Set.of("raw", "subject", "period", "url"));
+                text(source, "raw"); text(source, "subject"); text(source, "url");
+                nullableText(source.get("period"));
+            }
+        }
+    }
+
+    private static void prescriptions(JsonNode items) {
+        if (items == null || items.isNull()) return;
+        if (!items.isArray()) invalid();
+        for (JsonNode item : items) {
+            exact(item, Set.of("section", "kind", "kindLabel", "what", "why", "where"));
+            for (String field : List.of("section", "kind", "kindLabel", "what", "why", "where")) text(item, field);
+        }
+    }
+
+    private static void synthesis(JsonNode items) {
+        if (items == null || items.isNull()) return;
+        if (!items.isArray()) invalid();
+        for (JsonNode item : items) {
+            exact(item, Set.of("key", "stance", "sentence", "what", "sources"));
+            for (String field : List.of("key", "stance", "sentence", "what")) text(item, field);
+            JsonNode sources = item.get("sources");
+            if (sources == null || !sources.isArray()) invalid();
+            for (JsonNode source : sources) {
+                exact(source, Set.of("raw", "subject", "period"));
+                text(source, "raw"); text(source, "subject"); nullableText(source.get("period"));
+            }
         }
     }
 
@@ -328,6 +422,14 @@ public final class MarketResearchContract {
     private static void nonNegative(JsonNode value, String field) {
         JsonNode item = value.get(field);
         if (item == null || !item.isNumber() || item.asDouble() < 0) invalid();
+    }
+    private static void nonNegativeInteger(JsonNode value, String field) {
+        JsonNode item = value.get(field);
+        if (item == null || !item.isIntegralNumber() || item.asLong() < 0) invalid();
+    }
+    private static void nullableNonBlankText(JsonNode value) {
+        if (value == null || value.isNull()) return;
+        if (!value.isTextual() || value.asText().isBlank()) invalid();
     }
     private static void mustBeNull(JsonNode value, String field) {
         JsonNode item = value.get(field);

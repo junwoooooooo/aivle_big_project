@@ -14,6 +14,7 @@ import os
 import sys
 
 import pytest
+from pydantic import ValidationError
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -218,6 +219,19 @@ def test_allowed_label_survives_and_content_is_kept():
     assert result.canvas[0].content == ["x"]
 
 
+def test_planned_cell_without_model_label_keeps_user_plan_with_deterministic_label():
+    analysis = _analysis(labels=(), content=())
+    cells = list(analysis.canvas)
+    planned = next(index for index, item in enumerate(cells)
+                   if item.canvas_cell is CanvasCell.KEY_ACTIVITIES)
+    cells[planned] = cells[planned].model_copy(update={"content": ["사용자 확정 활동"]})
+
+    result = validate_canvas_source_labels(analysis.model_copy(update={"canvas": cells}))
+
+    assert result.canvas[planned].content == ["사용자 확정 활동"]
+    assert result.canvas[planned].source_labels == ["concept_snapshot"]
+
+
 # ══════════════════════════════ 흐름 (LLM 스텁) ══════════════════════════════
 class _StubResponses:
     def __init__(self, result):
@@ -237,6 +251,24 @@ class _StubClient:
         self.responses = _StubResponses(result)
 
 
+class _SequenceResponses:
+    def __init__(self, results):
+        self.results = iter(results)
+        self.calls = []
+
+    async def parse(self, **kwargs):
+        self.calls.append(kwargs)
+        value = next(self.results)
+        if isinstance(value, Exception):
+            raise value
+        return type("Response", (), {"output_parsed": value})()
+
+
+class _SequenceClient:
+    def __init__(self, results):
+        self.responses = _SequenceResponses(results)
+
+
 def test_flow_calls_the_model_once_and_filters_hallucinated_evidence():
     source = create_bm_analysis_input(market_data=_market())
     client = _StubClient(_analysis(evidence_ids=("C-F001", "C-없는근거")))
@@ -246,6 +278,34 @@ def test_flow_calls_the_model_once_and_filters_hallucinated_evidence():
     assert len(client.responses.calls) == 1, "모델 호출은 정확히 1회다"
     assert out["bm_analysis"].canvas[0].market_evidence_ids == ["C-F001"]
     assert out["final_result"].concept_id == "c1"
+
+
+def _schema_failure():
+    try:
+        BMAnalysisResult.model_validate({})
+    except ValidationError as failure:
+        return failure
+    raise AssertionError("invalid fixture unexpectedly passed")
+
+
+def test_malformed_canvas_gets_exactly_one_targeted_reask():
+    resolved = resolve_bm_input(create_bm_analysis_input(market_data=_market()))
+    client = _SequenceClient([_schema_failure(), _analysis()])
+
+    result = asyncio.run(run_bm_analysis(resolved=resolved, client=client, model="stub-model"))
+
+    assert result.concept_id == "c1"
+    assert len(client.responses.calls) == 2
+    assert "9개 칸" in client.responses.calls[1]["input"][-1]["content"]
+
+
+def test_second_malformed_canvas_fails_without_fabricating_a_cell():
+    resolved = resolve_bm_input(create_bm_analysis_input(market_data=_market()))
+    client = _SequenceClient([_schema_failure(), _schema_failure()])
+
+    with pytest.raises(ValidationError):
+        asyncio.run(run_bm_analysis(resolved=resolved, client=client, model="stub-model"))
+    assert len(client.responses.calls) == 2
 
 
 def test_model_returning_a_different_concept_id_is_rejected():

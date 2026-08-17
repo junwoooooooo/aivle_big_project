@@ -22,6 +22,18 @@ from .contracts import (
 )
 from .prompt import ALLOWED_CANVAS_SOURCE_LABELS, BM_ANALYSIS_PROMPT
 
+PLANNED_CELLS = {"CUSTOMER_RELATIONSHIPS", "KEY_RESOURCES", "KEY_ACTIVITIES",
+                 "KEY_PARTNERS", "COST_STRUCTURE"}
+_PLAN_FALLBACK_LABEL = {"COST_STRUCTURE": "execution_constraints"}
+_TEMPERATURE = 0.1
+_NO_TEMPERATURE: set[str] = set()
+_REASK_ONCE = (
+    "직전 응답은 BMC 9개 칸을 각각 정확히 한 번씩 담지 못했다. "
+    "CUSTOMER_SEGMENTS, VALUE_PROPOSITIONS, CHANNELS, CUSTOMER_RELATIONSHIPS, "
+    "REVENUE_STREAMS, KEY_ACTIVITIES, KEY_RESOURCES, KEY_PARTNERS, COST_STRUCTURE를 "
+    "빠짐없이 중복 없이 다시 내라. 입력에 없는 근거를 만들지 말고 지원되지 않은 "
+    "칸은 content=[]와 UNVERIFIED 또는 PLAN을 사용하라.")
+
 
 def default_model() -> str:
     """`BM_MODEL` → `AI_MODEL` 순. 노트북 기본값(`gpt-5.6-terra`)은 쓰지 않는다 —
@@ -51,16 +63,16 @@ def validate_canvas_source_labels(result: BMAnalysisResult) -> BMAnalysisResult:
         ))
         update: dict[str, Any] = {"source_labels": labels}
         if item.content and not labels:
-            update.update(
-                content=[],
-                market_evidence_ids=[],
-                status=CanvasStatus.UNVERIFIED,
-                reason="허용된 입력 출처 라벨이 없어 Canvas 내용을 제거했습니다.",
-                missing_evidence=list(dict.fromkeys([
-                    *item.missing_evidence,
-                    "Canvas 내용의 입력 출처 라벨",
-                ])),
-            )
+            cell = str(item.canvas_cell)
+            if cell in PLANNED_CELLS:
+                update["source_labels"] = [
+                    _PLAN_FALLBACK_LABEL.get(cell, "concept_snapshot")]
+            else:
+                update.update(
+                    content=[], market_evidence_ids=[], status=CanvasStatus.UNVERIFIED,
+                    reason="허용된 입력 출처 라벨이 없어 Canvas 내용을 제거했습니다.",
+                    missing_evidence=list(dict.fromkeys([
+                        *item.missing_evidence, "Canvas 내용의 입력 출처 라벨"])))
         validated_canvas.append(item.model_copy(update=update))
     return result.model_copy(update={"canvas": validated_canvas})
 
@@ -106,28 +118,25 @@ async def run_bm_analysis(
     api = client or get_client()
     payload = resolved.model_dump(mode="json")
 
+    name = model or default_model()
+    messages = [{"role": "system", "content": BM_ANALYSIS_PROMPT},
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]
     try:
-        response = await api.responses.parse(
-            model=model or default_model(),
-            input=[
-                {"role": "system", "content": BM_ANALYSIS_PROMPT},
-                {
-                    "role": "user",
-                    "content": json.dumps(payload, ensure_ascii=False),
-                },
-            ],
-            text_format=BMAnalysisResult,
-        )
+        parsed = await _parse_once(api, name, messages)
     except ValidationError as failure:
         from .diagnostics import log_bm_validation_failure
-
         log_bm_validation_failure(failure, diagnostic_context)
-        raise
+        try:
+            parsed = await _parse_once(api, name, [*messages,
+                                                   {"role": "user", "content": _REASK_ONCE}])
+        except ValidationError as second:
+            log_bm_validation_failure(second, diagnostic_context)
+            raise
 
-    if response.output_parsed is None:
+    if parsed is None:
         raise RuntimeError("BM 분석 결과를 구조화된 형식으로 받지 못했습니다.")
 
-    result = response.output_parsed
+    result = parsed
     if result.concept_id != resolved.concept_id:
         raise ValueError("BM 분석 결과의 concept_id가 입력과 다릅니다.")
 
@@ -137,3 +146,38 @@ async def run_bm_analysis(
     )
     result = validate_canvas_source_labels(result)
     return result
+
+
+def _effort() -> str:
+    return (os.getenv("BM_REASONING_EFFORT") or "").strip()
+
+
+def _knobs(model: str) -> dict[str, Any]:
+    effort = _effort()
+    knobs: dict[str, Any] = {}
+    if effort:
+        knobs["reasoning"] = {"effort": effort}
+    if (not effort or effort == "none") and model not in _NO_TEMPERATURE:
+        knobs["temperature"] = _TEMPERATURE
+    return knobs
+
+
+def _sampling_rejected(error: Exception) -> bool:
+    message = str(error).lower()
+    return "400" in message and ("temperature" in message or "reasoning_effort" in message)
+
+
+async def _parse_once(api: AsyncOpenAI, model: str,
+                      messages: list[dict[str, Any]]) -> BMAnalysisResult | None:
+    async def call():
+        response = await api.responses.parse(
+            model=model, input=messages, text_format=BMAnalysisResult, **_knobs(model))
+        return response.output_parsed
+
+    try:
+        return await call()
+    except Exception as failure:
+        if not _sampling_rejected(failure) or model in _NO_TEMPERATURE:
+            raise
+        _NO_TEMPERATURE.add(model)
+        return await call()

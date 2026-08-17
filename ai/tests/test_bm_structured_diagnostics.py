@@ -139,7 +139,7 @@ class _FailingClient:
         self.responses = _FailingResponses(failure)
 
 
-def test_run_bm_analysis_logs_validation_once_and_preserves_failure(caplog):
+def test_run_bm_analysis_logs_both_bounded_validation_failures_and_preserves_failure(caplog):
     failure = _validation_error()
     client = _FailingClient(failure)
     with caplog.at_level(logging.WARNING, logger="app.research.bm.diagnostics"):
@@ -156,5 +156,5 @@ def test_run_bm_analysis_logs_validation_once_and_preserves_failure(caplog):
             ))
 
     assert caught.value is failure
-    assert client.responses.calls == 1
-    assert caplog.text.count("BM schema validation failed") == 1
+    assert client.responses.calls == 2
+    assert caplog.text.count("BM schema validation failed") == 2

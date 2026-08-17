@@ -38,7 +38,7 @@ import tools.jackson.databind.ObjectMapper;
 
 class LaunchReadinessAsyncV21Tests {
     @Test
-    void repeatedCommandKeyReturnsExistingTaskBeforeUploadingAnotherDocument() {
+    void repeatedCommandKeyReturnsExistingTaskBeforeUploadingAnotherDocument() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProjectRepository projects = mock(ProjectRepository.class); Project project = mock(Project.class);
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));

@@ -60,6 +60,25 @@ class Theme(StrictModel):
     participantIds: list[str] = Field(min_length=1, max_length=5)
 
 
+class TranscriptProvenance(StrictModel):
+    transcriptId: str = Field(pattern=r"^T-P[1-5]$")
+    participantId: str = Field(pattern=r"^P[1-5]$")
+    answerCount: int = Field(strict=True, ge=3, le=10)
+
+
+class CodingAssignment(StrictModel):
+    participantId: str = Field(pattern=r"^P[1-5]$")
+    themeTitles: list[str] = Field(max_length=12)
+
+
+class SaturationSummary(StrictModel):
+    participantCount: int = Field(strict=True, ge=3, le=5)
+    codedParticipantCount: int = Field(strict=True, ge=0, le=5)
+    themeCount: int = Field(strict=True, ge=1, le=12)
+    assessment: Literal["EXPLORATORY_ONLY"]
+    limitation: str = Field(min_length=1, max_length=500)
+
+
 class MarketInterviewResult(StrictModel):
     contract: Literal["market-interview-result-v1"]
     schemaVersion: Literal["1.0"]
@@ -72,6 +91,9 @@ class MarketInterviewResult(StrictModel):
     purchaseTriggers: list[str] = Field(max_length=12)
     followUpQuestions: list[str] = Field(min_length=3, max_length=12)
     limitations: list[str] = Field(min_length=2, max_length=8)
+    transcriptProvenance: list[TranscriptProvenance] = Field(min_length=3, max_length=5)
+    codingTrace: list[CodingAssignment] = Field(min_length=3, max_length=5)
+    saturation: SaturationSummary
 
     @model_validator(mode="after")
     def identities_match(self):
@@ -84,4 +106,37 @@ class MarketInterviewResult(StrictModel):
             raise ValueError("every participant must have exactly one interview")
         if any(not set(theme.participantIds).issubset(set(ids)) for theme in self.themes):
             raise ValueError("theme participant reference is invalid")
+        if (len(self.transcriptProvenance) != len(ids)
+                or {item.participantId for item in self.transcriptProvenance} != set(ids)):
+            raise ValueError("every participant must retain transcript provenance")
+        if (len(self.codingTrace) != len(ids)
+                or {item.participantId for item in self.codingTrace} != set(ids)):
+            raise ValueError("every participant must retain a coding assignment")
+        known_themes = {theme.title for theme in self.themes}
+        if any(not set(item.themeTitles).issubset(known_themes) for item in self.codingTrace):
+            raise ValueError("coding assignment references an unknown theme")
+        if self.saturation.participantCount != len(ids):
+            raise ValueError("saturation participant count must match transcripts")
         return self
+
+
+class TargetingResult(StrictModel):
+    participants: list[Participant] = Field(min_length=3, max_length=5)
+
+
+class TranscriptResult(StrictModel):
+    interview: Interview
+
+
+class CodebookTheme(StrictModel):
+    title: str = Field(min_length=1, max_length=120)
+    description: str = Field(min_length=1, max_length=800)
+
+
+class CodebookResult(StrictModel):
+    themes: list[CodebookTheme] = Field(min_length=1, max_length=12)
+    followUpQuestions: list[str] = Field(min_length=3, max_length=12)
+
+
+class CodingResult(StrictModel):
+    assignments: list[CodingAssignment] = Field(min_length=3, max_length=5)

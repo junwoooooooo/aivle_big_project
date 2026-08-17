@@ -24,8 +24,8 @@ function fixture(name) {
 describe('normalizeMarketResult — FULL', () => {
   const result = normalizeMarketResult(fixture('full.json'));
 
-  it('7과목이 라벨과 함께 온다', () => {
-    expect(result.scorecard).toHaveLength(7);
+  it('10과목이 라벨과 함께 온다', () => {
+    expect(result.scorecard).toHaveLength(10);
     expect(result.scorecard.map((item) => item.label)).toContain('시장 크기');
     expect(result.scorecard.every((item) => item.state)).toBe(true);
   });

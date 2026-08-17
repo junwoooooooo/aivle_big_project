@@ -51,8 +51,9 @@ for _dir in (RESEARCH_HOME,
 # 단계 · 예산 · 실패 등급
 # ══════════════════════════════════════════════════════════════
 #: 8단계. **이름은 계약의 일부다** — 프론트가 이 이름으로 진행 상황을 그린다.
-STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary")
-STAGES_BM = ("restore", "cards", "bm_adapter", "bm_model")
+STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary",
+               "sections")
+STAGES_BM = ("restore", "cards", "promote", "bm_adapter", "bm_model")
 
 #: 이름표 하나로 **(컨셉 파일, 원장)** 이 정해진다.
 #:
@@ -516,12 +517,18 @@ def _full(source_run: str, concept_path: str, concept_id: str,
     score = _timed(ledger, "scorecard",
                    lambda: SCORECARD.build(source_run, concept_path, verdict=verdict))
 
-    cards = list(cards_doc.get("카드") or [])
-    import section_recall as SECTION                              # noqa: PLC0415
+    base_cards = list(cards_doc.get("카드") or [])
+    promoted_cards = _sections(ledger, source_run)
+    section_counts: dict[str, int] = {}
+    for promoted in promoted_cards:
+        subject = promoted.get("_절")
+        if subject:
+            section_counts[str(subject)] = section_counts.get(str(subject), 0) + 1
+    cards = list(base_cards)
     existing_ids = {card.get("카드_id") for card in cards}
-    for promoted in SECTION.load_cards(source_run):
+    for promoted in promoted_cards:
         if promoted.get("카드_id") in existing_ids:
-            ledger.degrade("collect", "SECTION_EVIDENCE_ID_COLLISION",
+            ledger.degrade("sections", "SECTION_EVIDENCE_ID_COLLISION",
                            f"promoted evidence id 충돌: {promoted.get('카드_id')}")
             continue
         existing_ids.add(promoted.get("카드_id"))
@@ -532,7 +539,7 @@ def _full(source_run: str, concept_path: str, concept_id: str,
 
     result = _read_result(source_run)
     market = serialize.market(
-        verdict, cards,
+        verdict, base_cards,
         ((result.get("report") or {}).get("not_found") or {}),
         result.get("coverage_caveat"), evidence_ids,
         # 슬롯 정의 — 「S2」를 사람이 읽는 문구로 옮기는 데 쓴다. 원장에 이미 있어 새 I/O 는 없다.
@@ -540,6 +547,7 @@ def _full(source_run: str, concept_path: str, concept_id: str,
 
     summary = _summary(ledger, budget, source_run, concept_path, evidence_ids, rescore,
                        merged_cards_doc)
+    human = serialize.verified_report(evidence)
 
     return serialize.envelope(
         runId=run_id, conceptId=concept_id,
@@ -547,10 +555,36 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         generatedAt=_now(), mode="FULL",
         stages=[stage.as_contract() for stage in ledger.stages],
         degradations=ledger.degradations,
-        scorecard=serialize.scorecard(score),
+        scorecard=serialize.scorecard(score, section_counts),
         market=market, canvas=None, bm=None,
         evidence=evidence, summary=summary,
-        notes=list(serialize.NOTES_FULL))
+        notes=list(serialize.NOTES_FULL),
+        judgment=human["judgment"], prescriptions=human["prescriptions"],
+        synthesis=human["synthesis"], report=human["report"])
+
+
+def _sections(ledger: Run, source_run: str) -> list[dict]:
+    """Load the bounded section-recall artifact produced by the collection engine.
+
+    Reading documents and exact-quote promotion happen inside ``research2.run.collect``.
+    This named stage makes that production work observable and keeps promoted facts in
+    evidence/summary only; market figures continue to use slot-authorized cards.
+    """
+    import section_recall as SECTION                              # noqa: PLC0415
+
+    stage = ledger.stage("sections")
+    snapshot = SECTION.load(source_run)
+    if not snapshot:
+        ledger.degrade("sections", "NO_SECTION_ARTIFACT",
+                       "section recall 산출물이 없어 기존 슬롯 근거만 사용한다")
+        return []
+    stage.status = "OK"
+    stage.seconds = max(0, int(float(snapshot.get("wall_seconds") or 0)))
+    stage.llm_calls = max(0, int(snapshot.get("attempts") or 0))
+    for degradation in snapshot.get("degradations") or []:
+        ledger.degrade("sections", str(degradation.get("code") or "SECTION_RECALL_FAILED"),
+                       str(degradation.get("detail") or "section recall 저하")[:200])
+    return SECTION.load_cards(source_run)
 
 
 def _summary(ledger: Run, budget: Budget, source_run: str, concept_path: str,
@@ -689,12 +723,8 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
         deadline_monotonic=deadline_monotonic)))
     metrics = collection.get("metrics") or {}
     section_attempts = int(metrics.get("section_recall.attempts") or 0)
-    section_errors = int(metrics.get("llm.section_recall.error") or 0)
-    ledger.stages[-1].llm_calls = int(metrics.get("llm.calls") or 0) + section_errors
-    import section_recall as SECTION                              # noqa: PLC0415
-    for degradation in SECTION.load(run_id).get("degradations") or []:
-        ledger.degrade("collect", str(degradation.get("code") or "SECTION_RECALL_FAILED"),
-                       str(degradation.get("detail") or "section recall 저하")[:200])
+    ledger.stages[-1].llm_calls = int(metrics.get("llm.calls") or 0) - section_attempts
+    ledger.stages[-1].llm_calls = max(0, ledger.stages[-1].llm_calls)
     if rc:
         # **무엇을 다시 샀는지 값으로 남긴다.** 안 남기면 「왜 이 슬롯만 새 값인가」를
         # 나중에 코드로 추론해야 하고, 그건 기록이 아니다.

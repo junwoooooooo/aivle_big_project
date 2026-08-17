@@ -42,7 +42,21 @@ export const SUBJECT_LABEL = {
   PRICE: '가격',
   DEMAND: '수요 근거',
   CALCULATION: '시장 규모 계산',
+  CHANNEL: '채널',
+  UNIT_ECONOMICS: '단위 경제성',
+  REGULATION: '규제',
   NOT_FOUND: '못 찾은 것',
+};
+
+export const REPORT_SECTION_ORDER = [
+  'MARKET_SIZE', 'PRICE', 'COMPETITOR', 'CHANNEL', 'DEMAND',
+  'UNIT_ECONOMICS', 'REGULATION', 'GAPS', 'SYNTHESIS',
+];
+
+export const REPORT_SECTION_TITLE = {
+  MARKET_SIZE: '시장 크기', PRICE: '가격', COMPETITOR: '경쟁', CHANNEL: '채널',
+  DEMAND: '수요', UNIT_ECONOMICS: '원가·수익성', REGULATION: '규제',
+  GAPS: '못 구한 것', SYNTHESIS: '사업가에게 의미하는 것',
 };
 
 export const SCORE_STATE_VIEW = {
@@ -157,6 +171,7 @@ export const COMP_METRICS = [
 
 const list = (value) => (Array.isArray(value) ? value : []);
 const text = (value) => (typeof value === 'string' && value.trim() ? value : null);
+const count = (value) => (typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0);
 
 /** 출처 도메인. 건수와 독립성은 다르다 — 한 도메인에서 3건은 3중 확인이 아니다. */
 export function hostOf(url) {
@@ -240,6 +255,11 @@ function normalizeEvidence(raw) {
     inputs: raw?.inputs && typeof raw.inputs === 'object' ? raw.inputs : null,
     materialIds: list(raw?.materialIds),
     assumptions: list(raw?.assumptions),
+    section: text(raw?.section),
+    placement: text(raw?.placement),
+    issuer: text(raw?.issuer),
+    tableKey: text(raw?.tableKey),
+    raw: text(raw?.raw),
   };
 }
 
@@ -358,6 +378,11 @@ export function normalizeMarketResult(raw) {
     bm: raw.bm && typeof raw.bm === 'object'
       ? {
         decision: text(raw.bm.decision),
+        gateReasons: list(raw.bm.gateReasons).map((reason) => ({
+          code: text(reason?.code), cell: text(reason?.cell),
+          message: text(reason?.message) ?? '사유 없음',
+          evidenceIds: list(reason?.evidenceIds), cause: text(reason?.cause) ?? 'UNMAPPED',
+        })),
         confidence: text(raw.bm.confidence),
         summary: text(raw.bm.summary),
         marketFitStatus: text(raw.bm.marketFitStatus),
@@ -383,7 +408,64 @@ export function normalizeMarketResult(raw) {
     evidenceById: byId,
     usedIn: usedInIndex(raw, evidence),
     notes: list(raw.notes),
+    judgment: raw.judgment
+      ? {
+        price: typeof raw.judgment.price === 'number' ? raw.judgment.price : null,
+        lines: list(raw.judgment.lines).map((line) => ({
+          what: text(line?.what) ?? '무엇 없음', sentence: text(line?.sentence),
+          formula: text(line?.formula), silentBecause: text(line?.silentBecause),
+          sources: list(line?.sources).map((source) => ({
+            raw: text(source?.raw) ?? '', subject: text(source?.subject) ?? '',
+            period: text(source?.period), url: text(source?.url) ?? '',
+          })),
+        })),
+        conclusion: text(raw.judgment.conclusion),
+      }
+      : null,
+    prescriptions: Array.isArray(raw.prescriptions)
+      ? raw.prescriptions.map((row) => ({
+        section: text(row?.section) ?? 'UNKNOWN', kind: text(row?.kind) ?? 'UNKNOWN',
+        kindLabel: text(row?.kindLabel) ?? '갈래 없음', what: text(row?.what) ?? '',
+        why: text(row?.why) ?? '', where: text(row?.where) ?? '',
+      }))
+      : null,
+    synthesis: Array.isArray(raw.synthesis)
+      ? raw.synthesis.map((row) => ({
+        key: text(row?.key) ?? '', stance: text(row?.stance) ?? '미상',
+        sentence: text(row?.sentence) ?? '', what: text(row?.what) ?? '',
+        sources: list(row?.sources).map((source) => ({
+          raw: text(source?.raw) ?? '', subject: text(source?.subject) ?? '',
+          period: text(source?.period),
+        })),
+      }))
+      : null,
+    report: raw.report && typeof raw.report === 'object'
+      ? {
+        writtenBy: text(raw.report.writtenBy),
+        unverifiedNumbers: count(raw.report.unverifiedNumbers),
+        conceptLeaks: count(raw.report.conceptLeaks),
+        lead: text(raw.report.lead), tail: text(raw.report.tail),
+        sections: list(raw.report.sections).map((section) => ({
+          subject: text(section?.subject) ?? 'UNKNOWN',
+          markdown: text(section?.markdown) ?? '',
+        })),
+      }
+      : null,
   };
+}
+
+export function reportMarkdown(report, subject) {
+  if (!report) return null;
+  const found = report.sections.find((section) => section.subject === subject);
+  return found?.markdown || null;
+}
+
+export function sectionEvidence(result) {
+  const output = Object.fromEntries(REPORT_SECTION_ORDER.map((subject) => [subject, []]));
+  for (const item of list(result?.evidence)) {
+    if (item.section && output[item.section]) output[item.section].push(item);
+  }
+  return output;
 }
 
 /**

@@ -69,6 +69,21 @@ def test_envelope_matches_both_golden_fixtures():
     assert set(serialize.ENVELOPE) == _keys(_golden("bm.json"))
 
 
+def test_verified_section_report_preserves_quotes_and_marks_missing_sections():
+    evidence = [{
+        "id": "C-SEC-CH-a", "section": "CHANNEL", "metric": "채널·유통 조건",
+        "subject": "채널", "quote": "입점 수수료는 계약 조건에 따라 정한다.",
+        "issuer": "example.org", "sourceKind": "official_page",
+        "retrievedAt": "2026-08-17", "period": None, "raw": None,
+    }]
+    out = serialize.verified_report(evidence)
+    assert out["report"]["writtenBy"] == "deterministic-evidence-renderer-v1"
+    assert out["report"]["unverifiedNumbers"] == 0
+    assert "입점 수수료는 계약 조건에 따라 정한다." in out["report"]["sections"][0]["markdown"]
+    assert any(item["section"] == "MARKET_SIZE" for item in out["prescriptions"])
+    assert out["synthesis"][0]["stance"] == "VERIFIED_EVIDENCE"
+
+
 # ══════════════════════════════════════════════════════════════
 @needs_ledger
 def test_full_mode_matches_the_golden_shape():
@@ -101,7 +116,8 @@ def test_evidence_carries_exactly_the_contract_keys_and_nothing_else():
     out = asyncio.run(pipeline.run_market_research(
         {"mode": "RESCORE", "sourceRun": SEED_RUN, "conceptId": "smoke"},
         "test-envelope-allowlist", 600))
-    expected = set(_golden("full.json")["evidence"][0])
+    expected = set(_golden("full.json")["evidence"][0]) | {
+        "section", "placement", "issuer", "tableKey", "raw"}
     assert out["evidence"], "근거가 0건이면 이 검사는 아무것도 못 본다"
     for item in out["evidence"]:
         assert set(item) == expected

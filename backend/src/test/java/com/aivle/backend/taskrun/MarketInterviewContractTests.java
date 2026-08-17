@@ -72,7 +72,17 @@ class MarketInterviewContractTests {
            "themes":[{"title":"도입 부담","description":"설정과 지원 범위를 먼저 확인하려는 관점","participantIds":["P1","P2","P3"]}],
            "objections":["도입 부담"],"unmetNeeds":["초기 교육"],"purchaseTriggers":["쉬운 설정"],
            "followUpQuestions":["현재 해결 방식은 무엇인가요?","도입 전에 무엇을 확인하나요?","어떤 지원이 필요한가요?"],
-           "limitations":["실제 고객 조사 결과가 아닙니다.","통계적 대표성이 없으며 실제 인터뷰로 확인해야 합니다."]}
+           "limitations":["실제 고객 조사 결과가 아닙니다.","통계적 대표성이 없으며 실제 인터뷰로 확인해야 합니다."],
+           "transcriptProvenance":[
+             {"transcriptId":"T-P1","participantId":"P1","answerCount":3},
+             {"transcriptId":"T-P2","participantId":"P2","answerCount":3},
+             {"transcriptId":"T-P3","participantId":"P3","answerCount":3}],
+           "codingTrace":[
+             {"participantId":"P1","themeTitles":["도입 부담"]},
+             {"participantId":"P2","themeTitles":["도입 부담"]},
+             {"participantId":"P3","themeTitles":["도입 부담"]}],
+           "saturation":{"participantCount":3,"codedParticipantCount":3,"themeCount":1,
+             "assessment":"EXPLORATORY_ONLY","limitation":"가상 참여자 기반 탐색으로 대표성을 입증하지 않습니다."}}
           """);
     }
 }

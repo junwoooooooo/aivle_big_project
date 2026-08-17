@@ -21,7 +21,7 @@ GRADES = ("확정", "실무 신뢰", "추정", "근거 없음")
 EVIDENCE_KINDS = ("관측", "계산")
 SCORE_STATES = ("FILLED", "PARTIAL", "MISSING", "REPORTED")
 SUBJECTS = ("MARKET_SIZE", "GROWTH", "COMPETITOR", "PRICE", "DEMAND",
-            "CALCULATION", "NOT_FOUND")
+            "CALCULATION", "CHANNEL", "UNIT_ECONOMICS", "REGULATION", "NOT_FOUND")
 
 #: 성적표 상태 한글 → 계약 어휘. `—`(못 찾은 것)은 **점수가 아니라 보고**라 따로 있다.
 _STATE = {"채워짐": "FILLED", "부분": "PARTIAL", "미확보": "MISSING", "—": "REPORTED"}
@@ -33,6 +33,12 @@ _SUBJECT = {
     "7_못찾은것": "NOT_FOUND",
 }
 
+_SECTION_SUBJECT = {
+    "CHANNEL": "어디서 팔리나 — 채널·유통 조건",
+    "UNIT_ECONOMICS": "한 개 팔면 얼마가 남나",
+    "REGULATION": "무엇을 지켜야 하나",
+}
+
 #: 근거 카드 한글 키 → 계약 키. **이 표가 evidence 의 allowlist 다** —
 #: 여기 없는 카드 칸(`슬롯`·`채택`·`연도`·`약한_고리` …)은 나가지 않는다.
 _EVIDENCE = {
@@ -42,6 +48,8 @@ _EVIDENCE = {
     "출처_url": "sourceUrl", "kind": "sourceKind", "조회일": "retrievedAt",
     "인용": "quote", "식": "formula", "입력": "inputs",
     "재료_카드_id": "materialIds", "가정": "assumptions",
+    "_절": "section", "_갈래": "placement", "_발행사": "issuer",
+    "_표키": "tableKey", "_원문값": "raw",
 }
 
 #: 카드가 경계를 담는 칸들. **하나라도 빠뜨리면 §4 위반**이다 — 경계는 값과 같이 옮긴다.
@@ -189,7 +197,8 @@ def evidence(cards: list[dict]) -> list[dict]:
         item["assumptions"] = _strings(item.get("assumptions"))
         item["caveats"] = caveats_of_card(card)
         for key in ("metric", "subject", "period", "unit",
-                    "sourceUrl", "sourceKind", "retrievedAt", "formula"):
+                    "sourceUrl", "sourceKind", "retrievedAt", "formula",
+                    "section", "placement", "issuer", "tableKey", "raw"):
             item[key] = str(item[key]) if item.get(key) is not None else None
         out.append(item)
     return out
@@ -198,8 +207,8 @@ def evidence(cards: list[dict]) -> list[dict]:
 # ══════════════════════════════════════════════════════════════
 # FULL — 성적표 · 시장
 # ══════════════════════════════════════════════════════════════
-def scorecard(doc: dict) -> list[dict]:
-    """7과목 **전부** 싣는다. 빠진 과목은 「미확보」가 아니라 「안 쟀다」로 읽힌다."""
+def scorecard(doc: dict, section_counts: dict | None = None) -> list[dict]:
+    """All score subjects, including deterministic section-fact coverage."""
     subjects = doc.get("과목") or {}
     out = []
     for korean, subject in _SUBJECT.items():
@@ -209,6 +218,11 @@ def scorecard(doc: dict) -> list[dict]:
             raise ContractDrift(f"{korean} 상태가 계약 밖이다: {row.get('상태')!r}")
         out.append({"subject": subject, "state": state,
                     "detail": _text(_detail(korean, row), "세부 없음")})
+    counts = section_counts or {}
+    for subject, label in _SECTION_SUBJECT.items():
+        count = max(0, int(counts.get(subject) or 0))
+        out.append({"subject": subject, "state": "FILLED" if count else "MISSING",
+                    "detail": f"{label} 원문 근거 {count}건"})
     return out
 
 
@@ -548,7 +562,8 @@ def assert_caveats_reached(cells: list[dict], evidence_items: list[dict]) -> Non
                 f"{cell['canvasCell']} 이 인용한 근거의 경계가 칸에 없다: {sorted(missing)}")
 
 
-def bm(final, analysis, handoff=None) -> dict:
+def bm(final, analysis, handoff=None, *, decision: str | None = None,
+       gate_reasons: list[dict] | None = None) -> dict:
     """`BMFinalResult` + `BMAnalysisResult` → 계약 `bm`. 이름만 바꾼다 — 판정을 다시 안 한다.
 
     ⚠ **두 물건이 필요하다.** `marketFitStatus`·`consistencyStatus` 는 최종 결과가 아니라
@@ -556,7 +571,8 @@ def bm(final, analysis, handoff=None) -> dict:
       상태 칸을 채울 수 없다(그러려면 요약에서 되짚어야 하고 그건 추측이다).
     """
     return {
-        "decision": final.decision.value,
+        "decision": decision or final.decision.value,
+        "gateReasons": [dict(reason) for reason in (gate_reasons or [])],
         "confidence": final.confidence,
         "summary": _text(final.summary, "요약 없음"),
         "marketFitStatus": analysis.market_fit_status,
@@ -609,7 +625,151 @@ def summary_lines(doc: dict | None, evidence_ids: set[str]) -> list[dict] | None
 #: 그래야 봉투를 `exact()` 한 번으로 못박을 수 있다.
 ENVELOPE = ("runId", "conceptId", "asOf", "generatedAt", "mode",
             "stages", "degradations",
-            "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes")
+            "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes",
+            "judgment", "prescriptions", "synthesis", "report")
+
+REPORT_SECTIONS = ("MARKET_SIZE", "PRICE", "COMPETITOR", "CHANNEL", "DEMAND",
+                   "UNIT_ECONOMICS", "REGULATION", "GAPS", "SYNTHESIS")
+
+
+def verified_report(evidence_items: list[dict]) -> dict:
+    """Build a readable report from exact-quote section evidence without another model call.
+
+    This is deliberately not an interpretation layer. It preserves the promoted quote and
+    provenance, records absent sections as gaps, and labels the writer as deterministic so the
+    frontend never presents these lines as AI-written judgment.
+    """
+    primary = REPORT_SECTIONS[:7]
+    grouped = {subject: [] for subject in primary}
+    for item in evidence_items or []:
+        section = item.get("section")
+        quote = str(item.get("quote") or "").strip()
+        if section in grouped and quote:
+            grouped[section].append(item)
+    sections = []
+    synthesis_rows = []
+    for subject in primary:
+        rows = grouped[subject]
+        if not rows:
+            continue
+        lines = []
+        for item in rows[:4]:
+            issuer = str(item.get("issuer") or item.get("sourceKind") or "출처 확인 필요")
+            period = str(item.get("period") or item.get("retrievedAt") or "시점 미확인")
+            lines.append(f"- “{item['quote']}” — {issuer} ({period})")
+        sections.append({"subject": subject, "markdown": "\n".join(lines)})
+        lead = rows[0]
+        synthesis_rows.append({
+            "key": str(lead.get("id") or subject),
+            "stance": "VERIFIED_EVIDENCE",
+            "sentence": f"{subject} 절에 원문 대조를 통과한 근거가 있습니다.",
+            "what": str(lead.get("metric") or lead.get("subject") or subject),
+            "sources": [{
+                "raw": str(lead.get("raw") or lead.get("quote") or "원문 근거"),
+                "subject": str(lead.get("subject") or lead.get("metric") or subject),
+                "period": lead.get("period"),
+            }],
+        })
+    missing = [subject for subject in primary if not grouped[subject]]
+    prescriptions_rows = [{
+        "section": subject,
+        "kind": "NOT_FOUND",
+        "kindLabel": "현재 근거 없음",
+        "what": f"{subject} 절에 원문 대조를 통과한 근거가 없습니다.",
+        "why": "현재 로컬 수집 본문과 exact quote gate에서 공개할 근거를 확보하지 못했습니다.",
+        "where": "다음 시장조사 또는 실제 이해관계자 확인에서 보완하세요.",
+    } for subject in missing]
+    if missing:
+        sections.append({
+            "subject": "GAPS",
+            "markdown": "현재 유효한 근거가 없는 절: " + ", ".join(missing),
+        })
+    if sections:
+        sections.append({
+            "subject": "SYNTHESIS",
+            "markdown": "위 내용은 원문 대조를 통과한 근거의 정리이며, 사업 성과나 시장 대표성을 뜻하지 않습니다.",
+        })
+    public_report = None if not sections else {
+        "writtenBy": "deterministic-evidence-renderer-v1",
+        "unverifiedNumbers": 0,
+        "conceptLeaks": 0,
+        "lead": "section recall에서 원문 대조를 통과한 근거를 절별로 정리했습니다.",
+        "tail": "해석과 의사결정 전에 ‘근거로 검산하기’에서 원문과 경계를 확인하세요.",
+        "sections": sections,
+    }
+    return {"judgment": None,
+            "prescriptions": prescriptions_rows or None,
+            "synthesis": synthesis_rows or None,
+            "report": public_report}
+
+
+def report(doc: dict | None) -> dict | None:
+    if not doc:
+        return None
+    sections = []
+    for row in doc.get("절") or []:
+        subject = row.get("section")
+        markdown = str(row.get("본문") or "").strip()
+        if not markdown:
+            continue
+        if subject not in REPORT_SECTIONS:
+            raise ContractDrift(f"보고서 절이 계약 밖이다: {subject!r}")
+        sections.append({"subject": subject, "markdown": markdown})
+    if not sections:
+        return None
+    return {"writtenBy": _text(doc.get("쓴_모델"), "모델 미상"),
+            "unverifiedNumbers": max(0, int(doc.get("유령_수") or 0)),
+            "conceptLeaks": max(0, int(doc.get("컨셉_누출_수") or 0)),
+            "lead": str(doc.get("머리말") or "").strip() or None,
+            "tail": str(doc.get("꼬리말") or "").strip() or None,
+            "sections": sections}
+
+
+def judgment(doc: dict | None) -> dict | None:
+    price = (doc or {}).get("가격") or {}
+    if not price:
+        return None
+    lines = []
+    for row in price.get("갈래") or []:
+        lines.append({"what": _text(row.get("무엇"), "무엇 없음"),
+                      "sentence": row.get("문장") or None,
+                      "formula": row.get("계산") or None,
+                      "silentBecause": row.get("왜_못_쓰나") or None,
+                      "sources": [{"raw": f"{s.get('number_raw') or ''}{s.get('unit_raw') or ''}",
+                                   "subject": _text(s.get("subject"), "미상"),
+                                   "period": str(s["year"]) if s.get("year") else None,
+                                   "url": _text(s.get("_url"), "")}
+                                  for s in row.get("근거") or []]})
+    amount = price.get("정가")
+    return {"price": float(amount) if isinstance(amount, (int, float)) else None,
+            "lines": lines, "conclusion": price.get("결론") or None}
+
+
+def prescriptions(rows: list | None) -> list[dict] | None:
+    if not rows:
+        return None
+    return [{"section": _text(row.get("절"), "UNKNOWN"),
+             "kind": _text(row.get("갈래"), "UNKNOWN"),
+             "kindLabel": _text(row.get("갈래말"), "갈래 없음"),
+             "what": _text(row.get("진단"), "진단 없음"),
+             "why": _text(row.get("왜"), "사유 없음"),
+             "where": _text(row.get("어디서"), "확인 경로 미기록")}
+            for row in rows]
+
+
+def synthesis(doc: dict | None) -> list[dict] | None:
+    rows = [row for row in ((doc or {}).get("문장") or []) if row.get("문장")]
+    if not rows:
+        return None
+    return [{"key": _text(row.get("키"), "키 없음"),
+             "stance": _text(row.get("갈래"), "미상"),
+             "sentence": _text(row.get("문장"), ""),
+             "what": _text(row.get("무엇"), ""),
+             "sources": [{"raw": f"{s.get('number_raw') or ''}{s.get('unit_raw') or ''}",
+                          "subject": _text(s.get("subject"), "미상"),
+                          "period": str(s["year"]) if s.get("year") else None}
+                         for s in row.get("근거") or []]}
+            for row in rows]
 
 NOTES_FULL = (
     "등급은 evidence[].grade 에 있다. 값만 떼어 쓰면 추정이 확정처럼 읽힌다.",

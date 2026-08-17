@@ -192,6 +192,13 @@ def _promote(document, source: dict, parsed: dict, rules: dict,
                 "kind": source["kind"],
                 "조회일": source["retrieved_at"],
                 "인용": quote,
+                # Public metadata is copied through serialize's explicit allowlist.
+                # The remaining underscore keys below are internal dedup/sort state.
+                "_절": section,
+                "_갈래": "HEAD",
+                "_발행사": urlsplit(source["url"]).netloc or None,
+                "_표키": None,
+                "_원문값": " ".join(value for value in (number_raw, unit_raw) if value) or None,
                 "_section": section,
                 "_source_identity": source_identity,
                 "_document_order": document_order,
@@ -218,9 +225,10 @@ def _dedup_and_cap(cards: list[dict], cfg: dict) -> tuple[list[dict], list[dict]
         if len(rows) > cap:
             sampled.append({"stage": "collect", "code": "SECTION_EVIDENCE_SAMPLED",
                             "detail": f"{section}: 전체 {len(rows)}건 중 {cap}건 공개"})
+    public_metadata = {"_절", "_갈래", "_발행사", "_표키", "_원문값"}
     for card in kept:
         for key in tuple(card):
-            if key.startswith("_"):
+            if key.startswith("_") and key not in public_metadata:
                 card.pop(key)
     return kept, sampled, len(unique)
 

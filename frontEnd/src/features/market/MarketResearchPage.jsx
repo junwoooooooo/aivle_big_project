@@ -12,6 +12,7 @@ import Emphasis from './emphasis.jsx';
 import useMarketLiveState from './useMarketPolling.js';
 import useCellFocus from './useCellFocus.js';
 import CompetitorSeedForm from './CompetitorSeedForm.jsx';
+import MarketReportView from './MarketReportView.jsx';
 import {
   NOT_FOUND_GROUP, SCORE_STATE_VIEW,
   abbreviateKrw, bucketEvidence, competitorGaps, formatValue, hostOf,
@@ -133,8 +134,10 @@ export default function MarketResearchPage() {
       {!result ? (
         !active ? <Card><p>아직 조사한 적이 없다. 「시장조사 실행」을 눌러라.</p></Card> : null
       ) : (
-        <MarketResultBody result={result} activeId={focus.active} onJump={focus.jump} onNext={() =>
-          navigate(projectRoutes.businessModel(projectId))} />
+        <MarketReportView result={result} fallback={
+          <MarketResultBody result={result} activeId={focus.active} onJump={focus.jump} onNext={() =>
+            navigate(projectRoutes.businessModel(projectId))} />
+        } />
       )}
     </ProjectWorkspace>
   );

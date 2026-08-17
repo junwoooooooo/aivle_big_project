@@ -222,6 +222,8 @@ def test_growth_card_uses_percent_scale_and_keeps_ratio_internal(monkeypatch):
 def test_public_envelope_and_stage_names_are_unchanged():
     assert serialize.ENVELOPE == (
         "runId", "conceptId", "asOf", "generatedAt", "mode", "stages", "degradations",
-        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes")
+        "scorecard", "market", "canvas", "bm", "evidence", "summary", "notes",
+        "judgment", "prescriptions", "synthesis", "report")
     assert pipeline.STAGES_FULL == (
-        "harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary")
+        "harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary",
+        "sections")

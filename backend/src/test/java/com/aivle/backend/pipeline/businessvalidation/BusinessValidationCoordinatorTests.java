@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -32,12 +33,13 @@ class BusinessValidationCoordinatorTests {
     @Mock MarketResearchRunRepository runs;
     @Mock MarketResearchService market;
     @Mock BmPlanPreparationService bmPlans;
+    @Mock ApplicationEventPublisher events;
     private BusinessValidationCoordinator coordinator;
     private Project project;
 
     @BeforeEach
     void setUp() {
-        coordinator = new BusinessValidationCoordinator(projects, sessions, runs, market, bmPlans);
+        coordinator = new BusinessValidationCoordinator(projects, sessions, runs, market, bmPlans, events);
         project = mock(Project.class);
         User owner = mock(User.class);
         when(project.getId()).thenReturn(41L);
@@ -112,6 +114,29 @@ class BusinessValidationCoordinatorTests {
         verify(session).bmFailed();
         verify(session, never()).marketFailed();
         verify(market, never()).startFull(anyLong(), anyLong(), any(), anyString(), anyString());
+    }
+
+    @Test
+    void completedBmPublishesExactRefinementStartOnlyOnceAcrossReconciliation() {
+        BusinessValidationSession session = session(BusinessValidationSession.State.BM_RUNNING, 91L, "bm-task");
+        when(session.getState()).thenReturn(BusinessValidationSession.State.BM_RUNNING,
+            BusinessValidationSession.State.COMPLETED);
+        when(sessions.findByIdForUpdate("session-1")).thenReturn(Optional.of(session));
+        when(market.currentForTaskRun(7L, 41L, "market-task")).thenReturn(current("SUCCEEDED", 91L, false));
+        when(market.currentForTaskRun(7L, 41L, "bm-task")).thenReturn(current("SUCCEEDED", 92L, false));
+
+        coordinator.reconcile("session-1");
+        coordinator.reconcile("session-1");
+
+        verify(session, times(1)).completed(92L);
+        ArgumentCaptor<BusinessValidationCompletedEvent> event =
+            ArgumentCaptor.forClass(BusinessValidationCompletedEvent.class);
+        verify(events, times(1)).publishEvent(event.capture());
+        assertThat(event.getValue().sessionId()).isEqualTo("session-1");
+        assertThat(event.getValue().marketVersionId()).isEqualTo(91L);
+        assertThat(event.getValue().bmVersionId()).isEqualTo(92L);
+        assertThat(event.getValue().selectionRevision()).isEqualTo(4);
+        assertThat(event.getValue().bmPlanRevision()).isEqualTo(3);
     }
 
     @Test

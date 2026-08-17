@@ -15,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class BusinessValidationCoordinator {
     private final MarketResearchRunRepository marketRuns;
     private final MarketResearchService market;
     private final BmPlanPreparationService bmPlans;
+    private final ApplicationEventPublisher events;
 
     @Transactional
     public CurrentView start(Long ownerId, Long projectId, String asOf,
@@ -134,7 +136,14 @@ public class BusinessValidationCoordinator {
         MarketResearchService.CurrentView bmView = market.currentForTaskRun(
             ownerId, session.getProject().getId(), session.getBmTaskRunId());
         if (bmView.run().state().equals("FAILED")) session.bmFailed();
-        else if (bmView.version() != null) session.completed(bmView.version().id());
+        else if (bmView.version() != null) {
+            session.completed(bmView.version().id());
+            events.publishEvent(new BusinessValidationCompletedEvent(
+                session.getId(), session.getProject().getId(), ownerId,
+                session.getMarketVersionId(), bmView.version().id(),
+                session.getSourceMarketSeedSnapshotId(), session.getSourcePortfolioSelectionId(),
+                session.getSourceSelectionRevision(), session.getSourceBmPlanRevision()));
+        }
     }
 
     public List<String> activeSessionIds() { return sessions.findActiveIds(ACTIVE_STATES); }

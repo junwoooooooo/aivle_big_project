@@ -102,6 +102,21 @@
       "detail": "TAM 1,025,336,520원 · 가정 6개 명시"
     },
     {
+      "subject": "CHANNEL",
+      "state": "MISSING",
+      "detail": "채널·유통 조건 원문 근거 0건"
+    },
+    {
+      "subject": "UNIT_ECONOMICS",
+      "state": "MISSING",
+      "detail": "단위 경제성 원문 근거 0건"
+    },
+    {
+      "subject": "REGULATION",
+      "state": "MISSING",
+      "detail": "규제 원문 근거 0건"
+    },
+    {
       "subject": "NOT_FOUND",
       "state": "REPORTED",
       "detail": "아직 못 채운 것 26건 · 가정으로 메운 변수 14건 · 걸러낸 것 2건 · 값이 갈린 것 5건 · 찾아도 없는 것 5건"
@@ -554,5 +569,9 @@
     "caveats 를 떨어뜨리지 마라 — 값과 함께 옮겨야 하는 문장이다.",
     "법률 결과는 반영되지 않았다.",
     "SOM 은 이 파이프라인이 산출하지 않는다 — som:null 은 0 이 아니라 «안 쟀다»다."
-  ]
+  ],
+  "judgment": null,
+  "prescriptions": null,
+  "synthesis": null,
+  "report": null
 }

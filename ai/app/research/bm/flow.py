@@ -29,6 +29,9 @@ async def run_bm_pipeline_flow(
         model=model,
         diagnostic_context=diagnostic_context,
     )
+    from ...validation import citation, mapping
+    bm_analysis = mapping.apply(bm_analysis, resolved.market_join_data.evidence_list)
+    bm_analysis = citation.enforce(bm_analysis)
 
     final_result = finalize_bm_analysis(
         bm_analysis=bm_analysis,

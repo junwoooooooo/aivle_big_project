@@ -54,8 +54,9 @@ for _dir in (RESEARCH_HOME,
 # 단계 · 예산 · 실패 등급
 # ══════════════════════════════════════════════════════════════
 #: 8단계. **이름은 계약의 일부다** — 프론트가 이 이름으로 진행 상황을 그린다.
-STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary")
-STAGES_BM = ("restore", "cards", "bm_adapter", "bm_model")
+STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary",
+               "sections")
+STAGES_BM = ("restore", "cards", "promote", "bm_adapter", "bm_model")
 
 #: 이름표 하나로 **(컨셉 파일, 원장)** 이 정해진다.
 #:
@@ -659,6 +660,7 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     if plan_constraints:
         concept = {**concept, "constraint": {**(concept.get("constraint") or {}),
                                              **plan_constraints}}
+    market_result = _timed(ledger, "promote", lambda: _promote_for_bm(market_result))
     market_join = _timed(
         ledger, "bm_adapter",
         lambda: build_market_join(market_result, concept, concept_id))
@@ -683,19 +685,41 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     stage.seconds = int(time.monotonic() - began)
     stage.llm_calls = 1
     _observe(event_sink, "BM_MODEL", "COMPLETED", "Business Model 분석 완료")
+    canvas_cells = serialize.canvas_cells(
+        out["bm_analysis"].canvas, evidence,
+        _user_planned_cells(plan_material, plan_constraints))
+    from app.validation import gate
+    scorecard = market_result.get("scorecard")
+    gate_reasons = gate.evaluate(canvas_cells, scorecard)
+    decision = gate.apply_decision(out["final_result"].decision.value, gate_reasons)
     result = serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(market_result.get("asOf") or _now()[:10]), generatedAt=_now(), mode="BM",
         stages=[s.as_contract() for s in ledger.stages],
-        degradations=ledger.degradations, scorecard=None, market=None,
-        canvas={"cells": serialize.canvas_cells(
-            out["bm_analysis"].canvas, evidence,
-            _user_planned_cells(plan_material, plan_constraints))},
-        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff")),
+        degradations=ledger.degradations, scorecard=scorecard, market=None,
+        canvas={"cells": canvas_cells},
+        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff"),
+                        decision=decision, gate_reasons=gate_reasons),
         evidence=evidence, summary=None, notes=list(serialize.NOTES_BM))
     _observe(event_sink, "BM_SERIALIZATION", "COMPLETED", "Business Model 결과 정리 완료",
              status="COMPLETED")
     return result
+
+
+def _promote_for_bm(market_result: dict) -> dict:
+    """Consume FULL-time section promotion without re-reading or re-judging it.
+
+    ``C-SEC-*`` cards already passed exact-quote/source gates while FULL was made.
+    BM receives the immutable FULL evidence list verbatim, including the stored
+    ``C-SEC-CH-*`` channel eligibility identity.
+    """
+    evidence = market_result.get("evidence")
+    if not isinstance(evidence, list):
+        raise TypeError("Market FULL evidence must be a list")
+    for item in evidence:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+            raise TypeError("Market FULL evidence identity is invalid")
+    return market_result
 
 
 def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: str,

@@ -16,13 +16,14 @@ A1 은 채우지 않는다. 사람이 적어둔 것이 없으면 그대로 두�
 from __future__ import annotations
 
 import json
+import os
 import re
 
 import prompts
 from a_desk import normalize_unit
 from schema import FORMULA_TEMPLATES, Formula, FormulaVar, Slot, 경계_승격
 
-MODEL = "gpt-4o-mini"
+MODEL = (os.getenv("MARKET_DESIGN_MODEL") or "gpt-5.6-luna").strip()
 
 # "없음을 표현한 것"과 "값"을 구분한다.
 # 목록은 rules/units.v1.json 의 nullish_tokens 한 곳에만 둔다 — 필드마다 따로 처리하면
