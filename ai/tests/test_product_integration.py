@@ -45,6 +45,7 @@ def test_official_full_uses_arbitrary_concept_snapshot_without_saved_run(monkeyp
 def test_product_runner_invokes_exact_main_orchestrator(monkeypatch, tmp_path):
     input_path = tmp_path / "input.json"
     output_path = tmp_path / "output.json"
+    error_path = tmp_path / "error.json"
     progress_path = tmp_path / "progress.jsonl"
     input_path.write_text(json.dumps({"concept_name": "Any concept"}), encoding="utf-8")
     seen = {}
@@ -60,6 +61,7 @@ def test_product_runner_invokes_exact_main_orchestrator(monkeypatch, tmp_path):
             "product_runner.py",
             "--input", str(input_path),
             "--output", str(output_path),
+            "--error-output", str(error_path),
             "--workspace", str(tmp_path / "workspace"),
             "--run-id", "run-1",
             "--concept-id", "concept-1",
@@ -76,6 +78,7 @@ def test_product_runner_invokes_exact_main_orchestrator(monkeypatch, tmp_path):
     assert seen["task_input"]["conceptId"] == "concept-1"
     assert json.loads(seen["task_input"]["textContents"][0]["chunks"][0]["text"])["concept_name"] == "Any concept"
     assert json.loads(output_path.read_text(encoding="utf-8"))["mode"] == "FULL"
+    assert not error_path.exists()
     events = [json.loads(line) for line in progress_path.read_text(encoding="utf-8").splitlines()]
     assert [event["stage"] for event in events] == [
         "MARKET_COLLECTION", "MARKET_COLLECTION", "MARKET_SERIALIZATION"]

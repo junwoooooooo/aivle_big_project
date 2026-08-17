@@ -24,10 +24,82 @@ from datetime import datetime, timezone
 
 from pydantic import ValidationError
 
+from app.providers import ProviderFailure
+
 from . import serialize
-from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail
+from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail, _safe_failure_detail
 
 EventSink = Callable[[dict], None]
+
+_CHILD_PROVIDER_FAILURES = {
+    ("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION"): (400, False),
+    ("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE"): (503, True),
+    ("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID"): (503, False),
+    ("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED"): (504, True),
+    ("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED"): (429, True),
+    ("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE"): (502, True),
+    ("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE"): (500, False),
+    ("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION"): (502, False),
+    ("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED"): (502, False),
+    ("RESULT_SCHEMA_INVALID", "PROVIDER_JSON_INVALID"): (502, False),
+    ("INTERNAL_ERROR", "UNEXPECTED_INTERNAL_ERROR"): (500, True),
+}
+
+
+def _optional_child_int(value, minimum: int, maximum: int) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value if minimum <= value <= maximum else None
+
+
+def _child_failure(error_path: str) -> ProviderFailure | None:
+    try:
+        if os.path.getsize(error_path) > 64 * 1024:
+            return None
+        with io.open(error_path, encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    from .product_runner import _safe_error_value
+
+    if payload.get("kind") == "ProviderFailure":
+        code = payload.get("code")
+        reason = payload.get("reason")
+        expected = _CHILD_PROVIDER_FAILURES.get((code, reason))
+        if expected is None:
+            return None
+        status_code, retryable = expected
+        if payload.get("statusCode") != status_code or payload.get("retryable") is not retryable:
+            return None
+        safe_diagnostics = _safe_error_value(payload.get("safeDiagnostics"))
+        return ProviderFailure(
+            code, reason, status_code, retryable,
+            upstream_status=_optional_child_int(payload.get("upstreamStatus"), 100, 599),
+            provider_error_type=_safe_error_value(payload.get("providerErrorType")),
+            provider_error_param=_safe_error_value(payload.get("providerErrorParam")),
+            schema_name=_safe_error_value(payload.get("schemaName")),
+            retry_after_ms=_optional_child_int(payload.get("retryAfterMs"), 1, 86_400_000),
+            safe_provider_message=_safe_error_value(payload.get("safeProviderMessage")),
+            safe_diagnostics=safe_diagnostics if isinstance(safe_diagnostics, dict) else {},
+        )
+    if payload.get("kind") == "UnexpectedException":
+        exception_class = _safe_error_value(payload.get("exceptionClass"))
+        safe_message = _safe_error_value(payload.get("safeMessage"))
+        stage = _safe_error_value(payload.get("stage"))
+        diagnostics = {
+            "stage": stage if isinstance(stage, str) and stage else "market-collection",
+            "exceptionClass": exception_class if isinstance(exception_class, str) and exception_class
+            else "UnexpectedException",
+            "detail": safe_message if isinstance(safe_message, str) and safe_message
+            else "시장조사 자식 프로세스가 예기치 않게 실패했다",
+        }
+        return ProviderFailure(
+            "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", 502, True,
+            safe_diagnostics=diagnostics,
+        )
+    return None
 
 
 def _observe(event_sink: EventSink | None, stage: str, action: str, summary: str,
@@ -361,6 +433,7 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
         input_path = os.path.join(workspace, "input.json")
         runtime_path = os.path.join(workspace, "runtime.json")
         output_path = os.path.join(workspace, "output.json")
+        error_path = os.path.join(workspace, "error.json")
         progress_path = os.path.join(workspace, "progress.jsonl")
         with io.open(input_path, "w", encoding="utf-8") as handle:
             json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
@@ -373,6 +446,7 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
         command = [
             sys.executable, "-u", "-m", "app.research.product_runner",
             "--input", input_path, "--output", output_path,
+            "--error-output", error_path,
             "--workspace", workspace, "--run-id", run_id,
             "--concept-id", concept_id, "--as-of", as_of,
             "--runtime-input", runtime_path,
@@ -422,9 +496,12 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             if progress_task is not None:
                 await progress_task
         if process.returncode != 0:
+            structured_failure = _child_failure(error_path)
+            if structured_failure is not None:
+                raise structured_failure
             detail = stderr.decode("utf-8", "replace").strip().splitlines()
             raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
-                        detail[-1] if detail else "시장조사 엔진 실패")
+                        _safe_failure_detail(detail[-1]) if detail else "시장조사 엔진 실패")
         try:
             with io.open(output_path, encoding="utf-8") as handle:
                 result = json.load(handle)

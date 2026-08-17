@@ -11,10 +11,95 @@ import asyncio
 import io
 import json
 import os
+import re
 import sys
 import threading
+from typing import Any
 
+from app.providers import ProviderFailure
 from app.research.progress_jsonl import SafeProgressJsonl
+from app.research.runner import _safe_failure_detail
+
+
+_SAFE_ERROR_FIELDS = 20
+_SAFE_ERROR_DEPTH = 3
+_SENSITIVE_DIAGNOSTIC_KEY = re.compile(
+    r"(?i)(authorization|api.?key|token|secret|password|prompt|input|request|response|document|content)"
+)
+
+
+def _safe_error_value(value: Any, *, key: str = "", depth: int = 0) -> Any:
+    if _SENSITIVE_DIAGNOSTIC_KEY.search(key):
+        return "[REDACTED]"
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return value if value == value and abs(value) != float("inf") else None
+    if isinstance(value, str):
+        return _safe_failure_detail(value)
+    if depth >= _SAFE_ERROR_DEPTH:
+        return "[TRUNCATED]"
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for raw_key, item in list(value.items())[:_SAFE_ERROR_FIELDS]:
+            safe_key = re.sub(r"[^A-Za-z0-9_.-]", "_", str(raw_key))[:80] or "field"
+            result[safe_key] = _safe_error_value(item, key=safe_key, depth=depth + 1)
+        return result
+    if isinstance(value, (list, tuple)):
+        return [_safe_error_value(item, depth=depth + 1)
+                for item in list(value)[:_SAFE_ERROR_FIELDS]]
+    return _safe_failure_detail(type(value).__name__)
+
+
+def provider_failure_envelope(failure: ProviderFailure) -> dict[str, Any]:
+    return {
+        "kind": "ProviderFailure",
+        "code": _safe_failure_detail(failure.code)[:80],
+        "reason": _safe_failure_detail(failure.reason)[:120],
+        "statusCode": failure.status_code,
+        "retryable": failure.retryable,
+        "upstreamStatus": failure.upstream_status,
+        "providerErrorType": _safe_error_value(failure.provider_error_type),
+        "providerErrorParam": _safe_error_value(failure.provider_error_param),
+        "schemaName": _safe_error_value(failure.schema_name),
+        "retryAfterMs": failure.retry_after_ms,
+        "safeProviderMessage": _safe_error_value(failure.safe_provider_message),
+        "safeDiagnostics": _safe_error_value(failure.safe_diagnostics),
+    }
+
+
+def unexpected_failure_envelope(failure: Exception, stage: str) -> dict[str, Any]:
+    return {
+        "kind": "UnexpectedException",
+        "exceptionClass": _safe_failure_detail(type(failure).__name__)[:160],
+        "safeMessage": _safe_failure_detail(str(failure)),
+        "stage": _safe_failure_detail(stage)[:120],
+    }
+
+
+def _write_error_output(path: str, payload: dict[str, Any]) -> None:
+    try:
+        with io.open(path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, sort_keys=True)
+    except OSError:
+        # The parent retains a sanitized stderr fallback when the side channel is unavailable.
+        pass
+
+
+def _finish_failed(progress: SafeProgressJsonl, heartbeat: "_ProgressHeartbeat | None") -> None:
+    if heartbeat is not None:
+        heartbeat.stop()
+    try:
+        progress.emit({"stage": "MARKET_COLLECTION", "action": "FAILED", "status": "FAILED",
+                       "safeSummary": "시장 근거 수집을 완료하지 못했습니다."})
+    except Exception:
+        pass
+    try:
+        progress.close()
+    except Exception:
+        pass
 
 
 class _ProgressHeartbeat:
@@ -58,6 +143,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--error-output", required=True)
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--concept-id", required=True)
@@ -69,20 +155,22 @@ def main() -> None:
     args = parser.parse_args()
 
     progress = SafeProgressJsonl(args.progress_jsonl, truncate=True)
-
-    os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
-    os.environ["RESEARCH2_GENERATED_RUNS_DIR"] = os.path.join(args.workspace, "runs-generated")
-    with io.open(args.input, encoding="utf-8") as handle:
-        concept = json.load(handle)
-    runtime_input = {}
-    if args.runtime_input:
-        with io.open(args.runtime_input, encoding="utf-8") as handle:
-            runtime_input = json.load(handle)
-    progress.emit({"stage": "MARKET_COLLECTION", "action": "STARTED", "status": "RUNNING",
-                   "safeSummary": "선택한 사업안의 시장 근거를 수집하고 있습니다."})
-    heartbeat = _ProgressHeartbeat(progress)
-    heartbeat.start()
+    heartbeat: _ProgressHeartbeat | None = None
+    stage = "initialization"
     try:
+        os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
+        os.environ["RESEARCH2_GENERATED_RUNS_DIR"] = os.path.join(args.workspace, "runs-generated")
+        with io.open(args.input, encoding="utf-8") as handle:
+            concept = json.load(handle)
+        runtime_input = {}
+        if args.runtime_input:
+            with io.open(args.runtime_input, encoding="utf-8") as handle:
+                runtime_input = json.load(handle)
+        progress.emit({"stage": "MARKET_COLLECTION", "action": "STARTED", "status": "RUNNING",
+                       "safeSummary": "선택한 사업안의 시장 근거를 수집하고 있습니다."})
+        heartbeat = _ProgressHeartbeat(progress)
+        heartbeat.start()
+        stage = "market-collection"
         # donor orchestrator가 dynamic collection, harness/dryrun gate, dual run path,
         # partial quarantine 및 recollect 의미를 한 곳에서 결정한다. 이 wrapper는
         # immutable snapshot을 donor textContents 계약으로 옮길 뿐이다.
@@ -106,21 +194,26 @@ def main() -> None:
             task_input["recollect"] = runtime_input["recollect"]
         result = asyncio.run(run_market_research(
             task_input, args.run_id, max(1.0, args.timeout_seconds)))
+        stage = "product-post-validation"
         result = _fail_closed_unverified_product_assumptions(result)
-    except Exception:
         heartbeat.stop()
-        progress.emit({"stage": "MARKET_COLLECTION", "action": "FAILED", "status": "FAILED",
-                       "safeSummary": "시장 근거 수집을 완료하지 못했습니다."})
+        heartbeat = None
+        progress.emit({"stage": "MARKET_COLLECTION", "action": "COMPLETED", "status": "RUNNING",
+                       "safeSummary": "시장 근거 수집을 완료했습니다."})
+        progress.emit({"stage": "MARKET_SERIALIZATION", "action": "COMPLETED",
+                       "status": "COMPLETED", "safeSummary": "시장조사 결과 정리 완료"})
         progress.close()
-        raise
-    heartbeat.stop()
-    progress.emit({"stage": "MARKET_COLLECTION", "action": "COMPLETED", "status": "RUNNING",
-                   "safeSummary": "시장 근거 수집을 완료했습니다."})
-    progress.emit({"stage": "MARKET_SERIALIZATION", "action": "COMPLETED",
-                   "status": "COMPLETED", "safeSummary": "시장조사 결과 정리 완료"})
-    progress.close()
-    with io.open(args.output, "w", encoding="utf-8") as handle:
-        json.dump(result, handle, ensure_ascii=False, sort_keys=True)
+        stage = "result-serialization"
+        with io.open(args.output, "w", encoding="utf-8") as handle:
+            json.dump(result, handle, ensure_ascii=False, sort_keys=True)
+    except ProviderFailure as failure:
+        _finish_failed(progress, heartbeat)
+        _write_error_output(args.error_output, provider_failure_envelope(failure))
+        raise SystemExit(1) from None
+    except Exception as failure:
+        _finish_failed(progress, heartbeat)
+        _write_error_output(args.error_output, unexpected_failure_envelope(failure, stage))
+        raise SystemExit(1) from None
 
 
 def _fail_closed_unverified_product_assumptions(result: dict) -> dict:
