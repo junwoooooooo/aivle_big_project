@@ -168,6 +168,8 @@ def test_all_live_keyed_batch_prompts_share_completeness_rule(monkeypatch):
         "concept_business_role_semantic_v2", "concept_legal_fact_dependency_v2",
     }
     assert all(BATCH_COMPLETENESS_RULE in prompt for _, prompt in prompts)
+    assert "UNKNOWN, OTHER" not in BATCH_COMPLETENESS_RULE
+    assert "응답 schema가 허용하는 가장 보수적인 값" in BATCH_COMPLETENESS_RULE
 
 
 @pytest.mark.parametrize("provider, marker", [

@@ -17,7 +17,10 @@ public class MarketInterviewInputFactory {
     public MarketInterviewInputFactory(ObjectMapper mapper) { this.mapper = mapper; }
 
     public String build(MarketAnalysisSeedSnapshot seed, ConceptPortfolioSelection selection,
-            BmPlanPreparationService.PlanView bm) {
+            BmPlanPreparationService.PlanView bm, int sampleSize) {
+        if (sampleSize != 20 && sampleSize != 40 && sampleSize != 80) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "표본 크기는 20, 40, 80 중 하나여야 합니다.");
+        }
         JsonNode snapshot;
         try { snapshot = mapper.readTree(seed.getSnapshotJson()); }
         catch (RuntimeException invalidJson) {
@@ -33,9 +36,10 @@ public class MarketInterviewInputFactory {
                 "현재 Market Seed의 시장 인터뷰 입력 계약이 올바르지 않습니다.");
         }
         ObjectNode root = mapper.createObjectNode();
-        root.put("contract", "market-interview-input-v1");
-        root.put("schemaVersion", "1.0");
+        root.put("contract", "market-interview-input-v2");
+        root.put("schemaVersion", "2.0");
         root.put("synthetic", true);
+        root.put("sampleSize", sampleSize);
         ObjectNode source = root.putObject("source");
         source.put("marketSeedSnapshotId", seed.getId());
         source.put("selectionId", selection.getId());

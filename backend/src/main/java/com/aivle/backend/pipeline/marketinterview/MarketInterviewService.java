@@ -18,7 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class MarketInterviewService {
-    static final String SCHEMA_VERSION = "1.0";
+    static final String SCHEMA_VERSION = "2.0";
     static final int MAX_ATTEMPTS = 3;
 
     private final ProjectRepository projects;
@@ -39,9 +39,15 @@ public class MarketInterviewService {
 
     @Transactional
     public CurrentView start(Long ownerId, Long projectId, String idempotencyKey, String correlationId) {
+        return start(ownerId, projectId, idempotencyKey, correlationId, 20);
+    }
+
+    @Transactional
+    public CurrentView start(Long ownerId, Long projectId, String idempotencyKey, String correlationId,
+            int sampleSize) {
         Project project = owned(ownerId, projectId);
         Source source = currentSource(projectId);
-        return create(ownerId, project, source, 1, idempotencyKey, correlationId);
+        return create(ownerId, project, source, sampleSize, 1, idempotencyKey, correlationId);
     }
 
     @Transactional(noRollbackFor = BusinessException.class)
@@ -57,14 +63,21 @@ public class MarketInterviewService {
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
                 "사업안이 변경되어 이전 시장 인터뷰를 재시도할 수 없습니다.");
         }
-        String rebuilt = inputs.build(source.seed(), source.selection(), source.bm());
+        Integer sampleSize = previous.getRequestedSampleSize();
+        if (sampleSize == null) {
+            previous.markStale(previous.getResultJson(), LocalDateTime.now());
+            throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
+                "이전 형식의 시장 인터뷰입니다. 현재 사업안으로 새 인터뷰를 시작해 주세요.");
+        }
+        String rebuilt = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
         String rebuiltHash = hasher.hash(TaskType.MARKET_INTERVIEW, SCHEMA_VERSION, "ko-KR", rebuilt);
         if (!previous.getInputHash().equals(rebuiltHash)) {
             previous.markStale(previous.getResultJson(), LocalDateTime.now());
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
                 "시장 인터뷰 입력 기준이 변경되었습니다.");
         }
-        return create(ownerId, project, source, previous.getAttempt() + 1, idempotencyKey, correlationId);
+        return create(ownerId, project, source, sampleSize, previous.getAttempt() + 1,
+            idempotencyKey, correlationId);
     }
 
     @Transactional
@@ -100,9 +113,9 @@ public class MarketInterviewService {
         });
     }
 
-    private CurrentView create(Long ownerId, Project project, Source source, int attempt,
+    private CurrentView create(Long ownerId, Project project, Source source, int sampleSize, int attempt,
             String idempotencyKey, String correlationId) {
-        String input = inputs.build(source.seed(), source.selection(), source.bm());
+        String input = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
         String inputHash = hasher.hash(TaskType.MARKET_INTERVIEW, SCHEMA_VERSION, "ko-KR", input);
         var created = taskRuns.createWithDisposition(ownerId, project.getId(), TaskType.MARKET_INTERVIEW,
             "MARKET_INTERVIEW", String.valueOf(project.getId()), input, inputHash,
@@ -110,7 +123,7 @@ public class MarketInterviewService {
         MarketInterviewRun domain = created.createdNew()
             ? runs.save(MarketInterviewRun.create(project, created.taskRun(), source.seed().getId(),
                 source.selection().getId(), source.selection().getHypothesisRevision(), source.bm().revision(),
-                attempt, idempotencyKey, inputHash, LocalDateTime.now()))
+                sampleSize, attempt, idempotencyKey, inputHash, LocalDateTime.now()))
             : runs.findByTaskRunIdAndDeletedAtIsNull(created.taskRun().getId())
                 .orElseThrow(() -> new IllegalStateException("Market interview TaskRun replay lineage missing"));
         return view(domain, false);
@@ -142,14 +155,16 @@ public class MarketInterviewService {
             ? "시장 인터뷰를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." : null;
         return new CurrentView(run.getState().name(), stale,
             run.getSourceMarketSeedSnapshotId(), run.getSourceSelectionRevision(), run.getAttempt(),
+            run.getRequestedSampleSize(),
             result, failure, run.getStartedAt(), run.getCompletedAt());
     }
 
     public record CurrentView(String state, boolean stale, String sourceMarketSeedSnapshotId,
-            Integer sourceSelectionRevision, Integer attempt, JsonNode result, String failure,
+            Integer sourceSelectionRevision, Integer attempt, Integer requestedSampleSize,
+            JsonNode result, String failure,
             LocalDateTime startedAt, LocalDateTime completedAt) {
         static CurrentView notStarted() {
-            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null);
+            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null);
         }
     }
 }

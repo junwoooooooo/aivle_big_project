@@ -632,7 +632,7 @@ REPORT_SECTIONS = ("MARKET_SIZE", "PRICE", "COMPETITOR", "CHANNEL", "DEMAND",
                    "UNIT_ECONOMICS", "REGULATION", "GAPS", "SYNTHESIS")
 
 
-def verified_report(evidence_items: list[dict]) -> dict:
+def verified_report(evidence_items: list[dict], scorecard_items: list[dict] | None = None) -> dict:
     """Build a readable report from exact-quote section evidence without another model call.
 
     This is deliberately not an interpretation layer. It preserves the promoted quote and
@@ -670,19 +670,37 @@ def verified_report(evidence_items: list[dict]) -> dict:
                 "period": lead.get("period"),
             }],
         })
+    score_state = {str(item.get("subject")): str(item.get("state"))
+                   for item in (scorecard_items or []) if isinstance(item, dict)}
     missing = [subject for subject in primary if not grouped[subject]]
-    prescriptions_rows = [{
-        "section": subject,
-        "kind": "NOT_FOUND",
-        "kindLabel": "현재 근거 없음",
-        "what": f"{subject} 절에 원문 대조를 통과한 근거가 없습니다.",
-        "why": "현재 로컬 수집 본문과 exact quote gate에서 공개할 근거를 확보하지 못했습니다.",
-        "where": "다음 시장조사 또는 실제 이해관계자 확인에서 보완하세요.",
-    } for subject in missing]
-    if missing:
+    true_gaps = [subject for subject in missing if score_state.get(subject) in (None, "MISSING")]
+    reread_gaps = [subject for subject in missing if subject not in true_gaps]
+    prescriptions_rows = []
+    for subject in true_gaps:
+        prescriptions_rows.append({
+            "section": subject, "kind": "NOT_FOUND", "kindLabel": "현재 근거 없음",
+            "what": f"{subject} 관련 검증 근거를 확보하지 못했습니다.",
+            "why": "기존 검증 근거와 보고서용 절 재독 모두에서 공개할 근거를 확보하지 못했습니다.",
+            "where": "다음 시장조사 또는 실제 이해관계자 확인에서 보완하세요.",
+        })
+    for subject in reread_gaps:
+        prescriptions_rows.append({
+            "section": subject, "kind": "REPORT_REREAD_MISSING", "kindLabel": "추가 원문 미확보",
+            "what": f"{subject} 보고서용 절 재독에서 추가 원문을 확보하지 못했습니다.",
+            "why": "기존 검증 근거는 있으며, 이번 bounded section recall에서 추가 exact quote가 없었습니다.",
+            "where": "기존 검증 근거는 아래 ‘근거로 검산하기’에서 확인하세요.",
+        })
+    if true_gaps or reread_gaps:
+        gap_lines = []
+        if true_gaps:
+            gap_lines.append("전체 시장조사에서도 현재 유효한 근거가 없는 절: " + ", ".join(true_gaps))
+        if reread_gaps:
+            gap_lines.append("보고서용 절 재독에서 추가 원문을 확보하지 못한 절: "
+                             + ", ".join(reread_gaps)
+                             + ". 기존 검증 근거는 ‘근거로 검산하기’에서 확인할 수 있습니다.")
         sections.append({
             "subject": "GAPS",
-            "markdown": "현재 유효한 근거가 없는 절: " + ", ".join(missing),
+            "markdown": "\n".join(gap_lines),
         })
     if sections:
         sections.append({

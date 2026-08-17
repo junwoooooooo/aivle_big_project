@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """시장조사·BM 오케스트레이터 — 8단계를 **선언 목록**으로 돌린다.
 
-    FULL     1단계. 저장된 수집을 재채점 → 7과목 성적표 + 근거 원장 (+ 요약)
+    FULL     1단계. 저장된 수집을 재채점 → 10과목 성적표 + 근거 원장 (+ 요약)
     BM       2단계. 같은 원장 위에서 BM 분석 1회 → 캔버스 9칸 + 판정
     RESCORE  FULL 과 같되 요약을 건너뛴다 (LLM 0회 · 무료 재채점)
 
@@ -42,7 +42,10 @@ from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail
 #: 두 개체로 실려 규칙 캐시가 갈라진다. 그래서 폴더들을 그대로 경로에 얹는다.
 for _dir in (RESEARCH_HOME,
              os.path.join(RESEARCH_HOME, "service"),
-             os.path.join(RESEARCH_HOME, "tools")):
+             os.path.join(RESEARCH_HOME, "tools"),
+             os.path.join(RESEARCH_HOME, "adapters"),
+             os.path.join(RESEARCH_HOME, "blocks"),
+             os.path.join(RESEARCH_HOME, "harness")):
     if _dir not in sys.path:
         sys.path.insert(0, _dir)
 
@@ -547,7 +550,8 @@ def _full(source_run: str, concept_path: str, concept_id: str,
 
     summary = _summary(ledger, budget, source_run, concept_path, evidence_ids, rescore,
                        merged_cards_doc)
-    human = serialize.verified_report(evidence)
+    scorecard = serialize.scorecard(score, section_counts)
+    human = serialize.verified_report(evidence, scorecard)
 
     return serialize.envelope(
         runId=run_id, conceptId=concept_id,
@@ -555,7 +559,7 @@ def _full(source_run: str, concept_path: str, concept_id: str,
         generatedAt=_now(), mode="FULL",
         stages=[stage.as_contract() for stage in ledger.stages],
         degradations=ledger.degradations,
-        scorecard=serialize.scorecard(score, section_counts),
+        scorecard=scorecard,
         market=market, canvas=None, bm=None,
         evidence=evidence, summary=summary,
         notes=list(serialize.NOTES_FULL),

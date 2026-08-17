@@ -7,8 +7,15 @@ from app.tasks.market_interview.deep_engine import execute_deep_interview
 from app.tasks.market_interview.models import MarketInterviewInput
 
 
+# Shared semantic policy with Java MarketInterviewContract. A literal percentage is legal in an
+# individual's price/discount/fee answer; only population/generalization structures are blocked.
 STATISTICAL_CLAIM = re.compile(
-    r"(?i)(\d+(?:\.\d+)?\s*%|퍼센트|구매\s*전환율|전국\s*소비자|대부분의\s*(?:시장|고객|소비자)|실제\s*(?:사용자|고객)(?:들)?은)"
+    r"(?i)((?:응답자|참여자|고객|소비자)(?:들|들\s*중|의)?\s*\d+(?:\.\d+)?\s*%"
+    r"|대부분의\s*(?:시장|고객|소비자|응답자|참여자)"
+    r"|전국\s*(?:소비자|고객|사용자)"
+    r"|실제\s*(?:사용자|고객|소비자)(?:들)?(?:은|는|이|가)"
+    r"|구매\s*확률(?:은|는|이|가)?\s*\d+(?:\.\d+)?\s*%"
+    r"|구매\s*전환율(?:은|는|이|가)?\s*\d*(?:\.\d+)?\s*%)"
 )
 
 

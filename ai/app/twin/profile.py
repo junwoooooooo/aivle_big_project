@@ -15,7 +15,7 @@
 
 import re
 
-__all__ = ["parse_profile", "FIELDS"]
+__all__ = ["parse_profile", "parse_target_facts", "FIELDS", "HOUSEHOLD_ROLES"]
 
 FIELDS = ("age", "gender", "household", "region", "income", "job")
 
@@ -80,3 +80,27 @@ def parse_profile(card_text: str | None) -> dict:
 def is_empty(profile: dict) -> bool:
     """전부 못 읽었다. 빈 카드를 화면에 앉히지 않으려고 쓴다."""
     return all(profile.get(field) is None for field in FIELDS)
+
+
+# Sampling-only facts. These fields never enter the public respondent profile.
+_GENERATION = re.compile(r"(\d)세대가구")
+_WITH_CHILDREN = re.compile(r"2세대가구\(부부\+자녀\)|3세대가구")
+_ROLE = re.compile(r"가구 안에서는 ([^.]+?)입니다")
+HOUSEHOLD_ROLES = ("가구주", "가구주의 배우자", "가구주의 자녀", "부모")
+
+
+def parse_target_facts(card_text: str | None) -> dict:
+    """Return deterministic bank facts used only for target matching.
+
+    Missing facts stay ``None`` and therefore cannot satisfy an active condition. Raw card text,
+    household role and source pid are deliberately excluded from the public result contract.
+    """
+    text = card_text or ""
+    profile = parse_profile(text)
+    has_children = None
+    if _GENERATION.search(text):
+        has_children = bool(_WITH_CHILDREN.search(text))
+    role = _first(_ROLE, text)
+    if role not in HOUSEHOLD_ROLES:
+        role = None
+    return {**profile, "hasChildren": has_children, "householdRole": role}

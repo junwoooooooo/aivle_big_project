@@ -84,6 +84,24 @@ def test_verified_section_report_preserves_quotes_and_marks_missing_sections():
     assert out["synthesis"][0]["stance"] == "VERIFIED_EVIDENCE"
 
 
+def test_report_reread_gap_does_not_deny_existing_validated_market_evidence():
+    scorecard = [{"subject": "MARKET_SIZE", "state": "FILLED", "detail": "직접 관측 1건"}]
+    out = serialize.verified_report([], scorecard)
+    gap = next(item for item in out["prescriptions"] if item["section"] == "MARKET_SIZE")
+    assert gap["kind"] == "REPORT_REREAD_MISSING"
+    assert gap["kindLabel"] == "추가 원문 미확보"
+    gaps = next(item for item in out["report"]["sections"] if item["subject"] == "GAPS")
+    assert "시장규모 근거 없음" not in gaps["markdown"]
+    assert "근거로 검산하기" in gaps["markdown"]
+
+
+def test_true_gap_requires_both_base_and_section_evidence_to_be_missing():
+    scorecard = [{"subject": "MARKET_SIZE", "state": "MISSING", "detail": "직접 관측 0건"}]
+    out = serialize.verified_report([], scorecard)
+    gap = next(item for item in out["prescriptions"] if item["section"] == "MARKET_SIZE")
+    assert gap["kind"] == "NOT_FOUND"
+
+
 # ══════════════════════════════════════════════════════════════
 @needs_ledger
 def test_full_mode_matches_the_golden_shape():

@@ -23,10 +23,10 @@ public class MarketInterviewController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<MarketInterviewService.CurrentView>> start(@PathVariable Long projectId,
-            HttpServletRequest request) {
+            @RequestBody(required = false) StartRequest body, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
             service.start(currentUser.currentUserId(), projectId, request.getHeader("Idempotency-Key"),
-                requestId(request)), requestId(request)));
+                requestId(request), body == null || body.sampleSize() == null ? 20 : body.sampleSize()), requestId(request)));
     }
 
     @PostMapping("/retry")
@@ -41,4 +41,6 @@ public class MarketInterviewController {
         Object value = request.getAttribute("requestId");
         return value == null ? null : value.toString();
     }
+
+    public record StartRequest(Integer sampleSize) { }
 }

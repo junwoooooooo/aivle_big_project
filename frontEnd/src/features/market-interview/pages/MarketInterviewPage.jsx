@@ -17,6 +17,7 @@ export default function MarketInterviewPage() {
   const [current, setCurrent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [sampleSize, setSampleSize] = useState(20);
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
@@ -25,7 +26,10 @@ export default function MarketInterviewPage() {
     finally { setLoading(false); }
   }, [api]);
 
-  useEffect(() => { void refresh(); }, [refresh, liveRevision]);
+  useEffect(() => {
+    const timer = setTimeout(() => void refresh(), 0);
+    return () => clearTimeout(timer);
+  }, [refresh, liveRevision]);
 
   const command = useCallback(async (action) => {
     setBusy(true); setError(null);
@@ -56,11 +60,15 @@ export default function MarketInterviewPage() {
     </Alert> : null}
 
     {view.state === 'NOT_STARTED' ? <section className="market-interview__start">
-      <h2>현재 사업안을 기준으로 시작합니다</h2><p>확정된 고객, 문제, 해결 방식, 가격·채널·가치제안 맥락만 사용하며 사업안 자체는 변경하지 않습니다.</p>
-      <Button disabled={busy} loading={busy} onClick={() => void command(api.start)}>시장 인터뷰 시작</Button>
+      <h2>현재 사업안을 기준으로 시작합니다</h2><p>실측 프로파일 뱅크에서 조건에 맞는 파생 프로필을 결정론적으로 표집합니다. 응답은 AI가 시뮬레이션하며 사업안 자체는 변경하지 않습니다.</p>
+      <fieldset><legend>가상 패널 규모</legend>{[20, 40, 80].map((size) => <label key={size}>
+        <input type="radio" name="market-interview-sample" value={size} checked={sampleSize === size}
+          onChange={() => setSampleSize(size)} /> {size}명{size === 20 ? ' · 기본' : ''}
+      </label>)}</fieldset>
+      <Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(sampleSize))}>시장 인터뷰 시작</Button>
     </section> : null}
     {view.state === 'STALE' ? <div className="market-interview__actions">
-      <Button disabled={busy} loading={busy} onClick={() => void command(api.start)}>현재 사업안으로 다시 인터뷰</Button>
+      <Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(sampleSize))}>현재 사업안으로 다시 인터뷰</Button>
     </div> : null}
     {view.canRetry ? <div className="market-interview__actions">
       <Button disabled={busy} loading={busy} onClick={() => void command(api.retry)}>다시 시도</Button>

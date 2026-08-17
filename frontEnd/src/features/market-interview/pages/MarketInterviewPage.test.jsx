@@ -6,10 +6,11 @@ import { ApiClientProvider } from '../../../shared/api/ApiClientProvider.jsx';
 import MarketInterviewPage from './MarketInterviewPage.jsx';
 
 const result = {
-  contract: 'market-interview-result-v1', schemaVersion: '1.0', synthetic: true,
-  participants: [{ participantId: 'P1', label: '가상 참여자 A', profile: '소규모 매장 운영자', context: '도입 전 비교', needs: ['간단한 설정'] }],
-  interviews: [{ participantId: 'P1', questions: [{ question: '무엇이 걱정되나요?', answer: '도입 시간이 걱정됩니다.', uncertainty: '실제 현장 확인 필요' }] }],
-  themes: [{ title: '도입 부담', description: '설정과 지원을 먼저 확인하려는 관점', participantIds: ['P1'] }],
+  contract: 'market-interview-result-v2', schemaVersion: '2.0', synthetic: true,
+  targeting: { criteriaText: '서울 조건 교집합 80명', drawnSampleSize: 20, targetCount: 16, nonTargetCount: 4 },
+  participants: [{ participantId: 'R001', label: '가상 참여자 A', profile: '소규모 매장 운영자', context: '도입 전 비교', needs: ['간단한 설정'], group: 'TARGET' }],
+  interviews: [{ participantId: 'R001', questions: [{ question: '무엇이 걱정되나요?', answer: '도입 시간이 걱정됩니다.', uncertainty: '실제 현장 확인 필요' }] }],
+  themes: [{ axis: 'CONCERN', title: '도입 부담', description: '설정과 지원을 먼저 확인하려는 관점', participantIds: ['R001'], mentionCount: 1, quote: '도입 시간이 걱정됩니다.' }],
   objections: ['지원 범위'], unmetNeeds: ['초기 교육'], purchaseTriggers: ['간단한 설정'],
   followUpQuestions: ['현재 어떻게 해결하나요?'], limitations: ['실제 고객 조사 결과가 아닙니다.'],
 };
@@ -41,7 +42,16 @@ describe('MarketInterviewPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: '시장 인터뷰 시작' }));
     await waitFor(() => expect(client.post).toHaveBeenCalledTimes(1));
     expect(client.post.mock.calls[0][0]).toMatch(/\/market-interview$/);
+    expect(client.post.mock.calls[0][1]).toEqual({ sampleSize: 20 });
     expect(await screen.findByText(/가상 고객 관점에서 사업안을 검토/)).toBeInTheDocument();
+  });
+
+  it('offers only the 20, 40 and 80 profile-bank sample contract', async () => {
+    const client = { get: vi.fn().mockResolvedValue({ data: current('NOT_STARTED') }), post: vi.fn() };
+    renderPage(client);
+    expect(await screen.findByRole('radio', { name: /20명/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /40명/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /80명/ })).toBeInTheDocument();
   });
 
   it('renders RUNNING without implying contact with real customers', async () => {

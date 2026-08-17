@@ -58,8 +58,8 @@ class MarketInterviewServiceTests {
             new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 3));
         lenient().when(sources.require(eq(41L), anyString())).thenReturn(source);
         lenient().when(sources.currentOrNull(41L)).thenReturn(source);
-        lenient().when(inputs.build(any(), any(), any())).thenReturn("{\"contract\":\"market-interview-input-v1\"}");
-        lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "1.0", "ko-KR", "{\"contract\":\"market-interview-input-v1\"}"))
+        lenient().when(inputs.build(any(), any(), any(), anyInt())).thenReturn("{\"contract\":\"market-interview-input-v2\"}");
+        lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "2.0", "ko-KR", "{\"contract\":\"market-interview-input-v2\"}"))
             .thenReturn(HASH);
         lenient().when(task.getId()).thenReturn("task-1");
         lenient().when(runs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -76,6 +76,13 @@ class MarketInterviewServiceTests {
         var started = service.start(7L, 41L, "start-key", "request-1");
         assertThat(started.sourceMarketSeedSnapshotId()).isEqualTo("seed-1");
         assertThat(started.sourceSelectionRevision()).isEqualTo(4);
+        assertThat(started.requestedSampleSize()).isEqualTo(20);
+    }
+
+    @Test void sampleSizeIsPartOfCanonicalInputAndDurableRun() {
+        var started = service.start(7L, 41L, "size-key", "request-1", 80);
+        assertThat(started.requestedSampleSize()).isEqualTo(80);
+        verify(inputs).build(eq(seed), eq(selection), any(), eq(80));
     }
 
     @Test void sameKeyAndInputReplaysSameRun() {
@@ -164,7 +171,7 @@ class MarketInterviewServiceTests {
     }
 
     private MarketInterviewRun run(MarketInterviewRun.State state, int attempt) {
-        MarketInterviewRun value = MarketInterviewRun.create(project, task, "seed-1", 31L, 4, 3,
+        MarketInterviewRun value = MarketInterviewRun.create(project, task, "seed-1", 31L, 4, 3, 20,
             attempt, "key-" + attempt, HASH, LocalDateTime.now());
         if (state == MarketInterviewRun.State.SUCCEEDED) value.succeed("{\"synthetic\":true}", LocalDateTime.now());
         if (state == MarketInterviewRun.State.FAILED) value.fail("EXECUTION_FAILED", LocalDateTime.now());

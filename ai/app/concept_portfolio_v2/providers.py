@@ -50,7 +50,7 @@ LEGAL_REDESIGN_REPAIR_PROMPT_VERSION = "concept-legal-redesign-compliance-repair
 BATCH_COMPLETENESS_RULE = (
     " 입력 items의 모든 항목에 대해 결과를 정확히 하나씩 반환한다. results 길이는 items 길이와 "
     "정확히 같아야 하며 항목을 빠뜨리거나 합치거나 중복하면 안 된다. 판단이 어려운 항목도 "
-    "건너뛰지 말고 해당 schema가 허용하는 UNKNOWN, OTHER 또는 중립 값을 사용한다."
+    "건너뛰지 말고 해당 응답 schema가 허용하는 가장 보수적인 값을 사용한다."
 )
 
 

@@ -24,6 +24,7 @@ public class MarketInterviewRun extends BaseEntity {
     @Column(name = "source_selection_id", nullable = false) private Long sourceSelectionId;
     @Column(name = "source_selection_revision", nullable = false) private int sourceSelectionRevision;
     @Column(name = "source_bm_plan_revision", nullable = false) private int sourceBmPlanRevision;
+    @Column(name = "requested_sample_size") private Integer requestedSampleSize;
     @Column(nullable = false) private int attempt;
     @Column(nullable = false, length = 128) private String idempotencyKey;
     @Column(name = "input_hash", nullable = false, length = 71) private String inputHash;
@@ -34,15 +35,18 @@ public class MarketInterviewRun extends BaseEntity {
     private LocalDateTime completedAt;
 
     public static MarketInterviewRun create(Project project, TaskRun taskRun, String seedId,
-            Long selectionId, int selectionRevision, int bmPlanRevision, int attempt, String idempotencyKey,
+            Long selectionId, int selectionRevision, int bmPlanRevision, int requestedSampleSize,
+            int attempt, String idempotencyKey,
             String inputHash, LocalDateTime now) {
         if (project == null || taskRun == null || blank(seedId) || selectionId == null
-                || selectionRevision < 0 || bmPlanRevision < 0 || attempt < 1 || attempt > 3 || blank(idempotencyKey)
+                || selectionRevision < 0 || bmPlanRevision < 0 || !sampleSize(requestedSampleSize)
+                || attempt < 1 || attempt > 3 || blank(idempotencyKey)
                 || !hash(inputHash) || now == null) throw new IllegalArgumentException("Market interview run is invalid");
         MarketInterviewRun value = new MarketInterviewRun();
         value.project = project; value.taskRun = taskRun; value.sourceMarketSeedSnapshotId = seedId;
         value.sourceSelectionId = selectionId; value.sourceSelectionRevision = selectionRevision;
         value.sourceBmPlanRevision = bmPlanRevision;
+        value.requestedSampleSize = requestedSampleSize;
         value.attempt = attempt; value.idempotencyKey = idempotencyKey; value.inputHash = inputHash;
         value.state = State.RUNNING; value.startedAt = now;
         return value;
@@ -67,4 +71,5 @@ public class MarketInterviewRun extends BaseEntity {
 
     private static boolean blank(String value) { return value == null || value.isBlank(); }
     private static boolean hash(String value) { return value != null && value.matches("sha256:[0-9a-f]{64}"); }
+    private static boolean sampleSize(int value) { return value == 20 || value == 40 || value == 80; }
 }
