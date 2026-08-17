@@ -29,6 +29,8 @@ class MarketInterviewContractTests {
     @Test void populationGeneralizationsAreRejected() {
         for (String phrase : List.of("응답자의 75%가 구매한다.", "75%의 응답자가 구매한다.",
                 "고객의 80%가 선호한다.", "80%의 고객이 선호한다.",
+                "응답자 중 75%가 구매한다.", "고객 중 80%가 선호한다.",
+                "참여자 중 60%가 긍정적이다.", "20명 중 15명(75%)이 긍정적이다.",
                 "대부분의 고객이 구매한다.", "실제 사용자들은 만족한다.",
                 "구매 확률은 70%다.", "구매 전환율은 35%다.")) {
             ObjectNode value = valid();
@@ -72,7 +74,31 @@ class MarketInterviewContractTests {
         assertThatCode(() -> MarketInterviewContract.validate(value)).doesNotThrowAnyException();
     }
 
+    @Test void usableSampleMustMeetRequestedSampleMinimum() {
+        assertThatCode(() -> MarketInterviewContract.validate(valid(80, 40))).doesNotThrowAnyException();
+        assertThatThrownBy(() -> MarketInterviewContract.validate(valid(80, 39)))
+            .isInstanceOf(ExecutionFailure.class);
+    }
+
+    @Test void targetingCountsMustMatchTranscriptGroups() {
+        ObjectNode value = valid();
+        ((ObjectNode) value.path("targeting")).put("targetCount", 15).put("nonTargetCount", 5);
+        assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
+    }
+
+    @Test void themeCountsMustMatchParticipantGroups() {
+        ObjectNode value = valid();
+        ((ObjectNode) value.path("themes").path(0)).put("targetCount", 15).put("nonTargetCount", 5);
+        assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
+    }
+
     private ObjectNode valid() {
+        return valid(20, 20);
+    }
+
+    private ObjectNode valid(int requested, int usable) {
+        int targetCount = usable * 4 / 5;
+        int nonTargetCount = usable - targetCount;
         ObjectNode root = mapper.createObjectNode();
         root.put("contract", "market-interview-result-v2").put("schemaVersion", "2.0").put("synthetic", true);
         root.putObject("source").put("marketSeedSnapshotId", "seed-1").put("selectionId", 31)
@@ -84,9 +110,10 @@ class MarketInterviewContractTests {
         criteria.put("householdSizeMin", 0).put("householdSizeMax", 0);
         criteria.putArray("regions").add("서울"); criteria.putArray("incomeKeywords");
         criteria.putArray("jobKeywords"); criteria.put("hasChildren", 0); criteria.putArray("householdRoles");
-        targeting.put("criteriaText", "서울 조건 교집합 80명").put("requestedSampleSize", 20)
-            .put("drawnSampleSize", 20).put("attemptedCount", 20).put("usableCount", 20)
-            .put("failedCount", 0).put("targetCount", 16).put("nonTargetCount", 4)
+        targeting.put("criteriaText", "서울 조건 교집합 80명").put("requestedSampleSize", requested)
+            .put("drawnSampleSize", requested).put("attemptedCount", requested).put("usableCount", usable)
+            .put("failedCount", requested - usable).put("targetCount", targetCount)
+            .put("nonTargetCount", nonTargetCount)
             .putNull("targetCoverageWarning");
         ArrayNode participants = root.putArray("participants");
         ArrayNode interviews = root.putArray("interviews");
@@ -102,14 +129,14 @@ class MarketInterviewContractTests {
             interview.putArray("concerns").add("가격 조건"); interview.putArray("purchaseTriggers").add("조건 해소");
             interview.putArray("objections"); interview.putArray("unmetNeeds");
         }
-        ArrayNode ids = mapper.createArrayNode(); for (int i = 1; i <= 20; i++) ids.add("R%03d".formatted(i));
+        ArrayNode ids = mapper.createArrayNode(); for (int i = 1; i <= usable; i++) ids.add("R%03d".formatted(i));
         ObjectNode theme = root.putArray("themes").addObject().put("axis", "CONCERN").put("title", "가격 조건")
             .put("description", "가격 조건을 확인하려는 관점");
-        theme.set("participantIds", ids); theme.put("mentionCount", 20).put("targetCount", 16)
-            .put("nonTargetCount", 4).put("quote", "20% 할인이라면 고려할 수 있다.");
+        theme.set("participantIds", ids); theme.put("mentionCount", usable).put("targetCount", targetCount)
+            .put("nonTargetCount", nonTargetCount).put("quote", "20% 할인이라면 고려할 수 있다.");
         root.putArray("crossRelationships");
-        summary(root.putObject("comprehension"), "accurate", "partial", "misunderstood");
-        summary(root.putObject("differentiation"), "different", "similar", "unclear");
+        summary(root.putObject("comprehension"), "accurate", "partial", "misunderstood", usable);
+        summary(root.putObject("differentiation"), "different", "similar", "unclear", usable);
         root.putArray("objections"); root.putArray("unmetNeeds"); root.putArray("purchaseTriggers");
         root.putArray("followUpQuestions").add("현재 방식은 무엇인가요?").add("무엇이 걸리나요?").add("무엇을 확인할까요?");
         root.putArray("limitations").add("실제 고객 조사 결과가 아닙니다.")
@@ -117,28 +144,32 @@ class MarketInterviewContractTests {
             .add("실제 고객 인터뷰로 다시 확인해야 합니다.");
         ArrayNode provenance = root.putArray("transcriptProvenance");
         ArrayNode coding = root.putArray("codingTrace");
-        for (int i = 1; i <= 20; i++) {
-            String id = "R%03d".formatted(i); String group = i <= 16 ? "TARGET" : "COMPARISON";
+        for (int i = 1; i <= usable; i++) {
+            String id = "R%03d".formatted(i); String group = i <= targetCount ? "TARGET" : "COMPARISON";
             provenance.addObject().put("transcriptId", "T-" + id).put("participantId", id)
                 .put("answerCount", 9).put("group", group);
             ObjectNode coded = coding.addObject().put("participantId", id);
             coded.putArray("themeTitles").add("가격 조건"); coded.put("comprehension", "accurate")
                 .put("differentiation", "unclear").put("alternativeLabel", "수기").put("group", group);
         }
-        root.putArray("respondentFailures");
+        ArrayNode failures = root.putArray("respondentFailures");
+        for (int i = usable + 1; i <= requested; i++) {
+            failures.addObject().put("participantId", "R%03d".formatted(i)).put("group", "TARGET")
+                .put("attempts", 1).put("code", "PERMANENT_PROVIDER_FAILURE");
+        }
         ObjectNode saturation = root.putObject("saturation");
-        saturation.put("participantCount", 20).put("codedParticipantCount", 20).put("themeCount", 1);
+        saturation.put("participantCount", usable).put("codedParticipantCount", usable).put("themeCount", 1);
         axisMap(saturation.putObject("axisLabelCounts"), 0); axisMap(saturation.putObject("maxMentionByAxis"), 0);
         ((ObjectNode) saturation.path("axisLabelCounts")).put("CONCERN", 1);
-        ((ObjectNode) saturation.path("maxMentionByAxis")).put("CONCERN", 20);
+        ((ObjectNode) saturation.path("maxMentionByAxis")).put("CONCERN", usable);
         saturation.putArray("saturatedThemes").add("CONCERN: 가격 조건");
-        saturation.put("alternativeSum", 20).put("assessment", "EXPLORATORY_ONLY")
+        saturation.put("alternativeSum", usable).put("assessment", "EXPLORATORY_ONLY")
             .put("limitation", "사람 수 진단이며 시장 대표성이 아닙니다.");
         return root;
     }
 
-    private void summary(ObjectNode node, String first, String second, String third) {
-        node.put(first, 20).put(second, 0).put(third, 0);
+    private void summary(ObjectNode node, String first, String second, String third, int total) {
+        node.put(first, total).put(second, 0).put(third, 0);
     }
     private void axisMap(ObjectNode node, int value) {
         for (String axis : List.of("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION"))

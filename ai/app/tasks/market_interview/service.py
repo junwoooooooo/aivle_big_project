@@ -13,6 +13,8 @@ from app.tasks.market_interview.provider import execute_market_interview_prompt
 STATISTICAL_CLAIM = re.compile(
     r"(?i)((?:응답자|참여자|고객|소비자)(?:들|들\s*중|의)?\s*\d+(?:\.\d+)?\s*%"
     r"|\d+(?:\.\d+)?\s*%\s*의\s*(?:응답자|참여자|고객|소비자)"
+    r"|(?:응답자|참여자|고객|소비자)\s*중\s*\d+(?:\.\d+)?\s*%"
+    r"|\d+\s*명\s*중\s*\d+\s*명\s*\(\s*\d+(?:\.\d+)?\s*%\s*\)"
     r"|대부분의\s*(?:시장|고객|소비자|응답자|참여자)"
     r"|전국\s*(?:소비자|고객|사용자)"
     r"|실제\s*(?:사용자|고객|소비자)(?:들)?(?:은|는|이|가)"

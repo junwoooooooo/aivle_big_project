@@ -224,10 +224,14 @@ class MarketInterviewResult(StrictModel):
 
     @model_validator(mode="after")
     def identities_match(self):
+        minimum_usable = max(8, (self.targeting.requestedSampleSize + 1) // 2)
+        if self.targeting.usableCount < minimum_usable:
+            raise ValueError("usable respondent count is below the requested-sample minimum")
         sampled = [item.participantId for item in self.transcriptProvenance]
         if len(sampled) != len(set(sampled)) or len(sampled) != self.targeting.usableCount:
             raise ValueError("sampled respondent identities must be complete and unique")
         sampled_set = set(sampled)
+        group_by_id = {item.participantId: item.group for item in self.transcriptProvenance}
         failed = [item.participantId for item in self.respondentFailures]
         if (len(failed) != len(set(failed)) or len(failed) != self.targeting.failedCount
                 or sampled_set.intersection(failed)):
@@ -241,21 +245,30 @@ class MarketInterviewResult(StrictModel):
         representative = [item.participantId for item in self.participants]
         if len(representative) != len(set(representative)):
             raise ValueError("representative participant IDs must be unique")
+        if any(item.group != group_by_id.get(item.participantId) for item in self.participants):
+            raise ValueError("representative participant group must match transcript provenance")
         if {item.participantId for item in self.interviews} != set(representative):
             raise ValueError("representative interviews must match representative participants")
         known_themes = {item.title for item in self.themes}
         if any(not set(item.themeTitles).issubset(known_themes) for item in self.codingTrace):
             raise ValueError("coding assignment references an unknown theme")
+        if any(item.group != group_by_id.get(item.participantId) for item in self.codingTrace):
+            raise ValueError("coding group must match transcript provenance")
         for theme in self.themes:
+            target_count = sum(group_by_id.get(item) == "TARGET" for item in theme.participantIds)
+            non_target_count = sum(group_by_id.get(item) == "COMPARISON" for item in theme.participantIds)
             if (not set(theme.participantIds).issubset(sampled_set)
                     or theme.mentionCount != len(theme.participantIds)
-                    or theme.targetCount + theme.nonTargetCount != theme.mentionCount):
+                    or theme.targetCount != target_count
+                    or theme.nonTargetCount != non_target_count):
                 raise ValueError("theme mentionCount must be derived from respondentIds")
         if any(item.overlapCount != len(item.respondentIds)
                or not set(item.respondentIds).issubset(sampled_set) for item in self.crossRelationships):
             raise ValueError("cross relationship must be derived from respondentIds")
-        if self.targeting.targetCount + self.targeting.nonTargetCount != len(sampled):
-            raise ValueError("target/non-target counts must equal usable sample")
+        if (self.targeting.targetCount != sum(group == "TARGET" for group in group_by_id.values())
+                or self.targeting.nonTargetCount != sum(
+                    group == "COMPARISON" for group in group_by_id.values())):
+            raise ValueError("target/non-target counts must be derived from transcript provenance")
         if self.saturation.participantCount != len(sampled):
             raise ValueError("saturation participant count must equal drawn sample")
         return self

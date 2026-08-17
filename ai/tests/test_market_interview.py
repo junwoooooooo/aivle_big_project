@@ -3,9 +3,11 @@ import json
 from collections import Counter
 
 import pytest
+from pydantic import ValidationError
 
 from app.providers import ProviderFailure
 from app.tasks.market_interview import deep_engine, service
+from app.tasks.market_interview.models import MarketInterviewResult
 
 
 def request_payload(sample_size=20):
@@ -151,11 +153,83 @@ def test_literal_percentage_in_individual_response_is_allowed(monkeypatch, allow
 
 @pytest.mark.parametrize("claim", ["응답자의 75%가 구매한다.", "75%의 응답자가 구매한다.",
     "고객의 80%가 선호한다.", "80%의 고객이 선호한다.",
+    "응답자 중 75%가 구매한다.", "고객 중 80%가 선호한다.",
+    "참여자 중 60%가 긍정적이다.", "20명 중 15명(75%)이 긍정적이다.",
     "대부분의 고객이 구매한다.", "실제 사용자들은 만족한다.", "구매 확률은 70%다.",
     "구매 전환율은 35%다."])
 def test_population_or_statistical_claim_is_rejected(monkeypatch, claim):
     with pytest.raises(ProviderFailure):
         execute(monkeypatch, claim=claim)
+
+
+def _with_usable_count(result, usable):
+    provenance = list(result["transcriptProvenance"])
+    kept = provenance[:usable]
+    kept_ids = {row["participantId"] for row in kept}
+    groups = {row["participantId"]: row["group"] for row in provenance}
+    result["transcriptProvenance"] = kept
+    result["codingTrace"] = [row for row in result["codingTrace"] if row["participantId"] in kept_ids]
+    result["participants"] = [row for row in result["participants"] if row["participantId"] in kept_ids]
+    result["interviews"] = [row for row in result["interviews"] if row["participantId"] in kept_ids]
+    result["respondentFailures"] = [{
+        "participantId": row["participantId"], "group": row["group"], "attempts": 1,
+        "code": "PERMANENT_PROVIDER_FAILURE",
+    } for row in provenance[usable:]]
+    result["targeting"].update({
+        "usableCount": usable,
+        "failedCount": len(provenance) - usable,
+        "targetCount": sum(row["group"] == "TARGET" for row in kept),
+        "nonTargetCount": sum(row["group"] == "COMPARISON" for row in kept),
+    })
+    for theme in result["themes"]:
+        ids = [item for item in theme["participantIds"] if item in kept_ids]
+        theme.update({
+            "participantIds": ids,
+            "mentionCount": len(ids),
+            "targetCount": sum(groups[item] == "TARGET" for item in ids),
+            "nonTargetCount": sum(groups[item] == "COMPARISON" for item in ids),
+        })
+    for relation in result["crossRelationships"]:
+        ids = [item for item in relation["respondentIds"] if item in kept_ids]
+        relation.update({"respondentIds": ids, "overlapCount": len(ids)})
+    comprehension = Counter(row["comprehension"] for row in result["codingTrace"])
+    differentiation = Counter(row["differentiation"] for row in result["codingTrace"])
+    result["comprehension"] = {name: comprehension[name]
+                               for name in ("accurate", "partial", "misunderstood")}
+    result["differentiation"] = {name: differentiation[name]
+                                 for name in ("different", "similar", "unclear")}
+    result["saturation"].update({
+        "participantCount": usable,
+        "codedParticipantCount": usable,
+        "alternativeSum": usable,
+        "maxMentionByAxis": {axis: max(
+            (theme["mentionCount"] for theme in result["themes"] if theme["axis"] == axis),
+            default=0,
+        ) for axis in ("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION")},
+    })
+    return result
+
+
+def test_result_contract_rejects_usable_sample_below_requested_half(monkeypatch):
+    assert MarketInterviewResult.model_validate(_with_usable_count(execute(monkeypatch, 80), 40))
+    with pytest.raises(ValidationError):
+        MarketInterviewResult.model_validate(_with_usable_count(execute(monkeypatch, 80), 39))
+
+
+def test_result_contract_rejects_targeting_counts_not_derived_from_provenance(monkeypatch):
+    result = execute(monkeypatch)
+    result["targeting"]["targetCount"] -= 1
+    result["targeting"]["nonTargetCount"] += 1
+    with pytest.raises(ValidationError):
+        MarketInterviewResult.model_validate(result)
+
+
+def test_result_contract_rejects_theme_counts_not_derived_from_membership(monkeypatch):
+    result = execute(monkeypatch)
+    result["themes"][0]["targetCount"] -= 1
+    result["themes"][0]["nonTargetCount"] += 1
+    with pytest.raises(ValidationError):
+        MarketInterviewResult.model_validate(result)
 
 
 def test_transient_respondent_failure_retries_once_then_succeeds(monkeypatch):

@@ -1,7 +1,9 @@
 package com.aivle.backend.taskrun.contract;
 
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionFailure;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import tools.jackson.databind.JsonNode;
@@ -38,6 +40,8 @@ public final class MarketInterviewContract {
     private static final Pattern STATISTICAL = Pattern.compile(
         "(?i)((?:응답자|참여자|고객|소비자)(?:들|들\\s*중|의)?\\s*\\d+(?:\\.\\d+)?\\s*%"
         + "|\\d+(?:\\.\\d+)?\\s*%\\s*의\\s*(?:응답자|참여자|고객|소비자)"
+        + "|(?:응답자|참여자|고객|소비자)\\s*중\\s*\\d+(?:\\.\\d+)?\\s*%"
+        + "|\\d+\\s*명\\s*중\\s*\\d+\\s*명\\s*\\(\\s*\\d+(?:\\.\\d+)?\\s*%\\s*\\)"
         + "|대부분의\\s*(?:시장|고객|소비자|응답자|참여자)"
         + "|전국\\s*(?:소비자|고객|사용자)"
         + "|실제\\s*(?:사용자|고객|소비자)(?:들)?(?:은|는|이|가)"
@@ -59,20 +63,25 @@ public final class MarketInterviewContract {
         int attempted = integerValue(targeting, "attemptedCount", 20, 80);
         int usable = integerValue(targeting, "usableCount", 8, 80);
         int failed = integerValue(targeting, "failedCount", 0, 80);
-        if (requested != drawn || drawn != attempted || usable + failed != attempted) invalid();
+        int minimumUsable = Math.max(8, (requested + 1) / 2);
+        if (requested != drawn || drawn != attempted || usable + failed != attempted
+                || usable < minimumUsable) invalid();
         int targetCount = integerValue(targeting, "targetCount", 0, 80);
         int nonTargetCount = integerValue(targeting, "nonTargetCount", 0, 80);
         if (targetCount + nonTargetCount != usable) invalid();
         nullableText(targeting, "targetCoverageWarning");
 
         Set<String> sampled = new HashSet<>();
+        Map<String, String> groupById = new HashMap<>();
         for (JsonNode item : array(result, "transcriptProvenance", usable, usable)) {
             exact(item, TRANSCRIPT);
             String id = respondentId(item, "participantId");
             if (!sampled.add(id) || !text(item, "transcriptId").equals("T-" + id)
                     || !integer(item, "answerCount", 9, 9)) invalid();
-            group(item, "group");
+            groupById.put(id, group(item, "group"));
         }
+        if (groupById.values().stream().filter("TARGET"::equals).count() != targetCount
+                || groupById.values().stream().filter("COMPARISON"::equals).count() != nonTargetCount) invalid();
 
         Set<String> failedRespondents = new HashSet<>();
         for (JsonNode item : array(result, "respondentFailures", failed, failed)) {
@@ -90,7 +99,8 @@ public final class MarketInterviewContract {
             String id = respondentId(item, "participantId");
             if (!sampled.contains(id) || !representative.add(id)) invalid();
             text(item, "label"); text(item, "profile"); text(item, "context");
-            stringArray(item.get("needs"), true, 8); group(item, "group");
+            stringArray(item.get("needs"), true, 8);
+            if (!groupById.get(id).equals(group(item, "group"))) invalid();
         }
         Set<String> interviewed = new HashSet<>();
         for (JsonNode item : array(result, "interviews", representative.size(), representative.size())) {
@@ -115,11 +125,18 @@ public final class MarketInterviewContract {
             text(item, "description"); text(item, "quote");
             JsonNode ids = stringArray(item.get("participantIds"), false, 80);
             Set<String> unique = new HashSet<>();
-            for (JsonNode id : ids) if (!sampled.contains(id.asText()) || !unique.add(id.asText())) invalid();
+            int actualTargetMentions = 0;
+            int actualComparisonMentions = 0;
+            for (JsonNode id : ids) {
+                if (!sampled.contains(id.asText()) || !unique.add(id.asText())) invalid();
+                if ("TARGET".equals(groupById.get(id.asText()))) actualTargetMentions++;
+                else if ("COMPARISON".equals(groupById.get(id.asText()))) actualComparisonMentions++;
+                else invalid();
+            }
             if (!integer(item, "mentionCount", ids.size(), ids.size())) invalid();
             int targetMentions = integerValue(item, "targetCount", 0, ids.size());
             int comparisonMentions = integerValue(item, "nonTargetCount", 0, ids.size());
-            if (targetMentions + comparisonMentions != ids.size()) invalid();
+            if (targetMentions != actualTargetMentions || comparisonMentions != actualComparisonMentions) invalid();
         }
         for (JsonNode item : array(result, "crossRelationships", 0, 24)) {
             exact(item, CROSS); text(item, "suggestionTitle");
@@ -142,7 +159,7 @@ public final class MarketInterviewContract {
             if (!Set.of("different", "similar", "unclear").contains(text(item, "differentiation"))) invalid();
             JsonNode alternative = item.get("alternativeLabel");
             if (alternative == null || !alternative.isTextual()) invalid();
-            group(item, "group");
+            if (!groupById.get(id).equals(group(item, "group"))) invalid();
         }
         if (!coded.equals(sampled)) invalid();
         classification(result.get("comprehension"), Set.of("accurate", "partial", "misunderstood"), usable);
@@ -198,8 +215,10 @@ public final class MarketInterviewContract {
         if (!RESPONDENT_ID.matcher(id).matches()) invalid();
         return id;
     }
-    private static void group(JsonNode value, String field) {
-        if (!Set.of("TARGET", "COMPARISON").contains(text(value, field))) invalid();
+    private static String group(JsonNode value, String field) {
+        String group = text(value, field);
+        if (!Set.of("TARGET", "COMPARISON").contains(group)) invalid();
+        return group;
     }
     private static void nullableText(JsonNode value, String field) {
         JsonNode item = value.get(field);
