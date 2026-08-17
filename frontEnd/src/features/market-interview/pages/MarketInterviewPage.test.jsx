@@ -32,6 +32,8 @@ describe('MarketInterviewPage', () => {
     const client = { get: vi.fn().mockResolvedValue({ data: current('NOT_STARTED') }), post: vi.fn() };
     renderPage(client);
     expect(await screen.findByRole('button', { name: '가상 고객 인터뷰 시작' })).toBeInTheDocument();
+    expect(screen.getByText(/RESEARCH MISSION/)).toBeInTheDocument();
+    for (const step of ['표집', '가상 인터뷰', '응답 코딩', '반복 패턴', '실제 고객 질문']) expect(screen.getByText(step)).toBeInTheDocument();
     expect(screen.getByText(/실제 고객에게 조사한 결과는 아닙니다/)).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });
@@ -63,6 +65,7 @@ describe('MarketInterviewPage', () => {
   it('renders structured participants, themes and follow-up questions', async () => {
     renderPage({ get: vi.fn().mockResolvedValue({ data: current('SUCCEEDED', { result }) }), post: vi.fn() });
     expect(await screen.findByRole('heading', { name: 'Respondent Explorer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '인사이트에서 응답 원문까지 한 화면에서 탐색하세요' })).toBeInTheDocument();
     expect(screen.getAllByText('가상 참여자 A')).toHaveLength(2);
     expect(screen.getAllByText('도입 부담')).toHaveLength(2);
     expect(screen.getByText(/응답 생성 실패 1명은 모든 코딩과 집계에서 제외/)).toBeInTheDocument();
@@ -106,7 +109,7 @@ describe('MarketInterviewPage', () => {
       concept, targetingPreview: { customerUnit: 'ORGANIZATION' },
     }) }), post: vi.fn() });
     expect(await screen.findByText('스마트 킥포인트 - 데이터 분석 서비스')).toBeInTheDocument();
-    expect(screen.getByText('직접 타겟 표현 불가 · 탐색 표본')).toBeInTheDocument();
+    expect(screen.getAllByText('직접 타겟 표현 불가 · 탐색 표본')).toHaveLength(2);
     expect(screen.queryByText(/패널 전체가 타겟/)).not.toBeInTheDocument();
   });
 

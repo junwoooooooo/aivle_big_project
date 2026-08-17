@@ -4,7 +4,7 @@ import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
     buildProposalPreview, businessDecisionReachability, businessDecisionStage, canOpenComparison, candidateFieldOptions,
   candidateRequests, comparisonRows, hypothesisDecisionLabel, createCandidateDraft,
-  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
+  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, hypothesisInputCount, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
   serializeCandidateFacts, toggleComparedConcept,
 } from './businessProposalModel.js';
 
@@ -91,11 +91,15 @@ describe('hypothesis provenance', () => {
       .toEqual({ CHANNELS: ['오프라인'] });
     expect(buildHypothesisChanges(hypotheses, {})).toEqual({});
   });
-  it('uses actual accepted statuses and user-facing locked copy', () => {
-    expect(hypothesisDecisionLabel({ decisionStatus: 'ACCEPTED' })).toBe('확인 완료');
-    expect(hypothesisDecisionLabel({ decisionStatus: 'USER_EDITED_ACCEPTED' })).toBe('확인 완료');
-    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('AI 제안 · 확인 필요');
-    expect(hypothesisDecisionLabel({ locked: true })).toBe('확정된 값');
+  it('shows provenance without turning an AI proposal into a progress blocker', () => {
+    expect(hypothesisDecisionLabel({ decisionStatus: 'ACCEPTED', source: 'AI' })).toBe('AI 제안');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'USER_EDITED_ACCEPTED' })).toBe('사용자 수정');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('AI 제안');
+  });
+  it('counts visible proposed values as input completion', () => {
+    const seven = HYPOTHESIS_TYPES.map((hypothesisType) => ({ hypothesisType, proposedValue: `${hypothesisType}-value`, decisionStatus: 'PROPOSED' }));
+    expect(hypothesisInputCount(seven)).toBe(7);
+    expect(hypothesisInputCount(seven.map((item, index) => index === 2 ? { ...item, proposedValue: '' } : item))).toBe(6);
   });
   it('contains exactly seven validation assumptions', () => expect(HYPOTHESIS_TYPES).toHaveLength(7));
 });

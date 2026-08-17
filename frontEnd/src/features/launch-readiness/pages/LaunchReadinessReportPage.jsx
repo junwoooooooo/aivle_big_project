@@ -5,15 +5,17 @@ import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { ErrorState, LoadingState, ProjectWorkspace, scrollPageToTop } from '../../../shared/ui/index.js';
 import { useProjectContext } from '../../projects/ProjectContext.jsx';
 import { createLaunchReadinessApi } from '../api/launchReadinessApi.js';
+import { FinanceReadinessReportDocument } from '../components/FinanceReadinessReportDocument.jsx';
+import { IntegratedLaunchReadinessReportDocument } from '../components/IntegratedLaunchReadinessReportDocument.jsx';
 import { LaunchReadinessReportDocument } from '../components/LaunchReadinessReportDocument.jsx';
 import { printLaunchReadinessReport, reportModulesFromQuery } from '../model/reportDocumentPresentation.js';
 import '../styles/launch-readiness.css';
 
-const REPORT_TYPES = new Set(['launch']);
+const REPORT_TYPES = new Set(['technology', 'operations', 'finance', 'integrated']);
 
 function hasCurrentReport(module, current) {
   if (current?.stale) return false;
-  return module === 'launch' && Boolean(current?.analysis);
+  return module === 'finance' ? Boolean(current?.result) : Boolean(current?.analysis);
 }
 
 function latestCompletedAt(documents) {
@@ -21,14 +23,18 @@ function latestCompletedAt(documents) {
     .sort((left, right) => new Date(right) - new Date(left))[0];
 }
 
-export function LaunchReadinessReportPageView({ project, documents, onPrint }) {
+export function LaunchReadinessReportPageView({ reportType, project, documents, onPrint }) {
   const completedAt = latestCompletedAt(documents);
   return <ProjectWorkspace mode="document" className="launch-report-page">
     <nav className="launch-report-actions" aria-label="출시 준비 보고서 작업">
       <Link to={projectRoutes.launchReadiness(project.projectId)}>출시 준비로 돌아가기</Link>
       <button type="button" onClick={() => onPrint(completedAt)}>PDF로 저장</button>
     </nav>
-    <LaunchReadinessReportDocument module="launch" current={documents[0].current} projectName={project.name} />
+    {reportType === 'integrated'
+      ? <IntegratedLaunchReadinessReportDocument documents={documents} projectName={project.name} completedAt={completedAt} />
+      : reportType === 'finance'
+        ? <FinanceReadinessReportDocument current={documents[0].current} projectName={project.name} />
+        : <LaunchReadinessReportDocument module={reportType} current={documents[0].current} projectName={project.name} />}
   </ProjectWorkspace>;
 }
 
@@ -41,7 +47,7 @@ export default function LaunchReadinessReportPage() {
   const modules = useMemo(() => reportModulesFromQuery(reportType, searchParams), [reportType, searchParams]);
   const moduleKey = modules.join(',');
   const requestKey = `${reportType}:${moduleKey}`;
-  const selectionValid = REPORT_TYPES.has(reportType) && modules.length === 1 && modules[0] === 'launch';
+  const selectionValid = REPORT_TYPES.has(reportType) && (reportType !== 'integrated' || modules.length >= 2);
   const [state, setState] = useState({ key: null, status: 'loading', documents: [], error: null });
 
   useEffect(() => scrollPageToTop({ smooth: false }), [reportType, moduleKey]);
@@ -51,7 +57,9 @@ export default function LaunchReadinessReportPage() {
     const requestedModules = moduleKey.split(',').filter(Boolean);
     Promise.all(requestedModules.map(async (module) => ({
       module,
-      current: await api.professionalCurrent(projectId, module),
+      current: module === 'finance'
+        ? await api.financeCurrent(projectId)
+        : await api.professionalCurrent(projectId, module),
     }))).then((documents) => {
       if (cancelled) return;
       if (documents.some(({ module, current }) => !hasCurrentReport(module, current))) {

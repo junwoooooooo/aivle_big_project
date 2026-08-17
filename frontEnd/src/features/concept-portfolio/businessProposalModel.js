@@ -237,9 +237,26 @@ export function detailedComparisonGroups(concepts) {
 }
 
 export function hypothesisDecisionLabel(hypothesis) {
-  if (hypothesis?.locked) return '확정된 값';
-  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus)
-    ? '확인 완료' : 'AI 제안 · 확인 필요';
+  const source = String(hypothesis?.source ?? '').toUpperCase();
+  if (hypothesis?.decisionStatus === 'USER_EDITED_ACCEPTED' || source.includes('EDIT')) return '사용자 수정';
+  if (source.includes('USER')) return '사용자 입력';
+  return 'AI 제안';
+}
+
+export function hypothesisHasValue(value) {
+  if (value == null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.some(hypothesisHasValue);
+  if (typeof value === 'object') return Object.values(value).some(hypothesisHasValue);
+  return true;
+}
+
+export function hypothesisInputCount(hypotheses = [], edits = {}) {
+  const byType = Object.fromEntries(hypotheses.map((item) => [item.hypothesisType, item]));
+  return HYPOTHESIS_TYPES.filter((type) => {
+    const hypothesis = byType[type];
+    return hypothesisHasValue(edits[type] ?? hypothesis?.finalValue ?? hypothesis?.proposedValue);
+  }).length;
 }
 
 export function hypothesisNeedsConfirmation(hypothesis) {

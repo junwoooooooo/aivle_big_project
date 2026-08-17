@@ -10,9 +10,8 @@ const launchPage = readFileSync('src/features/launch-readiness/pages/LaunchReadi
 describe('V21.4 report page source contract', () => {
   it('화면과 print는 동일한 사용자-facing document component를 사용한다', () => {
     expect(page).toContain('<LaunchReadinessReportDocument');
-    expect(page).not.toContain('<FinanceReadinessReportDocument');
-    expect(page).not.toContain('<IntegratedLaunchReadinessReportDocument');
-    expect(page).toContain("const REPORT_TYPES = new Set(['launch'])");
+    expect(page).toContain('<FinanceReadinessReportDocument');
+    expect(page).toContain('<IntegratedLaunchReadinessReportDocument');
     expect(page).not.toMatch(/PreviewDocument|PrintDocument|ReportPreviewDialog/);
   });
 
@@ -40,17 +39,18 @@ describe('V21.4 report page source contract', () => {
     expect(finance).toContain('result.cashFlowChart');
   });
 
-  it('메인은 출시 준비 DOCX 단일 workflow만 사용한다', () => {
-    expect(launchPage).toContain('className="launch-module"');
+  it('V21.6 메인은 3열 IA와 세로 workflow, compact report toolbar를 사용한다', () => {
+    expect(launchPage).toContain('className="launch-analysis-grid"');
     expect(launchPage).toContain('launch-workflow launch-workflow--vertical');
-    expect(launchPage).toContain('출시 범위, 승인 기준, 고객 준비, 모니터링과 롤백 계획');
-    expect(launchPage).toContain("professionalCurrent(projectId, 'launch')");
-    expect(launchPage).not.toContain('<ReportToolbar');
-    expect(launchPage).not.toContain('FinanceModule');
-    expect(launchPage).not.toContain('ProfessionalModule');
-    expect(launchPage).not.toContain('재무 분석');
-    expect(launchPage).not.toContain('기술 분석');
+    expect(launchPage).toContain('전문 입력 문서를 필수 근거로 사용하고');
+    expect(launchPage).toContain('프로젝트 정보는 보조 맥락으로만 활용');
+    expect(launchPage).toContain('<ReportToolbar');
+    expect(launchPage).not.toContain('독립 사용 가능');
+    expect(launchPage).not.toContain('선택형 · 독립 문서 분석');
+    expect(launchPage).not.toContain('className="launch-readiness-nav"');
+    expect(css).toContain('grid-template-columns:repeat(3,minmax(0,1fr))');
     expect(css).toContain('.launch-workflow li:not(:last-child)::after');
+    expect(css).toContain('.launch-report-toolbar');
     expect(css).toContain('flex-wrap:wrap');
   });
 

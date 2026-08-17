@@ -23,8 +23,15 @@ const STAGES = [
   ['MI_PATTERNS', '반복 패턴 정리'], ['MI_RESULT_READY', '결과 구성'],
 ];
 const REPRESENTATION = { ORGANIZATION: '직접 타겟 표현 불가 · 탐색 표본', PERSON: '개인 프로필 조건으로 표현 가능 여부 확인', TRANSACTION: '거래 단위 · 탐색 표본', UNKNOWN: '탐색 표본' };
+const WORKFLOW = ['표집', '가상 인터뷰', '응답 코딩', '반복 패턴', '실제 고객 질문'];
+const STAGE_COPY = {
+  MI_INPUT_VALIDATED: '사업안과 현재 검증 기준을 확인했습니다.', MI_TARGETING: '관찰 가능한 타겟 조건을 해석하고 있습니다.',
+  MI_BANK_READY: '조건에 맞는 패널 후보를 탐색하고 있습니다.', MI_PANEL_READY: '가상 인터뷰 패널을 구성하고 있습니다.',
+  MI_INTERVIEWING: '가상 인터뷰 응답을 생성하고 있습니다.', MI_CODING: '응답별 원문 근거를 코딩하고 있습니다.',
+  MI_PATTERNS: '반복되는 응답 패턴을 정리하고 있습니다.', MI_RESULT_READY: '인사이트와 원문 응답을 연결하고 있습니다.',
+};
 
-function ConceptCard({ concept }) {
+function ConceptCard({ concept, representation }) {
   const identity = concept?.identity ?? {};
   const solution = concept?.solution ?? {};
   const operation = concept?.operation ?? {};
@@ -32,7 +39,7 @@ function ConceptCard({ concept }) {
     ['타겟 고객', identity.targetUsers], ['해결 문제', solution.problemScenario],
     ['제공 방식', solution.solutionMechanism], ['운영 주체', operation.actorRoles ?? operation.providerRole],
   ].filter(([, value]) => value && (typeof value === 'string' || Array.isArray(value)));
-  return <section className="market-interview__concept-card"><span>현재 인터뷰 대상 사업안</span>
+  return <section className="market-interview__concept-card"><header><span>RESEARCH MISSION · 현재 인터뷰 대상</span><div><small>타겟 표현</small><strong>{representation}</strong></div></header>
     <h2>{identity.conceptName ?? concept?.conceptName ?? '현재 선택 사업안'}</h2>
     <p>{identity.conceptDefinition ?? identity.coreValue ?? concept?.summary ?? '현재 확정된 사업안 기준으로 진행합니다.'}</p>
     {rows.length ? <details><summary>사업안 기준 자세히 보기</summary><dl>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{Array.isArray(value) ? value.join(' · ') : String(value)}</dd></div>)}</dl></details> : null}
@@ -46,7 +53,7 @@ function InterviewProgress({ events, concept }) {
   const params = latest?.messageParams ?? {};
   const identity = concept?.identity ?? {};
   return <section className="market-interview__progress" aria-live="polite" aria-busy="true">
-    <header><span>시장 인터뷰 진행 중</span><h2>{params.traceDetail ?? '실제 실행 상태를 기다리고 있습니다.'}</h2><p>사업안 기준: {identity.conceptName ?? concept?.conceptName ?? '현재 선택 사업안'}</p></header>
+    <header><span>시장 인터뷰 진행 중 · {index + 1}/{STAGES.length}</span><h2>{params.traceDetail ?? STAGE_COPY[stage] ?? '실제 실행 상태를 기다리고 있습니다.'}</h2><p>사업안 기준: {identity.conceptName ?? concept?.conceptName ?? '현재 선택 사업안'}</p></header>
     <ol>{STAGES.map(([key, label], stageIndex) => <li key={key} data-status={stageIndex < index ? 'complete' : stageIndex === index ? 'current' : 'pending'}><b>{stageIndex < index ? '✓' : stageIndex + 1}</b><span>{label}</span></li>)}</ol>
     {(params.completedCount != null || params.candidateCount != null) ? <dl>
       {params.candidateCount != null ? <div><dt>패널 후보</dt><dd>{Number(params.candidateCount).toLocaleString('ko-KR')}명 profile bank 탐색</dd></div> : null}
@@ -96,11 +103,11 @@ export default function MarketInterviewPage() {
 
     {(view.state === 'NOT_STARTED' || view.state === 'STALE') ? <div className="market-interview__before">
       <Alert tone="info" title="AI 가상 고객 인터뷰">실측 profile bank에서 파생한 가상 관점을 탐색합니다. 실제 고객에게 조사한 결과는 아닙니다.</Alert>
-      <ConceptCard concept={view.concept} />
+      <ConceptCard concept={view.concept} representation={REPRESENTATION[view.targetingPreview?.customerUnit] ?? '시작 전에 고객 단위를 확인합니다.'} />
       <section className="market-interview__purpose"><span>이번 인터뷰에서 확인할 것</span><ul>{PURPOSES.map((item) => <li key={item}>{item}</li>)}</ul></section>
       <fieldset className="market-interview__sample"><legend>패널 준비</legend><p>표본 수는 정성 탐색의 폭을 조절하며 시장 대표성이나 구매 확률을 만들지 않습니다.</p><div>{SAMPLE_OPTIONS.map((option) => <label key={option.size} data-selected={sampleSize === option.size}><input type="radio" name="market-interview-sample" value={option.size} checked={sampleSize === option.size} onChange={() => setSampleSize(option.size)} /><strong>{option.size}명</strong><span>{option.title}</span><small>{option.detail}</small></label>)}</div>
         <p className="market-interview__representation"><b>타겟 표현</b>{REPRESENTATION[view.targetingPreview?.customerUnit] ?? '시작 전에 현재 사업안의 고객 단위를 확인합니다.'}</p></fieldset>
-      <section className="market-interview__start"><h2>가상 고객 인터뷰를 시작합니다</h2><p>실측 프로파일 기반 표집 → 가상 응답 생성 → 응답별 원문 코딩 → 반복 패턴 정리 → 실제 고객 확인 질문 제안</p>
+      <section className="market-interview__start"><div><span>진행 방식</span><h2>가상 고객 인터뷰를 시작합니다</h2><p>각 단계는 실제 TaskRun 상태에 따라 진행되며, 새로운 통계나 구매 확률을 만들지 않습니다.</p></div><ol className="market-interview__workflow">{WORKFLOW.map((item, index) => <li key={item}><b>{index + 1}</b><span>{item}</span></li>)}</ol>
         <Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(sampleSize))}>{view.state === 'STALE' ? '현재 사업안으로 다시 인터뷰' : '가상 고객 인터뷰 시작'}</Button></section>
     </div> : null}
     {view.active ? <InterviewProgress events={job} concept={view.concept} /> : null}

@@ -23,7 +23,7 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'conceptRefinement', label: '컨셉 다듬기', shortLabel: '컨셉 다듬기', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'techOps', label: '기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.READY },
   { id: 'finance', label: '재무 분석', shortLabel: '재무', routeKey: 'finance', defaultStatus: MODULE_STATUS.READY },
-  { id: 'launchReadiness', label: '출시 준비 분석', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'launchReadiness', label: '출시 준비', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'marketInterview', label: '시장 인터뷰', shortLabel: '시장 인터뷰', routeKey: 'marketInterview', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'marketing', label: '마케팅 실행', shortLabel: '마케팅 실행', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'settings', label: '프로젝트 설정', shortLabel: '설정', routeKey: 'settings', defaultStatus: MODULE_STATUS.READY },

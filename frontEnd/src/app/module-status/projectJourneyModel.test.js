@@ -23,6 +23,18 @@ describe('project journey model', () => {
     ]);
   });
 
+  it('출시 준비는 canonical 한 단계이며 기술·운영·재무를 하위 Journey로 노출하지 않는다', () => {
+    const modules = getProjectModules('41', {
+      techOps: { status: MODULE_STATUS.READY },
+      finance: { status: MODULE_STATUS.FAILED },
+      launchReadiness: { status: MODULE_STATUS.READY },
+    });
+    const launch = getProjectJourneys('41', modules).find(({ id }) => id === 'launch');
+    expect(launch.href).toBe('/app/projects/41/launch-readiness');
+    expect(launch.children).toEqual([]);
+    expect(launch.status).toBe(JOURNEY_STATUS.ATTENTION);
+  });
+
   it('하위 모듈 상태를 결정적으로 집계한다', () => {
     expect(aggregateJourneyStatus([MODULE_STATUS.COMPLETED, MODULE_STATUS.COMPLETED])).toBe(JOURNEY_STATUS.COMPLETED);
     expect(aggregateJourneyStatus([MODULE_STATUS.COMPLETED, MODULE_STATUS.READY])).toBe(JOURNEY_STATUS.IN_PROGRESS);

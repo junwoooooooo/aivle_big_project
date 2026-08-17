@@ -738,11 +738,29 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
     seen = _timed(ledger, "dryrun", lambda: DRYRUN.dryrun(
         DRYRUN.DryrunOptions(tag=run_id, slots=snapshot["slots"])))
     resolved = seen.get("stat_code_해결")
+    routes = _dryrun_route_statuses(seen)
     if resolved and resolved.get("대상") and not resolved.get("해결"):
-        ledger.degrade("dryrun", "STAT_CODE_UNRESOLVED",
-                       f"kosis 슬롯 {resolved['대상']}개 중 stat_code 가 선 것이 0개다 — "
-                       "유료 수집을 태우지 않는다. 슬롯의 subject·metric 을 고쳐야 한다")
-        raise _Hard("드라이런 미통과 — stat_code 가 하나도 서지 않는다")
+        fallback_count = routes.count("KOSIS_UNRESOLVED_WEB_FALLBACK")
+        blocked_count = routes.count("BLOCKED_NO_ROUTE")
+        routable_count = len(routes) - blocked_count
+        if fallback_count:
+            ledger.degrade(
+                "dryrun", "STAT_CODE_UNRESOLVED_WEB_FALLBACK",
+                f"kosis stat_code 미해결 {resolved['대상']}개 중 {fallback_count}개는 "
+                "adapter rule에 따라 web 경로로 계속 수집한다",
+            )
+        if blocked_count:
+            ledger.degrade(
+                "dryrun", "MARKET_ROUTE_PARTIAL",
+                f"stat_code 미해결 슬롯 {blocked_count}개는 대체 관측 경로가 없다. "
+                "해당 직접 시장규모 근거는 생성하지 않고 나머지 경로만 수집한다",
+            )
+        if routes and routable_count == 0:
+            raise _PipelineContract(
+                "MARKET_ROUTE_UNRESOLVED",
+                "KOSIS stat_code를 확인하지 못했고 WEB·기타 관측 경로도 없어 "
+                "시장 결과를 사실대로 구성할 수 없다",
+            )
     if not resolved:
         # 키가 없어 대조 자체를 못 했다. **막지는 않되 조용히 넘기지 않는다.**
         ledger.degrade("dryrun", "STAT_CODE_UNCHECKED",
@@ -776,6 +794,28 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
                        f"(복원 {rc.get('from')} · 사람칸 {rc.get('slotsFrom')}). "
                        "나머지 슬롯은 원본 수집 결과를 그대로 쓴다")
     budget.charge(COLLECT_CALLS + section_attempts)
+
+
+def _dryrun_route_statuses(report: dict) -> list[str]:
+    """Translate the free dry-run into collection route decisions without inventing evidence."""
+    statuses: list[str] = []
+    for row in report.get("슬롯") or []:
+        route = row.get("route")
+        if route == "web":
+            statuses.append("WEB_DIRECT")
+            continue
+        if route != "kosis":
+            # DART and future explicit adapters are already observable collection routes.
+            statuses.append("DIRECT_EVIDENCE_ROUTE")
+            continue
+        resolved = row.get("stat_code_대조")
+        if resolved and resolved != "not_configured":
+            statuses.append("KOSIS_VERIFIED")
+        elif "route_metric=" in str(row.get("route_why") or ""):
+            statuses.append("KOSIS_UNRESOLVED_WEB_FALLBACK")
+        else:
+            statuses.append("BLOCKED_NO_ROUTE")
+    return statuses
 
 
 def _timed(ledger: Run, name: str, work):

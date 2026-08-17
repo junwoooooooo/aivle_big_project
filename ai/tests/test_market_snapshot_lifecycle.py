@@ -179,3 +179,27 @@ def test_child_transport_preserves_snapshot_contract_reason(tmp_path):
     assert failure.reason == 'RESEARCH_SNAPSHOT_MISSING'
     assert failure.retryable is False
     assert failure.safe_diagnostics['detail'] == 'run=42 slots missing'
+
+
+def test_zero_resolved_kosis_uses_existing_web_routes_instead_of_hard_failing():
+    statuses = pipeline._dryrun_route_statuses({"슬롯": [
+        {"route": "kosis", "route_why": "route_metric=사업체 수 (검색 대신 통계 API)",
+         "stat_code_대조": ""},
+        {"route": "web", "route_why": "기본 경로"},
+    ]})
+
+    assert statuses == ["KOSIS_UNRESOLVED_WEB_FALLBACK", "WEB_DIRECT"]
+
+
+def test_explicit_kosis_without_fallback_is_classified_as_blocked():
+    assert pipeline._dryrun_route_statuses({"슬롯": [{
+        "route": "kosis", "route_why": "stat_code=101/UNKNOWN", "stat_code_대조": "",
+    }]}) == ["BLOCKED_NO_ROUTE"]
+
+
+def test_market_route_unresolved_taxonomy_is_non_retryable():
+    failure = pipeline._fail(
+        "EXECUTION_FAILED", "MARKET_ROUTE_UNRESOLVED", "관측 경로 없음")
+
+    assert failure.reason == "MARKET_ROUTE_UNRESOLVED"
+    assert failure.retryable is False

@@ -195,7 +195,12 @@ describe('BusinessProposalWorkspace', () => {
     const finalizeReport = vi.fn();
     let state = base({ confirm, finalizeReport,
       selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 0 },
-      hypotheses: [{ hypothesisType: 'TARGET_REGION', proposedValue: '서울', decisionStatus: 'PROPOSED' }],
+      hypotheses: [
+        ['TARGET_REGION', '서울'], ['REVENUE_MODEL', '구독'], ['PRICE', '월 5만원'],
+        ['CHANNELS', ['웹']], ['DIFFERENTIATORS', ['자동화']],
+        ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 1, horizonYears: 2 }],
+        ['PRE_MARKET_SOM', { amount: 500000, currency: 'KRW', period: '연간' }],
+      ].map(([hypothesisType, proposedValue]) => ({ hypothesisType, proposedValue, decisionStatus: 'PROPOSED' })),
     });
     useConceptPortfolio.mockImplementation(() => state);
     const view = renderWorkspace();
@@ -203,7 +208,7 @@ describe('BusinessProposalWorkspace', () => {
     expect(confirm).toHaveBeenCalled();
     state = { ...state, selection: { ...state.selection, status: 'READY_FOR_LEGAL_REPORT', hypothesisConfirmedCount: 7, nextAction: 'REVIEW_LEGAL_REPORT' }, hypotheses: state.hypotheses.map((item) => ({ ...item, finalValue: '서울', decisionStatus: 'ACCEPTED', locked: true })) };
     view.rerender(<MemoryRouter initialEntries={['/app/projects/41/concepts']}><Routes><Route path="/app/projects/:projectId/concepts" element={<BusinessProposalWorkspace />} /></Routes></MemoryRouter>);
-    expect(screen.getByText('7/7 확인 완료')).toBeInTheDocument();
+    expect(screen.getByText('7/7 입력 완료')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /현재 값으로 진행/ }));
     expect(finalizeReport).toHaveBeenCalled();
   });
@@ -294,7 +299,7 @@ describe('BusinessProposalWorkspace', () => {
     expect(css).not.toContain('min-width: max-content');
     expect(css).not.toContain('repeat(auto-fit');
   });
-  it('6/7 가격 AI 제안이 미확정인 정확한 항목을 알리고 전체 확정 후 그 행으로 이동한다', async () => {
+  it('7개 AI 제안값을 7/7 입력 완료로 세고 한 번에 확정한다', async () => {
     const confirm = vi.fn().mockResolvedValue(undefined);
     const values = [
       ['TARGET_REGION', '대한민국'], ['REVENUE_MODEL', 'B2B 구독'],
@@ -303,19 +308,36 @@ describe('BusinessProposalWorkspace', () => {
       ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 2, horizonYears: 3 }],
       ['PRE_MARKET_SOM', { amount: 500000, currency: 'KRW', period: '연간' }],
     ];
-    const hypotheses = values.map(([hypothesisType, proposedValue]) => hypothesisType === 'PRICE'
-      ? { hypothesisType, proposedValue, decisionStatus: 'PROPOSED', semanticStatus: 'AMBIGUOUS', legalReviewStatus: 'NOT_REQUIRED' }
-      : { hypothesisType, proposedValue, finalValue: proposedValue, decisionStatus: 'ACCEPTED', semanticStatus: 'VALID', locked: true });
+    const hypotheses = values.map(([hypothesisType, proposedValue]) => ({
+      hypothesisType, proposedValue, decisionStatus: 'PROPOSED', semanticStatus: 'VALID', legalReviewStatus: 'NOT_REQUIRED', source: 'AI',
+    }));
     useConceptPortfolio.mockReturnValue(base({ confirm,
       selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 6 }, hypotheses }));
     renderWorkspace();
-    expect(screen.getByText('6/7 확인 완료')).toBeInTheDocument();
-    expect(screen.getByText('AI 제안 · 확인 필요')).toBeInTheDocument();
-    expect(screen.getByText(/확인이 필요한 항목/).parentElement).toHaveTextContent('가격·과금 방식');
+    expect(screen.getByText('7/7 입력 완료')).toBeInTheDocument();
+    expect(screen.getAllByText('AI 제안')).toHaveLength(7);
+    expect(screen.queryByText(/확인이 필요한 항목/)).not.toBeInTheDocument();
     expect(screen.getByText(/500,000 KRW/).parentElement).toHaveTextContent('500,000 KRW · 50만 원');
     fireEvent.click(screen.getByRole('button', { name: '기준값 확정' }));
     await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole('alert')).toHaveTextContent('가격·과금 방식의 AI 제안을 확인해 주세요');
+    expect(confirm).toHaveBeenCalledWith({});
+  });
+  it('실제 빈 값만 6/7로 표시하고 해당 행으로 이동한다', async () => {
+    const confirm = vi.fn();
+    const hypotheses = [
+      ['TARGET_REGION', '대한민국'], ['REVENUE_MODEL', 'B2B 구독'], ['PRICE', ''],
+      ['CHANNELS', ['직접 영업']], ['DIFFERENTIATORS', ['자동화']],
+      ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 2, horizonYears: 3 }],
+      ['PRE_MARKET_SOM', { amount: 500000, currency: 'KRW', period: '연간' }],
+    ].map(([hypothesisType, proposedValue]) => ({ hypothesisType, proposedValue, decisionStatus: 'PROPOSED' }));
+    useConceptPortfolio.mockReturnValue(base({ confirm,
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION' }, hypotheses }));
+    renderWorkspace();
+    expect(screen.getByText('6/7 입력 완료')).toBeInTheDocument();
+    expect(screen.getByText(/값이 필요한 항목/).parentElement).toHaveTextContent('가격·과금 방식');
+    fireEvent.click(screen.getByRole('button', { name: '기준값 확정' }));
+    expect(confirm).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('가격·과금 방식 값이 비어 있습니다');
     await waitFor(() => expect(document.activeElement).toHaveAttribute('id', 'business-basis-PRICE'));
   });
   it('시장 준비 상태에서는 저장 정보를 조회하고 실제 시장 분석 CTA를 표시한다', async () => {

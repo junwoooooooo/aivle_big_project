@@ -20,8 +20,8 @@ describe('project route cutover', () => {
   it('출시 준비의 canonical 및 호환 경로를 하나의 화면으로 연결한다', () => {
     expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');
     expect(routerSource).toContain('path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />}');
-    expect(routerSource).toContain('path="technology" element={<Navigate replace to="../tech-ops" />}');
-    expect(routerSource).toContain('path="operations" element={<Navigate replace to="../tech-ops" />}');
+    expect(routerSource).toContain('path="technology" element={<LaunchReadinessPage initialFocus="technology" />}');
+    expect(routerSource).toContain('path="operations" element={<LaunchReadinessPage initialFocus="operations" />}');
     expect(routerSource).toContain('path="tech-ops" element={<TechOpsPage />}');
     expect(routerSource).toContain('path="finance" element={<FinancePage />}');
     expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');

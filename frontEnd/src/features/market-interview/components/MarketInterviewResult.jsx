@@ -57,7 +57,7 @@ export default function MarketInterviewResult({ result }) {
   const failed = result.targeting?.failedCount ?? 0;
   const groups = ['TARGET', 'COMPARISON', 'PROXY', 'EXPLORATORY'].filter((value) => dashboard.participants.some((item) => item.group === value));
 
-  return <div className="market-interview__result">
+  return <div className="market-interview__result"><header className="market-interview__result-heading"><span>RESULT INSIGHT WORKSPACE</span><h2>인사이트에서 응답 원문까지 한 화면에서 탐색하세요</h2><p>표시되는 수치와 인용은 현재 결과 payload에 연결된 근거만 사용합니다.</p></header>
     <section className="market-interview__scope" aria-labelledby="market-interview-summary-title"><div><span>조사 요약</span><h2 id="market-interview-summary-title">가상 인터뷰 근거 범위</h2><strong>{REPRESENTATION_LABEL[result.targeting?.representationStatus] ?? '표현 범위 확인 필요'}</strong></div>
       <dl><div><dt>요청</dt><dd>{requested}명</dd></div><div><dt>코딩 응답</dt><dd>{dashboard.usableCount}명</dd></div><div><dt>직접 타겟</dt><dd>{result.targeting?.targetCount ?? 0}명</dd></div><div><dt>대리·탐색</dt><dd>{(result.targeting?.proxyCount ?? 0) + (result.targeting?.exploratoryCount ?? 0)}명</dd></div></dl>
       <p>{result.targeting?.criteriaText}</p>{failed ? <p>응답 생성 실패 {failed}명은 모든 코딩과 집계에서 제외했습니다.</p> : null}{result.targeting?.targetCoverageWarning ? <p role="status">{result.targeting.targetCoverageWarning}</p> : null}</section>
