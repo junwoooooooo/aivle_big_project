@@ -7,7 +7,7 @@ const JOURNEY_DESCRIPTIONS = Object.freeze({
   planning: '아이디어를 정리하고 비교해 실행할 사업안을 확정합니다.',
   validation: '시장 근거와 사업 모델을 함께 검증합니다.',
   launch: '기술·운영 계획과 재무 전망으로 출시 준비 상태를 확인합니다.',
-  interview: '시장 인터뷰의 정성 탐색과 트윈 패널의 정량 시뮬레이션을 진행합니다.',
+  interview: '가상 고객 인터뷰를 진행하고 반응과 개선점을 확인합니다.',
   marketingStrategy: '현재 사업안을 바탕으로 검토할 마케팅 초안을 준비합니다.',
   finalReport: '앞선 결과를 한 문서로 정리해 의사결정에 활용합니다.',
 });

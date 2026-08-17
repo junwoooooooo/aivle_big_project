@@ -32,6 +32,9 @@ import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRoundRepository;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementService;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.selection.domain.ConceptSelection;
 import com.aivle.backend.pipeline.techops.domain.TechOpsInputPreparation;
@@ -73,10 +76,14 @@ class ProjectModuleStatusServiceTests {
     private final FinancialInputPreparationRepository financialPreparations = mock(FinancialInputPreparationRepository.class);
     private final FinancialInputSnapshotRepository financialSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
+    private final BusinessValidationCoordinator businessValidations = mock(BusinessValidationCoordinator.class);
+    private final ConceptRefinementService conceptRefinements = mock(ConceptRefinementService.class);
+    private final ConceptRefinementRoundRepository conceptRefinementRounds = mock(ConceptRefinementRoundRepository.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
         projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs,
         marketRuns, marketVersions, twinRuns, twinVersions, interviewRuns, marketing, marketingSources,
-        techOpsPreparations, techOpsSnapshots, techOpsAdvisories, financialPreparations, financialSnapshots, taskRuns);
+        techOpsPreparations, techOpsSnapshots, techOpsAdvisories, financialPreparations, financialSnapshots, taskRuns,
+        businessValidations, conceptRefinements, conceptRefinementRounds);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
@@ -101,7 +108,8 @@ class ProjectModuleStatusServiceTests {
 
         assertThat(modules).extracting(ProjectModuleStatusResponse::module).containsExactly(
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
-            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.TECH_OPS,
+            PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL,
+            PipelineModuleType.CONCEPT_REFINEMENT, PipelineModuleType.TECH_OPS,
             PipelineModuleType.FINANCE, PipelineModuleType.MARKET_INTERVIEW,
             PipelineModuleType.TWIN_SURVEY, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
@@ -313,6 +321,20 @@ class ProjectModuleStatusServiceTests {
         assertThatThrownBy(() -> service.findAll(8L, 41L))
             .isInstanceOfSatisfying(BusinessException.class,
                 exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    @Test
+    void mapsCurrentRefinementStatesWithoutTreatingFailureAsCompletion() {
+        assertThat((PipelineModuleStatus) ReflectionTestUtils.invokeMethod(
+            service, "refinementStatus", "FINALIZED")).isEqualTo(PipelineModuleStatus.COMPLETED);
+        assertThat((PipelineModuleStatus) ReflectionTestUtils.invokeMethod(
+            service, "refinementStatus", "AWAITING_DECISION")).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
+        assertThat((PipelineModuleStatus) ReflectionTestUtils.invokeMethod(
+            service, "refinementStatus", "PROPOSING")).isEqualTo(PipelineModuleStatus.RUNNING);
+        assertThat((PipelineModuleStatus) ReflectionTestUtils.invokeMethod(
+            service, "refinementStatus", "LEGAL_BLOCKED")).isEqualTo(PipelineModuleStatus.FAILED);
+        assertThat((PipelineModuleStatus) ReflectionTestUtils.invokeMethod(
+            service, "refinementStatus", "STALE")).isEqualTo(PipelineModuleStatus.STALE);
     }
 
     @Test

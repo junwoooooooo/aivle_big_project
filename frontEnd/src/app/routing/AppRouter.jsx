@@ -80,6 +80,7 @@ export default function AppRouter() {
             <Route path="business-validation" element={<BusinessValidationPage />} />
             <Route path="market" element={<ProjectRedirect routeKey="businessValidation" />} />
             <Route path="business-model" element={<ProjectRedirect routeKey="businessValidation" />} />
+            <Route path="concept-refinement" element={<ProjectRedirect routeKey="businessValidation" />} />
             <Route path="market-interview" element={<MarketInterviewPage />} />
             <Route path="virtual-interview" element={<ProjectRedirect routeKey="marketInterview" />} />
             <Route path="twin-survey" element={<TwinSurveyPage />} />

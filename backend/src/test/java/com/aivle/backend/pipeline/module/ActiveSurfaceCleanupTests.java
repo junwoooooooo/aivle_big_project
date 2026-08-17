@@ -20,7 +20,8 @@ class ActiveSurfaceCleanupTests {
             "MARKET_ANALYSIS", "BUSINESS_MODEL", "TECH_OPS", "FINANCIAL_ANALYSIS", "PERSONA_RESPONSE");
         assertThat(Arrays.stream(PipelineModuleType.values()).map(Enum::name)).containsExactly(
             "IDEA", "CONCEPT_PORTFOLIO", "CONCEPT_FACTORY", "CONCEPT_SELECTION", "MARKET_ANALYSIS",
-            "BUSINESS_MODEL", "TECH_OPS", "FINANCE", "MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING");
+            "BUSINESS_MODEL", "CONCEPT_REFINEMENT", "TECH_OPS", "FINANCE", "MARKET_INTERVIEW",
+            "TWIN_SURVEY", "MARKETING");
     }
 
     @Test

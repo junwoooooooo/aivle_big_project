@@ -23,16 +23,16 @@ export const JOURNEY_STATUS_VIEW = Object.freeze({
 
 export const PROJECT_JOURNEYS = Object.freeze([
   { id: 'planning', label: '1. 사업 기획', shortLabel: '사업 기획', moduleIds: ['idea', 'concepts'] },
-  { id: 'validation', label: '2. 사업 검증', shortLabel: '사업 검증', moduleIds: ['market', 'businessModel'] },
+  { id: 'validation', label: '2. 사업 검증', shortLabel: '사업 검증', moduleIds: ['market', 'businessModel', 'conceptRefinement'] },
   { id: 'launch', label: '3. 출시 준비', shortLabel: '출시 준비', moduleIds: ['launchReadiness'] },
-  { id: 'interview', label: '4. 가상 인터뷰', shortLabel: '가상 인터뷰', moduleIds: ['marketInterview', 'twinSurvey'] },
+  { id: 'interview', label: '4. 가상 인터뷰', shortLabel: '가상 인터뷰', moduleIds: ['marketInterview'] },
   { id: 'marketingStrategy', label: '5. 마케팅 전략', shortLabel: '마케팅 전략', moduleIds: ['marketing'] },
   { id: 'finalReport', label: '6. 최종 보고서', shortLabel: '최종 보고서', moduleIds: [] },
 ]);
 
 const PATH_TO_JOURNEY = Object.freeze({
   overview: 'overview', idea: 'planning', concepts: 'planning', 'business-validation': 'validation', market: 'validation',
-  'business-model': 'validation', 'launch-readiness': 'launch', technology: 'launch', operations: 'launch', 'tech-ops': 'launch', finance: 'launch',
+  'business-model': 'validation', 'concept-refinement': 'validation', 'launch-readiness': 'launch', technology: 'launch', operations: 'launch', 'tech-ops': 'launch', finance: 'launch',
   'market-interview': 'interview', 'virtual-interview': 'interview', 'twin-survey': 'interview', marketing: 'marketingStrategy', 'final-report': 'finalReport',
 });
 

@@ -66,6 +66,83 @@ class ProjectServicePresentationTests {
         assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
     }
 
+    @Test
+    void completedMarketInterviewIsNotBlockedByTwinSurvey() {
+        var statuses = allOtherJourneysCompleted();
+        statuses.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.COMPLETED,
+            LocalDateTime.of(2026, 8, 17, 10, 0)));
+        statuses.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.NOT_READY, null));
+        stubProject(statuses);
+
+        var summary = service.findAll(2L).get(0);
+
+        assertThat(summary.completedJourneyCount()).isEqualTo(5);
+        assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
+        assertThat(summary.attentionCount()).isZero();
+    }
+
+    @Test
+    void completedMarketAndBusinessModelDoNotCompleteValidationBeforeRefinement() {
+        var statuses = allOtherJourneysCompleted();
+        statuses.removeIf(status -> status.module() == PipelineModuleType.CONCEPT_REFINEMENT);
+        statuses.add(response(PipelineModuleType.CONCEPT_REFINEMENT, PipelineModuleStatus.READY, null));
+        statuses.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.COMPLETED,
+            LocalDateTime.of(2026, 8, 17, 10, 0)));
+        statuses.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.NOT_READY, null));
+        stubProject(statuses);
+
+        var summary = service.findAll(2L).get(0);
+
+        assertThat(summary.completedJourneyCount()).isEqualTo(4);
+        assertThat(summary.currentJourneyLabel()).isEqualTo("사업 검증");
+    }
+
+    @Test
+    void legacyCompletedTwinSurveyProjectsToCanonicalInterviewWhenNoInterviewRunExists() {
+        var statuses = allOtherJourneysCompleted();
+        statuses.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.READY, null));
+        statuses.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.COMPLETED,
+            LocalDateTime.of(2026, 8, 16, 10, 0)));
+        stubProject(statuses);
+
+        var summary = service.findAll(2L).get(0);
+
+        assertThat(summary.completedJourneyCount()).isEqualTo(5);
+        assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
+    }
+
+    @Test
+    void currentInterviewFailureWinsAndLegacyTwinFailureCannotBlockCompletedInterview() {
+        var failedInterview = allOtherJourneysCompleted();
+        failedInterview.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.FAILED,
+            LocalDateTime.of(2026, 8, 17, 10, 0)));
+        failedInterview.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.COMPLETED,
+            LocalDateTime.of(2026, 8, 16, 10, 0)));
+        stubProject(failedInterview);
+        assertThat(service.findAll(2L).get(0).attentionCount()).isEqualTo(1);
+
+        var completedInterview = allOtherJourneysCompleted();
+        completedInterview.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.COMPLETED,
+            LocalDateTime.of(2026, 8, 17, 10, 0)));
+        completedInterview.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.FAILED,
+            LocalDateTime.of(2026, 8, 16, 10, 0)));
+        stubProject(completedInterview);
+        assertThat(service.findAll(2L).get(0).completedJourneyCount()).isEqualTo(5);
+        assertThat(service.findAll(2L).get(0).attentionCount()).isZero();
+    }
+
+    private java.util.ArrayList<ProjectModuleStatusResponse> allOtherJourneysCompleted() {
+        return new java.util.ArrayList<>(List.of(
+            response(PipelineModuleType.IDEA, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.CONCEPT_PORTFOLIO, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.MARKET_ANALYSIS, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.BUSINESS_MODEL, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.CONCEPT_REFINEMENT, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.TECH_OPS, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.FINANCE, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)),
+            response(PipelineModuleType.MARKETING, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0))));
+    }
+
     private void stubProject(List<ProjectModuleStatusResponse> statuses) {
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(41L);

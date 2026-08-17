@@ -35,28 +35,41 @@ describe('project journey model', () => {
     const modules = getProjectModules('41', {
       market: { status: MODULE_STATUS.COMPLETED },
       businessModel: { status: MODULE_STATUS.READY },
+      conceptRefinement: { status: MODULE_STATUS.NOT_READY },
     });
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').href)
       .toBe('/app/projects/41/business-validation');
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').children).toHaveLength(1);
   });
 
-  it('가상 인터뷰 Journey 안에서 시장 인터뷰 다음 트윈 패널 route를 선택한다', () => {
+  it('사업 검증은 Market과 BM만 완료되어도 refinement 전에는 완료되지 않는다', () => {
+    const waiting = getProjectModules('41', {
+      market: { status: MODULE_STATUS.COMPLETED },
+      businessModel: { status: MODULE_STATUS.COMPLETED },
+      conceptRefinement: { status: MODULE_STATUS.READY },
+    });
+    expect(getProjectJourneys('41', waiting).find(({ id }) => id === 'validation').status)
+      .toBe(JOURNEY_STATUS.IN_PROGRESS);
+    const completed = getProjectModules('41', {
+      market: { status: MODULE_STATUS.COMPLETED },
+      businessModel: { status: MODULE_STATUS.COMPLETED },
+      conceptRefinement: { status: MODULE_STATUS.COMPLETED },
+    });
+    expect(getProjectJourneys('41', completed).find(({ id }) => id === 'validation').status)
+      .toBe(JOURNEY_STATUS.COMPLETED);
+  });
+
+  it('가상 인터뷰 Journey를 canonical 시장 인터뷰 슬롯 하나로 집계한다', () => {
     const modules = getProjectModules('41', {
-      marketInterview: { status: MODULE_STATUS.READY }, twinSurvey: { status: MODULE_STATUS.NOT_READY },
+      marketInterview: { status: MODULE_STATUS.COMPLETED },
     });
     const journeys = getProjectJourneys('41', modules);
     const interview = journeys.find(({ id }) => id === 'interview');
     expect(interview.href).toBe('/app/projects/41/market-interview');
-    expect(interview.children.map(({ id }) => id)).toEqual(['marketInterview', 'twinSurvey']);
+    expect(interview.children.map(({ id }) => id)).toEqual(['marketInterview']);
+    expect(interview.status).toBe(JOURNEY_STATUS.COMPLETED);
     expect(journeys.map(({ id }) => id)).toEqual([
       'planning', 'validation', 'launch', 'interview', 'marketingStrategy', 'finalReport',
     ]);
-
-    const completedMarketInterview = getProjectModules('41', {
-      marketInterview: { status: MODULE_STATUS.COMPLETED }, twinSurvey: { status: MODULE_STATUS.READY },
-    });
-    expect(getProjectJourneys('41', completedMarketInterview).find(({ id }) => id === 'interview').href)
-      .toBe('/app/projects/41/twin-survey');
   });
 });

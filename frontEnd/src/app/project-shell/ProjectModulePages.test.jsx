@@ -20,7 +20,7 @@ describe('project overview journey map', () => {
     expect(screen.getByRole('list').children).toHaveLength(6);
     expect(screen.getByText('6단계 사업 여정')).toBeInTheDocument();
     expect(screen.getByText(/아이디어를 정리하고 비교/)).toBeInTheDocument();
-    expect(screen.getByText(/트윈 패널의 정량 시뮬레이션/)).toBeInTheDocument();
+    expect(screen.getByText(/가상 고객 인터뷰를 진행/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '사업 기획 시작하기' })).toBeInTheDocument();
     expect(screen.queryByText('사업 기획 열기')).not.toBeInTheDocument();
     expect(document.querySelector('.journey-map')).toBeInTheDocument();

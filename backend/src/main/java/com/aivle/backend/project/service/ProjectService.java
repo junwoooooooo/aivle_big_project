@@ -20,6 +20,7 @@ import com.aivle.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.text.Normalizer;
 
@@ -91,24 +92,26 @@ public class ProjectService {
 
     private ProjectSummaryResponse summary(Long userId, Project p) {
         List<ProjectModuleStatusResponse> statuses = moduleStatuses.findAll(userId, p.getId());
+        List<ProjectModuleStatusResponse> presentationStatuses = canonicalJourneyStatuses(statuses);
         List<JourneySummary> journeys = List.of(
-            journey("사업 기획", statuses, PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
+            journey("사업 기획", presentationStatuses, PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
                 PipelineModuleType.CONCEPT_FACTORY, PipelineModuleType.CONCEPT_SELECTION),
-            journey("사업 검증", statuses, PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL),
-            journey("출시 준비", statuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
-            journey("가상 인터뷰", statuses, PipelineModuleType.MARKET_INTERVIEW, PipelineModuleType.TWIN_SURVEY),
-            journey("마케팅 전략", statuses, PipelineModuleType.MARKETING));
+            journey("사업 검증", presentationStatuses, PipelineModuleType.MARKET_ANALYSIS,
+                PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.CONCEPT_REFINEMENT),
+            journey("출시 준비", presentationStatuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
+            journey("가상 인터뷰", presentationStatuses, PipelineModuleType.MARKET_INTERVIEW, PipelineModuleType.TWIN_SURVEY),
+            journey("마케팅 전략", presentationStatuses, PipelineModuleType.MARKETING));
         FinalReportApiModels.State reportState = finalReports.state(userId, p.getId());
         boolean reportCurrent = reportState == FinalReportApiModels.State.CURRENT;
         boolean reportStale = reportState == FinalReportApiModels.State.STALE;
         int completed = (int) journeys.stream().filter(JourneySummary::completed).count() + (reportCurrent ? 1 : 0);
         String current = journeys.stream().filter(value -> !value.completed()).map(JourneySummary::label)
             .findFirst().orElse("최종 보고서");
-        List<ProjectModuleStatusResponse> attentionModules = statuses.stream()
+        List<ProjectModuleStatusResponse> attentionModules = presentationStatuses.stream()
             .filter(this::requiresUserAttention)
             .toList();
         int attentionCount = attentionModules.size() + (reportStale ? 1 : 0);
-        boolean started = statuses.stream().anyMatch(this::hasStartedWork) || reportCurrent || reportStale;
+        boolean started = presentationStatuses.stream().anyMatch(this::hasStartedWork) || reportCurrent || reportStale;
         String presentationState = completed == 6 ? "COMPLETED"
             : attentionCount > 0 ? "NEEDS_ATTENTION"
             : started ? "IN_PROGRESS" : "NOT_STARTED";
@@ -134,6 +137,27 @@ public class ProjectService {
             || status.status() == PipelineModuleStatus.COMPLETED;
     }
 
+    private List<ProjectModuleStatusResponse> canonicalJourneyStatuses(List<ProjectModuleStatusResponse> statuses) {
+        ProjectModuleStatusResponse marketInterview = statuses.stream()
+            .filter(value -> value.module() == PipelineModuleType.MARKET_INTERVIEW).findFirst().orElse(null);
+        ProjectModuleStatusResponse legacyTwinSurvey = statuses.stream()
+            .filter(value -> value.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElse(null);
+        ProjectModuleStatusResponse canonicalInterview = hasInterviewExecution(marketInterview) ? marketInterview
+            : hasInterviewExecution(legacyTwinSurvey) ? legacyTwinSurvey
+            : marketInterview != null ? marketInterview : legacyTwinSurvey;
+        List<ProjectModuleStatusResponse> canonical = new ArrayList<>(statuses.stream()
+            .filter(value -> value.module() != PipelineModuleType.MARKET_INTERVIEW
+                && value.module() != PipelineModuleType.TWIN_SURVEY)
+            .toList());
+        if (canonicalInterview != null) canonical.add(canonicalInterview);
+        return List.copyOf(canonical);
+    }
+
+    private boolean hasInterviewExecution(ProjectModuleStatusResponse status) {
+        return status != null && (status.updatedAt() != null || status.activeRunId() != null
+            || status.activeTaskRunId() != null || status.activeJobId() != null);
+    }
+
     private String attentionReason(PipelineModuleStatus status) {
         return switch (status) {
             case NEEDS_INPUT -> "계속하려면 필요한 내용을 입력해 주세요.";
@@ -146,8 +170,10 @@ public class ProjectService {
     private JourneySummary journey(String label, List<ProjectModuleStatusResponse> statuses,
             PipelineModuleType... modules) {
         List<PipelineModuleType> types = List.of(modules);
-        boolean completed = statuses.stream().filter(value -> types.contains(value.module()))
-            .allMatch(value -> value.status() == PipelineModuleStatus.COMPLETED);
+        List<ProjectModuleStatusResponse> relevant = statuses.stream()
+            .filter(value -> types.contains(value.module())).toList();
+        boolean completed = !relevant.isEmpty()
+            && relevant.stream().allMatch(value -> value.status() == PipelineModuleStatus.COMPLETED);
         return new JourneySummary(label, completed);
     }
 

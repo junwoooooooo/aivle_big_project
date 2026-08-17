@@ -29,6 +29,10 @@ import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRun;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRound;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRoundRepository;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementService;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputSnapshotRepository;
@@ -68,6 +72,9 @@ public class ProjectModuleStatusService {
     private final FinancialInputPreparationRepository financialPreparationRepository;
     private final FinancialInputSnapshotRepository financialSnapshotRepository;
     private final TaskRunRepository taskRunRepository;
+    private final BusinessValidationCoordinator businessValidations;
+    private final ConceptRefinementService conceptRefinements;
+    private final ConceptRefinementRoundRepository conceptRefinementRounds;
 
     public List<ProjectModuleStatusResponse> findAll(Long userId, Long projectId) {
         projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
@@ -167,6 +174,19 @@ public class ProjectModuleStatusService {
             : businessRun == null ? PipelineModuleStatus.READY
             : analysisStatus(businessRun,
                 !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()));
+        var validationView = businessValidations.current(userId, projectId);
+        var refinementView = conceptRefinements.current(userId, projectId);
+        ConceptRefinementRound refinementRound = conceptRefinementRounds
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
+        boolean currentRefinementCycle = validationView != null && refinementView != null
+            && validationView.businessValidationSessionId() != null
+            && validationView.businessValidationSessionId().equals(refinementView.sourceBusinessValidationSessionId());
+        PipelineModuleStatus refinementStatus = currentRefinementCycle
+            ? refinementStatus(refinementView.state())
+            : validationView != null && "COMPLETED".equals(validationView.state())
+                ? PipelineModuleStatus.READY : PipelineModuleStatus.NOT_READY;
+        TaskRun activeRefinementTask = currentRefinementCycle
+            ? activeRefinementTask(refinementRound) : null;
         PipelineModuleStatus twinBaseStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
             : twinRun == null ? PipelineModuleStatus.READY
             : twinStatus(twinRun, !selectedSnapshot.getId().equals(twinRun.getSourceMarketSeedSnapshotId()));
@@ -231,6 +251,16 @@ public class ProjectModuleStatusService {
                 businessRun == null ? null : businessRun.getTaskRun().getId(),
                 currentMarketVersion == null ? null : String.valueOf(currentMarketVersion.getId()), null, null,
                 businessRun == null ? null : businessRun.getUpdatedAt()),
+            response(projectId, PipelineModuleType.CONCEPT_REFINEMENT, refinementStatus,
+                refinementStatus == PipelineModuleStatus.NOT_READY
+                    ? List.of("businessValidationSessionId") : List.of(),
+                new NextAction("컨셉 다듬기", "/business-validation"),
+                currentRefinementCycle && refinementRound != null
+                    ? String.valueOf(refinementRound.getId()) : null,
+                activeRefinementTask == null ? null : activeRefinementTask.getId(),
+                validationView == null ? null : validationView.businessValidationSessionId(),
+                null, null, !currentRefinementCycle || refinementRound == null
+                    ? null : refinementRound.getUpdatedAt()),
             response(projectId, PipelineModuleType.TECH_OPS, techOpsStatus,
                 List.of(), new NextAction("출시 준비 분석", "/launch-readiness"),
                 latestId(launchTechnologyTask, launchOperationsTask),
@@ -414,6 +444,34 @@ public class ProjectModuleStatusService {
             case FAILED, CANCELLED, TIMED_OUT -> contentStatus;
             case SUCCEEDED, NEEDS_INPUT -> contentStatus;
         };
+    }
+
+    private PipelineModuleStatus refinementStatus(String state) {
+        if (state == null) return PipelineModuleStatus.NOT_READY;
+        return switch (state) {
+            case "FINALIZED" -> PipelineModuleStatus.COMPLETED;
+            case "AWAITING_DECISION", "DECISION_RECORDED", "KEEP_CURRENT", "NO_CHANGES",
+                 "APPLIED_PENDING_FINALIZATION", "RECOVERED" -> PipelineModuleStatus.NEEDS_INPUT;
+            case "FAILED", "APPLY_FAILED", "LEGAL_REVIEW_FAILED", "LEGAL_BLOCKED",
+                 "FINALIZATION_FAILED" -> PipelineModuleStatus.FAILED;
+            case "STALE" -> PipelineModuleStatus.STALE;
+            case "PROPOSING", "APPLYING_HYPOTHESES", "LEGAL_REVIEW_PENDING", "FINALIZING",
+                 "DECLINED", "CONTINUED" -> PipelineModuleStatus.RUNNING;
+            default -> PipelineModuleStatus.NOT_READY;
+        };
+    }
+
+    private TaskRun activeRefinementTask(ConceptRefinementRound round) {
+        if (round == null) return null;
+        String taskRunId = switch (round.getState()) {
+            case PROPOSING -> round.getTaskRunId();
+            case APPLYING_HYPOTHESES -> round.getApplicationTaskRunId();
+            case LEGAL_REVIEW_PENDING -> round.getDeltaLegalTaskRunId();
+            case FINALIZING -> round.getFinalizationTaskRunId();
+            default -> null;
+        };
+        if (taskRunId == null) return null;
+        return taskRunRepository.findById(taskRunId).filter(task -> !task.terminal()).orElse(null);
     }
 
     private ProjectModuleStatusResponse response(Long projectId, PipelineModuleType module,
