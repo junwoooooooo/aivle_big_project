@@ -273,7 +273,7 @@ export default function LaunchReadinessPage({ initialFocus }) {
   }, [navigate, projectId]);
 
   return <ProjectWorkspace as="div" mode="data" className="launch-readiness-page">
-    <ProjectStageHeader step={7} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="현재 확정 사업안과 제출한 전문 입력 문서를 함께 기준으로 기술·운영·재무 준비 상태를 확인합니다. 결과는 인증이 아닌 의사결정 지원 자료입니다." />
+    <ProjectStageHeader step={3} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="현재 확정 사업안과 제출한 전문 입력 문서를 함께 기준으로 기술·운영·재무 준비 상태를 확인합니다. 결과는 인증이 아닌 의사결정 지원 자료입니다." />
     <ReportToolbar reports={reports} onViewReport={viewReport} />
     <div className="launch-analysis-grid">
       <ProfessionalModule module="technology" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />

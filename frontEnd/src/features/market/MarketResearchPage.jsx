@@ -64,7 +64,7 @@ export default function MarketResearchPage() {
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="market-page">
-      <ProjectStageHeader step={3} eyebrow="사업 검증" title="시장 상황과 경쟁 환경을 확인하세요"
+      <ProjectStageHeader step={2} eyebrow="사업 검증" title="시장 상황과 경쟁 환경을 확인하세요"
         description="공개 통계, 공시, 언론에서 확인된 근거를 시장 규모·경쟁·고객 관점으로 정리합니다." />
 
       <div className="market-page__actions">

@@ -51,6 +51,21 @@ class ProjectServicePresentationTests {
         assertThat(summary.attentionReason()).contains("입력");
     }
 
+    @Test
+    void completedProjectUsesCanonicalSixStageProgress() {
+        var allCompleted = Arrays.stream(PipelineModuleType.values())
+            .map(type -> response(type, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)))
+            .toList();
+        stubProject(allCompleted);
+        when(reports.state(2L, 41L)).thenReturn(FinalReportApiModels.State.CURRENT);
+
+        var summary = service.findAll(2L).get(0);
+
+        assertThat(summary.completedJourneyCount()).isEqualTo(6);
+        assertThat(summary.presentationState()).isEqualTo("COMPLETED");
+        assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
+    }
+
     private void stubProject(List<ProjectModuleStatusResponse> statuses) {
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(41L);

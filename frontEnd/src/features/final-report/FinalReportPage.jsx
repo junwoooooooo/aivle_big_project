@@ -100,7 +100,7 @@ export default function FinalReportPage() {
   const view = state.view;
   const statusView = STATE_VIEW[view.state] ?? STATE_VIEW.NOT_READY;
   return <ProjectWorkspace mode="document" className="final-report-page">
-    <ProjectStageHeader step={8} eyebrow="결과 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
+    <ProjectStageHeader step={6} eyebrow="최종 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
       description="현재 확정 사업안과 유효한 분석 결과만 사용하며, 실행하지 않은 내용은 추정하지 않습니다."
       status={<span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span>}
       actions={<>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></>} />

@@ -5,10 +5,9 @@ import { describe, expect, it } from 'vitest';
 import { ProjectOverviewPage } from './ProjectModulePages.jsx';
 
 const journeys = [
-  ['diagnosis', '현황 점검', 'READY'], ['planning', '문제 발굴', 'NOT_STARTED'],
-  ['validation', '사업성 검증', 'NOT_STARTED'], ['interview', '시장 인터뷰', 'NOT_STARTED'],
-  ['twinSurvey', '트윈 패널', 'NOT_STARTED'], ['marketingStrategy', '마케팅 실행', 'NOT_STARTED'],
-  ['launch', '출시 준비', 'NOT_STARTED'], ['finalReport', '결과 보고서', 'NOT_STARTED'],
+  ['planning', '사업 기획', 'READY'], ['validation', '사업 검증', 'NOT_STARTED'],
+  ['launch', '출시 준비', 'NOT_STARTED'], ['interview', '가상 인터뷰', 'NOT_STARTED'],
+  ['marketingStrategy', '마케팅 전략', 'NOT_STARTED'], ['finalReport', '최종 보고서', 'NOT_STARTED'],
 ].map(([id, shortLabel, status]) => ({ id, shortLabel, label: shortLabel, status, href: `/app/projects/41/${id}` }));
 
 function Host() {
@@ -16,20 +15,20 @@ function Host() {
 }
 
 describe('project overview journey map', () => {
-  it('8개 업무를 카드 격자가 아닌 하나의 여정 지도와 행동형 CTA로 표시한다', () => {
+  it('canonical 6개 업무를 하나의 여정 지도와 행동형 CTA로 표시한다', () => {
     render(<MemoryRouter initialEntries={['/']}><Routes><Route element={<Host />}><Route path="/" element={<ProjectOverviewPage />} /></Route></Routes></MemoryRouter>);
-    expect(screen.getByRole('list').children).toHaveLength(8);
-    expect(screen.getByText('8단계 사업 여정')).toBeInTheDocument();
-    expect(screen.getByText(/현재 아이디어와 준비 상태/)).toBeInTheDocument();
-    expect(screen.getByText(/AI 가상 패널의 정량 시뮬레이션/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '현황 점검 시작하기' })).toBeInTheDocument();
-    expect(screen.queryByText('현황 점검 열기')).not.toBeInTheDocument();
+    expect(screen.getByRole('list').children).toHaveLength(6);
+    expect(screen.getByText('6단계 사업 여정')).toBeInTheDocument();
+    expect(screen.getByText(/아이디어를 정리하고 비교/)).toBeInTheDocument();
+    expect(screen.getByText(/트윈 패널의 정량 시뮬레이션/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '사업 기획 시작하기' })).toBeInTheDocument();
+    expect(screen.queryByText('사업 기획 열기')).not.toBeInTheDocument();
     expect(document.querySelector('.journey-map')).toBeInTheDocument();
     expect(document.querySelector('.pipeline-overview__grid')).not.toBeInTheDocument();
-    expect([...screen.getByRole('list').children].map((node) => node.querySelector('.journey-map__step').textContent)).toEqual(['1단계', '2단계', '3단계', '4단계', '5단계', '6단계', '7단계', '8단계']);
-    expect(screen.getAllByRole('link')).toHaveLength(8);
-    expect(screen.getByRole('link', { name: '현황 점검 시작하기' })).toContainElement(document.querySelector('.journey-map__station'));
+    expect([...screen.getByRole('list').children].map((node) => node.querySelector('.journey-map__step').textContent)).toEqual(['1단계', '2단계', '3단계', '4단계', '5단계', '6단계']);
+    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(screen.getByRole('link', { name: '사업 기획 시작하기' })).toContainElement(document.querySelector('.journey-map__station'));
     expect(document.querySelector('.journey-map__path path')).toHaveAttribute('d', expect.stringContaining('M80 180'));
-    expect(screen.getByRole('link', { name: '현황 점검 시작하기' }).querySelector('path')).toHaveAttribute('d', 'M7 17 17 7M9 7h8v8');
+    expect(screen.getByRole('link', { name: '사업 기획 시작하기' }).querySelector('path')).toHaveAttribute('d', 'M7 17 17 7M9 7h8v8');
   });
 });

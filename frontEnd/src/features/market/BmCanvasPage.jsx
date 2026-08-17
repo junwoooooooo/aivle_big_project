@@ -62,7 +62,7 @@ export default function BmCanvasPage() {
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="market-page">
-      <ProjectStageHeader step={4} eyebrow="수익 구조" title="사업이 고객에게 가치를 전달하고 수익을 만드는 방식을 확인하세요"
+      <ProjectStageHeader step={2} eyebrow="수익 구조" title="사업이 고객에게 가치를 전달하고 수익을 만드는 방식을 확인하세요"
         description="시장조사에서 확인된 근거로 캔버스를 구성하며, 근거가 없는 항목은 비워 둡니다." />
 
       <div className="market-page__actions">
@@ -258,7 +258,7 @@ function PlanPhase({ projectId, navigate, plan, error, run, onBack }) {
 
 function PreparedPlanPhase({ projectId, navigate, plan, error, onEdit, onCreate, busy }) {
   return <ProjectWorkspace as="section" mode="analyze" className="market-page">
-    <ProjectStageHeader step={4} eyebrow="사업 모델 검토" title="저장한 운영 정보로 사업 모델을 검토할 수 있습니다"
+    <ProjectStageHeader step={2} eyebrow="사업 모델 검토" title="저장한 운영 정보로 사업 모델을 검토할 수 있습니다"
       description="사업 검증 준비에서 저장한 운영 정보를 사용합니다. 필요한 경우 시작 전에 수정할 수 있습니다." />
     <div className="market-page__actions"><Button variant="ghost" onClick={() => navigate(projectRoutes.market(projectId))}>시장조사로</Button><Button variant="outline" onClick={onEdit}>준비 정보 보기·수정</Button><Button onClick={onCreate} disabled={busy}>{busy ? '준비 중…' : '캔버스 만들기'}</Button></div>
     {error ? <Alert tone="danger">{error}</Alert> : null}

@@ -1,4 +1,5 @@
 import { projectRoutes } from '../../../app/routing/projectRoutes.js';
+import { PROJECT_JOURNEYS } from '../../../app/module-status/projectJourneyModel.js';
 import { getProjectPresentationView, projectNextAction } from './projectPresentation.js';
 
 export function toProjectViewModel(project) {
@@ -22,8 +23,8 @@ export function toProjectViewModel(project) {
     statusLabel: statusView.label,
     statusTone: statusView.tone,
     stageLabel: project.currentJourneyLabel ?? (project.status === 'COMPLETED' ? '최종 보고서' : '사업 기획'),
-    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? 8 : 0),
-    journeyTotal: 8,
+    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? PROJECT_JOURNEYS.length : 0),
+    journeyTotal: PROJECT_JOURNEYS.length,
     area: 'PIPELINE',
     nextAction: null,
     nextRoute: 'overview',

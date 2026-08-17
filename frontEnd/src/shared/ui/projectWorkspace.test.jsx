@@ -18,11 +18,11 @@ describe('ProjectSplitWorkspace', () => {
 
   it('workspace mode와 단계 heading을 의미 구조로 노출한다', () => {
     const { container } = render(<ProjectWorkspace as="main" mode="document"><ProjectStageHeader
-      step={8} eyebrow="최종 보고서" title="사업의 전체 흐름을 확인하세요" description="확정된 결과를 읽습니다." />
+      step={6} eyebrow="최종 보고서" title="사업의 전체 흐름을 확인하세요" description="확정된 결과를 읽습니다." />
     </ProjectWorkspace>);
     expect(container.querySelector('main')).toHaveClass('project-workspace--document');
     expect(screen.getByRole('heading', { name: '사업의 전체 흐름을 확인하세요' })).toBeInTheDocument();
-    expect(screen.getByLabelText('8단계')).toBeInTheDocument();
+    expect(screen.getByLabelText('6단계')).toBeInTheDocument();
   });
 });
 

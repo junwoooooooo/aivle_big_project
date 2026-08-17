@@ -31,7 +31,7 @@ function TechOpsWorkspace({ techOps }) {
   const safe = async (action) => { try { await action(); } catch { /* hook가 안전한 오류 상태를 제공한다. */ } };
 
   return <ProjectWorkspace as="main" mode="compose" className="tech-ops-page">
-    <ProjectStageHeader step={5} eyebrow="출시 준비" title="출시를 위한 기술·운영 조건을 정리하세요"
+    <ProjectStageHeader step={3} eyebrow="출시 준비" title="출시를 위한 기술·운영 조건을 정리하세요"
       description="서비스 운영에 필요한 핵심 사실과 보완 조건을 확인하고, 실제 근거 자료를 연결합니다." />
     {techOps.error && <p className="tech-ops-error" role="alert">{getUserErrorMessage(techOps.error)}</p>}
     {['QUEUED', 'RUNNING'].includes(preparation.proposalGenerationStatus) && <p role="status">

@@ -55,7 +55,7 @@ function FinanceWorkspace({ projectId, finance }) {
   const refreshContainer = () => void finance.refresh({ preserveView: true });
 
   return <FinanceRefreshContext.Provider value={refreshContainer}><ProjectWorkspace as="main" mode="compose" className="finance-page">
-    <ProjectStageHeader step={6} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
+    <ProjectStageHeader step={3} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
       description="최신 시장 분석과 수익 구조를 바탕으로 핵심 비용·가격·매출 목표와 세부 가정을 정리합니다."
       status={<div className="finance-statuses" aria-label="재무 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>

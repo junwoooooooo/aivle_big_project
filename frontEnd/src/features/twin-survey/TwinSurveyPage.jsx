@@ -125,7 +125,7 @@ export default function TwinSurveyPage() {
 
   return (
     <ProjectWorkspace as="section" mode="analyze" className="twin-page">
-      <ProjectStageHeader eyebrow="AI 가상 패널 기반 정량 시뮬레이션" title="트윈 패널 조사"
+      <ProjectStageHeader step={4} eyebrow="AI 가상 패널 기반 정량 시뮬레이션" title="트윈 패널 조사"
         description="비교안 준비, 표본 설정, 시뮬레이션 실행 순서로 가상 응답의 분포와 불확실성을 살펴봅니다." />
       <Alert tone="info" title="실제 소비자 설문조사가 아닙니다">
         AI가 현재 사업안을 바탕으로 가상의 패널 응답을 시뮬레이션하여 정량적으로 비교·탐색하는 기능입니다. 실제 소비자 설문조사 결과는 아닙니다.

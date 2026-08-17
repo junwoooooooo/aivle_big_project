@@ -129,7 +129,7 @@ describe('MarketingContentPage 단계형 화면', () => {
   it('공식 명칭과 게시 전 AI 초안 안내를 눈에 보이게 제공한다', () => {
     useMarketingContent.mockReturnValue(createHook());
     renderPage();
-    expect(screen.getByText('마케팅 실행')).toBeInTheDocument();
+    expect(screen.getByText('마케팅 전략')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '현재 확정된 컨셉으로 마케팅 초안을 만드세요' })).toBeInTheDocument();
     expect(screen.getByText(/AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다/)).toBeInTheDocument();
   });

@@ -11,6 +11,13 @@ vi.mock('../service-policy/useServicePolicy.js', () => ({
 }));
 
 describe('workspace home', () => {
+  it('프로젝트가 없으면 canonical 6단계 onboarding rail을 표시한다', async () => {
+    render(<MemoryRouter><ApiClientProvider client={{ get: vi.fn(async () => ({ data: [] })) }}><WorkspaceHomePage /></ApiClientProvider></MemoryRouter>);
+    expect(await screen.findByText('6단계 사업 여정')).toBeInTheDocument();
+    expect(document.querySelectorAll('.getting-started-rail li')).toHaveLength(6);
+    expect(screen.queryByText('8단계 사업 여정')).not.toBeInTheDocument();
+  });
+
   it('프로젝트가 있으면 전체 폭에서 이어서 할 일·확인 항목·최근 프로젝트를 보여준다', async () => {
     const project = { id: 5, title: '스마트 킥포인트', industryCategory: '모빌리티', status: 'DRAFT',
       presentationState: 'NEEDS_ATTENTION', attentionCount: 1, attentionReason: '재무 입력을 확인해 주세요.',

@@ -43,7 +43,7 @@ export default function MarketInterviewPage() {
   if (loading) return <LoadingState label="시장 인터뷰 상태를 불러오는 중" />;
   const view = current ?? marketInterviewView(null);
   return <ProjectWorkspace as="section" mode="analyze" className="market-interview">
-    <ProjectStageHeader eyebrow="정성적 고객 탐색" title="시장 인터뷰"
+    <ProjectStageHeader step={4} eyebrow="정성적 고객 탐색" title="시장 인터뷰"
       description="현재 확정된 사업안을 여러 가상 고객 관점에서 살펴보고, 실제 고객에게 확인할 질문을 준비합니다." />
     <Alert tone="info" title="AI 가상 고객 인터뷰">
       AI가 현재 사업안과 검증 결과를 바탕으로 가상의 고객 관점에서 인터뷰를 시뮬레이션합니다. 실제 고객에게 조사한 결과는 아닙니다.

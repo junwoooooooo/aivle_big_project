@@ -161,7 +161,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   const deferValidationRerun = state === 'STALE' && healthyRefinement && !actualRefinementStale;
 
   return <ProjectWorkspace as="section" mode="analyze" className="business-validation">
-    <ProjectStageHeader step={3} eyebrow="사업 검증" title="시장성과 사업 모델을 함께 검증하세요"
+    <ProjectStageHeader step={2} eyebrow="사업 검증" title="시장성과 사업 모델을 함께 검증하세요"
       description="한 번 시작하면 시장 분석을 완료한 뒤 같은 결과를 근거로 비즈니스 모델 분석을 이어갑니다." />
 
     {error ? <Alert tone="danger">{error}</Alert> : null}

@@ -159,7 +159,7 @@ export default function BusinessProposalWorkspace() {
       : { eyebrow: '사업안 생성', title: '사업안 생성 및 검토', description: '확정한 아이디어를 바탕으로 서로 다른 방향의 사업안을 만들고, 법률·규제 검토를 거친 뒤 비교할 수 있는 결과를 준비합니다.' };
 
   return <ProjectWorkspace as="main" mode="decide" className="business-proposal">
-    <ProjectStageHeader step={2} {...header} />
+    <ProjectStageHeader step={1} {...header} />
     {portfolio.error && <section className="business-proposal__error" role="alert"><span>{getUserErrorMessage(portfolio.error)}</span><button type="button" onClick={portfolio.refresh}>다시 시도</button></section>}
     {preGeneration && <PreGeneration onStart={portfolio.start} busy={portfolio.busy} />}
     {portfolio.run && !readyToReview && <PortfolioStatus run={portfolio.run} busy={portfolio.busy} onRestart={portfolio.start} events={progressEvents.events} now={clock} onDetail={progressJobId && outlet.openWorkCenterJob ? () => outlet.openWorkCenterJob(progressJobId) : undefined} />}

@@ -21,7 +21,7 @@ function displayName(user) {
 }
 
 function GettingStartedRail() {
-  return <aside className="getting-started-rail" aria-labelledby="workspace-getting-started-title"><p>8단계 사업 여정</p><h2 id="workspace-getting-started-title">사업 검증 여정을 시작하세요</h2><ol>{PROJECT_JOURNEYS.map((item, index) => {
+  return <aside className="getting-started-rail" aria-labelledby="workspace-getting-started-title"><p>6단계 사업 여정</p><h2 id="workspace-getting-started-title">사업 검증 여정을 시작하세요</h2><ol>{PROJECT_JOURNEYS.map((item, index) => {
     const content = <><span>{index + 1}</span><strong>{item.shortLabel}</strong></>;
     return <li key={item.id} className={index === 0 ? 'is-current' : ''}>{content}</li>;
   })}</ol></aside>;

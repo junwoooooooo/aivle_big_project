@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (path) => readFileSync(resolve(root, path), 'utf8');
@@ -85,5 +86,40 @@ for (const authority of [
 ]) {
   assert(e2eService.includes(authority), `E2E seam bypasses current ${authority} authority`);
 }
+
+const journeyModule = await import(pathToFileURL(resolve(root,
+  'frontEnd/src/app/module-status/projectJourneyModel.js')).href);
+const expectedJourneyIds = ['planning', 'validation', 'launch', 'interview', 'marketingStrategy', 'finalReport'];
+const expectedJourneyLabels = ['사업 기획', '사업 검증', '출시 준비', '가상 인터뷰', '마케팅 전략', '최종 보고서'];
+const expectedJourneyModules = [
+  ['idea', 'concepts'], ['market', 'businessModel'], ['launchReadiness'],
+  ['marketInterview', 'twinSurvey'], ['marketing'], [],
+];
+assert(JSON.stringify(journeyModule.PROJECT_JOURNEYS.map(({ id }) => id)) === JSON.stringify(expectedJourneyIds),
+  'Top-level Journey IDs must remain the canonical six-stage taxonomy');
+assert(JSON.stringify(journeyModule.PROJECT_JOURNEYS.map(({ shortLabel }) => shortLabel)) === JSON.stringify(expectedJourneyLabels),
+  'Top-level Journey labels must remain the canonical six-stage taxonomy');
+assert(JSON.stringify(journeyModule.PROJECT_JOURNEYS.map(({ moduleIds }) => moduleIds)) === JSON.stringify(expectedJourneyModules),
+  'Current modules must remain grouped under the canonical six-stage taxonomy');
+assert(journeyModule.getJourneyByPath('/app/projects/41/market-interview').id === 'interview'
+  && journeyModule.getJourneyByPath('/app/projects/41/twin-survey').id === 'interview',
+  'Market Interview and Twin Survey must share the virtual interview top-level Journey');
+
+const journeyUx = [
+  read('frontEnd/src/app/project-shell/ProjectModulePages.jsx'),
+  read('frontEnd/src/features/projects/WorkspaceHomePage.jsx'),
+  read('frontEnd/src/features/projects/ProjectPages.jsx'),
+  read('frontEnd/src/features/landing/components/WorkflowSection.jsx'),
+].join('\n');
+assert(!journeyUx.includes('8단계 사업 여정') && !journeyUx.includes('여덟 단계'),
+  'Active UX must not restore the eight-stage Journey regression');
+assert(journeyUx.includes('6단계 사업 여정') && journeyUx.includes('여섯 단계'),
+  'Active UX must explain the canonical six-stage Journey');
+const landingWorkflow = read('frontEnd/src/features/landing/data/landingData.js');
+for (const [number, title] of expectedJourneyLabels.map((title, index) => [String(index + 1).padStart(2, '0'), title])) {
+  assert(landingWorkflow.includes(`number: '${number}', title: '${title}'`),
+    `Landing workflow is missing ${number} ${title}`);
+}
+assert(!/number:\s*'0[78]'/.test(landingWorkflow), 'Landing workflow must stop at canonical stage 06');
 
 console.log('Pipeline cutover configuration is consistent (5 eligible / 20 inspected / 2 replacement rounds / 1 legal redesign).');

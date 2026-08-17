@@ -54,7 +54,9 @@ describe('project pages', () => {
     expect(await screen.findByRole('link', { name: '실제 프로젝트' })).toBeInTheDocument();
     expect(screen.getAllByText('시작 전').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('사업 기획')).toBeInTheDocument();
-    expect(screen.getByText('0 / 8')).toBeInTheDocument();
+    expect(screen.getByText('0 / 6')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '상태 안내' }));
+    expect(screen.getByText('프로젝트는 사업 기획부터 최종 보고서까지 여섯 단계로 진행됩니다.')).toBeInTheDocument();
   });
 
   it('renders a retryable project load error', async () => {

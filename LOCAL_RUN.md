@@ -24,14 +24,12 @@ docker compose up --build
 
 ## A. 현재 공식 Journey 확인
 
-1. 현황 점검
-2. 문제 발굴
-3. 사업성 검증 — current concept의 exact Market/BM lineage 사용
-4. 시장 인터뷰 — AI 가상 고객 기반 정성 탐색
-5. 트윈 패널 조사 — AI 가상 패널 기반 정량 시뮬레이션
-6. 마케팅 실행
-7. 출시 준비 — 기술·운영·재무
-8. 결과 보고서
+1. 사업 기획 — Idea, Concept
+2. 사업 검증 — current concept의 exact Market/BM lineage 사용
+3. 출시 준비 — Technology, Operations, Finance
+4. 가상 인터뷰 — 시장 인터뷰 정성 탐색, 트윈 패널 정량 시뮬레이션
+5. 마케팅 전략 — Marketing
+6. 최종 보고서
 
 Market fresh collection은 최대 20분 execution budget을 사용하며, 화면과 Work Center에 heartbeat가
 계속 표시된다. 5분 전후에 중단되면 정상 timeout이 아니라 transport 설정 회귀이므로
@@ -39,7 +37,7 @@ Market fresh collection은 최대 20분 execution budget을 사용하며, 화면
 
 ## B. 보존된 기존 MVP 실험 기능 확인
 
-`/api/v1` 중심 Legacy stable-core 경로는 현재 8단계 공식 Journey와 별개의 개발·실험 호환 경로다. 공식 제품 완료 여부나 다음 단계 판단에는 current `/api/v3` Journey authority를 사용한다.
+`/api/v1` 중심 Legacy stable-core 경로는 현재 6단계 공식 Journey와 별개의 개발·실험 호환 경로다. 공식 제품 완료 여부나 다음 단계 판단에는 current `/api/v3` Journey authority를 사용한다.
 
 `.env.demo.example`과 `scripts/demo-start.ps1`은 Backend와 Frontend만 직접 실행하는 `/api/v1` 중심 Legacy stable-core 데모다. FastAPI, PostgreSQL, MinIO를 포함한 공식 전체 Journey 검증이 아니다.
 

@@ -4,11 +4,19 @@
 
 - Gate update: 2026-08-17 (Asia/Seoul)
 - Branch: `full`
-- Start HEAD: `2f769033b62b08b60754ba66586ddbcbb2177266`
-- Start `origin/full`: `2f769033b62b08b60754ba66586ddbcbb2177266`
+- E2E realignment start HEAD: `2f769033b62b08b60754ba66586ddbcbb2177266`
+- Six-stage authority patch start HEAD / `origin/full`: `a1edd5ea264578c53cb4b61a1525bce289abd54e`
 - Start tracked worktree: clean
 - Commit/push/branch change: none
-- Current worktree: uncommitted E2E harness realignment and these evidence documents
+- Current worktree: uncommitted six-stage Journey authority restoration and evidence updates
+
+### Current Journey authority correction
+
+The previous Gate notes incorrectly treated an eight-stage UI regression as canonical.
+The active top-level product taxonomy is now restored to six stages: 사업 기획, 사업 검증,
+출시 준비, 가상 인터뷰, 마케팅 전략, 최종 보고서. Current Market Interview and Twin
+Panel Survey functionality remains independent, but both modules are grouped under the
+single top-level 가상 인터뷰 stage.
 
 ## [2] Current E2E contract audit
 
@@ -94,6 +102,20 @@ were fixed, then the failed focused command was rerun and passed in 19 seconds.
 
 ## [7] Docker matrix
 
+### Six-stage authority patch verification
+
+| Command | Result | Passed | Failed | Skipped |
+|---|---:|---:|---:|---:|
+| `node scripts/verify-pipeline-cutover.mjs` | PASS | static assertions | 0 | 0 |
+| focused Journey/frontend Vitest command | PASS | 59 | 0 | 0 |
+| focused `ProjectServicePresentationTests` Gradle command | PASS | 3 | 0 | 0 |
+| `npm run lint` | PASS | error 0 | 0 | n/a |
+| `npm run test:baseline` | PASS | 679 | 6 explicitly allowed failures; 0 unexpected | 0 |
+| `npm run build` | PASS | production bundle | 0 | n/a |
+| `git diff --check` | PASS | n/a | 0 | 0 |
+
+The production build emitted a non-blocking chunk-size warning. No paid provider was called.
+
 ### User-observed authority
 
 | Check | Status | Evidence |
@@ -114,11 +136,12 @@ or Flyway V41 was the user-environment blocker. They were not reinvestigated.
 |---|---|---|
 | Old normal harness | FAIL (historical) | reached removed `/api/v1/.../ai-tasks/smoke` |
 | Old failure harness | INVALID / NOT RUN | failed before reaching `ai-down` fault injection |
-| Realigned normal harness | NOT RUN | Docker executable unavailable in the Codex environment |
-| Realigned failure scenarios | NOT RUN | Docker executable unavailable in the Codex environment |
+| Realigned normal harness | PASS | user independently observed the current TaskRun harness success |
+| Realigned failure scenarios | PASS | user independently observed all six injected scenarios reaching PASS |
 
-No Docker runtime PASS is claimed for the modified scripts. User runtime rerun is
-required with the exact commands in the verification document.
+User runtime evidence now confirms the realigned harness after the earlier Codex
+environment limitation: normal E2E passed, and `ai-down`, `minio-down`, `malformed`,
+`checksum`, `timeout`, and `stale` each reached their fault injection and passed.
 
 ## [8] Real provider and manual browser
 
@@ -129,14 +152,13 @@ required with the exact commands in the verification document.
 
 ## [9] Remaining risks
 
-1. The realigned normal Docker harness has not yet run in a Docker-capable environment.
-2. None of the six realigned fault scenarios has runtime evidence yet.
-3. The broader Final Integration Gate still retains its separately documented paid-provider and manual-browser checkpoints.
+1. The broader Final Integration Gate still retains its separately documented paid-provider and manual-browser checkpoints.
+2. The restored six-stage taxonomy still requires the focused/frontend verification recorded by the current patch before this document can represent a complete Gate.
 
 ## [10] Verdict
 
 **E2E HARNESS REALIGNMENT = IMPLEMENTED**
 
-**USER RUNTIME RE-RUN REQUIRED**
+**USER DOCKER RUNTIME EVIDENCE = PASS**
 
 The Final Integration Gate is not declared PASS and `PRODUCTION READY` is not declared.

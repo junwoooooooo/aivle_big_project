@@ -5,7 +5,7 @@ const page = readFileSync('src/features/launch-readiness/pages/LaunchReadinessPa
 
 describe('Launch Readiness product contract', () => {
   it('현재 journey의 7단계와 current concept + professional input 기준을 명시한다', () => {
-    expect(page).toContain('step={7}');
+    expect(page).toContain('step={3}');
     expect(page).toContain('현재 확정 사업안과 제출한 전문 입력 문서');
   });
 

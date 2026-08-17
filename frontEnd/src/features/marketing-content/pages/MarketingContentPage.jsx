@@ -181,7 +181,7 @@ export default function MarketingContentPage() {
 
   return (
     <ProjectWorkspace mode="review" className="mk-page">
-      <ProjectStageHeader step={6} eyebrow="마케팅 실행" title="현재 확정된 컨셉으로 마케팅 초안을 만드세요"
+      <ProjectStageHeader step={5} eyebrow="마케팅 전략" title="현재 확정된 컨셉으로 마케팅 초안을 만드세요"
         description="컨셉 확인, 생성 설정, 결과 검토의 세 단계로 게시 전 초안을 준비합니다."
         actions={<button type="button" onClick={() => void hook.refresh()}>새로고침</button>} />
 
