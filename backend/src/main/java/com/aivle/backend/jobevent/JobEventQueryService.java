@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class JobEventQueryService {
     static final int MAX_POLL_EVENTS = 100;
+    static final int MAX_REPLAY_EVENTS = 100;
     private final JobEventRepository events;
     private final ObjectMapper mapper;
 
@@ -23,8 +24,9 @@ public class JobEventQueryService {
     public List<JobEventView> replay(Long ownerId, String jobId, long after) {
         if (after < 0) throw new BusinessException(ErrorCode.INVALID_REQUEST);
         JobEvent latest = requireOwned(ownerId, jobId);
+        long effectiveAfter = Math.max(after, latest.getSequence() - MAX_REPLAY_EVENTS);
         return events.findByJobIdAndProjectIdAndSequenceGreaterThanAndDeletedAtIsNullOrderBySequence(
-                jobId, latest.getProject().getId(), after).stream()
+                jobId, latest.getProject().getId(), effectiveAfter).stream()
             .map(event -> JobEventView.from(event, mapper))
             .toList();
     }

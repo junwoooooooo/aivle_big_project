@@ -22,4 +22,10 @@ describe('marketing setup model', () => {
       '00000000-0000-4000-8000-000000000001');
     expect(request.referenceArtifactId).toBe('00000000-0000-4000-8000-000000000001');
   });
+
+  it('allows content creation without a marketing strategy report', () => {
+    const setup = { ...createSetupModel('source-1'), channel: 'B2B 제안', purpose: '상담 확보' };
+    expect(setupIsValid(setup)).toBe(true);
+    expect(toCreateRequest(setup).marketingStrategyReportId).toBeNull();
+  });
 });

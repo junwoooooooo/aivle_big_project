@@ -121,3 +121,41 @@
 1. 사용자가 인증된 실제 서비스에서 TaskRun `bf82d4aa-a39d-4add-96f6-ca6d3f0df88b`과 같은 입력을 재시도해 local coding retry/diagnostics를 확인한다.
 2. OS에 한국어 글꼴이 없는 배포 환경에서는 Strategy PDF font 설치가 필요하다(Windows 맑은 고딕과 Linux Noto CJK 경로 지원).
 3. 실제 provider 결과로 Strategy 생성과 Strategy ID가 연결된 Content 생성은 이번 FAST 지시에서 호출하지 않았다.
+
+---
+
+## 2026-08-18 FAST RUNTIME REPAIR + MARKETING WORKSPACE + FINAL BUSINESS PROPOSAL
+
+### 기준과 구현 계약
+
+- start SHA와 `origin/full`: `43ea2ede55ae483fcd5f8d5f1fd484f75aae0b39`.
+- Market Interview의 `VERBATIM_QUOTE_MISMATCH`는 NFKC·zero-width·공백·인용부호·dash만 보수적으로 정규화하고, 일치한 span을 실제 원문에서 다시 잘라 저장한다. batch 재시도 뒤에도 한 respondent만 실패하면 해당 assignment만 1회 repair하며, 실패 시 minimum usable과 Target/Comparison coverage를 지키는 경우에만 제외한다. 진단에는 repair/exclusion 시도 및 차단 이유를 추가했다.
+- Marketing Strategy `evidenceRefs`는 source manifest의 exact `TYPE:id` enum만 provider schema와 prompt에 제공한다. 고유 TYPE의 잘못된 id만 canonical ref로 교정하고 unknown/ambiguous TYPE은 안전 진단과 함께 거부한다.
+- SSE client disconnect는 wrapper cause chain 전체에서 감지해 committed/text-event-stream 응답에 JSON `ApiResponse`를 쓰지 않는다. event replay는 최근 100개 window로 제한했다.
+- Marketing 페이지는 `마케팅 전략`과 `콘텐츠 제작`의 독립 workspace로 구성했다. 콘텐츠는 전략 없이 현재 사업안만으로 생성 가능하며, 사용자가 최신 전략을 선택한 경우에만 `marketingStrategyReportId`를 보낸다. 생성 이력과 AI 초안 안내는 콘텐츠 workspace 안으로 이동했다.
+- Final Report는 lightweight `/status`, 사용자 source 선택, 비동기 `FINAL_BUSINESS_PROPOSAL_GENERATION`, structured proposal, Backend evidence canonicalization, A4 web preview, deterministic PDF/DOCX renderer를 제공한다. `MARKETING_STRATEGY` current source를 포함하며 AI 검토는 별도 `FINAL_BUSINESS_PROPOSAL_REVIEW` TaskRun/TaskResult로 저장하고 선택한 문서 버전에만 부록으로 출력한다.
+
+### 변경 파일
+
+- AI: Market Interview repair, Marketing Strategy evidence guard, `final_business_proposal/*`, execution routing과 focused tests.
+- Backend: SSE handler/replay, Final Report API/service/status/workers/document renderer, TaskType/AI routing/error/job projection과 focused tests.
+- Frontend: Marketing workspace/model/tests, Final Report page/API/CSS/tests, project shell lightweight status, job labels.
+- 정확한 목록은 `git status --short`를 기준으로 한다.
+
+### 실제로 실행한 확인
+
+- AI focused: 3개 관련 test file, `50 passed in 2.70s`.
+- Backend focused: SSE, event stream, Final Report source/status, DOCX/PDF, Marketing Strategy, AI routing 지정 6개 class; 최종 `BUILD SUCCESSFUL in 16s`.
+- Frontend focused: Marketing model/page/strategy hook-panel, Final Report, ProjectLayout 6개 file; `21 passed`.
+- 변경 Frontend 파일 ESLint: PASS.
+- `git diff --check`: PASS(LF→CRLF 안내만 존재).
+
+### 의도적으로 생략
+
+전체 suite/baseline, Docker rebuild, production build, 외부 provider 호출, 새 프로젝트, 장시간 runtime/browser E2E, commit/push.
+
+### 남은 위험과 continuation point
+
+1. 실제 project 7에서 실패한 Market Interview를 재시도해 respondent repair 또는 안전 제외 후 terminal 상태를 확인한다.
+2. 실제 Marketing Strategy provider 실행으로 enum evidence ref와 canonicalization 이후 완료되는지 확인한다.
+3. Final Proposal의 실제 대용량 source 문서에서 한글 font, 긴 표, page break를 사용자 다운로드 파일로 확인한다.

@@ -7,107 +7,126 @@ import { Button, ErrorState, LoadingState, ProjectStageHeader, ProjectWorkspace 
 import { createFinalReportApi } from './finalReportApi.js';
 import './final-report.css';
 
+const SOURCE_LABELS = {
+  CURRENT_CONCEPT: '현재 확정 사업안', BUSINESS_VALIDATION_SESSION: '사업성 검증', MARKET: '시장 분석',
+  BUSINESS_MODEL: '비즈니스 모델', MARKET_INTERVIEW: '시장 인터뷰', TWIN_SURVEY: '트윈 패널 조사',
+  MARKETING_STRATEGY: '마케팅 전략', MARKETING: '마케팅 콘텐츠', LAUNCH_TECHNOLOGY: '기술 분석',
+  LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 분석', FINANCE_REPORT: '재무 보고서',
+};
+const OPTIONAL = ['MARKET_INTERVIEW', 'MARKETING_STRATEGY', 'MARKETING', 'LAUNCH_TECHNOLOGY',
+  'LAUNCH_OPERATIONS', 'FINANCE', 'TWIN_SURVEY'];
 const STATE_VIEW = {
-  CURRENT: { label: '최신 보고서', tone: 'success' },
-  STALE: { label: '업데이트 필요', tone: 'warning' },
-  READY: { label: '생성 가능', tone: 'success' },
-  NOT_READY: { label: '준비 중', tone: 'neutral' },
+  CURRENT: ['최신 사업기획서', 'success'], STALE: ['업데이트 필요', 'warning'], READY: ['생성 가능', 'success'],
+  NOT_READY: ['필수 자료 준비 중', 'neutral'], GENERATING: ['사업기획서 작성 중', 'neutral'],
 };
 
-const FIELD_LABELS = {
-  overview: '문제와 사업 개요', summary: '핵심 요약', interpretation: '확정 해석', name: '명칭',
-  description: '설명', industryCategory: '사업 분야', status: '상태', candidate: '선정 사업안',
-  decision: '판정', confidence: '신뢰 수준', caveats: '한계와 주의사항', evidence: '근거',
-  assumptions: '가정', recommendations: '권고사항', risks: '위험', artifacts: '산출물',
-};
-
-function fieldLabel(key) {
-  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
-  return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replaceAll('_', ' ');
+function key() {
+  return globalThis.crypto?.randomUUID?.() ?? `final-report-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function sourceTypeLabel(type) {
-  return ({ PROJECT: '프로젝트 정보', CURRENT_CONCEPT: '현재 확정 사업안',
-    BUSINESS_VALIDATION_SESSION: '사업성 검증', MARKET: '시장 분석', BUSINESS_MODEL: '비즈니스 모델',
-    MARKET_INTERVIEW: '시장 인터뷰', TWIN_SURVEY: '트윈 패널 조사', MARKETING: '마케팅 콘텐츠',
-    MARKETING_ASSETS: '마케팅 소재', LAUNCH_TECHNOLOGY: '기술 준비',
-    LAUNCH_OPERATIONS: '운영 준비', FINANCE: '재무 분석', FINANCE_REPORT: '재무 분석 보고서' })[type] ?? '프로젝트 자료';
+function Evidence({ refs }) {
+  if (!refs?.length) return null;
+  return <details className="proposal-evidence"><summary>근거 상세 보기</summary><ul>{refs.map((ref) => <li key={ref}>{SOURCE_LABELS[ref.split(':')[0]] ?? ref.split(':')[0]}</li>)}</ul></details>;
 }
 
-function ReportValue({ value, depth = 0 }) {
-  if (value == null || value === '') return <span className="final-report__missing">자료 없음</span>;
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return <span>{String(value)}</span>;
-  if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="final-report__missing">자료 없음</span>;
-    return <ul>{value.map((item, index) => <li key={typeof item === 'object' ? index : String(item)}><ReportValue value={item} depth={depth + 1} /></li>)}</ul>;
-  }
-  const visibleEntries = Object.entries(value).filter(([key]) => !/(^|_)(taskRun|sourceBinding|schemaVersion)|(^|_)([a-z]*Id|[a-z]*Hash|[a-z]*Revision)$/i.test(key));
-  return <dl className={depth > 1 ? 'is-nested' : ''}>{visibleEntries.map(([key, item]) => <div key={key}><dt>{fieldLabel(key)}</dt><dd><ReportValue value={item} depth={depth + 1} /></dd></div>)}</dl>;
-}
-
-function ReportDocument({ view }) {
-  const report = view.report ?? {};
-  const metadata = report.metadata ?? {};
-  return <article className="final-report-document">
-    <header className="final-report-document__cover"><p>VENTURE VERIFY</p><h1>{report.title ?? '사업 타당성 검토 보고서'}</h1><dl><div><dt>프로젝트명</dt><dd>{metadata.projectName ?? '자료 없음'}</dd></div><div><dt>사업 분야</dt><dd>{metadata.industryCategory ?? '자료 없음'}</dd></div><div><dt>작성일</dt><dd>{metadata.generatedAt ? new Date(metadata.generatedAt).toLocaleDateString('ko-KR') : '초안'}</dd></div><div><dt>분석 기준일</dt><dd>{metadata.analysisBaseAt ? new Date(metadata.analysisBaseAt).toLocaleDateString('ko-KR') : '현재 자료 기준'}</dd></div><div><dt>보고서 버전</dt><dd>{view.version ?? '초안'}</dd></div></dl></header>
-    {(report.sections ?? []).map((section) => <section key={section.number} className="final-report-section"><h2>{section.number}. {section.title}</h2>{section.sources?.map((source) => <div key={`${section.number}-${source.type}`} className="final-report-source"><h3>{sourceTypeLabel(source.type)}</h3>{source.status === 'MISSING' ? <p className="final-report__missing">{source.label ?? '현재 유효한 결과가 없습니다.'}</p> : <ReportValue value={source.data} />}<footer>사용한 자료: {sourceTypeLabel(source.type)}</footer></div>)}</section>)}
-    <footer className="final-report-document__appendix"><h2>부록 · 사용된 자료</h2><p>{report.caveat}</p><ul>{((view.sourceManifest?.sources ?? view.sourceManifest) || []).map((source) => <li key={`${source.type}-${source.generatedAt ?? source.version ?? ''}`}><strong>{sourceTypeLabel(source.type)}</strong>{source.generatedAt ? ` · ${new Date(source.generatedAt).toLocaleDateString('ko-KR')} 생성` : ' · 현재 결과'}</li>)}</ul></footer>
+function ProposalDocument({ view, review, includeReview }) {
+  const report = view.report;
+  if (!report) return null;
+  const summary = report.executiveDecisionSummary ?? {};
+  return <article className="proposal-document">
+    <header className="proposal-cover"><p>BUSINESS PROPOSAL</p><h1>{report.cover?.documentName ?? '사업기획서'}</h1><h2>{report.cover?.businessName ?? '사업명'}</h2><dl><div><dt>작성일</dt><dd>{report.cover?.createdOn}</dd></div><div><dt>버전</dt><dd>{report.cover?.version ?? view.version}</dd></div><div><dt>문서 상태</dt><dd>{report.cover?.documentStatus}</dd></div><div><dt>결재·검토</dt><dd>{report.cover?.approvalPlaceholder}</dd></div></dl></header>
+    <section id="proposal-summary" className="proposal-summary"><p>EXECUTIVE DECISION SUMMARY</p><h2>의사결정 요약</h2><div className="proposal-callout"><strong>사업 한 줄 정의</strong><span>{summary.businessDefinition}</span></div><div className="proposal-kpis"><article><strong>추진 목적</strong><p>{summary.purpose}</p></article><article><strong>핵심 가치</strong><p>{summary.coreValue}</p></article><article><strong>승인 요청사항</strong><p>{summary.approvalRequest}</p></article></div><div className="proposal-summary__lists"><List title="대상 고객" values={summary.targetCustomers} /><List title="주요 시장 근거" values={summary.marketEvidence} /><List title="재무 핵심" values={summary.financialHighlights} /><List title="핵심 위험" values={summary.keyRisks} /></div><Evidence refs={summary.evidenceRefs} /></section>
+    {(report.sections ?? []).map((section) => <section className="proposal-section" id={`proposal-section-${section.number}`} key={section.number}><header><span>{String(section.number).padStart(2, '0')}</span><div><p>BUSINESS PLAN</p><h2>{section.title}</h2></div></header><p className="proposal-section__summary">{section.summary}</p>{section.narratives?.map((item) => <article className="proposal-narrative" key={item.heading}><h3>{item.heading}</h3><p>{item.body}</p></article>)}<List title="주요 확인사항" values={section.keyPoints} />{section.tables?.map((table) => <ProposalTable table={table} key={table.title} />)}<Evidence refs={section.evidenceRefs} /></section>)}
+    <section id="proposal-appendix" className="proposal-section"><header><span>A</span><div><p>APPENDIX</p><h2>자료·가정·제외 항목</h2></div></header><List title="가정" values={report.appendix?.assumptions} /><List title="포함하지 않은 분석" values={report.appendix?.omittedAnalyses} /><List title="사용 자료 버전" values={report.appendix?.sourceVersions} /></section>
+    {includeReview && review?.result && <section className="proposal-section proposal-review-print"><header><span>R</span><div><p>AI REVIEW</p><h2>AI 사업기획서 검토 의견</h2></div></header><ReviewGroups result={review.result} /></section>}
   </article>;
 }
+
+function List({ title, values }) {
+  if (!values?.length) return null;
+  return <div className="proposal-list"><h3>{title}</h3><ul>{values.map((value, index) => <li key={`${value}-${index}`}>{value}</li>)}</ul></div>;
+}
+
+function ProposalTable({ table }) {
+  return <div className="proposal-table"><h3>{table.title}</h3><div><table><thead><tr>{table.columns?.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{table.rows?.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody></table></div></div>;
+}
+
+function ReviewGroups({ result }) {
+  return <div className="proposal-review-groups"><ReviewGroup title="잘 갖춰진 부분" values={result.wellPrepared} /><ReviewGroup title="보완 필요" values={result.needsImprovement} /><ReviewGroup title="결재 전 필수 확인" values={result.requiredBeforeApproval} /><ReviewGroup title="후속 조치" values={result.followUpActions} /></div>;
+}
+function ReviewGroup({ title, values }) { return <section><h3>{title}</h3>{values?.length ? <ul>{values.map((item, index) => <li key={`${item.rubric}-${index}`}><strong>{item.rubric}</strong><p>{item.finding}</p><Evidence refs={item.evidenceRefs} /></li>)}</ul> : <p>해당 의견이 없습니다.</p>}</section>; }
 
 export default function FinalReportPage() {
   const { projectId } = useParams();
   const client = useApiClient();
   const api = useMemo(() => createFinalReportApi(client), [client]);
-  const pendingCommandKey = useRef(null);
-  const [state, setState] = useState({ status: 'loading', view: null, error: null, generating: false });
-  const load = useCallback(() => {
-    const controller = new AbortController();
-    setState((current) => ({ ...current, status: 'loading', error: null }));
-    api.current(projectId, { signal: controller.signal })
-      .then((view) => { if (!controller.signal.aborted) setState({ status: 'success', view, error: null, generating: false }); })
-      .catch((error) => { if (!controller.signal.aborted) setState({ status: 'error', view: null, error, generating: false }); });
-    return controller;
-  }, [api, projectId]);
-  useEffect(() => { const controller = load(); return () => controller.abort(); }, [load]);
-  const generate = async () => {
-    if (state.generating) return;
-    setState((current) => ({ ...current, generating: true, error: null }));
-    const before = state.view;
-    const commandKey = pendingCommandKey.current ?? globalThis.crypto?.randomUUID?.()
-      ?? `final-report-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    pendingCommandKey.current = commandKey;
+  const commandKey = useRef(null);
+  const [state, setState] = useState({ loading: true, status: null, view: null, review: null, error: null });
+  const [selected, setSelected] = useState([]);
+  const [includeReview, setIncludeReview] = useState(false);
+
+  const load = useCallback(async () => {
+    setState((value) => ({ ...value, loading: true, error: null }));
     try {
-      const view = await api.generate(projectId, commandKey);
-      pendingCommandKey.current = null;
-      setState({ status: 'success', view, error: null, generating: false });
-    } catch (error) {
-      try {
-        const recovered = await api.current(projectId);
-        const changed = recovered.snapshotId && (recovered.snapshotId !== before?.snapshotId || recovered.version !== before?.version);
-        if (changed) {
-          pendingCommandKey.current = null;
-          setState({ status: 'success', view: recovered, error: null, generating: false });
-          return;
-        }
-      } catch { /* The original safe user error remains authoritative. */ }
-      setState((current) => ({ ...current, generating: false, error }));
-    }
+      const status = await api.status(projectId);
+      let view = null; let review = null;
+      if (['CURRENT', 'STALE'].includes(status.state)) {
+        [view, review] = await Promise.all([api.current(projectId), api.currentReview(projectId)]);
+      }
+      setSelected((current) => current.length ? current : OPTIONAL.filter((type) => status.availableSources?.includes(type)));
+      setState({ loading: false, status, view, review, error: null });
+    } catch (error) { setState((value) => ({ ...value, loading: false, error })); }
+  }, [api, projectId]);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (state.status?.state !== 'GENERATING') return undefined;
+    const timer = window.setInterval(() => { void load(); }, 1800);
+    return () => window.clearInterval(timer);
+  }, [load, state.status?.state]);
+  useEffect(() => {
+    if (!['QUEUED', 'CLAIMED', 'RUNNING'].includes(state.review?.status)) return undefined;
+    const timer = window.setInterval(() => {
+      void api.currentReview(projectId).then((review) => {
+        setState((value) => ({ ...value, review }));
+      }).catch(() => {});
+    }, 1800);
+    return () => window.clearInterval(timer);
+  }, [api, projectId, state.review?.status]);
+
+  const generate = async () => {
+    commandKey.current ??= key();
+    try { await api.generate(projectId, commandKey.current, selected); commandKey.current = null; await load(); }
+    catch (error) { setState((value) => ({ ...value, error })); }
+  };
+  const reviewProposal = async () => {
+    if (!state.view?.snapshotId) return;
+    try { await api.review(projectId, state.view.snapshotId, key()); setState((value) => ({ ...value, review: { status: 'QUEUED', result: null } })); }
+    catch (error) { setState((value) => ({ ...value, error })); }
   };
 
-  if (state.status === 'loading') return <LoadingState label="최종 보고서를 불러오고 있습니다" />;
-  if (state.status === 'error') return <ErrorState title="최종 보고서를 불러오지 못했습니다" description={getUserErrorMessage(state.error)} onRetry={load} />;
-  const view = state.view;
-  const statusView = STATE_VIEW[view.state] ?? STATE_VIEW.NOT_READY;
+  if (state.loading && !state.status) return <LoadingState label="사업기획서 상태를 확인하고 있습니다" />;
+  if (state.error && !state.status) return <ErrorState title="사업기획서 상태를 불러오지 못했습니다" description={getUserErrorMessage(state.error)} onRetry={() => void load()} />;
+  const status = state.status;
+  const statusView = STATE_VIEW[status?.state] ?? STATE_VIEW.NOT_READY;
+  const report = state.view?.report?.contract === 'final-business-proposal-result-v1'
+    ? state.view.report : null;
   return <ProjectWorkspace mode="document" className="final-report-page">
-    <ProjectStageHeader step={6} eyebrow="최종 보고서" title="사업의 전체 검토 결과를 한 문서에서 확인하세요"
-      description="현재 확정 사업안과 유효한 분석 결과만 사용하며, 실행하지 않은 내용은 추정하지 않습니다."
-      status={<span className="pipeline-status" data-tone={statusView.tone}>{statusView.label}</span>}
-      actions={<>{view.state === 'CURRENT' && <Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button>}<Button type="button" loading={state.generating} onClick={generate}>{view.state === 'STALE' ? '보고서 업데이트' : view.state === 'CURRENT' ? '새 버전 만들기' : '최종 보고서 만들기'}</Button></>} />
+    <ProjectStageHeader step={6} eyebrow="최종 사업기획서" title="결재·공유 가능한 사업기획서를 만드세요" description="사용자가 선택한 현재 분석 snapshot만 고정해 회사용 사업기획서로 구성합니다." status={<span className="pipeline-status" data-tone={statusView[1]}>{statusView[0]}</span>} actions={<Button type="button" variant="outline" onClick={() => void load()}>새로고침</Button>} />
     {state.error && <p className="final-report-error" role="alert">{getUserErrorMessage(state.error)}</p>}
-    {view.state === 'NOT_READY' && <section className="final-report-readiness" aria-labelledby="report-readiness-title"><h2 id="report-readiness-title">보고서 준비 상태</h2><p>현재 확정된 사업안과 사업성 검증 결과를 먼저 준비해 주세요.</p>{view.blockingSources?.length > 0 && <p>핵심 자료가 준비되면 결과 보고서를 만들 수 있습니다.</p>}</section>}
-    {view.omittedSources?.length > 0 && <section className="final-report-readiness"><h2>아직 실행하지 않은 단계</h2><ul>{view.omittedSources.map((type) => <li key={type}>{sourceTypeLabel(type)} · 미실행</li>)}</ul></section>}
-    {view.state === 'STALE' && <p className="final-report-stale" role="status">보고서를 만든 뒤 사업안 또는 포함된 분석 결과가 변경되었습니다. 최신 결과로 새 보고서를 만들어 주세요.</p>}
-    <ReportDocument view={view} />
+    {!report && <section className="proposal-ready"><header><p>BUSINESS PROPOSAL</p><h2>사업기획서 작성</h2><span>현재 프로젝트의 분석 결과를 조합해 결재·공유 가능한 사업기획서를 만듭니다.</span></header><div className="proposal-source-grid"><section><h3>필수 기반</h3><SourceOption label="현재 확정 사업안" ready={status?.availableSources?.includes('CURRENT_CONCEPT')} required /><SourceOption label="사업성 검증" ready={status?.availableSources?.includes('MARKET') && status?.availableSources?.includes('BUSINESS_MODEL')} required /></section><section><h3>선택 포함</h3>{OPTIONAL.map((type) => <SourceOption key={type} label={SOURCE_LABELS[type]} ready={status?.availableSources?.includes(type)} checked={selected.includes(type)} onChange={(checked) => setSelected((items) => checked ? [...new Set([...items, type])] : items.filter((item) => item !== type))} />)}</section></div>{status?.blockingSources?.length > 0 && <p className="proposal-blocking">필수 기반 자료를 먼저 준비해 주세요.</p>}<Button type="button" loading={status?.state === 'GENERATING'} disabled={status?.state === 'NOT_READY' || status?.state === 'GENERATING'} onClick={() => void generate()}>사업기획서 만들기</Button></section>}
+    {report && <div className="proposal-workspace">
+      <nav className="proposal-toc" aria-label="사업기획서 목차"><strong>문서 목차</strong><a href="#proposal-summary">의사결정 요약</a>{report.sections?.map((section) => <a key={section.number} href={`#proposal-section-${section.number}`}>{section.number}. {section.title}</a>)}<a href="#proposal-appendix">부록</a></nav>
+      <main><ProposalDocument view={state.view} review={state.review} includeReview={includeReview} /></main>
+      <aside className="proposal-inspector">
+        <section><p>문서 정보</p><strong>버전 {state.view.version}</strong><span>{state.view.generatedAt ? new Date(state.view.generatedAt).toLocaleString('ko-KR') : ''}</span>{status.state === 'STALE' && <mark>자료가 변경되어 업데이트가 필요합니다.</mark>}</section>
+        <section><p>포함 자료</p><ul>{(state.view.sourceManifest?.sources ?? []).map((source) => <li key={`${source.type}-${source.id}`}>{SOURCE_LABELS[source.type] ?? source.type}</li>)}</ul></section>
+        <section><p>문서 작업</p><Button type="button" onClick={() => void generate()}>{status.state === 'STALE' ? '최신 자료로 다시 생성' : '새 버전 생성'}</Button><a className="proposal-download" href={api.downloadUrl(projectId, state.view.snapshotId, 'pdf', includeReview)}>PDF 다운로드</a><a className="proposal-download" href={api.downloadUrl(projectId, state.view.snapshotId, 'docx', includeReview)}>DOCX 다운로드</a></section>
+        <section><p>AI 검토</p>{state.review?.result ? <><ReviewGroups result={state.review.result} /><label><input type="checkbox" checked={includeReview} onChange={(event) => setIncludeReview(event.target.checked)} /> 사업기획서 부록에 포함</label></> : <Button type="button" loading={['QUEUED', 'RUNNING'].includes(state.review?.status)} onClick={() => void reviewProposal()}>AI 사업기획서 검토</Button>}</section>
+      </aside>
+    </div>}
   </ProjectWorkspace>;
+}
+
+function SourceOption({ label, ready, required = false, checked = false, onChange }) {
+  return <label className="proposal-source" data-ready={ready}><input type="checkbox" checked={required ? ready : checked} disabled={required || !ready} onChange={(event) => onChange?.(event.target.checked)} /><span><strong>{label}</strong><small>{ready ? (required ? '필수 포함' : '현재 결과 사용 가능') : '미실행'}</small></span></label>;
 }

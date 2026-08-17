@@ -56,7 +56,7 @@ function ProjectLayoutContent() {
   const retryModuleStatus = moduleState.retry;
   useEffect(() => {
     const controller = new AbortController();
-    finalReportApi.current(projectId, { signal: controller.signal })
+    finalReportApi.status(projectId, { signal: controller.signal })
       .then((view) => { if (!controller.signal.aborted) setFinalReportState({ projectId, status: 'success', view }); })
       .catch(() => { if (!controller.signal.aborted) setFinalReportState({ projectId, status: 'error', view: null }); });
     return () => controller.abort();
@@ -64,7 +64,7 @@ function ProjectLayoutContent() {
   const finalReportJourneyStatus = finalReportState.projectId !== projectId || finalReportState.status !== 'success'
     ? JOURNEY_STATUS.NOT_STARTED : finalReportState.view?.state === 'CURRENT' ? JOURNEY_STATUS.COMPLETED
       : finalReportState.view?.state === 'STALE' ? JOURNEY_STATUS.STALE
-        : finalReportState.view?.readiness?.some(({ status: itemStatus }) => itemStatus !== 'NOT_STARTED')
+        : (finalReportState.view?.availableSources?.length ?? 0) > 1
           ? JOURNEY_STATUS.IN_PROGRESS : JOURNEY_STATUS.NOT_STARTED;
   const modules = useMemo(() => getProjectModules(projectId, moduleState.modules), [moduleState.modules, projectId]);
   const journeys = useMemo(() => getProjectJourneys(projectId, modules, finalReportJourneyStatus), [finalReportJourneyStatus, modules, projectId]);

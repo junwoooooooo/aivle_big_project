@@ -60,7 +60,7 @@ export function toCreateRequest(setup, referenceArtifactId = null) {
 }
 
 export function setupIsValid(setup) {
-  return Boolean(setup.marketingSourceSnapshotId && setup.marketingStrategyReportId
+  return Boolean(setup.marketingSourceSnapshotId
     && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
 }
 

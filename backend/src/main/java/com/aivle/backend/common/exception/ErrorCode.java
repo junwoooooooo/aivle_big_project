@@ -154,6 +154,7 @@ public enum ErrorCode {
     FINANCIAL_INPUT_INVALID(HttpStatus.UNPROCESSABLE_ENTITY, "재무 입력값을 확인해 주세요.", false),
     FINANCIAL_SNAPSHOT_NOT_READY(HttpStatus.CONFLICT, "재무 분석에 필요한 입력을 완료해 주세요.", false),
     FINANCIAL_SNAPSHOT_IMMUTABLE(HttpStatus.CONFLICT, "확정된 재무 입력 Snapshot은 수정할 수 없습니다.", false),
+    FINAL_REPORT_NOT_READY(HttpStatus.CONFLICT, "현재 확정 사업안과 사업성 검증 결과를 먼저 준비해 주세요.", false),
     MODULE_INPUT_STALE(HttpStatus.CONFLICT, "현재 선택과 다른 입력 Snapshot입니다.", false),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.", true);
 

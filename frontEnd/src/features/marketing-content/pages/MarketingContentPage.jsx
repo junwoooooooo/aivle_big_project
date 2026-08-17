@@ -5,7 +5,6 @@ import MarketingContentList from '../components/MarketingContentList.jsx';
 import MarketingCopyEditor from '../components/MarketingCopyEditor.jsx';
 import MarketingRevisionList from '../components/MarketingRevisionList.jsx';
 import MarketingSetupPanel from '../components/MarketingSetupPanel.jsx';
-import MarketingSourceSummary from '../components/MarketingSourceSummary.jsx';
 import MarketingStylePanel from '../components/MarketingStylePanel.jsx';
 import MarketingStrategyPanel from '../components/MarketingStrategyPanel.jsx';
 import useMarketingContent from '../hooks/useMarketingContent.js';
@@ -17,19 +16,13 @@ import { isUserVisibleJobEvent, jobEventMessage } from '../../../shared/async-ev
 import { ProjectStageHeader, ProjectWorkspace } from '../../../shared/ui/index.js';
 import '../styles/marketing-content.css';
 
-const STEP_ITEMS = [
-  { id: 1, label: '분석 자료' },
-  { id: 2, label: '마케팅 전략' },
-  { id: 3, label: '생성 설정' },
-  { id: 4, label: '결과 확인' },
-];
-
 export default function MarketingContentPage() {
   const { projectId } = useParams();
   const hook = useMarketingContent(projectId);
   const strategy = useMarketingStrategy(projectId);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(2);
+  const [strategyMode, setStrategyMode] = useState('NONE');
   const [pendingContentId, setPendingContentId] = useState(null);
   const [setup, setSetup] = useState(createSetupModel());
   const [draftState, setDraftState] = useState({ key: null, value: null });
@@ -38,17 +31,13 @@ export default function MarketingContentPage() {
   const [style, setStyle] = useState({ theme: 'DARK', align: 'LEFT', accent: '#0f8878', scale: '1' });
   const effectiveSetup = { ...setup,
     marketingSourceSnapshotId: setup.marketingSourceSnapshotId || hook.source?.snapshotId || '',
-    marketingStrategyReportId: strategy.current ? strategy.view?.reportId ?? '' : '' };
+    marketingStrategyReportId: strategyMode === 'CURRENT' && strategy.current
+      ? strategy.view?.reportId ?? '' : '' };
   const activeRevision = latestRevision(hook.selected);
   const draftKey = hook.selected && activeRevision ? `${hook.selected.content.contentId}:${activeRevision.revisionNumber}` : null;
   const draft = draftState.key === draftKey ? draftState.value
     : (activeRevision ? editableFromResult(activeRevision.result, hook.selected.content.contentType) : null);
   const setDraft = (value) => setDraftState({ key: draftKey, value });
-
-  const currentSource = useMemo(
-    () => sourceSummary(hook.source?.snapshot),
-    [hook.source?.snapshot],
-  );
 
   const resultSource = useMemo(
     () =>
@@ -73,7 +62,6 @@ export default function MarketingContentPage() {
   const progressEvents = (hook.jobEvents?.events ?? []).filter(isUserVisibleJobEvent);
   const latestEvent = progressEvents.at(-1);
   const generationBusy = hook.active || hook.uploading;
-  const workflowBusy = generationBusy || strategy.active;
 
   const generatedResultReady =
     step === 3 &&
@@ -187,13 +175,9 @@ export default function MarketingContentPage() {
 
   return (
     <ProjectWorkspace mode="review" className="mk-page">
-      <ProjectStageHeader step={5} eyebrow="마케팅 전략·콘텐츠" title="사업안에서 실행 전략과 콘텐츠까지 이어가세요"
-        description="분석 자료 확인, 전략 생성, 콘텐츠 설정, 결과 편집의 네 단계로 게시 전 초안을 준비합니다."
+      <ProjectStageHeader step={5} eyebrow="마케팅" title="전략을 세우거나 바로 콘텐츠를 제작하세요"
+        description="마케팅 전략과 콘텐츠 제작은 독립 workspace입니다. 전략이 없어도 현재 사업안을 기준으로 콘텐츠를 만들 수 있습니다."
         actions={<button type="button" onClick={() => { void Promise.resolve(hook.refresh()).catch(() => {}); void Promise.resolve(strategy.refresh()).catch(() => {}); }}>새로고침</button>} />
-
-      <div className="mk-alert" role="note">
-        AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다. 게시 전에 내용과 표현을 직접 확인하세요.
-      </div>
 
       {hook.error && (
         <div
@@ -236,107 +220,24 @@ export default function MarketingContentPage() {
         </section>
       )}
 
-      <MarketingContentList
-        contents={hook.list}
-        onOpen={(contentId) => {
-          void openContent(contentId);
-        }}
-        selectedId={selectedContentId}
-      />
-
       <nav
-        className="mk-steps"
-        aria-label="마케팅 초안 제작 단계"
+        className="mk-workspace-tabs"
+        aria-label="마케팅 작업 공간"
       >
-        <ol>
-          {STEP_ITEMS.map((item) => {
-            const available =
-              item.id === 1 ||
-              (item.id === 2 && strategy.ready) ||
-              (item.id === 3 && strategy.current) ||
-              (item.id === 4 && Boolean(draft));
-
-            const completed =
-              item.id < activeStep ||
-              (item.id === 2 && strategy.current) ||
-              (item.id === 3 && Boolean(draft));
-
-            const state =
-              activeStep === item.id
-                ? 'current'
-                : completed
-                  ? 'complete'
-                  : 'upcoming';
-
-            return (
-              <li key={item.id} data-state={state}>
-                <button
-                  type="button"
-                  disabled={!available || workflowBusy}
-                  aria-current={
-                    activeStep === item.id
-                      ? 'step'
-                      : undefined
-                  }
-                  onClick={() => moveToStep(item.id)}
-                >
-                  <span>
-                    {completed &&
-                    activeStep !== item.id
-                      ? '✓'
-                      : item.id}
-                  </span>
-                  <strong>{item.label}</strong>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
+        <button type="button" aria-pressed={activeStep === 2}
+          onClick={() => moveToStep(2)}>
+          <span>Strategy</span><strong>마케팅 전략</strong><small>분석 context로 실행 방향 설계</small>
+        </button>
+        <button type="button" aria-pressed={activeStep >= 3}
+          onClick={() => moveToStep(draft ? 4 : 3)}>
+          <span>Content</span><strong>콘텐츠 제작</strong><small>사업안 또는 최신 전략으로 초안 제작</small>
+        </button>
       </nav>
-
-      {activeStep === 1 && (
-        <section
-          className="mk-step"
-          aria-labelledby="mk-step-source-title"
-        >
-          <header className="mk-step__header">
-            <div>
-              <p>1단계</p>
-              <h2 id="mk-step-source-title">
-                현재 분석 자료를 확인하세요
-              </h2>
-              <span>
-                초안 생성에 사용될 고객, 가치 제안과
-                법률 조건을 확인합니다.
-              </span>
-            </div>
-          </header>
-
-          <MarketingSourceSummary
-            source={currentSource}
-          />
-
-          <div className="mk-step__actions">
-            <span>
-              사업안과 법률 조건이 맞으면 전략 단계로 이동하세요.
-            </span>
-
-            <button
-              className="mk-primary"
-              type="button"
-              disabled={!strategy.ready}
-              onClick={() => moveToStep(2)}
-            >
-              마케팅 전략 만들기
-            </button>
-          </div>
-        </section>
-      )}
 
       {activeStep === 2 && (
         <section className="mk-step" aria-labelledby="mk-step-strategy-title">
-          <header className="mk-step__header"><div><p>2단계</p><h2 id="mk-step-strategy-title">마케팅 전략을 준비하세요</h2><span>현재 사업안은 필수이고, 완료된 추가 분석은 존재하는 경우에만 전략 근거로 사용합니다.</span></div><button type="button" disabled={workflowBusy} onClick={() => moveToStep(1)}>분석 자료 다시 보기</button></header>
-          <MarketingStrategyPanel strategy={strategy} onNext={() => moveToStep(3)} />
+          <header className="mk-step__header"><div><p>Strategy workspace</p><h2 id="mk-step-strategy-title">마케팅 전략</h2><span>현재 사업안은 필수이고, 완료된 추가 분석은 존재하는 경우에만 전략 근거로 사용합니다.</span></div></header>
+          <MarketingStrategyPanel strategy={strategy} onNext={() => { setStrategyMode('CURRENT'); moveToStep(3); }} />
         </section>
       )}
 
@@ -347,7 +248,7 @@ export default function MarketingContentPage() {
         >
           <header className="mk-step__header">
             <div>
-              <p>3단계</p>
+              <p>Content workspace</p>
               <h2 id="mk-step-setup-title">
                 만들 콘텐츠를 설정하세요
               </h2>
@@ -357,20 +258,23 @@ export default function MarketingContentPage() {
               </span>
             </div>
 
-            <button
-              type="button"
-              disabled={generationBusy}
-              onClick={() => moveToStep(2)}
-            >
-              전략 다시 보기
-            </button>
           </header>
+
+          <section className="mk-content-basis" aria-labelledby="mk-content-basis-title">
+            <header><div><p>콘텐츠 기준</p><h3 id="mk-content-basis-title">현재 사업안 ✓</h3></div><span>사용할 전략을 선택하세요.</span></header>
+            <div role="radiogroup" aria-label="마케팅 전략 적용 방식">
+              <label data-selected={strategyMode === 'NONE'}><input type="radio" name="strategy-mode" value="NONE" checked={strategyMode === 'NONE'} onChange={() => setStrategyMode('NONE')} />
+                <span><strong>전략 없이 현재 사업안으로 제작</strong><small>현재 사업안과 법률 조건만 사용합니다.</small></span></label>
+              <label data-selected={strategyMode === 'CURRENT'} data-disabled={!strategy.current}><input type="radio" name="strategy-mode" value="CURRENT" checked={strategyMode === 'CURRENT'} disabled={!strategy.current} onChange={() => setStrategyMode('CURRENT')} />
+                <span><strong>최신 마케팅 전략 적용</strong><small>{strategy.current ? '현재 전략을 콘텐츠 생성 context로 사용합니다.' : '사용 가능한 최신 전략이 없습니다.'}</small></span></label>
+            </div>
+          </section>
 
           <MarketingSetupPanel
             value={effectiveSetup}
             onChange={setSetup}
             onSubmit={() => void create()}
-            disabled={!hook.source || !strategy.current}
+            disabled={!hook.source}
             busy={generationBusy}
           />
 
@@ -379,6 +283,11 @@ export default function MarketingContentPage() {
           </div> : null}
 
           {showSetupProgress && progressPanel}
+
+          <details className="mk-history">
+            <summary>생성 이력 · {hook.list.length}개</summary>
+            <MarketingContentList contents={hook.list} onOpen={(contentId) => { void openContent(contentId); }} selectedId={selectedContentId} />
+          </details>
         </section>
       )}
 
@@ -407,6 +316,15 @@ export default function MarketingContentPage() {
               입력 수정하기
             </button>
           </header>
+
+          <div className="mk-alert" role="note">
+            AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다. 게시 전에 내용과 표현을 직접 확인하세요.
+          </div>
+
+          <details className="mk-history">
+            <summary>생성 이력 · {hook.list.length}개</summary>
+            <MarketingContentList contents={hook.list} onOpen={(contentId) => { void openContent(contentId); }} selectedId={selectedContentId} />
+          </details>
 
           {(generationBusy ||
             generationStatus === 'FAILED') &&

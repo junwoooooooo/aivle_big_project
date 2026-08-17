@@ -7,6 +7,7 @@ import com.aivle.backend.auth.LoginCredentialsFailedException;
 import com.aivle.backend.auth.LoginAttemptRateLimiter.LoginAttemptStatus;
 import com.aivle.backend.taskrun.service.TaskRunFailure;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -19,7 +20,12 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.dao.OptimisticLockingFailureException;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @RestControllerAdvice
 @Slf4j
@@ -136,7 +142,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception exception, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleUnexpected(
+        Exception exception,
+        HttpServletRequest request,
+        HttpServletResponse response
+    ) {
+        if (isClientDisconnect(exception) && isStreamingOrCommitted(request, response)) {
+            log.debug("Nested async client disconnect, requestId={}", requestId(request));
+            return null;
+        }
         log.error("Unhandled request failure, requestId={}", requestId(request), exception);
         ErrorCode code = ErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(code.getHttpStatus()).body(ApiResponse.failure(
@@ -156,5 +170,31 @@ public class GlobalExceptionHandler {
             status.warningLevel().name(), status.remainingAttempts(),
             status.limited() ? status.retryAfterSeconds() : null
         );
+    }
+
+    static boolean isClientDisconnect(Throwable failure) {
+        Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable current = failure;
+        while (current != null && seen.add(current)) {
+            if (current instanceof ClientAbortException
+                    || current instanceof AsyncRequestNotUsableException) {
+                return true;
+            }
+            if (current instanceof IOException) {
+                String message = String.valueOf(current.getMessage()).toLowerCase(Locale.ROOT);
+                if (message.contains("broken pipe") || message.contains("connection reset")) {
+                    return true;
+                }
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private boolean isStreamingOrCommitted(HttpServletRequest request, HttpServletResponse response) {
+        String contentType = response.getContentType();
+        return response.isCommitted()
+            || (contentType != null && contentType.startsWith("text/event-stream"))
+            || request.isAsyncStarted();
     }
 }

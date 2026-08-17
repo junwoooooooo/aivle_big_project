@@ -36,6 +36,8 @@ TASK_TYPES = {
     "LAUNCH_READINESS",
     "MARKETING_CONTENT_GENERATION",
     "MARKETING_STRATEGY_GENERATION",
+    "FINAL_BUSINESS_PROPOSAL_GENERATION",
+    "FINAL_BUSINESS_PROPOSAL_REVIEW",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
     "MARKET_INTERVIEW",
@@ -177,6 +179,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     elif body.taskType == "MARKETING_STRATEGY_GENERATION":
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_keys = [f"marketing-strategy-source:{body.input.get('sourceManifestHash', 'unknown')}"]
+    elif body.taskType in {"FINAL_BUSINESS_PROPOSAL_GENERATION", "FINAL_BUSINESS_PROPOSAL_REVIEW"}:
+        text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        source_keys = [f"final-business-proposal:{body.input.get('sourceManifestHash', 'unknown')}"]
     elif body.taskType == "MARKETING_VISUAL_GENERATION":
         from app.tasks.marketing_visual.models import MarketingVisualInput
         try:
@@ -341,6 +346,12 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "MARKETING_STRATEGY_GENERATION":
             from app.tasks.marketing_strategy import execute_marketing_strategy
             result = await execute_marketing_strategy(body.input)
+        elif body.taskType == "FINAL_BUSINESS_PROPOSAL_GENERATION":
+            from app.tasks.final_business_proposal import execute_final_business_proposal
+            result = await execute_final_business_proposal(body.input)
+        elif body.taskType == "FINAL_BUSINESS_PROPOSAL_REVIEW":
+            from app.tasks.final_business_proposal.review import execute_final_business_proposal_review
+            result = await execute_final_business_proposal_review(body.input)
         elif body.taskType == "MARKETING_VISUAL_GENERATION":
             from app.tasks.marketing_visual import execute_marketing_visual
             result = await execute_marketing_visual(body.input)

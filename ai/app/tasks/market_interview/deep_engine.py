@@ -3,6 +3,7 @@
 import asyncio
 import json
 import re
+import unicodedata
 from collections import Counter
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -57,6 +58,13 @@ CODING_PROMPT = COMMON_BOUNDARY + """
 각 themeTitles에는 themeEvidence를 정확히 하나씩 만들고, 해당 축의 실제 answerField에서 연속된 원문 substring을 그대로 복사한 짧은 quote를 반환한다.
 근거 인용이 없으면 그 테마를 배정하지 않는다. comprehension은 accurate/partial/misunderstood,
 differentiation은 different/similar/unclear 중 하나다."""
+
+CODING_REPAIR_PROMPT = COMMON_BOUNDARY + """
+한 응답자의 코딩 근거만 교정한다. 새 theme를 만들거나 participantId를 바꾸지 않는다.
+기존 themeTitles 밖의 theme를 추가하지 않고, 유지하는 theme의 answerField를 바꾸지 않는다.
+quote는 제공된 해당 answer에서 연속된 원문 substring을 그대로 복사한다.
+정확한 원문 근거를 찾을 수 없는 theme는 themeTitles와 themeEvidence에서 함께 제거한다.
+나머지 comprehension, differentiation, alternativeLabel은 제공된 assignment를 유지한다."""
 
 LIMITATIONS = [
     "실제 고객 조사 결과가 아니라 실측 profile bank에서 표집한 파생 프로필 기반 AI 가상 고객 정성 탐색입니다.",
@@ -140,12 +148,24 @@ class CodingValidationFailure(ValueError):
     """Safe, structured coding failure. It never contains answer or prompt text."""
 
     def __init__(self, rule: str, path: str, *, batch_index: int,
-                 participant_id: str | None = None):
+                 participant_id: str | None = None, repair_attempts: int = 0,
+                 exclusion_attempted: bool = False,
+                 exclusion_blocked_reason: str | None = None):
         super().__init__(rule)
         self.rule = rule
         self.path = path
         self.batch_index = batch_index
         self.participant_id = participant_id
+        self.repair_attempts = repair_attempts
+        self.exclusion_attempted = exclusion_attempted
+        self.exclusion_blocked_reason = exclusion_blocked_reason
+
+    def with_recovery(self, *, repair_attempts: int, exclusion_attempted: bool,
+                      exclusion_blocked_reason: str | None = None):
+        self.repair_attempts = repair_attempts
+        self.exclusion_attempted = exclusion_attempted
+        self.exclusion_blocked_reason = exclusion_blocked_reason
+        return self
 
     def diagnostic(self) -> dict[str, Any]:
         value: dict[str, Any] = {
@@ -153,9 +173,13 @@ class CodingValidationFailure(ValueError):
             "batchIndex": self.batch_index,
             "rule": self.rule,
             "path": self.path,
+            "repairAttempts": self.repair_attempts,
+            "exclusionAttempted": self.exclusion_attempted,
         }
         if self.participant_id:
             value["participantId"] = self.participant_id
+        if self.exclusion_blocked_reason:
+            value["exclusionBlockedReason"] = self.exclusion_blocked_reason
         return value
 
 
@@ -174,6 +198,52 @@ def _coding_failure(failure: CodingValidationFailure) -> ProviderFailure:
         }],
         safe_diagnostics=diagnostic,
     )
+
+
+_ZERO_WIDTH = {"\u200b", "\u200c", "\u200d", "\u2060", "\ufeff"}
+_CHAR_NORMALIZATION = {
+    "\u2018": "'", "\u2019": "'", "\u201a": "'", "\u201b": "'", "\u2032": "'",
+    "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u201f": '"', "\u2033": '"',
+    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-", "\u2014": "-",
+    "\u2015": "-", "\u2212": "-",
+}
+
+
+def _normalized_text(value: str, *, retain_spans: bool = False):
+    normalized: list[str] = []
+    spans: list[tuple[int, int]] = []
+    pending_space: tuple[int, int] | None = None
+    for index, original in enumerate(str(value)):
+        if original in _ZERO_WIDTH:
+            continue
+        fragment = unicodedata.normalize("NFKC", original)
+        for character in fragment:
+            character = _CHAR_NORMALIZATION.get(character, character)
+            if character.isspace():
+                if normalized:
+                    pending_space = ((pending_space or (index, index + 1))[0], index + 1)
+                continue
+            if pending_space is not None:
+                normalized.append(" ")
+                spans.append(pending_space)
+                pending_space = None
+            normalized.append(character)
+            spans.append((index, index + 1))
+    text = "".join(normalized)
+    return (text, spans) if retain_spans else text
+
+
+def _resolve_original_quote(actual_answer: str, candidate: str) -> str | None:
+    """Return the original answer span only for a normalized contiguous substring."""
+    normalized_quote = _normalized_text(candidate)
+    normalized_answer, spans = _normalized_text(actual_answer, retain_spans=True)
+    if not normalized_quote:
+        return None
+    start = normalized_answer.find(normalized_quote)
+    if start < 0:
+        return None
+    end = start + len(normalized_quote) - 1
+    return str(actual_answer)[spans[start][0]:spans[end][1]]
 
 
 def _validate_coding_batch(coded: CodingResult, batch: list[dict], *, batch_index: int,
@@ -215,15 +285,44 @@ def _validate_coding_batch(coded: CodingResult, batch: list[dict], *, batch_inde
                     "ANSWER_FIELD_AXIS_MISMATCH", f"{evidence_path}.answerField",
                     batch_index=batch_index, participant_id=row.participantId,
                 )
-            actual_answer = re.sub(r"\s+", " ", str(getattr(answer, evidence.answerField))).strip()
-            quote = re.sub(r"\s+", " ", evidence.quote).strip()
-            if not quote or quote not in actual_answer:
+            actual_answer = str(getattr(answer, evidence.answerField))
+            resolved_quote = _resolve_original_quote(actual_answer, evidence.quote)
+            if resolved_quote is None:
                 raise CodingValidationFailure(
                     "VERBATIM_QUOTE_MISMATCH", f"{evidence_path}.quote",
                     batch_index=batch_index, participant_id=row.participantId,
                 )
+            evidence.quote = resolved_quote
         validated.append(row)
     return validated
+
+
+def _validate_repair_scope(original, repaired, *, batch_index: int):
+    base_path = f"codingBatches[{batch_index}].repair"
+    if repaired.participantId != original.participantId:
+        raise CodingValidationFailure(
+            "REPAIR_PARTICIPANT_MISMATCH", f"{base_path}.participantId",
+            batch_index=batch_index, participant_id=original.participantId,
+        )
+    original_fields = {item.themeTitle: item.answerField for item in original.themeEvidence}
+    if not set(repaired.themeTitles).issubset(set(original.themeTitles)):
+        raise CodingValidationFailure(
+            "REPAIR_THEME_SCOPE_MISMATCH", f"{base_path}.themeTitles",
+            batch_index=batch_index, participant_id=original.participantId,
+        )
+    if any(original_fields.get(item.themeTitle) != item.answerField
+           for item in repaired.themeEvidence):
+        raise CodingValidationFailure(
+            "REPAIR_ANSWER_FIELD_CHANGED", f"{base_path}.themeEvidence",
+            batch_index=batch_index, participant_id=original.participantId,
+        )
+    if (repaired.alternativeLabel != original.alternativeLabel
+            or repaired.comprehension != original.comprehension
+            or repaired.differentiation != original.differentiation):
+        raise CodingValidationFailure(
+            "REPAIR_ASSIGNMENT_SCOPE_MISMATCH", base_path,
+            batch_index=batch_index, participant_id=original.participantId,
+        )
 
 
 def _coverage_is_safe(panel: list[dict], usable_panel: list[dict], warning: str | None) -> bool:
@@ -334,6 +433,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
             batch = transcript_rows[offset:offset + ASSIGN_BATCH]
             batch_index = offset // ASSIGN_BATCH
             failure = None
+            last_coded = None
             for attempt in range(1, CODING_BATCH_ATTEMPTS + 1):
                 try:
                     coding_prompt = CODING_PROMPT if failure is None else (
@@ -344,6 +444,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                     coded = CodingResult.model_validate(await _call(call, coding_prompt, {
                         "codebook": codebook.model_dump(mode="json"), "transcripts": batch,
                     }, CodingResult, "market_interview_assignment_v2"))
+                    last_coded = coded
                     assignments.extend(_validate_coding_batch(
                         coded, batch, batch_index=batch_index, known=known,
                         alternatives=alternatives, answer_by_id=answer_by_id,
@@ -363,17 +464,87 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                 if attempt < CODING_BATCH_ATTEMPTS:
                     continue
             if failure is not None:
-                # A respondent-scoped failure may be excluded only when the already validated
-                # sample remains above the product minimum and preserves target coverage.
                 failed_id = failure.participant_id
+                repair_attempts = 0
+                if (failure.rule == "VERBATIM_QUOTE_MISMATCH"
+                        and failed_id is not None and last_coded is not None):
+                    original = next((row for row in last_coded.assignments
+                                     if row.participantId == failed_id), None)
+                    transcript_row = next((row for row in batch
+                                           if row["participantId"] == failed_id), None)
+                    if original is not None and transcript_row is not None:
+                        repair_attempts = 1
+                        try:
+                            repaired_result = CodingResult.model_validate(await _call(
+                                call,
+                                CODING_REPAIR_PROMPT
+                                + f"\n이 assignment는 {failure.rule} 규칙을 위반했다.",
+                                {
+                                    "codebook": codebook.model_dump(mode="json"),
+                                    "transcripts": [transcript_row],
+                                    "assignment": original.model_dump(mode="json"),
+                                },
+                                CodingResult,
+                                "market_interview_assignment_repair_v1",
+                            ))
+                            if len(repaired_result.assignments) != 1:
+                                raise CodingValidationFailure(
+                                    "REPAIR_ASSIGNMENT_COUNT_MISMATCH",
+                                    f"codingBatches[{batch_index}].repair.assignments",
+                                    batch_index=batch_index, participant_id=failed_id,
+                                )
+                            repaired = repaired_result.assignments[0]
+                            _validate_repair_scope(original, repaired, batch_index=batch_index)
+                            combined = CodingResult(assignments=[
+                                repaired if row.participantId == failed_id else row
+                                for row in last_coded.assignments
+                            ])
+                            repaired_batch = _validate_coding_batch(
+                                combined, batch, batch_index=batch_index, known=known,
+                                alternatives=alternatives, answer_by_id=answer_by_id,
+                            )
+                            assignments.extend(repaired_batch)
+                            failure = None
+                        except ValidationError as invalid_repair:
+                            first = invalid_repair.errors()[0] if invalid_repair.errors() else {}
+                            path = ".".join(str(part) for part in first.get("loc", ()))
+                            failure = CodingValidationFailure(
+                                "RESPONDENT_REPAIR_SCHEMA_INVALID",
+                                f"codingBatches[{batch_index}].repair.{path or 'result'}",
+                                batch_index=batch_index, participant_id=failed_id,
+                            )
+                        except CodingValidationFailure as invalid_repair:
+                            failure = invalid_repair
+
+                if failure is None:
+                    progress("MI_CODING", "응답별 원문 근거를 확인하며 코딩하고 있습니다.",
+                             completedCount=len(assignments) + len(coding_failed_ids),
+                             totalCount=len(transcript_rows))
+                    continue
+
+                # Exclusion is the final fallback and must preserve the product minimum
+                # and the original target/comparison representation.
+                failed_id = failure.participant_id or failed_id
                 remaining_panel = [row for row in usable_panel if row["participantId"] != failed_id]
-                if (failed_id is None or len(remaining_panel) < minimum_usable
-                        or not _coverage_is_safe(panel, remaining_panel, sampling["warning"])):
-                    raise _coding_failure(failure)
+                blocked_reason = None
+                if failed_id is None:
+                    blocked_reason = "RESPONDENT_SCOPE_UNAVAILABLE"
+                elif len(remaining_panel) < minimum_usable:
+                    blocked_reason = "MINIMUM_USABLE_THRESHOLD"
+                elif not _coverage_is_safe(panel, remaining_panel, sampling["warning"]):
+                    failed_group = next((row["group"] for row in usable_panel
+                                         if row["participantId"] == failed_id), None)
+                    blocked_reason = ("TARGET_COVERAGE_THRESHOLD" if failed_group == "TARGET"
+                                      else "COMPARISON_COVERAGE_THRESHOLD")
+                if blocked_reason:
+                    raise _coding_failure(failure.with_recovery(
+                        repair_attempts=repair_attempts, exclusion_attempted=True,
+                        exclusion_blocked_reason=blocked_reason,
+                    ))
                 try:
                     remaining_batch = [row for row in batch if row["participantId"] != failed_id]
                     remaining_coded = CodingResult(assignments=[
-                        row for row in coded.assignments if row.participantId != failed_id
+                        row for row in last_coded.assignments if row.participantId != failed_id
                     ])
                     assignments.extend(_validate_coding_batch(
                         remaining_coded, remaining_batch, batch_index=batch_index, known=known,
@@ -381,8 +552,11 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                     ))
                 except (ValidationError, CodingValidationFailure) as remaining_failure:
                     if isinstance(remaining_failure, CodingValidationFailure):
-                        raise _coding_failure(remaining_failure) from remaining_failure
-                    raise _coding_failure(failure) from remaining_failure
+                        failure = remaining_failure
+                    raise _coding_failure(failure.with_recovery(
+                        repair_attempts=repair_attempts, exclusion_attempted=True,
+                        exclusion_blocked_reason="REMAINING_BATCH_INVALID",
+                    )) from remaining_failure
                 coding_failed_ids.add(failed_id)
                 failures.append({
                     "participantId": failed_id,

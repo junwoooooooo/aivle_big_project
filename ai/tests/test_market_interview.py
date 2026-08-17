@@ -78,7 +78,7 @@ def provider(claim=None, target_region="서울", unknown_theme=False,
             if claim: themes[1]["description"] = claim
             return {"themes": themes, "alternatives": ["수기 처리"],
                     "followUpQuestions": ["현재 방식은 무엇인가요?", "무엇이 걸리나요?", "어떤 설명이 필요한가요?"]}
-        if name == "market_interview_assignment_v2":
+        if name in {"market_interview_assignment_v2", "market_interview_assignment_repair_v1"}:
             sources = {"간단한 확인": ("like", "간단한 확인이 좋습니다."),
                        "가격 부담": ("concern", claim or "20% 할인이라면 써볼 수 있습니다."),
                        "차이 불명확": ("differentiation", "기존 방식과 차이는 더 봐야 합니다."),
@@ -225,12 +225,35 @@ def test_invalid_coding_batch_retries_only_that_batch(monkeypatch):
     assert result["targeting"]["usableCount"] == 20
 
 
-def test_retry_exhausted_single_coding_respondent_is_excluded_when_sample_remains_safe(monkeypatch):
+def test_respondent_repair_preserves_successful_batch_members(monkeypatch):
+    base = provider()
+    repair_calls = 0
+
+    async def one_invalid_respondent(*args, **kwargs):
+        nonlocal repair_calls
+        value = await base(*args, **kwargs)
+        if kwargs["schema_name"] == "market_interview_assignment_repair_v1":
+            repair_calls += 1
+        elif kwargs["schema_name"] == "market_interview_assignment_v2":
+            for row in value["assignments"]:
+                if row["participantId"] == "R001":
+                    row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
+        return value
+
+    result = execute_with_provider(monkeypatch, one_invalid_respondent)
+    assert repair_calls == 1
+    assert result["targeting"]["usableCount"] == 20
+    assert result["respondentFailures"] == []
+
+
+def test_repair_failure_excludes_one_respondent_when_sample_remains_safe(monkeypatch):
     base = provider()
 
     async def one_invalid_respondent(*args, **kwargs):
         value = await base(*args, **kwargs)
-        if kwargs["schema_name"] == "market_interview_assignment_v2":
+        if kwargs["schema_name"] in {
+            "market_interview_assignment_v2", "market_interview_assignment_repair_v1",
+        }:
             for row in value["assignments"]:
                 if row["participantId"] == "R001":
                     row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
@@ -243,6 +266,35 @@ def test_retry_exhausted_single_coding_respondent_is_excluded_when_sample_remain
         "code": "INVALID_CODING_OUTPUT",
     }]
     assert "R001" not in {row["participantId"] for row in result["codingTrace"]}
+
+
+def test_quote_resolver_recovers_original_typography_and_whitespace_span():
+    answer = "고객은\u200b  “가격” — 조건을\n확인합니다."
+    resolved = deep_engine._resolve_original_quote(answer, '"가격" - 조건을 확인합니다.')
+    assert resolved == "“가격” — 조건을\n확인합니다."
+    assert resolved in answer
+
+
+def test_quote_resolver_rejects_paraphrase():
+    assert deep_engine._resolve_original_quote(
+        "가격 조건을 직접 확인합니다.", "가격이 합리적인지 살펴봅니다.",
+    ) is None
+
+
+def test_exclusion_block_reason_and_repair_attempts_are_safe_diagnostics():
+    failure = deep_engine.CodingValidationFailure(
+        "VERBATIM_QUOTE_MISMATCH", "codingBatches[0].assignments[3].themeEvidence[0].quote",
+        batch_index=0, participant_id="R005",
+    ).with_recovery(repair_attempts=1, exclusion_attempted=True,
+                    exclusion_blocked_reason="TARGET_COVERAGE_THRESHOLD")
+    provider_failure = deep_engine._coding_failure(failure)
+    assert provider_failure.safe_diagnostics == {
+        "stage": "CODING_EVIDENCE_VALIDATION", "batchIndex": 0,
+        "rule": "VERBATIM_QUOTE_MISMATCH",
+        "path": "codingBatches[0].assignments[3].themeEvidence[0].quote",
+        "repairAttempts": 1, "exclusionAttempted": True,
+        "participantId": "R005", "exclusionBlockedReason": "TARGET_COVERAGE_THRESHOLD",
+    }
 
 
 @pytest.mark.parametrize("allowed", ["20% 할인이라면 써볼 수 있다.", "수수료 8%는 부담스럽다.",

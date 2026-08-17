@@ -185,6 +185,8 @@ public class InternalAiExecutionClient {
         if (taskType == TaskType.MARKET_INTERVIEW
             || taskType == TaskType.MARKETING_CONTENT_GENERATION
             || taskType == TaskType.MARKETING_STRATEGY_GENERATION
+            || taskType == TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION
+            || taskType == TaskType.FINAL_BUSINESS_PROPOSAL_REVIEW
             || taskType == TaskType.TECH_OPS_ADVISORY
             || taskType == TaskType.LAUNCH_TECHNOLOGY_READINESS
             || taskType == TaskType.LAUNCH_OPERATIONS_READINESS

@@ -88,3 +88,37 @@ npx vitest run src/features/business-validation/pages/BusinessValidationPage.tes
 ```
 
 다음 단계 진행 조건: 위 세 route의 화면 계약 확인 및 실제 전략/인터뷰 TaskRun의 terminal 상태와 current lineage 확인.
+
+---
+
+## 2026-08-18 Runtime Repair / Marketing / Final Proposal 사용자 검증
+
+### 1. Market Interview
+
+1. `/app/projects/7/market-interview`에서 실패 실행 `ab36d2b0-add3-43ac-b9cd-6d209c9b6365`과 같은 입력을 재시도한다.
+2. quote의 typography/공백 차이만 있는 경우 완료되며 저장된 evidence quote가 실제 answer의 정확한 substring인지 확인한다.
+3. 특정 respondent repair가 실패하면 Work Center 기술 정보에서 `repairAttempts`, `exclusionAttempted`, `exclusionBlockedReason`만 확인한다. 원문/prompt/provider response는 없어야 한다.
+4. minimum usable 또는 Target/Comparison coverage가 깨지면 전체 실패하고 명확한 blocked reason이 남아야 한다.
+
+### 2. Marketing
+
+1. `/app/projects/7/marketing`에서 `마케팅 전략`과 `콘텐츠 제작`을 자유롭게 전환한다.
+2. 전략을 생성해 channel action/KPI, campaign roadmap, budget, risk, evidence를 확인한다.
+3. Strategy가 없어도 콘텐츠 workspace의 `전략 없이 현재 사업안으로 제작`으로 생성할 수 있어야 한다.
+4. Strategy가 있으면 `최신 마케팅 전략 적용`을 선택한 요청에만 `marketingStrategyReportId`가 포함되는지 확인한다.
+5. 초안 기록은 콘텐츠 workspace에서만 보이고 0건일 때 작은 empty state인지 확인한다.
+
+### 3. Final Business Proposal
+
+1. `/app/projects/7/final-report`에서 필수 기반과 실행된 선택 자료를 확인하고 포함할 source를 선택한다.
+2. `사업기획서 만들기`를 누른 뒤 terminal 완료 시 좌측 목차, 중앙 A4 preview, 우측 문서 정보가 표시되는지 확인한다.
+3. current Marketing Strategy를 선택했다면 마케팅·시장 진입 section과 source manifest에 포함되는지 확인한다.
+4. PDF와 DOCX를 내려받아 표지, 의사결정 요약, 8~10개 section, 부록, 한글 font, 표 wrapping과 page footer를 확인한다.
+5. `AI 사업기획서 검토`를 별도로 실행하고 `사업기획서 부록에 포함`을 켠 뒤 내려받은 같은 snapshot 문서에만 검토 의견이 붙는지 확인한다.
+6. 다른 project route 이동 시 `/final-report/status`만 호출되고 전체 report JSON은 Final Report 페이지 진입 후에만 요청되는지 확인한다.
+
+### 4. SSE
+
+진행 중 새로고침/route 이동 후에도 TaskRun은 계속 실행되어야 한다. Backend 로그에 `No converter for ApiResponse with preset Content-Type 'text/event-stream'`가 없어야 하며 nested broken pipe는 debug disconnect로 끝나야 한다.
+
+다음 continuation point: project 7의 Market Interview/Marketing Strategy terminal state와 생성된 PDF/DOCX 파일을 확인한다.

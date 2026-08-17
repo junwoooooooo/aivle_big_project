@@ -173,11 +173,65 @@
 }
 
 .mk-empty{
-  padding:1.25rem;
+  margin:0;
+  padding:.75rem;
   border:1px dashed var(--color-border-default);
   border-radius:0.8rem;
   color:var(--color-text-secondary);
 }
+
+.mk-workspace-tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.75rem;
+  width:min(100%,72rem);
+  margin:0 auto;
+}
+
+.mk-workspace-tabs > button{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:.15rem .75rem;
+  align-items:center;
+  text-align:left;
+  padding:1rem;
+}
+
+.mk-workspace-tabs > button > span{
+  grid-row:span 2;
+  color:#08766a;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.mk-workspace-tabs > button > small{color:var(--color-text-secondary)}
+.mk-workspace-tabs > button[aria-pressed='true']{
+  border-color:#0f8878;
+  background:#eefbf8;
+  box-shadow:0 0 0 2px #0f887822;
+}
+
+.mk-content-basis,.mk-history{
+  padding:1rem;
+  border:1px solid var(--color-border-default);
+  border-radius:.9rem;
+  background:var(--color-surface);
+}
+
+.mk-content-basis{display:grid;gap:.8rem}
+.mk-content-basis > header{display:flex;justify-content:space-between;gap:1rem;align-items:center}
+.mk-content-basis h3,.mk-content-basis p{margin:.15rem 0}
+.mk-content-basis > header span{color:var(--color-text-secondary)}
+.mk-content-basis [role='radiogroup']{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+.mk-content-basis label{display:flex;gap:.65rem;padding:.85rem;border:1px solid var(--color-border-default);border-radius:.75rem;cursor:pointer}
+.mk-content-basis label[data-selected='true']{border-color:#0f8878;background:#eefbf8}
+.mk-content-basis label[data-disabled='true']{cursor:not-allowed;opacity:.6}
+.mk-content-basis label span{display:grid;gap:.2rem;min-width:0}
+.mk-content-basis label small{color:var(--color-text-secondary);overflow-wrap:anywhere}
+.mk-history > summary{cursor:pointer;color:#08766a;font-weight:800}
+.mk-history > .mk-list{margin-top:1rem}
 
 .mk-steps {
   width: min(100%, 64rem);
@@ -712,7 +766,9 @@
 
   .mk-list__grid,
   .mk-result-workspace,
-  .mk-source dl {
+  .mk-source dl,
+  .mk-workspace-tabs,
+  .mk-content-basis [role='radiogroup'] {
     grid-template-columns: 1fr;
   }
 

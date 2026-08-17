@@ -7,9 +7,27 @@ import java.util.List;
 public final class FinalReportApiModels {
     private FinalReportApiModels() {}
 
-    public enum State { CURRENT, STALE, READY, NOT_READY }
+    public enum State { CURRENT, STALE, READY, NOT_READY, GENERATING, REVIEWING }
 
     public record ReadinessItem(String journeyId, String label, String status) {}
+
+    public record FinalReportStatusView(
+        State state,
+        Integer currentVersion,
+        Instant generatedAt,
+        boolean stale,
+        String taskRunId,
+        List<String> blockingSources,
+        List<String> availableSources,
+        List<String> omittedSources
+    ) {}
+
+    public record GenerateRequest(List<String> includedOptionalSources) {}
+
+    public record ProposalActionResponse(String reportId, String taskRunId, String status,
+                                         String sourceManifestHash) {}
+
+    public record ReviewView(String taskRunId, String status, JsonNode result, Instant generatedAt) {}
 
     public record FinalReportView(
         State state,

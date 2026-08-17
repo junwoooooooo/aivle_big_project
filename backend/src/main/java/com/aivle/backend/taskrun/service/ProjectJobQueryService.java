@@ -152,6 +152,7 @@ public class ProjectJobQueryService {
             case LAUNCH_TECHNOLOGY_READINESS, LAUNCH_OPERATIONS_READINESS, LAUNCH_READINESS -> JobModule.LAUNCH_READINESS;
             case MARKETING_CONTENT_GENERATION, MARKETING_STRATEGY_GENERATION,
                 MARKETING_VISUAL_GENERATION -> JobModule.MARKETING;
+            case FINAL_BUSINESS_PROPOSAL_GENERATION, FINAL_BUSINESS_PROPOSAL_REVIEW -> JobModule.FINAL_REPORT;
             case MARKET_RESEARCH -> "MARKET_RESEARCH_BM".equals(run.getSubjectType())
                 ? JobModule.BUSINESS_MODEL : JobModule.MARKET;
             case MARKET_INTERVIEW -> JobModule.MARKET_INTERVIEW;
@@ -162,7 +163,8 @@ public class ProjectJobQueryService {
     private enum JobModule {
         IDEA("/idea"), CONCEPT_PORTFOLIO("/concepts"), CONCEPT_FACTORY("/concepts"), CONCEPT_SELECTION("/concepts/compare"),
         MARKET("/market"), BUSINESS_MODEL("/business-model"), MARKET_INTERVIEW("/market-interview"), TWIN("/twin-survey"),
-        TECH_OPS("/tech-ops"), FINANCE("/finance"), LAUNCH_READINESS("/launch-readiness"), MARKETING("/marketing");
+        TECH_OPS("/tech-ops"), FINANCE("/finance"), LAUNCH_READINESS("/launch-readiness"), MARKETING("/marketing"),
+        FINAL_REPORT("/final-report");
         private final String route;
         JobModule(String route) { this.route = route; }
     }

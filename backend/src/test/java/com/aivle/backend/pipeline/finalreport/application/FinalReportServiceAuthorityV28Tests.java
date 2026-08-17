@@ -17,6 +17,8 @@ import com.aivle.backend.pipeline.finalreport.repository.FinalReportSnapshotRepo
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.launchreadiness.repository.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
+import com.aivle.backend.pipeline.marketing.strategy.repository.MarketingStrategyReportRepository;
+import com.aivle.backend.pipeline.marketing.strategy.domain.MarketingStrategyReport;
 import com.aivle.backend.pipeline.market.*;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
@@ -24,6 +26,9 @@ import com.aivle.backend.pipeline.module.ProjectModuleStatusService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.repository.*;
+import com.aivle.backend.taskrun.service.CanonicalInputHasher;
+import com.aivle.backend.taskrun.service.TaskRunService;
+import com.aivle.backend.jobevent.JobEventPublisher;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,11 +49,15 @@ class FinalReportServiceAuthorityV28Tests {
     private final MarketingContentRepository marketingContents = mock(MarketingContentRepository.class);
     private final MarketingContentRevisionRepository marketingRevisions = mock(MarketingContentRevisionRepository.class);
     private final MarketingAssetRepository marketingAssets = mock(MarketingAssetRepository.class);
+    private final MarketingStrategyReportRepository marketingStrategies = mock(MarketingStrategyReportRepository.class);
     private final LaunchReadinessInputSnapshotRepository launchInputs = mock(LaunchReadinessInputSnapshotRepository.class);
     private final LaunchReadinessReportRepository launchReports = mock(LaunchReadinessReportRepository.class);
     private final FinancialInputSnapshotRepository financeSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
     private final TaskResultRepository taskResults = mock(TaskResultRepository.class);
+    private final TaskRunService taskRunService = mock(TaskRunService.class);
+    private final CanonicalInputHasher inputHasher = mock(CanonicalInputHasher.class);
+    private final JobEventPublisher events = mock(JobEventPublisher.class);
     private final ProjectModuleStatusService moduleStatuses = mock(ProjectModuleStatusService.class);
     private final FinalReportSnapshotRepository snapshots = mock(FinalReportSnapshotRepository.class);
     private final ObjectMapper mapper = new ObjectMapper();
@@ -58,7 +67,8 @@ class FinalReportServiceAuthorityV28Tests {
     void setUp() {
         service = new FinalReportService(projects, currentConcepts, sessions, marketVersions, marketInterviews,
             twinVersions, twinRuns, marketingSources, marketingContents, marketingRevisions, marketingAssets,
-            launchInputs, launchReports, financeSnapshots, taskRuns, taskResults, moduleStatuses,
+            marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskResults,
+            taskRunService, inputHasher, events, moduleStatuses,
             snapshots, new FinalReportComposer(mapper), mapper);
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(41L); when(project.getTitle()).thenReturn("프로젝트");
@@ -109,6 +119,37 @@ class FinalReportServiceAuthorityV28Tests {
         assertThat(view.state().name()).isEqualTo("NOT_READY");
         assertThat(view.blockingSources()).containsExactly("CURRENT_CONCEPT");
         verify(snapshots, never()).save(any());
+    }
+
+    @Test
+    void currentMarketingStrategyCanBeSelectedAsAnOptionalProposalSource() {
+        MarketingStrategyReport strategy = mock(MarketingStrategyReport.class);
+        when(strategy.getId()).thenReturn("strategy-1");
+        when(strategy.getGeneratedAt()).thenReturn(Instant.parse("2026-08-17T01:00:00Z"));
+        when(strategy.getResultJson()).thenReturn("{\"contract\":\"marketing-strategy-result-v1\"}");
+        when(strategy.getSourceManifestJson()).thenReturn("""
+            {"sources":[
+              {"type":"CURRENT_CONCEPT","id":"seed-1"},
+              {"type":"MARKET","id":"101"},
+              {"type":"BUSINESS_MODEL","id":"202"}
+            ]}
+            """);
+        when(marketingStrategies.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(strategy));
+
+        var view = service.generate(7L, 41L, "strategy-source", List.of("MARKETING_STRATEGY"));
+
+        List<String> types = new java.util.ArrayList<>();
+        view.sourceManifest().path("sources").forEach(item -> types.add(item.path("type").asText()));
+        assertThat(types).contains("MARKETING_STRATEGY");
+    }
+
+    @Test
+    void lightweightStatusExposesAvailabilityWithoutReportPayload() {
+        var status = service.status(7L, 41L);
+        assertThat(status.state()).isEqualTo(com.aivle.backend.pipeline.finalreport.api.FinalReportApiModels.State.READY);
+        assertThat(status.availableSources()).contains("CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL");
+        assertThat(status.currentVersion()).isNull();
     }
 
     private void exactCore() {
