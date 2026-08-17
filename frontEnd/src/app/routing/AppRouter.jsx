@@ -88,8 +88,8 @@ export default function AppRouter() {
             <Route path="twin-survey" element={<TwinSurveyPage />} />
             <Route path="launch-readiness" element={<LaunchReadinessPage />} />
             <Route path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />} />
-            <Route path="technology" element={<LaunchReadinessPage initialFocus="technology" />} />
-            <Route path="operations" element={<LaunchReadinessPage initialFocus="operations" />} />
+            <Route path="technology" element={<Navigate replace to="../tech-ops" />} />
+            <Route path="operations" element={<Navigate replace to="../tech-ops" />} />
             <Route path="tech-ops" element={<TechOpsPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="marketing" element={<MarketingContentPage />} />

@@ -294,6 +294,30 @@ describe('BusinessProposalWorkspace', () => {
     expect(css).not.toContain('min-width: max-content');
     expect(css).not.toContain('repeat(auto-fit');
   });
+  it('6/7 가격 AI 제안이 미확정인 정확한 항목을 알리고 전체 확정 후 그 행으로 이동한다', async () => {
+    const confirm = vi.fn().mockResolvedValue(undefined);
+    const values = [
+      ['TARGET_REGION', '대한민국'], ['REVENUE_MODEL', 'B2B 구독'],
+      ['PRICE', '서비스 계약에 따라 변동'], ['CHANNELS', ['직접 영업']],
+      ['DIFFERENTIATORS', ['AI 카메라 데이터 분석']],
+      ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 2, horizonYears: 3 }],
+      ['PRE_MARKET_SOM', { amount: 500000, currency: 'KRW', period: '연간' }],
+    ];
+    const hypotheses = values.map(([hypothesisType, proposedValue]) => hypothesisType === 'PRICE'
+      ? { hypothesisType, proposedValue, decisionStatus: 'PROPOSED', semanticStatus: 'AMBIGUOUS', legalReviewStatus: 'NOT_REQUIRED' }
+      : { hypothesisType, proposedValue, finalValue: proposedValue, decisionStatus: 'ACCEPTED', semanticStatus: 'VALID', locked: true });
+    useConceptPortfolio.mockReturnValue(base({ confirm,
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION', hypothesisConfirmedCount: 6 }, hypotheses }));
+    renderWorkspace();
+    expect(screen.getByText('6/7 확인 완료')).toBeInTheDocument();
+    expect(screen.getByText('AI 제안 · 확인 필요')).toBeInTheDocument();
+    expect(screen.getByText(/확인이 필요한 항목/).parentElement).toHaveTextContent('가격·과금 방식');
+    expect(screen.getByText(/500,000 KRW/).parentElement).toHaveTextContent('500,000 KRW · 50만 원');
+    fireEvent.click(screen.getByRole('button', { name: '기준값 확정' }));
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('alert')).toHaveTextContent('가격·과금 방식의 AI 제안을 확인해 주세요');
+    await waitFor(() => expect(document.activeElement).toHaveAttribute('id', 'business-basis-PRICE'));
+  });
   it('시장 준비 상태에서는 저장 정보를 조회하고 실제 시장 분석 CTA를 표시한다', async () => {
     useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'READY_FOR_MARKET', hypothesisConfirmedCount: 7 } }));
     renderWorkspace();

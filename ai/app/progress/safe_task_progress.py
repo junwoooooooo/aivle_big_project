@@ -84,6 +84,9 @@ class SafeTaskProgressSender:
         for optional in ("reasonCode", "decision"):
             if event.get(optional) is not None:
                 payload[optional] = str(event[optional])[:80]
+        for optional in ("completedCount", "totalCount", "candidateCount"):
+            if isinstance(event.get(optional), int) and event[optional] >= 0:
+                payload[optional] = event[optional]
         try:
             self.queue.put_nowait(payload)
         except asyncio.QueueFull:

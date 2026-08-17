@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AiTaskProgressService {
     private static final java.util.Set<TaskType> ALLOWED_TASK_TYPES = java.util.Set.of(
         TaskType.CONCEPT_PORTFOLIO_V2_RUN, TaskType.MARKET_RESEARCH, TaskType.TWIN_SURVEY,
-        TaskType.TECH_OPS_ADVISORY);
+        TaskType.TECH_OPS_ADVISORY, TaskType.MARKET_INTERVIEW);
     public enum Outcome { ACCEPTED, IGNORED, NOT_FOUND, INVALID }
 
     private final TaskRunRepository runs;
@@ -48,6 +48,9 @@ public class AiTaskProgressService {
             params.put("traceDetail", bounded(request.safeSummary(), 256));
             if (request.reasonCode() != null) params.put("reasonCode", request.reasonCode());
             if (request.decision() != null) params.put("decision", request.decision());
+            if (request.completedCount() != null) params.put("completedCount", request.completedCount());
+            if (request.totalCount() != null) params.put("totalCount", request.totalCount());
+            if (request.candidateCount() != null) params.put("candidateCount", request.candidateCount());
             String key = messageKey(run, request.stage(), request.action(), request.reasonCode());
             String eventType = eventType(run);
             events.publish(new JobEventPublisher.Command(
@@ -67,6 +70,7 @@ public class AiTaskProgressService {
         }
         if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
         if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
+        if (run.getTaskType() == TaskType.MARKET_INTERVIEW) return "job.market-interview.trace";
         return messageKey(stage, action, reasonCode);
     }
 
@@ -77,6 +81,7 @@ public class AiTaskProgressService {
         }
         if (run.getTaskType() == TaskType.TWIN_SURVEY) return "job.twin.trace";
         if (run.getTaskType() == TaskType.TECH_OPS_ADVISORY) return "job.tech-ops.advisory.progress";
+        if (run.getTaskType() == TaskType.MARKET_INTERVIEW) return "job.market-interview.trace";
         return "job.concept-portfolio.trace";
     }
 

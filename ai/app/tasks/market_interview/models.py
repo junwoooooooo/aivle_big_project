@@ -8,6 +8,10 @@ class StrictModel(BaseModel):
 
 
 SampleSize = Literal[20, 40, 80]
+Group = Literal["TARGET", "COMPARISON", "PROXY", "EXPLORATORY"]
+RepresentationStatus = Literal["REPRESENTABLE_TARGET", "PARTIAL_PROXY", "EXPLORATORY_ONLY", "TARGET_UNAVAILABLE"]
+AnswerField = Literal["firstImpression", "restatement", "like", "concern", "differentiation",
+                      "relevance", "usageScene", "barrier", "suggestion"]
 Axis = Literal["LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION"]
 AXES = ("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION")
 AXIS_SOURCE = {"LIKE": "like", "CONCERN": "concern", "DIFFERENTIATION": "differentiation",
@@ -27,6 +31,14 @@ class BusinessModelContext(StrictModel):
     constraints: dict[str, Any]
 
 
+class TargetingContext(StrictModel):
+    marketSeries: Literal["A", "B", "C", "D"]
+    customerUnit: Literal["ORGANIZATION", "PERSON", "TRANSACTION", "UNKNOWN"]
+    buyerType: Literal["ORGANIZATION_BUYER", "PERSON_BUYER", "UNRESOLVED_BUYER"]
+    denominator: str = Field(min_length=1, max_length=200)
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class MarketInterviewInput(StrictModel):
     contract: Literal["market-interview-input-v2"]
     schemaVersion: Literal["2.0"]
@@ -36,6 +48,7 @@ class MarketInterviewInput(StrictModel):
     selectedConcept: dict[str, Any]
     validatedHypotheses: dict[str, Any]
     businessModel: BusinessModelContext
+    targetingContext: TargetingContext
     boundaries: list[str] = Field(min_length=3, max_length=6)
 
 
@@ -85,9 +98,16 @@ class CodebookResult(StrictModel):
     followUpQuestions: list[str] = Field(min_length=3, max_length=12)
 
 
+class ThemeEvidence(StrictModel):
+    themeTitle: str = Field(min_length=1, max_length=120)
+    answerField: AnswerField
+    quote: str = Field(min_length=1, max_length=500)
+
+
 class CodingAssignment(StrictModel):
     participantId: str = Field(pattern=r"^R\d{3}$")
     themeTitles: list[str] = Field(max_length=18)
+    themeEvidence: list[ThemeEvidence] = Field(max_length=18)
     alternativeLabel: str = Field(max_length=120)
     comprehension: Literal["accurate", "partial", "misunderstood"]
     differentiation: Literal["different", "similar", "unclear"]
@@ -103,7 +123,7 @@ class Participant(StrictModel):
     profile: str = Field(min_length=1, max_length=500)
     context: str = Field(min_length=1, max_length=500)
     needs: list[str] = Field(max_length=8)
-    group: Literal["TARGET", "COMPARISON"]
+    group: Group
 
 
 class InterviewAnswer(StrictModel):
@@ -144,21 +164,22 @@ class TranscriptProvenance(StrictModel):
     transcriptId: str = Field(pattern=r"^T-R\d{3}$")
     participantId: str = Field(pattern=r"^R\d{3}$")
     answerCount: Literal[9]
-    group: Literal["TARGET", "COMPARISON"]
+    group: Group
 
 
 class CodingTrace(StrictModel):
     participantId: str = Field(pattern=r"^R\d{3}$")
     themeTitles: list[str] = Field(max_length=18)
+    themeEvidence: list[ThemeEvidence] = Field(max_length=18)
     comprehension: Literal["accurate", "partial", "misunderstood"]
     differentiation: Literal["different", "similar", "unclear"]
     alternativeLabel: str = Field(max_length=120)
-    group: Literal["TARGET", "COMPARISON"]
+    group: Group
 
 
 class RespondentFailure(StrictModel):
     participantId: str = Field(pattern=r"^R\d{3}$")
-    group: Literal["TARGET", "COMPARISON"]
+    group: Group
     attempts: int = Field(strict=True, ge=1, le=2)
     code: Literal["TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT"]
 
@@ -173,6 +194,10 @@ class TargetingSummary(StrictModel):
     failedCount: int = Field(strict=True, ge=0, le=80)
     targetCount: int = Field(strict=True, ge=0, le=80)
     nonTargetCount: int = Field(strict=True, ge=0, le=80)
+    proxyCount: int = Field(strict=True, ge=0, le=80)
+    exploratoryCount: int = Field(strict=True, ge=0, le=80)
+    representationStatus: RepresentationStatus
+    customerUnit: Literal["ORGANIZATION", "PERSON", "TRANSACTION", "UNKNOWN"]
     targetCoverageWarning: str | None = Field(default=None, max_length=500)
 
 
@@ -206,8 +231,8 @@ class MarketInterviewResult(StrictModel):
     synthetic: Literal[True]
     source: SourceBinding
     targeting: TargetingSummary
-    participants: list[Participant] = Field(min_length=1, max_length=5)
-    interviews: list[Interview] = Field(min_length=1, max_length=5)
+    participants: list[Participant] = Field(min_length=8, max_length=80)
+    interviews: list[Interview] = Field(min_length=8, max_length=80)
     themes: list[Theme] = Field(min_length=1, max_length=36)
     crossRelationships: list[CrossRelationship] = Field(max_length=24)
     comprehension: ClassificationSummary
@@ -243,8 +268,8 @@ class MarketInterviewResult(StrictModel):
         if {item.participantId for item in self.codingTrace} != sampled_set or len(self.codingTrace) != len(sampled):
             raise ValueError("coding trace must include every sampled respondent exactly once")
         representative = [item.participantId for item in self.participants]
-        if len(representative) != len(set(representative)):
-            raise ValueError("representative participant IDs must be unique")
+        if len(representative) != len(set(representative)) or set(representative) != sampled_set:
+            raise ValueError("every usable participant must be available for traceability")
         if any(item.group != group_by_id.get(item.participantId) for item in self.participants):
             raise ValueError("representative participant group must match transcript provenance")
         if {item.participantId for item in self.interviews} != set(representative):
@@ -254,23 +279,32 @@ class MarketInterviewResult(StrictModel):
             raise ValueError("coding assignment references an unknown theme")
         if any(item.group != group_by_id.get(item.participantId) for item in self.codingTrace):
             raise ValueError("coding group must match transcript provenance")
+        trace_by_id = {item.participantId: item for item in self.codingTrace}
+        for trace in self.codingTrace:
+            evidence_titles = [item.themeTitle for item in trace.themeEvidence]
+            if len(evidence_titles) != len(set(evidence_titles)) or set(evidence_titles) != set(trace.themeTitles):
+                raise ValueError("every coded theme must have one unique respondent answer evidence")
         for theme in self.themes:
             if len(theme.participantIds) != len(set(theme.participantIds)):
                 raise ValueError("theme respondent identities must be unique")
             target_count = sum(group_by_id.get(item) == "TARGET" for item in theme.participantIds)
-            non_target_count = sum(group_by_id.get(item) == "COMPARISON" for item in theme.participantIds)
+            non_target_count = sum(group_by_id.get(item) != "TARGET" for item in theme.participantIds)
             if (not set(theme.participantIds).issubset(sampled_set)
                     or theme.mentionCount != len(theme.participantIds)
                     or theme.targetCount != target_count
                     or theme.nonTargetCount != non_target_count):
                 raise ValueError("theme mentionCount must be derived from respondentIds")
+            if any(theme.title not in {item.themeTitle for item in trace_by_id[rid].themeEvidence}
+                   for rid in theme.participantIds):
+                raise ValueError("theme membership must be backed by respondent evidence")
         if any(item.overlapCount != len(item.respondentIds)
                or len(item.respondentIds) != len(set(item.respondentIds))
                or not set(item.respondentIds).issubset(sampled_set) for item in self.crossRelationships):
             raise ValueError("cross relationship must be derived from respondentIds")
         if (self.targeting.targetCount != sum(group == "TARGET" for group in group_by_id.values())
-                or self.targeting.nonTargetCount != sum(
-                    group == "COMPARISON" for group in group_by_id.values())):
+                or self.targeting.proxyCount != sum(group == "PROXY" for group in group_by_id.values())
+                or self.targeting.exploratoryCount != sum(group == "EXPLORATORY" for group in group_by_id.values())
+                or self.targeting.nonTargetCount != sum(group != "TARGET" for group in group_by_id.values())):
             raise ValueError("target/non-target counts must be derived from transcript provenance")
         if self.saturation.participantCount != len(sampled):
             raise ValueError("saturation participant count must equal drawn sample")

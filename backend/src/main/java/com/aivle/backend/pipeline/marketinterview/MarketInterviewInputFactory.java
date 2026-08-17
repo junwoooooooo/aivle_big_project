@@ -5,6 +5,7 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
+import com.aivle.backend.pipeline.market.MarketStrategySelector;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -53,10 +54,35 @@ public class MarketInterviewInputFactory {
         ObjectNode businessModel = root.putObject("businessModel");
         businessModel.set("plan", bm.plan());
         businessModel.set("constraints", bm.constraints());
+        var marketStrategy = new MarketStrategySelector().select(
+            snapshot.path("selectedConcept").toString(), snapshot.path("finalHypotheses").toString(),
+            bm.plan().toString(), bm.constraints().toString());
+        ObjectNode targetingContext = root.putObject("targetingContext");
+        targetingContext.put("marketSeries", marketStrategy.series());
+        targetingContext.put("customerUnit", switch (marketStrategy.strategy()) {
+            case "ORGANIZATION_UNIT" -> "ORGANIZATION";
+            case "POPULATION_UNIT" -> "PERSON";
+            case "TRANSACTION_VALUE" -> "TRANSACTION";
+            default -> "UNKNOWN";
+        });
+        targetingContext.put("buyerType", "ORGANIZATION_UNIT".equals(marketStrategy.strategy())
+            ? "ORGANIZATION_BUYER" : "POPULATION_UNIT".equals(marketStrategy.strategy())
+            ? "PERSON_BUYER" : "UNRESOLVED_BUYER");
+        targetingContext.put("denominator", marketStrategy.denominator());
+        targetingContext.put("reason", marketStrategy.reason());
         root.putArray("boundaries")
             .add("가상의 고객 관점 시뮬레이션이며 실제 고객 조사나 시장 근거가 아니다.")
             .add("통계, 대표성, 구매율 또는 모집단 비율을 추론하지 않는다.")
             .add("결과는 사업안을 자동으로 변경하지 않는다.");
         return root.toString();
+    }
+
+    public JsonNode preview(MarketAnalysisSeedSnapshot seed, ConceptPortfolioSelection selection,
+            BmPlanPreparationService.PlanView bm) {
+        JsonNode input = mapper.readTree(build(seed, selection, bm, 20));
+        ObjectNode preview = mapper.createObjectNode();
+        preview.set("concept", input.path("selectedConcept"));
+        preview.set("targeting", input.path("targetingContext"));
+        return preview;
     }
 }

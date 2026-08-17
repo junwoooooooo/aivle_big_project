@@ -192,29 +192,34 @@ def criteria_text(criteria: TargetCriteria, facts_by_pid: dict[str, dict],
                           for name, _test in conditions(criteria))
         description = f"{head} → 전부 동시에 만족: {report.normalized_matched:,}명"
     else:
-        description = "조건 없음 — 패널 전체가 타겟"
+        description = "개인 프로필에서 직접 확인 가능한 타겟 조건 없음"
     reasons = ", ".join(report.reasons) if report.reasons else "none"
     return (f"{description}. raw={report.raw_matched:,}명, normalized={report.normalized_matched:,}명, "
             f"relaxationLevel={report.relaxation_level}({reasons}). 실제 판정과 표집은 코드가 수행했습니다.")
 
 
 def draw_panel(cards: dict[str, str], frame: list[dict], criteria: TargetCriteria, size: int,
-               target_text: str = "") -> tuple[list[dict], dict]:
+               target_text: str = "", customer_unit: str = "PERSON") -> tuple[list[dict], dict]:
     facts = {pid: parse_target_facts(text) for pid, text in cards.items()}
     normalized, report = normalize_criteria(criteria, target_text, facts)
     target_pids = {pid for pid, value in facts.items() if matches(value, normalized)}
     target_frame = [row for row in frame if row.get("pid_hash") in target_pids]
     comparison_frame = [row for row in frame if row.get("pid_hash") not in target_pids]
 
-    if has_conditions(normalized) and not target_frame:
+    directly_representable = customer_unit == "PERSON"
+    if directly_representable and has_conditions(normalized) and not target_frame:
         raise ProviderFailure("INVALID_REQUEST", "MARKET_INTERVIEW_TARGET_UNAVAILABLE", 422, False,
                               safe_diagnostics={"requested": size, "rawTargetMatches": report.raw_matched,
                                                 "targetMatches": 0,
                                                 "relaxationLevel": report.relaxation_level})
-    if not has_conditions(normalized):
+    if not directly_representable or not has_conditions(normalized):
         picked, _sampling = stratified_sample(frame, size)
-        target_pids = {row["pid_hash"] for row in picked}
-        warning = "패널에서 확인 가능한 HARD 조건이 없어 전체 표집틀을 탐색했습니다."
+        target_pids = set()
+        representation_status = "EXPLORATORY_ONLY"
+        member_group = "EXPLORATORY"
+        warning = ("현재 개인 profile bank로 조직 구매 담당자를 직접 표현할 수 없어 일반 관점의 "
+                   "탐색 표본으로 구성했습니다." if customer_unit == "ORGANIZATION" else
+                   "패널에서 직접 확인 가능한 HARD 조건이 없어 일반 관점의 탐색 표본으로 구성했습니다.")
     else:
         wanted = math.ceil(size * TARGET_SHARE)
         target_size = min(wanted, len(target_frame))
@@ -227,8 +232,13 @@ def draw_panel(cards: dict[str, str], frame: list[dict], criteria: TargetCriteri
         comparison_rows, _comparison_report = stratified_sample(comparison_frame, comparison_size)
         picked = sorted(target_rows + comparison_rows, key=lambda row: row["pid_hash"])
         target_pids = {row["pid_hash"] for row in target_rows}
-        warning = None if target_size == wanted else (
-            f"TARGET 목표 {wanted}명 중 {target_size}명을 확보하고 나머지를 COMPARISON으로 보완했습니다.")
+        representation_status = "PARTIAL_PROXY" if report.relaxation_level > 0 else "REPRESENTABLE_TARGET"
+        member_group = "PROXY" if representation_status == "PARTIAL_PROXY" else "TARGET"
+        warning = ("직접 타겟이 아니라 관찰 가능한 대리 조건으로 표집했습니다. "
+                   if representation_status == "PARTIAL_PROXY" else "")
+        if target_size != wanted:
+            warning += f"TARGET 목표 {wanted}명 중 {target_size}명을 확보하고 나머지를 COMPARISON으로 보완했습니다."
+        warning = warning or None
     if len(picked) != size:
         raise ProviderFailure("INVALID_REQUEST", "MARKET_INTERVIEW_TARGET_INSUFFICIENT", 422, False,
                               safe_diagnostics={"requested": size, "drawn": len(picked),
@@ -238,12 +248,13 @@ def draw_panel(cards: dict[str, str], frame: list[dict], criteria: TargetCriteri
     for index, row in enumerate(picked, 1):
         pid = row["pid_hash"]
         rows.append({"participantId": f"R{index:03d}",
-                     "group": "TARGET" if pid in target_pids else "COMPARISON",
+                     "group": member_group if pid in target_pids or member_group == "EXPLORATORY" else "COMPARISON",
                      "cardText": cards[pid], "profile": parse_profile(cards[pid])})
     return rows, {"matched": len(target_frame), "rawMatched": report.raw_matched,
                   "total": len(frame), "relaxationLevel": report.relaxation_level,
                   "criteria": normalized, "criteriaText": criteria_text(normalized, facts, report),
-                  "warning": warning}
+                  "warning": warning, "representationStatus": representation_status,
+                  "customerUnit": customer_unit}
 
 
 def public_profile(profile: dict) -> str:

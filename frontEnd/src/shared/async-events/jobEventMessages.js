@@ -34,6 +34,7 @@ const messages = Object.freeze({
   'job.market.trace': '{traceDetail}',
   'job.business-model.trace': '{traceDetail}',
   'job.twin.trace': '{traceDetail}',
+  'job.market-interview.trace': '{traceDetail}',
   'job.concept-portfolio.summary': '{reviewed}개의 사업안을 검토해 {prepared}개가 준비되었고, {needsInput}개는 실제 사업정보 확인이 필요합니다.',
   'job.concept-portfolio.continuation.queued': '추가 사업정보 반영을 준비하고 있습니다.',
   'job.concept-portfolio.continuation.running': '추가 사업정보를 반영하고 있습니다.',

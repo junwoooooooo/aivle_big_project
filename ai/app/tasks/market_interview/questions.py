@@ -15,13 +15,21 @@ def concept_board(value) -> str:
     concept = value.selectedConcept
     identity = concept.get("identity") or {}
     solution = concept.get("solution") or {}
-    lines = [f"이름: {identity.get('name') or '이름 미정'}"]
+    operation = concept.get("operation") or {}
+    lines = [f"이름: {identity.get('conceptName') or identity.get('name') or concept.get('conceptName') or '이름 미정'}"]
+    definition = (identity.get("conceptDefinition") or identity.get("coreValue")
+                  or concept.get("conceptDefinition") or concept.get("coreValue"))
+    if definition: lines.append(f"핵심 설명: {definition}")
     target = identity.get("targetUsers") or concept.get("targetUsers")
     if target: lines.append(f"누구를 위한 것인가: {target}")
-    problem = concept.get("problem") or concept.get("problemScenario")
+    problem = solution.get("problemScenario") or concept.get("problem") or concept.get("problemScenario")
     if problem: lines.append(f"어떤 상황의 문제인가: {problem}")
+    mechanism = solution.get("solutionMechanism") or concept.get("solutionMechanism")
+    if mechanism: lines.append(f"어떻게 해결하는가: {mechanism}")
     features = solution.get("featureSet") or concept.get("featureSet") or []
     if features: lines.append("하는 일: " + " · ".join(str(item) for item in features[:12]))
+    actors = operation.get("actorRoles") or operation.get("providerRole") or concept.get("actorRoles")
+    if actors: lines.append(f"도입·운영 주체: {actors}")
     return "\n".join(lines)
 
 

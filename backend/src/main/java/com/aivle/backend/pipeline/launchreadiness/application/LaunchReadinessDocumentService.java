@@ -53,6 +53,17 @@ public class LaunchReadinessDocumentService {
     }
 
     public List<Field> fields(ModuleType type) {
+        if (type == ModuleType.LAUNCH) return List.of(
+            new Field("releaseScope", "출시 범위", "이번 출시에 포함하는 제품·서비스, 대상 고객과 제외 범위"),
+            new Field("launchCriteria", "출시 승인 기준", "출시 여부를 결정할 품질·사업·운영 기준과 확인 방법"),
+            new Field("goLiveSchedule", "출시 일정과 책임자", "주요 마일스톤, 승인자, 실행 담당자와 의사결정 시점"),
+            new Field("customerJourney", "고객 이용 준비", "가입·구매·온보딩·문의 등 출시 직후 고객 경험"),
+            new Field("supportPlan", "고객 지원과 공지", "지원 채널, 응답 기준, 안내·변경 공지 계획"),
+            new Field("complianceChecklist", "법무·정책·보안 확인", "필수 약관, 개인정보, 권한, 인허가 확인 상태"),
+            new Field("monitoringPlan", "출시 모니터링", "출시 후 관찰 지표, 경보 기준, 담당자와 점검 주기"),
+            new Field("incidentAndRollback", "장애 대응과 롤백", "중단 기준, 복구·롤백 절차, 고객 커뮤니케이션"),
+            new Field("launchCommunications", "출시 커뮤니케이션", "내부 공유, 고객 안내, 채널별 공개 순서"),
+            new Field("openRisks", "미해결 위험과 대응", "남은 위험, 영향, 완화 조치, 완료 증빙과 기한"));
         return type == ModuleType.TECHNOLOGY ? List.of(
             new Field("systemArchitecture", "시스템·제품 구조", "구성도, 주요 구성 요소와 연결 관계"),
             new Field("coreFunctions", "핵심 기능과 구현 상태", "기능별 현재 상태와 출시 기준"),
@@ -95,6 +106,8 @@ public class LaunchReadinessDocumentService {
             }
         }
     }
-    private String label(ModuleType type) { return type == ModuleType.TECHNOLOGY ? "기술" : "운영"; }
+    private String label(ModuleType type) { return switch (type) {
+        case TECHNOLOGY -> "기술"; case OPERATIONS -> "운영"; case LAUNCH -> "출시 준비";
+    }; }
     public record Field(String key, String label, String guide) {}
 }

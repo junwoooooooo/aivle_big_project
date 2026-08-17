@@ -279,8 +279,11 @@ public class LaunchReadinessService {
             null, null, null, null, null, null, null, null, null, null, null, false, false,
             false, null, "PROFESSIONAL_INPUT", null);
     }
-    private TaskType taskType(ModuleType type) { return type == ModuleType.TECHNOLOGY
-        ? TaskType.LAUNCH_TECHNOLOGY_READINESS : TaskType.LAUNCH_OPERATIONS_READINESS; }
+    private TaskType taskType(ModuleType type) { return switch (type) {
+        case TECHNOLOGY -> TaskType.LAUNCH_TECHNOLOGY_READINESS;
+        case OPERATIONS -> TaskType.LAUNCH_OPERATIONS_READINESS;
+        case LAUNCH -> TaskType.LAUNCH_READINESS;
+    }; }
     private String requiredKey(String value) {
         if (value == null || value.isBlank() || value.strip().length() > 128) throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
         return value.strip();

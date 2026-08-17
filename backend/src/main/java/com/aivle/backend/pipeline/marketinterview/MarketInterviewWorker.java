@@ -84,7 +84,9 @@ public class MarketInterviewWorker {
             else service.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
                 failure.code(), failure.reason(), failure.retryable());
             completion.materializeFailure(claim.taskRunId(), failure.code());
-            publish(context, "FAILED", "job.market-interview.failed", JobEvent.Status.FAILED, "AI_SERVICE_UNAVAILABLE");
+            String safeCode = Set.of("MARKET_INTERVIEW_SEMANTIC_MISMATCH", "MARKET_INTERVIEW_TARGET_UNAVAILABLE")
+                .contains(failure.code()) ? failure.code() : "AI_SERVICE_UNAVAILABLE";
+            publish(context, "FAILED", "job.market-interview.failed", JobEvent.Status.FAILED, safeCode);
         } catch (TaskRunFailure failure) {
             service.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
                 "RESULT_SCHEMA_INVALID", failure.getReason(), false);

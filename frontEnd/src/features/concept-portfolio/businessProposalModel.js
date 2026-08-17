@@ -153,7 +153,7 @@ export function formatKoreanCurrencyAmount(amount, currency = '') {
   const parts = [];
   for (const [unit, label] of groups) {
     const group = Math.floor(remainder / unit);
-    if (group > 0) parts.push(`${formatKoreanNumberGroup(group)}${label}`);
+    if (group > 0) parts.push(`${group < 100 ? group : formatKoreanNumberGroup(group)}${label}`);
     remainder %= unit;
   }
   if (remainder > 0 || parts.length === 0) parts.push(formatKoreanNumberGroup(remainder) || '0');
@@ -238,7 +238,19 @@ export function detailedComparisonGroups(concepts) {
 
 export function hypothesisDecisionLabel(hypothesis) {
   if (hypothesis?.locked) return '확정된 값';
-  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus) ? '확인 완료' : 'AI가 제안한 값';
+  return ['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis?.decisionStatus)
+    ? '확인 완료' : 'AI 제안 · 확인 필요';
+}
+
+export function hypothesisNeedsConfirmation(hypothesis) {
+  return Boolean(hypothesis) && !['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis.decisionStatus);
+}
+
+export function hypothesisConfirmationMessage(hypothesis) {
+  if (!hypothesisNeedsConfirmation(hypothesis)) return '';
+  if (hypothesis.legalReviewStatus === 'FAILED') return '법률 검토를 통과하지 못했습니다. 값을 수정하거나 다른 제안을 선택해 주세요.';
+  if (hypothesis.semanticStatus !== 'VALID') return '현재 AI 제안은 그대로 확정할 수 없습니다. 값을 확인해 수정하거나 다른 제안을 선택해 주세요.';
+  return '현재 AI 제안을 기준값으로 일괄 확정할 수 있습니다.';
 }
 
 export function businessDecisionStage(selection) {

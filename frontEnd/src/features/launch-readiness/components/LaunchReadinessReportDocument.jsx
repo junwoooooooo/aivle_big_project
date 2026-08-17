@@ -1,6 +1,13 @@
 import { formatReportDate } from '../model/reportDocumentPresentation.js';
 
 const INPUT_LABELS = {
+  launch: {
+    releaseScope: '출시 범위', launchCriteria: '출시 승인 기준', goLiveSchedule: '출시 일정과 책임자',
+    customerJourney: '고객 이용 준비', supportPlan: '고객 지원과 공지',
+    complianceChecklist: '법무·정책·보안 확인', monitoringPlan: '출시 모니터링',
+    incidentAndRollback: '장애 대응과 롤백', launchCommunications: '출시 커뮤니케이션',
+    openRisks: '미해결 위험과 대응',
+  },
   technology: {
     systemArchitecture: '시스템·제품 구조', coreFunctions: '핵심 기능과 구현 상태',
     techStack: '기술 스택·인프라', integrations: '외부 연동·의존성',
@@ -28,7 +35,7 @@ function ReportSection({ number, title, children, className = '' }) {
 
 export function LaunchReadinessReportDocument({ module, current, projectName, includeSources = true, embedded = false }) {
   const result = current?.analysis;
-  const label = module === 'technology' ? '기술' : '운영';
+  const label = module === 'launch' ? '출시 준비' : module === 'technology' ? '기술' : '운영';
   if (!result) return <article className="launch-report-document"><p>표시할 {label} 분석 결과가 없습니다.</p></article>;
   const inputs = Object.entries(current.professionalInput ?? {})
     .filter(([, value]) => typeof value === 'string' && value.trim());
@@ -37,7 +44,7 @@ export function LaunchReadinessReportDocument({ module, current, projectName, in
   return <article className={`launch-report-document${embedded ? ' is-embedded' : ''}`} data-report-document={module}>
     <header className="launch-report-document__cover">
       <p>VENTURE VERIFY · LAUNCH READINESS</p>
-      <h1>{label} 출시 준비도 보고서</h1>
+      <h1>{module === 'launch' ? '출시 준비 보고서' : `${label} 출시 준비도 보고서`}</h1>
       <span>작성한 {label} 전문 계획과 공개 참고자료를 바탕으로 현재 출시 준비 상태를 정리했습니다.</span>
       <dl><div><dt>프로젝트명</dt><dd>{projectName || '자료 없음'}</dd></div><div><dt>분석 기준일</dt><dd>{formatReportDate(current.completedAt)}</dd></div><div><dt>입력 문서</dt><dd>{current.sourceDocumentName || '사용자 전문 입력 문서'}</dd></div></dl>
     </header>

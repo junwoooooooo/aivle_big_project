@@ -57,6 +57,16 @@ public class AiTaskProgressController {
         @Size(max=200) String parentId,
         @Size(max=80) String reasonCode,
         @Size(max=80) String decision,
+        @Min(0) Integer completedCount,
+        @Min(0) Integer totalCount,
+        @Min(0) Integer candidateCount,
         @NotNull Instant occurredAt
-    ) { }
+    ) {
+        public ProgressRequest(String taskRunId, String taskAttemptId, String correlationId,
+                int sequence, String stage, String action, String status, String safeSummary,
+                String entityId, String parentId, String reasonCode, String decision, Instant occurredAt) {
+            this(taskRunId, taskAttemptId, correlationId, sequence, stage, action, status, safeSummary,
+                entityId, parentId, reasonCode, decision, null, null, null, occurredAt);
+        }
+    }
 }

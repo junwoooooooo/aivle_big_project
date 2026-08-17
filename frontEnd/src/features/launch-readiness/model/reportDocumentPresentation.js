@@ -1,8 +1,5 @@
 const REPORT_LABELS = Object.freeze({
-  technology: '기술',
-  operations: '운영',
-  finance: '재무',
-  integrated: '통합',
+  launch: '출시준비',
 });
 
 export const REPORT_ORDER = Object.freeze(['technology', 'operations', 'finance']);
@@ -12,10 +9,8 @@ export function canonicalizeReportModules(modules = []) {
   return REPORT_ORDER.filter((module) => selected.has(module));
 }
 
-export function reportModulesFromQuery(reportType, searchParams) {
-  return reportType === 'integrated'
-    ? canonicalizeReportModules(searchParams.getAll('modules'))
-    : canonicalizeReportModules([reportType]);
+export function reportModulesFromQuery(reportType) {
+  return reportType === 'launch' ? ['launch'] : [];
 }
 
 function compactKoreanUnit(value, unit, shortUnit, divisor) {
@@ -73,9 +68,8 @@ export function sanitizeReportFilenamePart(value, fallback = '프로젝트', max
 
 export function launchReadinessReportTitle(projectName, reportType, completedAt) {
   const project = sanitizeReportFilenamePart(projectName);
-  if (reportType === 'integrated') return `${project}_출시준비_통합보고서_${compactTimestamp(completedAt)}`;
-  const label = REPORT_LABELS[reportType] ?? REPORT_LABELS.integrated;
-  return `${project}_${label}_출시준비_보고서_${compactTimestamp(completedAt)}`;
+  const label = REPORT_LABELS[reportType] ?? REPORT_LABELS.launch;
+  return `${project}_${label}_보고서_${compactTimestamp(completedAt)}`;
 }
 
 export function printLaunchReadinessReport(projectName, reportType, completedAt) {

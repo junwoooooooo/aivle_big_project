@@ -28,12 +28,15 @@ def _search_queries(module_type: str, values: dict[str, str]) -> list[str]:
         "mysql", "redis", "api", "saas", "개인정보", "결제", "인증", "백업", "모니터링",
         "고객지원", "sla", "물류", "공급망", "파일럿", "장애대응",
     ]
-    keywords = " ".join(token for token in allowed if token in context) or (
-        "소프트웨어 서비스" if module_type == "TECHNOLOGY" else "서비스 운영"
-    )
+    keywords = " ".join(token for token in allowed if token in context) or ({
+        "TECHNOLOGY": "소프트웨어 서비스", "OPERATIONS": "서비스 운영",
+    }.get(module_type, "제품 서비스 출시 준비"))
     if module_type == "TECHNOLOGY":
         return [f"{keywords} 공식 기술 아키텍처 보안 가이드", f"{keywords} 성능 테스트 장애 대응 공식 문서"]
-    return [f"{keywords} 운영 KPI SLA 파일럿 가이드", f"{keywords} 고객 지원 장애 대응 운영 벤치마크"]
+    if module_type == "OPERATIONS":
+        return [f"{keywords} 운영 KPI SLA 파일럿 가이드", f"{keywords} 고객 지원 장애 대응 운영 벤치마크"]
+    return [f"{keywords} 출시 체크리스트 롤백 모니터링 가이드",
+            f"{keywords} go live 승인 기준 고객 지원 공식 가이드"]
 
 
 async def _external_evidence(module_type: str, values: dict[str, str]) -> list[dict[str, str]]:
@@ -64,11 +67,13 @@ async def _external_evidence(module_type: str, values: dict[str, str]) -> list[d
 
 
 def _analysis_system(module_type: str) -> str:
-    subject = "기술" if module_type == "TECHNOLOGY" else "운영"
+    subject = {"TECHNOLOGY": "기술", "OPERATIONS": "운영"}.get(module_type, "출시 준비")
     dimensions = (
         "아키텍처 적합성, 구현 완성도, 보안·데이터, 성능·확장, 테스트·출시"
         if module_type == "TECHNOLOGY"
         else "프로세스, 인력·책임, 공급·파트너, 고객지원·품질, 파일럿·확장"
+        if module_type == "OPERATIONS"
+        else "출시 범위·승인 기준, 고객 이용 준비, 법무·정책 확인, 모니터링·장애 대응, 커뮤니케이션·미해결 위험"
     )
     return f"""당신은 기업 출시심사위원회의 {subject} 전문 분석가입니다.
 사용자가 작성한 전문입력을 사실 판단의 정본으로 사용하십시오. 외부 검색 결과는 검증 보조자료로만 사용하십시오.
@@ -95,7 +100,7 @@ async def _generate(request: ProfessionalAnalysisRequest, evidence: list[dict[st
 async def _review(request: ProfessionalAnalysisRequest, analysis: ProfessionalAnalysis) -> AnalysisReview:
     system = """당신은 독립된 품질검증자입니다. 사용자 전문입력과 분석 결과만 비교하십시오.
 통과 조건은 (1) 입력에 없는 확정 사실·숫자가 없음, (2) 위험·조치·게이트가 구체적임,
-(3) 기술과 운영 영역이 섞이지 않음, (4) 점수가 발견된 위험과 모순되지 않음입니다.
+(3) 요청된 분석 영역과 다른 독립 업무의 결과를 대신 만들지 않음, (4) 점수가 발견된 위험과 모순되지 않음입니다.
 하나라도 어기면 passed=false로 하고 재분석에 바로 쓸 수 있는 한국어 피드백을 반환하십시오."""
     raw = await execute_structured_prompt(
         system,

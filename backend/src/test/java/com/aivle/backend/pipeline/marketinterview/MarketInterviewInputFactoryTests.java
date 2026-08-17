@@ -25,6 +25,8 @@ class MarketInterviewInputFactoryTests {
         assertThat(input.path("sampleSize").asInt()).isEqualTo(sampleSize);
         assertThat(input.path("source").path("selectionRevision").asInt()).isEqualTo(4);
         assertThat(input.path("source").path("bmPlanRevision").asInt()).isEqualTo(3);
+        assertThat(input.path("targetingContext").path("customerUnit").asText()).isEqualTo("ORGANIZATION");
+        assertThat(input.path("targetingContext").path("marketSeries").asText()).isEqualTo("A");
     }
 
     @ParameterizedTest
@@ -41,7 +43,7 @@ class MarketInterviewInputFactoryTests {
         when(seed.getSnapshotHash()).thenReturn("sha256:" + "a".repeat(64));
         when(seed.getSnapshotJson()).thenReturn("""
             {"contract":"market-analysis-seed-snapshot-v1","schemaVersion":"2.0",
-             "selectedConcept":{"identity":{"name":"예약 도우미","targetUsers":"서울 매장"}},
+             "selectedConcept":{"identity":{"conceptName":"예약 도우미","targetUsers":"서울 매장 운영 업체"}},
              "finalHypotheses":{}}
             """);
         return seed;

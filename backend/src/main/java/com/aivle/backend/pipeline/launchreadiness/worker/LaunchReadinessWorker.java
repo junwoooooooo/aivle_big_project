@@ -19,7 +19,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class LaunchReadinessWorker {
-    private static final List<TaskType> TYPES = List.of(TaskType.LAUNCH_TECHNOLOGY_READINESS, TaskType.LAUNCH_OPERATIONS_READINESS);
+    private static final List<TaskType> TYPES = List.of(TaskType.LAUNCH_READINESS,
+        TaskType.LAUNCH_TECHNOLOGY_READINESS, TaskType.LAUNCH_OPERATIONS_READINESS);
     private final TaskRunService taskRuns;
     private final InternalAiExecutionClient ai;
     private final LaunchReadinessService readiness;

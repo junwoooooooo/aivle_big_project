@@ -13,7 +13,9 @@ public class MarketStrategySelector {
     };
     private static final String[] ORGANIZATION = {
         "b2b", "기업용", "기업 대상", "사업자", "소상공인", "매장", "사업장", "점포",
-        "법인", "조직", "팀 단위", "운영자", "원장", "merchant", "enterprise", "per store", "per seat"
+        "법인", "조직", "팀 단위", "운영자", "원장", "지자체", "공공기관", "기관",
+        "대여 업체", "대여업체", "업체", "운영 조직", "구매 담당자", "도입 담당자",
+        "municipality", "rental operator", "merchant", "enterprise", "per store", "per seat"
     };
     private static final String[] PERSON = {
         "b2c", "직장인", "지역 주민", "주민", "개인", "사용자", "소비자", "회원", "사람",

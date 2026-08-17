@@ -185,7 +185,8 @@ public class InternalAiExecutionClient {
             || taskType == TaskType.MARKETING_CONTENT_GENERATION
             || taskType == TaskType.TECH_OPS_ADVISORY
             || taskType == TaskType.LAUNCH_TECHNOLOGY_READINESS
-            || taskType == TaskType.LAUNCH_OPERATIONS_READINESS) {
+            || taskType == TaskType.LAUNCH_OPERATIONS_READINESS
+            || taskType == TaskType.LAUNCH_READINESS) {
             return longRunningClient;
         }
         if (taskType == TaskType.TWIN_SURVEY) {

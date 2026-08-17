@@ -88,8 +88,11 @@ class LaunchReadinessMultipartControllerTests {
             LaunchReadinessReportRepository reports = mock(LaunchReadinessReportRepository.class);
             TaskRunRepository runs = mock(TaskRunRepository.class);
             TaskRunService taskRuns = mock(TaskRunService.class);
-            TaskType taskType = type == ModuleType.TECHNOLOGY
-                ? TaskType.LAUNCH_TECHNOLOGY_READINESS : TaskType.LAUNCH_OPERATIONS_READINESS;
+            TaskType taskType = switch (type) {
+                case TECHNOLOGY -> TaskType.LAUNCH_TECHNOLOGY_READINESS;
+                case OPERATIONS -> TaskType.LAUNCH_OPERATIONS_READINESS;
+                case LAUNCH -> TaskType.LAUNCH_READINESS;
+            };
             TaskRun task = TaskRun.create(project, taskType, "LAUNCH_READINESS_INPUT", "snapshot",
                 "{}", hash('b'), "command-" + type.name().toLowerCase(),
                 "request-" + type.name().toLowerCase(), 1);

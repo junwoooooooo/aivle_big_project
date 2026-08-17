@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from collections import Counter
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -18,6 +19,7 @@ from app.tasks.market_interview.panel_sampling import (
 )
 from app.tasks.market_interview.provider import RESPONDENT_WORKLOAD, interview_concurrency
 from app.tasks.market_interview.questions import QUESTIONS, build_prompt, concept_board
+from app.tasks.market_interview.semantic_integrity import assert_semantic_integrity
 from app.twin.bank import load as load_bank
 
 StructuredCall = Callable[..., Awaitable[dict[str, Any]]]
@@ -45,12 +47,15 @@ CODEBOOK_PROMPT = COMMON_BOUNDARY + """
 응답 원문을 읽고 LIKE, CONCERN, DIFFERENTIATION, USAGE_SCENE, BARRIER, SUGGESTION 여섯 축의 코드북을 만든다.
 각 축에 적어도 하나의 구체적인 이름표를 만들고, 이름표는 전체 코드북에서 중복하지 않는다.
 이 단계에는 respondent id나 언급 수를 쓰지 않는다. relevance 답에 나온 현재 해결 대안의
-이름표는 alternatives에 별도로 만든다. 실제 고객에게 물을 중립 질문도 만든다."""
+이름표는 alternatives에 별도로 만든다. 실제 고객에게 물을 중립 질문도 만든다.
+한국어 서비스이므로 이름표와 후속 질문은 자연스러운 한국어로 작성한다."""
 
 CODING_PROMPT = COMMON_BOUNDARY + """
 고정 코드북으로 받은 응답자 전원을 정확히 한 줄씩 코딩한다. codebook의 이름표만 글자 그대로 쓴다.
 모르는 이름표를 만들지 않는다. themeTitles는 실제 답에 근거할 때만 고른다. alternativeLabel은 relevance 답의 현재 대안이며 없으면 빈 문자열이다.
-comprehension은 accurate/partial/misunderstood, differentiation은 different/similar/unclear 중 하나다."""
+각 themeTitles에는 themeEvidence를 정확히 하나씩 만들고, 해당 축의 실제 answerField와 답변에 그대로 존재하는 짧은 원문 quote를 반환한다.
+근거 인용이 없으면 그 테마를 배정하지 않는다. comprehension은 accurate/partial/misunderstood,
+differentiation은 different/similar/unclear 중 하나다."""
 
 LIMITATIONS = [
     "실제 고객 조사 결과가 아니라 실측 profile bank에서 표집한 파생 프로필 기반 AI 가상 고객 정성 탐색입니다.",
@@ -130,15 +135,26 @@ def _representatives(panel: list[dict], assignments) -> list[str]:
     return chosen[:5]
 
 
-async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCall) -> dict[str, Any]:
+async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCall,
+                                 event_sink=None) -> dict[str, Any]:
+    def progress(stage: str, summary: str, **counts) -> None:
+        if event_sink:
+            event_sink({"stage": stage, "action": "COMPLETED", "status": "RUNNING",
+                        "safeSummary": summary, **counts})
+
     try:
         cards, frame = load_bank()
+        progress("MI_BANK_READY", "프로필 뱅크의 패널 후보를 탐색했습니다.", candidateCount=len(frame))
         target_context = _target_context(value)
         target_text = "\n".join(text for text in target_context.values() if text)
+        progress("MI_TARGETING", "사업안의 고객 단위와 관찰 가능한 타겟 조건을 해석하고 있습니다.")
         targeting = TargetingResult.model_validate(await _call(
             call, TARGETING_PROMPT + "\n" + profile_taxonomy(cards), target_context, TargetingResult,
             "market_interview_target_criteria_v2"))
-        panel, sampling = draw_panel(cards, frame, targeting.criteria, value.sampleSize, target_text)
+        panel, sampling = draw_panel(cards, frame, targeting.criteria, value.sampleSize, target_text,
+                                     value.targetingContext.customerUnit)
+        progress("MI_PANEL_READY", "타겟 표현 가능성을 반영해 패널 구성을 완료했습니다.",
+                 completedCount=len(panel), totalCount=value.sampleSize)
         board = concept_board(value)
         semaphore = asyncio.Semaphore(interview_concurrency())
 
@@ -171,7 +187,16 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                     }}
             raise AssertionError("respondent retry loop must terminate")
 
-        outcomes = list(await asyncio.gather(*(transcript(row) for row in panel)))
+        completed_interviews = 0
+        async def transcript_with_progress(row):
+            nonlocal completed_interviews
+            outcome = await transcript(row)
+            completed_interviews += 1
+            progress("MI_INTERVIEWING", "가상 인터뷰 응답을 생성하고 있습니다.",
+                     completedCount=completed_interviews, totalCount=len(panel))
+            return outcome
+
+        outcomes = list(await asyncio.gather(*(transcript_with_progress(row) for row in panel)))
         usable = [outcome for outcome in outcomes if outcome["answer"] is not None]
         failures = [outcome["failure"] for outcome in outcomes if outcome["failure"] is not None]
         minimum_usable = max(MIN_USABLE, (value.sampleSize + 1) // 2)
@@ -197,6 +222,10 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         titles = [theme.title.strip() for theme in codebook.themes]
         if axes != set(AXES) or len(titles) != len(set(titles)):
             raise ValueError("codebook must cover every axis with globally unique labels")
+        if any(not re.search(r"[가-힣]", title) for title in titles):
+            raise ValueError("codebook labels must be localized for the Korean service")
+        if any(not re.search(r"[가-힣]", question) for question in codebook.followUpQuestions):
+            raise ValueError("follow-up questions must be localized for the Korean service")
         alternatives = [item.strip() for item in codebook.alternatives if item.strip()]
         if len(alternatives) != len(set(alternatives)):
             raise ValueError("codebook alternatives must be unique")
@@ -212,12 +241,32 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
             if actual != expected or len(actual) != len(set(actual)):
                 raise ValueError("coding batch must preserve every respondent exactly once")
             assignments.extend(coded.assignments)
+            progress("MI_CODING", "응답별 원문 근거를 확인하며 코딩하고 있습니다.",
+                     completedCount=len(assignments), totalCount=len(transcript_rows))
         known = {theme.title: theme for theme in codebook.themes}
         if any(title not in known for row in assignments for title in row.themeTitles):
             raise ValueError("coding referenced an unknown codebook theme")
         if any(row.alternativeLabel.strip() and row.alternativeLabel.strip() not in alternatives
                for row in assignments):
             raise ValueError("coding referenced an unknown alternative")
+
+        evidence_by_participant: dict[str, dict[str, Any]] = {}
+        for row in assignments:
+            evidence_titles = [item.themeTitle for item in row.themeEvidence]
+            if len(evidence_titles) != len(set(evidence_titles)) or set(evidence_titles) != set(row.themeTitles):
+                raise ValueError("every assigned theme must have one unique evidence quote")
+            validated: dict[str, Any] = {}
+            answer = answer_by_id[row.participantId]
+            for evidence in row.themeEvidence:
+                theme = known.get(evidence.themeTitle)
+                if theme is None or evidence.answerField != AXIS_SOURCE[theme.axis]:
+                    raise ValueError("theme evidence must reference its source answer axis")
+                actual = re.sub(r"\s+", " ", str(getattr(answer, evidence.answerField))).strip()
+                quote = re.sub(r"\s+", " ", evidence.quote).strip()
+                if not quote or quote not in actual:
+                    raise ValueError("theme evidence quote must be a verbatim respondent answer excerpt")
+                validated[evidence.themeTitle] = evidence
+            evidence_by_participant[row.participantId] = validated
 
         group_by_id = {row["participantId"]: row["group"] for row in usable_panel}
         memberships = {title: [] for title in known}
@@ -228,11 +277,11 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         for title, theme in known.items():
             ids = memberships[title]
             if not ids: continue
-            quote = str(getattr(answer_by_id[ids[0]], AXIS_SOURCE[theme.axis])).strip()
+            quote = evidence_by_participant[ids[0]][title].quote
             themes.append({"axis": theme.axis, "title": title, "description": theme.description,
                            "participantIds": ids, "mentionCount": len(ids),
                            "targetCount": sum(group_by_id.get(rid) == "TARGET" for rid in ids),
-                           "nonTargetCount": sum(group_by_id.get(rid) == "COMPARISON" for rid in ids),
+                           "nonTargetCount": sum(group_by_id.get(rid) != "TARGET" for rid in ids),
                            "quote": quote})
         if not themes:
             raise ValueError("coding produced no traceable theme")
@@ -251,16 +300,17 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                                                 "respondentIds": shared,
                                                 "overlapCount": len(shared)})
         cross_relationships.sort(key=lambda row: (-row["overlapCount"], row["suggestionTitle"], row["relatedTitle"]))
-        representative_ids = _representatives(usable_panel, assignments)
+        progress("MI_PATTERNS", "응답별 코딩에서 반복 패턴과 연결 관계를 정리했습니다.")
         participants = []
         interviews = []
         for row in usable_panel:
             rid = row["participantId"]
-            if rid not in representative_ids: continue
             answer = answer_by_id[rid]
+            context = {"TARGET": "직접 타겟 조건 일치", "COMPARISON": "비교 관점",
+                       "PROXY": "관찰 가능한 대리 조건", "EXPLORATORY": "일반 관점의 탐색 표본"}[row["group"]]
             participants.append({"participantId": rid, "label": f"가상 패널 {rid}",
                                  "profile": public_profile(row["profile"]),
-                                 "context": "타겟 조건 일치" if row["group"] == "TARGET" else "비교 관점",
+                                 "context": context,
                                  "needs": [], "group": row["group"]})
             interviews.append({"participantId": rid, "questions": [
                 {"question": question, "answer": str(getattr(answer, field)),
@@ -286,7 +336,11 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                           "attemptedCount": len(panel), "usableCount": len(usable),
                           "failedCount": len(failures),
                           "targetCount": sum(row["group"] == "TARGET" for row in usable_panel),
-                          "nonTargetCount": sum(row["group"] == "COMPARISON" for row in usable_panel),
+                          "nonTargetCount": sum(row["group"] != "TARGET" for row in usable_panel),
+                          "proxyCount": sum(row["group"] == "PROXY" for row in usable_panel),
+                          "exploratoryCount": sum(row["group"] == "EXPLORATORY" for row in usable_panel),
+                          "representationStatus": sampling["representationStatus"],
+                          "customerUnit": sampling["customerUnit"],
                           "targetCoverageWarning": sampling["warning"]},
             "participants": participants, "interviews": interviews, "themes": themes,
             "crossRelationships": cross_relationships[:24],
@@ -300,13 +354,17 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                                       "participantId": row["participantId"], "answerCount": 9,
                                       "group": row["group"]} for row in usable_panel],
             "codingTrace": [{"participantId": row.participantId, "themeTitles": row.themeTitles,
+                             "themeEvidence": [item.model_dump(mode="json") for item in row.themeEvidence],
                              "comprehension": row.comprehension, "differentiation": row.differentiation,
                              "alternativeLabel": row.alternativeLabel,
                              "group": group_by_id[row.participantId]} for row in assignments],
             "respondentFailures": failures,
             "saturation": _saturation(themes, assignments, len(usable)),
         }
-        return MarketInterviewResult.model_validate(result).model_dump(mode="json")
+        validated = MarketInterviewResult.model_validate(result).model_dump(mode="json")
+        assert_semantic_integrity(value.selectedConcept, validated)
+        progress("MI_RESULT_READY", "현재 사업안과 일치하는 인터뷰 결과를 구성했습니다.")
+        return validated
     except ValidationError as failure:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
     except ValueError as failure:

@@ -57,7 +57,8 @@ def test_exercise_matching_uses_real_bank_and_deterministic_target_comparison(
     assert report["rawMatched"] == 0
     assert report["matched"] > 0
     assert report["relaxationLevel"] == 3
-    assert (groups["TARGET"], groups["COMPARISON"]) == expected
+    assert (groups["PROXY"], groups["COMPARISON"]) == expected
+    assert report["representationStatus"] == "PARTIAL_PROXY"
     assert len(first) == size
     assert [(row["cardText"], row["group"]) for row in first] == [
         (row["cardText"], row["group"]) for row in second]
@@ -98,6 +99,9 @@ def test_full_v2_input_reaches_respondent_provider_boundary_with_shipped_bank(sh
                          "featureSet": ["동네 운동 파트너 매칭"]}},
         "validatedHypotheses": {"targetRegion": {"value": "대한민국"}},
         "businessModel": {"plan": {}, "constraints": {}},
+        "targetingContext": {"marketSeries": "B", "customerUnit": "PERSON",
+                             "buyerType": "PERSON_BUYER", "denominator": "대상 개인 수",
+                             "reason": "개인 이용자 조건으로 표집한다."},
         "boundaries": ["실제 고객 조사가 아니다.", "통계를 추론하지 않는다.", "사업안을 변경하지 않는다."],
     })
 

@@ -95,7 +95,9 @@ public class LaunchReadinessPdfService {
             document.close(); return output.toByteArray();
         } catch (Exception exception) { throw new IllegalStateException("분석 PDF를 만들 수 없습니다.", exception); }
     }
-    private String label(ModuleType type) { return type == ModuleType.TECHNOLOGY ? "기술" : "운영"; }
+    private String label(ModuleType type) { return switch (type) {
+        case TECHNOLOGY -> "기술"; case OPERATIONS -> "운영"; case LAUNCH -> "출시 준비";
+    }; }
     private String decision(String value) { return switch (value) { case "READY" -> "출시 준비"; case "CONDITIONAL" -> "조건부 준비"; default -> "보완 후 재검토"; }; }
     private String status(String value) { return switch (value) { case "READY", "PASS" -> "준비"; case "CAUTION", "OPEN", "MEDIUM" -> "주의"; case "RISK", "BLOCKED", "CRITICAL", "HIGH" -> "위험"; case "LOW" -> "낮음"; default -> value; }; }
     private PdfPCell cell(String value, Font font) { PdfPCell cell = new PdfPCell(new Phrase(value == null ? "-" : value, font)); cell.setPadding(9); cell.setLeading(14, 0); cell.setBorderColor(new Color(210, 220, 230)); return cell; }

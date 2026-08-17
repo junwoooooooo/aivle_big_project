@@ -34,7 +34,7 @@ public class LaunchReadinessInputSnapshot extends BaseEntity {
     @Column(name = "created_by_user_id", nullable = false) private Long createdByUserId;
     @Column(name = "finalized_at", nullable = false) private Instant finalizedAt;
 
-    public enum ModuleType { TECHNOLOGY, OPERATIONS }
+    public enum ModuleType { TECHNOLOGY, OPERATIONS, LAUNCH }
 
     public static LaunchReadinessInputSnapshot create(String id, Long projectId, ModuleType moduleType,
             String artifactId, String documentHash, String documentName, String parsedInputJson,

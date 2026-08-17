@@ -85,13 +85,14 @@ public class MarketInterviewService {
         owned(ownerId, projectId);
         MarketInterviewRun run = runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
             .orElse(null);
-        if (run == null) return CurrentView.notStarted();
         Source source = currentSourceOrNull(projectId);
+        JsonNode preview = source == null ? null : inputs.preview(source.seed(), source.selection(), source.bm());
+        if (run == null) return CurrentView.notStarted(preview);
         boolean stale = source == null || !bound(run, source);
         if (stale && run.getState() != MarketInterviewRun.State.STALE) {
             run.markStale(run.getResultJson(), LocalDateTime.now());
         }
-        return view(run, stale);
+        return view(run, stale, preview);
     }
 
     @Transactional
@@ -126,7 +127,7 @@ public class MarketInterviewService {
                 sampleSize, attempt, idempotencyKey, inputHash, LocalDateTime.now()))
             : runs.findByTaskRunIdAndDeletedAtIsNull(created.taskRun().getId())
                 .orElseThrow(() -> new IllegalStateException("Market interview TaskRun replay lineage missing"));
-        return view(domain, false);
+        return view(domain, false, inputs.preview(source.seed(), source.selection(), source.bm()));
     }
 
     private Source currentSource(Long projectId) {
@@ -149,22 +150,32 @@ public class MarketInterviewService {
             .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "프로젝트를 찾을 수 없습니다."));
     }
 
-    private CurrentView view(MarketInterviewRun run, boolean stale) {
+    private CurrentView view(MarketInterviewRun run, boolean stale, JsonNode preview) {
         JsonNode result = run.getResultJson() == null ? null : mapper.readTree(run.getResultJson());
-        String failure = run.getState() == MarketInterviewRun.State.FAILED
-            ? "시장 인터뷰를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." : null;
+        String failure = run.getState() != MarketInterviewRun.State.FAILED ? null
+            : "MARKET_INTERVIEW_SEMANTIC_MISMATCH".equals(run.getFailureCode())
+            ? "결과가 현재 사업안의 의미와 일치하지 않아 저장하지 않았습니다. 현재 사업안으로 다시 시도해 주세요."
+            : "MARKET_INTERVIEW_TARGET_UNAVAILABLE".equals(run.getFailureCode())
+            ? "현재 profile bank에서 직접 타겟을 구성할 수 없습니다. 타겟 조건을 확인해 주세요."
+            : "시장 인터뷰를 완료하지 못했습니다. 실패한 단계를 확인한 뒤 다시 시도해 주세요.";
         return new CurrentView(run.getState().name(), stale,
             run.getSourceMarketSeedSnapshotId(), run.getSourceSelectionRevision(), run.getAttempt(),
             run.getRequestedSampleSize(),
-            result, failure, run.getStartedAt(), run.getCompletedAt());
+            result, failure, run.getFailureCode(), run.getTaskRun().getId(),
+            preview == null ? null : preview.path("concept"),
+            preview == null ? null : preview.path("targeting"),
+            run.getStartedAt(), run.getCompletedAt());
     }
 
     public record CurrentView(String state, boolean stale, String sourceMarketSeedSnapshotId,
             Integer sourceSelectionRevision, Integer attempt, Integer requestedSampleSize,
-            JsonNode result, String failure,
+            JsonNode result, String failure, String failureCode, String taskRunId,
+            JsonNode concept, JsonNode targetingPreview,
             LocalDateTime startedAt, LocalDateTime completedAt) {
-        static CurrentView notStarted() {
-            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null);
+        static CurrentView notStarted(JsonNode preview) {
+            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null,
+                preview == null ? null : preview.path("concept"),
+                preview == null ? null : preview.path("targeting"), null, null);
         }
     }
 }

@@ -38,7 +38,7 @@ function normalizeAlternatives(result, startOrder) {
     if (!item.participantIds.includes(participantId)) {
       item.participantIds.push(participantId); item.mentionCount += 1;
       if (trace?.group === 'TARGET') item.targetCount += 1;
-      else if (trace?.group === 'COMPARISON') item.nonTargetCount += 1;
+      else item.nonTargetCount += 1;
     }
     groups.set(label, item);
   });
@@ -68,7 +68,8 @@ export function marketInterviewDashboard(result) {
     order, participantId: text(participant?.participantId), label: text(participant?.label),
     profile: text(participant?.profile), context: text(participant?.context),
     needs: Array.isArray(participant?.needs) ? participant.needs.map(text).filter(Boolean) : [],
-    group: participant?.group === 'COMPARISON' ? 'COMPARISON' : 'TARGET',
+    group: ['TARGET', 'COMPARISON', 'PROXY', 'EXPLORATORY'].includes(participant?.group)
+      ? participant.group : 'EXPLORATORY',
     interview: (Array.isArray(result?.interviews) ? result.interviews : [])
       .find((item) => item?.participantId === participant?.participantId) ?? null,
   })).filter((participant) => participant.participantId);

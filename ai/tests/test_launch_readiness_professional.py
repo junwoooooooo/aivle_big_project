@@ -63,3 +63,14 @@ def test_professional_input_is_the_only_required_product_authority():
     system = service._analysis_system("OPERATIONS")
     assert "전문입력을 사실 판단의 정본" in system
     assert "입력에 없는 사실이나 수치를 만들어내지" in system
+
+
+def test_launch_module_is_a_single_release_readiness_authority():
+    request = ProfessionalAnalysisRequest.model_validate({
+        "moduleType": "LAUNCH", "input": {"releaseScope": "지자체 대상 제한 출시",
+        "incidentAndRollback": "오류율 기준을 넘으면 이전 버전으로 복귀"},
+    })
+    assert request.moduleType == "LAUNCH"
+    system = service._analysis_system("LAUNCH")
+    assert "출시 범위·승인 기준" in system
+    assert "모니터링·장애 대응" in system

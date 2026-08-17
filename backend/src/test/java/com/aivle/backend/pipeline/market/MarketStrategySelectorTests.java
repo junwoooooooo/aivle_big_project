@@ -44,4 +44,13 @@ class MarketStrategySelectorTests {
     void unknownConceptDoesNotFallBackToTransactionValue() {
         assertThat(selector.select("새로운 문제 해결 서비스").series()).isEqualTo("D");
     }
+
+    @Test
+    void bicycleRentalAnalyticsForMunicipalitiesUsesOrganizationStrategy() {
+        var selected = selector.select("스마트 킥포인트 - 데이터 분석 서비스",
+            "AI 카메라 데이터로 자전거 대여와 관리 효율을 높인다",
+            "자전거 대여 업체와 지자체의 B2B 서비스 계약");
+        assertThat(selected.series()).isEqualTo("A");
+        assertThat(selected.strategy()).isEqualTo("ORGANIZATION_UNIT");
+    }
 }

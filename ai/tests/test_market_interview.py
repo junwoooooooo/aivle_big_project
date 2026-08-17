@@ -7,7 +7,10 @@ from pydantic import ValidationError
 
 from app.providers import ProviderFailure
 from app.tasks.market_interview import deep_engine, service
-from app.tasks.market_interview.models import MarketInterviewResult
+from app.tasks.market_interview.models import MarketInterviewResult, TargetCriteria
+from app.tasks.market_interview.models import MarketInterviewInput
+from app.tasks.market_interview.questions import concept_board
+from app.tasks.market_interview.semantic_integrity import assert_semantic_integrity
 
 
 def request_payload(sample_size=20):
@@ -19,6 +22,9 @@ def request_payload(sample_size=20):
         "selectedConcept": {"identity": {"name": "예약 도우미", "targetUsers": "서울 소규모 매장"},
                             "solution": {"featureSet": ["예약 확인"]}},
         "validatedHypotheses": {}, "businessModel": {"plan": {}, "constraints": {}},
+        "targetingContext": {"marketSeries": "B", "customerUnit": "PERSON",
+                             "buyerType": "PERSON_BUYER", "denominator": "대상 개인 수",
+                             "reason": "개인 이용자 조건으로 표집한다."},
         "boundaries": ["실제 고객 조사가 아니다.", "통계를 추론하지 않는다.", "사업안을 변경하지 않는다."],
     }
 
@@ -72,10 +78,19 @@ def provider(claim=None, target_region="서울", unknown_theme=False):
             return {"themes": themes, "alternatives": ["수기 처리"],
                     "followUpQuestions": ["현재 방식은 무엇인가요?", "무엇이 걸리나요?", "어떤 설명이 필요한가요?"]}
         if name == "market_interview_assignment_v2":
+            sources = {"간단한 확인": ("like", "간단한 확인이 좋습니다."),
+                       "가격 부담": ("concern", claim or "20% 할인이라면 써볼 수 있습니다."),
+                       "차이 불명확": ("differentiation", "기존 방식과 차이는 더 봐야 합니다."),
+                       "매장 마감": ("usageScene", "매장 마감 때 씁니다."),
+                       "도입 시간": ("barrier", "도입 시간이 걸립니다."),
+                       "설명 보완": ("suggestion", "설명을 보완해 주세요.")}
             rows = []
             for item in payload["transcripts"]:
+                selected = ["없는 주제"] if unknown_theme else [row["title"] for row in THEMES]
                 rows.append({"participantId": item["participantId"],
-                             "themeTitles": ["없는 주제"] if unknown_theme else [row["title"] for row in THEMES],
+                             "themeTitles": selected,
+                             "themeEvidence": ([{"themeTitle": "없는 주제", "answerField": "like", "quote": "간단한 확인이 좋습니다."}]
+                                               if unknown_theme else [{"themeTitle": title, "answerField": sources[title][0], "quote": sources[title][1]} for title in selected]),
                              "alternativeLabel": "수기 처리", "comprehension": "accurate",
                              "differentiation": "unclear"})
             return {"assignments": rows}
@@ -201,7 +216,9 @@ def _with_usable_count(result, usable):
         "usableCount": usable,
         "failedCount": len(provenance) - usable,
         "targetCount": sum(row["group"] == "TARGET" for row in kept),
-        "nonTargetCount": sum(row["group"] == "COMPARISON" for row in kept),
+        "nonTargetCount": sum(row["group"] != "TARGET" for row in kept),
+        "proxyCount": sum(row["group"] == "PROXY" for row in kept),
+        "exploratoryCount": sum(row["group"] == "EXPLORATORY" for row in kept),
     })
     for theme in result["themes"]:
         ids = [item for item in theme["participantIds"] if item in kept_ids]
@@ -209,7 +226,7 @@ def _with_usable_count(result, usable):
             "participantIds": ids,
             "mentionCount": len(ids),
             "targetCount": sum(groups[item] == "TARGET" for item in ids),
-            "nonTargetCount": sum(groups[item] == "COMPARISON" for item in ids),
+            "nonTargetCount": sum(groups[item] != "TARGET" for item in ids),
         })
     for relation in result["crossRelationships"]:
         ids = [item for item in relation["respondentIds"] if item in kept_ids]
@@ -356,3 +373,64 @@ def test_eighty_respondents_never_exceed_configured_concurrency(monkeypatch):
     result = execute_with_provider(monkeypatch, measured, 80)
     assert result["targeting"]["usableCount"] == 80
     assert maximum <= 3
+
+
+def test_current_bicycle_concept_board_preserves_semantic_nouns():
+    payload = request_payload()
+    payload["selectedConcept"] = {
+        "identity": {"conceptName": "스마트 킥포인트 - 데이터 분석 서비스",
+                     "conceptDefinition": "AI 카메라 데이터로 자전거 관리 효율을 높이는 서비스",
+                     "targetUsers": ["자전거 대여 운영 조직", "지자체"]},
+        "solution": {"problemScenario": "방치된 공유 자전거의 회수와 재배치가 늦다",
+                     "solutionMechanism": "AI 카메라로 자전거 주차 상태를 분석한다",
+                     "featureSet": ["자전거 상태 모니터링"]},
+    }
+    board = concept_board(MarketInterviewInput.model_validate(payload))
+    assert "스마트 킥포인트" in board
+    assert "자전거 관리" in board and "AI 카메라" in board
+    assert "이름 미정" not in board
+
+
+def test_bicycle_source_rejects_automotive_parking_result():
+    concept = {"identity": {"conceptName": "자전거 관리 분석", "conceptDefinition": "자전거 대여 관리",
+                            "targetUsers": ["자전거 대여 업체", "지자체"]},
+               "solution": {"problemScenario": "공유 자전거 방치", "solutionMechanism": "AI 카메라 분석"}}
+    result = {"themes": [{"title": "Smart Parking", "description": "Traditional parking management systems and parking spaces"}],
+              "interviews": [{"questions": [{"answer": "Urban parking lot management is difficult."}]}],
+              "followUpQuestions": ["Which parking space do you use?"]}
+    with pytest.raises(ProviderFailure) as failure:
+        assert_semantic_integrity(concept, result)
+    assert failure.value.code == "MARKET_INTERVIEW_SEMANTIC_MISMATCH"
+
+
+def test_b2b_organization_bank_is_exploratory_not_whole_bank_target():
+    cards, frame = bank()
+    no_conditions = TargetCriteria.model_validate({
+        "ageMin": 0, "ageMax": 0, "genders": [], "householdSizeMin": 0, "householdSizeMax": 0,
+        "regions": [], "incomeKeywords": [], "jobKeywords": [], "hasChildren": 0, "householdRoles": [],
+    })
+    panel, report = deep_engine.draw_panel(cards, frame, no_conditions, 20,
+                                           "자전거 대여 업체와 지자체", "ORGANIZATION")
+    assert report["representationStatus"] == "EXPLORATORY_ONLY"
+    assert {row["group"] for row in panel} == {"EXPLORATORY"}
+    assert "전체가 타겟" not in report["criteriaText"]
+
+
+def test_theme_mention_count_is_exactly_unique_evidence_respondents(monkeypatch):
+    result = execute(monkeypatch, 80)
+    theme = result["themes"][0]
+    kept = theme["participantIds"][:17]
+    removed = set(theme["participantIds"]) - set(kept)
+    theme.update({"participantIds": kept, "mentionCount": 17,
+                  "targetCount": sum(next(row["group"] for row in result["codingTrace"] if row["participantId"] == rid) == "TARGET" for rid in kept),
+                  "nonTargetCount": sum(next(row["group"] for row in result["codingTrace"] if row["participantId"] == rid) != "TARGET" for rid in kept)})
+    for trace in result["codingTrace"]:
+        if trace["participantId"] in removed:
+            trace["themeTitles"] = [title for title in trace["themeTitles"] if title != theme["title"]]
+            trace["themeEvidence"] = [item for item in trace["themeEvidence"] if item["themeTitle"] != theme["title"]]
+    result["saturation"]["maxMentionByAxis"][theme["axis"]] = 17
+    result["saturation"]["saturatedThemes"] = [item for item in result["saturation"]["saturatedThemes"] if theme["title"] not in item]
+    validated = MarketInterviewResult.model_validate(result)
+    checked = next(item for item in validated.themes if item.title == theme["title"])
+    assert checked.mentionCount == len(set(checked.participantIds)) == 17
+    assert not removed.intersection(checked.participantIds)

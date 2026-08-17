@@ -56,6 +56,7 @@ public class LaunchReadinessController {
     }
     private ModuleType type(String value) { return switch (value.toLowerCase()) {
         case "technology" -> ModuleType.TECHNOLOGY; case "operations" -> ModuleType.OPERATIONS;
+        case "launch" -> ModuleType.LAUNCH;
         default -> throw new IllegalArgumentException("지원하지 않는 출시 준비 분석입니다.");
     }; }
 }

@@ -94,7 +94,7 @@ describe('hypothesis provenance', () => {
   it('uses actual accepted statuses and user-facing locked copy', () => {
     expect(hypothesisDecisionLabel({ decisionStatus: 'ACCEPTED' })).toBe('확인 완료');
     expect(hypothesisDecisionLabel({ decisionStatus: 'USER_EDITED_ACCEPTED' })).toBe('확인 완료');
-    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('AI가 제안한 값');
+    expect(hypothesisDecisionLabel({ decisionStatus: 'PROPOSED' })).toBe('AI 제안 · 확인 필요');
     expect(hypothesisDecisionLabel({ locked: true })).toBe('확정된 값');
   });
   it('contains exactly seven validation assumptions', () => expect(HYPOTHESIS_TYPES).toHaveLength(7));

@@ -33,6 +33,7 @@ TASK_TYPES = {
     "FINANCE_ANALYSIS_REPORT",
     "LAUNCH_TECHNOLOGY_READINESS",
     "LAUNCH_OPERATIONS_READINESS",
+    "LAUNCH_READINESS",
     "MARKETING_CONTENT_GENERATION",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
@@ -323,10 +324,11 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "FINANCE_ANALYSIS_REPORT":
             from app.tasks.finance_analysis_report import execute_finance_analysis_report
             result = await execute_finance_analysis_report(body.input)
-        elif body.taskType in {"LAUNCH_TECHNOLOGY_READINESS", "LAUNCH_OPERATIONS_READINESS"}:
+        elif body.taskType in {"LAUNCH_TECHNOLOGY_READINESS", "LAUNCH_OPERATIONS_READINESS", "LAUNCH_READINESS"}:
             from app.tasks.launch_readiness.professional import analyze_professional_readiness
             result = await analyze_professional_readiness({
-                "moduleType": "TECHNOLOGY" if body.taskType == "LAUNCH_TECHNOLOGY_READINESS" else "OPERATIONS",
+                "moduleType": ({"LAUNCH_TECHNOLOGY_READINESS": "TECHNOLOGY",
+                                "LAUNCH_OPERATIONS_READINESS": "OPERATIONS"}.get(body.taskType, "LAUNCH")),
                 "input": body.input.get("professionalInput", {}),
             })
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
@@ -358,7 +360,14 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             result = await execute_twin_stimulus_draft(body.input)
         elif body.taskType == "MARKET_INTERVIEW":
             from app.tasks.market_interview import execute_market_interview
-            result = await execute_market_interview(body.input)
+            from app.progress.safe_task_progress import progress_sender_from_environment
+            async with progress_sender_from_environment(
+                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
+                correlation_id=correlation,
+            ) as progress:
+                result = await execute_market_interview(
+                    body.input, event_sink=progress.emit if progress.enabled else None,
+                )
         elif body.taskType == "TWIN_SURVEY":
             from app.twin import execute_twin_survey
             from app.progress.safe_task_progress import progress_sender_from_environment

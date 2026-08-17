@@ -31,7 +31,7 @@ describe('MarketInterviewPage', () => {
   it('shows the explicit NOT_STARTED CTA and synthetic disclaimer without auto-starting', async () => {
     const client = { get: vi.fn().mockResolvedValue({ data: current('NOT_STARTED') }), post: vi.fn() };
     renderPage(client);
-    expect(await screen.findByRole('button', { name: '시장 인터뷰 시작' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: '가상 고객 인터뷰 시작' })).toBeInTheDocument();
     expect(screen.getByText(/실제 고객에게 조사한 결과는 아닙니다/)).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });
@@ -40,11 +40,11 @@ describe('MarketInterviewPage', () => {
     const client = { get: vi.fn().mockResolvedValue({ data: current('NOT_STARTED') }),
       post: vi.fn().mockResolvedValue({ data: current('RUNNING') }) };
     renderPage(client);
-    fireEvent.click(await screen.findByRole('button', { name: '시장 인터뷰 시작' }));
+    fireEvent.click(await screen.findByRole('button', { name: '가상 고객 인터뷰 시작' }));
     await waitFor(() => expect(client.post).toHaveBeenCalledTimes(1));
     expect(client.post.mock.calls[0][0]).toMatch(/\/market-interview$/);
     expect(client.post.mock.calls[0][1]).toEqual({ sampleSize: 20 });
-    expect(await screen.findByText(/가상 고객 관점에서 사업안을 검토/)).toBeInTheDocument();
+    expect(await screen.findByText(/실제 실행 상태를 기다리고/)).toBeInTheDocument();
   });
 
   it('offers only the 20, 40 and 80 profile-bank sample contract', async () => {
@@ -62,18 +62,18 @@ describe('MarketInterviewPage', () => {
 
   it('renders structured participants, themes and follow-up questions', async () => {
     renderPage({ get: vi.fn().mockResolvedValue({ data: current('SUCCEEDED', { result }) }), post: vi.fn() });
-    expect(await screen.findByRole('heading', { name: '가상 응답자' })).toBeInTheDocument();
-    expect(screen.getByText('가상 참여자 A')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Respondent Explorer' })).toBeInTheDocument();
+    expect(screen.getAllByText('가상 참여자 A')).toHaveLength(2);
     expect(screen.getAllByText('도입 부담')).toHaveLength(2);
-    expect(screen.getByText(/요청 20명 · 유효 응답 19명 · 응답 생성 실패 1명/)).toBeInTheDocument();
-    expect(screen.getByText(/유효 응답 중 타겟 조건 일치 15명/)).toBeInTheDocument();
+    expect(screen.getByText(/응답 생성 실패 1명은 모든 코딩과 집계에서 제외/)).toBeInTheDocument();
+    expect(screen.getByText('15명')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '실제 고객에게 확인할 질문' })).toBeInTheDocument();
   });
 
   it('shows stale history and requires an explicit current-source restart', async () => {
     const client = { get: vi.fn().mockResolvedValue({ data: current('STALE', { result }) }), post: vi.fn() };
     renderPage(client);
-    expect(await screen.findByText(/이전 버전 기준/)).toBeInTheDocument();
+    expect(await screen.findByText(/이전 결과를 current로 표시하지 않습니다/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '현재 사업안으로 다시 인터뷰' })).toBeInTheDocument();
     expect(client.post).not.toHaveBeenCalled();
   });
@@ -82,7 +82,7 @@ describe('MarketInterviewPage', () => {
     const client = { get: vi.fn().mockResolvedValue({ data: current('FAILED', { failure: '잠시 후 다시 시도해 주세요.' }) }),
       post: vi.fn().mockResolvedValue({ data: current('RUNNING', { attempt: 2 }) }) };
     renderPage(client);
-    fireEvent.click(await screen.findByRole('button', { name: '다시 시도' }));
+    fireEvent.click(await screen.findByRole('button', { name: '실패한 실행 다시 시도' }));
     await waitFor(() => expect(client.post.mock.calls[0][0]).toMatch(/\/market-interview\/retry$/));
   });
 
@@ -92,10 +92,22 @@ describe('MarketInterviewPage', () => {
       .mockResolvedValueOnce({ data: current('RUNNING') }),
     post: vi.fn().mockRejectedValue(new Error('network ambiguity')) };
     renderPage(client);
-    fireEvent.click(await screen.findByRole('button', { name: '시장 인터뷰 시작' }));
-    await screen.findByText(/가상 고객 관점에서 사업안을 검토/);
+    fireEvent.click(await screen.findByRole('button', { name: '가상 고객 인터뷰 시작' }));
+    await screen.findByText(/실제 실행 상태를 기다리고/);
     expect(client.post).toHaveBeenCalledTimes(1);
     expect(client.get).toHaveBeenCalledTimes(2);
+  });
+
+  it('B2B organization concept를 전체 개인 패널 TARGET으로 미리 표시하지 않는다', async () => {
+    const concept = { identity: { conceptName: '스마트 킥포인트 - 데이터 분석 서비스',
+      conceptDefinition: 'AI 카메라 데이터로 자전거 대여 운영 효율을 높입니다.',
+      targetUsers: ['자전거 대여 운영 조직', '지자체'] } };
+    renderPage({ get: vi.fn().mockResolvedValue({ data: current('NOT_STARTED', {
+      concept, targetingPreview: { customerUnit: 'ORGANIZATION' },
+    }) }), post: vi.fn() });
+    expect(await screen.findByText('스마트 킥포인트 - 데이터 분석 서비스')).toBeInTheDocument();
+    expect(screen.getByText('직접 타겟 표현 불가 · 탐색 표본')).toBeInTheDocument();
+    expect(screen.queryByText(/패널 전체가 타겟/)).not.toBeInTheDocument();
   });
 
   it('never presents synthetic output as market evidence or a population statistic', async () => {

@@ -61,6 +61,8 @@ class MarketInterviewContractTests {
             .put("targetCount", 16).put("nonTargetCount", 3);
         ((ArrayNode) value.path("transcriptProvenance")).remove(19);
         ((ArrayNode) value.path("codingTrace")).remove(19);
+        ((ArrayNode) value.path("participants")).remove(19);
+        ((ArrayNode) value.path("interviews")).remove(19);
         ObjectNode theme = (ObjectNode) value.path("themes").path(0);
         ((ArrayNode) theme.path("participantIds")).remove(19);
         theme.put("mentionCount", 19).put("targetCount", 16).put("nonTargetCount", 3);
@@ -131,14 +133,19 @@ class MarketInterviewContractTests {
             .put("drawnSampleSize", requested).put("attemptedCount", requested).put("usableCount", usable)
             .put("failedCount", requested - usable).put("targetCount", targetCount)
             .put("nonTargetCount", nonTargetCount)
+            .put("proxyCount", 0).put("exploratoryCount", 0)
+            .put("representationStatus", "REPRESENTABLE_TARGET")
+            .put("customerUnit", "PERSON")
             .putNull("targetCoverageWarning");
         ArrayNode participants = root.putArray("participants");
         ArrayNode interviews = root.putArray("interviews");
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= usable; i++) {
             String id = "R%03d".formatted(i);
+            String group = i <= targetCount ? "TARGET" : "COMPARISON";
             ObjectNode participant = participants.addObject().put("participantId", id).put("label", "가상 패널 " + id)
-                .put("profile", "서울 · 매장 운영").put("context", "타겟 조건 일치");
-            participant.putArray("needs"); participant.put("group", "TARGET");
+                .put("profile", "서울 · 매장 운영")
+                .put("context", "TARGET".equals(group) ? "타겟 조건 일치" : "비교 관점");
+            participant.putArray("needs"); participant.put("group", group);
             ObjectNode interview = interviews.addObject().put("participantId", id);
             ArrayNode questions = interview.putArray("questions");
             for (int q = 0; q < 9; q++) questions.addObject().put("question", "질문 " + q)
@@ -166,7 +173,10 @@ class MarketInterviewContractTests {
             provenance.addObject().put("transcriptId", "T-" + id).put("participantId", id)
                 .put("answerCount", 9).put("group", group);
             ObjectNode coded = coding.addObject().put("participantId", id);
-            coded.putArray("themeTitles").add("가격 조건"); coded.put("comprehension", "accurate")
+            coded.putArray("themeTitles").add("가격 조건");
+            coded.putArray("themeEvidence").addObject().put("themeTitle", "가격 조건")
+                .put("answerField", "concern").put("quote", "개별 응답입니다.");
+            coded.put("comprehension", "accurate")
                 .put("differentiation", "unclear").put("alternativeLabel", "수기").put("group", group);
         }
         ArrayNode failures = root.putArray("respondentFailures");

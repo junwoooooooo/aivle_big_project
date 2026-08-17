@@ -8,7 +8,7 @@ class StrictModel(BaseModel):
 
 
 class ProfessionalAnalysisRequest(StrictModel):
-    moduleType: Literal["TECHNOLOGY", "OPERATIONS"]
+    moduleType: Literal["TECHNOLOGY", "OPERATIONS", "LAUNCH"]
     input: dict[str, str]
 
 

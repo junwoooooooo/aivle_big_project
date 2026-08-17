@@ -18,7 +18,8 @@ public final class MarketInterviewContract {
         "selectionRevision", "marketSeedSnapshotHash", "bmPlanRevision");
     private static final Set<String> TARGETING = Set.of("criteria", "criteriaText", "requestedSampleSize",
         "drawnSampleSize", "attemptedCount", "usableCount", "failedCount", "targetCount",
-        "nonTargetCount", "targetCoverageWarning");
+        "nonTargetCount", "proxyCount", "exploratoryCount", "representationStatus",
+        "customerUnit", "targetCoverageWarning");
     private static final Set<String> CRITERIA = Set.of("ageMin", "ageMax", "genders",
         "householdSizeMin", "householdSizeMax", "regions", "incomeKeywords", "jobKeywords",
         "hasChildren", "householdRoles");
@@ -28,7 +29,10 @@ public final class MarketInterviewContract {
     private static final Set<String> THEME = Set.of("axis", "title", "description", "participantIds", "mentionCount", "targetCount", "nonTargetCount", "quote");
     private static final Set<String> CROSS = Set.of("suggestionTitle", "relatedAxis", "relatedTitle", "respondentIds", "overlapCount");
     private static final Set<String> TRANSCRIPT = Set.of("transcriptId", "participantId", "answerCount", "group");
-    private static final Set<String> CODING = Set.of("participantId", "themeTitles", "comprehension", "differentiation", "alternativeLabel", "group");
+    private static final Set<String> CODING = Set.of("participantId", "themeTitles", "themeEvidence", "comprehension", "differentiation", "alternativeLabel", "group");
+    private static final Set<String> THEME_EVIDENCE = Set.of("themeTitle", "answerField", "quote");
+    private static final Set<String> ANSWER_FIELDS = Set.of("firstImpression", "restatement", "like", "concern",
+        "differentiation", "relevance", "usageScene", "barrier", "suggestion");
     private static final Set<String> RESPONDENT_FAILURE = Set.of("participantId", "group", "attempts", "code");
     private static final Set<String> RESPONDENT_FAILURE_CODES = Set.of(
         "TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT");
@@ -68,7 +72,12 @@ public final class MarketInterviewContract {
                 || usable < minimumUsable) invalid();
         int targetCount = integerValue(targeting, "targetCount", 0, 80);
         int nonTargetCount = integerValue(targeting, "nonTargetCount", 0, 80);
+        int proxyCount = integerValue(targeting, "proxyCount", 0, 80);
+        int exploratoryCount = integerValue(targeting, "exploratoryCount", 0, 80);
         if (targetCount + nonTargetCount != usable) invalid();
+        if (!Set.of("REPRESENTABLE_TARGET", "PARTIAL_PROXY", "EXPLORATORY_ONLY", "TARGET_UNAVAILABLE")
+                .contains(text(targeting, "representationStatus"))) invalid();
+        if (!Set.of("ORGANIZATION", "PERSON", "TRANSACTION", "UNKNOWN").contains(text(targeting, "customerUnit"))) invalid();
         nullableText(targeting, "targetCoverageWarning");
 
         Set<String> sampled = new HashSet<>();
@@ -81,7 +90,9 @@ public final class MarketInterviewContract {
             groupById.put(id, group(item, "group"));
         }
         if (groupById.values().stream().filter("TARGET"::equals).count() != targetCount
-                || groupById.values().stream().filter("COMPARISON"::equals).count() != nonTargetCount) invalid();
+                || groupById.values().stream().filter(value -> !"TARGET".equals(value)).count() != nonTargetCount
+                || groupById.values().stream().filter("PROXY"::equals).count() != proxyCount
+                || groupById.values().stream().filter("EXPLORATORY"::equals).count() != exploratoryCount) invalid();
 
         Set<String> failedRespondents = new HashSet<>();
         for (JsonNode item : array(result, "respondentFailures", failed, failed)) {
@@ -94,7 +105,7 @@ public final class MarketInterviewContract {
         }
 
         Set<String> representative = new HashSet<>();
-        for (JsonNode item : array(result, "participants", 1, 5)) {
+        for (JsonNode item : array(result, "participants", usable, usable)) {
             exact(item, PARTICIPANT);
             String id = respondentId(item, "participantId");
             if (!sampled.contains(id) || !representative.add(id)) invalid();
@@ -103,17 +114,21 @@ public final class MarketInterviewContract {
             if (!groupById.get(id).equals(group(item, "group"))) invalid();
         }
         Set<String> interviewed = new HashSet<>();
+        Map<String, Set<String>> answerQuotes = new HashMap<>();
         for (JsonNode item : array(result, "interviews", representative.size(), representative.size())) {
             exact(item, INTERVIEW);
             String id = respondentId(item, "participantId");
             if (!representative.contains(id) || !interviewed.add(id)) invalid();
+            Set<String> quotes = new HashSet<>();
             for (JsonNode answer : array(item, "questions", 9, 9)) {
-                exact(answer, ANSWER); text(answer, "question"); text(answer, "answer"); text(answer, "uncertainty");
+                exact(answer, ANSWER); text(answer, "question"); quotes.add(text(answer, "answer")); text(answer, "uncertainty");
             }
+            answerQuotes.put(id, quotes);
             for (String field : Set.of("concerns", "purchaseTriggers", "objections", "unmetNeeds"))
                 stringArray(item.get(field), true, 8);
         }
         if (!interviewed.equals(representative)) invalid();
+        if (!representative.equals(sampled)) invalid();
 
         Set<String> themeTitles = new HashSet<>();
         JsonNode themes = array(result, "themes", 1, 36);
@@ -155,6 +170,18 @@ public final class MarketInterviewContract {
             if (!sampled.contains(id) || !coded.add(id)) invalid();
             for (JsonNode title : stringArray(item.get("themeTitles"), true, 18))
                 if (!themeTitles.contains(title.asText())) invalid();
+            Set<String> evidenceTitles = new HashSet<>();
+            for (JsonNode evidence : array(item, "themeEvidence", 0, 18)) {
+                exact(evidence, THEME_EVIDENCE);
+                String title = text(evidence, "themeTitle");
+                if (!themeTitles.contains(title) || !evidenceTitles.add(title)
+                        || !ANSWER_FIELDS.contains(text(evidence, "answerField"))) invalid();
+                String quote = text(evidence, "quote");
+                if (answerQuotes.getOrDefault(id, Set.of()).stream().noneMatch(answer -> answer.contains(quote))) invalid();
+            }
+            Set<String> assignedTitles = new HashSet<>();
+            item.get("themeTitles").forEach(title -> assignedTitles.add(title.asText()));
+            if (!assignedTitles.equals(evidenceTitles)) invalid();
             if (!Set.of("accurate", "partial", "misunderstood").contains(text(item, "comprehension"))) invalid();
             if (!Set.of("different", "similar", "unclear").contains(text(item, "differentiation"))) invalid();
             JsonNode alternative = item.get("alternativeLabel");
@@ -217,7 +244,7 @@ public final class MarketInterviewContract {
     }
     private static String group(JsonNode value, String field) {
         String group = text(value, field);
-        if (!Set.of("TARGET", "COMPARISON").contains(group)) invalid();
+        if (!Set.of("TARGET", "COMPARISON", "PROXY", "EXPLORATORY").contains(group)) invalid();
         return group;
     }
     private static void nullableText(JsonNode value, String field) {

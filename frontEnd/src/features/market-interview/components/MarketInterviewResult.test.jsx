@@ -10,18 +10,20 @@ const result = {
   interviews: [{ participantId: 'R1', questions: [
     { question: '가장 걱정되는 점은?', answer: '일정이 맞지 않을까 걱정됩니다.', uncertainty: '실제 일정 확인' },
     { question: '현재는 어떻게 하나요?', answer: '혼자 운동합니다.', uncertainty: '빈도 확인' },
+    { question: '언제 사용하나요?', answer: '퇴근 뒤 사용합니다.', uncertainty: '상황 확인' },
+    { question: '무엇을 바꾸고 싶나요?', answer: '시간 선택을 늘리고 싶습니다.', uncertainty: '요구 확인' },
   ] }],
 };
 
 describe('MarketInterviewResult', () => {
   it('요약 → theme → 실제 응답자 → 전체 답변 traceability를 제공한다', () => {
     render(<MarketInterviewResult result={result} />);
-    expect(screen.getByRole('heading', { name: '반복된 응답을 원문 근거와 함께 확인하세요' })).toBeInTheDocument();
-    expect(screen.getByText('18명 중 9명')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '반복 패턴을 원문 근거와 함께 확인하세요' })).toBeInTheDocument();
+    expect(screen.getByText(/18명 중 근거 응답 9명/)).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: /시간 부담/ }).at(-1));
     expect(screen.getByText((_, element) => element?.classList?.contains('market-interview__filter-note')
-      && element.textContent.includes('시간 부담을 언급한 응답자 원문'))).toBeInTheDocument();
-    fireEvent.click(screen.getByText(/나머지 답변 보기/));
+      && element.textContent.includes('시간 부담의 원문 근거가 있는 응답자'))).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/나머지 답변 1개 보기/));
     expect(screen.getByText('혼자 운동합니다.')).toBeInTheDocument();
   });
 
@@ -33,6 +35,6 @@ describe('MarketInterviewResult', () => {
   it('theme과 respondent가 없는 완료 payload를 빈 상태로 표시한다', () => {
     render(<MarketInterviewResult result={{ targeting: { usableCount: 0 } }} />);
     expect(screen.getByRole('heading', { name: '표시할 반복 인사이트가 없습니다' })).toBeInTheDocument();
-    expect(screen.getByText('표시할 대표 응답자가 없습니다.')).toBeInTheDocument();
+    expect(screen.getByText('조건에 맞는 응답자가 없습니다.')).toBeInTheDocument();
   });
 });

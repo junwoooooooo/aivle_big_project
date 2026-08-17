@@ -42,11 +42,14 @@ def _validate_boundaries(result: dict) -> None:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False)
 
 
-async def execute_market_interview(task_input: dict) -> dict:
+async def execute_market_interview(task_input: dict, event_sink=None) -> dict:
     try:
         value = MarketInterviewInput.model_validate(task_input)
     except ValidationError as failure:
         raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
-    result = await execute_deep_interview(value, execute_market_interview_prompt)
+    if event_sink:
+        event_sink({"stage": "MI_INPUT_VALIDATED", "action": "COMPLETED",
+                    "safeSummary": "현재 사업안과 인터뷰 기준을 확인했습니다."})
+    result = await execute_deep_interview(value, execute_market_interview_prompt, event_sink=event_sink)
     _validate_boundaries(result)
     return result
