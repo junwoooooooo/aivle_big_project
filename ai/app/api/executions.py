@@ -35,6 +35,7 @@ TASK_TYPES = {
     "LAUNCH_OPERATIONS_READINESS",
     "LAUNCH_READINESS",
     "MARKETING_CONTENT_GENERATION",
+    "MARKETING_STRATEGY_GENERATION",
     "MARKETING_VISUAL_GENERATION",
     "MARKET_RESEARCH",
     "MARKET_INTERVIEW",
@@ -173,6 +174,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         source_hash = body.input.get("source", {}).get("hash", body.input.get("source", {}).get("sourceSnapshotHash", "unknown"))
         source_keys = [f"finalized-planning:{source_hash}"]
+    elif body.taskType == "MARKETING_STRATEGY_GENERATION":
+        text = json.dumps(body.input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        source_keys = [f"marketing-strategy-source:{body.input.get('sourceManifestHash', 'unknown')}"]
     elif body.taskType == "MARKETING_VISUAL_GENERATION":
         from app.tasks.marketing_visual.models import MarketingVisualInput
         try:
@@ -334,6 +338,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
             result = await execute_marketing_content(body.input)
+        elif body.taskType == "MARKETING_STRATEGY_GENERATION":
+            from app.tasks.marketing_strategy import execute_marketing_strategy
+            result = await execute_marketing_strategy(body.input)
         elif body.taskType == "MARKETING_VISUAL_GENERATION":
             from app.tasks.marketing_visual import execute_marketing_visual
             result = await execute_marketing_visual(body.input)

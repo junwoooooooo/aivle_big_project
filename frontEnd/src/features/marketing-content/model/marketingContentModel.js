@@ -36,7 +36,7 @@ export function marketingFailureMessage(error, technicalCode) {
 
 export function createSetupModel(marketingSourceSnapshotId = '') {
   return {
-    marketingSourceSnapshotId, contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
+    marketingSourceSnapshotId, marketingStrategyReportId: '', contentType: 'SOCIAL_POST', channel: '', purpose: '', tone: '명확하고 친근하게',
     length: 'MEDIUM', callToAction: '', requiredPhrases: '', excludedPhrases: '', additionalInstruction: '', referenceImage: null,
   };
 }
@@ -55,12 +55,13 @@ export function toCreateRequest(setup, referenceArtifactId = null) {
     contentType: setup.contentType, channel: setup.channel.trim(), purpose: setup.purpose.trim(),
     tone: setup.tone.trim(), length: setup.length, requiredPhrases: [...new Set(required)].slice(0, 20),
     excludedPhrases: parsePhrases(setup.excludedPhrases), additionalInstruction: instruction || null,
-    referenceArtifactId,
+    referenceArtifactId, marketingStrategyReportId: setup.marketingStrategyReportId || null,
   };
 }
 
 export function setupIsValid(setup) {
-  return Boolean(setup.marketingSourceSnapshotId && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
+  return Boolean(setup.marketingSourceSnapshotId && setup.marketingStrategyReportId
+    && setup.channel?.trim() && setup.purpose?.trim() && setup.tone?.trim());
 }
 
 export function emptyResult(contentType = 'SOCIAL_POST') {

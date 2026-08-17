@@ -98,11 +98,22 @@ export function useJobEvents(jobId, options = {}) {
           throw new Error('event stream closed');
         } catch (error) {
           if (controller.signal.aborted || terminal.current) return;
-          if (isAuthenticationError(error) || isMissingJob(error)) {
+          if (isAuthenticationError(error)) {
             dispatch({ type: 'ERROR', error });
             return;
           }
           sseFailures += 1;
+          // A start/retry response may arrive a few milliseconds before the event resource is
+          // visible. Treat only the first two cursor-zero 404s as this registration race.
+          if (isMissingJob(error) && cursor.current === 0 && sseFailures <= 2) {
+            dispatch({ type: 'RECONNECTING', error: null });
+            await wait(reconnectDelayMs, controller.signal);
+            continue;
+          }
+          if (isMissingJob(error)) {
+            dispatch({ type: 'ERROR', error });
+            return;
+          }
           dispatch({ type: 'RECONNECTING', error });
           const delay = Math.min(
             reconnectDelayMs * (2 ** (sseFailures - 1)),

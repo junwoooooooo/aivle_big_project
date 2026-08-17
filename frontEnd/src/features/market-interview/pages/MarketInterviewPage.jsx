@@ -99,7 +99,9 @@ export default function MarketInterviewPage() {
     <ProjectStageHeader step={4} eyebrow="정성적 고객 탐색" title="시장 인터뷰" description="현재 사업안을 실측 profile bank 기반 가상 관점으로 탐색하고, 원문 근거와 실제 고객 확인 질문까지 이어서 살펴봅니다." />
     {error ? <Alert tone="danger">{error}</Alert> : null}
     {view.stale || view.state === 'STALE' ? <Alert tone="warning" title="이전 사업안 기준 결과입니다">사업안이 변경되어 이전 결과를 current로 표시하지 않습니다. 현재 사업안으로 다시 인터뷰해 주세요.</Alert> : null}
-    {view.state === 'FAILED' ? <Alert tone="danger" title="시장 인터뷰를 완료하지 못했습니다">{view.failure ?? '실패한 단계를 확인한 뒤 다시 시도해 주세요.'}</Alert> : null}
+    {view.state === 'FAILED' ? <Alert tone="danger" title="시장 인터뷰를 완료하지 못했습니다">{view.failureCode === 'RESULT_SCHEMA_INVALID'
+      ? '응답 코딩 근거를 확인하는 단계에서 실패한 코딩 묶음을 자동으로 다시 생성했지만 계약을 충족하지 못했습니다. 새 실행으로 다시 시도해 주세요.'
+      : view.failure ?? '실패한 단계를 확인한 뒤 다시 시도해 주세요.'}</Alert> : null}
 
     {(view.state === 'NOT_STARTED' || view.state === 'STALE') ? <div className="market-interview__before">
       <Alert tone="info" title="AI 가상 고객 인터뷰">실측 profile bank에서 파생한 가상 관점을 탐색합니다. 실제 고객에게 조사한 결과는 아닙니다.</Alert>

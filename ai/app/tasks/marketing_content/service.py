@@ -23,6 +23,8 @@ async def execute_marketing_content(task_input: dict) -> dict:
     # Lineage/attempt metadata is validated but is not persuasive prompt material.
     prompt_input = {"source": value.source.model_dump(mode="json"),
                     "request": value.request.model_dump(mode="json")}
+    if value.strategy is not None:
+        prompt_input["strategy"] = value.strategy
     raw = await execute_structured_prompt(
         SYSTEM_PROMPT,
         json.dumps(prompt_input, ensure_ascii=False, sort_keys=True),

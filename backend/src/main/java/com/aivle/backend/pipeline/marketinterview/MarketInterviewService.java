@@ -157,6 +157,8 @@ public class MarketInterviewService {
             ? "결과가 현재 사업안의 의미와 일치하지 않아 저장하지 않았습니다. 현재 사업안으로 다시 시도해 주세요."
             : "MARKET_INTERVIEW_TARGET_UNAVAILABLE".equals(run.getFailureCode())
             ? "현재 profile bank에서 직접 타겟을 구성할 수 없습니다. 타겟 조건을 확인해 주세요."
+            : "RESULT_SCHEMA_INVALID".equals(run.getFailureCode())
+            ? "응답 코딩 근거를 확인하는 단계에서 자동 재시도 후에도 결과 형식이 맞지 않았습니다. 새 실행으로 다시 시도해 주세요."
             : "시장 인터뷰를 완료하지 못했습니다. 실패한 단계를 확인한 뒤 다시 시도해 주세요.";
         return new CurrentView(run.getState().name(), stale,
             run.getSourceMarketSeedSnapshotId(), run.getSourceSelectionRevision(), run.getAttempt(),

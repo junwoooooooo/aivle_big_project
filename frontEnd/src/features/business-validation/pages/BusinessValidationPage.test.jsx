@@ -67,14 +67,14 @@ describe('BusinessValidationContent', () => {
   it('시장 분석 실행 중에는 BM을 대기로 표시한다', () => {
     render(<BusinessValidationContent current={view('MARKET_RUNNING', stage('RUNNING'))} api={api} />);
     expect(screen.getByText('사업 검증 진행 중')).toBeInTheDocument();
-    expect(screen.getByText('대기')).toBeInTheDocument();
+    expect(screen.getAllByText('대기').length).toBeGreaterThan(0);
   });
 
   it('시장 완료 후 BM 실행 중에도 시장 결과를 보존한다', () => {
     render(<BusinessValidationContent current={view('BM_RUNNING',
       stage('SUCCEEDED', { market: {} }), stage('RUNNING'))} api={api} />);
     expect(screen.getByText('시장 결과 본문')).toBeInTheDocument();
-    expect(screen.getByText('비즈니스 모델')).toBeInTheDocument();
+    expect(screen.getByText('비즈니스 모델 분석')).toBeInTheDocument();
     expect(screen.getAllByText('진행 중').length).toBeGreaterThan(0);
   });
 
@@ -227,7 +227,7 @@ describe('BusinessValidationContent', () => {
     render(<BusinessValidationContent current={view('STALE')} refinement={refinement('FINALIZED')}
       refinementFinal={finalView()} api={api} />);
     expect(screen.getByText('다듬어진 컨셉')).toBeInTheDocument();
-    expect(screen.getByText('지역 연결')).toBeInTheDocument();
+    expect(screen.getAllByText('지역 연결').length).toBeGreaterThan(0);
     expect(screen.getByText('대한민국')).toBeInTheDocument();
     expect(screen.getByText('상점 확보')).toBeInTheDocument();
     expect(screen.getByText('10,000원 → 12,500원')).toBeInTheDocument();
@@ -339,7 +339,8 @@ describe('BusinessValidationPage multi-round command', () => {
       nextRound: { available: false, currentRound: 2, maxRounds: 3 } }) });
     render(<BusinessValidationPage />);
     fireEvent.click(await screen.findByRole('button', { name: '다른 제안 더 받기' }));
-    await screen.findByText('제안 2 / 3');
+    await screen.findByText('앞선 선택을 바탕으로 다른 개선안을 만들고 있습니다.');
+    expect(screen.queryByText('제안 2 / 3')).not.toBeInTheDocument();
     expect(pageClient.post.mock.calls[0][1]).toEqual({ expectedRound: 1,
       expectedProposalSetHash: null, expectedDecisionHash: 'sha256:decision' });
     expect(screen.getByText('앞선 선택을 바탕으로 다른 개선안을 만들고 있습니다.')).toBeInTheDocument();

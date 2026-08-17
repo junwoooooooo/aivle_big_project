@@ -32,6 +32,7 @@ import com.aivle.backend.pipeline.marketing.repository.MarketingAssetRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingContentRevisionRepository;
 import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRepository;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.pipeline.marketing.domain.MarketingSourceSnapshot;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -125,7 +126,8 @@ class MarketingContentArtifactTests {
             mock(CurrentConceptSourceResolver.class), sources, mock(MarketingSourceSnapshotRepository.class),
             mock(MarketingContentRepository.class), mock(MarketingContentRevisionRepository.class),
             mock(MarketingAssetRepository.class), new MarketingResultContract(), new MarketingLegalGuard(mapper),
-            mock(TaskRunService.class), mock(CanonicalInputHasher.class), mock(JobEventPublisher.class), mapper);
+            mock(MarketingStrategyService.class), mock(TaskRunService.class), mock(CanonicalInputHasher.class),
+            mock(JobEventPublisher.class), mapper);
     }
 
     private final class CompletionHarness {

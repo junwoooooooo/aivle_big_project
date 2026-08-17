@@ -159,6 +159,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   const actualRefinementStale = effectiveRefinement?.stale || effectiveFinal?.stale;
   const showRefinement = (state === 'COMPLETED' && !current?.stale) || refinementStarted || finalStarted;
   const deferValidationRerun = state === 'STALE' && healthyRefinement && !actualRefinementStale;
+  const hasResults = Boolean(marketResult || bmResult);
 
   return <ProjectWorkspace as="section" mode="analyze" className="business-validation">
     <ProjectStageHeader step={2} eyebrow="사업 검증" title="시장성과 사업 모델을 함께 검증하세요"
@@ -176,11 +177,22 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
 
     {running ? <BusinessValidationProgress state={state} /> : null}
 
+    {hasResults ? <>
+      <ValidationSummary market={marketResult?.market} bm={bmResult?.bm} />
+      <nav className="business-validation__local-nav" aria-label="사업 검증 결과 바로가기">
+        <a href="#validation-summary">요약</a>
+        {marketResult ? <a href="#validation-market">시장 분석</a> : null}
+        {bmResult ? <a href="#validation-bm">사업 모델</a> : null}
+        {showRefinement ? <a href="#validation-refinement">사업안 다듬기</a> : null}
+        {finalStarted ? <a href="#validation-final">최종 결과</a> : null}
+      </nav>
+    </> : null}
+
     {state === 'MARKET_FAILED' ? <FailurePanel title="시장 분석을 완료하지 못했습니다"
       message="비즈니스 모델 분석은 시작하지 않았습니다. 입력을 확인한 뒤 시장 분석부터 다시 실행할 수 있습니다."
       action="사업 검증 다시 실행" busy={busy} onAction={onStart} /> : null}
 
-    {marketResult ? <section className="business-validation__result" aria-labelledby="market-result-title">
+    {marketResult ? <section id="validation-market" className="business-validation__result" aria-labelledby="market-result-title">
       <header><span>시장 분석 완료</span><h2 id="market-result-title">시장 분석 결과</h2></header>
       <MarketResultBody result={marketResult} activeId={marketFocus.active} onJump={marketFocus.jump} />
     </section> : null}
@@ -189,18 +201,18 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
       message="완료된 시장 분석 결과는 그대로 보존되어 있습니다. 같은 시장 결과로 비즈니스 모델만 다시 실행합니다."
       action="BM 다시 시도" busy={busy} onAction={onRetryBm} /> : null}
 
-    {bmResult ? <section className="business-validation__result" aria-labelledby="bm-result-title">
+    {bmResult ? <section id="validation-bm" className="business-validation__result" aria-labelledby="bm-result-title">
       <header><span>비즈니스 모델 분석 완료</span><h2 id="bm-result-title">비즈니스 모델 결과</h2></header>
       <BusinessModelResultBody result={bmResult} />
     </section> : null}
 
-    {showRefinement ? <ConceptRefinementPanel refinement={effectiveRefinement} finalView={effectiveFinal}
+    {showRefinement ? <div id="validation-refinement">{finalStarted ? <span id="validation-final" className="business-validation__anchor" /> : null}<ConceptRefinementPanel refinement={effectiveRefinement} finalView={effectiveFinal}
       busy={refinementBusy} error={refinementError} onStart={onStartRefinement}
       onRetry={onRetryRefinement} onDecideAndApply={onDecideAndApply}
       onNext={onNextRefinement}
       onKeepCurrent={onKeepCurrent} onApply={onApplyRefinement}
       onRetryLegal={onRetryLegal} onRecoverLegalBlocked={onRecoverLegalBlocked}
-      onFinalize={onFinalizeRefinement} /> : null}
+      onFinalize={onFinalizeRefinement} /></div> : null}
 
     {deferValidationRerun ? <div className="business-validation__secondary-rerun">
       <p>새 기준으로 전체 시장·사업 모델 검증이 필요한 경우 다시 실행할 수 있습니다.</p>
@@ -210,30 +222,47 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
 }
 
 function BusinessValidationPreparation({ api, plan, disabled, actionLabel, onStart }) {
+  const draft = draftFrom(plan);
+  const preparedOperations = Object.values(draft).filter((value) => String(value ?? '').trim()).length;
+  const checks = ['시장 규모·기초 관측', '성장 관련 관측', '경쟁·대체재', '가격·비용',
+    '수요 근거', '사업 모델 적합성', '수익 구조 일관성'];
   return <div className="business-validation__preparation">
-    <section>
+    <section className="business-validation__mission">
       <header><span>사업 검증 준비</span><h2>현재 검증 기준을 확인하세요</h2>
-        <p>저장한 경쟁 정보와 운영 계획을 그대로 사용합니다.</p></header>
-      <details><summary>경쟁·대체재 정보</summary><CompetitorSeedForm api={api} disabled={disabled} /></details>
-      <details><summary>사업 운영 정보</summary><BmPlanReview draft={draftFrom(plan)} /></details>
+        <p>저장한 경쟁 정보와 운영 계획을 사용하며, 결과에 없는 수치나 판단은 새로 만들지 않습니다.</p></header>
+      <ul className="business-validation__checks">{checks.map((item) => <li key={item}>{item}</li>)}</ul>
+      <div className="business-validation__input-cards">
+        <details><summary><span><b>경쟁·대체재 정보</b><small>시장 비교 대상을 찾는 출발점입니다.</small></span><em>확인·수정</em></summary><CompetitorSeedForm api={api} disabled={disabled} /></details>
+        <details><summary><span><b>사업 운영 정보</b><small>{preparedOperations ? `저장된 운영·자원 항목 ${preparedOperations}개` : '아직 저장된 운영 정보가 없습니다.'}</small></span><em>확인·수정</em></summary><BmPlanReview draft={draft} /></details>
+      </div>
     </section>
-    <div className="business-validation__primary-action">
+    <div className="business-validation__primary-action"><ol aria-label="사업 검증 진행 방식"><li>시장 근거 수집</li><li>시장 결과 정리</li><li>비즈니스 모델 검토</li><li>사업안 다듬기</li></ol>
       <Button onClick={onStart} disabled={disabled}>{disabled ? '시작하는 중…' : actionLabel}</Button>
     </div>
   </div>;
 }
 
 export function BusinessValidationProgress({ state }) {
-  const marketDone = ['MARKET_COMPLETED', 'BM_RUNNING', 'COMPLETED'].includes(state);
-  const bmRunning = state === 'BM_RUNNING';
+  const activeIndex = state === 'BM_RUNNING' ? 4 : state === 'MARKET_COMPLETED' ? 3 : 1;
+  const stages = ['검증 기준 확인', '시장 조사 설계', '시장 근거 수집', '시장 결과 정리',
+    '비즈니스 모델 분석', '사업안 다듬기'];
   return <section className="business-validation__progress" aria-live="polite">
-    <header><span>사업 검증 진행 중</span><h2>두 분석을 순서대로 진행하고 있습니다</h2></header>
-    <ol>
-      <li data-state={marketDone ? 'complete' : 'active'}><span>1</span><div><strong>시장 분석</strong><small>{marketDone ? '완료' : '진행 중'}</small></div></li>
-      <li data-state={bmRunning ? 'active' : marketDone ? 'waiting' : 'waiting'}><span>2</span><div><strong>비즈니스 모델</strong><small>{bmRunning ? '진행 중' : '대기'}</small></div></li>
-    </ol>
+    <header><span>사업 검증 진행 중</span><h2>{state === 'BM_RUNNING' ? '시장 결과를 바탕으로 비즈니스 모델을 분석하고 있습니다' : '시장 근거를 수집하고 결과를 정리하고 있습니다'}</h2></header>
+    <ol>{stages.map((stage, index) => <li key={stage} data-state={index < activeIndex ? 'complete' : index === activeIndex ? 'active' : 'waiting'}><span>{index < activeIndex ? '✓' : index + 1}</span><div><strong>{stage}</strong><small>{index < activeIndex ? '완료' : index === activeIndex ? '진행 중' : '대기'}</small></div></li>)}</ol>
     <p>상세 실행 기록은 작업센터에서 확인할 수 있습니다.</p>
   </section>;
+}
+
+function ValidationSummary({ market, bm }) {
+  const growth = market?.growth;
+  const price = market?.price;
+  const cards = [
+    ['시장 규모', market?.tam?.value != null || market?.sam?.value != null ? '계산 결과 있음' : '근거 부족 · 미측정'],
+    ['관측 지표 변화', growth?.value != null ? `${growth.value}${growth.unit === 'PERCENT_PER_YEAR' ? '%/년' : ` ${growth.unit ?? ''}`}` : '미측정'],
+    ['관련 가격·비용', price?.min != null && price?.max != null ? `${Number(price.min).toLocaleString('ko-KR')} ~ ${Number(price.max).toLocaleString('ko-KR')} ${price.currency ?? ''}` : '미측정'],
+    ['BM 판정', bm?.decision ?? '분석 대기'],
+  ];
+  return <section id="validation-summary" className="business-validation__summary" aria-labelledby="validation-summary-title"><header><span>검증 결과 한눈에 보기</span><h2 id="validation-summary-title">확보한 근거와 판정을 먼저 확인하세요</h2></header><div>{cards.map(([label, value]) => <article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div></section>;
 }
 
 function FailurePanel({ title, message, action, busy, onAction }) {

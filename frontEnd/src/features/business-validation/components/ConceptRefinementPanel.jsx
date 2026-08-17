@@ -47,7 +47,7 @@ export default function ConceptRefinementPanel({ refinement, finalView, busy = f
 
   return <section className="concept-refinement" aria-labelledby="concept-refinement-title">
     <header><span>사업 검증 다음 단계</span><h2 id="concept-refinement-title">검증 결과로 사업안 다듬기</h2></header>
-    {Number.isInteger(currentRound) && currentRound > 0 && Number.isInteger(maxRounds)
+    {proposals.length > 0 && Number.isInteger(currentRound) && currentRound > 0 && Number.isInteger(maxRounds)
       ? <div className="concept-refinement__round" aria-label="다듬기 제안 진행">
         <strong>제안 {currentRound} / {maxRounds}</strong>
         {lastRound ? <span>마지막 제안입니다.</span> : null}
@@ -68,7 +68,13 @@ export default function ConceptRefinementPanel({ refinement, finalView, busy = f
     {state === 'FAILED' ? <div className="concept-refinement__status"><p>다듬기 제안을 만들지 못했습니다.</p>
       {refinement?.retry?.available ? <Action busy={busy} onClick={onRetry}>다시 시도</Action> : null}</div> : null}
 
-    {state === 'AWAITING_DECISION' ? <>
+    {state === 'AWAITING_DECISION' && proposals.length === 0 ? <div className="concept-refinement__status concept-refinement__no-change">
+      <strong>변경 제안 없음</strong>
+      <p>현재 검증에서는 반드시 수정해야 할 항목이 확인되지 않았습니다.</p>
+      <Action busy={busy} disabled={stale} onClick={onKeepCurrent}>현재 사업안으로 확정</Action>
+    </div> : null}
+
+    {state === 'AWAITING_DECISION' && proposals.length > 0 ? <>
       <p>검증 결과를 바탕으로 이런 변경을 제안합니다. 아직 사업안에는 반영되지 않았습니다.</p>
       <div className="concept-refinement__proposals">{proposals.map((proposal) =>
         <RefinementProposalCard key={proposal.proposalKey} proposal={proposal}

@@ -76,3 +76,48 @@
 1. 사용자가 현재 환경에서 같은 Business Validation 입력을 재실행해 KOSIS unresolved 슬롯이 WEB fallback으로 넘어가고 Market 결과가 degradation과 함께 완료되는지 확인한다.
 2. Backend dependency cache가 준비된 환경에서 SSE focused tests만 재실행한다.
 3. 인증 후 Launch 세 카드와 Interview Before/During/After를 실제 화면에서 확인한다.
+
+---
+
+## 2026-08-18 FAST PRODUCT POLISH + MARKETING STRATEGY TRANSPLANT
+
+### 기준
+
+- start SHA: `5866ac1ec9c02eb00daf92cdc59c8951020d7e77`
+- branch: `full`; start HEAD와 `origin/full` 일치
+- `marketingfix`의 `d4d88ff39cb9b5439a9422729866f894ba260390`은 읽기 전용으로 조사했고 merge/cherry-pick/전체 덮어쓰기를 하지 않았다.
+
+### 구현한 계약
+
+- Market Interview coding은 batch 직후 participant/theme/alternative/evidence/axis/verbatim을 검증한다. 실패 batch만 1회 재생성하고, minimum usable·group coverage를 지킬 때만 실패 respondent를 명시적으로 제외한다. 안전 진단에는 stage/rule/path/batchIndex/participantId만 남긴다.
+- 인터뷰 응답 progress는 5명 단위로 emit하고 Work Center는 같은 stage의 count checkpoint를 한 항목으로 합친다. 새 TaskRun 직후 cursor 0의 404는 두 번까지 quiet retry한다.
+- Business Validation은 준비 mission, 두 입력 카드, 6단계 state rail, 결과 summary/local nav를 제공한다. Market 표는 8건 뒤 펼치며 가격·성장·경쟁·미확보 명칭을 실제 의미로 정리했다. BM 판정·canvas·강약위험·재무 handoff와 refinement/final 결과를 progressive disclosure로 구성했다.
+- Marketing Strategy AI/Backend/Frontend를 현재 `full` 위에 선별 이식했다. `CURRENT_CONCEPT`만 필수이고 Market/BM/기술/운영/재무/Market Interview/Twin Survey는 현재 결과가 있을 때만 optional context다.
+- Strategy 결과의 summary/target/positioning/messages/channel audience·actions·KPI/roadmap/budget/risks/evidence를 UI와 PDF에 보존한다. Marketing은 분석 자료 → 전략 → 생성 설정 → 결과 확인 4단계이며 콘텐츠 요청에 current strategy report ID를 연결한다.
+- `TWIN_SURVEY` 8개 hard prerequisite와 marketingfix의 이후 full 변경을 덮어쓰는 계약은 이식하지 않았다.
+
+### 변경 파일
+
+- AI: `market_interview/deep_engine.py`, 관련 models/tests, `marketing_strategy/*`, execution routing, marketing content strategy input.
+- Backend: TaskType/AI routing/job projection, Market Interview failure event, `pipeline/marketing/strategy/*`, V43 migration, PDF dependency, content strategy link와 focused tests.
+- Frontend: Business Validation/Market/BM/refinement/final UI, Market Interview failure/event handling, Marketing Strategy API/hook/panel/4-step page/CSS/tests.
+- 정확한 목록은 `git status --short`와 `git diff --stat`을 기준으로 한다.
+
+### 실제로 실행한 확인
+
+- AI changed modules `python -m py_compile ...`: PASS.
+- AI focused pytest 7개: PASS (`1.01s`).
+- Backend Marketing Strategy source/start/current/result + module enum + AI routing focused test 8개: PASS. `compileJava`: PASS.
+- Frontend focused 11 files 110 tests: PASS.
+- 변경 Frontend JS/JSX ESLint: PASS.
+- `git diff --check`: 최종 handoff 직전 별도 실행.
+
+### 의도적으로 생략
+
+전체 AI/Backend/Frontend suite, baseline, Docker rebuild, production build, 외부 provider, 실제 runtime E2E, browser automation, 새 프로젝트 생성.
+
+### 남은 위험과 continuation point
+
+1. 사용자가 인증된 실제 서비스에서 TaskRun `bf82d4aa-a39d-4add-96f6-ca6d3f0df88b`과 같은 입력을 재시도해 local coding retry/diagnostics를 확인한다.
+2. OS에 한국어 글꼴이 없는 배포 환경에서는 Strategy PDF font 설치가 필요하다(Windows 맑은 고딕과 Linux Noto CJK 경로 지원).
+3. 실제 provider 결과로 Strategy 생성과 Strategy ID가 연결된 Content 생성은 이번 FAST 지시에서 호출하지 않았다.

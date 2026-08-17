@@ -12,6 +12,7 @@ import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
 import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
@@ -46,6 +47,7 @@ public class MarketingContentService {
     private final MarketingAssetRepository assets;
     private final MarketingResultContract results;
     private final MarketingLegalGuard legalGuard;
+    private final MarketingStrategyService strategies;
     private final TaskRunService taskRuns;
     private final CanonicalInputHasher inputHasher;
     private final JobEventPublisher events;
@@ -180,7 +182,13 @@ public class MarketingContentService {
         if (key == null || key.isBlank()) throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
         ObjectNode input = mapper.createObjectNode();
         input.set("source", mapper.readTree(source.getSnapshotJson()));
-        input.set("request", mapper.readTree(requestJson));
+        JsonNode request = mapper.readTree(requestJson);
+        input.set("request", request);
+        String strategyReportId = request.path("marketingStrategyReportId").asText("").strip();
+        if (!strategyReportId.isBlank()) {
+            var strategy = strategies.requireCurrent(ownerId, projectId, strategyReportId);
+            input.set("strategy", mapper.readTree(strategy.getResultJson()));
+        }
         ObjectNode generation = input.putObject("generation");
         generation.put("operation", operation);
         generation.put("attempt", attempt);

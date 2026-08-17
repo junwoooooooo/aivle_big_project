@@ -41,3 +41,50 @@
 ## 5. SSE
 
 진행 화면에서 새로고침하거나 route를 이동한 뒤 Backend 로그를 확인한다. client disconnect는 debug/cleanup으로 끝나고 TaskRun은 계속 실행되어야 하며, `No converter for ApiResponse with preset Content-Type 'text/event-stream'` 오류가 없어야 한다.
+
+---
+
+## 2026-08-18 Product Polish 사용자 검증
+
+예상 소요: 기존 프로젝트 기준 10~20분. 외부 AI 실행 시간은 provider 상태에 따라 별도다.
+
+### 1. Business Validation
+
+1. `/app/projects/{id}/business-validation`에서 준비 mission과 접힌 `경쟁·대체재 정보`, `사업 운영 정보`를 확인한다.
+2. 실행 중 6단계 rail이 실제 session state만 표시하고 동일 heartbeat가 쌓이지 않는지 확인한다.
+3. 완료 후 `요약/시장 분석/사업 모델/사업안 다듬기/최종 결과` nav와 Market 내부 nav를 확인한다.
+4. 가격·수요 표는 처음 8건만 보이고 `전체 N건 보기`로 펼쳐져야 한다.
+5. 가격 KPI는 `관련 가격·비용 관측`, 성장 KPI는 `관측 지표 변화`로 표시되어야 한다.
+6. 변경 proposal 0건이면 `변경 제안 없음`과 `현재 사업안으로 확정`만 표시되어야 한다.
+
+### 2. Market Interview
+
+1. `/app/projects/{id}/market-interview`에서 실패 실행을 다시 시도한다.
+2. Work Center에서 인터뷰/코딩 count가 stage별 한 줄의 최신 count로 합쳐지는지 확인한다.
+3. coding 실패 시 화면은 사용자 설명만 보이고, Work Center `기술 정보`에는 `CODING_EVIDENCE_VALIDATION`, rule, batch path, participant ID만 보여야 한다. 원문·prompt·provider response는 없어야 한다.
+4. 새 실행 직후 event endpoint 404가 잠깐 발생해도 오류 화면으로 고정되지 않고 연결되는지 확인한다.
+
+수집할 로그: projectId, TaskRun/attempt ID, failure code/reason, JobEvent의 validationFields. 원문 응답이나 provider raw response는 첨부하지 않는다.
+
+### 3. Marketing Strategy + Content
+
+1. `/app/projects/{id}/marketing`을 연다.
+2. `분석 자료 → 마케팅 전략 → 생성 설정 → 결과 확인` 네 단계를 확인한다.
+3. Market/BM/재무/인터뷰가 없어도 현재 사업안이 있으면 전략 생성 CTA가 활성화되어야 한다. 없는 자료는 `이번 전략에 포함되지 않음`으로 보여야 한다.
+4. 전략 결과에서 target, positioning, core messages, channel audience/actions/KPI, campaign roadmap, budget, risks, evidence detail을 확인한다.
+5. PDF를 내려받아 한국어 글꼴과 10개 섹션을 확인한다.
+6. `이 전략으로 콘텐츠 만들기` 후 생성 설정을 제출하고 request의 `marketingStrategyReportId`가 current report인지 확인한다.
+
+성공 기준: 전략 생성 `SUCCEEDED`, current/stale 표시 정상, 콘텐츠 생성 request에 전략 ID 포함, 기존 이미지/편집/법률 확인/수정 이력/최종 저장 기능 유지.
+
+### 선택적 focused 재검증 명령
+
+```powershell
+.\ai\.venv\Scripts\python.exe -m pytest ai/tests/test_market_interview.py::test_coding_evidence_rule_is_reported_without_answer_text ai/tests/test_market_interview.py::test_invalid_coding_batch_retries_only_that_batch ai/tests/test_marketing_strategy.py -q
+Set-Location backend
+.\gradlew.bat test --tests "com.aivle.backend.pipeline.marketing.strategy.MarketingStrategyContractTests"
+Set-Location ..\frontEnd
+npx vitest run src/features/business-validation/pages/BusinessValidationPage.test.jsx src/features/market-interview/pages/MarketInterviewPage.test.jsx src/features/marketing-content/pages/MarketingContentPage.test.jsx src/features/marketing-content/components/MarketingStrategyPanel.test.jsx
+```
+
+다음 단계 진행 조건: 위 세 route의 화면 계약 확인 및 실제 전략/인터뷰 TaskRun의 terminal 상태와 current lineage 확인.

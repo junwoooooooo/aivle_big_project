@@ -66,17 +66,34 @@ describe('useJobEvents SSE-only transport', () => {
   it.each([
     Object.assign(new Error('missing'), { status: 404 }),
     Object.assign(new Error('missing'), { code: 'JOB_NOT_FOUND' }),
-  ])('stops reconnecting when the job no longer exists', async (error) => {
+  ])('quietly retries a cursor-zero registration race before treating the job as missing', async (error) => {
     const client = { stream: vi.fn(async () => { throw error; }), get: vi.fn() };
     useApiClient.mockReturnValue(client);
     const { result } = renderHook(() => useJobEvents('missing-job', { reconnectDelayMs: 100 }));
 
     await flush();
-    await act(async () => { vi.advanceTimersByTime(500); await flush(); });
+    await act(async () => { vi.advanceTimersByTime(100); await flush(); });
+    await act(async () => { vi.advanceTimersByTime(100); await flush(); });
 
-    expect(client.stream).toHaveBeenCalledOnce();
+    expect(client.stream).toHaveBeenCalledTimes(3);
     expect(client.get).not.toHaveBeenCalled();
     expect(result.current.connectionState).toBe('error');
+  });
+
+  it('recovers when the first event request races task registration', async () => {
+    const missing = Object.assign(new Error('missing'), { status: 404 });
+    const client = {
+      stream: vi.fn().mockRejectedValueOnce(missing).mockImplementationOnce(pendingUntilAbort),
+      get: vi.fn(),
+    };
+    useApiClient.mockReturnValue(client);
+    const { result, unmount } = renderHook(() => useJobEvents('new-job', { reconnectDelayMs: 100 }));
+    await flush();
+    expect(result.current.connectionState).toBe('connecting');
+    await act(async () => { vi.advanceTimersByTime(100); await flush(); });
+    expect(client.stream).toHaveBeenCalledTimes(2);
+    expect(result.current.connectionState).not.toBe('error');
+    unmount();
   });
 
   it('stops reconnecting when a terminal event arrives', async () => {

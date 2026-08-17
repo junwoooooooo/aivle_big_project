@@ -97,16 +97,14 @@ export function BusinessModelResultBody({ result }) {
   const decision = bm ? DECISION_VIEW[bm.decision] : null;
   return <>
     {bm ? (
-      <div className="ui-card bm-verdict">
-        <h3>판정</h3>
-        {decision ? <Badge tone={decision.tone}>{decision.label}</Badge> : null}
-        <Badge tone="neutral">{CONFIDENCE_VIEW[bm.confidence] ?? bm.confidence ?? '신뢰도 미기재'}</Badge>
-        <p>{bm.summary ?? ''}</p>
-        <dl className="bm-verdict__details">
-          <div><dt>시장 적합성</dt><dd>{bm.marketFitStatus || '미기재'} · {bm.marketFitSummary || '요약 없음'}</dd></div>
-          <div><dt>내부 일관성</dt><dd>{bm.consistencyStatus || '미기재'} · {bm.consistencySummary || '요약 없음'}</dd></div>
-        </dl>
-      </div>
+      <section className="ui-card bm-verdict">
+        <header><span>비즈니스 모델 판정</span><div>{decision ? <Badge tone={decision.tone}>{decision.label}</Badge> : null}<Badge tone="neutral">{CONFIDENCE_VIEW[bm.confidence] ?? bm.confidence ?? '신뢰도 미기재'}</Badge></div></header>
+        <h3>{bm.summary || '비즈니스 모델 판정을 확인하세요.'}</h3>
+        <div className="bm-verdict__cards">
+          <article><header><strong>시장 적합성</strong><Badge tone={bm.marketFitStatus === 'PASS' ? 'success' : 'warning'}>{bm.marketFitStatus || '미기재'}</Badge></header><p>{bm.marketFitSummary || '요약 없음'}</p><details><summary>판정 근거 보기</summary><p>{bm.marketFitSummary || '별도 판정 근거가 없습니다.'}</p></details></article>
+          <article><header><strong>내부 일관성</strong><Badge tone={bm.consistencyStatus === 'PASS' ? 'success' : 'warning'}>{bm.consistencyStatus || '미기재'}</Badge></header><p>{bm.consistencySummary || '요약 없음'}</p><details><summary>판정 근거 보기</summary><p>{bm.consistencySummary || '별도 판정 근거가 없습니다.'}</p></details></article>
+        </div>
+      </section>
     ) : <Alert tone="warning">수익 구조 판정을 받지 못했습니다. 시장 분석 결과는 유지되며 다시 만들 수 있습니다.</Alert>}
     {result.canvas ? <BmCanvas cells={result.canvas} onJump={focus.jump} /> : null}
     {bm ? <div className="bm-swr">
@@ -130,12 +128,12 @@ function FinancialHandoff({ value }) {
   const numbers = [
     ['기준 가격', value.priceBase], ['가격 하한', value.priceMin], ['가격 상한', value.priceMax],
     ['TAM', value.tam], ['SAM', value.sam], ['SOM', value.som],
-    ['시장 성장률', value.marketGrowthRate], ['예상 매출', value.expectedRevenue], ['단위 원가', value.unitCost],
+    ['참고 지표 증감률', value.marketGrowthRate], ['예상 매출', value.expectedRevenue], ['단위 원가', value.unitCost],
   ];
   return <Card title="재무 분석에 사용할 정보">
     <p>다음 단계 준비: <strong>{value.handoffStatus ? '준비됨' : '정보 없음'}</strong></p>
     <p>수익 모델: {value.revenueModel || '미입력'}</p>
-    <dl className="bm-verdict__details">{numbers.map(([label, number]) => (
+    <dl className="bm-handoff__metrics">{numbers.map(([label, number]) => (
       <div key={label}><dt>{label}</dt><dd>{number ?? '미측정'}</dd></div>
     ))}</dl>
     <p>고정비 항목: {(value.fixedCostItems || []).length

@@ -87,6 +87,7 @@
 
 /* ── 과목 섹션 — 성적표 7과목이 곧 목차다 ────────────────── */
 .mr-sec {
+  min-width: 0;
   border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-surface); scroll-margin-top: 5.5rem;
 }
@@ -102,6 +103,7 @@
   font-size: .78rem; line-height: 1.6; text-align: right;
 }
 .mr-sec__b { padding: 1.5rem; border-top: 1px solid var(--color-neutral-100); }
+.mr-sec__b > * { min-width: 0; }
 
 .mr-figs { display: flex; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 1.35rem; }
 .mr-figs > div > span { display: block; margin-bottom: .2rem; color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
@@ -110,6 +112,14 @@
 
 /* ⚠ 태그 선택자로 쓰지 않는다 — 전역 CSS 라 다른 화면의 표까지 덮는다. */
 .mr-table { width: 100%; border-collapse: collapse; }
+.mr-table-wrap { min-width: 0; overflow-x: auto; }
+.mr-table-wrap > .ui-button { margin-top: 1rem; }
+.mr-local-nav { position: sticky; top: .75rem; z-index: 3; display: flex; gap: .45rem;
+  padding: .6rem; margin: 1rem 0 1.35rem; overflow-x: auto; border: 1px solid var(--color-border, #dce7e4);
+  border-radius: 14px; background: color-mix(in srgb, var(--color-surface, #fff) 94%, transparent); }
+.mr-local-nav a { flex: 0 0 auto; padding: .48rem .72rem; border-radius: 999px; color: inherit;
+  text-decoration: none; font-size: .86rem; font-weight: 700; white-space: nowrap; }
+.mr-local-nav a:hover, .mr-local-nav a:focus-visible { background: #e9f6f3; color: #08766a; }
 .mr-table th, .mr-table td { padding: .95rem 0; font-size: .87rem; line-height: 1.65; text-align: left; vertical-align: top; }
 .mr-table thead th {
   padding-bottom: .6rem; border-bottom: 1px solid var(--color-border-default);
@@ -143,9 +153,16 @@
 .mr-comp__src { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid var(--color-neutral-100); font-size: .78rem; }
 
 /* ── 못 찾은 것 — 갈래마다 다음 행동이 다르다 ─────────────── */
-.mr-nf { display: grid; gap: 1.35rem; }
-.mr-nf__h { display: flex; align-items: center; gap: .55rem; margin-bottom: .7rem; }
+.mr-nf { display: grid; gap: .8rem; }
+.mr-nf__summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin-bottom: .45rem; }
+.mr-nf__summary article { display: grid; gap: .25rem; padding: .9rem; border-radius: var(--radius-control); background: var(--color-bg-subtle); }
+.mr-nf__summary span { color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
+.mr-nf__summary strong { font-size: 1.05rem; }
+.mr-nf__g { min-width: 0; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); }
+.mr-nf__h { display: flex; align-items: center; gap: .55rem; padding: .9rem 1rem; cursor: pointer; }
 .mr-nf__h > span { color: var(--color-text-secondary); font-size: .78rem; }
+.mr-nf__h > strong { margin-left: auto; font-size: .8rem; }
+.mr-nf__details { padding: 0 1rem 1rem; }
 .mr-nf__b { padding-left: .1rem; margin-bottom: .8rem; }
 .mr-nf__b:last-child { margin-bottom: 0; }
 .mr-nf__b h4 { display: flex; align-items: baseline; gap: .45rem; margin: 0 0 .4rem; font-size: .82rem; }
@@ -192,9 +209,22 @@
 @media (max-width: 620px) { .bm-plan-prepared { display: grid; } }
 
 /* ═══ BM 캔버스 ═══════════════════════════════════════════ */
-.bm-verdict { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: 1.1rem 1.25rem; }
-.bm-verdict h3 { margin: 0; font-size: .95rem; }
-.bm-verdict p { flex: 1 1 16rem; margin: 0; color: var(--color-text-secondary); font-size: .85rem; }
+.bm-verdict { display: grid; gap: 1rem; padding: 1.35rem; }
+.bm-verdict > header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.bm-verdict > header > span { color: var(--color-text-secondary); font-size: .76rem; font-weight: 800; }
+.bm-verdict > header > div { display: flex; gap: .45rem; flex-wrap: wrap; }
+.bm-verdict h3 { margin: 0; max-width: 58rem; font-size: 1.15rem; line-height: 1.6; overflow-wrap: anywhere; }
+.bm-verdict__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
+.bm-verdict__cards article { min-width: 0; padding: 1rem; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-bg-subtle); }
+.bm-verdict__cards article > header { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
+.bm-verdict__cards p { margin: .65rem 0 0; color: var(--color-text-secondary); font-size: .85rem; line-height: 1.7; overflow-wrap: anywhere; }
+.bm-verdict__cards article > p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.bm-verdict__cards details { margin-top: .7rem; }
+.bm-verdict__cards summary { color: var(--color-action-primary); cursor: pointer; font-size: .78rem; font-weight: 700; }
+.bm-handoff__metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.bm-handoff__metrics > div { min-width: 0; padding: .75rem; border-radius: var(--radius-control); background: var(--color-bg-subtle); }
+.bm-handoff__metrics dt { color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
+.bm-handoff__metrics dd { margin: .3rem 0 0; overflow-wrap: anywhere; }
 
 .bm-tally { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; color: var(--color-text-secondary); font-size: .78rem; }
 .bm-tally span { display: inline-flex; align-items: center; gap: .4rem; }
@@ -203,9 +233,8 @@
 .bm-kind--obs { background: #e5f4f8; color: #176275; }
 .bm-kind--plan { background: #edf1f1; color: #51676a; }
 
-/* 9칸을 «의미»로 세 묶음. 5열 포스터 배치는 웹 폭에서 칸당 195px 밖에 안 나와
-   한글이 10~12자마다 끊긴다. 4·3·2 로 나누면 칸당 280px 이상 나오고, 행 병합이
-   사라져 짧은 칸 옆의 빈 구멍도 없어진다. 묶음 순서 = 누구에게 · 어떻게 만들고 · 돈은. */
+/* 9칸은 의미 묶음을 유지하되 desktop 한 행은 최대 3열로 제한한다.
+   tablet은 2열, mobile은 1열로 내려 긴 한국어 근거가 이웃 카드를 덮지 않게 한다. */
 .bm-band { display: grid; gap: .75rem; margin-bottom: 1.75rem; }
 .bm-band:last-of-type { margin-bottom: 0; }
 .bm-band__t {
@@ -214,13 +243,14 @@
 }
 .bm-band__t::after { content: ""; flex: 1; height: 1px; background: var(--color-neutral-100); }
 .bm-band__row { display: grid; gap: 1rem; align-items: start; }
-.bm-band--4 .bm-band__row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bm-band--4 .bm-band__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .bm-band--3 .bm-band__row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .bm-band--2 .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 1000px) { .bm-band__row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
 @media (max-width: 620px) { .bm-band__row { grid-template-columns: 1fr !important; } }
 
 .bm-cell {
+  min-width: 0;
   display: flex; flex-direction: column; gap: .85rem; padding: 1.25rem 1.35rem 1.15rem;
   border: 1px solid var(--color-border-default); border-radius: var(--radius-card);
   background: var(--color-surface); font: inherit; text-align: left; cursor: pointer;
@@ -240,6 +270,10 @@
 .bm-dot--none { background: var(--color-neutral-300); }
 /* 줄 수를 자르지 않는다 — 3줄 클램프가 «주 채…» 처럼 말을 끊어 오히려 답답했다. */
 .bm-cell__lead { color: var(--color-text-primary); font-size: .86rem; line-height: 1.75; }
+.bm-cell__lead,
+.bm-cell__foot,
+.bm-det,
+.bm-swr > div { overflow-wrap: anywhere; }
 .bm-cell__none { margin: 0; color: var(--color-text-secondary); font-size: .82rem; line-height: 1.75; }
 /* 구분선을 없앤다. 바닥에 고정된 줄이 짧은 카드 안에 빈 공간을 만들고 있었다. */
 .bm-cell__foot { display: flex; align-items: center; gap: .45rem; color: var(--color-text-secondary); font-size: .73rem; }
@@ -264,6 +298,8 @@
 }
 .bm-det.is-on { border-color: var(--color-action-primary); box-shadow: 0 0 0 3px var(--color-mint-50); }
 .bm-det__h { display: flex; align-items: center; gap: .6rem; padding: 1.15rem 1.5rem; }
+.bm-det__h { cursor: pointer; list-style: none; }
+.bm-det__h::-webkit-details-marker { display: none; }
 .bm-det__h h4 { margin: 0; font-size: .95rem; }
 .bm-det__h > .ui-badge:last-child { margin-left: auto; }
 .bm-det__o { color: var(--color-text-secondary); font-size: .73rem; }
@@ -278,4 +314,11 @@
 .competitor-seeds__row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 12px; margin: 12px 0; }
 .competitor-seeds__actions { display: flex; gap: 8px; margin-top: 12px; }
 .competitor-seeds__hint { color: var(--color-text-muted, #596579); font-size: .9rem; }
+@media (max-width: 800px) { .mr-nf__summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .mr-nf__summary { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .competitor-seeds__row { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .bm-verdict__cards { grid-template-columns: 1fr; }
+  .bm-handoff__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) { .bm-handoff__metrics { grid-template-columns: 1fr; } }

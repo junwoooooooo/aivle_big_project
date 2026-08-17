@@ -17,6 +17,7 @@ import com.aivle.backend.pipeline.marketing.api.MarketingApiModels;
 import com.aivle.backend.pipeline.marketing.application.*;
 import com.aivle.backend.pipeline.marketing.domain.*;
 import com.aivle.backend.pipeline.marketing.repository.*;
+import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -49,7 +50,8 @@ class MarketingExecutionServiceTests {
     private final JobEventPublisher events = mock(JobEventPublisher.class);
     private final MarketingContentService service = new MarketingContentService(projects, evidence,
         mock(ObjectStoragePort.class), currentConcepts, sourceSnapshots, sourceRepository, contents,
-        revisions, assets, new MarketingResultContract(), new MarketingLegalGuard(mapper), taskRuns,
+        revisions, assets, new MarketingResultContract(), new MarketingLegalGuard(mapper),
+        mock(MarketingStrategyService.class), taskRuns,
         hasher, events, mapper);
     private final ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
     private final MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);

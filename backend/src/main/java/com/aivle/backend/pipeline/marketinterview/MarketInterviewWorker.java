@@ -84,9 +84,11 @@ public class MarketInterviewWorker {
             else service.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
                 failure.code(), failure.reason(), failure.retryable());
             completion.materializeFailure(claim.taskRunId(), failure.code());
-            String safeCode = Set.of("MARKET_INTERVIEW_SEMANTIC_MISMATCH", "MARKET_INTERVIEW_TARGET_UNAVAILABLE")
-                .contains(failure.code()) ? failure.code() : "AI_SERVICE_UNAVAILABLE";
-            publish(context, "FAILED", "job.market-interview.failed", JobEvent.Status.FAILED, safeCode);
+            String safeCode = "RESULT_SCHEMA_INVALID".equals(failure.code()) ? "AI_RESULT_INVALID"
+                : Set.of("MARKET_INTERVIEW_SEMANTIC_MISMATCH", "MARKET_INTERVIEW_TARGET_UNAVAILABLE")
+                    .contains(failure.code()) ? failure.code() : "AI_SERVICE_UNAVAILABLE";
+            publish(context, "FAILED", "job.market-interview.failed", JobEvent.Status.FAILED,
+                safeCode, failure.validationFields());
         } catch (TaskRunFailure failure) {
             service.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
                 "RESULT_SCHEMA_INVALID", failure.getReason(), false);
@@ -103,9 +105,19 @@ public class MarketInterviewWorker {
 
     private void publish(TaskRunWorkerContext context, String stage, String key,
             JobEvent.Status status, String code) {
+        publish(context, stage, key, status, code, List.of());
+    }
+
+    private void publish(TaskRunWorkerContext context, String stage, String key,
+            JobEvent.Status status, String code,
+            List<InternalAiExecutionClient.ValidationIssue> validationFields) {
         if (context == null) return;
+        Map<String, Object> params = validationFields == null || validationFields.isEmpty()
+            ? Map.of() : Map.of("validationFields", validationFields.stream().limit(5).map(issue -> Map.of(
+                "path", issue.path(), "expectedType", issue.expectedType(),
+                "category", issue.category())).toList());
         events.publish(new JobEventPublisher.Command(context.projectId(), context.taskRunId(),
-            context.taskRunId(), stage, key, status, key, Map.of(), code));
+            context.taskRunId(), stage, key, status, key, params, code));
     }
 
     private void rejectForbiddenFields(JsonNode node) {

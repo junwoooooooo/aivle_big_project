@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 
 class StrictModel(BaseModel):
@@ -122,6 +122,7 @@ class MarketingContentRequest(StrictModel):
     referenceArtifactId: Annotated[str, Field(
         pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     )] | None = None
+    marketingStrategyReportId: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
 
 
 class GenerationContext(StrictModel):
@@ -133,6 +134,7 @@ class GenerationContext(StrictModel):
 class MarketingContentInput(StrictModel):
     source: MarketingSourceSnapshot
     request: MarketingContentRequest
+    strategy: dict[str, JsonValue] | None = None
     generation: GenerationContext | None = None
 
 

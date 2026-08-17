@@ -35,7 +35,8 @@ public final class MarketInterviewContract {
         "differentiation", "relevance", "usageScene", "barrier", "suggestion");
     private static final Set<String> RESPONDENT_FAILURE = Set.of("participantId", "group", "attempts", "code");
     private static final Set<String> RESPONDENT_FAILURE_CODES = Set.of(
-        "TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT");
+        "TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT",
+        "INVALID_CODING_OUTPUT");
     private static final Set<String> SATURATION = Set.of("participantCount", "codedParticipantCount", "themeCount",
         "axisLabelCounts", "maxMentionByAxis", "saturatedThemes", "alternativeSum", "assessment", "limitation");
     private static final Set<String> AXES = Set.of("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION");

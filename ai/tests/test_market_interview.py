@@ -56,7 +56,8 @@ THEMES = [
 ]
 
 
-def provider(claim=None, target_region="서울", unknown_theme=False):
+def provider(claim=None, target_region="서울", unknown_theme=False,
+             wrong_axis=False, wrong_quote=False):
     async def prompt(_system, user, **kwargs):
         payload = json.loads(user)
         name = kwargs["schema_name"]
@@ -87,10 +88,16 @@ def provider(claim=None, target_region="서울", unknown_theme=False):
             rows = []
             for item in payload["transcripts"]:
                 selected = ["없는 주제"] if unknown_theme else [row["title"] for row in THEMES]
+                evidence = ([{"themeTitle": "없는 주제", "answerField": "like", "quote": "간단한 확인이 좋습니다."}]
+                            if unknown_theme else [{"themeTitle": title, "answerField": sources[title][0],
+                                                   "quote": sources[title][1]} for title in selected])
+                if wrong_axis:
+                    evidence[0]["answerField"] = "concern"
+                if wrong_quote:
+                    evidence[0]["quote"] = "원문에 없는 인용"
                 rows.append({"participantId": item["participantId"],
                              "themeTitles": selected,
-                             "themeEvidence": ([{"themeTitle": "없는 주제", "answerField": "like", "quote": "간단한 확인이 좋습니다."}]
-                                               if unknown_theme else [{"themeTitle": title, "answerField": sources[title][0], "quote": sources[title][1]} for title in selected]),
+                             "themeEvidence": evidence,
                              "alternativeLabel": "수기 처리", "comprehension": "accurate",
                              "differentiation": "unclear"})
             return {"assignments": rows}
@@ -177,8 +184,65 @@ def test_two_pass_coding_retains_identity_and_derives_mentions(monkeypatch):
 
 
 def test_unknown_codebook_assignment_fails_closed(monkeypatch):
-    with pytest.raises(ProviderFailure):
+    with pytest.raises(ProviderFailure) as failure:
         execute(monkeypatch, unknown_theme=True)
+    assert failure.value.safe_diagnostics["stage"] == "CODING_EVIDENCE_VALIDATION"
+    assert failure.value.safe_diagnostics["rule"] == "UNKNOWN_CODEBOOK_THEME"
+    assert failure.value.validation_fields[0]["path"].startswith("codingBatches[")
+
+
+@pytest.mark.parametrize(("option", "rule"), [
+    ({"wrong_axis": True}, "ANSWER_FIELD_AXIS_MISMATCH"),
+    ({"wrong_quote": True}, "VERBATIM_QUOTE_MISMATCH"),
+])
+def test_coding_evidence_rule_is_reported_without_answer_text(monkeypatch, option, rule):
+    with pytest.raises(ProviderFailure) as failure:
+        execute(monkeypatch, **option)
+    assert failure.value.safe_diagnostics["stage"] == "CODING_EVIDENCE_VALIDATION"
+    assert failure.value.safe_diagnostics["rule"] == rule
+    assert failure.value.safe_diagnostics["participantId"].startswith("R")
+    assert failure.value.safe_diagnostics["participantId"] in failure.value.validation_fields[0]["path"]
+    assert "원문에 없는 인용" not in str(failure.value.safe_diagnostics)
+
+
+def test_invalid_coding_batch_retries_only_that_batch(monkeypatch):
+    base = provider()
+    assignment_calls = Counter()
+
+    async def repaired(*args, **kwargs):
+        value = await base(*args, **kwargs)
+        if kwargs["schema_name"] == "market_interview_assignment_v2":
+            payload = json.loads(args[1])
+            batch = payload["transcripts"][0]["participantId"]
+            assignment_calls[batch] += 1
+            if batch == "R001" and assignment_calls[batch] == 1:
+                value["assignments"][0]["themeEvidence"][0]["quote"] = "원문에 없는 인용"
+        return value
+
+    result = execute_with_provider(monkeypatch, repaired)
+    assert assignment_calls["R001"] == 2
+    assert assignment_calls["R009"] == 1
+    assert result["targeting"]["usableCount"] == 20
+
+
+def test_retry_exhausted_single_coding_respondent_is_excluded_when_sample_remains_safe(monkeypatch):
+    base = provider()
+
+    async def one_invalid_respondent(*args, **kwargs):
+        value = await base(*args, **kwargs)
+        if kwargs["schema_name"] == "market_interview_assignment_v2":
+            for row in value["assignments"]:
+                if row["participantId"] == "R001":
+                    row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
+        return value
+
+    result = execute_with_provider(monkeypatch, one_invalid_respondent)
+    assert result["targeting"]["usableCount"] == 19
+    assert result["respondentFailures"] == [{
+        "participantId": "R001", "group": "TARGET", "attempts": 2,
+        "code": "INVALID_CODING_OUTPUT",
+    }]
+    assert "R001" not in {row["participantId"] for row in result["codingTrace"]}
 
 
 @pytest.mark.parametrize("allowed", ["20% 할인이라면 써볼 수 있다.", "수수료 8%는 부담스럽다.",

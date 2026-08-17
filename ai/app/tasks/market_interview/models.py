@@ -181,7 +181,8 @@ class RespondentFailure(StrictModel):
     participantId: str = Field(pattern=r"^R\d{3}$")
     group: Group
     attempts: int = Field(strict=True, ge=1, le=2)
-    code: Literal["TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT"]
+    code: Literal["TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE",
+                  "INVALID_RESPONDENT_OUTPUT", "INVALID_CODING_OUTPUT"]
 
 
 class TargetingSummary(StrictModel):

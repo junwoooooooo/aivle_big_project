@@ -64,4 +64,15 @@ describe('V2 job event message registry', () => {
       expect(groupJobEvents([{ ...generic(1), status }, { ...generic(2), status }])).toHaveLength(2);
     }
   });
+  it('coalesces market interview count checkpoints in the same running stage', () => {
+    const events = [5, 10, 15].map((completedCount) => ({
+      eventId: String(completedCount), status: 'RUNNING', stage: 'MI_INTERVIEWING',
+      messageKey: 'job.market-interview.trace',
+      messageParams: { traceStage: 'MI_INTERVIEWING', traceAction: 'COMPLETED',
+        traceDetail: '가상 인터뷰 응답을 생성하고 있습니다.', completedCount, totalCount: 40 },
+    }));
+    const grouped = groupJobEvents(events);
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].messageParams.completedCount).toBe(15);
+  });
 });

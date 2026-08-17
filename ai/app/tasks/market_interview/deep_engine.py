@@ -24,6 +24,7 @@ from app.twin.bank import load as load_bank
 
 StructuredCall = Callable[..., Awaitable[dict[str, Any]]]
 ASSIGN_BATCH = 8
+CODING_BATCH_ATTEMPTS = 2
 RESPONDENT_ATTEMPTS = 2
 RESPONDENT_RETRY_BACKOFF_SECONDS = 0.05
 MIN_USABLE = 8
@@ -53,7 +54,7 @@ CODEBOOK_PROMPT = COMMON_BOUNDARY + """
 CODING_PROMPT = COMMON_BOUNDARY + """
 고정 코드북으로 받은 응답자 전원을 정확히 한 줄씩 코딩한다. codebook의 이름표만 글자 그대로 쓴다.
 모르는 이름표를 만들지 않는다. themeTitles는 실제 답에 근거할 때만 고른다. alternativeLabel은 relevance 답의 현재 대안이며 없으면 빈 문자열이다.
-각 themeTitles에는 themeEvidence를 정확히 하나씩 만들고, 해당 축의 실제 answerField와 답변에 그대로 존재하는 짧은 원문 quote를 반환한다.
+각 themeTitles에는 themeEvidence를 정확히 하나씩 만들고, 해당 축의 실제 answerField에서 연속된 원문 substring을 그대로 복사한 짧은 quote를 반환한다.
 근거 인용이 없으면 그 테마를 배정하지 않는다. comprehension은 accurate/partial/misunderstood,
 differentiation은 different/similar/unclear 중 하나다."""
 
@@ -135,6 +136,105 @@ def _representatives(panel: list[dict], assignments) -> list[str]:
     return chosen[:5]
 
 
+class CodingValidationFailure(ValueError):
+    """Safe, structured coding failure. It never contains answer or prompt text."""
+
+    def __init__(self, rule: str, path: str, *, batch_index: int,
+                 participant_id: str | None = None):
+        super().__init__(rule)
+        self.rule = rule
+        self.path = path
+        self.batch_index = batch_index
+        self.participant_id = participant_id
+
+    def diagnostic(self) -> dict[str, Any]:
+        value: dict[str, Any] = {
+            "stage": "CODING_EVIDENCE_VALIDATION",
+            "batchIndex": self.batch_index,
+            "rule": self.rule,
+            "path": self.path,
+        }
+        if self.participant_id:
+            value["participantId"] = self.participant_id
+        return value
+
+
+def _coding_failure(failure: CodingValidationFailure) -> ProviderFailure:
+    diagnostic = failure.diagnostic()
+    safe_path = failure.path
+    if failure.participant_id:
+        safe_path = f"{safe_path}.participant[{failure.participant_id}]"
+    return ProviderFailure(
+        "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+        schema_name="market_interview_assignment_v2",
+        validation_fields=[{
+            "path": safe_path[:200],
+            "expectedType": f"CODING_EVIDENCE_VALIDATION {failure.rule}"[:80],
+            "category": "coding_evidence",
+        }],
+        safe_diagnostics=diagnostic,
+    )
+
+
+def _validate_coding_batch(coded: CodingResult, batch: list[dict], *, batch_index: int,
+                           known: dict, alternatives: list[str], answer_by_id: dict):
+    expected = [row["participantId"] for row in batch]
+    actual = [row.participantId for row in coded.assignments]
+    if actual != expected or len(actual) != len(set(actual)):
+        raise CodingValidationFailure(
+            "PARTICIPANT_ORDER_MISMATCH", f"codingBatches[{batch_index}].participantId",
+            batch_index=batch_index,
+        )
+    validated = []
+    for row_index, row in enumerate(coded.assignments):
+        base_path = f"codingBatches[{batch_index}].assignments[{row_index}]"
+        for title in row.themeTitles:
+            if title not in known:
+                raise CodingValidationFailure(
+                    "UNKNOWN_CODEBOOK_THEME", f"{base_path}.themeTitles",
+                    batch_index=batch_index, participant_id=row.participantId,
+                )
+        if row.alternativeLabel.strip() and row.alternativeLabel.strip() not in alternatives:
+            raise CodingValidationFailure(
+                "UNKNOWN_ALTERNATIVE", f"{base_path}.alternativeLabel",
+                batch_index=batch_index, participant_id=row.participantId,
+            )
+        evidence_titles = [item.themeTitle for item in row.themeEvidence]
+        if (len(evidence_titles) != len(set(evidence_titles))
+                or set(evidence_titles) != set(row.themeTitles)):
+            raise CodingValidationFailure(
+                "THEME_EVIDENCE_MISMATCH", f"{base_path}.themeEvidence",
+                batch_index=batch_index, participant_id=row.participantId,
+            )
+        answer = answer_by_id[row.participantId]
+        for evidence_index, evidence in enumerate(row.themeEvidence):
+            evidence_path = f"{base_path}.themeEvidence[{evidence_index}]"
+            theme = known.get(evidence.themeTitle)
+            if theme is None or evidence.answerField != AXIS_SOURCE[theme.axis]:
+                raise CodingValidationFailure(
+                    "ANSWER_FIELD_AXIS_MISMATCH", f"{evidence_path}.answerField",
+                    batch_index=batch_index, participant_id=row.participantId,
+                )
+            actual_answer = re.sub(r"\s+", " ", str(getattr(answer, evidence.answerField))).strip()
+            quote = re.sub(r"\s+", " ", evidence.quote).strip()
+            if not quote or quote not in actual_answer:
+                raise CodingValidationFailure(
+                    "VERBATIM_QUOTE_MISMATCH", f"{evidence_path}.quote",
+                    batch_index=batch_index, participant_id=row.participantId,
+                )
+        validated.append(row)
+    return validated
+
+
+def _coverage_is_safe(panel: list[dict], usable_panel: list[dict], warning: str | None) -> bool:
+    if warning is not None:
+        return True
+    attempted = Counter(row["group"] for row in panel)
+    usable = Counter(row["group"] for row in usable_panel)
+    return not any(attempted[group] and usable[group] * 2 < attempted[group]
+                   for group in ("TARGET", "COMPARISON"))
+
+
 async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCall,
                                  event_sink=None) -> dict[str, Any]:
     def progress(stage: str, summary: str, **counts) -> None:
@@ -192,8 +292,9 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
             nonlocal completed_interviews
             outcome = await transcript(row)
             completed_interviews += 1
-            progress("MI_INTERVIEWING", "가상 인터뷰 응답을 생성하고 있습니다.",
-                     completedCount=completed_interviews, totalCount=len(panel))
+            if completed_interviews == len(panel) or completed_interviews % 5 == 0:
+                progress("MI_INTERVIEWING", "가상 인터뷰 응답을 생성하고 있습니다.",
+                         completedCount=completed_interviews, totalCount=len(panel))
             return outcome
 
         outcomes = list(await asyncio.gather(*(transcript_with_progress(row) for row in panel)))
@@ -205,13 +306,9 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                                   502, False)
         usable_panel = [outcome["row"] for outcome in usable]
         answers = [outcome["answer"] for outcome in usable]
-        if sampling["warning"] is None:
-            attempted_groups = Counter(row["group"] for row in panel)
-            usable_groups = Counter(row["group"] for row in usable_panel)
-            if any(attempted_groups[group] and usable_groups[group] * 2 < attempted_groups[group]
-                   for group in ("TARGET", "COMPARISON")):
-                raise ProviderFailure("RESULT_SCHEMA_INVALID", "MARKET_INTERVIEW_TARGET_COVERAGE_INSUFFICIENT",
-                                      502, False)
+        if not _coverage_is_safe(panel, usable_panel, sampling["warning"]):
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "MARKET_INTERVIEW_TARGET_COVERAGE_INSUFFICIENT",
+                                  502, False)
         answer_by_id = {row.participantId: row.answers for row in answers}
         transcript_rows = [{"participantId": row.participantId,
                             "answers": _transcript_payload(row.answers)} for row in answers]
@@ -230,41 +327,85 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         if len(alternatives) != len(set(alternatives)):
             raise ValueError("codebook alternatives must be unique")
 
+        known = {theme.title: theme for theme in codebook.themes}
         assignments = []
+        coding_failed_ids: set[str] = set()
         for offset in range(0, len(transcript_rows), ASSIGN_BATCH):
             batch = transcript_rows[offset:offset + ASSIGN_BATCH]
-            coded = CodingResult.model_validate(await _call(call, CODING_PROMPT, {
-                "codebook": codebook.model_dump(mode="json"), "transcripts": batch,
-            }, CodingResult, "market_interview_assignment_v2"))
-            expected = [row["participantId"] for row in batch]
-            actual = [row.participantId for row in coded.assignments]
-            if actual != expected or len(actual) != len(set(actual)):
-                raise ValueError("coding batch must preserve every respondent exactly once")
-            assignments.extend(coded.assignments)
+            batch_index = offset // ASSIGN_BATCH
+            failure = None
+            for attempt in range(1, CODING_BATCH_ATTEMPTS + 1):
+                try:
+                    coding_prompt = CODING_PROMPT if failure is None else (
+                        CODING_PROMPT
+                        + f"\n이 묶음의 이전 출력은 {failure.rule} 규칙을 위반했다. "
+                          "원문이나 참가자를 바꾸지 말고 해당 계약만 교정한다."
+                    )
+                    coded = CodingResult.model_validate(await _call(call, coding_prompt, {
+                        "codebook": codebook.model_dump(mode="json"), "transcripts": batch,
+                    }, CodingResult, "market_interview_assignment_v2"))
+                    assignments.extend(_validate_coding_batch(
+                        coded, batch, batch_index=batch_index, known=known,
+                        alternatives=alternatives, answer_by_id=answer_by_id,
+                    ))
+                    failure = None
+                    break
+                except ValidationError as invalid_schema:
+                    first = invalid_schema.errors()[0] if invalid_schema.errors() else {}
+                    path = ".".join(str(part) for part in first.get("loc", ()))
+                    failure = CodingValidationFailure(
+                        "FINAL_PYDANTIC_VALIDATION",
+                        f"codingBatches[{batch_index}].{path or 'result'}",
+                        batch_index=batch_index,
+                    )
+                except CodingValidationFailure as invalid_coding:
+                    failure = invalid_coding
+                if attempt < CODING_BATCH_ATTEMPTS:
+                    continue
+            if failure is not None:
+                # A respondent-scoped failure may be excluded only when the already validated
+                # sample remains above the product minimum and preserves target coverage.
+                failed_id = failure.participant_id
+                remaining_panel = [row for row in usable_panel if row["participantId"] != failed_id]
+                if (failed_id is None or len(remaining_panel) < minimum_usable
+                        or not _coverage_is_safe(panel, remaining_panel, sampling["warning"])):
+                    raise _coding_failure(failure)
+                try:
+                    remaining_batch = [row for row in batch if row["participantId"] != failed_id]
+                    remaining_coded = CodingResult(assignments=[
+                        row for row in coded.assignments if row.participantId != failed_id
+                    ])
+                    assignments.extend(_validate_coding_batch(
+                        remaining_coded, remaining_batch, batch_index=batch_index, known=known,
+                        alternatives=alternatives, answer_by_id=answer_by_id,
+                    ))
+                except (ValidationError, CodingValidationFailure) as remaining_failure:
+                    if isinstance(remaining_failure, CodingValidationFailure):
+                        raise _coding_failure(remaining_failure) from remaining_failure
+                    raise _coding_failure(failure) from remaining_failure
+                coding_failed_ids.add(failed_id)
+                failures.append({
+                    "participantId": failed_id,
+                    "group": next(row["group"] for row in usable_panel
+                                  if row["participantId"] == failed_id),
+                    "attempts": CODING_BATCH_ATTEMPTS,
+                    "code": "INVALID_CODING_OUTPUT",
+                })
             progress("MI_CODING", "응답별 원문 근거를 확인하며 코딩하고 있습니다.",
-                     completedCount=len(assignments), totalCount=len(transcript_rows))
-        known = {theme.title: theme for theme in codebook.themes}
-        if any(title not in known for row in assignments for title in row.themeTitles):
-            raise ValueError("coding referenced an unknown codebook theme")
-        if any(row.alternativeLabel.strip() and row.alternativeLabel.strip() not in alternatives
-               for row in assignments):
-            raise ValueError("coding referenced an unknown alternative")
+                     completedCount=len(assignments) + len(coding_failed_ids),
+                     totalCount=len(transcript_rows))
+
+        if coding_failed_ids:
+            usable_panel = [row for row in usable_panel if row["participantId"] not in coding_failed_ids]
+            usable = [row for row in usable if row["row"]["participantId"] not in coding_failed_ids]
+            answers = [row for row in answers if row.participantId not in coding_failed_ids]
+            transcript_rows = [row for row in transcript_rows if row["participantId"] not in coding_failed_ids]
+            answer_by_id = {row.participantId: row.answers for row in answers}
 
         evidence_by_participant: dict[str, dict[str, Any]] = {}
         for row in assignments:
-            evidence_titles = [item.themeTitle for item in row.themeEvidence]
-            if len(evidence_titles) != len(set(evidence_titles)) or set(evidence_titles) != set(row.themeTitles):
-                raise ValueError("every assigned theme must have one unique evidence quote")
             validated: dict[str, Any] = {}
-            answer = answer_by_id[row.participantId]
             for evidence in row.themeEvidence:
-                theme = known.get(evidence.themeTitle)
-                if theme is None or evidence.answerField != AXIS_SOURCE[theme.axis]:
-                    raise ValueError("theme evidence must reference its source answer axis")
-                actual = re.sub(r"\s+", " ", str(getattr(answer, evidence.answerField))).strip()
-                quote = re.sub(r"\s+", " ", evidence.quote).strip()
-                if not quote or quote not in actual:
-                    raise ValueError("theme evidence quote must be a verbatim respondent answer excerpt")
                 validated[evidence.themeTitle] = evidence
             evidence_by_participant[row.participantId] = validated
 
@@ -361,11 +502,50 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
             "respondentFailures": failures,
             "saturation": _saturation(themes, assignments, len(usable)),
         }
-        validated = MarketInterviewResult.model_validate(result).model_dump(mode="json")
+        try:
+            validated = MarketInterviewResult.model_validate(result).model_dump(mode="json")
+        except ValidationError as failure:
+            fields = []
+            for issue in failure.errors()[:12]:
+                path = ".".join(str(part) for part in issue.get("loc", ())) or "result"
+                fields.append({"path": path[:200], "expectedType": "valid result contract",
+                               "category": str(issue.get("type", "invalid"))[:80]})
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+                schema_name="market_interview_result_v2", validation_fields=fields,
+                safe_diagnostics={"stage": "FINAL_RESULT_VALIDATION",
+                                  "rule": "FINAL_PYDANTIC_VALIDATION",
+                                  "path": fields[0]["path"] if fields else "result"},
+            ) from failure
         assert_semantic_integrity(value.selectedConcept, validated)
         progress("MI_RESULT_READY", "현재 사업안과 일치하는 인터뷰 결과를 구성했습니다.")
         return validated
+    except CodingValidationFailure as failure:
+        raise _coding_failure(failure) from failure
     except ValidationError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        fields = []
+        for issue in failure.errors()[:12]:
+            path = ".".join(str(part) for part in issue.get("loc", ())) or "result"
+            fields.append({"path": path[:200], "expectedType": "valid contract value",
+                           "category": str(issue.get("type", "invalid"))[:80]})
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+            validation_fields=fields,
+            safe_diagnostics={"stage": "SCHEMA_VALIDATION", "rule": "PYDANTIC_VALIDATION",
+                              "path": fields[0]["path"] if fields else "result"},
+        ) from failure
     except ValueError as failure:
-        raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
+        rule = {
+            "codebook must cover every axis with globally unique labels": "CODEBOOK_AXIS_OR_TITLE_INVALID",
+            "codebook labels must be localized for the Korean service": "CODEBOOK_LOCALE_INVALID",
+            "follow-up questions must be localized for the Korean service": "FOLLOW_UP_LOCALE_INVALID",
+            "codebook alternatives must be unique": "CODEBOOK_ALTERNATIVE_DUPLICATE",
+            "coding produced no traceable theme": "NO_TRACEABLE_THEME",
+        }.get(str(failure), "RESULT_DOMAIN_INVARIANT_VIOLATION")
+        stage = "CODEBOOK_VALIDATION" if rule.startswith(("CODEBOOK", "FOLLOW_UP")) else "RESULT_COMPOSITION"
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+            validation_fields=[{"path": "marketInterview.result", "expectedType": rule,
+                                "category": "domain_invariant"}],
+            safe_diagnostics={"stage": stage, "rule": rule, "path": "marketInterview.result"},
+        ) from failure

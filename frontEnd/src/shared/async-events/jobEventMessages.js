@@ -61,6 +61,10 @@ const messages = Object.freeze({
   'job.marketing.legal_checking': '금지 표현과 필수 고지를 확인하고 있습니다.',
   'job.marketing.completed': '마케팅 콘텐츠가 준비되었습니다.',
   'job.marketing.failed': '마케팅 콘텐츠 작업을 완료하지 못했습니다.',
+  'job.marketing.strategy.queued': '마케팅 전략 생성을 준비하고 있습니다.',
+  'job.marketing.strategy.analyzing': '현재 사업안과 사용 가능한 분석 자료로 전략을 구성하고 있습니다.',
+  'job.marketing.strategy.completed': '마케팅 전략이 준비되었습니다.',
+  'job.marketing.strategy.failed': '마케팅 전략을 완료하지 못했습니다.',
   'job.marketing.visual.queued': '마케팅 이미지 생성을 준비하고 있습니다.',
   'job.marketing.visual.input_validating': '입력과 Source 이미지를 확인하고 있습니다.',
   'job.marketing.visual.generating': '광고 문구와 이미지를 생성하고 있습니다.',
@@ -146,6 +150,10 @@ export function traceDetailForDisplay(event) {
 function significant(event) {
   const action = event?.messageParams?.traceAction;
   const status = event?.status ?? event?.messageParams?.traceStatus;
+  const stage = String(event?.messageParams?.traceStage ?? event?.stage ?? '');
+  // Interview/coding counters are checkpoints inside one stage, not dozens of
+  // separate user decisions. Preserve the newest real count in one timeline row.
+  if (['MI_INTERVIEWING', 'MI_CODING'].includes(stage) && status === 'RUNNING') return false;
   return ['REJECTED', 'ACCEPTED', 'NEEDS_INPUT', 'FAILED', 'COMPLETED'].includes(action)
     || ['NEEDS_INPUT', 'FAILED', 'COMPLETED'].includes(status)
     || (String(event?.messageParams?.traceStage ?? event?.stage).startsWith('LEGAL') && action === 'REVIEWED')

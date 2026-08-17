@@ -92,8 +92,8 @@ export default function MarketResearchPage() {
       {!DEMO_MODE ? <Accordion title="경쟁·현재 대안 씨앗">
         <CompetitorSeedForm api={api} disabled={busy || active} />
       </Accordion> : null}
-      {result && version && !stale ? <Accordion title="기존 원장에서 근거 다시 수집">
-        <p>현재 Market version의 검증된 원장을 복원해 전체 또는 지정 슬롯만 다시 수집합니다.</p>
+      {result && version && !stale ? <Accordion title="기존 조사 기록에서 근거 다시 수집">
+        <p>현재 시장 분석의 검증된 조사 기록을 복원해 전체 또는 지정 조사 항목만 다시 수집합니다.</p>
         <div className="project-form-layout">
         <label>슬롯 ID (쉼표 구분, 비우면 전체)
           <input value={recollectSlots} disabled={busy || active}
@@ -115,7 +115,7 @@ export default function MarketResearchPage() {
         <Button disabled={busy || active} onClick={() => triggerAction(() =>
           api.recollectMarketResearch(version.id, {
             asOf: today(), slots: recollectSlots, from: recollectFrom, slotsFrom,
-          }))}>원장 복원 후 다시 수집</Button>
+          }))}>조사 기록 복원 후 다시 수집</Button>
       </Accordion> : null}
 
       {error ? <Alert tone="danger">{error}</Alert> : null}
@@ -163,6 +163,11 @@ export function MarketResultBody({ result, activeId, onJump, onNext }) {
   return (
     <>
       <Kpis market={market} onJump={onJump} />
+      <nav className="mr-local-nav" aria-label="시장 분석 결과 바로가기">
+        {[['MARKET_SIZE', '시장 크기'], ['GROWTH', '성장'], ['COMPETITOR', '경쟁·대체재'],
+          ['PRICE', '가격·비용'], ['DEMAND', '수요'], ['NOT_FOUND', '미확보']]
+          .map(([id, label]) => <a key={id} href={`#sec-${id}`}>{label}</a>)}
+      </nav>
       <AssumptionLedger market={market} />
 
       {section(1, '시장 크기', 'MARKET_SIZE',
@@ -170,9 +175,9 @@ export function MarketResultBody({ result, activeId, onJump, onNext }) {
           ? <EvidenceTable rows={bag.size} />
           : <p className="bm-cell__none">모집단 관측이 없다.</p>)}
 
-      {section(2, '성장률', 'GROWTH', <GrowthBody growth={market.growth} rows={bag.grow} />)}
+      {section(2, '성장 관련 관측', 'GROWTH', <GrowthBody growth={market.growth} rows={bag.grow} />)}
 
-      {section(3, '경쟁사', 'COMPETITOR',
+      {section(3, '경쟁·대체재', 'COMPETITOR',
         <CompetitorBody rows={bag.comp} gaps={competitorGaps(market.notFound)} />)}
 
       {section(4, '가격', 'PRICE', <PriceBody price={market.price} cited={cited(market.price?.evidenceIds ?? [])} />)}
@@ -201,7 +206,7 @@ export function MarketResultBody({ result, activeId, onJump, onNext }) {
 
       {/* 7과목인데 6섹션만 세우면 성적표의 마지막 줄이 화면에 없다 —
           「못 찾은 것」은 이 조사에서 **항상 나가는 칸**이라 더더욱 그렇다. */}
-      {section(7, '못 찾은 것', 'NOT_FOUND', <NotFoundBody blocks={market.notFound} />)}
+      {section(7, '추가 확인이 필요한 근거', 'NOT_FOUND', <NotFoundBody blocks={market.notFound} />)}
 
       {onNext ? <div className="mr-actions">
         <Button onClick={onNext}>다음 — 사업 모델 검토</Button>
@@ -231,14 +236,15 @@ function Kpis({ market, onJump }) {
     <div className="mr-kpis">
       {tile('TAM', market.tam, 'CALCULATION')}
       {tile('SAM', market.sam, 'CALCULATION')}
-      {tile('연 성장률', market.growth, 'GROWTH', '2023 → 2024')}
+      {tile('관측 지표 변화', market.growth, 'GROWTH', market.growth?.formula ?? '참고 지표 증감')}
       {price ? (
         <button type="button" className="mr-kpi" onClick={() => onJump('PRICE')}>
-          <span>가격대 (월)</span>
+          <span>관련 가격·비용 관측</span>
           <b className="num">{abbreviateKrw(price.min) ?? formatValue(price.min, price.currency)}
             {'~'}{abbreviateKrw(price.max) ?? formatValue(price.max, price.currency)}</b>
           <small className="num">
             {formatValue(price.min, price.currency)} ~ {formatValue(price.max, price.currency)}
+            {price.evidenceIds?.length ? ` · 관련 관측 ${price.evidenceIds.length}건` : ''}
           </small>
           <GradeBadge grade={price.grade} />
         </button>
@@ -255,30 +261,47 @@ function NotFoundBody({ blocks }) {
   if (!blocks || blocks.length === 0) {
     return <p className="bm-cell__none">못 찾은 것이 기록되지 않았다.</p>;
   }
-  // 갈래 순서는 `NOT_FOUND_GROUP` 선언 순서다 — 모르는 키(group=null)는 맨 뒤에 드러낸다.
-  const groups = [...Object.keys(NOT_FOUND_GROUP), null];
+  const groups = Object.keys(NOT_FOUND_GROUP);
+  const totals = Object.fromEntries(groups.map((group) => [group ?? 'UNKNOWN', blocks
+    .filter((block) => block.group === group).reduce((sum, block) => sum + block.count, 0)]));
+  totals.UNKNOWN = blocks.filter((block) => block.group === null)
+    .reduce((sum, block) => sum + block.count, 0);
 
   return (
     <div className="mr-nf">
+      <div className="mr-nf__summary">
+        <article><span>아직 충분한 근거 없음</span><strong>{(totals.NOT_YET ?? 0) + (totals.ASSUMED ?? 0)}건</strong></article>
+        <article><span>추가 확인 필요</span><strong>{totals.UNKNOWN ?? 0}건</strong></article>
+        <article><span>수집에서 제외</span><strong>{totals.SCREENED_OUT ?? 0}건</strong></article>
+        <article><span>값이 엇갈림</span><strong>{totals.DIVERGED ?? 0}건</strong></article>
+      </div>
       {groups.map((group) => {
         const mine = blocks.filter((block) => block.group === group && block.count > 0);
         if (mine.length === 0) return null;
         const view = NOT_FOUND_GROUP[group];
         return (
-          <div key={group ?? '(모르는 갈래)'} className="mr-nf__g">
-            <div className="mr-nf__h">
+          <details key={group ?? '(모르는 갈래)'} className="mr-nf__g">
+            <summary className="mr-nf__h">
               <Badge tone={view?.tone ?? 'danger'}>{view?.label ?? '분류하지 못한 항목'}</Badge>
-              <span>{view?.note ?? '이 키를 화면이 모른다 — 조용히 묻지 않고 드러낸다'}</span>
-            </div>
-            {mine.map((block) => (
+              <span>{view?.note ?? '추가 확인이 필요한 기술 항목'}</span><strong>{mine.reduce((sum, block) => sum + block.count, 0)}건</strong>
+            </summary>
+            <div className="mr-nf__details">{mine.map((block) => (
               <div key={block.key} className="mr-nf__b">
                 <h4>{block.label}<small className="num">{block.count}건</small></h4>
                 <ul>{block.entries.map((line) => <li key={line}>{line}</li>)}</ul>
               </div>
-            ))}
-          </div>
+            ))}</div>
+          </details>
         );
       })}
+      {blocks.some((block) => block.group === null) ? <details className="mr-nf__g">
+        <summary className="mr-nf__h"><Badge tone="neutral">조사 상세</Badge>
+          <span>추가 확인이 필요한 기술 정보</span><strong>{totals.UNKNOWN ?? 0}건</strong></summary>
+        <div className="mr-nf__details">{blocks.filter((block) => block.group === null).map((block) => (
+          <div key={block.key} className="mr-nf__b"><h4><code>{block.key}</code><small className="num">{block.count}건</small></h4>
+            <ul>{block.entries.map((line) => <li key={line}>{line}</li>)}</ul></div>
+        ))}</div>
+      </details> : null}
     </div>
   );
 }
@@ -299,13 +322,15 @@ function Section({ n, title, id, row, active, children }) {
 }
 
 function EvidenceTable({ rows, quote = false }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? rows : rows.slice(0, 8);
   return (
-    <table className="mr-table">
+    <div className="mr-table-wrap"><table className="mr-table">
       <thead>
         <tr><th>값</th><th>항목</th><th>기간</th><th>등급</th><th>출처</th></tr>
       </thead>
       <tbody>
-        {rows.map((item) => (
+        {visible.map((item) => (
           <tr key={item.id}>
             <td className="v num">{formatValue(item.value, item.unit)}</td>
             <td>
@@ -322,17 +347,17 @@ function EvidenceTable({ rows, quote = false }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </table>{rows.length > 8 ? <Button variant="secondary" onClick={() => setExpanded((value) => !value)}>{expanded ? '대표 항목만 보기' : `전체 ${rows.length}건 보기`}</Button> : null}</div>
   );
 }
 
 function GrowthBody({ growth, rows }) {
-  if (!growth) return <p className="bm-cell__none">성장률을 산출하지 않았다.</p>;
+  if (!growth) return <p className="bm-cell__none">참고 지표 증감률을 산출하지 않았습니다.</p>;
   return (
     <>
       <div className="mr-figs">
         <div>
-          <span>연 성장률</span>
+          <span>관측 지표 증감률</span>
           <b className="num">{formatValue(growth.value, growth.unit)}</b>
           <small>{growth.formula ?? ''}</small>
         </div>
@@ -355,7 +380,7 @@ function GrowthBody({ growth, rows }) {
  */
 function CompetitorBody({ rows, gaps }) {
   const names = [...new Set([...rows.map((item) => item.subject), ...gaps.map(([name]) => name)])];
-  if (names.length === 0) return <p className="bm-cell__none">경쟁사 관측이 없다.</p>;
+  if (names.length === 0) return <p className="bm-cell__none">경쟁·대체재 관측이 없습니다.</p>;
 
   return (
     <>
@@ -398,7 +423,7 @@ function CompetitorBody({ rows, gaps }) {
 
 /** 가격은 밴드로 읽어야 한다. 대표값 하나만 남으면 확정 단가로 읽힌다. */
 function PriceBody({ price, cited }) {
-  if (!price) return <p className="bm-cell__none">표시가격 관측이 없다.</p>;
+  if (!price) return <p className="bm-cell__none">관련 가격·비용 관측이 없습니다.</p>;
   const hosts = new Set(cited.map((item) => hostOf(item.sourceUrl)).filter(Boolean));
 
   return (
@@ -460,12 +485,12 @@ function CalcBody({ cards }) {
               </tbody>
             </table>
             <div className="mr-note">
-              <b>쓴 재료</b>{' '}
+              <b>계산에 사용한 근거</b>{' '}
               {card.materialIds.length > 0
                 ? card.materialIds.map((id) => (
                   <Badge key={id} tone="success">{id}</Badge>
                 ))
-                : <Badge tone="warning">관측 재료 없음 — 전부 가정으로 채운 계산이다</Badge>}
+                : <Badge tone="warning">관측 근거 없이 가정으로 처리된 항목</Badge>}
               {card.assumptions.map((line) => (
                 <div key={line}><Emphasis text={line} /></div>
               ))}

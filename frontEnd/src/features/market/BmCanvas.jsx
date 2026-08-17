@@ -141,14 +141,14 @@ function CellDetail({ cell, active }) {
   const tone = dot === 'ok' ? 'success' : dot === 'mid' ? 'warning' : 'neutral';
 
   return (
-    <section id={`bm-${cell.cell}`} className={`bm-det${active ? ' is-on' : ''}`}>
-      <div className="bm-det__h">
+    <details id={`bm-${cell.cell}`} className={`bm-det${active ? ' is-on' : ''}`} open={active || undefined}>
+      <summary className="bm-det__h">
         <span className={`bm-dot bm-dot--${dot}`} />
         <h4>{cell.label}</h4>
         <KindChip kind={cell.kind} />
         <span className="bm-det__o">{cell.origin}</span>
         <Badge tone={tone}>{statusOf(cell)}</Badge>
-      </div>
+      </summary>
       <div className="bm-det__b">
         {/* 칸이 아예 안 온 것과 «미확인» 은 다른 사건이다. */}
         {cell.absent ? (
@@ -195,7 +195,7 @@ function CellDetail({ cell, active }) {
           </p>
         ) : null}
       </div>
-    </section>
+    </details>
   );
 }
 

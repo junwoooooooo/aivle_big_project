@@ -18,10 +18,27 @@ import {
 } from 'vitest';
 import MarketingContentPage from './MarketingContentPage.jsx';
 import useMarketingContent from '../hooks/useMarketingContent.js';
+import useMarketingStrategy from '../hooks/useMarketingStrategy.js';
 
 vi.mock('../hooks/useMarketingContent.js', () => ({
   default: vi.fn(),
 }));
+vi.mock('../hooks/useMarketingStrategy.js', () => ({ default: vi.fn() }));
+
+const strategyResult = {
+  executiveSummary: '현재 사업안의 핵심 고객에게 명확한 운영 가치를 전달합니다.',
+  targetCustomers: ['운영 담당자'], positioning: '운영 효율을 높이는 실무 도구',
+  coreMessages: ['반복 업무를 줄입니다.'], contentPillars: ['운영 효율'],
+  channelStrategies: [{ channel: '검색', objective: '인지', audience: '운영 담당자',
+    actions: ['사례 공개'], kpis: ['문의 수'], rationale: '탐색 의도가 있습니다.' }],
+  campaignRoadmap: [{ phase: '준비', objective: '메시지 확인', actions: ['소재 준비'], kpis: ['검토 완료'] }],
+  budgetGuidelines: ['확인된 예산 안에서 운영'], risks: ['성과 수치를 지어내지 않음'],
+  evidenceRefs: ['CURRENT_CONCEPT:concept-1'],
+};
+const createStrategy = (overrides = {}) => ({ loading: false, generating: false, downloading: false,
+  active: false, current: true, ready: true, error: null, generate: vi.fn(), download: vi.fn(), refresh: vi.fn(),
+  view: { reportId: 'a'.repeat(64), status: 'SUCCEEDED', ready: true, stale: false,
+    sourceManifest: [{ type: 'CURRENT_CONCEPT', id: 'concept-1' }], result: strategyResult }, ...overrides });
 
 const generatedResult = {
   contract: 'marketing-content-result-v1',
@@ -124,24 +141,24 @@ function renderPage() {
 describe('MarketingContentPage 단계형 화면', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useMarketingStrategy.mockReturnValue(createStrategy());
   });
 
   it('공식 명칭과 게시 전 AI 초안 안내를 눈에 보이게 제공한다', () => {
     useMarketingContent.mockReturnValue(createHook());
     renderPage();
-    expect(screen.getByText('마케팅 전략')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '현재 확정된 컨셉으로 마케팅 초안을 만드세요' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '사업안에서 실행 전략과 콘텐츠까지 이어가세요' })).toBeInTheDocument();
     expect(screen.getByText(/AI가 현재 확정된 컨셉을 바탕으로 만든 초안입니다/)).toBeInTheDocument();
   });
 
-  it('컨셉 확인 후 생성 설정 단계로 이동한다', () => {
+  it('분석 자료와 현재 전략을 거쳐 생성 설정 단계로 이동한다', () => {
     useMarketingContent.mockReturnValue(createHook());
 
     renderPage();
 
     expect(
       screen.getByRole('heading', {
-        name: '컨셉 정보를 확인하세요',
+        name: '현재 분석 자료를 확인하세요',
       }),
     ).toBeInTheDocument();
 
@@ -153,9 +170,12 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 사업안으로 마케팅 초안 만들기',
+        name: '마케팅 전략 만들기',
       }),
     );
+
+    expect(screen.getByRole('heading', { name: '마케팅 전략을 준비하세요' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '이 전략으로 콘텐츠 만들기' }));
 
     expect(
       screen.getByRole('heading', {
@@ -226,9 +246,10 @@ describe('MarketingContentPage 단계형 화면', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: '이 사업안으로 마케팅 초안 만들기',
+        name: '마케팅 전략 만들기',
       }),
     );
+    fireEvent.click(screen.getByRole('button', { name: '이 전략으로 콘텐츠 만들기' }));
 
     fireEvent.change(
       screen.getByLabelText('채널'),
@@ -257,6 +278,7 @@ describe('MarketingContentPage 단계형 화면', () => {
     await waitFor(() => {
       expect(create).toHaveBeenCalledTimes(1);
     });
+    expect(create.mock.calls[0][0].marketingStrategyReportId).toBe('a'.repeat(64));
 
     hookValue = createHook({
       create,

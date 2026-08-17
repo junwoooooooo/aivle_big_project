@@ -37,15 +37,15 @@ export const DECISION_VIEW = {
 
 export const SUBJECT_LABEL = {
   MARKET_SIZE: '시장 크기',
-  GROWTH: '성장률',
-  COMPETITOR: '경쟁사',
-  PRICE: '가격',
+  GROWTH: '성장 관련 관측',
+  COMPETITOR: '경쟁·대체재',
+  PRICE: '관련 가격·비용',
   DEMAND: '수요 근거',
   CALCULATION: '시장 규모 계산',
   CHANNEL: '채널',
   UNIT_ECONOMICS: '단위 경제성',
   REGULATION: '규제',
-  NOT_FOUND: '못 찾은 것',
+  NOT_FOUND: '추가 확인이 필요한 근거',
 };
 
 export const REPORT_SECTION_ORDER = [
@@ -83,11 +83,11 @@ export const SOURCE_KIND_VIEW = {
  * 서버 `serialize._NOT_FOUND` 와 같은 분류다. 갈리면 `marketResult.test.js` 가 잡는다.
  */
 export const NOT_FOUND_GROUP = {
-  NOT_YET: { label: '아직 못 채운 것', note: '더 찾으면 나올 수 있다', tone: 'warning' },
-  ASSUMED: { label: '가정으로 메운 변수', note: '자료가 아니라 판단이 필요하다', tone: 'warning' },
-  CONFIRMED_ABSENT: { label: '찾아도 없는 것', note: '여기가 종착이다', tone: 'neutral' },
-  SCREENED_OUT: { label: '찾았지만 쓰지 않은 것', note: '규격 미달로 걸러냈다', tone: 'info' },
-  DIVERGED: { label: '값이 갈린 것', note: '그 자체가 조사 결과다', tone: 'info' },
+  NOT_YET: { label: '근거가 부족한 항목', note: '추가 수집으로 보완할 수 있습니다.', tone: 'warning' },
+  ASSUMED: { label: '가정으로 처리된 항목', note: '관측 근거 없이 가정으로 처리되었습니다.', tone: 'warning' },
+  CONFIRMED_ABSENT: { label: '직접 관측이 어려운 항목', note: '현재 수집 경로에서 직접 근거를 확보하지 못했습니다.', tone: 'neutral' },
+  SCREENED_OUT: { label: '수집에서 제외된 항목', note: '사용 기준에 맞지 않아 제외되었습니다.', tone: 'info' },
+  DIVERGED: { label: '값이 서로 다른 항목', note: '출처별 값이 달라 추가 판단이 필요합니다.', tone: 'info' },
 };
 
 /** 진단 키 → 갈래 + 사람이 읽는 이름. 모르는 키는 원문 노출 + `danger` 로 **드러낸다.** */
@@ -95,9 +95,9 @@ export const NOT_FOUND_VIEW = {
   empty_slots: ['NOT_YET', '근거를 하나도 못 찾은 조사 칸'],
   thin_slots: ['NOT_YET', '근거가 기준에 못 미치는 조사 칸'],
   retry_hints: ['NOT_YET', '재조사 힌트 — 자동으로 돌지 않는다'],
-  url_filtered: ['NOT_YET', '열지 않고 거른 후보'],
-  unknown_error_codes: ['NOT_YET', '분류하지 못한 외부 응답'],
-  unfilled_vars: ['ASSUMED', '관측 없이 가정으로 채운 변수'],
+  url_filtered: ['NOT_YET', '수집 전에 제외된 후보'],
+  unknown_error_codes: ['NOT_YET', '추가 확인이 필요한 기술 항목'],
+  unfilled_vars: ['ASSUMED', '관측 근거 없이 가정으로 처리된 항목'],
   suspect_var: ['ASSUMED', '재조사 1순위 변수'],
   independent_topdown_blocked: ['CONFIRMED_ABSENT', '위에서 아래로 재는 길이 막혔다'],
   '자료_부재_확정': ['CONFIRMED_ABSENT', '그 형태로 발행되지 않는 자료'],

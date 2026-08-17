@@ -119,6 +119,9 @@ public class ProjectModuleStatusService {
             String.valueOf(projectId), TaskType.TWIN_STIMULUS_DRAFT);
         ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
+        TaskRun marketingStrategyTask = taskRunRepository
+            .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                projectId, TaskType.MARKETING_STRATEGY_GENERATION).orElse(null);
         TaskRun marketingVisualTask = marketing == null ? null : taskRunRepository
             .findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
                 projectId, TaskType.MARKETING_VISUAL_GENERATION, "MARKETING_VISUAL", marketing.getId()).orElse(null);
@@ -201,8 +204,13 @@ public class ProjectModuleStatusService {
             : interviewStale || interviewRun.getState() == MarketInterviewRun.State.STALE
                 ? PipelineModuleStatus.STALE : taskStatus(interviewRun.getTaskRun().getState());
         TaskRun activeInterviewTask = interviewRun == null ? null : activeTask(interviewRun.getTaskRun());
-        PipelineModuleStatus marketingStatus = marketingStatus(marketing,
-            marketingSource == null ? null : marketingSource.getId(), marketingVisualTask);
+        PipelineModuleStatus marketingStatus = marketingStatus(selectedSnapshot != null, marketing,
+            marketingSource == null ? null : marketingSource.getId(), marketingVisualTask,
+            marketingStrategyTask);
+        TaskRun activeMarketingTask = activeTask(marketingVisualTask) != null ? marketingVisualTask
+            : marketing != null && marketing.getTaskRunId() != null
+                ? taskRunRepository.findById(marketing.getTaskRunId()).filter(task -> !task.terminal()).orElse(null)
+                : activeTask(marketingStrategyTask);
         boolean techOpsAdvisoryStale = techOpsAdvisory != null && (techOpsSnapshot == null
             || !techOpsSnapshot.getId().equals(techOpsAdvisory.getTechOpsInputSnapshotId()));
         PipelineModuleStatus techOpsStatus = techOpsPreparation == null ? PipelineModuleStatus.READY
@@ -293,13 +301,15 @@ public class ProjectModuleStatusService {
                 selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
                 twinRun == null ? null : twinRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
-                marketingSource == null ? List.of("marketingSourceSnapshotId") : List.of(),
-                new NextAction("마케팅 콘텐츠", "/marketing"), marketing == null ? null : marketing.getId(),
-                marketingVisualTask != null && !marketingVisualTask.terminal() ? marketingVisualTask.getId()
-                    : marketing == null ? null : marketing.getTaskRunId(),
-                marketingSource == null ? null : marketingSource.getId(), null, null,
-                marketingVisualTask == null ? marketing == null ? null : marketing.getUpdatedAt()
-                    : marketingVisualTask.getUpdatedAt())
+                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
+                new NextAction("마케팅 전략·콘텐츠", "/marketing"),
+                marketing == null ? marketingStrategyTask == null ? null : marketingStrategyTask.getId() : marketing.getId(),
+                activeMarketingTask == null ? null : activeMarketingTask.getId(),
+                marketingSource == null ? selectedSnapshot == null ? null : selectedSnapshot.getId()
+                    : marketingSource.getId(), null, null,
+                latestUpdatedAt(marketingStrategyTask, marketingVisualTask) == null
+                    ? marketing == null ? null : marketing.getUpdatedAt()
+                    : latestUpdatedAt(marketingStrategyTask, marketingVisualTask))
         );
     }
 
@@ -429,10 +439,17 @@ public class ProjectModuleStatusService {
         };
     }
 
-    private PipelineModuleStatus marketingStatus(MarketingContent content, String marketingSourceSnapshotId,
-            TaskRun visualTask) {
-        if (marketingSourceSnapshotId == null) return PipelineModuleStatus.NOT_READY;
-        if (content == null) return PipelineModuleStatus.READY;
+    private PipelineModuleStatus marketingStatus(boolean hasCurrentConcept, MarketingContent content,
+            String marketingSourceSnapshotId, TaskRun visualTask, TaskRun strategyTask) {
+        if (!hasCurrentConcept) return PipelineModuleStatus.NOT_READY;
+        if (activeTask(strategyTask) != null) return taskStatus(strategyTask.getState());
+        if (content == null) {
+            if (strategyTask == null || strategyTask.getState() == TaskRunState.SUCCEEDED) {
+                return PipelineModuleStatus.READY;
+            }
+            return taskStatus(strategyTask.getState());
+        }
+        if (marketingSourceSnapshotId == null) return PipelineModuleStatus.STALE;
         if (!marketingSourceSnapshotId.equals(content.getMarketingSourceSnapshotId())) return PipelineModuleStatus.STALE;
         PipelineModuleStatus contentStatus = switch (content.getStatus()) {
             case QUEUED -> PipelineModuleStatus.QUEUED;
