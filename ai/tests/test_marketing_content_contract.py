@@ -14,6 +14,57 @@ from app.providers import ProviderFailure
 from app.tasks.marketing_content import service
 from app.tasks.marketing_content import marketing_image
 
+def strategy_result_input() -> dict:
+    return {
+        "contract": "marketing-strategy-result-v1",
+        "executiveSummary": "검증 결과를 기반으로 초기 고객 확보에 집중합니다.",
+        "targetCustomers": [
+            "검증된 핵심 고객군",
+        ],
+        "positioning": "검증된 고객 문제와 가치 제안을 연결한 포지셔닝",
+        "coreMessages": [
+            "검증된 핵심 가치 메시지",
+        ],
+        "channelStrategies": [
+            {
+                "channel": "Instagram",
+                "objective": "초기 인지도 확보",
+                "audience": "검증된 핵심 고객",
+                "actions": [
+                    "제품 사용 상황 콘텐츠 제작",
+                ],
+                "kpis": [
+                    "도달 및 참여 반응 측정",
+                ],
+                "rationale": "시장 및 패널 조사 결과를 반영",
+            },
+        ],
+        "contentPillars": [
+            "고객 문제 공감",
+            "제품 핵심 가치",
+        ],
+        "campaignRoadmap": [
+            {
+                "phase": "출시 전",
+                "objective": "핵심 메시지 검증",
+                "actions": [
+                    "핵심 메시지별 반응 비교",
+                ],
+                "kpis": [
+                    "메시지별 참여율",
+                ],
+            },
+        ],
+        "budgetGuidelines": [
+            "소규모 테스트 예산으로 검증 후 확대",
+        ],
+        "risks": [
+            "패널 조사 결과를 전체 시장으로 일반화하지 않음",
+        ],
+        "evidenceRefs": [
+            "MARKET:1",
+        ],
+    }
 
 def request_input() -> dict:
     return {
@@ -34,8 +85,10 @@ def request_input() -> dict:
             "requiredControls": [], "communicationRequiredControls": [], "officialEvidenceReferences": [],
             "sourceSnapshotHash": "sha256:" + "0" * 64,
         },
+        "strategy": strategy_result_input(),
         "request": {
             "contract": "marketing-content-request-v1", "marketingSourceSnapshotId": "source-1",
+            "marketingStrategyReportId": "a" * 64,
             "contentType": "BLOG_INTRO", "channel": "blog", "purpose": "launch",
             "tone": "clear", "length": "SHORT", "requiredPhrases": [],
             "excludedPhrases": [], "additionalInstruction": None,
