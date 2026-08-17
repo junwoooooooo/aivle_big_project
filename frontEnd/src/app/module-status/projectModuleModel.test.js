@@ -5,7 +5,7 @@ describe('project module model', () => {
   it('가상 인터뷰를 canonical 시장 인터뷰 슬롯 하나로 노출한다', () => {
     expect(PROJECT_MODULES.map((item) => item.id)).toEqual([
       'overview', 'idea', 'concepts', 'market', 'businessModel', 'conceptRefinement',
-      'launchReadiness', 'marketInterview', 'marketing', 'settings',
+      'techOps', 'finance', 'launchReadiness', 'marketInterview', 'marketing', 'settings',
     ]);
     expect(getProjectModules('41').filter((item) => item.id === 'concepts')).toHaveLength(1);
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/compare').id).toBe('concepts');
@@ -13,14 +13,18 @@ describe('project module model', () => {
     expect(getProjectModuleByPath('41', '/app/projects/41/business-validation').id).toBe('market');
   });
 
-  it('기술·운영과 재무 상태를 하나의 출시 준비 상태로 보수적으로 집계한다', () => {
+  it('기술·운영·재무·출시 준비 상태를 서로 독립적으로 projection한다', () => {
     const statuses = normalizeProjectModuleStatuses([
       { module: 'TECH_OPS', status: 'COMPLETED', requiredInputs: [] },
       { module: 'FINANCE', status: 'RUNNING', activeTaskRunId: 'finance-run' },
+      { module: 'LAUNCH_READINESS', status: 'READY' },
     ]);
-    expect(statuses.launchReadiness.status).toBe('RUNNING');
+    expect(statuses.techOps.status).toBe('COMPLETED');
+    expect(statuses.finance.status).toBe('RUNNING');
+    expect(statuses.launchReadiness.status).toBe('READY');
     expect(getProjectModuleByPath('41', '/app/projects/41/technology').id).toBe('launchReadiness');
-    expect(getProjectModuleByPath('41', '/app/projects/41/finance').id).toBe('launchReadiness');
+    expect(getProjectModuleByPath('41', '/app/projects/41/tech-ops').id).toBe('techOps');
+    expect(getProjectModuleByPath('41', '/app/projects/41/finance').id).toBe('finance');
   });
 
   it('CONCEPT_REFINEMENT 상태를 사업 검증의 세 번째 근거로 보존한다', () => {

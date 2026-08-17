@@ -39,6 +39,8 @@ _CHILD_PROVIDER_FAILURES = {
     ("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED"): (429, True),
     ("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE"): (502, True),
     ("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE"): (500, False),
+    ("EXECUTION_FAILED", "HARNESS_PRECONDITION_FAILED"): (500, False),
+    ("EXECUTION_FAILED", "RESEARCH_SNAPSHOT_MISSING"): (500, False),
     ("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION"): (502, False),
     ("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED"): (502, False),
     ("RESULT_SCHEMA_INVALID", "PROVIDER_JSON_INVALID"): (502, False),
@@ -443,6 +445,7 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
                       handle, ensure_ascii=False, sort_keys=True)
         env = dict(os.environ)
         env["RESEARCH2_RUNS_DIR"] = os.path.join(workspace, "runs")
+        env["RESEARCH2_SNAPSHOT_DIR"] = os.path.join(workspace, "snapshots")
         command = [
             sys.executable, "-u", "-m", "app.research.product_runner",
             "--input", input_path, "--output", output_path,

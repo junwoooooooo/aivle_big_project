@@ -74,13 +74,13 @@ class LaunchReadinessAuthorityV27ContractTests {
     }
 
     @Test
-    void financePinsCurrentConceptWithoutChangingDeterministicCalculator() throws Exception {
+    void financeSupportsIndependentInputWhileRetainingOptionalContextAndDeterministicCalculator() throws Exception {
         String finance = source("pipeline/finance/application/FinancialService.java");
         String snapshot = source("pipeline/finance/application/FinancialInputSnapshotFactory.java");
         String calculator = source("pipeline/finance/application/FinancialCalculator.java");
-        assertThat(finance).contains("CurrentConceptSourceResolver").contains("exactCurrentConcept")
-            .contains("bind(snapshot, authority)");
-        assertThat(snapshot).contains("sourceSelectionRevision", "sourceBmPlanRevision");
+        assertThat(finance).contains("CurrentConceptSourceResolver", "exactCurrentConcept", "DIRECT_INPUT",
+            "USER_DOCUMENT_INPUT", "createIndependent");
+        assertThat(snapshot).contains("sourceSelectionRevision", "sourceBmPlanRevision", "createIndependent");
         assertThat(calculator).contains("public class FinancialCalculator");
     }
 

@@ -4,9 +4,10 @@ import { describe, expect, it } from 'vitest';
 const page = readFileSync('src/features/launch-readiness/pages/LaunchReadinessPage.jsx', 'utf8');
 
 describe('Launch Readiness product contract', () => {
-  it('현재 journey의 7단계와 current concept + professional input 기준을 명시한다', () => {
+  it('현재 journey의 3단계와 professional input 독립 실행 기준을 명시한다', () => {
     expect(page).toContain('step={3}');
-    expect(page).toContain('현재 확정 사업안과 제출한 전문 입력 문서');
+    expect(page).toContain('전문 입력 문서를 필수 근거로 사용하고');
+    expect(page).toContain('프로젝트 정보는 보조 맥락으로만 활용');
   });
 
   it('기술·운영·재무·보고서를 한 사용자 화면에 함께 제공한다', () => {
@@ -20,11 +21,13 @@ describe('Launch Readiness product contract', () => {
     expect(page).toContain('<ReportToolbar');
   });
 
-  it('현재 사업안과 전문 입력의 결합 authority를 상단에 두고 compact 보고서 toolbar를 분석 카드 위에 둔다', () => {
-    expect(page.match(/현재 확정 사업안과 제출한 전문 입력 문서/g)).toHaveLength(1);
+  it('세 분석의 독립 실행 authority를 상단에 두고 compact 보고서 toolbar를 분석 카드 위에 둔다', () => {
+    expect(page).toContain('기술·운영·재무 준비 상태를 서로 독립적으로 확인');
+    expect(page).not.toContain('현재 확정 사업안과 제출한 전문 입력 문서');
     expect(page).not.toContain('독립 사용 가능');
     expect(page).not.toContain('선택형 · 독립 문서 분석');
     expect(page).not.toContain('앞 단계의 분석 결과');
+    expect(page).not.toContain("staleReason === 'CONCEPT_CHANGED'");
     expect(page.indexOf('<ReportToolbar')).toBeLessThan(page.indexOf('className="launch-analysis-grid"'));
     expect(page).not.toContain('className="launch-module launch-reports"');
   });

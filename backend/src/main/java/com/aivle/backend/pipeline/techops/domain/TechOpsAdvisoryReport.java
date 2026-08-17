@@ -19,12 +19,12 @@ public class TechOpsAdvisoryReport extends BaseEntity {
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Column(name = "task_run_id", nullable = false, length = 64) private String taskRunId;
     @Column(name = "tech_ops_input_snapshot_id", nullable = false, length = 64) private String techOpsInputSnapshotId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
-    @Column(name = "source_market_research_version_id", nullable = false) private Long sourceMarketResearchVersionId;
-    @Column(name = "source_business_model_version_id", nullable = false) private Long sourceBusinessModelVersionId;
-    @Column(name = "source_portfolio_selection_id", nullable = false) private Long sourcePortfolioSelectionId;
-    @Column(name = "selected_concept_id", nullable = false, length = 64) private String selectedConceptId;
-    @Column(name = "selected_concept_hash", nullable = false, length = 71) private String selectedConceptHash;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_market_research_version_id") private Long sourceMarketResearchVersionId;
+    @Column(name = "source_business_model_version_id") private Long sourceBusinessModelVersionId;
+    @Column(name = "source_portfolio_selection_id") private Long sourcePortfolioSelectionId;
+    @Column(name = "selected_concept_id", length = 64) private String selectedConceptId;
+    @Column(name = "selected_concept_hash", length = 71) private String selectedConceptHash;
     @Column(name = "contract_version", nullable = false, length = 20) private String contractVersion;
     @Column(name = "result_json", nullable = false, columnDefinition = "TEXT") private String resultJson;
     @Column(name = "created_by_user_id", nullable = false) private Long createdByUserId;
@@ -32,9 +32,8 @@ public class TechOpsAdvisoryReport extends BaseEntity {
     public static TechOpsAdvisoryReport create(Long projectId, String taskRunId, String snapshotId,
             String seedId, Long marketVersionId, Long businessModelVersionId, Long selectionId,
             String conceptId, String conceptHash, String contractVersion, String resultJson, Long userId) {
-        if (projectId == null || blank(taskRunId) || blank(snapshotId) || blank(seedId)
-                || marketVersionId == null || businessModelVersionId == null || selectionId == null
-                || blank(conceptId) || conceptHash == null || !conceptHash.matches("sha256:[0-9a-f]{64}")
+        if (projectId == null || blank(taskRunId) || blank(snapshotId)
+                || (conceptHash != null && !conceptHash.matches("sha256:[0-9a-f]{64}"))
                 || blank(contractVersion) || blank(resultJson) || userId == null) {
             throw new IllegalArgumentException("TechOps Advisory report is invalid");
         }

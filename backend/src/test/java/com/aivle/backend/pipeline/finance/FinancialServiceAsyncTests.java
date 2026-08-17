@@ -73,42 +73,42 @@ class FinancialServiceAsyncTests {
     }
 
     @Test
-    void initializeBlocksWhenCurrentMarketIsMissing() {
+    void initializeWithoutCurrentMarketCreatesIndependentUserInput() {
         Harness h = new Harness();
         when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.FULL))
             .thenReturn(new MarketResearchService.CurrentView(null, null, null, false));
-        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Market Research");
+        assertIndependent(h.service.initialize(7L, 41L));
     }
 
     @Test
-    void initializeBlocksWhenCurrentBusinessModelIsMissing() {
+    void initializeWithoutCurrentBusinessModelCreatesIndependentUserInput() {
         Harness h = new Harness();
         when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.BM))
             .thenReturn(new MarketResearchService.CurrentView(null, null, null, false));
-        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Business Model");
+        assertIndependent(h.service.initialize(7L, 41L));
     }
 
     @Test
-    void initializeBlocksAStaleMarket() {
+    void initializeWithStaleMarketCreatesIndependentUserInput() {
         Harness h = new Harness();
         when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.FULL))
             .thenReturn(new MarketResearchService.CurrentView(null, h.marketView, null, true));
-        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Market Research");
+        assertIndependent(h.service.initialize(7L, 41L));
     }
 
     @Test
-    void initializeBlocksAStaleBusinessModel() {
+    void initializeWithStaleBusinessModelCreatesIndependentUserInput() {
         Harness h = new Harness();
         when(h.marketResearch.current(7L, 41L, MarketResearchRun.Kind.BM))
             .thenReturn(new MarketResearchService.CurrentView(null, h.bmView, null, true));
-        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "Business Model");
+        assertIndependent(h.service.initialize(7L, 41L));
     }
 
     @Test
-    void initializeBlocksAMarketBusinessModelLineageMismatch() {
+    void initializeWithMismatchedMarketBusinessModelCreatesIndependentUserInput() {
         Harness h = new Harness();
         when(h.bmRun.getSourceMarketVersionId()).thenReturn(999L);
-        assertPreparationRequired(() -> h.service.initialize(7L, 41L), "lineage");
+        assertIndependent(h.service.initialize(7L, 41L));
     }
 
     @Test
@@ -163,12 +163,11 @@ class FinancialServiceAsyncTests {
         return new ObjectMapper().readTree("{\"amount\":" + amount + ",\"currency\":\"KRW\"}");
     }
 
-    private static void assertPreparationRequired(org.assertj.core.api.ThrowableAssert.ThrowingCallable action,
-            String messageFragment) {
-        assertThatThrownBy(action).isInstanceOfSatisfying(BusinessException.class, error -> {
-            assertThat(error.getErrorCode()).isEqualTo(ErrorCode.FINANCIAL_PREPARATION_REQUIRED);
-            assertThat(error.getMessage()).contains(messageFragment);
-        });
+    private static void assertIndependent(com.aivle.backend.pipeline.finance.api.FinancialApiModels.PreparationView result) {
+        assertThat(result.sourceMarketResearchVersionId()).isNull();
+        assertThat(result.sourceBusinessModelVersionId()).isNull();
+        assertThat(result.sourceTechOpsSnapshotId()).isNull();
+        assertThat(result.financialFields()).isNotNull();
     }
 
     private static final class Harness {
@@ -244,6 +243,7 @@ class FinancialServiceAsyncTests {
             when(marketVersions.findById(101L)).thenReturn(Optional.of(market));
             when(marketVersions.findById(201L)).thenReturn(Optional.of(bm));
             when(snapshotHasher.hash(any())).thenReturn(hash);
+            when(preparations.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
             when(snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(anyString(), eq(41L)))
                 .thenReturn(Optional.empty());
             when(readiness.missing(any())).thenReturn(List.of("annualFixedRentAndManagementCost"));

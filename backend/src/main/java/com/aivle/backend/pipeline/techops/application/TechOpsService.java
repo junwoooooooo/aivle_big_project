@@ -55,14 +55,15 @@ public class TechOpsService {
 
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId, String idempotencyKey, String correlationId) {
-        requireOwnedForUpdate(ownerId, projectId); MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
-        var existing = preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(projectId, source.getId());
+        requireOwnedForUpdate(ownerId, projectId); MarketAnalysisSeedSnapshot source = currentMarketSeedOrNull(projectId);
+        var existing = preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(projectId);
         if (existing.isPresent()) return view(existing.get());
-        var initial = preparationFactory.create(source);
+        var initial = source == null ? preparationFactory.createIndependent() : preparationFactory.create(source);
         String id = UUID.randomUUID().toString();
-        var saved = preparations.save(TechOpsInputPreparation.create(id, projectId, source.getId(), source.getSnapshotHash(),
+        var saved = preparations.save(TechOpsInputPreparation.create(id, projectId,
+            source == null ? null : source.getId(), source == null ? null : source.getSnapshotHash(),
             mapper.writeValueAsString(initial.requiredFacts()), mapper.writeValueAsString(initial.proposalDecisions()), ownerId));
-        if (hasMissingProposal(initial.proposalDecisions())) {
+        if (source != null && hasMissingProposal(initial.proposalDecisions())) {
             queueInitial(ownerId, projectId, saved, source, idempotencyKey, correlationId);
         }
         return view(saved);
@@ -116,7 +117,9 @@ public class TechOpsService {
                 }
                 int nextVersion = field.path("proposalVersion").asInt(1) + 1;
                 JsonNode previous = field.path("proposalValue"); validateDecisionValue(fieldKey, previous);
-                MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
+                MarketAnalysisSeedSnapshot source = currentMarketSeedOrNull(projectId);
+                if (source == null) throw new BusinessException(ErrorCode.TECH_OPS_PROPOSAL_INVALID,
+                    "상위 사업안 없이 시작한 분석에서는 값을 직접 입력해 확정해 주세요.");
                 JsonNode input = mapper.valueToTree(java.util.Map.ofEntries(
                     java.util.Map.entry("mode", "ALTERNATIVE"), java.util.Map.entry("preparationId", preparation.getId()),
                     java.util.Map.entry("fieldKey", fieldKey), java.util.Map.entry("currentProposalVersion", nextVersion - 1),
@@ -161,7 +164,9 @@ public class TechOpsService {
             }
             throw new BusinessException(ErrorCode.ANALYSIS_ALREADY_RUNNING);
         }
-        MarketAnalysisSeedSnapshot source = currentMarketSeed(projectId);
+        MarketAnalysisSeedSnapshot source = currentMarketSeedOrNull(projectId);
+        if (source == null) throw new BusinessException(ErrorCode.TECH_OPS_PROPOSAL_INVALID,
+            "상위 사업안 없이 시작한 분석에서는 값을 직접 입력해 확정해 주세요.");
         TaskRun task = queueInitial(ownerId, projectId, preparation, source, idempotencyKey, correlationId);
         return queued(preparation, task, "RETRY_INITIAL", null, 1);
     }
@@ -214,8 +219,8 @@ public class TechOpsService {
 
     @Transactional(readOnly = true)
     public SnapshotView currentSnapshot(Long ownerId, Long projectId) {
-        requireOwned(ownerId, projectId); MarketAnalysisSeedSnapshot source=currentMarketSeed(projectId);
-        return snapshotView(snapshots.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(source.getId(), projectId)
+        requireOwned(ownerId, projectId);
+        return snapshotView(snapshots.findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_SNAPSHOT_NOT_READY)));
     }
 
@@ -309,26 +314,26 @@ public class TechOpsService {
             mapper.readTree(value.getSnapshotJson()));
     }
     private TechOpsInputPreparation requireCurrent(Long projectId) {
-        MarketAnalysisSeedSnapshot source=currentMarketSeed(projectId);
-        return preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(projectId, source.getId())
+        return preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(projectId)
             .orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_PREPARATION_REQUIRED));
     }
     private TechOpsInputPreparation lockedCurrent(Long projectId) {
         TechOpsInputPreparation current=requireCurrent(projectId);
         return preparations.findLocked(current.getId(), projectId).orElseThrow(() -> new BusinessException(ErrorCode.TECH_OPS_PREPARATION_REQUIRED));
     }
-    private MarketAnalysisSeedSnapshot currentMarketSeed(Long projectId) {
+    private MarketAnalysisSeedSnapshot currentMarketSeedOrNull(Long projectId) {
         var portfolioSelection = portfolioSelections
             .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
         if (portfolioSelection != null) {
             return marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(portfolioSelection.getId())
                 .filter(seed -> projectId.equals(seed.getProjectId()))
-                .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+                .orElse(null);
         }
         var selection=selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.CONCEPT_SELECTION_REQUIRED));
+            .orElse(null);
+        if (selection == null) return null;
         return marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(selection.getId(), projectId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+            .orElse(null);
     }
     private void ensureMutable(TechOpsInputPreparation value) {
         if (snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(value.getId(), value.getProjectId()).isPresent())

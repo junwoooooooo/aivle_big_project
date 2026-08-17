@@ -57,7 +57,7 @@ class TechOpsServiceAsyncTests {
     }
 
     @Test
-    void portfolioSelectionWithoutCurrentSeedDoesNotFallBackToLegacy() {
+    void portfolioSelectionWithoutCurrentSeedStartsIndependentPreparation() {
         Harness h = new Harness();
         ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
         when(selection.getId()).thenReturn(77L);
@@ -66,21 +66,20 @@ class TechOpsServiceAsyncTests {
         when(h.marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(77L))
             .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> h.service.initialize(7L, 41L, "v2-missing", "request-v2-missing"))
-            .isInstanceOfSatisfying(BusinessException.class,
-                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
+        var result = h.service.initialize(7L, 41L, "v2-missing", "request-v2-missing");
+        assertThat(result.sourceMarketSeedSnapshotId()).isNull();
+        assertThat(result.proposalGenerationStatus()).isEqualTo("IDLE");
         verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
     }
 
     @Test
-    void portfolioSeedFromAnotherProjectIsRejected() {
+    void portfolioSeedFromAnotherProjectFallsBackToIndependentPreparation() {
         Harness h = new Harness();
         h.installPortfolioSeed(99L);
 
-        assertThatThrownBy(() -> h.service.initialize(7L, 41L, "v2-foreign", "request-v2-foreign"))
-            .isInstanceOfSatisfying(BusinessException.class,
-                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.HYPOTHESIS_DECISIONS_INCOMPLETE));
-        verify(h.preparations, never()).save(any());
+        var result = h.service.initialize(7L, 41L, "v2-foreign", "request-v2-foreign");
+        assertThat(result.sourceMarketSeedSnapshotId()).isNull();
+        verify(h.preparations).save(any());
         verify(h.selections, never()).findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(anyLong());
     }
 
@@ -195,6 +194,14 @@ class TechOpsServiceAsyncTests {
                 .thenReturn(Optional.of(source));
             when(factory.create(source)).thenReturn(new TechOpsPreparationFactory.InitialPreparation(
                 mapper.createObjectNode(), decisions(true)));
+            when(factory.createIndependent()).thenReturn(new TechOpsPreparationFactory.InitialPreparation(
+                mapper.createObjectNode(), decisions(true)));
+            when(preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(41L))
+                .thenAnswer(_ignored -> Optional.ofNullable(saved));
+            when(preparations.save(any())).thenAnswer(invocation -> {
+                saved = invocation.getArgument(0);
+                return saved;
+            });
             when(snapshots.findByPreparationIdAndProjectIdAndDeletedAtIsNull(anyString(), eq(41L)))
                 .thenReturn(Optional.empty());
             when(evidence.findAllByPreparationIdAndDeletedAtIsNullOrderByCreatedAtAsc(anyString()))

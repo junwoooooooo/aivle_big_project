@@ -160,6 +160,7 @@ def main() -> None:
     try:
         os.environ["RESEARCH2_RUNS_DIR"] = os.path.join(args.workspace, "runs")
         os.environ["RESEARCH2_GENERATED_RUNS_DIR"] = os.path.join(args.workspace, "runs-generated")
+        os.environ["RESEARCH2_SNAPSHOT_DIR"] = os.path.join(args.workspace, "snapshots")
         with io.open(args.input, encoding="utf-8") as handle:
             concept = json.load(handle)
         runtime_input = {}

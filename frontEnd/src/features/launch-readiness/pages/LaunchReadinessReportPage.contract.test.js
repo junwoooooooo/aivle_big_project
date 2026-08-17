@@ -42,7 +42,8 @@ describe('V21.4 report page source contract', () => {
   it('V21.6 메인은 3열 IA와 세로 workflow, compact report toolbar를 사용한다', () => {
     expect(launchPage).toContain('className="launch-analysis-grid"');
     expect(launchPage).toContain('launch-workflow launch-workflow--vertical');
-    expect(launchPage).toContain('현재 확정 사업안과 제출한 전문 입력 문서');
+    expect(launchPage).toContain('전문 입력 문서를 필수 근거로 사용하고');
+    expect(launchPage).toContain('프로젝트 정보는 보조 맥락으로만 활용');
     expect(launchPage).toContain('<ReportToolbar');
     expect(launchPage).not.toContain('독립 사용 가능');
     expect(launchPage).not.toContain('선택형 · 독립 문서 분석');

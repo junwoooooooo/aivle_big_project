@@ -57,7 +57,19 @@ public class FinancialService {
     @Transactional
     public PreparationView initialize(Long ownerId, Long projectId) {
         requireOwnedForUpdate(ownerId, projectId);
-        CurrentSources source = currentSources(ownerId, projectId);
+        var direct = preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+            projectId, "DIRECT_INPUT");
+        if (direct.isPresent()) return view(direct.get());
+        CurrentSources source;
+        try { source = currentSources(ownerId, projectId); }
+        catch (BusinessException unavailable) {
+            var initial = preparationFactory.createIndependent();
+            ObjectNode lineage = mapper.createObjectNode(); lineage.put("sourceMode", "DIRECT_INPUT");
+            String id = UUID.randomUUID().toString();
+            return view(preparations.save(FinancialInputPreparation.createIndependent(id, projectId,
+                snapshotHasher.hash(lineage), mapper.writeValueAsString(initial.financialFields()),
+                mapper.writeValueAsString(initial.upstreamReferences()), mapper.writeValueAsString(initial.assistance()), ownerId)));
+        }
         var existing = preparations
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
                 projectId, source.market().getId(), source.businessModel().getId());
@@ -225,11 +237,19 @@ public class FinancialService {
         String id = UUID.randomUUID().toString();
         Instant now = Instant.now();
         var built = snapshotFactory.create(id, now, preparation);
-        FinancialInputSnapshot snapshot = FinancialInputSnapshot.createFromMarketAndBusinessModel(
-            id, projectId, preparation.getId(), preparation.getSourceMarketResearchVersionId(),
-            preparation.getSourceBusinessModelVersionId(),
-            FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now);
-        bind(snapshot, currentConcepts.require(projectId, "현재 확정된 사업안이 필요합니다."));
+        FinancialInputSnapshot snapshot;
+        if ("DIRECT_INPUT".equals(preparation.getSourceMode())) {
+            built = snapshotFactory.createIndependent(id, now, preparation);
+            snapshot = FinancialInputSnapshot.createIndependent(id, projectId, preparation.getId(),
+                preparation.getRevision(), FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(),
+                mapper.writeValueAsString(built.body()), ownerId, now);
+        } else {
+            snapshot = FinancialInputSnapshot.createFromMarketAndBusinessModel(
+                id, projectId, preparation.getId(), preparation.getSourceMarketResearchVersionId(),
+                preparation.getSourceBusinessModelVersionId(), FinancialInputSnapshotFactory.SCHEMA_VERSION,
+                built.hash(), mapper.writeValueAsString(built.body()), ownerId, now);
+            bind(snapshot, currentConcepts.require(projectId, "현재 확정된 사업안이 필요합니다."));
+        }
         return snapshotView(snapshots.save(snapshot));
     }
 
@@ -266,15 +286,11 @@ public class FinancialService {
             preparationId, projectId, artifactId, documentHash, sourceHash,
             mapper.writeValueAsString(fields), mapper.writeValueAsString(references),
             mapper.writeValueAsString(assistance), ownerId));
-        Source authority = currentConcepts.require(projectId,
-            "현재 확정된 사업안과 재무 입력 문서가 필요합니다.");
-        bind(preparation, authority);
         String snapshotId = UUID.randomUUID().toString(); Instant now = Instant.now();
         var built = snapshotFactory.createUserDocument(snapshotId, now, preparation);
         FinancialInputSnapshot snapshot = FinancialInputSnapshot.createFromUserDocument(
             snapshotId, projectId, preparationId, preparation.getRevision(), artifactId, documentHash,
             FinancialInputSnapshotFactory.SCHEMA_VERSION, built.hash(), mapper.writeValueAsString(built.body()), ownerId, now);
-        bind(snapshot, authority);
         return snapshotView(snapshots.save(snapshot));
     }
 
@@ -301,6 +317,9 @@ public class FinancialService {
         var userDocument = snapshots.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(
             projectId, "USER_DOCUMENT_INPUT");
         if (userDocument.isPresent()) return snapshotView(userDocument.get());
+        var direct = snapshots.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            projectId, "DIRECT_INPUT");
+        if (direct.isPresent()) return snapshotView(direct.get());
         CurrentSources source = currentSources(ownerId, projectId);
         return snapshotView(snapshots
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByFinalizedAtAsc(
@@ -417,6 +436,9 @@ public class FinancialService {
         var userDocument = preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
             projectId, "USER_DOCUMENT_INPUT");
         if (userDocument.isPresent()) return userDocument.get();
+        var direct = preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+            projectId, "DIRECT_INPUT");
+        if (direct.isPresent()) return direct.get();
         CurrentSources source = currentSources(ownerId, projectId);
         return preparations
             .findFirstByProjectIdAndSourceMarketResearchVersionIdAndSourceBusinessModelVersionIdAndDeletedAtIsNullOrderByCreatedAtAsc(
@@ -466,12 +488,16 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputPreparation value) {
-        if (!exactCurrentConcept(value)) return true;
+        if ("DIRECT_INPUT".equals(value.getSourceMode())) {
+            return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                value.getProjectId(), "DIRECT_INPUT").map(current -> !current.getId().equals(value.getId())).orElse(true);
+        }
         if ("USER_DOCUMENT_INPUT".equals(value.getSourceMode())) {
             return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
                 value.getProjectId(), "USER_DOCUMENT_INPUT").map(current -> !current.getId().equals(value.getId())
                     || !current.getSourceDocumentHash().equals(value.getSourceDocumentHash())).orElse(true);
         }
+        if (!exactCurrentConcept(value)) return true;
         try {
             CurrentSources current = currentSources(value.getUpdatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())
@@ -480,13 +506,18 @@ public class FinancialService {
     }
 
     private boolean stale(FinancialInputSnapshot value) {
-        if (!exactCurrentConcept(value)) return true;
+        if ("DIRECT_INPUT".equals(value.getSourceMode())) {
+            return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
+                value.getProjectId(), "DIRECT_INPUT").map(current -> !current.getId().equals(value.getPreparationId())
+                    || current.getRevision() != value.getPreparationRevision()).orElse(true);
+        }
         if ("USER_DOCUMENT_INPUT".equals(value.getSourceMode())) {
             return preparations.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByCreatedAtDesc(
                 value.getProjectId(), "USER_DOCUMENT_INPUT").map(current -> !current.getId().equals(value.getPreparationId())
                     || current.getRevision() != value.getPreparationRevision()
                     || !current.getSourceDocumentHash().equals(value.getSourceDocumentHash())).orElse(true);
         }
+        if (!exactCurrentConcept(value)) return true;
         try {
             CurrentSources current = currentSources(value.getCreatedByUserId(), value.getProjectId());
             return !current.market().getId().equals(value.getSourceMarketResearchVersionId())

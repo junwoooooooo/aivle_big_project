@@ -65,6 +65,16 @@ public class FinancialInputSnapshotFactory {
         return new BuiltSnapshot(body, hash);
     }
 
+    public BuiltSnapshot createIndependent(String snapshotId, Instant createdAt,
+            FinancialInputPreparation preparation) {
+        BuiltSnapshot base = create(snapshotId, createdAt, preparation);
+        ObjectNode body = base.body().deepCopy();
+        body.remove("hash"); body.put("sourceMode", "DIRECT_INPUT");
+        body.put("preparationRevision", preparation.getRevision());
+        String hash = hasher.hash(body); body.put("hash", hash);
+        return new BuiltSnapshot(body, hash);
+    }
+
     private JsonNode finalizedAssistance(JsonNode source) {
         ObjectNode result = (ObjectNode) source.deepCopy();
         for (String key : FinancialPreparationFactory.ALL_KEYS) {

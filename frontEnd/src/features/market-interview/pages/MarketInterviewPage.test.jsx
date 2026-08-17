@@ -62,9 +62,9 @@ describe('MarketInterviewPage', () => {
 
   it('renders structured participants, themes and follow-up questions', async () => {
     renderPage({ get: vi.fn().mockResolvedValue({ data: current('SUCCEEDED', { result }) }), post: vi.fn() });
-    expect(await screen.findByRole('heading', { name: '가상 참여자' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '가상 응답자' })).toBeInTheDocument();
     expect(screen.getByText('가상 참여자 A')).toBeInTheDocument();
-    expect(screen.getByText('도입 부담')).toBeInTheDocument();
+    expect(screen.getAllByText('도입 부담')).toHaveLength(2);
     expect(screen.getByText(/요청 20명 · 유효 응답 19명 · 응답 생성 실패 1명/)).toBeInTheDocument();
     expect(screen.getByText(/유효 응답 중 타겟 조건 일치 15명/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '실제 고객에게 확인할 질문' })).toBeInTheDocument();

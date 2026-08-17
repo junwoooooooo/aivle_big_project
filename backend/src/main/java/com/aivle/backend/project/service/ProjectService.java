@@ -98,7 +98,8 @@ public class ProjectService {
                 PipelineModuleType.CONCEPT_FACTORY, PipelineModuleType.CONCEPT_SELECTION),
             journey("사업 검증", presentationStatuses, PipelineModuleType.MARKET_ANALYSIS,
                 PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.CONCEPT_REFINEMENT),
-            journey("출시 준비", presentationStatuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE),
+            journey("출시 준비", presentationStatuses, PipelineModuleType.TECH_OPS, PipelineModuleType.FINANCE,
+                PipelineModuleType.LAUNCH_READINESS),
             journey("가상 인터뷰", presentationStatuses, PipelineModuleType.MARKET_INTERVIEW, PipelineModuleType.TWIN_SURVEY),
             journey("마케팅 전략", presentationStatuses, PipelineModuleType.MARKETING));
         FinalReportApiModels.State reportState = finalReports.state(userId, p.getId());

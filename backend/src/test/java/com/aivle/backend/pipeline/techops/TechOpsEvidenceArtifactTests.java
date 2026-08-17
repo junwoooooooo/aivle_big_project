@@ -91,6 +91,8 @@ class TechOpsEvidenceArtifactTests {
             when(marketSeeds.findBySelectionIdAndProjectIdAndDeletedAtIsNull(9L, 41L)).thenReturn(Optional.of(seed));
             TechOpsInputPreparation preparation = TechOpsInputPreparation.create("prep-1", 41L, "seed-1",
                 "sha256:" + "b".repeat(64), "{}", "{}", 7L);
+            when(preparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(41L))
+                .thenReturn(Optional.of(preparation));
             when(preparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(41L, "seed-1"))
                 .thenReturn(Optional.of(preparation));
             when(preparations.findLocked("prep-1", 41L)).thenReturn(Optional.of(preparation));

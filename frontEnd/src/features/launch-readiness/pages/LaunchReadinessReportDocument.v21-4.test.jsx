@@ -59,13 +59,13 @@ describe('V21.4 단일 보고서 문서', () => {
     expect(onViewReport).toHaveBeenCalledWith([module]);
   });
 
-  it('사업안 변경 결과를 열람 가능하게 유지하고 새 분석 CTA를 제공한다', async () => {
+  it('입력 문서가 교체된 과거 결과를 열람 가능하게 유지하고 새 분석 CTA를 제공한다', async () => {
     const current = { ...professionalCurrent(), stale: true, current: false,
-      status: 'STALE', staleReason: 'CONCEPT_CHANGED' };
+      status: 'STALE', staleReason: 'DOCUMENT_SUPERSEDED' };
     const api = { professionalCurrent: vi.fn().mockResolvedValue(current) };
     render(<ProfessionalModule module="technology" api={api} projectId="7" onReady={vi.fn()} />);
-    expect(await screen.findByText('사업안이 변경되어 이 결과는 이전 사업안 기준입니다.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '현재 사업안으로 다시 분석' })).toBeInTheDocument();
+    expect(await screen.findByText('새 입력 문서가 있어 이 결과는 이전 입력 기준입니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '새 DOCX로 다시 분석' })).toBeInTheDocument();
     expect(screen.getByText(current.analysis.summary)).toBeInTheDocument();
   });
 

@@ -22,10 +22,9 @@ describe('project route cutover', () => {
     expect(routerSource).toContain('path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />}');
     expect(routerSource).toContain('path="technology" element={<LaunchReadinessPage initialFocus="technology" />}');
     expect(routerSource).toContain('path="operations" element={<LaunchReadinessPage initialFocus="operations" />}');
-    expect(routerSource).toContain('path="tech-ops" element={<LaunchReadinessPage />}');
-    expect(routerSource).toContain('path="finance" element={<LaunchReadinessPage initialFocus="finance" />}');
-    expect(routerSource).not.toContain('element={<TechOpsPage />}');
-    expect(routerSource).not.toContain('element={<FinancePage />}');
+    expect(routerSource).toContain('path="tech-ops" element={<TechOpsPage />}');
+    expect(routerSource).toContain('path="finance" element={<FinancePage />}');
+    expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');
   });
 
   it('사업 검증 canonical route와 Market/BM 호환 redirect를 함께 유지한다', () => {

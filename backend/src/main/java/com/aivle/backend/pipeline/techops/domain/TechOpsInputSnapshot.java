@@ -18,7 +18,7 @@ public class TechOpsInputSnapshot extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
     @Column(name = "preparation_id", nullable = false, length = 64) private String preparationId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
     @Column(name = "schema_version", nullable = false, length = 20) private String schemaVersion;
     @Column(name = "snapshot_hash", nullable = false, length = 71) private String snapshotHash;
     @Column(name = "snapshot_json", nullable = false, columnDefinition = "TEXT") private String snapshotJson;
@@ -27,7 +27,7 @@ public class TechOpsInputSnapshot extends BaseEntity {
 
     public static TechOpsInputSnapshot create(String id, Long projectId, String preparationId, String sourceId,
             String schemaVersion, String hash, String json, Long userId, Instant finalizedAt) {
-        if (blank(id) || projectId == null || blank(preparationId) || blank(sourceId) || blank(schemaVersion)
+        if (blank(id) || projectId == null || blank(preparationId) || blank(schemaVersion)
                 || !hash(hash) || blank(json) || userId == null || finalizedAt == null)
             throw new IllegalArgumentException("기술·운영 입력 Snapshot이 올바르지 않습니다.");
         TechOpsInputSnapshot value = new TechOpsInputSnapshot();

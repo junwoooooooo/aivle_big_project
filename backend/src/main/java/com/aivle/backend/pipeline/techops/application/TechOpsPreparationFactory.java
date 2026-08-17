@@ -40,6 +40,14 @@ public class TechOpsPreparationFactory {
         return new InitialPreparation(facts, decisions);
     }
 
+    public InitialPreparation createIndependent() {
+        ObjectNode facts = mapper.createObjectNode();
+        for (String key : REQUIRED_FACT_KEYS) fact(facts, key, null, "USER_INPUT", "OPEN", null, false);
+        ObjectNode decisions = mapper.createObjectNode();
+        for (String key : PROPOSAL_KEYS) proposal(decisions, key, null, "USER_INPUT");
+        return new InitialPreparation(facts, decisions);
+    }
+
     private JsonNode productSpecification(JsonNode source) {
         ObjectNode value = mapper.createObjectNode();
         JsonNode solution = source.path("selectedConcept").path("solution");

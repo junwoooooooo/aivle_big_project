@@ -166,6 +166,11 @@ public class FinancialPreparationFactory {
         return new InitialPreparation(fields, references, assistance);
     }
 
+    public InitialPreparation createIndependent() {
+        return createFromMarketAndBusinessModel(mapper.createObjectNode(), mapper.createObjectNode(),
+            mapper.createObjectNode(), null, null);
+    }
+
     public boolean applyConceptDefaults(ObjectNode fields, ObjectNode references, JsonNode hypotheses) {
         if (hypotheses == null || !hypotheses.isObject() || hypotheses.isEmpty()) return false;
         boolean changed = !references.path("conceptHypotheses").isObject();

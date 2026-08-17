@@ -115,10 +115,8 @@ function ResultSummary({ module, current }) {
     </div>
     <div className="launch-result__summary"><p>{result.summary}</p><small>작성한 계획을 바탕으로 AI가 평가한 결과이며, 정해진 재무 산식처럼 계산된 점수는 아닙니다.</small></div>
     <ul>{(result.actions ?? []).slice(0, 3).map((action) => <li key={`${action.priority}-${action.title}`}><b>{action.priority}</b><span>{action.title}</span></li>)}</ul>
-    {current.stale && <p className="launch-warning">{current.staleReason === 'CONCEPT_CHANGED'
-      ? '사업안이 변경되어 이 결과는 이전 사업안 기준입니다.'
-      : '새 입력 문서가 있어 이 결과는 이전 입력 기준입니다.'}</p>}
-    <small>현재 확정 사업안과 제출한 {module === 'technology' ? '기술' : '운영'} 입력 문서를 기준으로 만든 의사결정 지원 결과입니다.</small>
+    {current.stale && <p className="launch-warning">새 입력 문서가 있어 이 결과는 이전 입력 기준입니다.</p>}
+    <small>제출한 {module === 'technology' ? '기술' : '운영'} 전문 입력 문서를 필수 근거로 사용하고, 존재하는 프로젝트 정보는 보조 맥락으로만 활용한 의사결정 지원 결과입니다.</small>
   </div>;
 }
 
@@ -173,7 +171,7 @@ export function ProfessionalModule({ module, api, projectId, onReady, onDetail, 
     <div className="launch-actions">
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.professionalTemplate(projectId, module), `${module}-readiness-input.docx`)}><AppIcon name="download" size={16} />입력 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
-      <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 확인하고 있습니다…' : state.current?.stale ? '현재 사업안으로 다시 분석' : '작성한 DOCX로 분석 시작'}</button>
+       <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 확인하고 있습니다…' : state.current?.stale ? '새 DOCX로 다시 분석' : '작성한 DOCX로 분석 시작'}</button>
       {state.current?.status === 'FAILED' && state.current?.retryAvailable && <button type="button" className="launch-button is-secondary" disabled={state.busy} onClick={retry}>다시 시도</button>}
       {state.current?.analysis && !state.current.stale && <button type="button" className="launch-button is-tertiary" onClick={() => onViewReport([module])}>보고서 보기</button>}
     </div>
@@ -225,13 +223,13 @@ export function FinanceModule({ api, projectId, onReady, onDetail, onViewReport 
     <div className="launch-actions">
       <button type="button" className="launch-button is-secondary" onClick={async () => downloadDocumentBlob(await api.financeTemplate(projectId), 'finance-readiness-input.docx')}><AppIcon name="download" size={16} />재무 템플릿 다운로드</button>
       <input ref={input} type="file" accept=".docx" onChange={start} disabled={state.busy} />
-      <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 검증하고 있습니다…' : state.current?.stale ? '현재 사업안으로 다시 분석' : '작성한 DOCX로 재무 분석 시작'}</button>
+       <button type="button" className="launch-button is-primary" disabled={state.busy} onClick={() => input.current?.click()}>{state.busy ? '문서를 검증하고 있습니다…' : state.current?.stale ? '새 재무 DOCX로 다시 분석' : '작성한 DOCX로 재무 분석 시작'}</button>
       {state.current?.result && !state.current.stale && <button type="button" className="launch-button is-tertiary" onClick={() => onViewReport(['finance'])}>보고서 보기</button>}
     </div>
     {(state.current?.sourceDocumentName ?? state.optimisticFilename) && <p className="launch-document"><AppIcon name="file" size={15} />{state.current?.sourceDocumentName ?? state.optimisticFilename}</p>}
     {ACTIVE.has(state.current?.status) && <ExecutionStatus jobId={state.current?.taskRunId} events={job} onDetail={onDetail} />}
     {state.error && <FinanceInputError error={state.error} />}
-    {state.current?.result && <div className="launch-result"><div><span>재무 분석 결론</span><strong>{base && Number(base.totalOperatingProfit) >= 0 ? '사업 지속 가능성 확인' : '손실 구조 개선 필요'}</strong><small>현재 확정 사업안과 업로드한 재무 문서를 기준으로 계산한 결과입니다.</small></div><p>{state.current.result.report?.headline}</p><ul><li><b>매출</b><span>{formatKrwInline(base?.totalRevenue)}</span></li><li><b>영업이익</b><span>{formatKrwInline(base?.totalOperatingProfit)}</span></li><li><b>운전자금</b><span>{formatKrwInline(base?.requiredWorkingCapital)}</span></li></ul>{state.current.stale && <p className="launch-warning">{state.current.staleReason === 'CONCEPT_CHANGED' ? '사업안이 변경되어 이 결과는 이전 사업안 기준입니다.' : '새 입력 문서가 있어 이 결과는 이전 입력 기준입니다.'}</p>}</div>}
+    {state.current?.result && <div className="launch-result"><div><span>재무 분석 결론</span><strong>{base && Number(base.totalOperatingProfit) >= 0 ? '사업 지속 가능성 확인' : '손실 구조 개선 필요'}</strong><small>업로드한 재무 문서를 필수 근거로 계산하고, 존재하는 프로젝트 정보는 보조 맥락으로만 활용한 결과입니다.</small></div><p>{state.current.result.report?.headline}</p><ul><li><b>매출</b><span>{formatKrwInline(base?.totalRevenue)}</span></li><li><b>영업이익</b><span>{formatKrwInline(base?.totalOperatingProfit)}</span></li><li><b>운전자금</b><span>{formatKrwInline(base?.requiredWorkingCapital)}</span></li></ul>{state.current.stale && <p className="launch-warning">새 입력 문서가 있어 이 결과는 이전 입력 기준입니다.</p>}</div>}
   </section>;
 }
 
@@ -273,7 +271,7 @@ export default function LaunchReadinessPage({ initialFocus }) {
   }, [navigate, projectId]);
 
   return <ProjectWorkspace as="div" mode="data" className="launch-readiness-page">
-    <ProjectStageHeader step={3} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="현재 확정 사업안과 제출한 전문 입력 문서를 함께 기준으로 기술·운영·재무 준비 상태를 확인합니다. 결과는 인증이 아닌 의사결정 지원 자료입니다." />
+    <ProjectStageHeader step={3} eyebrow="출시 준비" title="출시 전에 필요한 준비 상태를 분야별로 확인하세요" description="각 분야의 전문 입력 문서를 기준으로 기술·운영·재무 준비 상태를 서로 독립적으로 확인합니다. 결과는 인증이 아닌 의사결정 지원 자료입니다." />
     <ReportToolbar reports={reports} onViewReport={viewReport} />
     <div className="launch-analysis-grid">
       <ProfessionalModule module="technology" api={api} projectId={projectId} onReady={onReady} onDetail={outlet?.openWorkCenterJob} onViewReport={viewReport} />

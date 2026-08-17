@@ -17,6 +17,8 @@ import MarketInterviewPage from '../../features/market-interview/pages/MarketInt
 import { MarketingContentPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import LaunchReadinessReportPage from '../../features/launch-readiness/pages/LaunchReadinessReportPage.jsx';
+import TechOpsPage from '../../features/tech-ops/pages/TechOpsPage.jsx';
+import FinancePage from '../../features/finance/pages/FinancePage.jsx';
 import FinalReportPage from '../../features/final-report/FinalReportPage.jsx';
 import WorkspaceHomePage from '../../features/projects/WorkspaceHomePage.jsx';
 import { AccountSettingsLayout, AccountSettingsRedirect, ProfileSettingsPage, SecuritySettingsPage } from '../../features/settings/AccountSettingsPages.jsx';
@@ -88,8 +90,8 @@ export default function AppRouter() {
             <Route path="launch-readiness/reports/:reportType" element={<LaunchReadinessReportPage />} />
             <Route path="technology" element={<LaunchReadinessPage initialFocus="technology" />} />
             <Route path="operations" element={<LaunchReadinessPage initialFocus="operations" />} />
-            <Route path="tech-ops" element={<LaunchReadinessPage />} />
-            <Route path="finance" element={<LaunchReadinessPage initialFocus="finance" />} />
+            <Route path="tech-ops" element={<TechOpsPage />} />
+            <Route path="finance" element={<FinancePage />} />
             <Route path="marketing" element={<MarketingContentPage />} />
             <Route path="final-report" element={<FinalReportPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />

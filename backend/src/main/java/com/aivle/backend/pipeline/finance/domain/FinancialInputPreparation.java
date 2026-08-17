@@ -51,6 +51,20 @@ public class FinancialInputPreparation extends BaseEntity {
         return value;
     }
 
+    public static FinancialInputPreparation createIndependent(String id, Long projectId, String sourceHash,
+            String fieldsJson, String referencesJson, String assistanceJson, Long userId) {
+        if (blank(id) || projectId == null || !hash(sourceHash) || blank(fieldsJson)
+                || blank(referencesJson) || blank(assistanceJson) || userId == null) {
+            throw new IllegalArgumentException("직접 재무 입력 정보가 올바르지 않습니다.");
+        }
+        FinancialInputPreparation value = new FinancialInputPreparation();
+        value.id = id; value.projectId = projectId; value.sourceMode = "DIRECT_INPUT";
+        value.sourceSnapshotHash = sourceHash; value.financialFieldsJson = fieldsJson;
+        value.upstreamReferencesJson = referencesJson; value.assistanceJson = assistanceJson;
+        value.revision = 1; value.updatedByUserId = userId;
+        return value;
+    }
+
     public static FinancialInputPreparation create(String id, Long projectId, String techOpsSnapshotId,
             String marketSeedSnapshotId, String sourceHash, String fieldsJson, String referencesJson,
             String assistanceJson, Long userId) {

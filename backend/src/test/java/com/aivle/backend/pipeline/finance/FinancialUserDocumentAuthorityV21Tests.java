@@ -8,16 +8,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.aivle.backend.jobevent.JobEventPublisher;
-import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
-import com.aivle.backend.pipeline.market.BmPlanPreparationService.PlanView;
 import com.aivle.backend.pipeline.finance.application.*;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputPreparationRepository;
 import com.aivle.backend.pipeline.finance.repository.FinancialInputSnapshotRepository;
 import com.aivle.backend.pipeline.market.MarketResearchService;
 import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.marketseed.repository.MarketAnalysisSeedSnapshotRepository;
-import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
@@ -46,15 +43,6 @@ class FinancialUserDocumentAuthorityV21Tests {
         FinancialCalculator calculator = new FinancialCalculator(mapper);
         SnapshotHasher hasher = new SnapshotHasher(mapper);
         CurrentConceptSourceResolver currentConcepts = mock(CurrentConceptSourceResolver.class);
-        ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
-        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
-        when(selection.getId()).thenReturn(8L); when(selection.getHypothesisRevision()).thenReturn(3);
-        when(seed.getId()).thenReturn("seed-1");
-        var source = new CurrentConceptSourceResolver.Source(selection, seed,
-            new PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4));
-        when(currentConcepts.require(org.mockito.ArgumentMatchers.eq(41L), any())).thenReturn(source);
-        when(currentConcepts.currentOrNull(41L)).thenReturn(source);
-        when(currentConcepts.binding(source)).thenReturn(new CurrentConceptSourceResolver.Binding("seed-1", 8L, 3, 4));
         FinancialService service = new FinancialService(projects, currentConcepts, marketSeeds, marketResearch, marketVersions,
             preparations, snapshots, new FinancialPreparationFactory(mapper),
             new FinancialInputSnapshotFactory(mapper, hasher, calculator), new FinancialReadiness(), calculator,
@@ -78,6 +66,7 @@ class FinancialUserDocumentAuthorityV21Tests {
             .path("normalizedValues").path(FinancialInputDocumentService.INPUT_NOTES)
             .path("annualFixedLaborCost").asText()).isEqualTo("개발자 2명, 초기 3~4인 기준");
         verifyNoInteractions(marketSeeds, marketResearch, marketVersions);
+        verifyNoInteractions(currentConcepts);
     }
 
     private ObjectNode completeValues(ObjectMapper mapper, long laborCost) {

@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 public class TechOpsInputPreparation extends BaseEntity {
     @Id @Column(length = 64) private String id;
     @Column(name = "project_id", nullable = false) private Long projectId;
-    @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64) private String sourceMarketSeedSnapshotId;
-    @Column(name = "source_snapshot_hash", nullable = false, length = 71) private String sourceSnapshotHash;
+    @Column(name = "source_market_seed_snapshot_id", length = 64) private String sourceMarketSeedSnapshotId;
+    @Column(name = "source_snapshot_hash", length = 71) private String sourceSnapshotHash;
     @Column(name = "required_facts_json", nullable = false, columnDefinition = "TEXT") private String requiredFactsJson;
     @Column(name = "proposal_decisions_json", nullable = false, columnDefinition = "TEXT") private String proposalDecisionsJson;
     @Column(nullable = false) private int revision;
@@ -29,7 +29,7 @@ public class TechOpsInputPreparation extends BaseEntity {
 
     public static TechOpsInputPreparation create(String id, Long projectId, String sourceId, String sourceHash,
             String requiredFactsJson, String proposalDecisionsJson, Long userId) {
-        if (blank(id) || projectId == null || blank(sourceId) || !hash(sourceHash) || blank(requiredFactsJson)
+        if (blank(id) || projectId == null || (sourceId == null ? sourceHash != null : !hash(sourceHash)) || blank(requiredFactsJson)
                 || blank(proposalDecisionsJson) || userId == null) throw new IllegalArgumentException("기술·운영 준비값이 올바르지 않습니다.");
         TechOpsInputPreparation value = new TechOpsInputPreparation();
         value.id = id; value.projectId = projectId; value.sourceMarketSeedSnapshotId = sourceId;

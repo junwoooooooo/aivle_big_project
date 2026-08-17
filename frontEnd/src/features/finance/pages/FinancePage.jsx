@@ -20,7 +20,7 @@ export default function FinancePage() {
   if (finance.loading) return <section className="finance-state" aria-busy="true">재무 입력을 불러오고 있습니다.</section>;
   if (!finance.preparation) return <section className="finance-state"><h1>재무 분석 준비</h1>
     <p role="alert">{getUserErrorMessage(finance.error)}</p>
-    <Link to={`/app/projects/${projectId}/business-model`}>시장조사와 BM을 완료한 뒤 재무 분석 시작</Link></section>;
+    <p>시장 분석이나 BM 완료 여부와 관계없이 재무 입력을 직접 작성할 수 있습니다.</p></section>;
   return <FinanceWorkspace key={`${finance.preparation.preparationId}:${finance.preparation.revision}`}
     projectId={projectId} finance={finance} />;
 }
@@ -34,6 +34,8 @@ function FinanceWorkspace({ projectId, finance }) {
   const safe = async (action) => { try { await action(); } catch { /* hook이 사용자용 오류 상태를 제공한다. */ } };
   const change = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const references = preparation.upstreamReferences ?? {};
+  const hasOptionalContext = Boolean(preparation.sourceMarketResearchVersionId
+    || preparation.sourceBusinessModelVersionId || Object.keys(references).length);
   const editedValues = () => financialValuesFromDraft(draft, fields);
   const targetView = proposalTargets(draft, fields.threeYearTargets, preparation.assistance?.threeYearTargets);
   const customerCountView = proposalPrimitive(draft.newCustomerCount, fields.newCustomerCount,
@@ -56,7 +58,7 @@ function FinanceWorkspace({ projectId, finance }) {
 
   return <FinanceRefreshContext.Provider value={refreshContainer}><ProjectWorkspace as="main" mode="compose" className="finance-page">
     <ProjectStageHeader step={3} eyebrow="재무 계획" title={locked ? '재무 가정이 확정되었습니다' : '사업에 필요한 비용과 수익을 입력하세요'}
-      description="최신 시장 분석과 수익 구조를 바탕으로 핵심 비용·가격·매출 목표와 세부 가정을 정리합니다."
+      description="재무 입력만으로 독립 실행할 수 있으며, 시장 분석과 수익 구조가 있으면 참고 문맥으로 함께 사용합니다."
       status={<div className="finance-statuses" aria-label="재무 상태">
         <strong className="finance-heading__status">준비 · {locked ? '확정' : preparation.readyToFinalize ? '완료' : '입력 필요'}</strong>
         <strong className="finance-heading__status">입력 · {finance.snapshot ? '저장 완료' : '입력 중'}</strong>
@@ -65,9 +67,10 @@ function FinanceWorkspace({ projectId, finance }) {
       </div>} />
     {finance.error && <p className="finance-error" role="alert">{getUserErrorMessage(finance.error)}</p>}
 
-    <section className="finance-source" aria-labelledby="finance-source-title"><div><p>시장 분석·BM에서 가져옴</p>
+    <section className="finance-source" aria-labelledby="finance-source-title"><div><p>{hasOptionalContext ? '선택 참고 문맥 연결됨' : '재무 고유 입력'}</p>
       <h2 id="finance-source-title">재무 가정의 원본과 근거</h2></div>
       <RefreshButton />
+      {!hasOptionalContext && <p>연결된 시장 분석이나 BM 없이 사용자 입력을 기준으로 준비합니다.</p>}
       <div className="finance-source__grid">
         <Reference label="TAM" value={references.marketAnalysis?.tam} />
         <Reference label="SAM" value={references.marketAnalysis?.sam} />
@@ -79,7 +82,7 @@ function FinanceWorkspace({ projectId, finance }) {
       <details><summary>시장·수익 구조의 근거, 가정과 주의사항 전체 보기</summary>
         <pre className="finance-source-detail">{JSON.stringify({ marketAnalysis: references.marketAnalysis,
           businessModel: references.businessModel, conceptHypotheses: references.conceptHypotheses }, null, 2)}</pre></details>
-      <small>Market Version {preparation.sourceMarketResearchVersionId} · BM Version {preparation.sourceBusinessModelVersionId}</small></section>
+      {hasOptionalContext && <small>Market Version {preparation.sourceMarketResearchVersionId ?? '없음'} · BM Version {preparation.sourceBusinessModelVersionId ?? '없음'}</small>}</section>
 
     <ProjectSplitWorkspace className="finance-input-workspace" primary={<>
     <FinancialSection eyebrow="고정운영비" title="연간 고정비 세부항목" fields={FIXED_COST_FIELDS}
@@ -177,7 +180,7 @@ function FinanceWorkspace({ projectId, finance }) {
     <AnalysisReport analysis={finance.analysis} />
     {finance.analysis?.result && <section className="finance-next-step" aria-label="다음 단계"><div><p>7. 트윈 패널 조사</p>
       <h2>재무 판단 다음으로 고객 선택 방향을 패널에서 확인하세요.</h2><span>확정 Concept의 비교안을 만들고 Twin 표본으로 방향과 측정 가능성을 확인합니다.</span></div>
-      <Link to={`/app/projects/${projectId}/twin-survey`}>다음 - 트윈 패널 조사</Link></section>}
+      <Link to={`/app/projects/${projectId}/market-interview`}>다음 - 가상 시장 인터뷰</Link></section>}
   </ProjectWorkspace></FinanceRefreshContext.Provider>;
 }
 

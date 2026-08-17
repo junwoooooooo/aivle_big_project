@@ -125,12 +125,10 @@ public class ProjectModuleStatusService {
         var marketingSource = selectedSnapshot == null ? null
             : marketingSourceRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
                 selectedSnapshot.getId(), projectId).orElse(null);
-        var techOpsPreparation = selectedSnapshot == null ? null
-            : techOpsPreparationRepository.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(
-                projectId, selectedSnapshot.getId()).orElse(null);
-        var techOpsSnapshot = selectedSnapshot == null ? null
-            : techOpsSnapshotRepository.findBySourceMarketSeedSnapshotIdAndProjectIdAndDeletedAtIsNull(
-                selectedSnapshot.getId(), projectId).orElse(null);
+        var techOpsPreparation = techOpsPreparationRepository
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(projectId).orElse(null);
+        var techOpsSnapshot = techOpsSnapshotRepository
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId).orElse(null);
         var techOpsAdvisory = techOpsAdvisoryReportRepository
             .findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         TaskRun techOpsAdvisoryTask = taskRunRepository
@@ -206,15 +204,13 @@ public class ProjectModuleStatusService {
         PipelineModuleStatus marketingStatus = marketingStatus(marketing,
             marketingSource == null ? null : marketingSource.getId(), marketingVisualTask);
         boolean techOpsAdvisoryStale = techOpsAdvisory != null && (techOpsSnapshot == null
-            || currentMarketVersion == null || currentBusinessVersion == null || portfolioSelection == null
-            || !techOpsSnapshot.getId().equals(techOpsAdvisory.getTechOpsInputSnapshotId())
-            || !currentMarketVersion.getId().equals(techOpsAdvisory.getSourceMarketResearchVersionId())
-            || !currentBusinessVersion.getId().equals(techOpsAdvisory.getSourceBusinessModelVersionId())
-            || !portfolioSelection.getId().equals(techOpsAdvisory.getSourcePortfolioSelectionId()));
-        PipelineModuleStatus techOpsStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
-            : aggregateLaunchStatus(launchTechnologyTask, launchOperationsTask);
-        PipelineModuleStatus financialBaseStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
-            : financialPreparation == null ? PipelineModuleStatus.READY
+            || !techOpsSnapshot.getId().equals(techOpsAdvisory.getTechOpsInputSnapshotId()));
+        PipelineModuleStatus techOpsStatus = techOpsPreparation == null ? PipelineModuleStatus.READY
+            : techOpsSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
+            : techOpsAdvisoryStale ? PipelineModuleStatus.STALE
+            : techOpsAdvisoryTask == null ? PipelineModuleStatus.READY : taskStatus(techOpsAdvisoryTask.getState());
+        PipelineModuleStatus launchStatus = aggregateLaunchStatus(launchTechnologyTask, launchOperationsTask);
+        PipelineModuleStatus financialBaseStatus = financialPreparation == null ? PipelineModuleStatus.READY
             : financialSnapshot == null ? PipelineModuleStatus.NEEDS_INPUT
             : financialTask == null ? PipelineModuleStatus.READY : taskStatus(financialTask.getState());
         TaskRun activeFinancialReportTask = activeTask(financialTask);
@@ -262,18 +258,26 @@ public class ProjectModuleStatusService {
                 null, null, !currentRefinementCycle || refinementRound == null
                     ? null : refinementRound.getUpdatedAt()),
             response(projectId, PipelineModuleType.TECH_OPS, techOpsStatus,
-                List.of(), new NextAction("출시 준비 분석", "/launch-readiness"),
-                latestId(launchTechnologyTask, launchOperationsTask),
-                latestActiveId(launchTechnologyTask, launchOperationsTask), null, null, null,
-                latestUpdatedAt(launchTechnologyTask, launchOperationsTask)),
+                techOpsSnapshot == null ? List.of("techOpsInput") : List.of(),
+                new NextAction("기술·운영 분석", "/tech-ops"),
+                techOpsAdvisoryTask == null ? null : techOpsAdvisoryTask.getId(),
+                activeTask(techOpsAdvisoryTask) == null ? null : techOpsAdvisoryTask.getId(),
+                techOpsSnapshot == null ? null : techOpsSnapshot.getId(), null, null,
+                techOpsAdvisoryTask == null ? techOpsPreparation == null ? null : techOpsPreparation.getUpdatedAt()
+                    : techOpsAdvisoryTask.getUpdatedAt()),
             response(projectId, PipelineModuleType.FINANCE, financialStatus,
                 financialSnapshot == null ? List.of("financialInputDocument")
                     : financialTask == null ? List.of("financialAnalysisReport") : List.of(),
-                new NextAction("출시 준비 분석", "/launch-readiness"), activeFinancialTask == null
+                new NextAction("재무 분석", "/finance"), activeFinancialTask == null
                     ? financialTask == null ? null : financialTask.getId() : activeFinancialTask.getId(),
                 activeFinancialTask == null ? null : activeFinancialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
                 financialTask == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialTask.getUpdatedAt()),
+            response(projectId, PipelineModuleType.LAUNCH_READINESS, launchStatus,
+                List.of("professionalDocument"), new NextAction("출시 준비 분석", "/launch-readiness"),
+                latestId(launchTechnologyTask, launchOperationsTask),
+                latestActiveId(launchTechnologyTask, launchOperationsTask), null, null, null,
+                latestUpdatedAt(launchTechnologyTask, launchOperationsTask)),
             response(projectId, PipelineModuleType.MARKET_INTERVIEW, interviewStatus,
                 selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
                 new NextAction("시장 인터뷰", "/market-interview"),

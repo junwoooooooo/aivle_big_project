@@ -167,6 +167,32 @@ def check_template_roles(formulas: list, vocab: dict, assumptions: dict | None =
     return {"name": "템플릿 필수 자리", "passed": not bad, "violations": bad}
 
 
+def check_direct_observed_market(formulas: list, vocab: dict) -> dict:
+    """TAM/SAM은 가정 곱셈이 아니라 직접 관측 변수 하나로만 설계한다."""
+    rule = (vocab.get("식_목록") or {}).get("직접_관측_시장") or {}
+    name = "직접 관측 시장식"
+    if not rule.get("enabled"):
+        return {"name": name, "passed": True, "violations": [], "_비활성": True}
+    ids = set(rule.get("formula_ids") or [])
+    template = rule.get("template") or "T5"
+    required_count = int(rule.get("observable_vars") or 1)
+    indexed = {formula.get("formula_id"): formula for formula in formulas}
+    bad = []
+    for formula_id in sorted(ids):
+        formula = indexed.get(formula_id)
+        if formula is None:
+            bad.append({"formula_id": formula_id, "why": "필수 시장식이 없다"})
+            continue
+        variables = formula.get("vars") or []
+        observed = [value for value in variables if value.get("_observable") is not False]
+        if formula.get("template") != template or len(variables) != required_count \
+                or len(observed) != required_count:
+            bad.append({"formula_id": formula_id, "template": formula.get("template"),
+                        "변수_수": len(variables), "관측_변수_수": len(observed),
+                        "why": rule.get("_규칙")})
+    return {"name": name, "passed": not bad, "violations": bad}
+
+
 def check_price_cell(slots: list, vocab: dict) -> dict:
     """G10 — 가격 계량은 수익원 칸 · claim_type PRICE.
 
@@ -947,6 +973,7 @@ def run_gate(raw: dict, slots: list, formulas: list, vocab: dict, adapters: dict
         check_stat_code(slots, adapters, kosis_key),
         check_role_kind(formulas, vocab, cat),
         check_template_roles(formulas, vocab),
+        check_direct_observed_market(formulas, vocab),
         check_price_cell(slots, vocab),
         check_period(slots, slotcheck or {}, as_of_year or 0),
         check_corp_exists(slots, corpcode or {}),

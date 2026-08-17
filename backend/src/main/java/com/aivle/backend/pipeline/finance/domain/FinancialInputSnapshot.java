@@ -54,6 +54,21 @@ public class FinancialInputSnapshot extends BaseEntity {
         return value;
     }
 
+    public static FinancialInputSnapshot createIndependent(String id, Long projectId,
+            String preparationId, int preparationRevision, String schemaVersion, String hash,
+            String json, Long userId, Instant finalizedAt) {
+        if (blank(id) || projectId == null || blank(preparationId) || preparationRevision < 1
+                || blank(schemaVersion) || !hash(hash) || blank(json) || userId == null || finalizedAt == null) {
+            throw new IllegalArgumentException("직접 재무 입력 Snapshot 정보가 올바르지 않습니다.");
+        }
+        FinancialInputSnapshot value = new FinancialInputSnapshot();
+        value.id = id; value.projectId = projectId; value.preparationId = preparationId;
+        value.sourceMode = "DIRECT_INPUT"; value.preparationRevision = preparationRevision;
+        value.schemaVersion = schemaVersion; value.snapshotHash = hash; value.snapshotJson = json;
+        value.createdByUserId = userId; value.finalizedAt = finalizedAt;
+        return value;
+    }
+
     public static FinancialInputSnapshot create(String id, Long projectId, String preparationId,
             String techOpsSnapshotId, String marketSeedSnapshotId, String schemaVersion, String hash,
             String json, Long userId, Instant finalizedAt) {

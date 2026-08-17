@@ -21,6 +21,8 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'market', label: '시장 분석', shortLabel: '시장 분석', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'businessModel', label: '사업 모델', shortLabel: '사업 모델', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
   { id: 'conceptRefinement', label: '컨셉 다듬기', shortLabel: '컨셉 다듬기', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'techOps', label: '기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.READY },
+  { id: 'finance', label: '재무 분석', shortLabel: '재무', routeKey: 'finance', defaultStatus: MODULE_STATUS.READY },
   { id: 'launchReadiness', label: '출시 준비 분석', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'marketInterview', label: '시장 인터뷰', shortLabel: '시장 인터뷰', routeKey: 'marketInterview', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'marketing', label: '마케팅 실행', shortLabel: '마케팅 실행', routeKey: 'marketing', defaultStatus: MODULE_STATUS.NOT_READY },
@@ -32,7 +34,7 @@ const API_MODULE_IDS = Object.freeze({
   CONCEPT_SELECTION: 'concepts', MARKET_ANALYSIS: 'market', BUSINESS_MODEL: 'businessModel',
   CONCEPT_REFINEMENT: 'conceptRefinement',
   MARKET_INTERVIEW: 'marketInterview', TWIN_SURVEY: 'marketInterview',
-  TECH_OPS: 'launchReadiness', FINANCE: 'launchReadiness', MARKETING: 'marketing',
+  TECH_OPS: 'techOps', FINANCE: 'finance', LAUNCH_READINESS: 'launchReadiness', MARKETING: 'marketing',
 });
 
 export function getModuleStatusView(status) { return MODULE_STATUS_VIEW[status] ?? MODULE_STATUS_VIEW.NOT_READY; }
@@ -62,8 +64,6 @@ export function normalizeProjectModuleStatuses(items) {
     const candidate = { ...item, requiredInputs: Array.isArray(item.requiredInputs) ? item.requiredInputs : [] };
     const current = normalized[id];
     if (!current || priority.indexOf(candidate.status) < priority.indexOf(current.status)) normalized[id] = candidate;
-    else if (id === 'launchReadiness') normalized[id] = { ...current,
-      requiredInputs: [...new Set([...(current.requiredInputs ?? []), ...candidate.requiredInputs])] };
   });
   if (canonicalInterview && MODULE_STATUS[canonicalInterview.status]) {
     normalized.marketInterview = {
@@ -84,6 +84,8 @@ export function getProjectModuleByPath(projectId, pathname, statuses = {}) {
   const normalized = pathname.replace(/\/+$/, '');
   if ([projectRoutes.conceptCompare(projectId), projectRoutes.legalReport(projectId)].includes(normalized)) return modules.find((item) => item.id === 'concepts');
   if (/\/(business-validation|market|business-model|concept-refinement)$/.test(normalized)) return modules.find((item) => item.id === 'market');
-  if (/\/(launch-readiness|technology|operations|tech-ops|finance)$/.test(normalized)) return modules.find((item) => item.id === 'launchReadiness');
+  if (/\/(launch-readiness|technology|operations)$/.test(normalized)) return modules.find((item) => item.id === 'launchReadiness');
+  if (/\/tech-ops$/.test(normalized)) return modules.find((item) => item.id === 'techOps');
+  if (/\/finance$/.test(normalized)) return modules.find((item) => item.id === 'finance');
   return modules.find((module) => module.href === normalized) ?? modules[0];
 }

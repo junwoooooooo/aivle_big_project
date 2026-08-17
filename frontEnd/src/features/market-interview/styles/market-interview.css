@@ -1,12 +1,56 @@
 .market-interview { display: grid; gap: var(--space-5); }
-.market-interview__start, .market-interview__section { padding: var(--space-5); border: 1px solid var(--color-border-default); border-radius: var(--radius-panel); background: var(--color-surface); }
+.market-interview__start, .market-interview__section, .market-interview__scope, .market-interview__headline,
+.market-interview__insights, .market-interview__respondents { padding: var(--space-5); border: 1px solid var(--color-border-default); border-radius: var(--radius-panel); background: var(--color-surface); }
 .market-interview__start { display: grid; gap: var(--space-3); justify-items: start; }
 .market-interview__result { display: grid; gap: var(--space-5); }
-.market-interview__participants, .market-interview__themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--space-4); }
-.market-interview__participant, .market-interview__themes article { padding: var(--space-4); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface-subtle); }
-.market-interview__participant h3, .market-interview__participant h4 { margin-top: var(--space-3); }
-.market-interview__tag { color: var(--color-text-muted); font-size: .78rem; }
-.market-interview__answer { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-default); }
+.market-interview__scope { display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap; }
+.market-interview__scope div { display: grid; gap: .25rem; margin-right: auto; }
+.market-interview__scope span, .market-interview__headline span, .market-interview__respondents header span { color: var(--color-text-muted); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.market-interview__scope p { margin: 0; }
+.market-interview__headline { display: grid; gap: var(--space-4); background: linear-gradient(135deg, var(--color-surface) 25%, var(--color-surface-subtle)); }
+.market-interview__headline > div:last-child { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.market-interview__headline button { display: grid; gap: .35rem; min-width: 0; padding: var(--space-4); text-align: left; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface); color: inherit; }
+.market-interview__headline button:hover { border-color: var(--color-text-muted); transform: translateY(-1px); }
+.market-interview__headline button strong { overflow-wrap: anywhere; font-size: 1.05rem; }
+.market-interview__dashboard { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(20rem, .9fr); gap: var(--space-5); align-items: start; }
+.market-interview__insights { display: grid; gap: var(--space-6); }
+.market-interview__insights > section { display: grid; gap: var(--space-3); }
+.market-interview__theme-row { display: grid; gap: .6rem; width: 100%; padding: var(--space-4); text-align: left; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--color-surface-subtle); color: inherit; }
+.market-interview__theme-row[aria-pressed='true'] { border-color: var(--color-accent, #3157d5); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #3157d5) 15%, transparent); }
+.market-interview__theme-heading { display: flex; gap: var(--space-3); justify-content: space-between; align-items: baseline; }
+.market-interview__theme-heading > span { font-weight: 700; }
+.market-interview__theme-heading strong { white-space: nowrap; }
+.market-interview__theme-heading small { display: block; color: var(--color-text-muted); font-weight: 500; }
+.market-interview__bar { height: .55rem; overflow: hidden; border-radius: 999px; background: var(--color-border-default); }
+.market-interview__bar > span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent, #3157d5); }
+.market-interview__theme-description { color: var(--color-text-muted); }
+.market-interview__theme-row q { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; font-style: normal; }
+.market-interview__respondents { position: sticky; top: var(--space-4); display: grid; gap: var(--space-4); max-height: calc(100vh - 2 * var(--space-4)); overflow: auto; }
+.market-interview__respondents > header { display: flex; gap: var(--space-3); justify-content: space-between; align-items: end; }
+.market-interview__respondents [role='group'] { display: flex; gap: .25rem; flex-wrap: wrap; }
+.market-interview__respondents [role='group'] button, .market-interview__filter-note button { padding: .35rem .6rem; border: 1px solid var(--color-border-default); border-radius: 999px; background: var(--color-surface); color: inherit; }
+.market-interview__respondents [role='group'] button[aria-pressed='true'] { background: var(--color-text-default); color: var(--color-surface); }
+.market-interview__filter-note { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; padding: var(--space-3); border-radius: var(--radius-control); background: var(--color-surface-subtle); }
+.market-interview__respondent-list { display: grid; gap: var(--space-3); }
+.market-interview__respondent { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface); }
+.market-interview__respondent[data-highlighted] { border-color: var(--color-accent, #3157d5); }
+.market-interview__respondent header { display: flex; gap: .5rem; justify-content: space-between; }
+.market-interview__respondent header span { padding: .2rem .45rem; border-radius: 999px; background: var(--color-surface-subtle); }
+.market-interview__profile { font-weight: 650; }
+.market-interview__answer { display: grid; gap: .35rem; padding-top: var(--space-3); border-top: 1px solid var(--color-border-default); }
+.market-interview__answer p { overflow-wrap: anywhere; }
 .market-interview__answer small { color: var(--color-text-muted); }
+.market-interview__relationships { display: grid; gap: .5rem; padding: 0; list-style: none; }
+.market-interview__relationships li { display: flex; gap: .5rem; flex-wrap: wrap; padding: .75rem; border-radius: var(--radius-control); background: var(--color-surface-subtle); }
+.market-interview__empty { padding: var(--space-5); border: 1px dashed var(--color-border-default); border-radius: var(--radius-control); color: var(--color-text-muted); }
 .market-interview__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
-@media (max-width: 42rem) { .market-interview__participants, .market-interview__themes { grid-template-columns: 1fr; } }
+@media (max-width: 58rem) {
+  .market-interview__dashboard { grid-template-columns: 1fr; }
+  .market-interview__respondents { position: static; max-height: none; overflow: visible; }
+}
+@media (max-width: 42rem) {
+  .market-interview__headline > div:last-child { grid-template-columns: 1fr; }
+  .market-interview__scope, .market-interview__respondents > header, .market-interview__theme-heading { align-items: stretch; flex-direction: column; }
+  .market-interview__start, .market-interview__section, .market-interview__scope, .market-interview__headline,
+  .market-interview__insights, .market-interview__respondents { padding: var(--space-4); }
+}

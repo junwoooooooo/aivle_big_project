@@ -1,14 +1,28 @@
 package com.aivle.backend.pipeline.refinement;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCompletedEvent;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.mockito.ArgumentCaptor;
 
 class BusinessValidationRefinementStarterTests {
+
+    @Test
+    void afterCommitListenerStartsASeparateTransaction() throws Exception {
+        var method = BusinessValidationRefinementStarter.class
+            .getDeclaredMethod("startRoundOne", BusinessValidationCompletedEvent.class);
+        var transaction = AnnotatedElementUtils.findMergedAnnotation(method, Transactional.class);
+
+        assertThat(transaction).isNotNull();
+        assertThat(transaction.propagation()).isEqualTo(Propagation.REQUIRES_NEW);
+    }
 
     @Test
     void schedulingFailureDoesNotEscapeOrRollBackCompletedBusinessValidation() {

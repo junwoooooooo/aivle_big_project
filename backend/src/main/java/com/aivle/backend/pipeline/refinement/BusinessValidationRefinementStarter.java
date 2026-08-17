@@ -6,6 +6,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -22,6 +24,7 @@ public class BusinessValidationRefinementStarter {
      * and the existing manual start action remains the recovery path.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void startRoundOne(BusinessValidationCompletedEvent event) {
         String identity = String.join("|", event.sessionId(), String.valueOf(event.marketVersionId()),
             String.valueOf(event.bmVersionId()), event.marketSeedSnapshotId(),

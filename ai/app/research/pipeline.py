@@ -359,6 +359,8 @@ async def run_market_research(task_input: dict, run_id: str,
                 recollect)
     except serialize.ContractDrift as drift:
         raise _fail("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION", str(drift)[:400])
+    except _PipelineContract as contract:
+        raise _fail("EXECUTION_FAILED", contract.reason, str(contract)[:400])
     except _Hard as hard:
         raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", str(hard)[:400])
     finally:
@@ -372,6 +374,14 @@ async def run_market_research(task_input: dict, run_id: str,
 
 class _Hard(RuntimeError):
     """HARD 실패 — 결과를 내지 않는다."""
+
+
+class _PipelineContract(RuntimeError):
+    """재시도로 복구되지 않는 Research2 producer/consumer 계약 위반."""
+
+    def __init__(self, reason: str, detail: str):
+        super().__init__(detail)
+        self.reason = reason
 
 
 def _inline_concept(task_input: dict) -> dict | None:
@@ -705,9 +715,24 @@ def _collect(ledger: Run, budget: Budget, concept_path: str, run_id: str, as_of:
                   if not c.get("passed")]
         ledger.degrade("harness", "HARNESS_GATE_FAILED",
                        "슬롯 설계가 게이트를 못 넘었다 — 미통과 검사: " + ", ".join(failed))
-        raise _Hard("하네스 게이트 미통과 — 스냅샷이 없어 수집할 슬롯이 없다")
+        raise _PipelineContract(
+            "HARNESS_PRECONDITION_FAILED",
+            "하네스 게이트 미통과 — 미통과 검사: " + (", ".join(failed) or "확인 불가"),
+        )
 
-    snapshot = {key: _abs(value) for key, value in design["snapshot"].items()}
+    produced = design.get("snapshot")
+    if not isinstance(produced, dict) or not all(produced.get(key) for key in ("slots", "formulas")):
+        raise _PipelineContract(
+            "RESEARCH_SNAPSHOT_MISSING",
+            f"하네스 통과 run={run_id}에 slots/formulas 스냅샷 경로가 없다",
+        )
+    snapshot = {key: _abs(value) for key, value in produced.items()}
+    missing = [key for key in ("slots", "formulas") if not os.path.isfile(snapshot[key])]
+    if missing:
+        raise _PipelineContract(
+            "RESEARCH_SNAPSHOT_MISSING",
+            f"하네스 통과 run={run_id}의 스냅샷 파일이 없다: {', '.join(missing)}",
+        )
 
     # ── dryrun (무료) ────────────────────────────────────────
     seen = _timed(ledger, "dryrun", lambda: DRYRUN.dryrun(

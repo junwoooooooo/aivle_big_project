@@ -43,17 +43,22 @@ public class TechOpsAdvisoryService {
         ObjectNode input = mapper.createObjectNode();
         input.put("projectId", projectId);
         input.put("techOpsInputSnapshotId", source.snapshot().getId());
-        input.put("sourceMarketSeedSnapshotId", source.seed().getId());
-        input.put("sourceMarketResearchVersionId", source.market().getId());
-        input.put("sourceBusinessModelVersionId", source.businessModel().getId());
-        input.put("sourcePortfolioSelectionId", source.selection().getId());
-        input.put("selectedConceptId", source.concept().getId());
-        input.put("selectedConceptHash", source.selection().getSelectedConceptHash());
-        input.set("conceptHandoff", mapper.readTree(source.concept().getCandidateSnapshotJson()));
+        if (source.seed() != null) input.put("sourceMarketSeedSnapshotId", source.seed().getId());
+        if (source.market() != null) input.put("sourceMarketResearchVersionId", source.market().getId());
+        if (source.businessModel() != null) input.put("sourceBusinessModelVersionId", source.businessModel().getId());
+        if (source.selection() != null) {
+            input.put("sourcePortfolioSelectionId", source.selection().getId());
+            input.put("selectedConceptHash", source.selection().getSelectedConceptHash());
+        }
+        if (source.concept() != null) input.put("selectedConceptId", source.concept().getId());
+        input.set("conceptHandoff", source.concept() == null ? mapper.createObjectNode()
+            : mapper.readTree(source.concept().getCandidateSnapshotJson()));
         input.set("legalHandoff", source.legal() == null ? mapper.nullNode()
             : mapper.readTree(source.legal().getReportJson()));
-        input.set("marketResult", mapper.readTree(source.market().getResultJson()));
-        input.set("businessModelResult", mapper.readTree(source.businessModel().getResultJson()));
+        input.set("marketResult", source.market() == null ? mapper.createObjectNode()
+            : mapper.readTree(source.market().getResultJson()));
+        input.set("businessModelResult", source.businessModel() == null ? mapper.createObjectNode()
+            : mapper.readTree(source.businessModel().getResultJson()));
         input.set("techOpsInputSnapshot", mapper.readTree(source.snapshot().getSnapshotJson()));
         String json = mapper.writeValueAsString(input);
         String key = requiredKey(idempotencyKey);
@@ -65,7 +70,9 @@ public class TechOpsAdvisoryService {
             "job.tech-ops.advisory.queued", JobEvent.Status.QUEUED, null);
         TaskRun task = created.taskRun();
         return new AdvisoryActionResponse(task.getId(), task.getId(), task.getState().name(),
-            source.snapshot().getId(), source.seed().getId(), source.market().getId(), source.businessModel().getId());
+            source.snapshot().getId(), source.seed() == null ? null : source.seed().getId(),
+            source.market() == null ? null : source.market().getId(),
+            source.businessModel() == null ? null : source.businessModel().getId());
     }
 
     @Transactional(readOnly = true)
@@ -100,10 +107,10 @@ public class TechOpsAdvisoryService {
         taskRuns.adopt(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
             mapper.writeValueAsString(response.result()), response.canonicalInputHash(), response.resultSchemaVersion());
         reports.save(TechOpsAdvisoryReport.create(context.projectId(), context.taskRunId(),
-            input.path("techOpsInputSnapshotId").asText(), input.path("sourceMarketSeedSnapshotId").asText(),
-            input.path("sourceMarketResearchVersionId").asLong(), input.path("sourceBusinessModelVersionId").asLong(),
-            input.path("sourcePortfolioSelectionId").asLong(), input.path("selectedConceptId").asText(),
-            input.path("selectedConceptHash").asText(), "1.0", mapper.writeValueAsString(response.result()),
+            input.path("techOpsInputSnapshotId").asText(), textOrNull(input, "sourceMarketSeedSnapshotId"),
+            longOrNull(input, "sourceMarketResearchVersionId"), longOrNull(input, "sourceBusinessModelVersionId"),
+            longOrNull(input, "sourcePortfolioSelectionId"), textOrNull(input, "selectedConceptId"),
+            textOrNull(input, "selectedConceptHash"), "1.0", mapper.writeValueAsString(response.result()),
             context.ownerId()));
     }
 
@@ -151,6 +158,13 @@ public class TechOpsAdvisoryService {
         JsonNode value = mapper.readTree(context.inputSnapshot());
         if (!value.isObject()) throw new IllegalStateException("TechOps advisory input invalid");
         return value;
+    }
+    private String textOrNull(JsonNode value, String field) {
+        String text = value.path(field).asText("");
+        return text.isBlank() ? null : text;
+    }
+    private Long longOrNull(JsonNode value, String field) {
+        return value.has(field) && value.get(field).canConvertToLong() ? value.get(field).asLong() : null;
     }
     private AdvisoryView view(TechOpsAdvisoryReport report, TaskRun task, boolean stale) {
         return new AdvisoryView(report.getId(), task == null ? report.getTaskRunId() : task.getId(), task == null ? "SUCCEEDED" : task.getState().name(),

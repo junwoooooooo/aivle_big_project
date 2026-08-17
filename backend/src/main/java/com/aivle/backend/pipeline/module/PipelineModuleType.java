@@ -10,6 +10,7 @@ public enum PipelineModuleType {
     CONCEPT_REFINEMENT,
     TECH_OPS,
     FINANCE,
+    LAUNCH_READINESS,
     MARKET_INTERVIEW,
     TWIN_SURVEY,
     MARKETING

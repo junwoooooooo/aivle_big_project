@@ -110,7 +110,7 @@ class ProjectModuleStatusServiceTests {
             PipelineModuleType.IDEA, PipelineModuleType.CONCEPT_PORTFOLIO,
             PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL,
             PipelineModuleType.CONCEPT_REFINEMENT, PipelineModuleType.TECH_OPS,
-            PipelineModuleType.FINANCE, PipelineModuleType.MARKET_INTERVIEW,
+            PipelineModuleType.FINANCE, PipelineModuleType.LAUNCH_READINESS, PipelineModuleType.MARKET_INTERVIEW,
             PipelineModuleType.TWIN_SURVEY, PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
@@ -129,10 +129,12 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(3).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(4).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(5).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(6).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(7).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
-        assertThat(modules.get(8).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.TECH_OPS).findFirst().orElseThrow().status())
+            .isEqualTo(PipelineModuleStatus.READY);
+        assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow().status())
+            .isEqualTo(PipelineModuleStatus.READY);
+        assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.LAUNCH_READINESS).findFirst().orElseThrow().status())
+            .isEqualTo(PipelineModuleStatus.READY);
     }
 
     @Test
@@ -174,15 +176,15 @@ class ProjectModuleStatusServiceTests {
         when(selection.getId()).thenReturn(13L); when(seed.getId()).thenReturn("market-seed-1");
         when(selections.findByProjectIdAndCurrentSelectionTrueAndDeletedAtIsNull(41L)).thenReturn(Optional.of(selection));
         when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L)).thenReturn(Optional.of(seed));
-        when(techOpsPreparations.findByProjectIdAndSourceMarketSeedSnapshotIdAndDeletedAtIsNull(41L, "market-seed-1"))
+        when(techOpsPreparations.findFirstByProjectIdAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(41L))
             .thenReturn(Optional.of(preparation));
 
         var techOps = service.findAll(7L, 41L).stream()
             .filter(item -> item.module() == PipelineModuleType.TECH_OPS).findFirst().orElseThrow();
 
-        assertThat(techOps.status()).isEqualTo(PipelineModuleStatus.READY);
-        assertThat(techOps.requiredInputs()).isEmpty();
-        assertThat(techOps.nextAction().route()).isEqualTo("/launch-readiness");
+        assertThat(techOps.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
+        assertThat(techOps.requiredInputs()).containsExactly("techOpsInput");
+        assertThat(techOps.nextAction().route()).isEqualTo("/tech-ops");
     }
 
     @Test
@@ -225,7 +227,7 @@ class ProjectModuleStatusServiceTests {
 
         assertThat(finance.status()).isEqualTo(PipelineModuleStatus.NEEDS_INPUT);
         assertThat(finance.requiredInputs()).containsExactly("financialInputDocument");
-        assertThat(finance.nextAction().route()).isEqualTo("/launch-readiness");
+        assertThat(finance.nextAction().route()).isEqualTo("/finance");
 
         TaskRun estimate = mock(TaskRun.class);
         when(estimate.getId()).thenReturn("finance-estimate-task");
