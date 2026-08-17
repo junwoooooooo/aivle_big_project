@@ -7,8 +7,6 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Binding;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.launchreadiness.domain.*;
 import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType;
 import com.aivle.backend.pipeline.launchreadiness.repository.*;
@@ -43,7 +41,6 @@ public class LaunchReadinessService {
     private final ProjectRepository projects;
     private final ProjectEvidenceArtifactService artifacts;
     private final LaunchReadinessDocumentService documents;
-    private final LaunchReadinessConceptSourceResolver currentConcepts;
     private final LaunchReadinessInputSnapshotRepository snapshots;
     private final LaunchReadinessReportRepository reports;
     private final TaskRunRepository runs;
@@ -59,8 +56,6 @@ public class LaunchReadinessService {
     public AnalysisActionResponse start(Long ownerId, Long projectId, ModuleType type, MultipartFile file,
             String idempotencyKey, String correlationId) {
         requireOwned(ownerId, projectId);
-        Source authority = requireAuthority(projectId);
-        Binding binding = currentConcepts.binding(authority);
         var fingerprint = artifacts.fingerprint(file);
         final Map<String, String> parsed;
         try { parsed = documents.parse(type, file); }
@@ -68,7 +63,7 @@ public class LaunchReadinessService {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, exception.getMessage());
         }
         ObjectNode snapshotBody = snapshotBody(projectId, type, file.getOriginalFilename(),
-            fingerprint.sha256(), parsed, authority, binding);
+            fingerprint.sha256(), parsed);
         String snapshotHash = snapshotHasher.hash(snapshotBody);
         TaskType taskType = taskType(type); String key = requiredKey(idempotencyKey);
         TaskRun replay = runs
@@ -91,8 +86,7 @@ public class LaunchReadinessService {
             .ifPresent(LaunchReadinessReport::supersede);
         snapshots.save(LaunchReadinessInputSnapshot.create(snapshotId, projectId, type, artifact.artifactId(),
             artifact.sha256(), artifact.originalFilename(), mapper.writeValueAsString(parsed), snapshotHash,
-            null, binding.selectionId(), binding.selectionRevision(),
-            null, bindingHash(binding), 1, ownerId, Instant.now()));
+            null, null, null, null, null, 1, ownerId, Instant.now()));
 
         ObjectNode input = taskInput(snapshotId, snapshotHash, snapshotBody, "START", 1);
         String json = mapper.writeValueAsString(input);
@@ -115,28 +109,20 @@ public class LaunchReadinessService {
                 projectId, taskType, key).orElse(null);
         if (replay != null) {
             JsonNode replayInput = mapper.readTree(replay.getInputSnapshot());
-            Source currentAuthority = currentConcepts.currentOrNull(projectId);
             LaunchReadinessInputSnapshot currentSnapshot = snapshots
                 .findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId, type)
                 .orElse(null);
             if (!"RETRY".equals(replayInput.path("operation").asText())
-                    || currentSnapshot == null || !exact(currentSnapshot, currentAuthority)
+                    || currentSnapshot == null
                     || !currentSnapshot.getId().equals(replayInput.path("inputSnapshotId").asText())
                     || !currentSnapshot.getSnapshotHash().equals(replayInput.path("inputSnapshotHash").asText()))
                 throw new BusinessException(ErrorCode.IDEMPOTENCY_CONFLICT);
             return action(replay, replayInput);
         }
         LaunchReadinessInputSnapshot previous = currentSnapshot(projectId, type);
-        Source authority = currentConcepts.currentOrNull(projectId);
-        if (!exact(previous, authority)) {
-            markStale(previous, type, "CONCEPT_CHANGED");
-            return new AnalysisActionResponse(null, null, "STALE", previous.getId(),
-                previous.getSnapshotHash());
-        }
         TaskRun latest = latestFor(projectId, type, previous);
         if (latest == null || latest.getState() != TaskRunState.FAILED || previous.getAttempt() >= 3)
             throw new BusinessException(ErrorCode.JOB_RETRY_NOT_ALLOWED);
-        Binding binding = currentConcepts.binding(authority);
         int attempt = previous.getAttempt() + 1;
         String snapshotId = UUID.randomUUID().toString();
         previous.supersede();
@@ -145,10 +131,9 @@ public class LaunchReadinessService {
         LaunchReadinessInputSnapshot next = snapshots.save(LaunchReadinessInputSnapshot.create(snapshotId,
             projectId, type, previous.getSourceDocumentArtifactId(), previous.getSourceDocumentHash(),
             previous.getSourceDocumentName(), previous.getParsedInputJson(), previous.getSnapshotHash(),
-            null, binding.selectionId(), binding.selectionRevision(),
-            null, bindingHash(binding), attempt, ownerId, Instant.now()));
+            null, null, null, null, null, attempt, ownerId, Instant.now()));
         ObjectNode snapshotBody = snapshotBody(projectId, type, next.getSourceDocumentName(),
-            next.getSourceDocumentHash(), mapper.readValue(next.getParsedInputJson(), Map.class), authority, binding);
+            next.getSourceDocumentHash(), mapper.readValue(next.getParsedInputJson(), Map.class));
         ObjectNode input = taskInput(snapshotId, next.getSnapshotHash(), snapshotBody, "RETRY", attempt);
         String json = mapper.writeValueAsString(input);
         TaskRun task = taskRuns.createWithDisposition(ownerId, projectId, taskType, SUBJECT, String.valueOf(projectId),
@@ -165,8 +150,6 @@ public class LaunchReadinessService {
             .findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId, type)
             .orElse(null);
         if (snapshot == null) return empty(type);
-        Source authority = currentConcepts.currentOrNull(projectId);
-        if (!exact(snapshot, authority)) markStale(snapshot, type, "CONCEPT_CHANGED");
         TaskRun latest = latestFor(projectId, type, snapshot);
         LaunchReadinessReport report = reports
             .findFirstByProjectIdAndModuleTypeAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(
@@ -188,7 +171,7 @@ public class LaunchReadinessService {
             reportMatches ? mapper.readTree(report.getExternalEvidenceJson()) : null,
             reportMatches ? report.getCompletedAt() : null, reportMatches && !stale, stale,
             retryAvailable, snapshot.getStaleReason(),
-            "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT", sourceBinding(snapshot));
+            "PROFESSIONAL_INPUT", null);
     }
 
     @Transactional
@@ -202,16 +185,14 @@ public class LaunchReadinessService {
             .orElseThrow(() -> new IllegalStateException("launch readiness input missing"));
         taskRuns.adopt(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(),
             mapper.writeValueAsString(response.result()), response.canonicalInputHash(), response.resultSchemaVersion());
-        Source authority = currentConcepts.currentOrNull(context.projectId());
         LaunchReadinessInputSnapshot current = snapshots
             .findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(context.projectId(), type)
             .orElse(null);
         boolean exact = current != null && current.getId().equals(source.getId())
-            && current.getSnapshotHash().equals(input.path("inputSnapshotHash").asText())
-            && exact(source, authority);
+            && current.getSnapshotHash().equals(input.path("inputSnapshotHash").asText());
         if (exact) reports.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByCompletedAtDesc(context.projectId(), type)
             .ifPresent(LaunchReadinessReport::supersede);
-        else source.markStale("CONCEPT_CHANGED");
+        else source.markStale("DOCUMENT_SUPERSEDED");
         reports.save(LaunchReadinessReport.create(UUID.randomUUID().toString(), context.projectId(), type,
             source.getId(), context.taskRunId(), mapper.writeValueAsString(response.result()),
             mapper.writeValueAsString(response.result().path("quality")),
@@ -228,20 +209,14 @@ public class LaunchReadinessService {
             .orElse(null);
         boolean exact = source != null && snapshots.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(context.projectId(), type)
             .filter(value -> value.getId().equals(input.path("inputSnapshotId").asText())
-                && value.getSnapshotHash().equals(input.path("inputSnapshotHash").asText())).isPresent()
-            && exact(source, currentConcepts.currentOrNull(context.projectId()));
-        if (!exact && source != null) markStale(source, type, "CONCEPT_CHANGED");
+                && value.getSnapshotHash().equals(input.path("inputSnapshotHash").asText())).isPresent();
+        if (!exact && source != null) markStale(source, type, "DOCUMENT_SUPERSEDED");
         return exact;
     }
 
     @Transactional public void fail(TaskRunService.Claim claim, TaskRunWorkerContext context,
             String code, String reason) {
         taskRuns.fail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), code, reason, false);
-        JsonNode input = mapper.readTree(context.inputSnapshot());
-        ModuleType type = ModuleType.valueOf(input.path("moduleType").asText());
-        snapshots.findByIdAndProjectIdAndDeletedAtIsNull(input.path("inputSnapshotId").asText(), context.projectId())
-            .filter(value -> !exact(value, currentConcepts.currentOrNull(context.projectId())))
-            .ifPresent(value -> markStale(value, type, "CONCEPT_CHANGED"));
     }
     @Transactional public void reject(TaskRunService.Claim claim, String reason) {
         taskRuns.rejectAndFail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), "null", "1.0", reason);
@@ -250,25 +225,14 @@ public class LaunchReadinessService {
         events.publish(new JobEventPublisher.Command(projectId, taskRunId, taskRunId, stage, key, status, key, Map.of(), code));
     }
     private ObjectNode snapshotBody(Long projectId, ModuleType type, String documentName,
-            String documentHash, Map<String, String> parsed, Source authority, Binding binding) {
+            String documentHash, Map<String, String> parsed) {
         ObjectNode body = mapper.createObjectNode();
         body.put("contract", "launch-readiness-professional-input-v2");
         body.put("schemaVersion", "2.0"); body.put("projectId", projectId);
         body.put("moduleType", type.name()); body.put("sourceMode", "USER_DOCUMENT_INPUT");
         body.put("sourceDocumentName", documentName); body.put("sourceDocumentHash", documentHash);
-        ObjectNode source = body.putObject("sourceBinding");
-        source.put("selectionId", binding.selectionId());
-        source.put("selectionRevision", binding.selectionRevision());
-        source.put("conceptId", binding.conceptId());
-        source.put("selectedConceptHash", binding.selectedConceptHash());
-        body.set("currentConcept", conceptContext(authority));
         body.set("professionalInput", mapper.valueToTree(parsed));
         return body;
-    }
-    private ObjectNode conceptContext(Source authority) {
-        ObjectNode value = mapper.createObjectNode();
-        value.setAll(authority.currentConcept());
-        return value;
     }
     private ObjectNode taskInput(String snapshotId, String snapshotHash, ObjectNode snapshotBody,
             String operation, int attempt) {
@@ -276,32 +240,6 @@ public class LaunchReadinessService {
         input.put("inputSnapshotId", snapshotId); input.put("inputSnapshotHash", snapshotHash);
         input.put("operation", operation); input.put("attempt", attempt);
         return input;
-    }
-    private String bindingHash(Binding binding) {
-        ObjectNode value = mapper.createObjectNode();
-        value.put("selectionId", binding.selectionId());
-        value.put("selectionRevision", binding.selectionRevision());
-        value.put("conceptId", binding.conceptId());
-        value.put("selectedConceptHash", binding.selectedConceptHash());
-        return snapshotHasher.hash(value);
-    }
-    private ObjectNode sourceBinding(LaunchReadinessInputSnapshot snapshot) {
-        ObjectNode value = mapper.createObjectNode();
-        if (snapshot.getSourceMarketSeedSnapshotId() != null)
-            value.put("marketSeedSnapshotId", snapshot.getSourceMarketSeedSnapshotId());
-        value.put("selectionId", snapshot.getSourceSelectionId());
-        if (snapshot.getSourceSelectionRevision() != null)
-            value.put("selectionRevision", snapshot.getSourceSelectionRevision());
-        if (snapshot.getSourceBmPlanRevision() != null)
-            value.put("bmPlanRevision", snapshot.getSourceBmPlanRevision());
-        return value;
-    }
-    private boolean exact(LaunchReadinessInputSnapshot snapshot, Source authority) {
-        if (snapshot == null || authority == null || snapshot.getSourceSelectionRevision() == null) return false;
-        Binding binding = currentConcepts.binding(authority);
-        return binding.selectionId().equals(snapshot.getSourceSelectionId())
-            && binding.selectionRevision() == snapshot.getSourceSelectionRevision()
-            && bindingHash(binding).equals(snapshot.getSourceBindingHash());
     }
     private void markStale(LaunchReadinessInputSnapshot snapshot, ModuleType type, String reason) {
         snapshot.markStale(reason);
@@ -324,10 +262,6 @@ public class LaunchReadinessService {
         return new AnalysisActionResponse(task.getId(), task.getId(), task.getState().name(),
             input.path("inputSnapshotId").asText(), input.path("inputSnapshotHash").asText());
     }
-    private Source requireAuthority(Long projectId) {
-        return currentConcepts.require(projectId,
-            "현재 확정된 사업안과 전문 입력 문서를 기준으로 분석할 수 없습니다.");
-    }
     private void validate(JsonNode result) {
         if (result == null || !result.isObject() || !Set.copyOf(result.propertyNames()).equals(RESULT_FIELDS)
                 || !Set.of("READY", "CONDITIONAL", "REVISE").contains(result.path("decision").asText())
@@ -343,7 +277,7 @@ public class LaunchReadinessService {
     private ProfessionalAnalysisView empty(ModuleType type) {
         return new ProfessionalAnalysisView(type.name(), "NOT_STARTED", false, null, null, null,
             null, null, null, null, null, null, null, null, null, null, null, false, false,
-            false, null, "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT", null);
+            false, null, "PROFESSIONAL_INPUT", null);
     }
     private TaskType taskType(ModuleType type) { return type == ModuleType.TECHNOLOGY
         ? TaskType.LAUNCH_TECHNOLOGY_READINESS : TaskType.LAUNCH_OPERATIONS_READINESS; }

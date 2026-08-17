@@ -20,14 +20,14 @@ class LaunchReadinessAuthorityV27ContractTests {
     }
 
     @Test
-    void technologyAndOperationsBindConceptAndProfessionalDocumentTogether() throws Exception {
+    void technologyAndOperationsUseOnlyOwnedProjectAndProfessionalDocument() throws Exception {
         String service = source("pipeline/launchreadiness/application/LaunchReadinessService.java");
         String entity = source("pipeline/launchreadiness/domain/LaunchReadinessInputSnapshot.java");
-        assertThat(service).contains("LaunchReadinessConceptSourceResolver")
-            .contains("launch-readiness-professional-input-v2")
-            .contains("sourceBinding").contains("currentConcept").contains("professionalInput");
-        assertThat(service).doesNotContain("binding.marketSeedSnapshotId()", "binding.bmPlanRevision()",
-            "authority.seed()", "authority.bm()");
+        assertThat(service).contains("launch-readiness-professional-input-v2")
+            .contains("professionalInput").contains("requireOwned(ownerId, projectId)");
+        assertThat(service).doesNotContain("LaunchReadinessConceptSourceResolver", "requireAuthority",
+            "sourceBinding", "currentConcept", "selectedConceptHash", "selectionRevision",
+            "marketSeedSnapshotId", "bmPlanRevision", "conceptContext", "first(");
         assertThat(entity).contains("source_market_seed_snapshot_id", "source_selection_id",
             "source_selection_revision", "source_bm_plan_revision", "source_binding_hash");
     }
@@ -59,18 +59,18 @@ class LaunchReadinessAuthorityV27ContractTests {
     }
 
     @Test
-    void lateSuccessAndFailureCannotBecomeCurrentAfterConceptDrift() throws Exception {
+    void lateSuccessCannotBecomeCurrentAfterDocumentSupersession() throws Exception {
         String service = source("pipeline/launchreadiness/application/LaunchReadinessService.java");
         assertThat(service).contains("snapshotHasher.hash(response.result()), exact, !exact")
-            .contains("markStale(value, type, \"CONCEPT_CHANGED\")")
+            .contains("markStale(source, type, \"DOCUMENT_SUPERSEDED\")")
             .contains("status = stale ? \"STALE\"");
     }
 
     @Test
-    void integratedManifestCarriesExactModuleResultInputAndConceptBinding() throws Exception {
+    void integratedManifestCarriesExactModuleResultInputWithoutLaunchConceptBinding() throws Exception {
         String bundle = source("pipeline/launchreadiness/application/LaunchReadinessReportBundleService.java");
-        assertThat(bundle).contains("inputSnapshotId", "inputSnapshotHash", "resultHash", "sourceBinding")
-            .contains("현재 사업안 기준으로 재무 분석이 필요합니다.");
+        assertThat(bundle).contains("inputSnapshotId", "inputSnapshotHash", "resultHash")
+            .contains("현재 전문 입력 기준으로");
     }
 
     @Test

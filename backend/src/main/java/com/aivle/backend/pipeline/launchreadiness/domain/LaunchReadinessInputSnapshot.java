@@ -57,7 +57,7 @@ public class LaunchReadinessInputSnapshot extends BaseEntity {
             String artifactId, String documentHash, String documentName, String parsedInputJson,
             String snapshotHash, Long userId, Instant now) {
         return create(id, projectId, moduleType, artifactId, documentHash, documentName,
-            parsedInputJson, snapshotHash, null, null, 0, 0, null, 1, userId, now);
+            parsedInputJson, snapshotHash, null, null, null, null, null, 1, userId, now);
     }
 
     public void supersede() { current = false; stale = true; staleReason = "DOCUMENT_SUPERSEDED"; }

@@ -57,12 +57,11 @@ public class LaunchReadinessReportBundleService {
                 ModuleType type = "technology".equals(module) ? ModuleType.TECHNOLOGY : ModuleType.OPERATIONS;
                 var view = readiness.current(ownerId, projectId, type);
                 if (view.analysis() == null || view.stale()) throw new IllegalArgumentException(
-                    "현재 사업안 기준으로 " + module + " 분석이 필요합니다.");
+                    "현재 전문 입력 기준으로 " + module + " 분석이 필요합니다.");
                 documents.add(professionalPdf.create(ownerId, projectId, type, !integrated));
                 sources.addObject().put("module", module).put("resultId", view.resultId())
                     .put("resultHash", view.resultHash()).put("inputSnapshotId", view.inputSnapshotId())
-                    .put("inputSnapshotHash", view.inputSnapshotHash())
-                    .set("sourceBinding", view.sourceBinding().deepCopy());
+                    .put("inputSnapshotHash", view.inputSnapshotHash());
                 if (integrated) for (var item : view.externalEvidence()) {
                     String url = item.path("url").asText("").trim(); String title = item.path("title").asText("").trim();
                     if (!url.isBlank()) external.putIfAbsent(url, new Source(title, url));

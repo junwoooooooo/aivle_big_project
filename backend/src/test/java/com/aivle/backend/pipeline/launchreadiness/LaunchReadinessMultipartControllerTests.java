@@ -11,12 +11,8 @@ import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.api.ProjectEvidenceArtifactApiModels.ArtifactView;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService.UploadFingerprint;
-import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
-import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.launchreadiness.api.LaunchReadinessController;
 import com.aivle.backend.pipeline.launchreadiness.application.*;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Binding;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType;
 import com.aivle.backend.pipeline.launchreadiness.repository.*;
 import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
@@ -88,18 +84,6 @@ class LaunchReadinessMultipartControllerTests {
                 "artifact-1", 41L, type.name().toLowerCase() + ".docx",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 1024, hash('a'), LocalDateTime.now()));
-            LaunchReadinessConceptSourceResolver concepts = mock(LaunchReadinessConceptSourceResolver.class);
-            ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
-            ConceptPortfolioConcept concept = mock(ConceptPortfolioConcept.class);
-            when(selection.getId()).thenReturn(8L);
-            when(selection.getHypothesisRevision()).thenReturn(3);
-            when(selection.getSelectedConceptHash()).thenReturn(hash('e'));
-            when(concept.getId()).thenReturn("concept-1");
-            Source source = new Source(selection, concept,
-                mapper.createObjectNode().put("conceptName", "선택 사업안"));
-            when(concepts.require(eq(41L), anyString())).thenReturn(source);
-            when(concepts.currentOrNull(41L)).thenReturn(source);
-            when(concepts.binding(source)).thenReturn(new Binding(8L, 3, "concept-1", hash('e')));
             LaunchReadinessInputSnapshotRepository snapshots = mock(LaunchReadinessInputSnapshotRepository.class);
             LaunchReadinessReportRepository reports = mock(LaunchReadinessReportRepository.class);
             TaskRunRepository runs = mock(TaskRunRepository.class);
@@ -115,7 +99,7 @@ class LaunchReadinessMultipartControllerTests {
             CanonicalInputHasher inputHasher = mock(CanonicalInputHasher.class);
             when(inputHasher.hash(eq(taskType), eq("1.0"), eq("ko-KR"), anyString())).thenReturn(hash('b'));
             LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents,
-                concepts, snapshots, reports, runs, taskRuns, inputHasher, new SnapshotHasher(mapper),
+                snapshots, reports, runs, taskRuns, inputHasher, new SnapshotHasher(mapper),
                 mock(JobEventPublisher.class), mapper);
             CurrentUserProvider user = mock(CurrentUserProvider.class);
             when(user.currentUserId()).thenReturn(7L);

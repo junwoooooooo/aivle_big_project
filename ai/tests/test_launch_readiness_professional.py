@@ -53,14 +53,13 @@ def test_failed_independent_review_causes_one_bounded_regeneration(monkeypatch):
     assert result["externalEvidence"][0]["url"] == "https://example.com/guide"
 
 
-def test_current_concept_context_is_accepted_without_replacing_professional_facts():
+def test_professional_input_is_the_only_required_product_authority():
     request = ProfessionalAnalysisRequest.model_validate({
         "moduleType": "OPERATIONS",
         "input": {"supportProcess": "평일 09~18시 담당자 2명"},
-        "currentConcept": {"target": "소형 반려동물 사업자", "businessModel": {"channels": ["온라인"]}},
     })
 
-    assert request.currentConcept["target"] == "소형 반려동물 사업자"
+    assert set(request.model_dump()) == {"moduleType", "input"}
     system = service._analysis_system("OPERATIONS")
-    assert "전문입력을 사실 판단의 1차 근거" in system
+    assert "전문입력을 사실 판단의 정본" in system
     assert "입력에 없는 사실이나 수치를 만들어내지" in system

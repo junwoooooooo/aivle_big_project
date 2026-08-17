@@ -328,7 +328,6 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             result = await analyze_professional_readiness({
                 "moduleType": "TECHNOLOGY" if body.taskType == "LAUNCH_TECHNOLOGY_READINESS" else "OPERATIONS",
                 "input": body.input.get("professionalInput", {}),
-                "currentConcept": body.input.get("currentConcept", {}),
             })
         elif body.taskType == "MARKETING_CONTENT_GENERATION":
             from app.tasks.marketing_content import execute_marketing_content
@@ -381,12 +380,14 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         logger.warning(
             "AI execution failed taskType=%s taskRunId=%s taskAttemptId=%s correlationId=%s "
             "code=%s reason=%s retryable=%s schemaName=%s upstreamStatus=%s "
-            "providerErrorType=%s providerErrorParam=%s retryAfterMs=%s validationFields=%s",
+            "providerErrorType=%s providerErrorParam=%s retryAfterMs=%s validationFields=%s "
+            "safeDiagnostics=%s",
             body.taskType, body.taskRunId, body.taskAttemptId, correlation,
             failure.code, failure.reason, failure.retryable, failure.schema_name,
             failure.upstream_status, failure.provider_error_type, failure.provider_error_param,
             failure.retry_after_ms,
             failure.validation_fields,
+            failure.safe_diagnostics,
         )
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
                               body.taskRunId, body.taskAttemptId, failure.validation_fields,

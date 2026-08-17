@@ -8,11 +8,6 @@ import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.api.ProjectEvidenceArtifactApiModels.ArtifactView;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService.UploadFingerprint;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Binding;
-import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Source;
-import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
-import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
 import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessDocumentService;
 import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessService;
 import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot;
@@ -54,7 +49,7 @@ class LaunchReadinessAsyncV21Tests {
         when(snapshotHasher.hash(any(tools.jackson.databind.JsonNode.class))).thenReturn(hash('c'));
         LaunchReadinessDocumentService documents = new LaunchReadinessDocumentService();
         LaunchReadinessService service = new LaunchReadinessService(projects, artifacts,
-            documents, concepts(mapper), mock(LaunchReadinessInputSnapshotRepository.class),
+            documents, mock(LaunchReadinessInputSnapshotRepository.class),
             mock(LaunchReadinessReportRepository.class), runs, mock(TaskRunService.class),
             mock(CanonicalInputHasher.class), snapshotHasher, mock(JobEventPublisher.class), mapper);
 
@@ -68,7 +63,7 @@ class LaunchReadinessAsyncV21Tests {
     }
 
     @Test
-    void technologyStartsFromSelectedConceptAndProfessionalDocumentWithoutMarketOrBusinessModel() throws Exception {
+    void technologyStartsWithNoSelectionConceptMarketOrBusinessModel() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProjectRepository projects = mock(ProjectRepository.class);
         Project project = mock(Project.class);
@@ -96,7 +91,7 @@ class LaunchReadinessAsyncV21Tests {
             .thenReturn(hash('b'));
         JobEventPublisher events = mock(JobEventPublisher.class);
         LaunchReadinessDocumentService documents = new LaunchReadinessDocumentService();
-        LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents, concepts(mapper), snapshots,
+        LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents, snapshots,
             reports, mock(TaskRunRepository.class), taskRuns, inputHasher, new SnapshotHasher(mapper), events, mapper);
 
         var response = service.start(7L, 41L, ModuleType.TECHNOLOGY,
@@ -109,6 +104,11 @@ class LaunchReadinessAsyncV21Tests {
         assertThat(savedSnapshot.getValue().getSourceDocumentArtifactId()).isEqualTo("artifact-1");
         assertThat(savedSnapshot.getValue().getParsedInputJson()).contains("3계층 구조");
         assertThat(savedSnapshot.getValue().isCurrent()).isTrue();
+        assertThat(savedSnapshot.getValue().getSourceMarketSeedSnapshotId()).isNull();
+        assertThat(savedSnapshot.getValue().getSourceSelectionId()).isNull();
+        assertThat(savedSnapshot.getValue().getSourceSelectionRevision()).isNull();
+        assertThat(savedSnapshot.getValue().getSourceBmPlanRevision()).isNull();
+        assertThat(savedSnapshot.getValue().getSourceBindingHash()).isNull();
         verify(taskRuns).createWithDisposition(eq(7L), eq(41L),
             eq(TaskType.LAUNCH_TECHNOLOGY_READINESS), eq("LAUNCH_READINESS_INPUT"),
             eq("41"), anyString(), anyString(), eq("command-1"), eq("request-1"), eq(1));
@@ -121,7 +121,7 @@ class LaunchReadinessAsyncV21Tests {
     }
 
     @Test
-    void operationsStartsFromProjectAndProfessionalDocumentWithoutMarketOrBusinessModel() throws Exception {
+    void operationsStartsWithNoSelectionConceptMarketOrBusinessModel() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProjectRepository projects = mock(ProjectRepository.class); Project project = mock(Project.class);
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
@@ -147,7 +147,7 @@ class LaunchReadinessAsyncV21Tests {
         when(inputHasher.hash(eq(TaskType.LAUNCH_OPERATIONS_READINESS), eq("1.0"), eq("ko-KR"), anyString()))
             .thenReturn(hash('b'));
         LaunchReadinessDocumentService documents = new LaunchReadinessDocumentService();
-        LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents, concepts(mapper), snapshots,
+        LaunchReadinessService service = new LaunchReadinessService(projects, artifacts, documents, snapshots,
             reports, mock(TaskRunRepository.class), taskRuns, inputHasher, new SnapshotHasher(mapper),
             mock(JobEventPublisher.class), mapper);
 
@@ -177,19 +177,4 @@ class LaunchReadinessAsyncV21Tests {
 
     private static String hash(char value) { return "sha256:" + String.valueOf(value).repeat(64); }
 
-    private LaunchReadinessConceptSourceResolver concepts(ObjectMapper mapper) {
-        LaunchReadinessConceptSourceResolver resolver = mock(LaunchReadinessConceptSourceResolver.class);
-        ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
-        ConceptPortfolioConcept concept = mock(ConceptPortfolioConcept.class);
-        when(selection.getId()).thenReturn(8L); when(selection.getHypothesisRevision()).thenReturn(3);
-        when(selection.getSelectedConceptHash()).thenReturn(hash('e'));
-        when(concept.getId()).thenReturn("concept-1");
-        var currentConcept = mapper.createObjectNode().put("conceptName", "선택 사업안")
-            .put("solutionMechanism", "전문 입력 기반 실행");
-        Source source = new Source(selection, concept, currentConcept);
-        when(resolver.require(eq(41L), anyString())).thenReturn(source);
-        when(resolver.currentOrNull(41L)).thenReturn(source);
-        when(resolver.binding(source)).thenReturn(new Binding(8L, 3, "concept-1", hash('e')));
-        return resolver;
-    }
 }

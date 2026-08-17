@@ -32,6 +32,30 @@ RESEARCH_HOME = os.getenv(
 # runs/<이름> 으로 경로를 만들기 때문에 디렉터리 이름으로 쓸 수 있는 글자만 받는다.
 # 이걸 안 걸면 sourceRun="../../etc" 같은 값이 그대로 경로가 된다.
 _SAFE_RUN_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
+_SAFE_DETAIL_LIMIT = 600
+_SENSITIVE_ASSIGNMENT = re.compile(
+    r"(?i)\b([A-Z0-9_-]*(?:API[_-]?KEY|ACCESS[_-]?TOKEN|TOKEN|SECRET|PASSWORD))"
+    r"\b\s*[:=]\s*([^\s,;]+)"
+)
+_SENSITIVE_PAYLOAD = re.compile(
+    r"(?i)(\b(?:prompt|input|request|response|document|content)\b\s*[:=]\s*)"
+    r"(?:\{.*\}|\[.*\]|\"(?:\\.|[^\"])*\"|'(?:\\.|[^'])*'|[^,;|]+)"
+)
+
+
+def _safe_failure_detail(detail: str) -> str:
+    """Keep one bounded diagnostic line without credentials or request payloads."""
+    value = re.sub(r"[\x00-\x1f\x7f]+", " ", str(detail or ""))
+    value = re.sub(
+        r"(?i)\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\s,;]+",
+        "Authorization=[REDACTED]",
+        value,
+    )
+    value = re.sub(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", value)
+    value = re.sub(r"(?i)\bsk-[A-Za-z0-9_-]{6,}\b", "[REDACTED]", value)
+    value = _SENSITIVE_ASSIGNMENT.sub(lambda match: f"{match.group(1)}=[REDACTED]", value)
+    value = _SENSITIVE_PAYLOAD.sub(lambda match: f"{match.group(1)}[REDACTED]", value)
+    return re.sub(r"\s+", " ", value).strip()[:_SAFE_DETAIL_LIMIT]
 
 
 # ── 실패 어휘는 **백엔드 화이트리스트 안에서만** 고른다 ────────────────────────
@@ -60,7 +84,14 @@ def _fail(code: str, reason: str, detail: str = "") -> ProviderFailure:
     if (code, reason) not in _ALLOWED:
         raise AssertionError(f"등록되지 않은 실패 어휘: {code}/{reason}")
     status_code, retryable = _ALLOWED[(code, reason)]
-    return ProviderFailure(code, reason, status_code, retryable)
+    safe_detail = _safe_failure_detail(detail)
+    diagnostics = {"component": "market-research"}
+    if safe_detail:
+        diagnostics["detail"] = safe_detail
+    return ProviderFailure(
+        code, reason, status_code, retryable,
+        safe_diagnostics=diagnostics,
+    )
 
 
 async def execute_market_research(task_input: dict[str, Any], run_id: str,

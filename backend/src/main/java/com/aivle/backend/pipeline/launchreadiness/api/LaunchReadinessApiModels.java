@@ -23,7 +23,7 @@ public final class LaunchReadinessApiModels {
                 sourceDocumentName, professionalInput, sourceDocumentHash, inputSnapshotHash,
                 resultId, resultHash, analysis, quality, externalEvidence, completedAt,
                 current, stale, retryable && !stale, stale ? "HISTORICAL_INPUT" : null,
-                "CURRENT_CONCEPT_AND_PROFESSIONAL_INPUT", null);
+                "PROFESSIONAL_INPUT", null);
         }
     }
     public record LaunchReadinessSummary(ProfessionalAnalysisView technology,
