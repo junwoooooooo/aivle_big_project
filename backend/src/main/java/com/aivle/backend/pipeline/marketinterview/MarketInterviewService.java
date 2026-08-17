@@ -18,7 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class MarketInterviewService {
-    static final String SCHEMA_VERSION = "2.0";
+    static final String TASK_SCHEMA_VERSION = "1.0";
     static final int MAX_ATTEMPTS = 3;
 
     private final ProjectRepository projects;
@@ -70,7 +70,7 @@ public class MarketInterviewService {
                 "이전 형식의 시장 인터뷰입니다. 현재 사업안으로 새 인터뷰를 시작해 주세요.");
         }
         String rebuilt = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
-        String rebuiltHash = hasher.hash(TaskType.MARKET_INTERVIEW, SCHEMA_VERSION, "ko-KR", rebuilt);
+        String rebuiltHash = hasher.hash(TaskType.MARKET_INTERVIEW, TASK_SCHEMA_VERSION, "ko-KR", rebuilt);
         if (!previous.getInputHash().equals(rebuiltHash)) {
             previous.markStale(previous.getResultJson(), LocalDateTime.now());
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
@@ -116,7 +116,7 @@ public class MarketInterviewService {
     private CurrentView create(Long ownerId, Project project, Source source, int sampleSize, int attempt,
             String idempotencyKey, String correlationId) {
         String input = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
-        String inputHash = hasher.hash(TaskType.MARKET_INTERVIEW, SCHEMA_VERSION, "ko-KR", input);
+        String inputHash = hasher.hash(TaskType.MARKET_INTERVIEW, TASK_SCHEMA_VERSION, "ko-KR", input);
         var created = taskRuns.createWithDisposition(ownerId, project.getId(), TaskType.MARKET_INTERVIEW,
             "MARKET_INTERVIEW", String.valueOf(project.getId()), input, inputHash,
             idempotencyKey, correlationId, 1);

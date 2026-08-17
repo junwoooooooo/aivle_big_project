@@ -12,6 +12,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 @Component
 public class MarketInterviewInputFactory {
+    static final String INPUT_CONTRACT = "market-interview-input-v2";
+    static final String INPUT_SCHEMA_VERSION = "2.0";
     private final ObjectMapper mapper;
 
     public MarketInterviewInputFactory(ObjectMapper mapper) { this.mapper = mapper; }
@@ -36,8 +38,8 @@ public class MarketInterviewInputFactory {
                 "현재 Market Seed의 시장 인터뷰 입력 계약이 올바르지 않습니다.");
         }
         ObjectNode root = mapper.createObjectNode();
-        root.put("contract", "market-interview-input-v2");
-        root.put("schemaVersion", "2.0");
+        root.put("contract", INPUT_CONTRACT);
+        root.put("schemaVersion", INPUT_SCHEMA_VERSION);
         root.put("synthetic", true);
         root.put("sampleSize", sampleSize);
         ObjectNode source = root.putObject("source");

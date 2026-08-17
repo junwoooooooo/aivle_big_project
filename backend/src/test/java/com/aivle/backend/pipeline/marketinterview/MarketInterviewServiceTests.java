@@ -59,7 +59,7 @@ class MarketInterviewServiceTests {
         lenient().when(sources.require(eq(41L), anyString())).thenReturn(source);
         lenient().when(sources.currentOrNull(41L)).thenReturn(source);
         lenient().when(inputs.build(any(), any(), any(), anyInt())).thenReturn("{\"contract\":\"market-interview-input-v2\"}");
-        lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "2.0", "ko-KR", "{\"contract\":\"market-interview-input-v2\"}"))
+        lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "1.0", "ko-KR", "{\"contract\":\"market-interview-input-v2\"}"))
             .thenReturn(HASH);
         lenient().when(task.getId()).thenReturn("task-1");
         lenient().when(runs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
