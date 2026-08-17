@@ -38,8 +38,8 @@ public class LaunchReadinessInputSnapshot extends BaseEntity {
 
     public static LaunchReadinessInputSnapshot create(String id, Long projectId, ModuleType moduleType,
             String artifactId, String documentHash, String documentName, String parsedInputJson,
-            String snapshotHash, String seedId, Long selectionId, int selectionRevision,
-            int bmPlanRevision, String bindingHash, int attempt, Long userId, Instant now) {
+            String snapshotHash, String seedId, Long selectionId, Integer selectionRevision,
+            Integer bmPlanRevision, String bindingHash, int attempt, Long userId, Instant now) {
         LaunchReadinessInputSnapshot value = new LaunchReadinessInputSnapshot();
         value.id = id; value.projectId = projectId; value.moduleType = moduleType;
         value.sourceDocumentArtifactId = artifactId; value.sourceDocumentHash = documentHash;

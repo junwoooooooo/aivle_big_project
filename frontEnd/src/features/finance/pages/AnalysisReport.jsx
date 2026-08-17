@@ -1,3 +1,5 @@
+import { formatKrwNarrative } from '../model/financeNarrativeFormat.js';
+
 const formatNumber = (value) => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
   .format(Number(value ?? 0));
 
@@ -57,7 +59,7 @@ export default function AnalysisReport({ analysis }) {
 }
 
 function Metric({ label, value }) { return <article><span>{label}</span><strong>{value}</strong></article>; }
-function ReportList({ title, values = [] }) { return <><h4>{title}</h4><ul>{values.map((item, index) => <li key={`${title}-${index}`}>{item}</li>)}</ul></>; }
+function ReportList({ title, values = [] }) { return <><h4>{title}</h4><ul>{values.map((item, index) => <li key={`${title}-${index}`}>{formatKrwNarrative(item)}</li>)}</ul></>; }
 
 function FinancialLineChart({ title, subtitle, series }) {
   const width = 880; const height = 280; const left = 64; const right = 24; const top = 24; const bottom = 42;

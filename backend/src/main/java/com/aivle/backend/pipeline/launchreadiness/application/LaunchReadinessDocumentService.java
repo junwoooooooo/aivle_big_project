@@ -44,7 +44,9 @@ public class LaunchReadinessDocumentService {
                 String key = table.getRow(0).getCell(0).getText().trim().replaceFirst("^fieldKey:\\s*", "");
                 if (values.containsKey(key)) values.put(key, table.getRow(2).getCell(0).getText().trim());
             }
-        } catch (IOException exception) { throw new IllegalArgumentException("DOCX 템플릿 형식을 읽을 수 없습니다.", exception); }
+        } catch (IOException | RuntimeException exception) {
+            throw new IllegalArgumentException("DOCX 템플릿 형식을 읽을 수 없습니다.", exception);
+        }
         long entered = values.values().stream().filter(value -> !value.isBlank()).count();
         if (entered == 0) throw new IllegalArgumentException("문서 입력 내용을 확인해 주세요. 작성된 항목이 없습니다.");
         return values;

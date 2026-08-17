@@ -8,12 +8,11 @@ import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.api.ProjectEvidenceArtifactApiModels.ArtifactView;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService.UploadFingerprint;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Binding;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
+import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver;
+import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Binding;
+import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Source;
+import com.aivle.backend.pipeline.conceptportfolio.domain.ConceptPortfolioConcept;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
-import com.aivle.backend.pipeline.market.BmPlanPreparationService;
-import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessDocumentService;
 import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessService;
 import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot;
@@ -69,7 +68,7 @@ class LaunchReadinessAsyncV21Tests {
     }
 
     @Test
-    void uploadCreatesImmutableSnapshotAndQueuedTaskRunInsteadOfWaitingForAi() throws Exception {
+    void technologyStartsFromSelectedConceptAndProfessionalDocumentWithoutMarketOrBusinessModel() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         ProjectRepository projects = mock(ProjectRepository.class);
         Project project = mock(Project.class);
@@ -178,20 +177,19 @@ class LaunchReadinessAsyncV21Tests {
 
     private static String hash(char value) { return "sha256:" + String.valueOf(value).repeat(64); }
 
-    private CurrentConceptSourceResolver concepts(ObjectMapper mapper) {
-        CurrentConceptSourceResolver resolver = mock(CurrentConceptSourceResolver.class);
-        Source source = mock(Source.class);
-        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+    private LaunchReadinessConceptSourceResolver concepts(ObjectMapper mapper) {
+        LaunchReadinessConceptSourceResolver resolver = mock(LaunchReadinessConceptSourceResolver.class);
         ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
-        when(seed.getId()).thenReturn("seed-1"); when(seed.getProjectId()).thenReturn(41L);
-        when(seed.getSnapshotJson()).thenReturn("{}");
+        ConceptPortfolioConcept concept = mock(ConceptPortfolioConcept.class);
         when(selection.getId()).thenReturn(8L); when(selection.getHypothesisRevision()).thenReturn(3);
-        when(source.seed()).thenReturn(seed); when(source.selection()).thenReturn(selection);
-        when(source.bm()).thenReturn(new BmPlanPreparationService.PlanView(
-            mapper.createObjectNode(), mapper.createObjectNode(), 4));
+        when(selection.getSelectedConceptHash()).thenReturn(hash('e'));
+        when(concept.getId()).thenReturn("concept-1");
+        var currentConcept = mapper.createObjectNode().put("conceptName", "선택 사업안")
+            .put("solutionMechanism", "전문 입력 기반 실행");
+        Source source = new Source(selection, concept, currentConcept);
         when(resolver.require(eq(41L), anyString())).thenReturn(source);
         when(resolver.currentOrNull(41L)).thenReturn(source);
-        when(resolver.binding(source)).thenReturn(new Binding("seed-1", 8L, 3, 4));
+        when(resolver.binding(source)).thenReturn(new Binding(8L, 3, "concept-1", hash('e')));
         return resolver;
     }
 }

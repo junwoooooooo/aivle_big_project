@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { formatKrwNarrative } from '../model/financeNarrativeFormat.js';
 import AnalysisReport from './AnalysisReport.jsx';
 
 const point = (month, revenue, operatingProfit, cumulativeCashFlow) => ({ month, revenue, operatingProfit, cumulativeCashFlow });
@@ -20,6 +21,32 @@ const result = {
 };
 
 describe('AnalysisReport', () => {
+  it.each([
+    ['0원', '0원'],
+    ['1000원', '1,000원'],
+    ['10000원', '10,000원 (1만원)'],
+    ['100000000원', '100,000,000원 (1억원)'],
+    ['153200000원', '153,200,000원 (1억 5,320만원)'],
+    ['1234567890 KRW', '1,234,567,890원 (12억 3,456만 7,890원)'],
+    ['-153200000 KRW', '-153,200,000원 (-1억 5,320만원)'],
+    ['매출 10000원, 비용 1,000 KRW', '매출 10,000원 (1만원), 비용 1,000원'],
+    ['153200000원이며 손실 확률은 18%', '153,200,000원 (1억 5,320만원)이며 손실 확률은 18%'],
+    ['2026-08-17, 12개월, 80명, ID 20260810, 비율 0.18', '2026-08-17, 12개월, 80명, ID 20260810, 비율 0.18'],
+  ])('명시적인 원/KRW 금액만 표시 형식으로 변환한다: %s', (source, expected) => {
+    expect(formatKrwNarrative(source)).toBe(expected);
+  });
+
+  it('findings, cautions, recommendedActions의 금액을 모두 presentation에서 변환한다', () => {
+    const narrativeResult = { ...result, report: { ...result.report,
+      findings: ['매출 153200000원'],
+      cautions: ['비용 -100000000 KRW와 손실 확률 18%'],
+      recommendedActions: ['예산 1234567890 KRW를 검토'] } };
+    render(<AnalysisReport analysis={{ result: narrativeResult, fallback: false }} />);
+    expect(screen.getByText('매출 153,200,000원 (1억 5,320만원)')).toBeInTheDocument();
+    expect(screen.getByText('비용 -100,000,000원 (-1억원)와 손실 확률 18%')).toBeInTheDocument();
+    expect(screen.getByText('예산 1,234,567,890원 (12억 3,456만 7,890원)를 검토')).toBeInTheDocument();
+  });
+
   it('donor의 계산·표·차트·위험·근거·주의·액션 정보를 보존한다', () => {
     render(<AnalysisReport analysis={{ result, fallback: false }} />);
     expect(screen.getByText('36개월 누적 매출')).toBeInTheDocument();

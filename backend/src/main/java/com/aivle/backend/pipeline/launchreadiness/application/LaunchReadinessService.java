@@ -7,9 +7,8 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.pipeline.artifact.application.ProjectEvidenceArtifactService;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Binding;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
+import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Binding;
+import com.aivle.backend.pipeline.launchreadiness.application.LaunchReadinessConceptSourceResolver.Source;
 import com.aivle.backend.pipeline.launchreadiness.domain.*;
 import com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType;
 import com.aivle.backend.pipeline.launchreadiness.repository.*;
@@ -44,7 +43,7 @@ public class LaunchReadinessService {
     private final ProjectRepository projects;
     private final ProjectEvidenceArtifactService artifacts;
     private final LaunchReadinessDocumentService documents;
-    private final CurrentConceptSourceResolver currentConcepts;
+    private final LaunchReadinessConceptSourceResolver currentConcepts;
     private final LaunchReadinessInputSnapshotRepository snapshots;
     private final LaunchReadinessReportRepository reports;
     private final TaskRunRepository runs;
@@ -92,8 +91,8 @@ public class LaunchReadinessService {
             .ifPresent(LaunchReadinessReport::supersede);
         snapshots.save(LaunchReadinessInputSnapshot.create(snapshotId, projectId, type, artifact.artifactId(),
             artifact.sha256(), artifact.originalFilename(), mapper.writeValueAsString(parsed), snapshotHash,
-            binding.marketSeedSnapshotId(), binding.selectionId(), binding.selectionRevision(),
-            binding.bmPlanRevision(), bindingHash(binding), 1, ownerId, Instant.now()));
+            null, binding.selectionId(), binding.selectionRevision(),
+            null, bindingHash(binding), 1, ownerId, Instant.now()));
 
         ObjectNode input = taskInput(snapshotId, snapshotHash, snapshotBody, "START", 1);
         String json = mapper.writeValueAsString(input);
@@ -146,8 +145,8 @@ public class LaunchReadinessService {
         LaunchReadinessInputSnapshot next = snapshots.save(LaunchReadinessInputSnapshot.create(snapshotId,
             projectId, type, previous.getSourceDocumentArtifactId(), previous.getSourceDocumentHash(),
             previous.getSourceDocumentName(), previous.getParsedInputJson(), previous.getSnapshotHash(),
-            binding.marketSeedSnapshotId(), binding.selectionId(), binding.selectionRevision(),
-            binding.bmPlanRevision(), bindingHash(binding), attempt, ownerId, Instant.now()));
+            null, binding.selectionId(), binding.selectionRevision(),
+            null, bindingHash(binding), attempt, ownerId, Instant.now()));
         ObjectNode snapshotBody = snapshotBody(projectId, type, next.getSourceDocumentName(),
             next.getSourceDocumentHash(), mapper.readValue(next.getParsedInputJson(), Map.class), authority, binding);
         ObjectNode input = taskInput(snapshotId, next.getSnapshotHash(), snapshotBody, "RETRY", attempt);
@@ -258,35 +257,18 @@ public class LaunchReadinessService {
         body.put("moduleType", type.name()); body.put("sourceMode", "USER_DOCUMENT_INPUT");
         body.put("sourceDocumentName", documentName); body.put("sourceDocumentHash", documentHash);
         ObjectNode source = body.putObject("sourceBinding");
-        source.put("marketSeedSnapshotId", binding.marketSeedSnapshotId());
         source.put("selectionId", binding.selectionId());
         source.put("selectionRevision", binding.selectionRevision());
-        source.put("bmPlanRevision", binding.bmPlanRevision());
+        source.put("conceptId", binding.conceptId());
+        source.put("selectedConceptHash", binding.selectedConceptHash());
         body.set("currentConcept", conceptContext(authority));
         body.set("professionalInput", mapper.valueToTree(parsed));
         return body;
     }
     private ObjectNode conceptContext(Source authority) {
         ObjectNode value = mapper.createObjectNode();
-        JsonNode seed = mapper.readTree(authority.seed().getSnapshotJson());
-        JsonNode selected = seed.path("selectedConcept");
-        value.put("conceptName", selected.path("name").asText(seed.path("conceptName").asText("")));
-        value.set("target", first(selected, seed, "target", "targetCustomers"));
-        value.set("problem", first(selected, seed, "problem", "problemStatement"));
-        value.set("solution", first(selected, seed, "solution", "valueProposition"));
-        value.set("finalHypotheses", copyOrNull(seed.path("finalHypotheses")));
-        value.set("businessModel", authority.bm().plan().deepCopy());
+        value.setAll(authority.currentConcept());
         return value;
-    }
-    private JsonNode first(JsonNode primary, JsonNode fallback, String first, String second) {
-        JsonNode value = primary.path(first);
-        if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = primary.path(second);
-        if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = fallback.path(first);
-        if (value.isMissingNode() || value.isNull() || value.asText().isBlank()) value = fallback.path(second);
-        return copyOrNull(value);
-    }
-    private JsonNode copyOrNull(JsonNode value) {
-        return value == null || value.isMissingNode() ? mapper.nullNode() : value.deepCopy();
     }
     private ObjectNode taskInput(String snapshotId, String snapshotHash, ObjectNode snapshotBody,
             String operation, int attempt) {
@@ -297,15 +279,16 @@ public class LaunchReadinessService {
     }
     private String bindingHash(Binding binding) {
         ObjectNode value = mapper.createObjectNode();
-        value.put("marketSeedSnapshotId", binding.marketSeedSnapshotId());
         value.put("selectionId", binding.selectionId());
         value.put("selectionRevision", binding.selectionRevision());
-        value.put("bmPlanRevision", binding.bmPlanRevision());
+        value.put("conceptId", binding.conceptId());
+        value.put("selectedConceptHash", binding.selectedConceptHash());
         return snapshotHasher.hash(value);
     }
     private ObjectNode sourceBinding(LaunchReadinessInputSnapshot snapshot) {
         ObjectNode value = mapper.createObjectNode();
-        value.put("marketSeedSnapshotId", snapshot.getSourceMarketSeedSnapshotId());
+        if (snapshot.getSourceMarketSeedSnapshotId() != null)
+            value.put("marketSeedSnapshotId", snapshot.getSourceMarketSeedSnapshotId());
         value.put("selectionId", snapshot.getSourceSelectionId());
         if (snapshot.getSourceSelectionRevision() != null)
             value.put("selectionRevision", snapshot.getSourceSelectionRevision());
@@ -314,13 +297,10 @@ public class LaunchReadinessService {
         return value;
     }
     private boolean exact(LaunchReadinessInputSnapshot snapshot, Source authority) {
-        if (snapshot == null || authority == null || snapshot.getSourceSelectionRevision() == null
-                || snapshot.getSourceBmPlanRevision() == null) return false;
+        if (snapshot == null || authority == null || snapshot.getSourceSelectionRevision() == null) return false;
         Binding binding = currentConcepts.binding(authority);
-        return binding.marketSeedSnapshotId().equals(snapshot.getSourceMarketSeedSnapshotId())
-            && binding.selectionId().equals(snapshot.getSourceSelectionId())
+        return binding.selectionId().equals(snapshot.getSourceSelectionId())
             && binding.selectionRevision() == snapshot.getSourceSelectionRevision()
-            && binding.bmPlanRevision() == snapshot.getSourceBmPlanRevision()
             && bindingHash(binding).equals(snapshot.getSourceBindingHash());
     }
     private void markStale(LaunchReadinessInputSnapshot snapshot, ModuleType type, String reason) {
