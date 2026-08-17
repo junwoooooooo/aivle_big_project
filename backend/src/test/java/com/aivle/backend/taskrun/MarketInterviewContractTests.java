@@ -27,7 +27,8 @@ class MarketInterviewContractTests {
     }
 
     @Test void populationGeneralizationsAreRejected() {
-        for (String phrase : List.of("응답자의 75%가 구매한다.", "고객의 80%가 선호한다.",
+        for (String phrase : List.of("응답자의 75%가 구매한다.", "75%의 응답자가 구매한다.",
+                "고객의 80%가 선호한다.", "80%의 고객이 선호한다.",
                 "대부분의 고객이 구매한다.", "실제 사용자들은 만족한다.",
                 "구매 확률은 70%다.", "구매 전환율은 35%다.")) {
             ObjectNode value = valid();
@@ -51,6 +52,26 @@ class MarketInterviewContractTests {
         assertThatThrownBy(() -> MarketInterviewContract.validate(value)).isInstanceOf(ExecutionFailure.class);
     }
 
+    @Test void partialRespondentFailureKeepsOnlyUsableResponses() {
+        ObjectNode value = valid();
+        ObjectNode targeting = (ObjectNode) value.path("targeting");
+        targeting.put("usableCount", 19).put("failedCount", 1)
+            .put("targetCount", 16).put("nonTargetCount", 3);
+        ((ArrayNode) value.path("transcriptProvenance")).remove(19);
+        ((ArrayNode) value.path("codingTrace")).remove(19);
+        ObjectNode theme = (ObjectNode) value.path("themes").path(0);
+        ((ArrayNode) theme.path("participantIds")).remove(19);
+        theme.put("mentionCount", 19).put("targetCount", 16).put("nonTargetCount", 3);
+        ((ObjectNode) value.path("comprehension")).put("accurate", 19);
+        ((ObjectNode) value.path("differentiation")).put("different", 19);
+        ObjectNode saturation = (ObjectNode) value.path("saturation");
+        saturation.put("participantCount", 19).put("codedParticipantCount", 19).put("alternativeSum", 19);
+        ((ObjectNode) saturation.path("maxMentionByAxis")).put("CONCERN", 19);
+        ((ArrayNode) value.path("respondentFailures")).addObject().put("participantId", "R020")
+            .put("group", "COMPARISON").put("attempts", 1).put("code", "PERMANENT_PROVIDER_FAILURE");
+        assertThatCode(() -> MarketInterviewContract.validate(value)).doesNotThrowAnyException();
+    }
+
     private ObjectNode valid() {
         ObjectNode root = mapper.createObjectNode();
         root.put("contract", "market-interview-result-v2").put("schemaVersion", "2.0").put("synthetic", true);
@@ -64,7 +85,9 @@ class MarketInterviewContractTests {
         criteria.putArray("regions").add("서울"); criteria.putArray("incomeKeywords");
         criteria.putArray("jobKeywords"); criteria.put("hasChildren", 0); criteria.putArray("householdRoles");
         targeting.put("criteriaText", "서울 조건 교집합 80명").put("requestedSampleSize", 20)
-            .put("drawnSampleSize", 20).put("targetCount", 16).put("nonTargetCount", 4).putNull("targetCoverageWarning");
+            .put("drawnSampleSize", 20).put("attemptedCount", 20).put("usableCount", 20)
+            .put("failedCount", 0).put("targetCount", 16).put("nonTargetCount", 4)
+            .putNull("targetCoverageWarning");
         ArrayNode participants = root.putArray("participants");
         ArrayNode interviews = root.putArray("interviews");
         for (int i = 1; i <= 3; i++) {
@@ -102,6 +125,7 @@ class MarketInterviewContractTests {
             coded.putArray("themeTitles").add("가격 조건"); coded.put("comprehension", "accurate")
                 .put("differentiation", "unclear").put("alternativeLabel", "수기").put("group", group);
         }
+        root.putArray("respondentFailures");
         ObjectNode saturation = root.putObject("saturation");
         saturation.put("participantCount", 20).put("codedParticipantCount", 20).put("themeCount", 1);
         axisMap(saturation.putObject("axisLabelCounts"), 0); axisMap(saturation.putObject("maxMentionByAxis"), 0);

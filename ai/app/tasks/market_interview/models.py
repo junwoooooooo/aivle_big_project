@@ -156,11 +156,21 @@ class CodingTrace(StrictModel):
     group: Literal["TARGET", "COMPARISON"]
 
 
+class RespondentFailure(StrictModel):
+    participantId: str = Field(pattern=r"^R\d{3}$")
+    group: Literal["TARGET", "COMPARISON"]
+    attempts: int = Field(strict=True, ge=1, le=2)
+    code: Literal["TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT"]
+
+
 class TargetingSummary(StrictModel):
     criteria: TargetCriteria
     criteriaText: str = Field(min_length=1, max_length=3000)
     requestedSampleSize: SampleSize
     drawnSampleSize: int = Field(strict=True, ge=20, le=80)
+    attemptedCount: int = Field(strict=True, ge=20, le=80)
+    usableCount: int = Field(strict=True, ge=8, le=80)
+    failedCount: int = Field(strict=True, ge=0, le=80)
     targetCount: int = Field(strict=True, ge=0, le=80)
     nonTargetCount: int = Field(strict=True, ge=0, le=80)
     targetCoverageWarning: str | None = Field(default=None, max_length=500)
@@ -179,7 +189,7 @@ class DifferentiationSummary(StrictModel):
 
 
 class SaturationSummary(StrictModel):
-    participantCount: int = Field(strict=True, ge=20, le=80)
+    participantCount: int = Field(strict=True, ge=8, le=80)
     codedParticipantCount: int = Field(strict=True, ge=0, le=80)
     themeCount: int = Field(strict=True, ge=1, le=36)
     axisLabelCounts: dict[str, int]
@@ -207,16 +217,25 @@ class MarketInterviewResult(StrictModel):
     purchaseTriggers: list[str] = Field(max_length=12)
     followUpQuestions: list[str] = Field(min_length=3, max_length=12)
     limitations: list[str] = Field(min_length=3, max_length=8)
-    transcriptProvenance: list[TranscriptProvenance] = Field(min_length=20, max_length=80)
-    codingTrace: list[CodingTrace] = Field(min_length=20, max_length=80)
+    transcriptProvenance: list[TranscriptProvenance] = Field(min_length=8, max_length=80)
+    codingTrace: list[CodingTrace] = Field(min_length=8, max_length=80)
+    respondentFailures: list[RespondentFailure] = Field(max_length=80)
     saturation: SaturationSummary
 
     @model_validator(mode="after")
     def identities_match(self):
         sampled = [item.participantId for item in self.transcriptProvenance]
-        if len(sampled) != len(set(sampled)) or len(sampled) != self.targeting.drawnSampleSize:
+        if len(sampled) != len(set(sampled)) or len(sampled) != self.targeting.usableCount:
             raise ValueError("sampled respondent identities must be complete and unique")
         sampled_set = set(sampled)
+        failed = [item.participantId for item in self.respondentFailures]
+        if (len(failed) != len(set(failed)) or len(failed) != self.targeting.failedCount
+                or sampled_set.intersection(failed)):
+            raise ValueError("failed respondent identities must be unique and excluded from usable responses")
+        if (self.targeting.requestedSampleSize != self.targeting.drawnSampleSize
+                or self.targeting.drawnSampleSize != self.targeting.attemptedCount
+                or self.targeting.usableCount + self.targeting.failedCount != self.targeting.attemptedCount):
+            raise ValueError("requested, attempted, usable and failed sample counts are inconsistent")
         if {item.participantId for item in self.codingTrace} != sampled_set or len(self.codingTrace) != len(sampled):
             raise ValueError("coding trace must include every sampled respondent exactly once")
         representative = [item.participantId for item in self.participants]
@@ -236,7 +255,7 @@ class MarketInterviewResult(StrictModel):
                or not set(item.respondentIds).issubset(sampled_set) for item in self.crossRelationships):
             raise ValueError("cross relationship must be derived from respondentIds")
         if self.targeting.targetCount + self.targeting.nonTargetCount != len(sampled):
-            raise ValueError("target/non-target counts must equal drawn sample")
+            raise ValueError("target/non-target counts must equal usable sample")
         if self.saturation.participantCount != len(sampled):
             raise ValueError("saturation participant count must equal drawn sample")
         return self

@@ -6,10 +6,14 @@ function ListSection({ title, items = [] }) {
 
 export default function MarketInterviewResult({ result }) {
   if (!result) return null;
+  const requested = result.targeting?.requestedSampleSize ?? result.targeting?.drawnSampleSize;
+  const usable = result.targeting?.usableCount ?? result.targeting?.drawnSampleSize;
+  const failed = result.targeting?.failedCount ?? 0;
   return <div className="market-interview__result">
     {result.targeting ? <section className="market-interview__section"><h2>표집 기준과 범위</h2>
       <p>{result.targeting.criteriaText}</p>
-      <p>가상 패널 {result.targeting.drawnSampleSize}명 · 타겟 조건 일치 {result.targeting.targetCount}명 · 비교 관점 {result.targeting.nonTargetCount}명</p>
+      <p>요청 {requested}명 · 유효 응답 {usable}명{failed ? ` · 응답 생성 실패 ${failed}명` : ''}</p>
+      <p>유효 응답 중 타겟 조건 일치 {result.targeting.targetCount}명 · 비교 관점 {result.targeting.nonTargetCount}명</p>
       {result.targeting.targetCoverageWarning ? <p>{result.targeting.targetCoverageWarning}</p> : null}
     </section> : null}
     <section className="market-interview__section" aria-labelledby="market-interview-participants">

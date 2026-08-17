@@ -14,6 +14,7 @@ from app.providers.schema_compatibility import strict_schema_failures
 
 
 logger = logging.getLogger(__name__)
+_DEFAULT_TEMPERATURE = object()
 
 
 class ProviderFailure(Exception):
@@ -101,11 +102,30 @@ def _retry_after_ms(response) -> int | None:
     return min(15_000, max(1_000, int(seconds * 1000)))
 
 
+def _request_body(model: str, system: str, user: str, response_format: dict[str, Any], *,
+                  temperature_override: float | None | object = _DEFAULT_TEMPERATURE,
+                  reasoning_effort_override: str | None = None) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "model": model,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+        "response_format": response_format,
+    }
+    temperature = 0.1 if temperature_override is _DEFAULT_TEMPERATURE else temperature_override
+    if temperature is not None:
+        body["temperature"] = temperature
+    if reasoning_effort_override:
+        body["reasoning_effort"] = reasoning_effort_override
+    return body
+
+
 async def execute_structured_prompt(system: str, user: str, model_override: str | None = None,
                                     response_schema: dict[str, Any] | None = None,
                                     schema_name: str | None = None,
                                     task_type: str | None = None,
-                                    timeout_seconds_override: float | None = None) -> dict[str, Any]:
+                                    timeout_seconds_override: float | None = None,
+                                    temperature_override: float | None | object = _DEFAULT_TEMPERATURE,
+                                    reasoning_effort_override: str | None = None) -> dict[str, Any]:
     if response_schema is not None:
         schema_failures = strict_schema_failures(response_schema)
         if schema_failures:
@@ -127,9 +147,11 @@ async def execute_structured_prompt(system: str, user: str, model_override: str 
     if response_schema is not None:
         response_format = {"type": "json_schema", "json_schema": {
             "name": schema_name or "structured_result", "strict": True, "schema": response_schema}}
-    body = {"model": model, "messages": [{"role": "system", "content": system},
-            {"role": "user", "content": user}], "temperature": 0.1,
-            "response_format": response_format}
+    body = _request_body(
+        model, system, user, response_format,
+        temperature_override=temperature_override,
+        reasoning_effort_override=reasoning_effort_override,
+    )
     try:
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(f"{base_url}/chat/completions",

@@ -11,11 +11,12 @@ public final class MarketInterviewContract {
     private static final Set<String> ROOT = Set.of("contract", "schemaVersion", "synthetic", "source",
         "targeting", "participants", "interviews", "themes", "crossRelationships", "comprehension", "differentiation",
         "objections", "unmetNeeds", "purchaseTriggers", "followUpQuestions", "limitations",
-        "transcriptProvenance", "codingTrace", "saturation");
+        "transcriptProvenance", "codingTrace", "respondentFailures", "saturation");
     private static final Set<String> SOURCE = Set.of("marketSeedSnapshotId", "selectionId",
         "selectionRevision", "marketSeedSnapshotHash", "bmPlanRevision");
     private static final Set<String> TARGETING = Set.of("criteria", "criteriaText", "requestedSampleSize",
-        "drawnSampleSize", "targetCount", "nonTargetCount", "targetCoverageWarning");
+        "drawnSampleSize", "attemptedCount", "usableCount", "failedCount", "targetCount",
+        "nonTargetCount", "targetCoverageWarning");
     private static final Set<String> CRITERIA = Set.of("ageMin", "ageMax", "genders",
         "householdSizeMin", "householdSizeMax", "regions", "incomeKeywords", "jobKeywords",
         "hasChildren", "householdRoles");
@@ -26,6 +27,9 @@ public final class MarketInterviewContract {
     private static final Set<String> CROSS = Set.of("suggestionTitle", "relatedAxis", "relatedTitle", "respondentIds", "overlapCount");
     private static final Set<String> TRANSCRIPT = Set.of("transcriptId", "participantId", "answerCount", "group");
     private static final Set<String> CODING = Set.of("participantId", "themeTitles", "comprehension", "differentiation", "alternativeLabel", "group");
+    private static final Set<String> RESPONDENT_FAILURE = Set.of("participantId", "group", "attempts", "code");
+    private static final Set<String> RESPONDENT_FAILURE_CODES = Set.of(
+        "TRANSIENT_RETRY_EXHAUSTED", "PERMANENT_PROVIDER_FAILURE", "INVALID_RESPONDENT_OUTPUT");
     private static final Set<String> SATURATION = Set.of("participantCount", "codedParticipantCount", "themeCount",
         "axisLabelCounts", "maxMentionByAxis", "saturatedThemes", "alternativeSum", "assessment", "limitation");
     private static final Set<String> AXES = Set.of("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION");
@@ -33,6 +37,7 @@ public final class MarketInterviewContract {
     // Kept byte-for-byte semantically aligned with Python service.STATISTICAL_CLAIM.
     private static final Pattern STATISTICAL = Pattern.compile(
         "(?i)((?:응답자|참여자|고객|소비자)(?:들|들\\s*중|의)?\\s*\\d+(?:\\.\\d+)?\\s*%"
+        + "|\\d+(?:\\.\\d+)?\\s*%\\s*의\\s*(?:응답자|참여자|고객|소비자)"
         + "|대부분의\\s*(?:시장|고객|소비자|응답자|참여자)"
         + "|전국\\s*(?:소비자|고객|사용자)"
         + "|실제\\s*(?:사용자|고객|소비자)(?:들)?(?:은|는|이|가)"
@@ -51,19 +56,32 @@ public final class MarketInterviewContract {
         criteria(targeting.get("criteria")); text(targeting, "criteriaText");
         int requested = sampleSize(targeting, "requestedSampleSize");
         int drawn = sampleSize(targeting, "drawnSampleSize");
-        if (requested != drawn) invalid();
+        int attempted = integerValue(targeting, "attemptedCount", 20, 80);
+        int usable = integerValue(targeting, "usableCount", 8, 80);
+        int failed = integerValue(targeting, "failedCount", 0, 80);
+        if (requested != drawn || drawn != attempted || usable + failed != attempted) invalid();
         int targetCount = integerValue(targeting, "targetCount", 0, 80);
         int nonTargetCount = integerValue(targeting, "nonTargetCount", 0, 80);
-        if (targetCount + nonTargetCount != drawn) invalid();
+        if (targetCount + nonTargetCount != usable) invalid();
         nullableText(targeting, "targetCoverageWarning");
 
         Set<String> sampled = new HashSet<>();
-        for (JsonNode item : array(result, "transcriptProvenance", drawn, drawn)) {
+        for (JsonNode item : array(result, "transcriptProvenance", usable, usable)) {
             exact(item, TRANSCRIPT);
             String id = respondentId(item, "participantId");
             if (!sampled.add(id) || !text(item, "transcriptId").equals("T-" + id)
                     || !integer(item, "answerCount", 9, 9)) invalid();
             group(item, "group");
+        }
+
+        Set<String> failedRespondents = new HashSet<>();
+        for (JsonNode item : array(result, "respondentFailures", failed, failed)) {
+            exact(item, RESPONDENT_FAILURE);
+            String id = respondentId(item, "participantId");
+            if (sampled.contains(id) || !failedRespondents.add(id)) invalid();
+            group(item, "group");
+            integerValue(item, "attempts", 1, 2);
+            if (!RESPONDENT_FAILURE_CODES.contains(text(item, "code"))) invalid();
         }
 
         Set<String> representative = new HashSet<>();
@@ -114,7 +132,7 @@ public final class MarketInterviewContract {
         }
 
         Set<String> coded = new HashSet<>();
-        for (JsonNode item : array(result, "codingTrace", drawn, drawn)) {
+        for (JsonNode item : array(result, "codingTrace", usable, usable)) {
             exact(item, CODING);
             String id = respondentId(item, "participantId");
             if (!sampled.contains(id) || !coded.add(id)) invalid();
@@ -127,20 +145,20 @@ public final class MarketInterviewContract {
             group(item, "group");
         }
         if (!coded.equals(sampled)) invalid();
-        classification(result.get("comprehension"), Set.of("accurate", "partial", "misunderstood"), drawn);
-        classification(result.get("differentiation"), Set.of("different", "similar", "unclear"), drawn);
+        classification(result.get("comprehension"), Set.of("accurate", "partial", "misunderstood"), usable);
+        classification(result.get("differentiation"), Set.of("different", "similar", "unclear"), usable);
         for (String field : Set.of("objections", "unmetNeeds", "purchaseTriggers", "followUpQuestions"))
             stringArray(result.get(field), field.equals("followUpQuestions") ? false : true, 12);
         stringArray(result.get("limitations"), false, 8);
 
         JsonNode saturation = result.get("saturation"); exact(saturation, SATURATION);
-        if (!integer(saturation, "participantCount", drawn, drawn)
-                || !integer(saturation, "codedParticipantCount", 0, drawn)
+        if (!integer(saturation, "participantCount", usable, usable)
+                || !integer(saturation, "codedParticipantCount", 0, usable)
                 || !integer(saturation, "themeCount", themes.size(), themes.size())
-                || !integer(saturation, "alternativeSum", 0, drawn)
+                || !integer(saturation, "alternativeSum", 0, usable)
                 || !"EXPLORATORY_ONLY".equals(text(saturation, "assessment"))) invalid();
         axisCounts(saturation.get("axisLabelCounts"), 0, 36);
-        axisCounts(saturation.get("maxMentionByAxis"), 0, drawn);
+        axisCounts(saturation.get("maxMentionByAxis"), 0, usable);
         stringArray(saturation.get("saturatedThemes"), true, 36); text(saturation, "limitation");
         rejectStatisticalClaims(result);
     }

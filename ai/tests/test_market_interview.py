@@ -1,5 +1,6 @@
 import asyncio
 import json
+from collections import Counter
 
 import pytest
 
@@ -82,7 +83,13 @@ def provider(claim=None, target_region="서울", unknown_theme=False):
 
 def execute(monkeypatch, sample_size=20, **provider_options):
     monkeypatch.setattr(deep_engine, "load_bank", lambda: bank())
-    monkeypatch.setattr(service, "execute_structured_prompt", provider(**provider_options))
+    monkeypatch.setattr(service, "execute_market_interview_prompt", provider(**provider_options))
+    return asyncio.run(service.execute_market_interview(request_payload(sample_size)))
+
+
+def execute_with_provider(monkeypatch, prompt, sample_size=20):
+    monkeypatch.setattr(deep_engine, "load_bank", lambda: bank())
+    monkeypatch.setattr(service, "execute_market_interview_prompt", prompt)
     return asyncio.run(service.execute_market_interview(request_payload(sample_size)))
 
 
@@ -92,6 +99,9 @@ def test_profile_bank_sample_paths_and_deterministic_8_to_2(monkeypatch, size):
     assert result["contract"] == "market-interview-result-v2"
     assert result["synthetic"] is True
     assert result["targeting"]["drawnSampleSize"] == size
+    assert result["targeting"]["attemptedCount"] == size
+    assert result["targeting"]["usableCount"] == size
+    assert result["targeting"]["failedCount"] == 0
     assert result["targeting"]["targetCount"] == int(size * .8)
     assert result["targeting"]["nonTargetCount"] == size - int(size * .8)
     assert len(result["transcriptProvenance"]) == len(result["codingTrace"]) == size
@@ -106,7 +116,7 @@ def test_target_zero_fails_before_response_spend(monkeypatch):
         calls.append(kwargs["schema_name"])
         return await real(*args, **kwargs)
     monkeypatch.setattr(deep_engine, "load_bank", lambda: bank())
-    monkeypatch.setattr(service, "execute_structured_prompt", tracked)
+    monkeypatch.setattr(service, "execute_market_interview_prompt", tracked)
     with pytest.raises(ProviderFailure) as failure:
         asyncio.run(service.execute_market_interview(request_payload()))
     assert failure.value.reason == "MARKET_INTERVIEW_TARGET_UNAVAILABLE"
@@ -139,9 +149,97 @@ def test_literal_percentage_in_individual_response_is_allowed(monkeypatch, allow
     assert allowed in str(result["interviews"])
 
 
-@pytest.mark.parametrize("claim", ["응답자의 75%가 구매한다.", "고객의 80%가 선호한다.",
+@pytest.mark.parametrize("claim", ["응답자의 75%가 구매한다.", "75%의 응답자가 구매한다.",
+    "고객의 80%가 선호한다.", "80%의 고객이 선호한다.",
     "대부분의 고객이 구매한다.", "실제 사용자들은 만족한다.", "구매 확률은 70%다.",
     "구매 전환율은 35%다."])
 def test_population_or_statistical_claim_is_rejected(monkeypatch, claim):
     with pytest.raises(ProviderFailure):
         execute(monkeypatch, claim=claim)
+
+
+def test_transient_respondent_failure_retries_once_then_succeeds(monkeypatch):
+    base = provider()
+    attempts = Counter()
+
+    async def flaky(*args, **kwargs):
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_answer_v2":
+            rid = payload["participantId"]
+            attempts[rid] += 1
+            if rid == "R001" and attempts[rid] == 1:
+                raise ProviderFailure("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE", 503, True)
+        return await base(*args, **kwargs)
+
+    result = execute_with_provider(monkeypatch, flaky)
+    assert attempts["R001"] == 2
+    assert result["targeting"]["usableCount"] == 20
+    assert result["respondentFailures"] == []
+
+
+def test_permanent_respondent_failure_keeps_other_responses_and_truthful_counts(monkeypatch):
+    base = provider()
+    calls = Counter()
+
+    async def partially_failing(*args, **kwargs):
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_answer_v2":
+            rid = payload["participantId"]
+            calls[rid] += 1
+            if rid == "R001":
+                raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
+        return await base(*args, **kwargs)
+
+    result = execute_with_provider(monkeypatch, partially_failing)
+    sampled = {row["participantId"] for row in result["transcriptProvenance"]}
+    assert calls["R001"] == 1
+    assert "R001" not in sampled
+    assert result["targeting"]["attemptedCount"] == 20
+    assert result["targeting"]["usableCount"] == 19
+    assert result["targeting"]["failedCount"] == 1
+    assert result["targeting"]["targetCount"] + result["targeting"]["nonTargetCount"] == 19
+    assert result["respondentFailures"] == [{
+        "participantId": "R001", "group": "TARGET", "attempts": 1,
+        "code": "PERMANENT_PROVIDER_FAILURE",
+    }]
+    assert all(theme["mentionCount"] == 19 and "R001" not in theme["participantIds"]
+               for theme in result["themes"])
+    assert any("유효 응답 19명" in item for item in result["limitations"])
+
+
+def test_usable_sample_below_half_fails_closed(monkeypatch):
+    base = provider()
+
+    async def insufficient(*args, **kwargs):
+        payload = json.loads(args[1])
+        if (kwargs["schema_name"] == "market_interview_answer_v2"
+                and int(payload["participantId"][1:]) <= 11):
+            raise ProviderFailure("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE", 500, False)
+        return await base(*args, **kwargs)
+
+    with pytest.raises(ProviderFailure) as failure:
+        execute_with_provider(monkeypatch, insufficient)
+    assert failure.value.reason == "MARKET_INTERVIEW_USABLE_SAMPLE_INSUFFICIENT"
+
+
+def test_eighty_respondents_never_exceed_configured_concurrency(monkeypatch):
+    base = provider()
+    active = 0
+    maximum = 0
+
+    async def measured(*args, **kwargs):
+        nonlocal active, maximum
+        if kwargs["schema_name"] != "market_interview_answer_v2":
+            return await base(*args, **kwargs)
+        active += 1
+        maximum = max(maximum, active)
+        try:
+            await asyncio.sleep(0.002)
+            return await base(*args, **kwargs)
+        finally:
+            active -= 1
+
+    monkeypatch.setattr(deep_engine, "interview_concurrency", lambda: 3)
+    result = execute_with_provider(monkeypatch, measured, 80)
+    assert result["targeting"]["usableCount"] == 80
+    assert maximum <= 3

@@ -7,7 +7,8 @@ import MarketInterviewPage from './MarketInterviewPage.jsx';
 
 const result = {
   contract: 'market-interview-result-v2', schemaVersion: '2.0', synthetic: true,
-  targeting: { criteriaText: '서울 조건 교집합 80명', drawnSampleSize: 20, targetCount: 16, nonTargetCount: 4 },
+  targeting: { criteriaText: '서울 조건 교집합 80명', requestedSampleSize: 20, drawnSampleSize: 20,
+    attemptedCount: 20, usableCount: 19, failedCount: 1, targetCount: 15, nonTargetCount: 4 },
   participants: [{ participantId: 'R001', label: '가상 참여자 A', profile: '소규모 매장 운영자', context: '도입 전 비교', needs: ['간단한 설정'], group: 'TARGET' }],
   interviews: [{ participantId: 'R001', questions: [{ question: '무엇이 걱정되나요?', answer: '도입 시간이 걱정됩니다.', uncertainty: '실제 현장 확인 필요' }] }],
   themes: [{ axis: 'CONCERN', title: '도입 부담', description: '설정과 지원을 먼저 확인하려는 관점', participantIds: ['R001'], mentionCount: 1, quote: '도입 시간이 걱정됩니다.' }],
@@ -64,6 +65,8 @@ describe('MarketInterviewPage', () => {
     expect(await screen.findByRole('heading', { name: '가상 참여자' })).toBeInTheDocument();
     expect(screen.getByText('가상 참여자 A')).toBeInTheDocument();
     expect(screen.getByText('도입 부담')).toBeInTheDocument();
+    expect(screen.getByText(/요청 20명 · 유효 응답 19명 · 응답 생성 실패 1명/)).toBeInTheDocument();
+    expect(screen.getByText(/유효 응답 중 타겟 조건 일치 15명/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '실제 고객에게 확인할 질문' })).toBeInTheDocument();
   });
 

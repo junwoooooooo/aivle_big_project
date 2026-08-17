@@ -14,12 +14,15 @@ from app.tasks.market_interview.models import (
     MarketInterviewResult, PanelAnswerResult, TargetingResult,
 )
 from app.tasks.market_interview.panel_sampling import criteria_text, draw_panel, public_profile
+from app.tasks.market_interview.provider import RESPONDENT_WORKLOAD, interview_concurrency
 from app.tasks.market_interview.questions import QUESTIONS, build_prompt, concept_board
 from app.twin.bank import load as load_bank
 
 StructuredCall = Callable[..., Awaitable[dict[str, Any]]]
 ASSIGN_BATCH = 8
-WORKERS = 4
+RESPONDENT_ATTEMPTS = 2
+RESPONDENT_RETRY_BACKOFF_SECONDS = 0.05
+MIN_USABLE = 8
 
 COMMON_BOUNDARY = """이 작업은 실제 고객 조사가 아니라 실측 profile bank에서 결정론적으로 뽑은
 파생 프로필을 바탕으로 한 AI 가상 고객 정성 탐색이다. 실제 인물의 발언이라고 주장하지 마라.
@@ -60,9 +63,10 @@ def _dump(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True)
 
 
-async def _call(call: StructuredCall, system: str, value: Any, model, name: str) -> dict[str, Any]:
+async def _call(call: StructuredCall, system: str, value: Any, model, name: str, *,
+                workload: str = "CLASSIFICATION") -> dict[str, Any]:
     return await call(system, _dump(value), response_schema=model.model_json_schema(),
-                      schema_name=name, task_type="MARKET_INTERVIEW")
+                      schema_name=name, task_type="MARKET_INTERVIEW", workload=workload)
 
 
 def _target_text(value: MarketInterviewInput) -> str:
@@ -126,19 +130,53 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         cards, frame = load_bank()
         panel, sampling = draw_panel(cards, frame, targeting.criteria, value.sampleSize)
         board = concept_board(value)
-        semaphore = asyncio.Semaphore(WORKERS)
+        semaphore = asyncio.Semaphore(interview_concurrency())
 
         async def transcript(row):
-            async with semaphore:
-                result = PanelAnswerResult.model_validate(await _call(call, TRANSCRIPT_PROMPT, {
-                    "participantId": row["participantId"],
-                    "prompt": build_prompt(row["cardText"], board),
-                }, PanelAnswerResult, "market_interview_answer_v2"))
-            if result.participantId != row["participantId"]:
-                raise ValueError("transcript participant identity changed")
-            return result
+            for attempt in range(1, RESPONDENT_ATTEMPTS + 1):
+                try:
+                    async with semaphore:
+                        result = PanelAnswerResult.model_validate(await _call(call, TRANSCRIPT_PROMPT, {
+                            "participantId": row["participantId"],
+                            "prompt": build_prompt(row["cardText"], board),
+                        }, PanelAnswerResult, "market_interview_answer_v2",
+                            workload=RESPONDENT_WORKLOAD))
+                    if result.participantId != row["participantId"]:
+                        raise ValueError("transcript participant identity changed")
+                    return {"row": row, "answer": result, "failure": None}
+                except ProviderFailure as failure:
+                    if failure.retryable and attempt < RESPONDENT_ATTEMPTS:
+                        await asyncio.sleep(RESPONDENT_RETRY_BACKOFF_SECONDS)
+                        continue
+                    code = ("TRANSIENT_RETRY_EXHAUSTED" if failure.retryable
+                            else "PERMANENT_PROVIDER_FAILURE")
+                    return {"row": row, "answer": None, "failure": {
+                        "participantId": row["participantId"], "group": row["group"],
+                        "attempts": attempt, "code": code,
+                    }}
+                except (ValidationError, ValueError):
+                    return {"row": row, "answer": None, "failure": {
+                        "participantId": row["participantId"], "group": row["group"],
+                        "attempts": attempt, "code": "INVALID_RESPONDENT_OUTPUT",
+                    }}
+            raise AssertionError("respondent retry loop must terminate")
 
-        answers = list(await asyncio.gather(*(transcript(row) for row in panel)))
+        outcomes = list(await asyncio.gather(*(transcript(row) for row in panel)))
+        usable = [outcome for outcome in outcomes if outcome["answer"] is not None]
+        failures = [outcome["failure"] for outcome in outcomes if outcome["failure"] is not None]
+        minimum_usable = max(MIN_USABLE, (value.sampleSize + 1) // 2)
+        if len(usable) < minimum_usable:
+            raise ProviderFailure("RESULT_SCHEMA_INVALID", "MARKET_INTERVIEW_USABLE_SAMPLE_INSUFFICIENT",
+                                  502, False)
+        usable_panel = [outcome["row"] for outcome in usable]
+        answers = [outcome["answer"] for outcome in usable]
+        if sampling["warning"] is None:
+            attempted_groups = Counter(row["group"] for row in panel)
+            usable_groups = Counter(row["group"] for row in usable_panel)
+            if any(attempted_groups[group] and usable_groups[group] * 2 < attempted_groups[group]
+                   for group in ("TARGET", "COMPARISON")):
+                raise ProviderFailure("RESULT_SCHEMA_INVALID", "MARKET_INTERVIEW_TARGET_COVERAGE_INSUFFICIENT",
+                                      502, False)
         answer_by_id = {row.participantId: row.answers for row in answers}
         transcript_rows = [{"participantId": row.participantId,
                             "answers": _transcript_payload(row.answers)} for row in answers]
@@ -171,7 +209,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                for row in assignments):
             raise ValueError("coding referenced an unknown alternative")
 
-        group_by_id = {row["participantId"]: row["group"] for row in panel}
+        group_by_id = {row["participantId"]: row["group"] for row in usable_panel}
         memberships = {title: [] for title in known}
         for row in assignments:
             for title in dict.fromkeys(row.themeTitles):
@@ -203,10 +241,10 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                                                 "respondentIds": shared,
                                                 "overlapCount": len(shared)})
         cross_relationships.sort(key=lambda row: (-row["overlapCount"], row["suggestionTitle"], row["relatedTitle"]))
-        representative_ids = _representatives(panel, assignments)
+        representative_ids = _representatives(usable_panel, assignments)
         participants = []
         interviews = []
-        for row in panel:
+        for row in usable_panel:
             rid = row["participantId"]
             if rid not in representative_ids: continue
             answer = answer_by_id[rid]
@@ -223,14 +261,22 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
 
         comprehension = Counter(row.comprehension for row in assignments)
         differentiation = Counter(row.differentiation for row in assignments)
+        limitations = list(LIMITATIONS)
+        if failures:
+            limitations.append(
+                f"요청 {value.sampleSize}명 중 유효 응답 {len(usable)}명만 분석했으며 "
+                f"응답 생성에 실패한 {len(failures)}명은 모든 집계에서 제외했습니다."
+            )
         result = {
             "contract": "market-interview-result-v2", "schemaVersion": "2.0", "synthetic": True,
             "source": value.source.model_dump(mode="json"),
             "targeting": {"criteria": targeting.criteria.model_dump(mode="json"),
                           "criteriaText": criteria_text(targeting.criteria, sampling["matched"], sampling["total"]),
                           "requestedSampleSize": value.sampleSize, "drawnSampleSize": len(panel),
-                          "targetCount": sum(row["group"] == "TARGET" for row in panel),
-                          "nonTargetCount": sum(row["group"] == "COMPARISON" for row in panel),
+                          "attemptedCount": len(panel), "usableCount": len(usable),
+                          "failedCount": len(failures),
+                          "targetCount": sum(row["group"] == "TARGET" for row in usable_panel),
+                          "nonTargetCount": sum(row["group"] == "COMPARISON" for row in usable_panel),
                           "targetCoverageWarning": sampling["warning"]},
             "participants": participants, "interviews": interviews, "themes": themes,
             "crossRelationships": cross_relationships[:24],
@@ -239,15 +285,16 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
             "objections": _unique((row.answers.concern for row in answers), 12),
             "unmetNeeds": _unique((row.answers.suggestion for row in answers), 12),
             "purchaseTriggers": _unique((row.answers.barrier for row in answers), 12),
-            "followUpQuestions": codebook.followUpQuestions, "limitations": LIMITATIONS,
+            "followUpQuestions": codebook.followUpQuestions, "limitations": limitations,
             "transcriptProvenance": [{"transcriptId": f"T-{row['participantId']}",
                                       "participantId": row["participantId"], "answerCount": 9,
-                                      "group": row["group"]} for row in panel],
+                                      "group": row["group"]} for row in usable_panel],
             "codingTrace": [{"participantId": row.participantId, "themeTitles": row.themeTitles,
                              "comprehension": row.comprehension, "differentiation": row.differentiation,
                              "alternativeLabel": row.alternativeLabel,
                              "group": group_by_id[row.participantId]} for row in assignments],
-            "saturation": _saturation(themes, assignments, len(panel)),
+            "respondentFailures": failures,
+            "saturation": _saturation(themes, assignments, len(usable)),
         }
         return MarketInterviewResult.model_validate(result).model_dump(mode="json")
     except ValidationError as failure:
