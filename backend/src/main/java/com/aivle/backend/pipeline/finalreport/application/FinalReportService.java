@@ -34,6 +34,7 @@ import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskResultValidationState;
 import com.aivle.backend.taskrun.repository.TaskResultRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
+import com.aivle.backend.taskrun.repository.TaskAttemptRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
@@ -82,6 +83,7 @@ public class FinalReportService {
     private final LaunchReadinessReportRepository launchReports;
     private final FinancialInputSnapshotRepository financeSnapshots;
     private final TaskRunRepository taskRuns;
+    private final TaskAttemptRepository taskAttempts;
     private final TaskResultRepository taskResults;
     private final TaskRunService taskRunService;
     private final CanonicalInputHasher inputHasher;
@@ -119,9 +121,11 @@ public class FinalReportService {
         SourceSet current = sources(ownerId, project);
         FinalReportSnapshot snapshot = snapshots
             .findFirstByProjectIdAndDeletedAtIsNullOrderByReportVersionDesc(projectId).orElse(null);
-        TaskRun active = taskRuns.findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
-            projectId, TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION)
-            .filter(task -> !java.util.Set.of("SUCCEEDED", "FAILED", "CANCELLED").contains(task.getState().name()))
+        TaskRun latest = taskRuns.findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            projectId, TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION).orElse(null);
+        TaskRun active = java.util.Optional.ofNullable(latest)
+            .filter(task -> !java.util.Set.of("SUCCEEDED", "FAILED", "CANCELLED", "TIMED_OUT", "NEEDS_INPUT")
+                .contains(task.getState().name()))
             .orElse(null);
         State state = active != null ? State.GENERATING : snapshot == null ? (current.ready() ? State.READY : State.NOT_READY)
             : (current.ready() && exact(snapshot, current) ? State.CURRENT : State.STALE);
@@ -129,7 +133,26 @@ public class FinalReportService {
         return new FinalReportStatusView(state, snapshot == null ? null : snapshot.getReportVersion(),
             snapshot == null ? null : snapshot.getGeneratedAt(), state == State.STALE,
             active == null ? null : active.getId(),
-            current.blocking(), available, current.omitted(), sourceStates(current, projectId));
+            current.blocking(), available, current.omitted(), sourceStates(current, projectId),
+            latest == null ? null : latest.getId(), latest == null ? null : latest.getState().name(),
+            latest == null ? null : latest.getLastErrorCode(), lastErrorReason(latest));
+    }
+
+    public CurrentSourceCatalog currentSourceCatalog(Long ownerId, Long projectId) {
+        Project project = owned(ownerId, projectId);
+        SourceSet current = sources(ownerId, project);
+        ArrayNode manifest = mapper.createArrayNode();
+        current.manifest().path("sources").forEach(item -> manifest.add(item.deepCopy()));
+        ObjectNode sourceData = mapper.createObjectNode();
+        current.sources().forEach(source -> sourceData.set(source.type(), source.data().deepCopy()));
+        return new CurrentSourceCatalog(manifest, sourceData, sourceStates(current, projectId),
+            current.blocking(), current.omitted(), current.hash());
+    }
+
+    private String lastErrorReason(TaskRun latest) {
+        if (latest == null || latest.getCurrentAttemptId() == null) return null;
+        return taskAttempts.findByIdAndTaskRunId(latest.getCurrentAttemptId(), latest.getId())
+            .map(attempt -> attempt.getErrorReason()).orElse(null);
     }
 
     @Transactional
@@ -485,8 +508,12 @@ public class FinalReportService {
                     projectId, binding.marketSeedSnapshotId(), binding.selectionId(), binding.selectionRevision(), binding.bmPlanRevision())
                 .orElse(null));
         if (snapshot == null) return;
-        taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
-            projectId, "FINANCIAL_ANALYSIS_REPORT", snapshot.getId()).flatMap(run -> taskResults.findByTaskRunId(run.getId()).stream()
+        String subjectId = "USER_DOCUMENT_INPUT".equals(snapshot.getSourceMode())
+            ? "USER_DOCUMENT_INPUT" : snapshot.getId();
+        taskRuns.findByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            projectId, "FINANCIAL_ANALYSIS_REPORT", subjectId).stream()
+            .filter(run -> financeSnapshotMatches(run, snapshot.getId())).findFirst()
+            .flatMap(run -> taskResults.findByTaskRunId(run.getId()).stream()
                 .filter(result -> result.getValidationState() == TaskResultValidationState.ADOPTED).findFirst())
             .ifPresent(result -> {
                 values.add(source("FINANCE", snapshot.getId(), null, null, snapshot.getSnapshotHash(),
@@ -494,6 +521,13 @@ public class FinalReportService {
                 values.add(source("FINANCE_REPORT", result.getId(), null, null, result.getResultHash(),
                     instant(result.getAdoptedAt()), json(result.getResultJson())));
             });
+    }
+
+    private boolean financeSnapshotMatches(TaskRun run, String snapshotId) {
+        JsonNode input = json(run.getInputSnapshot());
+        String referenced = input.path("snapshotId").asText();
+        if (referenced.isBlank()) referenced = input.path("inputSnapshot").path("snapshotId").asText();
+        return snapshotId.equals(referenced);
     }
 
     private java.util.Map<String, String> sourceStates(SourceSet current, Long projectId) {
@@ -536,6 +570,11 @@ public class FinalReportService {
         return new SourceSet(List.copyOf(sources), manifest, composer.hash(manifest), binding, bindingHash,
             readiness(moduleStatuses.findAll(ownerId, projectId)), List.copyOf(blocking), List.copyOf(omitted));
     }
+
+    public record CurrentSourceCatalog(ArrayNode manifest, ObjectNode sources,
+                                       java.util.Map<String, String> sourceStates,
+                                       List<String> blockingSources, List<String> omittedSources,
+                                       String hash) {}
 
     private boolean exact(FinalReportSnapshot snapshot, SourceSet current) {
         if (!snapshot.hasExactLineage() || current.binding() == null) return false;

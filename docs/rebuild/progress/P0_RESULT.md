@@ -199,3 +199,32 @@
 1. project 7에서 retry 소진 run의 새 실행 CTA와 attempt 1 생성을 확인한다.
 2. 실제 Final Proposal 생성으로 read-only transaction 오류가 재발하지 않는지 확인한다.
 3. 실제 Technology/Operations/Finance/Marketing 데이터의 sourceStates와 생성 문서 포함 여부를 확인한다.
+
+---
+
+## 2026-08-18 FAST Runtime Repair V4
+
+### 기준과 구현 계약
+
+- start SHA와 `origin/full`: `45a94cfd66c9b1209aa8f87033df4e7cfde6f649`.
+- Market Interview coding은 batch에서 participant 수·identity·순서·중복만 검사한다. Evidence는 respondent별로 검증하고, exact quote repair가 실패하면 해당 근거 없는 theme/evidence만 제거한다. 다른 respondent와 raw interview는 유지하며 mention count는 남은 exact evidence participant만 사용한다.
+- Final Proposal AI input의 manifest `metadata`를 optional JSON contract로 수용하고, Pydantic 오류는 value 없이 path/category/expectedType만 반환한다.
+- USER_DOCUMENT_INPUT 재무 결과는 shared subject `USER_DOCUMENT_INPUT`의 TaskRun 중 `inputSnapshot.snapshotId`가 현재 snapshot과 같은 adopted 결과만 선택한다.
+- Marketing Strategy와 Final Proposal은 Final Report 표현 JSON이 아닌 동일한 current source catalog의 manifest/source/sourceStates를 사용한다.
+- Final Report status는 최근 generation의 task/state/error code/reason을 제공하며, terminal failure를 준비 화면에서 숨기지 않는다.
+- Marketing 재생성은 요청 직후 progress를 표시하면서 기존 전략을 유지한다. Finance 입력/보고서는 UI에서 `재무 분석` 하나로 묶었다.
+- `/marketing/report`에 A4 전략 보고서 preview, browser PDF 저장, server PDF 다운로드를 추가했다. PDF는 TTC를 제외한 embeddable Korean TTF/OTF resolver를 공용 사용하고 Docker에 `fonts-nanum`을 추가했다.
+- 프로젝트 목록의 floating `상태 안내` helper와 관련 CSS를 제거했다.
+
+### 실제로 실행한 확인
+
+- AI py_compile + focused pytest: 13 tests PASS(최종 metadata diagnostics 포함).
+- Backend focused 4개 class: BUILD SUCCESSFUL. 전체 suite는 실행하지 않았다.
+- Frontend focused 7 files: 23 tests PASS.
+- 변경 Frontend ESLint: PASS.
+- `git diff --check`: PASS(LF→CRLF 안내만 존재).
+- 저장된 두 TaskRun input offline 조회: 로컬 PostgreSQL `localhost:5432`가 실행 중이지 않아 exact row를 읽지 못했다. 동일 metadata manifest shape은 AI model test로 validation PASS를 고정했다.
+
+### 의도적으로 생략 및 continuation point
+
+전체 suite/baseline, Docker rebuild, provider 호출, 장시간 runtime/browser E2E, 새 프로젝트, commit/push를 실행하지 않았다. 사용자는 project 7에서 Interview coding salvage, Marketing report/PDF 한글, Finance source, Final Proposal generation을 확인한다.

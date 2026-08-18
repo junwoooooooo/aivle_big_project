@@ -158,3 +158,14 @@ npx vitest run src/features/business-validation/pages/BusinessValidationPage.tes
 Final Report 페이지에 일부 영역만 덮는 회색 직사각형이 없어야 한다. 앱 기본 surface 위에서 A4 preview만 흰 배경과 shadow를 유지해야 한다.
 
 다음 continuation point: project 7의 새 Interview run ID/attempt와 Final Proposal TaskRun terminal state를 기록한다.
+
+---
+
+## 2026-08-18 Runtime Repair V4 사용자 검증
+
+1. `/app/projects/7/market-interview`: 새 실행 후 한두 respondent의 quote evidence가 invalid여도 해당 theme만 빠지고, 다른 respondent 및 원문 interview가 유지되며 TaskRun이 완료되는지 확인한다.
+2. `/app/projects/7/marketing`: `최신 자료로 다시 생성` 클릭 즉시 생성 중 안내와 기존 결과가 함께 보이는지 확인한다. 입력 자료의 `재무 분석`이 한 줄인지 확인하고 `보고서 보기`에서 A4 preview 및 PDF 저장/다운로드의 한글을 확인한다.
+3. `/app/projects/7/final-report`: `재무 분석`이 선택 가능하고 inspector에도 한 번만 표시되는지 확인한다. 사업기획서 생성이 input metadata 400 없이 진행하는지, 실패 시 `사업기획서 생성에 실패했습니다` 안내가 남는지 확인한다.
+4. `/app/projects`: floating `상태 안내` 버튼이 제거됐는지 확인한다.
+
+Docker image는 이번 작업에서 rebuild하지 않았다. PDF 검증 전 Backend image를 사용자가 rebuild해 `fonts-nanum` 설치를 반영한다.

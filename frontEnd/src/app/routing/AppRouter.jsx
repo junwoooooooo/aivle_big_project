@@ -13,7 +13,7 @@ import { BusinessProposalWorkspace } from '../../features/concept-portfolio/inde
 import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
 import BusinessValidationPage from '../../features/business-validation/pages/BusinessValidationPage.jsx';
 import MarketInterviewPage from '../../features/market-interview/pages/MarketInterviewPage.jsx';
-import { MarketingContentPage } from '../../features/marketing-content/index.js';
+import { MarketingContentPage, MarketingStrategyReportPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import LaunchReadinessReportPage from '../../features/launch-readiness/pages/LaunchReadinessReportPage.jsx';
 import TechOpsPage from '../../features/tech-ops/pages/TechOpsPage.jsx';
@@ -92,6 +92,7 @@ export default function AppRouter() {
             <Route path="tech-ops" element={<TechOpsPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="marketing" element={<MarketingContentPage />} />
+            <Route path="marketing/report" element={<MarketingStrategyReportPage />} />
             <Route path="final-report" element={<FinalReportPage />} />
             <Route path="settings" element={<ProjectSettingsSheet />} />
             <Route path="*" element={<ProjectRedirect />} />

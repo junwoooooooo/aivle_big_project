@@ -21,7 +21,11 @@ public final class FinalReportApiModels {
         List<String> blockingSources,
         List<String> availableSources,
         List<String> omittedSources,
-        Map<String, String> sourceStates
+        Map<String, String> sourceStates,
+        String lastTaskRunId,
+        String lastState,
+        String lastErrorCode,
+        String lastErrorReason
     ) {}
 
     public record GenerateRequest(List<String> includedOptionalSources) {}

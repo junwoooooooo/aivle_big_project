@@ -55,8 +55,7 @@ describe('project pages', () => {
     expect(screen.getAllByText('시작 전').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('사업 기획')).toBeInTheDocument();
     expect(screen.getByText('0 / 4')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '상태 안내' }));
-    expect(screen.getByText(/출시 준비와 최종 보고서는 필요할 때 사용하는 선택 기능/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '상태 안내' })).not.toBeInTheDocument();
   });
 
   it('renders a retryable project load error', async () => {

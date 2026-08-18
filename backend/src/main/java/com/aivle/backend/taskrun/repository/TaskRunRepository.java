@@ -36,6 +36,8 @@ public interface TaskRunRepository extends JpaRepository<TaskRun, String> {
         Long projectId, String subjectType);
     Optional<TaskRun> findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
         Long projectId, String subjectType, String subjectId);
+    List<TaskRun> findByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, String subjectType, String subjectId);
     Optional<TaskRun> findFirstByProjectIdAndTaskTypeAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
         Long projectId, com.aivle.backend.taskrun.domain.TaskType taskType, String subjectType, String subjectId);
     List<TaskRun> findByProjectIdAndStateInAndDeletedAtIsNullOrderByUpdatedAtDescIdDesc(

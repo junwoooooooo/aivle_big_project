@@ -46,13 +46,11 @@ public class MarketingStrategySourceService {
         Long ownerId,
         Long projectId
     ) {
-        var finalReport =
-            finalReports.current(ownerId, projectId);
+        var catalog = finalReports.currentSourceCatalog(ownerId, projectId);
 
         ArrayNode manifest = mapper.createArrayNode();
 
-        JsonNode sourceItems = finalReport.sourceManifest() == null
-            ? mapper.createArrayNode() : finalReport.sourceManifest().path("sources");
+        JsonNode sourceItems = catalog.manifest();
         if (sourceItems.isArray()) {
             for (JsonNode item : sourceItems) {
                 String type = item.path("type").asText();
@@ -64,35 +62,9 @@ public class MarketingStrategySourceService {
         }
 
         ObjectNode sources = mapper.createObjectNode();
-        JsonNode sections =
-            finalReport.report().path("sections");
-
-        if (sections.isArray()) {
-            for (JsonNode section : sections) {
-                JsonNode items = section.path("sources");
-
-                if (!items.isArray()) {
-                    continue;
-                }
-
-                for (JsonNode item : items) {
-                    String type =
-                        item.path("type").asText();
-
-                    boolean available =
-                        "AVAILABLE".equals(
-                            item.path("status").asText()
-                        );
-
-                    if (INCLUDED.contains(type)
-                            && available
-                            && !sources.has(type)) {
-                        sources.set(
-                            type,
-                            item.path("data").deepCopy()
-                        );
-                    }
-                }
+        for (String type : INCLUDED) {
+            if (catalog.sources().has(type)) {
+                sources.set(type, catalog.sources().path(type).deepCopy());
             }
         }
 

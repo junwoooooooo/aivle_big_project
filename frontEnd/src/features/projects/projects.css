@@ -227,13 +227,12 @@
 .resource-download--compact { min-width: 12rem; }
 .resource-download--compact small { display: none; }
 
-.project-hub__body { min-width:0; }.project-status-help { position:fixed; z-index:var(--z-popover); inset-inline-start:1.25rem; inset-block-start:calc(4.25rem + (100vh - 4.25rem) / 2); width:52px; overflow:visible; transform:translateY(-50%); transition:opacity var(--motion-fast) var(--ease-standard); }.has-overlay .project-status-help { opacity:0; pointer-events:none; }.project-status-help__trigger { display:grid; place-items:center; width:52px; height:52px; padding:0; border:1px solid var(--color-border-strong); border-radius:50%; background:var(--color-surface); box-shadow:0 10px 26px rgb(15 23 42 / 14%); color:var(--color-action-primary); font:inherit; cursor:pointer; }.project-status-help__trigger span:first-child { display:grid; place-items:center; width:1.5rem; height:1.5rem; border-radius:50%; background:var(--color-mint-50); }.project-status-help__trigger span:last-child { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }.project-status-help__content { position:absolute; inset-inline-start:0; inset-block-start:calc(100% + .75rem); display:grid; width:min(19rem,calc(100vw - 2rem)); gap:1rem; padding:1rem; border:1px solid var(--color-border-default); border-radius:.75rem; background:var(--color-surface); box-shadow:0 16px 36px rgb(15 23 42 / 16%); color:var(--color-text-secondary); font-size:.76rem; line-height:1.45; transform-origin:top left; animation:project-help-in var(--motion-medium) var(--ease-emphasized); }.project-status-help__content header, .project-status-help__content footer { display:flex; align-items:center; justify-content:space-between; gap:.5rem; }.project-status-help__content header p, .project-status-help__content h2 { margin:0; }.project-status-help__content header p { color:var(--color-text-primary); font-weight:800; }.project-status-help__content h2 { color:var(--color-action-primary); font-size:.82rem; letter-spacing:.08em; }.project-status-help__content dl { display:grid; gap:.5rem; margin:.75rem 0 0; }.project-status-help__content dl div { display:grid; gap:.1rem; }.project-status-help__content dt { color:var(--color-text-primary); font-weight:750; }.project-status-help__content dd { margin:0; }.project-status-help__content footer { justify-content:flex-end; }.project-status-help__content footer button { width:2rem; height:2rem; border:1px solid var(--color-border-default); border-radius:.4rem; background:var(--color-surface); color:var(--color-text-primary); font-size:1.2rem; cursor:pointer; }.project-status-help__content footer button:disabled { opacity:.4; cursor:default; } @keyframes project-help-in { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:none; } }
+.project-hub__body { min-width:0; }
 
 @media (max-width: 900px) {
   .workspace-home__layout { grid-template-columns: 1fr; }
   .getting-started-rail { position: static; }
   .getting-started-rail ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .project-status-help { inset-inline-start:auto; inset-inline-end:1rem; inset-block-start:auto; inset-block-end:1rem; transform:none; }.project-status-help__content { inset-inline-start:auto; inset-inline-end:0; inset-block-start:auto; inset-block-end:calc(100% + .75rem); transform-origin:bottom right; }
 }
 
 /* V9: 목록과 홈 모두 1프로젝트 = 1행 언어를 사용한다. */
@@ -254,66 +253,6 @@
   .getting-started-rail ol { grid-template-columns: 1fr; }
 }
 
-.project-status-help.is-hidden { opacity: 0; pointer-events: none; visibility: hidden; }
-.has-overlay .project-status-help { opacity: 1; pointer-events: auto; }
-.has-overlay .project-status-help.is-hidden { opacity: 0; pointer-events: none; }
-
-/* The help host sits outside the page-transition tree. Keep it below modal
-   backdrops, but never unmount or animate its viewport coordinates. */
-.project-status-help { z-index: var(--z-help, 30); }
-.project-status-help__content {
-  inset-inline-start: calc(100% + .75rem);
-  inset-block-start: 50%;
-  transform: translateY(-50%);
-  transform-origin: left center;
-}
-.project-status-help__slide { animation: project-help-slide-in var(--motion-medium) var(--ease-emphasized); }
-@keyframes project-help-slide-in {
-  from { opacity: 0; transform: translateX(-.5rem); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@media (max-width: 900px) {
-  .project-status-help__content {
-    inset-inline-start: auto;
-    inset-inline-end: 0;
-    inset-block-start: auto;
-    inset-block-end: calc(100% + .75rem);
-    transform: none;
-    transform-origin: bottom right;
-  }
-}
-
-.project-status-help__content {
-  width: min(19rem, calc(100vw - 2rem));
-  max-height: 21.25rem;
-}
-.project-status-help__content header p { color: var(--color-action-primary); font-size: .7rem; letter-spacing: .12em; }
-.project-status-help__content header span { color: var(--color-text-secondary); font-size: .72rem; }
-.project-status-help__slide { min-height: 9.25rem; }
-.project-status-help__slide > p { margin: 0; }
-.project-status-help__note { color: var(--color-text-secondary); font-size: .74rem; }
-.project-status-help__content footer { justify-content: center; gap: .75rem; }
-.project-status-help__content footer > span { min-width: 2.75rem; color: var(--color-text-secondary); font-size: .74rem; text-align: center; }
-.project-status-help__content footer .project-status-help__arrow {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border-radius: 50%;
-  font-size: inherit;
-}
-.project-status-help__slide--next { animation: project-help-slide-next var(--motion-medium) var(--ease-emphasized); }
-.project-status-help__slide--previous { animation: project-help-slide-previous var(--motion-medium) var(--ease-emphasized); }
-@keyframes project-help-slide-next {
-  from { opacity: 0; transform: translateX(.625rem); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes project-help-slide-previous {
-  from { opacity: 0; transform: translateX(-.625rem); }
-  to { opacity: 1; transform: translateX(0); }
-}
 .is-policy-disabled {
   opacity: .58;
   cursor: not-allowed;

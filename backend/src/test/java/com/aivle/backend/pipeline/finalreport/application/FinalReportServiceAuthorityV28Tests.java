@@ -53,6 +53,7 @@ class FinalReportServiceAuthorityV28Tests {
     private final LaunchReadinessReportRepository launchReports = mock(LaunchReadinessReportRepository.class);
     private final FinancialInputSnapshotRepository financeSnapshots = mock(FinancialInputSnapshotRepository.class);
     private final TaskRunRepository taskRuns = mock(TaskRunRepository.class);
+    private final TaskAttemptRepository taskAttempts = mock(TaskAttemptRepository.class);
     private final TaskResultRepository taskResults = mock(TaskResultRepository.class);
     private final TaskRunService taskRunService = mock(TaskRunService.class);
     private final CanonicalInputHasher inputHasher = mock(CanonicalInputHasher.class);
@@ -66,7 +67,7 @@ class FinalReportServiceAuthorityV28Tests {
     void setUp() {
         service = new FinalReportService(projects, currentConcepts, sessions, marketVersions, marketInterviews,
             marketingSources, marketingContents, marketingRevisions, marketingAssets,
-            marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskResults,
+            marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskAttempts, taskResults,
             taskRunService, inputHasher, events, moduleStatuses,
             snapshots, new FinalReportComposer(mapper), mapper);
         Project project = mock(Project.class);
@@ -183,23 +184,49 @@ class FinalReportServiceAuthorityV28Tests {
     @Test
     void latestUserDocumentFinanceWithAdoptedReportIsAvailableWithoutConceptBinding() {
         var snapshot = mock(com.aivle.backend.pipeline.finance.domain.FinancialInputSnapshot.class);
+        var staleRun = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
         var run = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
         var result = mock(com.aivle.backend.taskrun.domain.TaskResult.class);
         when(financeSnapshots.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(
             41L, "USER_DOCUMENT_INPUT")).thenReturn(Optional.of(snapshot));
         when(snapshot.getId()).thenReturn("finance-user-doc");
+        when(snapshot.getSourceMode()).thenReturn("USER_DOCUMENT_INPUT");
         when(snapshot.getSnapshotHash()).thenReturn("sha256:" + "8".repeat(64));
         when(snapshot.getSnapshotJson()).thenReturn("{}");
         when(snapshot.getFinalizedAt()).thenReturn(Instant.parse("2026-08-17T03:00:00Z"));
         when(run.getId()).thenReturn("finance-report-run");
-        when(taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
-            41L, "FINANCIAL_ANALYSIS_REPORT", "finance-user-doc")).thenReturn(Optional.of(run));
+        when(run.getInputSnapshot()).thenReturn("{\"snapshotId\":\"finance-user-doc\"}");
+        when(staleRun.getInputSnapshot()).thenReturn("{\"snapshotId\":\"older-finance-doc\"}");
+        when(taskRuns.findByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, "FINANCIAL_ANALYSIS_REPORT", "USER_DOCUMENT_INPUT")).thenReturn(List.of(staleRun, run));
         when(result.getValidationState()).thenReturn(com.aivle.backend.taskrun.domain.TaskResultValidationState.ADOPTED);
         when(result.getId()).thenReturn("finance-result"); when(result.getResultHash()).thenReturn("sha256:" + "9".repeat(64));
         when(result.getResultJson()).thenReturn("{}"); when(taskResults.findByTaskRunId("finance-report-run")).thenReturn(List.of(result));
 
         var view = service.generate(7L, 41L, "finance-independent", List.of("FINANCE"));
         assertThat(types(view)).contains("FINANCE", "FINANCE_REPORT");
+    }
+
+    @Test
+    void finalReportStatusExposesLatestTerminalGenerationFailure() {
+        var run = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
+        var attempt = mock(com.aivle.backend.taskrun.domain.TaskAttempt.class);
+        when(run.getId()).thenReturn("proposal-failed");
+        when(run.getState()).thenReturn(com.aivle.backend.taskrun.domain.TaskRunState.FAILED);
+        when(run.getCurrentAttemptId()).thenReturn("attempt-failed");
+        when(run.getLastErrorCode()).thenReturn("INVALID_REQUEST");
+        when(attempt.getErrorReason()).thenReturn("FIELD_CONSTRAINT_VIOLATION");
+        when(taskRuns.findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, com.aivle.backend.taskrun.domain.TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION))
+            .thenReturn(Optional.of(run));
+        when(taskAttempts.findByIdAndTaskRunId("attempt-failed", "proposal-failed"))
+            .thenReturn(Optional.of(attempt));
+
+        var status = service.status(7L, 41L);
+        assertThat(status.lastTaskRunId()).isEqualTo("proposal-failed");
+        assertThat(status.lastState()).isEqualTo("FAILED");
+        assertThat(status.lastErrorCode()).isEqualTo("INVALID_REQUEST");
+        assertThat(status.lastErrorReason()).isEqualTo("FIELD_CONSTRAINT_VIOLATION");
     }
 
     @Test

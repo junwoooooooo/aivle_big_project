@@ -9,10 +9,11 @@ import tools.jackson.databind.ObjectMapper;
 
 class FinalBusinessProposalDocumentServiceTests {
     private final FinalBusinessProposalDocumentService documents =
-        new FinalBusinessProposalDocumentService(new ObjectMapper());
+        new FinalBusinessProposalDocumentService(new ObjectMapper(),
+            new com.aivle.backend.pipeline.document.KoreanPdfFontResolver());
 
     @Test
-    void rendersStructuredProposalAsRealDocxAndPdfDocuments() {
+    void rendersStructuredProposalAsRealDocxAndPdfDocuments() throws Exception {
         FinalReportSnapshot snapshot = FinalReportSnapshot.create(7L, 1, "{}",
             "sha256:" + "a".repeat(64), proposal(), Instant.parse("2026-08-18T00:00:00Z"), 1L);
 
@@ -21,6 +22,10 @@ class FinalBusinessProposalDocumentServiceTests {
 
         assertThat(docx).startsWith(new byte[] {'P', 'K'});
         assertThat(pdf).startsWith("%PDF".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        try (var document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            assertThat(new org.apache.pdfbox.text.PDFTextStripper().getText(document))
+                .contains("사업기획서", "자전거 운영 분석");
+        }
     }
 
     private String proposal() {

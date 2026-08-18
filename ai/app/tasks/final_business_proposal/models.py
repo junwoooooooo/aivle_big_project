@@ -19,6 +19,7 @@ class SourceManifestItem(StrictModel):
     revision: int | None = None
     resultHash: str | None = None
     generatedAt: str | None = None
+    metadata: dict[str, JsonValue] | None = None
 
 
 class FinalBusinessProposalInput(StrictModel):

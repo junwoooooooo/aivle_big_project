@@ -10,6 +10,24 @@ from app.tasks.final_business_proposal.prompts import SYSTEM_PROMPT
 from app.tasks.marketing_content.models import lint_provider_schema
 
 
+def _safe_validation_fields(failure: ValidationError) -> list[dict[str, str]]:
+    expected = {
+        "missing": "required", "extra_forbidden": "no extra field",
+        "dict_type": "object", "list_type": "array", "string_type": "string",
+        "int_type": "integer", "literal_error": "allowed literal",
+    }
+    fields = []
+    for issue in failure.errors(include_url=False, include_context=False, include_input=False)[:12]:
+        category = str(issue.get("type", "invalid"))[:80]
+        location = ".".join(str(part) for part in issue.get("loc", ()))
+        fields.append({
+            "path": (location or "input")[:200],
+            "category": category,
+            "expectedType": expected.get(category, "valid contract value"),
+        })
+    return fields
+
+
 def _close_evidence_vocabulary(node, allowed_types: list[str]) -> None:
     if isinstance(node, dict):
         properties = node.get("properties", {})
@@ -42,7 +60,12 @@ async def execute_final_business_proposal(task_input: dict) -> dict:
     try:
         value = FinalBusinessProposalInput.model_validate(task_input)
     except ValidationError as failure:
-        raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
+        raise ProviderFailure(
+            "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
+            schema_name="final_business_proposal_input_v1",
+            validation_fields=_safe_validation_fields(failure),
+            safe_diagnostics={"stage": "INPUT_CONTRACT_VALIDATION"},
+        ) from failure
     allowed_types = sorted({item.type for item in value.sourceManifest})
     schema = FinalBusinessProposalResult.model_json_schema()
     _close_evidence_vocabulary(schema, allowed_types)

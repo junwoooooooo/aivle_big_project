@@ -21,4 +21,20 @@ describe('useMarketingStrategy', () => {
       expect.objectContaining({ headers: expect.objectContaining({ 'Idempotency-Key': expect.any(String) }) }));
     expect(result.current.current).toBe(true);
   });
+
+  it('재생성 요청 직후 기존 결과를 유지하며 active 상태를 즉시 표시한다', async () => {
+    let release;
+    const pending = new Promise((resolve) => { release = resolve; });
+    const existing = { reportId: 'old', status: 'SUCCEEDED', ready: true, stale: false,
+      result: { executiveSummary: '기존 전략' } };
+    const client = { get: vi.fn().mockResolvedValue({ data: existing }),
+      post: vi.fn(() => pending), download: vi.fn() };
+    useApiClient.mockReturnValue(client);
+    const { result } = renderHook(() => useMarketingStrategy('7'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => { void result.current.generate(); });
+    expect(result.current.active).toBe(true);
+    expect(result.current.view.result.executiveSummary).toBe('기존 전략');
+    await act(async () => { release({ data: { taskRunId: 'job-2' } }); await pending; });
+  });
 });

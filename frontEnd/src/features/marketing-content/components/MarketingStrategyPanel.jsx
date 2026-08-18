@@ -1,7 +1,9 @@
+import { Link } from 'react-router-dom';
+
 const SOURCE_LABELS = Object.freeze({
   PROJECT: '프로젝트', CURRENT_CONCEPT: '사업안·법률', MARKET: '시장 분석',
   BUSINESS_MODEL: 'BM 분석', LAUNCH_TECHNOLOGY: '기술 분석',
-  LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 입력', FINANCE_REPORT: '재무 보고서',
+  LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 분석',
   MARKET_INTERVIEW: '시장 인터뷰',
 });
 const SOURCE_ORDER = Object.keys(SOURCE_LABELS);
@@ -23,7 +25,8 @@ function List({ values = [], empty = '표시할 항목이 없습니다.' }) {
 function SourceStatus({ view }) {
   const available = new Set((view?.sourceManifest ?? []).map((item) => item.type));
   return <section className="mk-strategy__sources"><header><div><p>전략 입력 자료</p><h3>이번 전략에 사용한 현재 자료</h3></div></header><ul>{SOURCE_ORDER.map((type) => {
-    const connected = available.has(type);
+    const connected = type === 'FINANCE'
+      ? available.has('FINANCE') || available.has('FINANCE_REPORT') : available.has(type);
     return <li key={type} data-ready={connected}><span>{connected ? '✓' : '–'}</span><strong>{SOURCE_LABELS[type]}</strong><small>{connected ? '포함됨' : '이번 전략에 포함되지 않음'}</small></li>;
   })}</ul></section>;
 }
@@ -42,7 +45,7 @@ export default function MarketingStrategyPanel({ strategy, onNext }) {
     <SourceStatus view={view} />
     {!view?.ready && <div className="mk-alert mk-alert--danger" role="alert"><strong>현재 확정 사업안이 필요합니다.</strong><p>사업안 선택과 기준 확정을 먼저 완료해 주세요.</p></div>}
     {strategy.error && <div className="mk-alert mk-alert--danger" role="alert">{strategy.error.message}</div>}
-    {strategy.active && <div className="mk-progress" aria-live="polite"><div><span>전략 생성 중</span><strong>현재 사업안과 사용 가능한 분석 자료를 연결해 전략을 작성하고 있습니다.</strong></div></div>}
+    {strategy.active && <div className="mk-progress" aria-live="polite"><div><span>최신 전략 생성 중…</span><strong>{result ? '최신 자료로 새 마케팅 전략을 생성하고 있습니다. 기존 전략은 새 결과가 준비될 때까지 유지됩니다.' : '현재 사업안과 사용 가능한 분석 자료를 연결해 전략을 작성하고 있습니다.'}</strong></div></div>}
     {!result && !strategy.active && <section className="mk-strategy__empty"><h3>현재 사업안으로 마케팅 전략을 만드세요</h3><p>시장·BM·재무·인터뷰 결과는 존재하는 경우에만 활용하며, 없는 분석 때문에 전략 생성을 막지 않습니다.</p><button className="mk-primary" type="button" disabled={!view?.ready} onClick={() => void Promise.resolve(strategy.generate()).catch(() => {})}>마케팅 전략 생성</button></section>}
 
     {result && <section className="mk-strategy__result">
@@ -60,7 +63,7 @@ export default function MarketingStrategyPanel({ strategy, onNext }) {
 
       <section id="strategy-risk" className="mk-strategy__section"><header><p>GUARDRAILS</p><h3>위험·근거</h3></header><div className="mk-strategy__risk-grid"><article><h4>위험 및 주의사항</h4><List values={result.risks} /></article><article><h4>근거 연결</h4>{Object.entries(evidenceGroups).map(([label, refs]) => <details key={label}><summary>{label} · {refs.length}건</summary><ul>{refs.map((ref) => <li key={ref}><code>{ref}</code></li>)}</ul></details>)}</article></div></section>
 
-      <footer className="mk-strategy__actions"><button type="button" disabled={strategy.downloading} onClick={() => void Promise.resolve(strategy.download()).catch(() => {})}>{strategy.downloading ? 'PDF 생성 중…' : '전략 PDF 다운로드'}</button><button type="button" disabled={strategy.active} onClick={() => void Promise.resolve(strategy.generate()).catch(() => {})}>최신 자료로 다시 생성</button><button className="mk-primary" type="button" disabled={!strategy.current} onClick={onNext}>이 전략으로 콘텐츠 만들기</button></footer>
+      <footer className="mk-strategy__actions"><Link to="report">보고서 보기</Link><button type="button" disabled={strategy.active} onClick={() => void Promise.resolve(strategy.generate()).catch(() => {})}>{strategy.active ? '최신 전략 생성 중…' : '최신 자료로 다시 생성'}</button><button className="mk-primary" type="button" disabled={!strategy.current} onClick={onNext}>이 전략으로 콘텐츠 만들기</button></footer>
     </section>}
   </div>;
 }

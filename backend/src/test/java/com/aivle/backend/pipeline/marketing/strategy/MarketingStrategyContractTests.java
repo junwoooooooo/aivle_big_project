@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.aivle.backend.pipeline.finalreport.api.FinalReportApiModels;
 import com.aivle.backend.pipeline.finalreport.application.FinalReportService;
 import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyResultContract;
 import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
@@ -31,18 +30,15 @@ class MarketingStrategyContractTests {
     @Test
     void currentConceptAloneIsReadyAndOptionalAnalysisRemainsOptional() {
         FinalReportService finalReports = mock(FinalReportService.class);
-        ObjectNode manifest = mapper.createObjectNode();
-        var manifestSources = manifest.putArray("sources");
+        var manifestSources = mapper.createArrayNode();
         manifestSources.addObject().put("type", "PROJECT").put("id", "7");
         manifestSources.addObject().put("type", "CURRENT_CONCEPT").put("id", "concept-1");
-        ObjectNode report = mapper.createObjectNode();
-        var source = report.putArray("sections").addObject().putArray("sources").addObject();
-        source.put("type", "CURRENT_CONCEPT");
-        source.put("status", "AVAILABLE");
-        source.putObject("data").put("conceptName", "자전거 운영 분석");
-        when(finalReports.current(11L, 7L)).thenReturn(new FinalReportApiModels.FinalReportView(
-            FinalReportApiModels.State.READY, null, null, null, "sha256:" + "a".repeat(64),
-            manifest, report, List.of(), List.of(), List.of(), List.of()));
+        ObjectNode sourceData = mapper.createObjectNode();
+        sourceData.putObject("CURRENT_CONCEPT").put("conceptName", "자전거 운영 분석");
+        when(finalReports.currentSourceCatalog(11L, 7L)).thenReturn(
+            new FinalReportService.CurrentSourceCatalog(manifestSources, sourceData,
+                java.util.Map.of("CURRENT_CONCEPT", "AVAILABLE"), List.of(), List.of(),
+                "sha256:" + "a".repeat(64)));
 
         var service = new MarketingStrategySourceService(
             finalReports, new SnapshotHasher(mapper), mapper);

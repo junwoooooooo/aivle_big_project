@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
@@ -19,8 +19,6 @@ import { useProjectContext } from './ProjectContext.jsx';
 import { useProjects } from './hooks/useProjects.js';
 import ProjectRow from './components/ProjectRow.jsx';
 import ProjectDeleteDialog from './components/ProjectDeleteDialog.jsx';
-import { PROJECT_JOURNEYS } from '../../app/module-status/projectJourneyModel.js';
-import { PROJECT_PRESENTATION_VIEW } from './model/projectPresentation.js';
 import { appRoutes, projectRoutes } from '../../app/routing/projectRoutes.js';
 import { getProjectNameError } from './projectNameError.js';
 import { useServicePolicy } from '../service-policy/useServicePolicy.js';
@@ -57,23 +55,6 @@ function PolicyLink({ restriction, children, ...props }) {
       {children}
     </Link>
   );
-}
-
-export function ProjectStatusHelpRail() {
-  const [open, setOpen] = useState(false);
-  const railRef = useRef(null);
-  useEffect(() => {
-    if (!open) return undefined;
-    const closeOnOutside = (event) => { if (!railRef.current?.contains(event.target)) setOpen(false); };
-    const closeOnEscape = (event) => { if (event.key === 'Escape') setOpen(false); };
-    window.addEventListener('pointerdown', closeOnOutside);
-    window.addEventListener('keydown', closeOnEscape);
-    return () => { window.removeEventListener('pointerdown', closeOnOutside); window.removeEventListener('keydown', closeOnEscape); };
-  }, [open]);
-  return <aside ref={railRef} className={`project-status-help ${open ? 'is-open' : ''}`} aria-label="프로젝트 상태 안내">
-    <button type="button" className="project-status-help__trigger" aria-expanded={open} aria-controls="project-status-help-content" onClick={() => setOpen((value) => !value)} onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}><span aria-hidden="true">?</span><span>상태 안내</span></button>
-    {open && <div id="project-status-help-content" className="project-status-help__content"><div><h2>업무 단계</h2><p>여섯 개 제품 화면 중 출시 준비와 최종 보고서는 필요할 때 사용하는 선택 기능이며 프로젝트 진행률에는 포함되지 않습니다.</p><dl>{PROJECT_JOURNEYS.map((journey) => <div key={journey.id}><dt>{journey.label}</dt><dd>{journey.optional ? '필요할 때 독립적으로 사용할 수 있습니다.' : '프로젝트 화면에서 현재 상태와 다음 할 일을 확인할 수 있습니다.'}</dd></div>)}</dl></div><div><h2>프로젝트 상태</h2><p>필수 업무의 실제 진행 결과와 확인할 항목을 기준으로 표시합니다.</p><dl>{Object.entries(PROJECT_PRESENTATION_VIEW).map(([state, view]) => <div key={state}><dt>{view.label}</dt><dd>{({ NOT_STARTED: '아직 첫 업무를 시작하지 않은 프로젝트', IN_PROGRESS: '업무를 진행하고 있는 프로젝트', NEEDS_ATTENTION: '입력이나 확인이 필요한 프로젝트', COMPLETED: '필수 업무를 마친 프로젝트' })[state]}</dd></div>)}</dl></div></div>}
-  </aside>;
 }
 
 export function ProjectListPage() {
@@ -138,7 +119,6 @@ export function ProjectListPage() {
           {!visible.length && <p className="project-search-empty">조건에 맞는 프로젝트가 없습니다.</p>}
         </>
       )}</div></div>
-      <ProjectStatusHelpRail />
       <ProjectDeleteDialog project={deleteTarget} open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} onDeleted={async () => { setDeleteTarget(null); await retry(); }} />
     </div>
   );

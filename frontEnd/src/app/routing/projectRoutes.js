@@ -32,6 +32,7 @@ export const projectRoutes = Object.freeze({
   techOps: (projectId) => `${projectBase(projectId)}/tech-ops`,
   finance: (projectId) => `${projectBase(projectId)}/finance`,
   marketing: (projectId) => `${projectBase(projectId)}/marketing`,
+  marketingStrategyReport: (projectId) => `${projectBase(projectId)}/marketing/report`,
   finalReport: (projectId) => `${projectBase(projectId)}/final-report`,
   settings: (projectId) => `${projectBase(projectId)}/settings`,
 });

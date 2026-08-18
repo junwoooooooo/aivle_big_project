@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { expect, it, vi } from 'vitest';
 import MarketingStrategyPanel from './MarketingStrategyPanel.jsx';
 
@@ -15,15 +16,18 @@ const result = {
 
 it('전략의 채널 실행·KPI·로드맵·예산·근거를 빠짐없이 표시한다', () => {
   const onNext = vi.fn();
-  render(<MarketingStrategyPanel onNext={onNext} strategy={{ current: true, ready: true, active: false,
+  render(<MemoryRouter><MarketingStrategyPanel onNext={onNext} strategy={{ current: true, ready: true, active: false,
     downloading: false, generate: vi.fn(), download: vi.fn(),
-    view: { ready: true, stale: false, sourceManifest: [{ type: 'CURRENT_CONCEPT' }, { type: 'MARKET' }], result } }} />);
+    view: { ready: true, stale: false, sourceManifest: [{ type: 'CURRENT_CONCEPT' }, { type: 'MARKET' },
+      { type: 'FINANCE' }, { type: 'FINANCE_REPORT' }], result } }} /></MemoryRouter>);
   expect(screen.getByText('지자체 운영 담당자')).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: '캠페인 로드맵' })).toBeInTheDocument();
   expect(screen.getByText('확인된 예산 범위에서 채널별로 배분')).toBeInTheDocument();
   fireEvent.click(screen.getByText('실행 항목·KPI 보기'));
   expect(screen.getByText('운영 사례 제시')).toBeInTheDocument();
   expect(screen.getAllByText('제안 검토 수').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('재무 분석')).toHaveLength(1);
+  expect(screen.getByRole('link', { name: '보고서 보기' })).toHaveAttribute('href', '/report');
   fireEvent.click(screen.getByRole('button', { name: '이 전략으로 콘텐츠 만들기' }));
   expect(onNext).toHaveBeenCalledOnce();
 });

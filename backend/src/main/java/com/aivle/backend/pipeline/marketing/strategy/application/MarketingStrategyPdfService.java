@@ -1,13 +1,10 @@
 package com.aivle.backend.pipeline.marketing.strategy.application;
 
 import com.aivle.backend.pipeline.marketing.strategy.domain.MarketingStrategyReport;
+import com.aivle.backend.pipeline.document.KoreanPdfFontResolver;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import tools.jackson.databind.JsonNode;
@@ -17,11 +14,14 @@ import tools.jackson.databind.ObjectMapper;
 public class MarketingStrategyPdfService {
 
     private final ObjectMapper mapper;
+    private final KoreanPdfFontResolver fonts;
 
     public MarketingStrategyPdfService(
-        ObjectMapper mapper
+        ObjectMapper mapper,
+        KoreanPdfFontResolver fonts
     ) {
         this.mapper = mapper;
+        this.fonts = fonts;
     }
 
     public byte[] render(
@@ -40,20 +40,16 @@ public class MarketingStrategyPdfService {
             builder.useFastMode();
 
             builder.useFont(
-                () -> font(
-                    "fonts/NotoSansKR-Regular.ttf"
-                ),
-                "Noto Sans KR",
+                () -> fonts.open(false),
+                KoreanPdfFontResolver.FAMILY,
                 400,
                 FontStyle.NORMAL,
                 true
             );
 
             builder.useFont(
-                () -> font(
-                    "fonts/NotoSansKR-Bold.ttf"
-                ),
-                "Noto Sans KR",
+                () -> fonts.open(true),
+                KoreanPdfFontResolver.FAMILY,
                 700,
                 FontStyle.NORMAL,
                 true
@@ -90,7 +86,7 @@ public class MarketingStrategyPdfService {
                 }
 
                 body {
-                  font-family: 'Noto Sans KR';
+                  font-family: 'Korean Report';
                   color: #1f2b29;
                   font-size: 10.5pt;
                   line-height: 1.65;
@@ -154,15 +150,9 @@ public class MarketingStrategyPdfService {
         html.append("<h1>마케팅 전략 보고서</h1>");
 
         html.append("<div class=\"meta\">")
-            .append("<strong>전략 ID:</strong> ")
-            .append(escape(report.getId()))
-            .append("<br/><strong>생성 시각:</strong> ")
+            .append("<strong>생성 시각:</strong> ")
             .append(escape(
                 report.getGeneratedAt().toString()
-            ))
-            .append("<br/><strong>입력 해시:</strong> ")
-            .append(escape(
-                report.getSourceManifestHash()
             ))
             .append("</div>");
 
@@ -283,11 +273,11 @@ public class MarketingStrategyPdfService {
             result.path("risks")
         );
 
-        html.append("<h2>10. 근거 참조</h2>");
-        appendList(
-            html,
-            result.path("evidenceRefs")
-        );
+        html.append("<h2>10. 근거 요약</h2><ul>");
+        java.util.LinkedHashSet<String> evidenceLabels = new java.util.LinkedHashSet<>();
+        result.path("evidenceRefs").forEach(value -> evidenceLabels.add(sourceLabel(value.asText())));
+        evidenceLabels.forEach(label -> html.append("<li>").append(escape(label)).append("</li>"));
+        html.append("</ul>");
 
         html.append("""
               <p class="footer">
@@ -325,24 +315,18 @@ public class MarketingStrategyPdfService {
         );
     }
 
-    private InputStream font(String path) {
-        boolean bold = path.contains("Bold");
-        var candidates = bold
-            ? java.util.List.of(
-                "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-                "/usr/share/fonts/opentype/noto/NotoSansCJKkr-Bold.otf",
-                "C:/Windows/Fonts/malgunbd.ttf")
-            : java.util.List.of(
-                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-                "/usr/share/fonts/opentype/noto/NotoSansCJKkr-Regular.otf",
-                "C:/Windows/Fonts/malgun.ttf");
-        for (String candidate : candidates) {
-            try {
-                if (Files.isRegularFile(Path.of(candidate))) return new FileInputStream(candidate);
-            } catch (Exception ignored) {
-                // Try the next OS-provided Korean font. No user content is involved.
-            }
-        }
-        throw new IllegalStateException("PDF용 한국어 폰트를 찾을 수 없습니다: " + path);
+    private String sourceLabel(String reference) {
+        String type = reference == null ? "" : reference.split(":", 2)[0];
+        return switch (type) {
+            case "PROJECT" -> "프로젝트 정보";
+            case "CURRENT_CONCEPT" -> "현재 사업안·법률 조건";
+            case "MARKET" -> "시장 분석";
+            case "BUSINESS_MODEL" -> "비즈니스 모델 분석";
+            case "MARKET_INTERVIEW" -> "시장 인터뷰";
+            case "LAUNCH_TECHNOLOGY" -> "기술 분석";
+            case "LAUNCH_OPERATIONS" -> "운영 분석";
+            case "FINANCE", "FINANCE_REPORT" -> "재무 분석";
+            default -> "사용 분석 자료";
+        };
     }
 }

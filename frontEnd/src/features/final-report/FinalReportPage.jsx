@@ -11,7 +11,7 @@ const SOURCE_LABELS = {
   CURRENT_CONCEPT: '현재 확정 사업안', BUSINESS_VALIDATION_SESSION: '사업성 검증', MARKET: '시장 분석',
   BUSINESS_MODEL: '비즈니스 모델', MARKET_INTERVIEW: '시장 인터뷰',
   MARKETING_STRATEGY: '마케팅 전략', MARKETING: '마케팅 콘텐츠', LAUNCH_TECHNOLOGY: '기술 분석',
-  LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 분석', FINANCE_REPORT: '재무 보고서',
+  LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 분석', FINANCE_REPORT: '재무 분석',
 };
 const OPTIONAL = ['MARKET_INTERVIEW', 'MARKETING_STRATEGY', 'MARKETING', 'LAUNCH_TECHNOLOGY',
   'LAUNCH_OPERATIONS', 'FINANCE'];
@@ -27,6 +27,20 @@ const STATE_VIEW = {
 
 function key() {
   return globalThis.crypto?.randomUUID?.() ?? `final-report-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function generationFailure(status) {
+  if (status?.lastState !== 'FAILED') return null;
+  const reason = status.lastErrorReason;
+  if (reason === 'FIELD_CONSTRAINT_VIOLATION') return '포함한 분석 자료의 입력 형식이 맞지 않았습니다. 자료 상태를 새로고침한 뒤 다시 생성해 주세요.';
+  if (reason === 'AI_RESULT_INVALID') return '생성된 문서의 형식을 확인하는 단계에서 완료하지 못했습니다. 다시 생성해 주세요.';
+  return '최근 사업기획서 생성 작업을 완료하지 못했습니다. 현재 자료로 다시 생성할 수 있습니다.';
+}
+
+function displayManifestSources(sources = []) {
+  const finance = sources.find((source) => ['FINANCE', 'FINANCE_REPORT'].includes(source.type));
+  return [...sources.filter((source) => !['FINANCE', 'FINANCE_REPORT'].includes(source.type)),
+    ...(finance ? [{ ...finance, type: 'FINANCE' }] : [])];
 }
 
 function Evidence({ refs }) {
@@ -115,16 +129,18 @@ export default function FinalReportPage() {
   const statusView = STATE_VIEW[status?.state] ?? STATE_VIEW.NOT_READY;
   const report = state.view?.report?.contract === 'final-business-proposal-result-v1'
     ? state.view.report : null;
+  const failedGeneration = generationFailure(status);
   return <ProjectWorkspace mode="document" className="final-report-page">
     <ProjectStageHeader step={6} eyebrow="최종 사업기획서" title="결재·공유 가능한 사업기획서를 만드세요" description="사용자가 선택한 현재 분석 snapshot만 고정해 회사용 사업기획서로 구성합니다." status={<span className="pipeline-status" data-tone={statusView[1]}>{statusView[0]}</span>} actions={<Button type="button" variant="outline" onClick={() => void load()}>새로고침</Button>} />
     {state.error && <p className="final-report-error" role="alert">{getUserErrorMessage(state.error)}</p>}
+    {failedGeneration && <p className="final-report-error" role="alert"><strong>사업기획서 생성에 실패했습니다.</strong><br />{failedGeneration}</p>}
     {!report && <section className="proposal-ready"><header><p>BUSINESS PROPOSAL</p><h2>사업기획서 작성</h2><span>현재 프로젝트의 분석 결과를 조합해 결재·공유 가능한 사업기획서를 만듭니다.</span></header><div className="proposal-source-grid"><section><h3>필수 기반</h3><SourceOption label="현재 확정 사업안" ready={status?.availableSources?.includes('CURRENT_CONCEPT')} required /><SourceOption label="사업성 검증" ready={status?.availableSources?.includes('MARKET') && status?.availableSources?.includes('BUSINESS_MODEL')} required /></section><section><h3>선택 포함</h3>{OPTIONAL.map((type) => { const sourceState = status?.sourceStates?.[type] ?? (status?.availableSources?.includes(type) ? 'AVAILABLE' : 'NOT_RUN'); return <SourceOption key={type} label={SOURCE_LABELS[type]} sourceState={sourceState} ready={sourceState.startsWith('AVAILABLE')} checked={selected.includes(type)} onChange={(checked) => setSelected((items) => checked ? [...new Set([...items, type])] : items.filter((item) => item !== type))} />; })}</section></div>{status?.blockingSources?.length > 0 && <p className="proposal-blocking">필수 기반 자료를 먼저 준비해 주세요.</p>}<Button type="button" loading={status?.state === 'GENERATING'} disabled={status?.state === 'NOT_READY' || status?.state === 'GENERATING'} onClick={() => void generate()}>사업기획서 만들기</Button></section>}
     {report && <div className="proposal-workspace">
       <nav className="proposal-toc" aria-label="사업기획서 목차"><strong>문서 목차</strong><a href="#proposal-summary">의사결정 요약</a>{report.sections?.map((section) => <a key={section.number} href={`#proposal-section-${section.number}`}>{section.number}. {section.title}</a>)}<a href="#proposal-appendix">부록</a></nav>
       <main><ProposalDocument view={state.view} review={state.review} includeReview={includeReview} /></main>
       <aside className="proposal-inspector">
         <section><p>문서 정보</p><strong>버전 {state.view.version}</strong><span>{state.view.generatedAt ? new Date(state.view.generatedAt).toLocaleString('ko-KR') : ''}</span>{status.state === 'STALE' && <mark>자료가 변경되어 업데이트가 필요합니다.</mark>}</section>
-        <section><p>포함 자료</p><ul>{(state.view.sourceManifest?.sources ?? []).map((source) => <li key={`${source.type}-${source.id}`}>{SOURCE_LABELS[source.type] ?? source.type}</li>)}</ul></section>
+        <section><p>포함 자료</p><ul>{displayManifestSources(state.view.sourceManifest?.sources).map((source) => <li key={`${source.type}-${source.id}`}>{SOURCE_LABELS[source.type] ?? source.type}</li>)}</ul></section>
         <section><p>문서 작업</p><Button type="button" onClick={() => void generate()}>{status.state === 'STALE' ? '최신 자료로 다시 생성' : '새 버전 생성'}</Button><a className="proposal-download" href={api.downloadUrl(projectId, state.view.snapshotId, 'pdf', includeReview)}>PDF 다운로드</a><a className="proposal-download" href={api.downloadUrl(projectId, state.view.snapshotId, 'docx', includeReview)}>DOCX 다운로드</a></section>
         <section><p>AI 검토</p>{state.review?.result ? <><ReviewGroups result={state.review.result} /><label><input type="checkbox" checked={includeReview} onChange={(event) => setIncludeReview(event.target.checked)} /> 사업기획서 부록에 포함</label></> : <Button type="button" loading={['QUEUED', 'RUNNING'].includes(state.review?.status)} onClick={() => void reviewProposal()}>AI 사업기획서 검토</Button>}</section>
       </aside>

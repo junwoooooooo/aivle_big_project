@@ -1,15 +1,11 @@
 package com.aivle.backend.pipeline.finalreport.application;
 
 import com.aivle.backend.pipeline.finalreport.domain.FinalReportSnapshot;
+import com.aivle.backend.pipeline.document.KoreanPdfFontResolver;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -25,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 @RequiredArgsConstructor
 public class FinalBusinessProposalDocumentService {
     private final ObjectMapper mapper;
+    private final KoreanPdfFontResolver fonts;
 
     public byte[] renderDocx(FinalReportSnapshot snapshot) {
         return renderDocx(snapshot, null);
@@ -82,8 +79,8 @@ public class FinalBusinessProposalDocumentService {
         JsonNode report = json(snapshot.getReportJson());
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFont(() -> font(false), "Noto Sans KR", 400, FontStyle.NORMAL, true);
-            builder.useFont(() -> font(true), "Noto Sans KR", 700, FontStyle.NORMAL, true);
+            builder.useFont(() -> fonts.open(false), KoreanPdfFontResolver.FAMILY, 400, FontStyle.NORMAL, true);
+            builder.useFont(() -> fonts.open(true), KoreanPdfFontResolver.FAMILY, 700, FontStyle.NORMAL, true);
             builder.withHtmlContent(html(report, snapshot, review), null); builder.toStream(output); builder.run();
             return output.toByteArray();
         } catch (Exception failure) {
@@ -95,7 +92,7 @@ public class FinalBusinessProposalDocumentService {
         String shell = """
             <html><head><meta charset='UTF-8'/><style>
             @page{size:A4;margin:16mm 14mm 18mm;@bottom-center{content:'사업기획서 · ' counter(page);font-size:8pt;color:#687875}}
-            *{box-sizing:border-box}body{font-family:'Noto Sans KR';font-size:10pt;line-height:1.62;color:#20302d;overflow-wrap:anywhere}
+            *{box-sizing:border-box}body{font-family:'Korean Report';font-size:10pt;line-height:1.62;color:#20302d;overflow-wrap:anywhere}
             .cover{min-height:245mm;page-break-after:always;padding-top:45mm;border-bottom:3px solid #176d62}.cover h1{font-size:27pt}.meta{margin-top:28mm;border-top:1px solid #9badaa;padding-top:8mm}
             h2{margin:10mm 0 4mm;border-bottom:1px solid #43625d;padding-bottom:2mm;page-break-after:avoid}h3{page-break-after:avoid;color:#176d62}
             section,.callout,table{page-break-inside:avoid}.callout{padding:5mm;background:#eef8f6;border-left:4px solid #168173}
@@ -214,5 +211,4 @@ public class FinalBusinessProposalDocumentService {
     private void list(XWPFDocument d,String title,JsonNode values){if(!values.isArray()||values.isEmpty())return;heading(d,title,2);values.forEach(v->{XWPFParagraph p=d.createParagraph();p.setStyle("ListBullet");p.createRun().setText(v.asText());});}
     private JsonNode json(String value){try{return mapper.readTree(value);}catch(Exception e){throw new IllegalStateException(e);}}
     private String escape(String value){return HtmlUtils.htmlEscape(value==null?"":value);}
-    private InputStream font(boolean bold){List<String> paths=bold?List.of("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc","/usr/share/fonts/opentype/noto/NotoSansCJKkr-Bold.otf","C:/Windows/Fonts/malgunbd.ttf"):List.of("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc","/usr/share/fonts/opentype/noto/NotoSansCJKkr-Regular.otf","C:/Windows/Fonts/malgun.ttf");for(String path:paths)try{if(Files.isRegularFile(Path.of(path)))return new FileInputStream(path);}catch(Exception ignored){}throw new IllegalStateException("PDF용 한국어 폰트를 찾을 수 없습니다.");}
 }

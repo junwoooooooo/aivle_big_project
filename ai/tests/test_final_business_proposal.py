@@ -3,13 +3,14 @@ from app.tasks.final_business_proposal.models import (
 )
 from app.tasks.final_business_proposal.review import ProposalReviewResult
 from app.tasks.final_business_proposal.service import _close_evidence_vocabulary
+from app.tasks.final_business_proposal.service import execute_final_business_proposal
 
 
 def test_proposal_input_and_structured_output_schema():
     value = FinalBusinessProposalInput.model_validate({
         "contract": "final-business-proposal-input-v1", "projectId": 7, "version": 1,
         "sourceManifestHash": "sha256:" + "a" * 64,
-        "sourceManifest": [{"type": "PROJECT", "id": "7"},
+        "sourceManifest": [{"type": "PROJECT", "id": "7", "metadata": {"status": "CURRENT"}},
                            {"type": "CURRENT_CONCEPT", "id": "concept-1"},
                            {"type": "MARKET", "id": "market-1"}],
         "includedSourceTypes": ["PROJECT", "CURRENT_CONCEPT", "MARKET"],
@@ -17,6 +18,7 @@ def test_proposal_input_and_structured_output_schema():
     })
     schema = FinalBusinessProposalResult.model_json_schema()
     assert value.projectId == 7
+    assert value.sourceManifest[0].metadata == {"status": "CURRENT"}
     assert set(schema["required"]) == {"contract", "cover", "executiveDecisionSummary", "sections",
                                        "decisionRequest", "appendix"}
 
@@ -42,3 +44,27 @@ def test_review_contract_has_traceable_groups():
     assert {"wellPrepared", "needsImprovement", "requiredBeforeApproval", "followUpActions"}.issubset(
         schema["properties"],
     )
+
+
+def test_invalid_proposal_input_reports_only_safe_schema_path():
+    payload = {
+        "contract": "final-business-proposal-input-v1", "projectId": 7, "version": 1,
+        "sourceManifestHash": "sha256:" + "a" * 64,
+        "sourceManifest": [{"type": "PROJECT", "id": "7", "unexpected": "secret"},
+                           {"type": "CURRENT_CONCEPT", "id": "concept-1"},
+                           {"type": "MARKET", "id": "market-1"}],
+        "includedSourceTypes": ["PROJECT", "CURRENT_CONCEPT", "MARKET"],
+        "omittedSourceTypes": [], "sources": {"PROJECT": {}},
+    }
+    with pytest.raises(ProviderFailure) as failure:
+        asyncio.run(execute_final_business_proposal(payload))
+    assert failure.value.validation_fields == [{
+        "path": "sourceManifest.0.unexpected", "category": "extra_forbidden",
+        "expectedType": "no extra field",
+    }]
+    assert "secret" not in str(failure.value.validation_fields)
+import asyncio
+
+import pytest
+
+from app.providers import ProviderFailure

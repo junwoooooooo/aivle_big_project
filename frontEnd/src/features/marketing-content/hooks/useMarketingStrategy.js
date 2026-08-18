@@ -167,13 +167,12 @@ export default function useMarketingStrategy(projectId) {
     state.view?.reportId,
   ]);
 
-  const active = ACTIVE_STATUSES.has(
+  const active = state.generating || ACTIVE_STATUSES.has(
     state.view?.status,
   );
 
   const current = Boolean(
     state.view?.result
-      && state.view?.status === 'SUCCEEDED'
       && !state.view?.stale,
   );
 

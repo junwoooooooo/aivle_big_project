@@ -20,7 +20,8 @@ sections: [{ number: 1, title: '사업 추진 배경 및 목적', summary: '운�
 decisionRequest: { approvalRequests: ['파일럿'], conditionalApprovals: [], requiredChecks: [], nextActions: ['고객 확인'] },
 appendix: { assumptions: [], omittedAnalyses: [], sourceVersions: ['현재 사업안'] } };
 const view = { state: 'CURRENT', snapshotId: 'snapshot-1', version: 1, generatedAt: '2026-08-18T00:00:00Z',
-  sourceManifest: { sources: [{ type: 'CURRENT_CONCEPT', id: 'concept-1' }] }, report: proposal };
+  sourceManifest: { sources: [{ type: 'CURRENT_CONCEPT', id: 'concept-1' },
+    { type: 'FINANCE', id: 'finance-1' }, { type: 'FINANCE_REPORT', id: 'finance-report-1' }] }, report: proposal };
 
 function clientFor(currentStatus = status) {
   return { get: vi.fn(async (url) => {
@@ -63,9 +64,18 @@ describe('Final business proposal workspace', () => {
     const client = clientFor({ ...status, state: 'CURRENT', currentVersion: 1 }); renderPage(client);
     expect(await screen.findByRole('heading', { name: '사업기획서' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '의사결정 요약' })).toBeInTheDocument();
+    expect(screen.getAllByText('재무 분석')).toHaveLength(1);
     expect(screen.getByText('PDF 다운로드')).toHaveAttribute('href', expect.stringMatching(/\/pdf$/));
     expect(screen.getByText('DOCX 다운로드')).toHaveAttribute('href', expect.stringMatching(/\/docx$/));
     fireEvent.click(screen.getByRole('button', { name: 'AI 사업기획서 검토' }));
     await waitFor(() => expect(client.post).toHaveBeenCalledWith(expect.stringMatching(/\/review$/), {}, expect.anything()));
+  });
+
+  it('최근 generation terminal failure를 READY 화면에서 숨기지 않는다', async () => {
+    const client = clientFor({ ...status, lastTaskRunId: 'failed-task', lastState: 'FAILED',
+      lastErrorCode: 'INVALID_REQUEST', lastErrorReason: 'FIELD_CONSTRAINT_VIOLATION' });
+    renderPage(client);
+    expect(await screen.findByText('사업기획서 생성에 실패했습니다.')).toBeInTheDocument();
+    expect(screen.getByText(/입력 형식이 맞지 않았습니다/)).toBeInTheDocument();
   });
 });
