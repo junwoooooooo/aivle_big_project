@@ -31,3 +31,14 @@ it('전략의 채널 실행·KPI·로드맵·예산·근거를 빠짐없이 표�
   fireEvent.click(screen.getByRole('button', { name: '이 전략으로 콘텐츠 만들기' }));
   expect(onNext).toHaveBeenCalledOnce();
 });
+
+it('재생성 중 실제 event stage를 3단계 rail로 표시하고 기존 결과를 유지한다', () => {
+  render(<MemoryRouter><MarketingStrategyPanel onNext={vi.fn()} strategy={{ current: true, ready: true,
+    active: true, generating: true, generate: vi.fn(), jobEvents: { events: [{ stage: 'ANALYZING' }] },
+    view: { ready: true, stale: false, status: 'RUNNING', sourceManifest: [], result } }} /></MemoryRouter>);
+  expect(screen.getByText('최신 자료로 전략을 다시 작성하고 있습니다.')).toBeInTheDocument();
+  expect(screen.getByText('입력 자료 확인').closest('li')).toHaveAttribute('data-state', 'complete');
+  expect(screen.getByText('전략 작성').closest('li')).toHaveAttribute('data-state', 'active');
+  expect(screen.getByText('현재 사업안 기준 실행 전략')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '최신 전략 생성 중…' })).toBeDisabled();
+});

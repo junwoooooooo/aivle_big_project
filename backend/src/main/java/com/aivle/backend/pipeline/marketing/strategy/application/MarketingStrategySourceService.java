@@ -1,7 +1,6 @@
 package com.aivle.backend.pipeline.marketing.strategy.application;
 
 import com.aivle.backend.pipeline.finalreport.application.FinalReportService;
-import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,6 @@ public class MarketingStrategySourceService {
     );
 
     private final FinalReportService finalReports;
-    private final SnapshotHasher snapshotHasher;
     private final ObjectMapper mapper;
 
     public SourceBundle inspect(
@@ -75,7 +73,7 @@ public class MarketingStrategySourceService {
             requiredMissing.stream(), OPTIONAL.stream().filter(type -> !sources.has(type))
         ).distinct().toList();
 
-        String hash = snapshotHasher.hash(manifest);
+        String hash = catalog.strategySourceHash();
 
         return new SourceBundle(
             manifest,

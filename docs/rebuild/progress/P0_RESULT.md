@@ -228,3 +228,32 @@
 ### 의도적으로 생략 및 continuation point
 
 전체 suite/baseline, Docker rebuild, provider 호출, 장시간 runtime/browser E2E, 새 프로젝트, commit/push를 실행하지 않았다. 사용자는 project 7에서 Interview coding salvage, Marketing report/PDF 한글, Finance source, Final Proposal generation을 확인한다.
+
+---
+
+## 2026-08-18 FAST PRODUCT HARDENING V5
+
+### 기준과 구현 계약
+
+- START SHA와 `origin/full`: `1aa53213f694957af598686c8c93011e230133ab`.
+- Market Interview coding batch는 transport envelope로만 사용한다. provider 순서는 expected participant 순서로 재정렬하고, schema-valid row를 즉시 보존한 뒤 누락·중복·invalid respondent만 축소 batch 1회와 single respondent fallback으로 복구한다.
+- provider coding output에서 quote/themeEvidence를 제거했다. 서버가 codebook axis를 실제 answer field에 연결하고, 500자 이하 전체 답변 또는 500자 이하 문장 경계 excerpt를 exact original substring으로 저장한다. unknown theme만 제거하고 unknown alternative는 빈 값으로 정규화한다.
+- Codebook의 6축/한국어/고유 title 계약 위반은 동일 transcript로 correction call 1회 후에만 실패한다.
+- Marketing 재생성 POST의 taskRunId/status를 optimistic view에 즉시 보존해 SSE를 연결한다. QUEUED/ANALYZING/COMPLETED를 3단계 rail로 표현하며 기존 전략은 새 결과 전까지 유지한다.
+- Marketing Report를 표지, 문서 정보, 결재란, 내부 목차, 채널/캠페인 표 중심 회사 문서로 변경했다. 사용자 PDF 다운로드 action은 제거하고 browser `PDF로 저장`만 남겼으며 print chrome을 제거한다.
+- Final Report의 Marketing Strategy 상태를 `AVAILABLE / UPDATE_REQUIRED / IN_PROGRESS / FAILED / NOT_RUN`으로 구분한다. 공통 source catalog의 strategy source hash를 Marketing Strategy와 Final Report가 공유한다.
+- Proposal snapshot 저장 뒤 `auto-review:{snapshotId}` idempotency key로 AI review를 자동 queue한다. queue 실패는 Proposal 성공을 되돌리지 않는다.
+- Final Report는 작성자, 결재란, 내부 목차와 상단 control strip을 제공한다. 좌우 sidebar를 제거하고 PDF/DOCX는 authenticated blob download를 사용한다. PDF/DOCX deterministic renderer에도 내부 목차·결재란·작성자를 반영했다.
+
+### 실제 확인
+
+- AI focused Market Interview file: `45 passed in 2.12s`.
+- AI `py_compile`: PASS.
+- Frontend focused: `5 files, 14 tests PASS`.
+- 변경 Frontend ESLint: PASS.
+- Backend compile: 로컬 Gradle plugin artifact가 cache에 없고 network가 제한되어 실행 불가.
+- project 7 최신 Final Proposal failure 조회: localhost PostgreSQL 미실행, Docker CLI 없음으로 terminal reason 확인 불가. 원인을 추측해 별도 runtime fix를 추가하지 않았다.
+
+### 생략과 continuation point
+
+전체 suite, Docker rebuild, provider smoke, 새 프로젝트, browser E2E, commit/push를 생략했다. 사용자 runtime에서 final batch single recovery, Strategy source state, auto review 및 인증 download를 확인한다.

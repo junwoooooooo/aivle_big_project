@@ -179,7 +179,8 @@ public class MarketingStrategyService {
             report == null
                 ? null
                 : report.getGeneratedAt(),
-            source.missing()
+            source.missing(),
+            source.sources().path("PROJECT").path("name").asText(null)
         );
     }
 

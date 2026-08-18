@@ -25,6 +25,7 @@ import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.user.repository.UserRepository;
 import com.aivle.backend.taskrun.repository.*;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
@@ -40,6 +41,7 @@ import tools.jackson.databind.JsonNode;
 
 class FinalReportServiceAuthorityV28Tests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
+    private final UserRepository users = mock(UserRepository.class);
     private final CurrentConceptSourceResolver currentConcepts = mock(CurrentConceptSourceResolver.class);
     private final BusinessValidationSessionRepository sessions = mock(BusinessValidationSessionRepository.class);
     private final MarketResearchVersionRepository marketVersions = mock(MarketResearchVersionRepository.class);
@@ -65,7 +67,7 @@ class FinalReportServiceAuthorityV28Tests {
 
     @BeforeEach
     void setUp() {
-        service = new FinalReportService(projects, currentConcepts, sessions, marketVersions, marketInterviews,
+        service = new FinalReportService(projects, users, currentConcepts, sessions, marketVersions, marketInterviews,
             marketingSources, marketingContents, marketingRevisions, marketingAssets,
             marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskAttempts, taskResults,
             taskRunService, inputHasher, events, moduleStatuses,
@@ -124,17 +126,12 @@ class FinalReportServiceAuthorityV28Tests {
 
     @Test
     void currentMarketingStrategyCanBeSelectedAsAnOptionalProposalSource() {
+        String currentStrategyHash = service.currentSourceCatalog(7L, 41L).strategySourceHash();
         MarketingStrategyReport strategy = mock(MarketingStrategyReport.class);
         when(strategy.getId()).thenReturn("strategy-1");
         when(strategy.getGeneratedAt()).thenReturn(Instant.parse("2026-08-17T01:00:00Z"));
         when(strategy.getResultJson()).thenReturn("{\"contract\":\"marketing-strategy-result-v1\"}");
-        when(strategy.getSourceManifestJson()).thenReturn("""
-            {"sources":[
-              {"type":"CURRENT_CONCEPT","id":"seed-1"},
-              {"type":"MARKET","id":"101"},
-              {"type":"BUSINESS_MODEL","id":"202"}
-            ]}
-            """);
+        when(strategy.getSourceManifestHash()).thenReturn(currentStrategyHash);
         when(marketingStrategies.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
             .thenReturn(Optional.of(strategy));
 
@@ -143,6 +140,21 @@ class FinalReportServiceAuthorityV28Tests {
         List<String> types = new java.util.ArrayList<>();
         view.sourceManifest().path("sources").forEach(item -> types.add(item.path("type").asText()));
         assertThat(types).contains("MARKETING_STRATEGY");
+        assertThat(service.status(7L, 41L).sourceStates().get("MARKETING_STRATEGY"))
+            .isEqualTo("AVAILABLE");
+    }
+
+    @Test
+    void existingMarketingStrategyWithDifferentCurrentSourceHashRequiresUpdate() {
+        MarketingStrategyReport strategy = mock(MarketingStrategyReport.class);
+        when(strategy.getSourceManifestHash()).thenReturn("sha256:" + "f".repeat(64));
+        when(marketingStrategies.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(strategy));
+
+        var status = service.status(7L, 41L);
+
+        assertThat(status.sourceStates().get("MARKETING_STRATEGY")).isEqualTo("UPDATE_REQUIRED");
+        assertThat(status.availableSources()).doesNotContain("MARKETING_STRATEGY");
     }
 
     @Test

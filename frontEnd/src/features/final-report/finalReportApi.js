@@ -12,7 +12,9 @@ export function createFinalReportApi(client) {
       `${root(projectId)}/${encodeURIComponent(snapshotId)}/review`, {},
       { ...options, headers: { ...options.headers, 'Idempotency-Key': idempotencyKey } },
     )).data,
-    downloadUrl: (projectId, snapshotId, format, includeReview = false) =>
+    download: async (projectId, snapshotId, format, includeReview = false, options = {}) => client.download(
       `${root(projectId)}/${encodeURIComponent(snapshotId)}/${format}${includeReview ? '?includeReview=true' : ''}`,
+      options,
+    ),
   });
 }

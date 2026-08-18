@@ -20,6 +20,7 @@ sections: [{ number: 1, title: '사업 추진 배경 및 목적', summary: '운�
 decisionRequest: { approvalRequests: ['파일럿'], conditionalApprovals: [], requiredChecks: [], nextActions: ['고객 확인'] },
 appendix: { assumptions: [], omittedAnalyses: [], sourceVersions: ['현재 사업안'] } };
 const view = { state: 'CURRENT', snapshotId: 'snapshot-1', version: 1, generatedAt: '2026-08-18T00:00:00Z',
+  generatedByUserId: 9, generatedByName: '홍길동',
   sourceManifest: { sources: [{ type: 'CURRENT_CONCEPT', id: 'concept-1' },
     { type: 'FINANCE', id: 'finance-1' }, { type: 'FINANCE_REPORT', id: 'finance-report-1' }] }, report: proposal };
 
@@ -28,7 +29,8 @@ function clientFor(currentStatus = status) {
     if (url.endsWith('/status')) return { data: currentStatus };
     if (url.endsWith('/review')) return { data: { status: 'NOT_STARTED', result: null } };
     return { data: view };
-  }), post: vi.fn(async () => ({ data: { taskRunId: 'task-1', status: 'QUEUED' } })) };
+  }), post: vi.fn(async () => ({ data: { taskRunId: 'task-1', status: 'QUEUED' } })),
+  download: vi.fn(async () => ({ blob: new Blob(['document']) })) };
 }
 function renderPage(client) { return render(<MemoryRouter initialEntries={['/app/projects/41/final-report']}><ApiClientProvider client={client}><Routes><Route path="/app/projects/:projectId/final-report" element={<FinalReportPage />} /></Routes></ApiClientProvider></MemoryRouter>); }
 
@@ -53,6 +55,14 @@ describe('Final business proposal workspace', () => {
     expect(pageRule).not.toContain('margin:-.5rem');
   });
 
+  it('기존 전략의 source hash가 달라지면 미실행이 아니라 업데이트 필요로 표시한다', async () => {
+    const changed = { ...status, sourceStates: { ...status.sourceStates, MARKETING_STRATEGY: 'UPDATE_REQUIRED' },
+      availableSources: status.availableSources.filter((type) => type !== 'MARKETING_STRATEGY') };
+    renderPage(clientFor(changed));
+    expect(await screen.findByText('업데이트 필요')).toBeInTheDocument();
+    expect(screen.getByText('마케팅 전략').closest('label')).toHaveAttribute('data-ready', 'false');
+  });
+
   it('선택 source를 generation request에 전달한다', async () => {
     const client = clientFor(); renderPage(client);
     fireEvent.click(await screen.findByRole('button', { name: '사업기획서 만들기' }));
@@ -60,15 +70,18 @@ describe('Final business proposal workspace', () => {
     expect(client.post.mock.calls[0][1].includedOptionalSources).toContain('MARKETING_STRATEGY');
   });
 
-  it('structured proposal과 PDF/DOCX 및 독립 AI 검토 action을 표시한다', async () => {
+  it('회사 문서와 인증 PDF/DOCX action 및 자동 AI 검토 상태를 표시한다', async () => {
     const client = clientFor({ ...status, state: 'CURRENT', currentVersion: 1 }); renderPage(client);
     expect(await screen.findByRole('heading', { name: '사업기획서' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '의사결정 요약' })).toBeInTheDocument();
     expect(screen.getAllByText('재무 분석')).toHaveLength(1);
-    expect(screen.getByText('PDF 다운로드')).toHaveAttribute('href', expect.stringMatching(/\/pdf$/));
-    expect(screen.getByText('DOCX 다운로드')).toHaveAttribute('href', expect.stringMatching(/\/docx$/));
-    fireEvent.click(screen.getByRole('button', { name: 'AI 사업기획서 검토' }));
-    await waitFor(() => expect(client.post).toHaveBeenCalledWith(expect.stringMatching(/\/review$/), {}, expect.anything()));
+    expect(screen.getAllByText('홍길동').length).toBeGreaterThan(0);
+    expect(screen.getByText('서명/날인')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '목차' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'AI 사업기획서 검토' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'PDF 저장' }));
+    await waitFor(() => expect(client.download).toHaveBeenCalledWith(
+      expect.stringMatching(/\/pdf\?includeReview=true$/), expect.anything()));
   });
 
   it('최근 generation terminal failure를 READY 화면에서 숨기지 않는다', async () => {

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -111,6 +111,32 @@ class CodingAssignment(StrictModel):
     alternativeLabel: str = Field(max_length=120)
     comprehension: Literal["accurate", "partial", "misunderstood"]
     differentiation: Literal["different", "similar", "unclear"]
+
+
+class CodingDraftAssignment(StrictModel):
+    """Provider-owned classifications; respondent evidence is built by code."""
+
+    participantId: str = Field(pattern=r"^R\d{3}$")
+    themeTitles: list[str] = Field(max_length=18)
+    alternativeLabel: str = Field(max_length=120)
+    comprehension: Literal["accurate", "partial", "misunderstood"]
+    differentiation: Literal["different", "similar", "unclear"]
+
+
+class CodingTransportAssignment(StrictModel):
+    """Loose row envelope so one malformed respondent does not discard its peers."""
+
+    participantId: Annotated[str, Field(min_length=0, max_length=120)] | None = None
+    themeTitles: list[Annotated[str, Field(min_length=0, max_length=200)]] | None = Field(
+        default=None, max_length=24,
+    )
+    alternativeLabel: Annotated[str, Field(min_length=0, max_length=200)] | None = None
+    comprehension: Annotated[str, Field(min_length=0, max_length=40)] | None = None
+    differentiation: Annotated[str, Field(min_length=0, max_length=40)] | None = None
+
+
+class CodingTransportResult(StrictModel):
+    assignments: list[CodingTransportAssignment] = Field(default_factory=list, max_length=8)
 
 
 class CodingResult(StrictModel):

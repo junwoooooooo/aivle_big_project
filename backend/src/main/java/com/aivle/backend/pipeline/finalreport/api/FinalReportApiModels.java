@@ -43,6 +43,8 @@ public final class FinalReportApiModels {
         String sourceManifestHash,
         JsonNode sourceManifest,
         JsonNode report,
+        Long generatedByUserId,
+        String generatedByName,
         List<ReadinessItem> readiness,
         List<String> missingSources,
         List<String> blockingSources,

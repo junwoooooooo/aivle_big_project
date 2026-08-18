@@ -16,6 +16,10 @@ function List({ values = [] }) {
   return <ul>{values.map((value, index) => <li key={`${value}-${index}`}>{value}</li>)}</ul>;
 }
 
+function CellList({ values = [] }) {
+  return values.length ? values.map((value) => <div key={value}>{value}</div>) : '—';
+}
+
 export default function MarketingStrategyReportPage() {
   const { projectId } = useParams();
   const strategy = useMarketingStrategy(projectId);
@@ -25,19 +29,24 @@ export default function MarketingStrategyReportPage() {
   if (!result) return <EmptyState title="표시할 최신 전략이 없습니다" description="마케팅 전략을 먼저 생성해 주세요." action={<Link to={projectRoutes.marketing(projectId)}>마케팅 전략으로 돌아가기</Link>} />;
 
   const evidence = [...new Set((result.evidenceRefs ?? []).map((ref) => SOURCE_LABELS[String(ref).split(':', 1)[0]] ?? '사용 분석 자료'))];
+  const generatedAt = strategy.view?.generatedAt ? new Date(strategy.view.generatedAt) : null;
+  const writtenDate = generatedAt?.toLocaleDateString('ko-KR') ?? '현재 기준';
+  const projectName = strategy.view?.projectName ?? `프로젝트 ${projectId}`;
   return <ProjectWorkspace mode="document" className="mk-strategy-report">
-    <header className="mk-strategy-report__toolbar"><Link to={projectRoutes.marketing(projectId)}>마케팅 전략으로 돌아가기</Link><div><Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button><Button type="button" loading={strategy.downloading} onClick={() => void strategy.download()}>PDF 다운로드</Button></div></header>
+    <header className="mk-strategy-report__toolbar"><Link className="mk-button-link" to={projectRoutes.marketing(projectId)}>마케팅 전략으로 돌아가기</Link><Button type="button" variant="outline" onClick={() => window.print()}>PDF로 저장</Button></header>
     {strategy.error && <p className="mk-alert mk-alert--danger" role="alert">{strategy.error.message}</p>}
     <article className="mk-strategy-report__paper">
-      <header className="mk-strategy-report__cover"><p>MARKETING STRATEGY</p><h1>마케팅 전략 보고서</h1><h2>{result.executiveSummary}</h2><span>{strategy.view?.generatedAt ? new Date(strategy.view.generatedAt).toLocaleString('ko-KR') : '현재 사업안 기준'}</span></header>
-      <section><h2>1. 전략 요약</h2><div className="mk-strategy-report__callout">{result.executiveSummary}</div><List values={result.contentPillars} /></section>
+      <header className="mk-strategy-report__cover"><p>MARKETING STRATEGY REPORT</p><h1>마케팅 전략 보고서</h1><dl><div><dt>사업명</dt><dd>{projectName}</dd></div><div><dt>작성일</dt><dd>{writtenDate}</dd></div><div><dt>버전</dt><dd>현재 전략본</dd></div><div><dt>작성 기준</dt><dd>현재 사업안 및 생성 시점 가용 분석 자료</dd></div></dl></header>
+      <section className="mk-strategy-report__document-info"><h2>문서 정보</h2><table><tbody><tr><th>문서명</th><td>마케팅 전략 보고서</td><th>사업명</th><td>{projectName}</td></tr><tr><th>작성일</th><td>{writtenDate}</td><th>자료 기준일</th><td>{writtenDate}</td></tr></tbody></table><table className="mk-strategy-report__approval"><thead><tr><th>구분</th><th>작성</th><th>검토</th><th>승인</th></tr></thead><tbody><tr><th>담당</th><td></td><td></td><td></td></tr><tr><th>서명/날인</th><td></td><td></td><td></td></tr><tr><th>일자</th><td></td><td></td><td></td></tr></tbody></table></section>
+      <section className="mk-strategy-report__toc"><h2>목차</h2><ol>{['전략 요약', '타깃 고객', '포지셔닝', '핵심 메시지', '채널 전략', '캠페인 로드맵', '예산·KPI 운영', '위험 및 주의사항', '사용 근거'].map((label, index) => <li key={label}><span>{index + 1}</span>{label}</li>)}</ol></section>
+      <section><h2>1. 전략 요약</h2><div className="mk-strategy-report__callout">{result.executiveSummary}</div><h3>콘텐츠 운영 주제</h3><List values={result.contentPillars} /></section>
       <section><h2>2. 타깃 고객</h2><div className="mk-strategy-report__grid">{(result.targetCustomers ?? []).map((item) => <article key={item}>{item}</article>)}</div></section>
       <section><h2>3. 포지셔닝</h2><div className="mk-strategy-report__callout">{result.positioning}</div></section>
       <section><h2>4. 핵심 메시지</h2><List values={result.coreMessages} /></section>
-      <section><h2>5. 채널 전략</h2><div className="mk-strategy-report__grid">{(result.channelStrategies ?? []).map((channel) => <article key={channel.channel}><h3>{channel.channel}</h3><p><strong>목표</strong> {channel.objective}</p><p><strong>대상</strong> {channel.audience}</p><p>{channel.rationale}</p><h4>실행 항목</h4><List values={channel.actions} /><h4>KPI</h4><List values={channel.kpis} /></article>)}</div></section>
-      <section><h2>6. 캠페인 로드맵</h2><ol className="mk-strategy-report__timeline">{(result.campaignRoadmap ?? []).map((phase) => <li key={phase.phase}><h3>{phase.phase} · {phase.objective}</h3><List values={phase.actions} /><h4>KPI</h4><List values={phase.kpis} /></li>)}</ol></section>
+      <section><h2>5. 채널 전략</h2><div className="mk-strategy-report__table-wrap"><table><thead><tr><th>채널</th><th>목표</th><th>대상</th><th>주요 실행</th><th>KPI</th></tr></thead><tbody>{(result.channelStrategies ?? []).map((channel) => <tr key={channel.channel}><th>{channel.channel}</th><td>{channel.objective}</td><td>{channel.audience}</td><td><CellList values={channel.actions} /></td><td><CellList values={channel.kpis} /></td></tr>)}</tbody></table></div></section>
+      <section><h2>6. 캠페인 로드맵</h2><div className="mk-strategy-report__table-wrap"><table><thead><tr><th>단계</th><th>목표</th><th>주요 실행</th><th>KPI</th></tr></thead><tbody>{(result.campaignRoadmap ?? []).map((phase) => <tr key={phase.phase}><th>{phase.phase}</th><td>{phase.objective}</td><td><CellList values={phase.actions} /></td><td><CellList values={phase.kpis} /></td></tr>)}</tbody></table></div></section>
       <section><h2>7. 예산·KPI</h2><List values={result.budgetGuidelines} /></section>
-      <section><h2>8. 위험 및 주의사항</h2><List values={result.risks} /></section>
+      <section><h2>8. 위험 및 주의사항</h2><table><thead><tr><th>위험·주의사항</th></tr></thead><tbody>{(result.risks ?? []).map((risk) => <tr key={risk}><td>{risk}</td></tr>)}</tbody></table></section>
       <section><h2>9. 근거 요약</h2><List values={evidence} /></section>
     </article>
   </ProjectWorkspace>;

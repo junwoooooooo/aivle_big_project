@@ -31,6 +31,7 @@ import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusService;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.user.repository.UserRepository;
 import com.aivle.backend.taskrun.domain.TaskResultValidationState;
 import com.aivle.backend.taskrun.repository.TaskResultRepository;
 import com.aivle.backend.taskrun.repository.TaskRunRepository;
@@ -70,6 +71,7 @@ public class FinalReportService {
         "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
 
     private final ProjectRepository projects;
+    private final UserRepository users;
     private final CurrentConceptSourceResolver currentConcepts;
     private final BusinessValidationSessionRepository validationSessions;
     private final MarketResearchVersionRepository marketVersions;
@@ -146,7 +148,7 @@ public class FinalReportService {
         ObjectNode sourceData = mapper.createObjectNode();
         current.sources().forEach(source -> sourceData.set(source.type(), source.data().deepCopy()));
         return new CurrentSourceCatalog(manifest, sourceData, sourceStates(current, projectId),
-            current.blocking(), current.omitted(), current.hash());
+            current.blocking(), current.omitted(), current.hash(), strategySourceHash(current.sources()));
     }
 
     private String lastErrorReason(TaskRun latest) {
@@ -187,7 +189,7 @@ public class FinalReportService {
     }
 
     @Transactional
-    public void completeProposal(TaskRunService.Claim claim, TaskRunWorkerContext context,
+    public String completeProposal(TaskRunService.Claim claim, TaskRunWorkerContext context,
             ExecutionResponse response) {
         JsonNode taskInput = json(context.inputSnapshot());
         JsonNode result = response.result().deepCopy();
@@ -203,14 +205,16 @@ public class FinalReportService {
         taskRunService.adopt(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), resultJson,
             response.canonicalInputHash(), "1.0");
         int version = taskInput.path("version").asInt();
-        if (snapshots.findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(
-                context.projectId(), context.idempotencyKey()).isEmpty()) {
+        FinalReportSnapshot saved = snapshots.findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(
+            context.projectId(), context.idempotencyKey()).orElse(null);
+        if (saved == null) {
             Binding binding = current.binding();
-            snapshots.save(FinalReportSnapshot.create(context.projectId(), version, write(current.manifest()),
+            saved = snapshots.save(FinalReportSnapshot.create(context.projectId(), version, write(current.manifest()),
                 current.hash(), resultJson, Instant.now(), context.ownerId(), binding.marketSeedSnapshotId(),
                 binding.selectionId(), binding.selectionRevision(), binding.bmPlanRevision(), current.bindingHash(),
                 context.idempotencyKey(), context.inputHash(), MANIFEST_SCHEMA_VERSION));
         }
+        return saved.getId();
     }
 
     @Transactional
@@ -348,8 +352,11 @@ public class FinalReportService {
     }
 
     private FinalReportView view(State state, FinalReportSnapshot snapshot, SourceSet current) {
+        String generatedByName = users.findByIdAndDeletedAtIsNull(snapshot.getGeneratedBy())
+            .map(user -> user.getName()).orElse("알 수 없는 사용자");
         return new FinalReportView(state, snapshot.getId(), snapshot.getReportVersion(), snapshot.getGeneratedAt(),
             snapshot.getSourceManifestHash(), json(snapshot.getSourceManifestJson()), json(snapshot.getReportJson()),
+            snapshot.getGeneratedBy(), generatedByName,
             current.readiness(), combined(current), current.blocking(), current.omitted());
     }
 
@@ -357,7 +364,8 @@ public class FinalReportService {
         Instant now = Instant.now();
         return new FinalReportView(current.ready() ? State.READY : State.NOT_READY, null, null, null,
             current.hash(), current.manifest(),
-            composer.compose(project, version, now, current.sources()), current.readiness(), combined(current),
+            composer.compose(project, version, now, current.sources()), null, null,
+            current.readiness(), combined(current),
             current.blocking(), current.omitted());
     }
 
@@ -463,25 +471,18 @@ public class FinalReportService {
     }
 
     private void addMarketingStrategy(List<ReportSource> values, Long projectId) {
+        String currentHash = strategySourceHash(values);
         marketingStrategies.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
-            .filter(report -> strategyManifestMatches(report.getSourceManifestJson(), values))
+            .filter(report -> currentHash.equals(report.getSourceManifestHash()))
             .ifPresent(report -> values.add(source("MARKETING_STRATEGY", report.getId(), null, null,
                 composer.hash(json(report.getResultJson())), report.getGeneratedAt(), json(report.getResultJson()))));
     }
 
-    private boolean strategyManifestMatches(String manifestJson, List<ReportSource> current) {
-        JsonNode manifest = json(manifestJson);
-        JsonNode items = manifest.isArray() ? manifest : manifest.path("sources");
-        java.util.Set<String> expected = new java.util.HashSet<>();
-        items.forEach(item -> {
-            String type = item.path("type").asText();
-            if (STRATEGY_CONTEXT_TYPES.contains(type)) expected.add(type + ":" + item.path("id").asText());
-        });
-        java.util.Set<String> actual = current.stream()
-            .filter(item -> STRATEGY_CONTEXT_TYPES.contains(item.type()))
-            .map(item -> item.type() + ":" + item.id())
-            .collect(java.util.stream.Collectors.toSet());
-        return !expected.isEmpty() && expected.equals(actual);
+    private String strategySourceHash(List<ReportSource> values) {
+        List<ReportSource> context = values.stream()
+            .filter(item -> "PROJECT".equals(item.type()) || STRATEGY_CONTEXT_TYPES.contains(item.type()))
+            .toList();
+        return composer.hash(composer.manifest(context));
     }
 
     private void addLaunch(List<ReportSource> values, Long projectId, ModuleType type, String sourceType) {
@@ -552,6 +553,18 @@ public class FinalReportService {
                 case FAILED -> "FAILED"; case QUEUED, RUNNING -> "IN_PROGRESS";
                 case COMPLETED -> "CURRENT_RESULT_UNAVAILABLE"; default -> "CURRENT_RESULT_UNAVAILABLE";
             }));
+        if (!has(current.sources(), "MARKETING_STRATEGY")) {
+            var latestReport = marketingStrategies
+                .findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
+            var latestTask = taskRuns
+                .findFirstByProjectIdAndTaskTypeAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+                    projectId, TaskType.MARKETING_STRATEGY_GENERATION).orElse(null);
+            if (latestTask != null && java.util.Set.of("QUEUED", "CLAIMED", "RUNNING", "READY")
+                    .contains(latestTask.getState().name())) states.put("MARKETING_STRATEGY", "IN_PROGRESS");
+            else if (latestTask != null && "FAILED".equals(latestTask.getState().name()))
+                states.put("MARKETING_STRATEGY", latestReport == null ? "FAILED" : "UPDATE_REQUIRED");
+            else if (latestReport != null) states.put("MARKETING_STRATEGY", "UPDATE_REQUIRED");
+        }
         if (!has(current.sources(), "FINANCE") && financeSnapshots
             .findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId).isPresent())
             states.put("FINANCE", "CURRENT_RESULT_UNAVAILABLE");
@@ -574,7 +587,7 @@ public class FinalReportService {
     public record CurrentSourceCatalog(ArrayNode manifest, ObjectNode sources,
                                        java.util.Map<String, String> sourceStates,
                                        List<String> blockingSources, List<String> omittedSources,
-                                       String hash) {}
+                                       String hash, String strategySourceHash) {}
 
     private boolean exact(FinalReportSnapshot snapshot, SourceSet current) {
         if (!snapshot.hasExactLineage() || current.binding() == null) return false;

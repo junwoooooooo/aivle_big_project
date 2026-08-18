@@ -1,6 +1,7 @@
 package com.aivle.backend.pipeline.finalreport.application;
 
 import com.aivle.backend.pipeline.finalreport.domain.FinalReportSnapshot;
+import com.aivle.backend.user.repository.UserRepository;
 import com.aivle.backend.pipeline.document.KoreanPdfFontResolver;
 import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -22,6 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 public class FinalBusinessProposalDocumentService {
     private final ObjectMapper mapper;
     private final KoreanPdfFontResolver fonts;
+    private final UserRepository users;
 
     public byte[] renderDocx(FinalReportSnapshot snapshot) {
         return renderDocx(snapshot, null);
@@ -32,9 +34,18 @@ public class FinalBusinessProposalDocumentService {
         try (XWPFDocument document = new XWPFDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             title(document, report.path("cover").path("documentName").asText("사업기획서"), 24);
             paragraph(document, report.path("cover").path("businessName").asText("사업명 미정"), true);
-            paragraph(document, "버전 " + snapshot.getReportVersion() + " · "
-                + report.path("cover").path("documentStatus").asText("검토용"), false);
-            paragraph(document, report.path("cover").path("approvalPlaceholder").asText("결재 / 검토"), false);
+            paragraph(document, "문서번호 " + snapshot.getId(), false);
+            paragraph(document, "버전 " + snapshot.getReportVersion() + " · 작성자 " + generatedBy(snapshot)
+                + " · " + report.path("cover").path("documentStatus").asText("검토용"), false);
+            approvalTable(document, generatedBy(snapshot));
+            document.createParagraph().createRun().addBreak(BreakType.PAGE);
+
+            heading(document, "목차", 1);
+            paragraph(document, "의사결정 요약", false);
+            for (JsonNode section : report.path("sections"))
+                paragraph(document, section.path("number").asText() + " " + section.path("title").asText(), false);
+            paragraph(document, "부록", false);
+            if (review != null && review.isObject()) paragraph(document, "부록 · AI 사업기획서 검토 의견", false);
             document.createParagraph().createRun().addBreak(BreakType.PAGE);
 
             heading(document, "의사결정 요약", 1);
@@ -93,9 +104,9 @@ public class FinalBusinessProposalDocumentService {
             <html><head><meta charset='UTF-8'/><style>
             @page{size:A4;margin:16mm 14mm 18mm;@bottom-center{content:'사업기획서 · ' counter(page);font-size:8pt;color:#687875}}
             *{box-sizing:border-box}body{font-family:'Korean Report';font-size:10pt;line-height:1.62;color:#20302d;overflow-wrap:anywhere}
-            .cover{min-height:245mm;page-break-after:always;padding-top:45mm;border-bottom:3px solid #176d62}.cover h1{font-size:27pt}.meta{margin-top:28mm;border-top:1px solid #9badaa;padding-top:8mm}
+            .cover{min-height:245mm;page-break-after:always;padding-top:35mm;border-bottom:3px solid #176d62}.cover h1{font-size:27pt}.meta{margin-top:18mm;border-top:1px solid #9badaa;padding-top:8mm}.toc{min-height:245mm;page-break-after:always}.toc li{padding:2.5mm 0;border-bottom:1px dotted #aeb9b7}
             h2{margin:10mm 0 4mm;border-bottom:1px solid #43625d;padding-bottom:2mm;page-break-after:avoid}h3{page-break-after:avoid;color:#176d62}
-            section,.callout,table{page-break-inside:avoid}.callout{padding:5mm;background:#eef8f6;border-left:4px solid #168173}
+            section{page-break-inside:auto}.callout,table{page-break-inside:avoid}.callout{padding:5mm;background:#eef8f6;border-left:4px solid #168173}
             table{width:100%;border-collapse:collapse;table-layout:fixed;margin:4mm 0}th,td{border:1px solid #bcc9c6;padding:2.5mm;vertical-align:top;overflow-wrap:anywhere}th{background:#edf2f1}
             ul{padding-left:5mm}.source{font-size:8pt;color:#73817f}.page{page-break-before:always}
             </style></head><body><section class='cover'><p>BUSINESS PROPOSAL</p><h1>
@@ -103,8 +114,18 @@ public class FinalBusinessProposalDocumentService {
         StringBuilder out = new StringBuilder(shell)
             .append(escape(report.path("cover").path("documentName").asText("사업기획서"))).append("</h1><h2>")
             .append(escape(report.path("cover").path("businessName").asText("사업명 미정"))).append("</h2><div class='meta'>버전 ")
-            .append(snapshot.getReportVersion()).append(" · ").append(escape(report.path("cover").path("documentStatus").asText("검토용")))
-            .append("<br/>").append(escape(report.path("cover").path("approvalPlaceholder").asText("결재 / 검토"))).append("</div></section>");
+            .append(snapshot.getReportVersion()).append(" · 작성자 ").append(escape(generatedBy(snapshot)))
+            .append(" · ").append(escape(report.path("cover").path("documentStatus").asText("검토용")))
+            .append("<br/>문서번호 ").append(escape(snapshot.getId()))
+            .append("</div><table><thead><tr><th>구분</th><th>작성</th><th>검토</th><th>승인</th></tr></thead><tbody><tr><th>성명</th><td>")
+            .append(escape(generatedBy(snapshot))).append("</td><td></td><td></td></tr><tr><th>서명/날인</th><td></td><td></td><td></td></tr><tr><th>일자</th><td></td><td></td><td></td></tr></tbody></table></section>");
+        out.append("<section class='toc'><h2>목차</h2><ol><li>의사결정 요약</li>");
+        report.path("sections").forEach(section -> out.append("<li>")
+            .append(escape(section.path("number").asText())).append(". ")
+            .append(escape(section.path("title").asText())).append("</li>"));
+        out.append("<li>부록</li>");
+        if (review != null && review.isObject()) out.append("<li>부록 · AI 사업기획서 검토 의견</li>");
+        out.append("</ol></section>");
         JsonNode summary = report.path("executiveDecisionSummary");
         out.append("<section><h2>의사결정 요약</h2><div class='callout'><strong>사업 한 줄 정의</strong><p>")
             .append(escape(summary.path("businessDefinition").asText())).append("</p><strong>승인 요청사항</strong><p>")
@@ -186,6 +207,20 @@ public class FinalBusinessProposalDocumentService {
             var cells = value.createRow().getTableCells();
             for (int i = 0; i < columns; i++) cells.get(i).setText(row.path(i).asText(""));
         }
+    }
+
+    private void approvalTable(XWPFDocument document, String author) {
+        XWPFTable table = document.createTable(4, 4);
+        String[][] values = {{"구분", "작성", "검토", "승인"}, {"성명", author, "", ""},
+            {"서명/날인", "", "", ""}, {"일자", "", "", ""}};
+        for (int row = 0; row < values.length; row++)
+            for (int column = 0; column < values[row].length; column++)
+                table.getRow(row).getCell(column).setText(values[row][column]);
+    }
+
+    private String generatedBy(FinalReportSnapshot snapshot) {
+        return users.findByIdAndDeletedAtIsNull(snapshot.getGeneratedBy())
+            .map(user -> user.getName()).orElse("알 수 없는 사용자");
     }
 
     private void appendHtmlTable(StringBuilder out, JsonNode table) {

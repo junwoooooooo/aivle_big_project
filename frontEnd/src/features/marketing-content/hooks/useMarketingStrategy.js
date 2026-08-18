@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { useApiClient } from '../../../shared/api/ApiClientProvider.jsx';
 import { createMarketingStrategyApi } from '../api/marketingStrategyApi.js';
+import { useJobEvents } from '../../../shared/async-events/index.js';
 
 const ACTIVE_STATUSES = new Set([
   'QUEUED',
@@ -93,12 +94,22 @@ export default function useMarketingStrategy(projectId) {
     }));
 
     try {
-      await api.generate(
+      const action = await api.generate(
         projectId,
         idempotencyKey(),
       );
-
-      return await refresh();
+      setState((value) => ({
+        ...value,
+        generating: true,
+        view: {
+          ...(value.view ?? {}),
+          reportId: action.reportId ?? value.view?.reportId ?? null,
+          taskRunId: action.taskRunId,
+          status: action.status ?? 'QUEUED',
+          sourceManifestHash: action.sourceManifestHash ?? value.view?.sourceManifestHash,
+        },
+      }));
+      return action;
     } catch (error) {
       setState((value) => ({
         ...value,
@@ -108,7 +119,7 @@ export default function useMarketingStrategy(projectId) {
 
       throw error;
     }
-  }, [api, projectId, refresh]);
+  }, [api, projectId]);
 
   const download = useCallback(async () => {
     const reportId = state.view?.reportId;
@@ -170,6 +181,7 @@ export default function useMarketingStrategy(projectId) {
   const active = state.generating || ACTIVE_STATUSES.has(
     state.view?.status,
   );
+  const jobEvents = useJobEvents(state.view?.taskRunId ?? null);
 
   const current = Boolean(
     state.view?.result
@@ -184,5 +196,6 @@ export default function useMarketingStrategy(projectId) {
     refresh,
     generate,
     download,
+    jobEvents,
   };
 }

@@ -56,8 +56,7 @@ THEMES = [
 ]
 
 
-def provider(claim=None, target_region="서울", unknown_theme=False,
-             wrong_axis=False, wrong_quote=False):
+def provider(claim=None, target_region="서울", unknown_theme=False):
     async def prompt(_system, user, **kwargs):
         payload = json.loads(user)
         name = kwargs["schema_name"]
@@ -78,26 +77,12 @@ def provider(claim=None, target_region="서울", unknown_theme=False,
             if claim: themes[1]["description"] = claim
             return {"themes": themes, "alternatives": ["수기 처리"],
                     "followUpQuestions": ["현재 방식은 무엇인가요?", "무엇이 걸리나요?", "어떤 설명이 필요한가요?"]}
-        if name in {"market_interview_assignment_v2", "market_interview_assignment_repair_v1"}:
-            sources = {"간단한 확인": ("like", "간단한 확인이 좋습니다."),
-                       "가격 부담": ("concern", claim or "20% 할인이라면 써볼 수 있습니다."),
-                       "차이 불명확": ("differentiation", "기존 방식과 차이는 더 봐야 합니다."),
-                       "매장 마감": ("usageScene", "매장 마감 때 씁니다."),
-                       "도입 시간": ("barrier", "도입 시간이 걸립니다."),
-                       "설명 보완": ("suggestion", "설명을 보완해 주세요.")}
+        if name in {"market_interview_assignment_v3", "market_interview_assignment_single_v1"}:
             rows = []
             for item in payload["transcripts"]:
                 selected = ["없는 주제"] if unknown_theme else [row["title"] for row in THEMES]
-                evidence = ([{"themeTitle": "없는 주제", "answerField": "like", "quote": "간단한 확인이 좋습니다."}]
-                            if unknown_theme else [{"themeTitle": title, "answerField": sources[title][0],
-                                                   "quote": sources[title][1]} for title in selected])
-                if wrong_axis:
-                    evidence[0]["answerField"] = "concern"
-                if wrong_quote:
-                    evidence[0]["quote"] = "원문에 없는 인용"
                 rows.append({"participantId": item["participantId"],
                              "themeTitles": selected,
-                             "themeEvidence": evidence,
                              "alternativeLabel": "수기 처리", "comprehension": "accurate",
                              "differentiation": "unclear"})
             return {"assignments": rows}
@@ -183,142 +168,136 @@ def test_two_pass_coding_retains_identity_and_derives_mentions(monkeypatch):
     assert result["saturation"]["alternativeSum"] == 20
 
 
-def test_unknown_codebook_theme_is_removed_without_dropping_other_respondents(monkeypatch):
+def test_coding_batch_order_is_transport_only_and_evidence_is_server_derived(monkeypatch):
     base = provider()
-    async def one_unknown(*args, **kwargs):
+    schemas = []
+
+    async def reordered(*args, **kwargs):
         value = await base(*args, **kwargs)
-        if kwargs["schema_name"] == "market_interview_assignment_v2":
-            row = next((item for item in value["assignments"] if item["participantId"] == "R001"), None)
-            if row:
-                row["themeTitles"][0] = "없는 주제"
-                row["themeEvidence"][0]["themeTitle"] = "없는 주제"
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
+            schemas.append(kwargs["response_schema"])
+            value["assignments"].reverse()
         return value
-    result = execute_with_provider(monkeypatch, one_unknown)
-    trace = next(row for row in result["codingTrace"] if row["participantId"] == "R001")
-    assert "없는 주제" not in trace["themeTitles"]
-    assert result["targeting"]["usableCount"] == 20
+
+    result = execute_with_provider(monkeypatch, reordered)
+    assert [row["participantId"] for row in result["codingTrace"]] == [
+        row["participantId"] for row in result["transcriptProvenance"]
+    ]
+    assert "themeEvidence" not in json.dumps(schemas, ensure_ascii=False)
+    answers = {row["participantId"]: row for row in result["interviews"]}
+    for trace in result["codingTrace"]:
+        original_answers = [item["answer"] for item in answers[trace["participantId"]]["questions"]]
+        assert all(any(evidence["quote"] in answer for answer in original_answers)
+                   for evidence in trace["themeEvidence"])
 
 
-@pytest.mark.parametrize(("option", "rule"), [
-    ({"wrong_axis": True}, "ANSWER_FIELD_AXIS_MISMATCH"),
-    ({"wrong_quote": True}, "VERBATIM_QUOTE_MISMATCH"),
-])
-def test_coding_evidence_failure_removes_only_untraceable_theme(monkeypatch, option, rule):
-    result = execute(monkeypatch, **option)
-    assert result["targeting"]["usableCount"] == 20
+@pytest.mark.parametrize("broken_ids", [{"R005"}, {"R005", "R007"}])
+def test_partial_batch_preserves_valid_rows_and_single_recovers_only_broken(monkeypatch, broken_ids):
+    base = provider()
+    single_ids = []
+
+    async def partial(*args, **kwargs):
+        value = await base(*args, **kwargs)
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
+            value["assignments"] = [row for row in value["assignments"]
+                                    if row["participantId"] not in broken_ids]
+        elif kwargs["schema_name"] == "market_interview_assignment_single_v1":
+            single_ids.append(payload["transcripts"][0]["participantId"])
+        return value
+
+    result = execute_with_provider(monkeypatch, partial)
+    assert set(single_ids) == broken_ids
     assert len(result["codingTrace"]) == 20
-    assert all(len(row["themeTitles"]) == 5 for row in result["codingTrace"]), rule
 
 
-def test_invalid_coding_batch_retries_only_that_batch(monkeypatch):
+def test_two_schema_invalid_rows_use_single_fallback_without_recalling_valid_rows(monkeypatch):
     base = provider()
-    assignment_calls = Counter()
+    broken_ids = {"R005", "R007"}
+    single_ids = []
 
-    async def repaired(*args, **kwargs):
+    async def invalid_classification(*args, **kwargs):
         value = await base(*args, **kwargs)
-        if kwargs["schema_name"] == "market_interview_assignment_v2":
-            payload = json.loads(args[1])
-            batch = payload["transcripts"][0]["participantId"]
-            assignment_calls[batch] += 1
-            if batch == "R001" and assignment_calls[batch] == 1:
-                value["assignments"][0]["themeEvidence"][0]["quote"] = "원문에 없는 인용"
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
+            for row in value["assignments"]:
+                if row["participantId"] in broken_ids:
+                    row["comprehension"] = "unsupported"
+        elif kwargs["schema_name"] == "market_interview_assignment_single_v1":
+            single_ids.append(payload["transcripts"][0]["participantId"])
         return value
 
-    result = execute_with_provider(monkeypatch, repaired)
-    assert assignment_calls["R001"] == 1
-    assert assignment_calls["R009"] == 1
-    assert result["targeting"]["usableCount"] == 20
+    result = execute_with_provider(monkeypatch, invalid_classification)
+    assert set(single_ids) == broken_ids
+    assert len(result["codingTrace"]) == 20
 
 
-def test_respondent_repair_preserves_successful_batch_members(monkeypatch):
+def test_final_batch_partial_failure_does_not_discard_first_32(monkeypatch):
     base = provider()
-    repair_calls = 0
+    batch_starts = Counter()
+    single_ids = []
 
-    async def one_invalid_respondent(*args, **kwargs):
-        nonlocal repair_calls
+    async def final_batch_partial(*args, **kwargs):
         value = await base(*args, **kwargs)
-        if kwargs["schema_name"] == "market_interview_assignment_repair_v1":
-            repair_calls += 1
-        elif kwargs["schema_name"] == "market_interview_assignment_v2":
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
+            first_id = payload["transcripts"][0]["participantId"]
+            batch_starts[first_id] += 1
+            if any(item["participantId"] == "R035" for item in payload["transcripts"]):
+                value["assignments"] = [row for row in value["assignments"]
+                                        if row["participantId"] != "R035"]
+        elif kwargs["schema_name"] == "market_interview_assignment_single_v1":
+            single_ids.append(payload["transcripts"][0]["participantId"])
+        return value
+
+    result = execute_with_provider(monkeypatch, final_batch_partial, sample_size=40)
+    assert single_ids == ["R035"]
+    assert batch_starts["R001"] == batch_starts["R009"] == batch_starts["R017"] == batch_starts["R025"] == 1
+    assert len(result["codingTrace"]) == 40
+
+
+def test_unknown_themes_become_zero_theme_without_dropping_respondent(monkeypatch):
+    base = provider()
+
+    async def unknown_for_one(*args, **kwargs):
+        value = await base(*args, **kwargs)
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
             for row in value["assignments"]:
                 if row["participantId"] == "R001":
-                    row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
+                    row["themeTitles"] = ["없는 주제"]
         return value
 
-    result = execute_with_provider(monkeypatch, one_invalid_respondent)
-    assert repair_calls == 1
-    assert result["targeting"]["usableCount"] == 20
-    assert result["respondentFailures"] == []
-
-
-def test_repair_failure_removes_theme_and_preserves_raw_respondent(monkeypatch):
-    base = provider()
-
-    async def one_invalid_respondent(*args, **kwargs):
-        value = await base(*args, **kwargs)
-        if kwargs["schema_name"] in {
-            "market_interview_assignment_v2", "market_interview_assignment_repair_v1",
-        }:
-            for row in value["assignments"]:
-                if row["participantId"] == "R001":
-                    row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
-        return value
-
-    result = execute_with_provider(monkeypatch, one_invalid_respondent)
-    assert result["targeting"]["usableCount"] == 20
-    assert result["respondentFailures"] == []
-    trace = next(row for row in result["codingTrace"] if row["participantId"] == "R001")
-    assert "간단한 확인" not in trace["themeTitles"]
-    assert len(trace["themeTitles"]) == 5
-    assert "R001" in {row["participantId"] for row in result["transcriptProvenance"]}
-
-
-def test_two_quote_mismatches_are_salvaged_independently(monkeypatch):
-    base = provider()
-    async def two_invalid(*args, **kwargs):
-        value = await base(*args, **kwargs)
-        if kwargs["schema_name"] in {"market_interview_assignment_v2", "market_interview_assignment_repair_v1"}:
-            for row in value["assignments"]:
-                if row["participantId"] in {"R001", "R002"}:
-                    row["themeEvidence"][0]["quote"] = "원문에 없는 인용"
-        return value
-    result = execute_with_provider(monkeypatch, two_invalid)
-    traces = {row["participantId"]: row for row in result["codingTrace"]}
-    assert "간단한 확인" not in traces["R001"]["themeTitles"]
-    assert "간단한 확인" not in traces["R002"]["themeTitles"]
-    assert len(traces["R003"]["themeTitles"]) == 6
-    theme = next(row for row in result["themes"] if row["title"] == "간단한 확인")
-    assert theme["mentionCount"] == len(theme["participantIds"]) == 18
-
-
-def test_zero_valid_theme_respondent_keeps_raw_interview(monkeypatch):
-    base = provider()
-    async def all_evidence_invalid_for_one(*args, **kwargs):
-        value = await base(*args, **kwargs)
-        if kwargs["schema_name"] in {"market_interview_assignment_v2", "market_interview_assignment_repair_v1"}:
-            for row in value["assignments"]:
-                if row["participantId"] == "R001":
-                    for evidence in row["themeEvidence"]:
-                        evidence["quote"] = "원문에 없는 인용"
-        return value
-    result = execute_with_provider(monkeypatch, all_evidence_invalid_for_one)
+    result = execute_with_provider(monkeypatch, unknown_for_one)
     trace = next(row for row in result["codingTrace"] if row["participantId"] == "R001")
     assert trace["themeTitles"] == [] and trace["themeEvidence"] == []
     assert "R001" in {row["participantId"] for row in result["interviews"]}
-    assert result["targeting"]["usableCount"] == 20
+    assert result["saturation"]["codedParticipantCount"] == 19
 
 
-def test_batch_participant_identity_mismatch_still_fails_closed(monkeypatch):
+def test_deterministic_excerpt_is_bounded_sentence_span_from_original_answer():
+    answer = ("첫 문장입니다. " * 45) + "마지막 원문입니다."
+    quote = deep_engine._deterministic_excerpt(answer)
+    assert 1 <= len(quote) <= 500
+    assert quote in answer
+    assert quote.endswith(".")
+
+
+def test_codebook_contract_gets_one_correction_call(monkeypatch):
     base = provider()
-    async def wrong_identity(*args, **kwargs):
+    calls = 0
+
+    async def corrected(*args, **kwargs):
+        nonlocal calls
         value = await base(*args, **kwargs)
-        if kwargs["schema_name"] == "market_interview_assignment_v2":
-            value["assignments"][0]["participantId"] = "R999"
+        if kwargs["schema_name"] == "market_interview_codebook_v2":
+            calls += 1
+            if calls == 1:
+                value["themes"][1]["title"] = value["themes"][0]["title"]
         return value
-    with pytest.raises(ProviderFailure) as failure:
-        execute_with_provider(monkeypatch, wrong_identity)
-    assert failure.value.safe_diagnostics["rule"] == "PARTICIPANT_ORDER_MISMATCH"
-    assert failure.value.safe_diagnostics["exclusionBlockedReason"] == "BATCH_STRUCTURE_INVALID"
+
+    result = execute_with_provider(monkeypatch, corrected)
+    assert calls == 2
+    assert result["targeting"]["usableCount"] == 20
 
 
 def test_quote_resolver_recovers_original_typography_and_whitespace_span():

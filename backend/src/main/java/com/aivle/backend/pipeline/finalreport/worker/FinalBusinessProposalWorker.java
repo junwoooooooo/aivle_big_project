@@ -46,9 +46,10 @@ public class FinalBusinessProposalWorker {
             safePublish(context.projectId(), context.taskRunId(), "COMPOSING",
                 "job.final-report.composing", JobEvent.Status.RUNNING, null);
             var response = ai.executeWorker(context, claim.taskAttemptId(), LocalDateTime.now().plusMinutes(6));
-            reports.completeProposal(claim, context, response);
+            String snapshotId = reports.completeProposal(claim, context, response);
             safePublish(context.projectId(), context.taskRunId(), "COMPLETED",
                 "job.final-report.completed", JobEvent.Status.COMPLETED, null);
+            safeStartReview(context.ownerId(), context.projectId(), snapshotId);
         } catch (ExecutionFailure failure) {
             safeFail(claim, failure.code(), failure.reason(), failure.retryable());
             safePublish(context.projectId(), context.taskRunId(), "FAILED",
@@ -82,6 +83,15 @@ public class FinalBusinessProposalWorker {
         catch (RuntimeException failure) {
             log.warn("Final proposal failure persistence failed taskRunId={} type={}",
                 claim.taskRunId(), failure.getClass().getSimpleName());
+        }
+    }
+
+    void safeStartReview(Long ownerId, Long projectId, String snapshotId) {
+        String key = "auto-review:" + snapshotId;
+        try { reports.startReview(ownerId, projectId, snapshotId, key, key); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal auto review queue skipped snapshotId={} type={}",
+                snapshotId, failure.getClass().getSimpleName());
         }
     }
 }

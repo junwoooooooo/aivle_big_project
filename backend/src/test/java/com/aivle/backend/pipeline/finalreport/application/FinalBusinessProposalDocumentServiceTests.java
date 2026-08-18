@@ -1,6 +1,7 @@
 package com.aivle.backend.pipeline.finalreport.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.aivle.backend.pipeline.finalreport.domain.FinalReportSnapshot;
 import java.time.Instant;
@@ -10,7 +11,8 @@ import tools.jackson.databind.ObjectMapper;
 class FinalBusinessProposalDocumentServiceTests {
     private final FinalBusinessProposalDocumentService documents =
         new FinalBusinessProposalDocumentService(new ObjectMapper(),
-            new com.aivle.backend.pipeline.document.KoreanPdfFontResolver());
+            new com.aivle.backend.pipeline.document.KoreanPdfFontResolver(),
+            mock(com.aivle.backend.user.repository.UserRepository.class));
 
     @Test
     void rendersStructuredProposalAsRealDocxAndPdfDocuments() throws Exception {

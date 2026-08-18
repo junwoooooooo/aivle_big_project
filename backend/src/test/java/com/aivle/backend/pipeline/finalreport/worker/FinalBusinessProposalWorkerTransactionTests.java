@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.pipeline.finalreport.application.FinalReportService;
@@ -41,5 +42,21 @@ class FinalBusinessProposalWorkerTransactionTests {
             "job.final-report.composing", JobEvent.Status.RUNNING, null)).doesNotThrowAnyException();
         assertThatCode(() -> review.safePublish(41L, "task-2", "REVIEWING",
             "job.final-report.review.running", JobEvent.Status.RUNNING, null)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void proposalQueuesIdempotentAutoReviewAndReviewQueueFailureIsNonBlocking() {
+        FinalReportService reports = mock(FinalReportService.class);
+        var proposal = new FinalBusinessProposalWorker(mock(TaskRunService.class),
+            mock(InternalAiExecutionClient.class), reports);
+
+        proposal.safeStartReview(7L, 41L, "snapshot-1");
+        verify(reports).startReview(7L, 41L, "snapshot-1",
+            "auto-review:snapshot-1", "auto-review:snapshot-1");
+
+        doThrow(new IllegalStateException("review queue unavailable")).when(reports)
+            .startReview(any(), any(), any(), any(), any());
+        assertThatCode(() -> proposal.safeStartReview(7L, 41L, "snapshot-2"))
+            .doesNotThrowAnyException();
     }
 }

@@ -27,7 +27,8 @@ public final class MarketingStrategyApiModels {
         JsonNode sourceManifest,
         JsonNode result,
         Instant generatedAt,
-        List<String> missingSources
+        List<String> missingSources,
+        String projectName
     ) {
     }
 }

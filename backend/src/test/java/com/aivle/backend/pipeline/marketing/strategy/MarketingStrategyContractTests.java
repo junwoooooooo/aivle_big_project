@@ -10,7 +10,6 @@ import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrate
 import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategyService;
 import com.aivle.backend.pipeline.marketing.strategy.application.MarketingStrategySourceService;
 import com.aivle.backend.pipeline.marketing.strategy.repository.MarketingStrategyReportRepository;
-import com.aivle.backend.pipeline.selection.application.SnapshotHasher;
 import com.aivle.backend.jobevent.JobEventPublisher;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskRunState;
@@ -38,14 +37,15 @@ class MarketingStrategyContractTests {
         when(finalReports.currentSourceCatalog(11L, 7L)).thenReturn(
             new FinalReportService.CurrentSourceCatalog(manifestSources, sourceData,
                 java.util.Map.of("CURRENT_CONCEPT", "AVAILABLE"), List.of(), List.of(),
-                "sha256:" + "a".repeat(64)));
+                "sha256:" + "a".repeat(64), "sha256:" + "b".repeat(64)));
 
         var service = new MarketingStrategySourceService(
-            finalReports, new SnapshotHasher(mapper), mapper);
+            finalReports, mapper);
         var bundle = service.inspect(11L, 7L);
 
         assertThat(bundle.ready()).isTrue();
         assertThat(bundle.sources().has("CURRENT_CONCEPT")).isTrue();
+        assertThat(bundle.hash()).isEqualTo("sha256:" + "b".repeat(64));
         assertThat(bundle.missing()).contains("MARKET", "BUSINESS_MODEL", "MARKET_INTERVIEW");
     }
 

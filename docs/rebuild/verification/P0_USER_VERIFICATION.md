@@ -169,3 +169,13 @@ Final Report 페이지에 일부 영역만 덮는 회색 직사각형이 없어�
 4. `/app/projects`: floating `상태 안내` 버튼이 제거됐는지 확인한다.
 
 Docker image는 이번 작업에서 rebuild하지 않았다. PDF 검증 전 Backend image를 사용자가 rebuild해 `fonts-nanum` 설치를 반영한다.
+
+---
+
+## 2026-08-18 Product Hardening V5 사용자 검증
+
+1. `/app/projects/7/market-interview`: 같은 프로젝트에서 40명 인터뷰를 실행한다. 마지막 batch 일부 row가 누락/invalid여도 이전 32명과 정상 row가 유지되고, 문제 respondent만 단건 복구되어야 한다. 결과 상단은 `유효 인터뷰`, 다양성 영역은 `테마 코딩 완료`로 구분돼야 하며 zero-theme respondent도 원문 탐색기에 남아야 한다.
+2. `/app/projects/7/marketing`: `최신 자료로 다시 생성` 직후 `입력 자료 확인 → 전략 작성 → 결과 정리` rail과 기존 전략이 함께 보여야 한다. `보고서 보기`는 button 형태여야 하고 문서의 표지·결재란·목차·표를 확인한다. print preview에 `본문으로 바로가기`와 app chrome이 없어야 하며 별도 `PDF 다운로드` 버튼은 없어야 한다.
+3. `/app/projects/7/final-report`: Marketing Strategy가 현재 hash와 같으면 `현재 결과 사용 가능`, 다르면 `업데이트 필요`로 표시돼야 한다. 새 버전 생성 후 Proposal을 즉시 볼 수 있고 AI 검토는 자동 시작되어 완료 후 기본 포함 부록으로 나타나야 한다.
+4. Final Report 문서에서 작성자, 문서번호, 결재란, 내부 목차를 확인한다. 좌우 sidebar는 없어야 한다. `PDF 저장`과 `DOCX 다운로드`는 로그인 JSON 화면으로 이동하지 않고 현재 화면에서 authenticated blob으로 다운로드돼야 한다.
+5. project 7 최신 Final Proposal failure reason은 이번 로컬 환경에서 DB가 꺼져 확인하지 못했다. 새 버전이 다시 실패하면 status의 `lastErrorCode / lastErrorReason`을 기록해 정확한 후속 수정 입력으로 사용한다.

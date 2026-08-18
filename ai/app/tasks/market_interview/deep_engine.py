@@ -12,8 +12,9 @@ from pydantic import ValidationError
 
 from app.providers import ProviderFailure
 from app.tasks.market_interview.models import (
-    AXES, AXIS_SOURCE, CodebookResult, CodingResult, MarketInterviewInput,
-    MarketInterviewResult, PanelAnswerResult, TargetingResult,
+    AXES, AXIS_SOURCE, CodebookResult, CodingAssignment, CodingDraftAssignment,
+    CodingTransportResult, MarketInterviewInput, MarketInterviewResult,
+    PanelAnswerResult, TargetingResult, ThemeEvidence,
 )
 from app.tasks.market_interview.panel_sampling import (
     TARGETING_POLICY, draw_panel, profile_taxonomy, public_profile,
@@ -55,16 +56,16 @@ CODEBOOK_PROMPT = COMMON_BOUNDARY + """
 CODING_PROMPT = COMMON_BOUNDARY + """
 고정 코드북으로 받은 응답자 전원을 정확히 한 줄씩 코딩한다. codebook의 이름표만 글자 그대로 쓴다.
 모르는 이름표를 만들지 않는다. themeTitles는 실제 답에 근거할 때만 고른다. alternativeLabel은 relevance 답의 현재 대안이며 없으면 빈 문자열이다.
-각 themeTitles에는 themeEvidence를 정확히 하나씩 만들고, 해당 축의 실제 answerField에서 연속된 원문 substring을 그대로 복사한 짧은 quote를 반환한다.
-근거 인용이 없으면 그 테마를 배정하지 않는다. comprehension은 accurate/partial/misunderstood,
+quote나 themeEvidence는 생성하지 않는다. 근거 원문은 서버가 코드북 axis와 실제 답을 연결해 결정론적으로 만든다.
+comprehension은 accurate/partial/misunderstood,
 differentiation은 different/similar/unclear 중 하나다."""
 
-CODING_REPAIR_PROMPT = COMMON_BOUNDARY + """
-한 응답자의 코딩 근거만 교정한다. 새 theme를 만들거나 participantId를 바꾸지 않는다.
-기존 themeTitles 밖의 theme를 추가하지 않고, 유지하는 theme의 answerField를 바꾸지 않는다.
-quote는 제공된 해당 answer에서 연속된 원문 substring을 그대로 복사한다.
-정확한 원문 근거를 찾을 수 없는 theme는 themeTitles와 themeEvidence에서 함께 제거한다.
-나머지 comprehension, differentiation, alternativeLabel은 제공된 assignment를 유지한다."""
+CODING_SINGLE_PROMPT = CODING_PROMPT + """
+이번 입력에는 응답자가 한 명뿐이다. 제공된 participantId를 그대로 사용해 assignment 한 건만 반환한다."""
+
+CODEBOOK_REPAIR_PROMPT = CODEBOOK_PROMPT + """
+이전 코드북이 계약을 만족하지 못했다. 여섯 axis를 모두 포함하고, 전체 title은 중복 없이 한국어로 작성하며,
+후속 질문도 한국어로 교정한다. 응답 원문이나 사실을 새로 만들지 않는다."""
 
 LIMITATIONS = [
     "실제 고객 조사 결과가 아니라 실측 profile bank에서 표집한 파생 프로필 기반 AI 가상 고객 정성 탐색입니다.",
@@ -202,7 +203,7 @@ def _coding_failure(failure: CodingValidationFailure) -> ProviderFailure:
         safe_path = f"{safe_path}.participant[{failure.participant_id}]"
     return ProviderFailure(
         "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
-        schema_name="market_interview_assignment_v2",
+        schema_name="market_interview_assignment_v3",
         validation_fields=[{
             "path": safe_path[:200],
             "expectedType": f"CODING_EVIDENCE_VALIDATION {failure.rule}"[:80],
@@ -258,119 +259,81 @@ def _resolve_original_quote(actual_answer: str, candidate: str) -> str | None:
     return str(actual_answer)[spans[start][0]:spans[end][1]]
 
 
-def _validate_coding_batch_structure(coded: CodingResult, batch: list[dict], *, batch_index: int):
-    """Validate only identities owned by the batch transport contract."""
-    expected = [row["participantId"] for row in batch]
-    actual = [row.participantId for row in coded.assignments]
-    if actual != expected or len(actual) != len(set(actual)):
-        raise CodingValidationFailure(
-            "PARTICIPANT_ORDER_MISMATCH", f"codingBatches[{batch_index}].participantId",
-            batch_index=batch_index,
-            invalid_participant_count=len(set(expected).symmetric_difference(actual)) or 1,
-        )
-    return coded.assignments
+def _deterministic_excerpt(actual_answer: str, maximum: int = 500) -> str:
+    """Return an exact original span; never a normalized or generated quotation."""
+    text = str(actual_answer)
+    if len(text) <= maximum:
+        return text
+    window = text[:maximum]
+    boundaries = [match.end() for match in re.finditer(r"[.!?。！？](?:[\"'’”)]*)", window)]
+    useful = [end for end in boundaries if end >= min(120, maximum // 2)]
+    return window[:useful[-1]] if useful else window
 
 
-def _validate_coding_assignment(row, *, row_index: int, batch_index: int,
-                                known: dict, alternatives: list[str], answer_by_id: dict):
-    """Validate and canonicalize one respondent without touching its batch peers."""
-    base_path = f"codingBatches[{batch_index}].assignments[{row_index}]"
-    for title in row.themeTitles:
-        if title not in known:
-            raise CodingValidationFailure(
-                "UNKNOWN_CODEBOOK_THEME", f"{base_path}.themeTitles",
-                batch_index=batch_index, participant_id=row.participantId,
-                invalid_participant_count=1, invalid_theme_count=1,
-            )
-    if row.alternativeLabel.strip() and row.alternativeLabel.strip() not in alternatives:
-        raise CodingValidationFailure(
-            "UNKNOWN_ALTERNATIVE", f"{base_path}.alternativeLabel",
-            batch_index=batch_index, participant_id=row.participantId,
-            invalid_participant_count=1,
-        )
-    evidence_titles = [item.themeTitle for item in row.themeEvidence]
-    if (len(evidence_titles) != len(set(evidence_titles))
-            or set(evidence_titles) != set(row.themeTitles)):
-        raise CodingValidationFailure(
-            "THEME_EVIDENCE_MISMATCH", f"{base_path}.themeEvidence",
-            batch_index=batch_index, participant_id=row.participantId,
-            invalid_participant_count=1,
-            invalid_theme_count=len(set(evidence_titles).symmetric_difference(row.themeTitles)) or 1,
-        )
-    answer = answer_by_id[row.participantId]
-    for evidence_index, evidence in enumerate(row.themeEvidence):
-        evidence_path = f"{base_path}.themeEvidence[{evidence_index}]"
-        theme = known.get(evidence.themeTitle)
-        if theme is None or evidence.answerField != AXIS_SOURCE[theme.axis]:
-            raise CodingValidationFailure(
-                "ANSWER_FIELD_AXIS_MISMATCH", f"{evidence_path}.answerField",
-                batch_index=batch_index, participant_id=row.participantId,
-                invalid_participant_count=1, invalid_theme_count=1,
-            )
-        actual_answer = str(getattr(answer, evidence.answerField))
-        resolved_quote = _resolve_original_quote(actual_answer, evidence.quote)
-        if resolved_quote is None:
-            raise CodingValidationFailure(
-                "VERBATIM_QUOTE_MISMATCH", f"{evidence_path}.quote",
-                batch_index=batch_index, participant_id=row.participantId,
-                invalid_participant_count=1, invalid_theme_count=1,
-            )
-        evidence.quote = resolved_quote
-    return row
+def _build_coding_assignment(draft: CodingDraftAssignment, *, known: dict,
+                             alternatives: list[str], answer_by_id: dict) -> CodingAssignment:
+    """Canonicalize labels and derive all traceable evidence from respondent answers."""
+    titles = []
+    for raw_title in draft.themeTitles:
+        title = str(raw_title).strip()
+        if title in known and title not in titles:
+            titles.append(title)
+    answer = answer_by_id[draft.participantId]
+    evidence = []
+    for title in titles:
+        answer_field = AXIS_SOURCE[known[title].axis]
+        evidence.append(ThemeEvidence(
+            themeTitle=title,
+            answerField=answer_field,
+            quote=_deterministic_excerpt(str(getattr(answer, answer_field))),
+        ))
+    alternative = draft.alternativeLabel.strip()
+    return CodingAssignment(
+        participantId=draft.participantId,
+        themeTitles=titles,
+        themeEvidence=evidence,
+        alternativeLabel=alternative if alternative in alternatives else "",
+        comprehension=draft.comprehension,
+        differentiation=draft.differentiation,
+    )
 
 
-def _salvage_coding_assignment(row, *, known: dict, alternatives: list[str], answer_by_id: dict):
-    """Keep only themes with exact respondent-level evidence; preserve the interview row."""
-    answer = answer_by_id[row.participantId]
-    requested = set(row.themeTitles)
-    evidence_by_title = {}
-    for evidence in row.themeEvidence:
-        if evidence.themeTitle in evidence_by_title or evidence.themeTitle not in requested:
+def _parse_coding_transport(raw: dict[str, Any], expected_ids: list[str]) -> tuple[dict[str, CodingDraftAssignment], list[str]]:
+    """Keep every unique, schema-valid expected row and report only unresolved ids."""
+    transport = CodingTransportResult.model_validate(raw)
+    candidates: dict[str, list[dict[str, Any]]] = {participant_id: [] for participant_id in expected_ids}
+    for envelope in transport.assignments:
+        value = envelope.model_dump(mode="python")
+        participant_id = value.get("participantId")
+        if participant_id in candidates:
+            candidates[participant_id].append(value)
+    valid: dict[str, CodingDraftAssignment] = {}
+    unresolved: list[str] = []
+    for participant_id in expected_ids:
+        rows = candidates[participant_id]
+        if len(rows) != 1:
+            unresolved.append(participant_id)
             continue
-        theme = known.get(evidence.themeTitle)
-        if theme is None or evidence.answerField != AXIS_SOURCE[theme.axis]:
-            continue
-        resolved_quote = _resolve_original_quote(
-            str(getattr(answer, evidence.answerField)), evidence.quote,
-        )
-        if resolved_quote is None:
-            continue
-        evidence.quote = resolved_quote
-        evidence_by_title[evidence.themeTitle] = evidence
-    titles = [title for title in row.themeTitles if title in evidence_by_title]
-    return row.model_copy(update={
-        "themeTitles": titles,
-        "themeEvidence": [evidence_by_title[title] for title in titles],
-        "alternativeLabel": (row.alternativeLabel if row.alternativeLabel.strip() in alternatives else ""),
-    })
+        try:
+            valid[participant_id] = CodingDraftAssignment.model_validate(rows[0])
+        except ValidationError:
+            unresolved.append(participant_id)
+    return valid, unresolved
 
 
-def _validate_repair_scope(original, repaired, *, batch_index: int):
-    base_path = f"codingBatches[{batch_index}].repair"
-    if repaired.participantId != original.participantId:
-        raise CodingValidationFailure(
-            "REPAIR_PARTICIPANT_MISMATCH", f"{base_path}.participantId",
-            batch_index=batch_index, participant_id=original.participantId,
-        )
-    original_fields = {item.themeTitle: item.answerField for item in original.themeEvidence}
-    if not set(repaired.themeTitles).issubset(set(original.themeTitles)):
-        raise CodingValidationFailure(
-            "REPAIR_THEME_SCOPE_MISMATCH", f"{base_path}.themeTitles",
-            batch_index=batch_index, participant_id=original.participantId,
-        )
-    if any(original_fields.get(item.themeTitle) != item.answerField
-           for item in repaired.themeEvidence):
-        raise CodingValidationFailure(
-            "REPAIR_ANSWER_FIELD_CHANGED", f"{base_path}.themeEvidence",
-            batch_index=batch_index, participant_id=original.participantId,
-        )
-    if (repaired.alternativeLabel != original.alternativeLabel
-            or repaired.comprehension != original.comprehension
-            or repaired.differentiation != original.differentiation):
-        raise CodingValidationFailure(
-            "REPAIR_ASSIGNMENT_SCOPE_MISMATCH", base_path,
-            batch_index=batch_index, participant_id=original.participantId,
-        )
+def _validate_codebook(codebook: CodebookResult) -> CodebookResult:
+    axes = {theme.axis for theme in codebook.themes}
+    titles = [theme.title.strip() for theme in codebook.themes]
+    if axes != set(AXES) or len(titles) != len(set(titles)):
+        raise ValueError("codebook must cover every axis with globally unique labels")
+    if any(not re.search(r"[가-힣]", title) for title in titles):
+        raise ValueError("codebook labels must be localized for the Korean service")
+    if any(not re.search(r"[가-힣]", question) for question in codebook.followUpQuestions):
+        raise ValueError("follow-up questions must be localized for the Korean service")
+    alternatives = [item.strip() for item in codebook.alternatives if item.strip()]
+    if len(alternatives) != len(set(alternatives)):
+        raise ValueError("codebook alternatives must be unique")
+    return codebook
 
 
 def _coverage_is_safe(panel: list[dict], usable_panel: list[dict], warning: str | None) -> bool:
@@ -459,110 +422,80 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         answer_by_id = {row.participantId: row.answers for row in answers}
         transcript_rows = [{"participantId": row.participantId,
                             "answers": _transcript_payload(row.answers)} for row in answers]
-        codebook = CodebookResult.model_validate(await _call(call, CODEBOOK_PROMPT, {
-            "concept": value.selectedConcept, "transcripts": transcript_rows,
-        }, CodebookResult, "market_interview_codebook_v2"))
-        axes = {theme.axis for theme in codebook.themes}
-        titles = [theme.title.strip() for theme in codebook.themes]
-        if axes != set(AXES) or len(titles) != len(set(titles)):
-            raise ValueError("codebook must cover every axis with globally unique labels")
-        if any(not re.search(r"[가-힣]", title) for title in titles):
-            raise ValueError("codebook labels must be localized for the Korean service")
-        if any(not re.search(r"[가-힣]", question) for question in codebook.followUpQuestions):
-            raise ValueError("follow-up questions must be localized for the Korean service")
+        codebook = None
+        codebook_failure = None
+        for codebook_attempt, prompt in enumerate((CODEBOOK_PROMPT, CODEBOOK_REPAIR_PROMPT), start=1):
+            try:
+                candidate = CodebookResult.model_validate(await _call(call, prompt, {
+                    "concept": value.selectedConcept, "transcripts": transcript_rows,
+                }, CodebookResult, "market_interview_codebook_v2"))
+                codebook = _validate_codebook(candidate)
+                break
+            except (ValidationError, ValueError) as failure:
+                codebook_failure = failure
+        if codebook is None:
+            raise ProviderFailure(
+                "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False,
+                schema_name="market_interview_codebook_v2",
+                validation_fields=[{"path": "codebook", "expectedType": "six-axis Korean codebook",
+                                    "category": "codebook_contract"}],
+                safe_diagnostics={"stage": "CODEBOOK_VALIDATION", "rule": "CODEBOOK_REPAIR_EXHAUSTED",
+                                  "repairAttempts": 1},
+            ) from codebook_failure
+
         alternatives = [item.strip() for item in codebook.alternatives if item.strip()]
-        if len(alternatives) != len(set(alternatives)):
-            raise ValueError("codebook alternatives must be unique")
 
         known = {theme.title: theme for theme in codebook.themes}
         assignments = []
         for offset in range(0, len(transcript_rows), ASSIGN_BATCH):
             batch = transcript_rows[offset:offset + ASSIGN_BATCH]
             batch_index = offset // ASSIGN_BATCH
-            failure = None
-            last_coded = None
+            expected_ids = [row["participantId"] for row in batch]
+            recovered: dict[str, CodingDraftAssignment] = {}
+            unresolved = list(expected_ids)
             for attempt in range(1, CODING_BATCH_ATTEMPTS + 1):
+                retry_batch = [row for row in batch if row["participantId"] in unresolved]
                 try:
-                    coding_prompt = CODING_PROMPT if failure is None else (
-                        CODING_PROMPT
-                        + f"\n이 묶음의 이전 출력은 {failure.rule} 규칙을 위반했다. "
-                          "원문이나 참가자를 바꾸지 말고 해당 계약만 교정한다."
+                    raw = await _call(call, CODING_PROMPT, {
+                        "codebook": codebook.model_dump(mode="json"), "transcripts": retry_batch,
+                    }, CodingTransportResult, "market_interview_assignment_v3")
+                    valid, unresolved = _parse_coding_transport(
+                        raw, [row["participantId"] for row in retry_batch],
                     )
-                    coded = CodingResult.model_validate(await _call(call, coding_prompt, {
-                        "codebook": codebook.model_dump(mode="json"), "transcripts": batch,
-                    }, CodingResult, "market_interview_assignment_v2"))
-                    last_coded = coded
-                    _validate_coding_batch_structure(coded, batch, batch_index=batch_index)
-                    failure = None
+                    recovered.update(valid)
+                except (ValidationError, ProviderFailure):
+                    unresolved = [row["participantId"] for row in retry_batch]
+                if not unresolved:
                     break
-                except ValidationError as invalid_schema:
-                    first = invalid_schema.errors()[0] if invalid_schema.errors() else {}
-                    path = ".".join(str(part) for part in first.get("loc", ()))
-                    failure = CodingValidationFailure(
-                        "FINAL_PYDANTIC_VALIDATION",
-                        f"codingBatches[{batch_index}].{path or 'result'}",
-                        batch_index=batch_index,
-                    )
-                except CodingValidationFailure as invalid_coding:
-                    failure = invalid_coding
-                if attempt < CODING_BATCH_ATTEMPTS:
-                    continue
-            if failure is not None:
-                # A structurally invalid batch cannot be mapped back to respondents safely.
-                raise _coding_failure(failure.with_recovery(
-                    repair_attempts=0, exclusion_attempted=False,
-                    exclusion_blocked_reason="BATCH_STRUCTURE_INVALID",
+
+            # The batch is only a transport optimization. Recover unresolved rows one by one.
+            for participant_id in unresolved:
+                transcript_row = next(row for row in batch if row["participantId"] == participant_id)
+                single_failure = None
+                try:
+                    raw = await _call(call, CODING_SINGLE_PROMPT, {
+                        "codebook": codebook.model_dump(mode="json"),
+                        "transcripts": [transcript_row],
+                    }, CodingTransportResult, "market_interview_assignment_single_v1")
+                    valid, still_unresolved = _parse_coding_transport(raw, [participant_id])
+                    if not still_unresolved:
+                        recovered.update(valid)
+                        continue
+                    single_failure = "SINGLE_ASSIGNMENT_INVALID"
+                except ValidationError:
+                    single_failure = "SINGLE_ASSIGNMENT_SCHEMA_INVALID"
+                raise _coding_failure(CodingValidationFailure(
+                    single_failure or "SINGLE_ASSIGNMENT_INVALID",
+                    f"codingBatches[{batch_index}].participant[{participant_id}]",
+                    batch_index=batch_index, participant_id=participant_id,
+                    repair_attempts=1, invalid_participant_count=1,
+                    recovery_applied="VALID_ROWS_PRESERVED_SINGLE_FALLBACK",
                 ))
 
-            for row_index, original in enumerate(last_coded.assignments):
-                candidate = original
-                try:
-                    assignments.append(_validate_coding_assignment(
-                        candidate, row_index=row_index, batch_index=batch_index, known=known,
-                        alternatives=alternatives, answer_by_id=answer_by_id,
-                    ))
-                    continue
-                except CodingValidationFailure as participant_failure:
-                    failure = participant_failure
-
-                if failure.rule == "VERBATIM_QUOTE_MISMATCH":
-                    transcript_row = batch[row_index]
-                    try:
-                        repaired_result = CodingResult.model_validate(await _call(
-                            call,
-                            CODING_REPAIR_PROMPT
-                            + f"\n이 assignment는 {failure.rule} 규칙을 위반했다.",
-                            {
-                                "codebook": codebook.model_dump(mode="json"),
-                                "transcripts": [transcript_row],
-                                "assignment": original.model_dump(mode="json"),
-                            },
-                            CodingResult,
-                            "market_interview_assignment_repair_v1",
-                        ))
-                        if len(repaired_result.assignments) != 1:
-                            raise CodingValidationFailure(
-                                "REPAIR_ASSIGNMENT_COUNT_MISMATCH",
-                                f"codingBatches[{batch_index}].repair.assignments",
-                                batch_index=batch_index, participant_id=original.participantId,
-                            )
-                        repaired = repaired_result.assignments[0]
-                        _validate_repair_scope(original, repaired, batch_index=batch_index)
-                        candidate = repaired
-                        assignments.append(_validate_coding_assignment(
-                            candidate, row_index=row_index, batch_index=batch_index, known=known,
-                            alternatives=alternatives, answer_by_id=answer_by_id,
-                        ))
-                        continue
-                    except (ValidationError, CodingValidationFailure):
-                        # candidate is the scope-validated repair when respondent validation
-                        # failed after repair; otherwise it is still the original assignment.
-                        pass
-
-                # An untraceable theme is not an assignment. Preserve the respondent and
-                # every other theme that still has exact evidence in the original answer.
-                assignments.append(_salvage_coding_assignment(
-                    candidate, known=known, alternatives=alternatives,
+            # Reorder by the expected transport ids; provider order is not a product contract.
+            for participant_id in expected_ids:
+                assignments.append(_build_coding_assignment(
+                    recovered[participant_id], known=known, alternatives=alternatives,
                     answer_by_id=answer_by_id,
                 ))
             progress("MI_CODING", "응답별 원문 근거를 확인하며 코딩하고 있습니다.",
