@@ -4,7 +4,7 @@ import {
   CANDIDATE_FACT_FIELDS, HYPOTHESIS_TYPES, buildHypothesisChanges, candidateDefaultField,
     buildProposalPreview, businessDecisionReachability, businessDecisionStage, canOpenComparison, candidateFieldOptions,
   candidateRequests, comparisonRows, hypothesisDecisionLabel, createCandidateDraft,
-  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, hypothesisInputCount, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
+  formatKoreanCurrencyAmount, groupLegalEvidence, hypothesisDisplay, hypothesisInputCount, hypothesisPresentation, legalStatusLabel, portfolioRunPresentation, serializeCandidateFact,
   serializeCandidateFacts, toggleComparedConcept,
 } from './businessProposalModel.js';
 
@@ -100,6 +100,14 @@ describe('hypothesis provenance', () => {
     const seven = HYPOTHESIS_TYPES.map((hypothesisType) => ({ hypothesisType, proposedValue: `${hypothesisType}-value`, decisionStatus: 'PROPOSED' }));
     expect(hypothesisInputCount(seven)).toBe(7);
     expect(hypothesisInputCount(seven.map((item, index) => index === 2 ? { ...item, proposedValue: '' } : item))).toBe(6);
+  });
+  it('separates value presence from canonical confirmation blockers', () => {
+    expect(hypothesisPresentation({ proposedValue: '월 구독', hasCurrentValue: true,
+      confirmable: true, semanticStatus: 'VALID' })).toMatchObject({ hasCurrentValue: true, confirmable: true });
+    expect(hypothesisPresentation({ proposedValue: '조건에 따라 변동', hasCurrentValue: true,
+      confirmable: false, semanticStatus: 'INVALID', blockingReason: '가격 기준을 구체화해 주세요.' }))
+      .toMatchObject({ hasCurrentValue: true, confirmable: false,
+        blockingReason: '가격 기준을 구체화해 주세요.' });
   });
   it('contains exactly seven validation assumptions', () => expect(HYPOTHESIS_TYPES).toHaveLength(7));
 });

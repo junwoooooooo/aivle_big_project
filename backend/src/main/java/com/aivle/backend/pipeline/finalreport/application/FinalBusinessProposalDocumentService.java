@@ -14,7 +14,6 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.HtmlUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -58,6 +57,7 @@ public class FinalBusinessProposalDocumentService {
             list(document, "주요 시장 근거", summary.path("marketEvidence"));
             list(document, "예상 비용·재무 핵심", summary.path("financialHighlights"));
             list(document, "핵심 위험", summary.path("keyRisks"));
+            appendEvidence(document, summary);
 
             for (JsonNode section : report.path("sections")) {
                 heading(document, section.path("number").asText() + " " + section.path("title").asText(), 1);
@@ -68,12 +68,14 @@ public class FinalBusinessProposalDocumentService {
                 }
                 list(document, "주요 확인사항", section.path("keyPoints"));
                 section.path("tables").forEach(table -> appendTable(document, table));
+                appendEvidence(document, section);
             }
             heading(document, "부록 · 자료와 가정", 1);
             JsonNode appendix = report.path("appendix");
             list(document, "가정", appendix.path("assumptions"));
             list(document, "포함하지 않은 분석", appendix.path("omittedAnalyses"));
             list(document, "사용 자료 버전", appendix.path("sourceVersions"));
+            appendEvidence(document, appendix);
             appendReview(document, review);
             document.write(output);
             return output.toByteArray();
@@ -133,7 +135,7 @@ public class FinalBusinessProposalDocumentService {
         appendHtmlList(out, "대상 고객", summary.path("targetCustomers"));
         appendHtmlList(out, "주요 시장 근거", summary.path("marketEvidence"));
         appendHtmlList(out, "재무 핵심", summary.path("financialHighlights"));
-        appendHtmlList(out, "핵심 위험", summary.path("keyRisks")); out.append("</section>");
+        appendHtmlList(out, "핵심 위험", summary.path("keyRisks")); appendEvidence(out, summary); out.append("</section>");
         for (JsonNode section : report.path("sections")) {
             out.append("<section><h2>").append(escape(section.path("number").asText())).append(". ")
                 .append(escape(section.path("title").asText())).append("</h2><p>")
@@ -143,12 +145,13 @@ public class FinalBusinessProposalDocumentService {
                 .append(escape(narrative.path("body").asText())).append("</p>");
             appendHtmlList(out, "주요 확인사항", section.path("keyPoints"));
             section.path("tables").forEach(table -> appendHtmlTable(out, table));
-            appendEvidence(out, section.path("evidenceRefs")); out.append("</section>");
+            appendEvidence(out, section); out.append("</section>");
         }
         out.append("<section class='page'><h2>부록 · 자료와 가정</h2>");
         appendHtmlList(out, "가정", report.path("appendix").path("assumptions"));
         appendHtmlList(out, "포함하지 않은 분석", report.path("appendix").path("omittedAnalyses"));
         appendHtmlList(out, "사용 자료 버전", report.path("appendix").path("sourceVersions"));
+        appendEvidence(out, report.path("appendix"));
         appendHtmlReview(out, review);
         return out.append("</section></body></html>").toString();
     }
@@ -237,13 +240,52 @@ public class FinalBusinessProposalDocumentService {
         out.append("<h3>").append(escape(title)).append("</h3><ul>");
         values.forEach(item -> out.append("<li>").append(escape(item.asText())).append("</li>")); out.append("</ul>");
     }
-    private void appendEvidence(StringBuilder out, JsonNode refs) { if (refs.isArray() && !refs.isEmpty()) {
-        out.append("<p class='source'>사용 근거: "); for (int i=0;i<refs.size();i++) { if(i>0)out.append(" · "); out.append(escape(refs.path(i).asText())); } out.append("</p>"); } }
+    private void appendEvidence(XWPFDocument document, JsonNode owner) {
+        JsonNode details = owner.path("evidenceDetails");
+        if (!details.isArray() || details.isEmpty()) return;
+        heading(document, "근거 상세", 2);
+        details.forEach(item -> {
+            paragraph(document, item.path("label").asText("근거"), true);
+            paragraph(document, item.path("summary").asText(), false);
+            if (item.path("actualQuote").isTextual())
+                paragraph(document, "대표 원문: “" + item.path("actualQuote").asText() + "”", false);
+            paragraph(document, "출처 위치: " + item.path("sourcePath").asText("확인 필요"), false);
+            if (item.path("limitation").isTextual()) paragraph(document, item.path("limitation").asText(), false);
+        });
+    }
+    private void appendEvidence(StringBuilder out, JsonNode owner) {
+        JsonNode details = owner.path("evidenceDetails");
+        if (details.isArray() && !details.isEmpty()) {
+            out.append("<h3>근거 상세</h3><table><thead><tr><th>근거</th><th>확인 내용</th><th>출처 위치</th></tr></thead><tbody>");
+            details.forEach(item -> out.append("<tr><td>").append(escape(item.path("label").asText()))
+                .append("</td><td>").append(escape(item.path("summary").asText()))
+                .append(item.path("actualQuote").isTextual() ? "<br/>대표 원문: “" + escape(item.path("actualQuote").asText()) + "”" : "")
+                .append("</td><td>").append(escape(item.path("sourcePath").asText()))
+                .append(item.path("limitation").isTextual() ? "<br/>" + escape(item.path("limitation").asText()) : "")
+                .append("</td></tr>"));
+            out.append("</tbody></table>");
+            return;
+        }
+        JsonNode refs = owner.path("evidenceRefs");
+        if (refs.isArray() && !refs.isEmpty()) {
+            out.append("<p class='source'>사용 근거: ");
+            for (int i=0;i<refs.size();i++) { if(i>0)out.append(" · "); out.append(escape(refs.path(i).asText())); }
+            out.append("</p>");
+        }
+    }
     private void title(XWPFDocument d,String text,int size){XWPFParagraph p=d.createParagraph();p.setAlignment(ParagraphAlignment.CENTER);var r=p.createRun();r.setBold(true);r.setFontSize(size);r.setText(text);}
     private void heading(XWPFDocument d,String text,int level){XWPFParagraph p=d.createParagraph();p.setStyle("Heading"+level);var r=p.createRun();r.setBold(true);r.setText(text);}
     private void paragraph(XWPFDocument d,String text,boolean bold){var r=d.createParagraph().createRun();r.setBold(bold);r.setText(text==null?"":text);}
     private void labeled(XWPFDocument d,String label,JsonNode value){heading(d,label,2);paragraph(d,value.asText("자료 없음"),false);}
     private void list(XWPFDocument d,String title,JsonNode values){if(!values.isArray()||values.isEmpty())return;heading(d,title,2);values.forEach(v->{XWPFParagraph p=d.createParagraph();p.setStyle("ListBullet");p.createRun().setText(v.asText());});}
     private JsonNode json(String value){try{return mapper.readTree(value);}catch(Exception e){throw new IllegalStateException(e);}}
-    private String escape(String value){return HtmlUtils.htmlEscape(value==null?"":value);}
+    /** OpenHTMLToPDF parses XHTML, so only XML predefined entities are emitted. */
+    private String escape(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;");
+    }
 }

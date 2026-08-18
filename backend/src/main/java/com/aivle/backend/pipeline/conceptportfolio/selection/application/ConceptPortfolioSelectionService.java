@@ -378,7 +378,40 @@ public class ConceptPortfolioSelectionService {
             marketSeeds.findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(value.getId()).isPresent()?"READY":"NOT_READY",task,
             task != null ? "WAIT" : next(value.getStatus()),utc(value.getUpdatedAt()));}
     private String next(ConceptPortfolioSelectionStatus s){return switch(s){case HYPOTHESES_PREPARING,DELTA_LEGAL_PENDING,MARKET_SEED_FINALIZING->"WAIT";case PENDING_HYPOTHESIS_CONFIRMATION->"CONFIRM_VALIDATION_ASSUMPTIONS";case DELTA_LEGAL_FAILED->"REVISE_OR_RETRY";case READY_FOR_LEGAL_REPORT->"REVIEW_LEGAL_REPORT";case LEGAL_REPORT_READY->"FINALIZE_MARKET_SEED";case READY_FOR_MARKET->"START_MARKET_ANALYSIS";default->"NONE";};}
-    private HypothesisView hypothesisView(ConceptPortfolioHypothesisDecision v){return new HypothesisView(v.getId(),v.getHypothesisType().name(),mapper.readTree(v.getProposedValueJson()),v.getFinalValueJson()==null?null:mapper.readTree(v.getFinalValueJson()),v.getSource(),v.getDecisionStatus(),v.getProposalVersion(),v.isLocked(),v.getSemanticStatus(),v.getSemanticReason(),v.getLegalImpact(),v.getLegalReviewStatus(),v.isDeltaLegalRequired(),v.getDecidedAt());}
+    private HypothesisView hypothesisView(ConceptPortfolioHypothesisDecision v) {
+        JsonNode proposed = mapper.readTree(v.getProposedValueJson());
+        JsonNode finalValue = v.getFinalValueJson() == null ? null : mapper.readTree(v.getFinalValueJson());
+        JsonNode current = finalValue == null || finalValue.isNull() ? proposed : finalValue;
+        boolean hasCurrentValue = hasValue(current);
+        String blockingReason = null;
+        if (!hasCurrentValue) blockingReason = "현재 값이 비어 있습니다.";
+        else if (!"VALID".equals(v.getSemanticStatus())) blockingReason = v.getSemanticReason() == null
+            || v.getSemanticReason().isBlank()
+                ? "시장 분석 기준으로 확정하려면 값을 조금 더 구체화해 주세요."
+                : v.getSemanticReason();
+        else if ("FAILED".equals(v.getLegalReviewStatus()))
+            blockingReason = "법률·규제 검토를 통과하지 못해 현재 값으로 확정할 수 없습니다.";
+        return new HypothesisView(v.getId(), v.getHypothesisType().name(), proposed, finalValue,
+            v.getSource(), v.getDecisionStatus(), v.getProposalVersion(), v.isLocked(),
+            v.getSemanticStatus(), v.getSemanticReason(), v.getLegalImpact(), v.getLegalReviewStatus(),
+            v.isDeltaLegalRequired(), v.getDecidedAt(), hasCurrentValue, blockingReason == null,
+            blockingReason);
+    }
+
+    private boolean hasValue(JsonNode value) {
+        if (value == null || value.isNull() || value.isMissingNode()) return false;
+        if (value.isTextual()) return !value.asText().isBlank();
+        if (value.isArray()) {
+            for (JsonNode item : value) if (hasValue(item)) return true;
+            return false;
+        }
+        if (value.isObject()) {
+            var fields = value.iterator();
+            while (fields.hasNext()) if (hasValue(fields.next())) return true;
+            return false;
+        }
+        return true;
+    }
     private LegalReportView reportView(ConceptLegalRegulatoryReport v){return new LegalReportView(v.getId(),v.getSelectionId(),v.getConceptId(),v.getStatus(),v.getSchemaVersion(),v.getReportHash(),v.getBasisDate(),v.getCreatedAt(),mapper.readTree(v.getReportJson()));}
     private void copyLegal(ObjectNode out,JsonNode legal,String...names){for(String n:names)out.set(n,legal.has(n)?legal.path(n).deepCopy():mapper.createArrayNode());}
     private void requireOwned(Long owner,Long project){projects.findByIdAndOwnerIdAndDeletedAtIsNull(project,owner).orElseThrow(()->new BusinessException(ErrorCode.PROJECT_NOT_FOUND));}

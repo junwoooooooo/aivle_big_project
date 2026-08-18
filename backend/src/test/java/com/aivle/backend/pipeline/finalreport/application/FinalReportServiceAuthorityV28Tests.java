@@ -71,7 +71,7 @@ class FinalReportServiceAuthorityV28Tests {
             marketingSources, marketingContents, marketingRevisions, marketingAssets,
             marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskAttempts, taskResults,
             taskRunService, inputHasher, events, moduleStatuses,
-            snapshots, new FinalReportComposer(mapper), mapper);
+            snapshots, new FinalReportComposer(mapper), new BusinessProposalEvidenceCatalog(mapper), mapper);
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(41L); when(project.getTitle()).thenReturn("프로젝트");
         when(project.getVersion()).thenReturn(1L); when(project.getUpdatedAt()).thenReturn(LocalDateTime.of(2026, 8, 17, 0, 0));

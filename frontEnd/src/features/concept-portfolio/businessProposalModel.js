@@ -259,6 +259,24 @@ export function hypothesisInputCount(hypotheses = [], edits = {}) {
   }).length;
 }
 
+export function hypothesisPresentation(hypothesis, edit) {
+  const currentValue = edit ?? hypothesis?.finalValue ?? hypothesis?.proposedValue;
+  const hasCurrentValue = edit !== undefined
+    ? hypothesisHasValue(edit)
+    : hypothesis?.hasCurrentValue ?? hypothesisHasValue(currentValue);
+  const locallyEdited = edit !== undefined;
+  const semanticBlocked = !locallyEdited && hypothesis?.semanticStatus
+    && hypothesis.semanticStatus !== 'VALID';
+  const legalBlocked = !locallyEdited && hypothesis?.legalReviewStatus === 'FAILED';
+  const confirmable = hasCurrentValue && !semanticBlocked && !legalBlocked
+    && (locallyEdited || hypothesis?.confirmable !== false);
+  const blockingReason = !hasCurrentValue ? '현재 값이 비어 있습니다.'
+    : confirmable ? null
+      : hypothesis?.blockingReason ?? hypothesis?.semanticReason
+        ?? '현재 값은 입력되어 있으나 확정하려면 값을 조금 더 구체화해 주세요.';
+  return { currentValue, hasCurrentValue, confirmable, blockingReason };
+}
+
 export function hypothesisNeedsConfirmation(hypothesis) {
   return Boolean(hypothesis) && !['ACCEPTED', 'USER_EDITED_ACCEPTED'].includes(hypothesis.decisionStatus);
 }

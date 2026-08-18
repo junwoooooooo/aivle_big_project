@@ -11,6 +11,7 @@ import {
   canOpenComparison, candidateFieldOptions, candidateRequests, comparisonRows, createCandidateDraft,
   detailedComparisonGroups, groupLegalEvidence, hypothesisDecisionLabel, hypothesisDisplay,
   hypothesisHasValue, hypothesisInputCount,
+  hypothesisPresentation,
   formatKoreanCurrencyAmount, hypothesisValueText, legalStatusLabel, portfolioRunPresentation, selectedConceptId, serializeCandidateFacts,
   toggleComparedConcept,
 } from '../businessProposalModel.js';
@@ -263,8 +264,12 @@ function BusinessBasis({ portfolio, hypothesisMap, edits, setEdits, reviewMode =
   const inputCount = hypothesisInputCount(portfolio.hypotheses, edits);
   const missing = HYPOTHESIS_TYPES.filter((type) => !hypothesisHasValue(
     edits[type] ?? hypothesisMap[type]?.finalValue ?? hypothesisMap[type]?.proposedValue));
-  const invalid = portfolio.hypotheses.find((item) => item.legalReviewStatus === 'FAILED'
-    || (item.semanticStatus && item.semanticStatus !== 'VALID'));
+  const presentations = HYPOTHESIS_TYPES.map((type) => ({ type,
+    ...hypothesisPresentation(hypothesisMap[type], edits[type]) }));
+  const invalid = presentations.find((item) => item.hasCurrentValue && !item.confirmable);
+  const terminalBlocker = presentations.find((item) => !item.confirmable);
+  const terminalBlockerType = terminalBlocker?.type;
+  const terminalBlockerReason = terminalBlocker?.blockingReason;
   const focusField = (type) => setTimeout(() => {
     const node = document.getElementById(`business-basis-${type}`);
     node?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
@@ -278,16 +283,38 @@ function BusinessBasis({ portfolio, hypothesisMap, edits, setEdits, reviewMode =
         focusField(missing[0]);
         return;
       }
+      if (invalid) {
+        setConfirmationNotice(`${HYPOTHESIS_LABELS[invalid.type]}: ${invalid.blockingReason}`);
+        focusField(invalid.type);
+        return;
+      }
       await portfolio.confirm(buildHypothesisChanges(portfolio.hypotheses, edits));
     } catch (error) {
       setConfirmationNotice(invalid
-        ? `${HYPOTHESIS_LABELS[invalid.hypothesisType]} 값을 사용할 수 없습니다. ${invalid.semanticReason ?? getUserErrorMessage(error)}`
+        ? `${HYPOTHESIS_LABELS[invalid.type]} 값을 사용할 수 없습니다. ${invalid.blockingReason ?? getUserErrorMessage(error)}`
         : getUserErrorMessage(error));
-      if (invalid) focusField(invalid.hypothesisType);
+      if (invalid) focusField(invalid.type);
     } finally { setConfirming(false); }
   };
+  useEffect(() => {
+    if (!portfolio.confirmationEvents?.terminal
+      || portfolio.selection.status !== 'PENDING_HYPOTHESIS_CONFIRMATION') return undefined;
+    if (!terminalBlockerType) return undefined;
+    const timer = setTimeout(() => {
+      setConfirmationNotice(`${HYPOTHESIS_LABELS[terminalBlockerType]}: ${terminalBlockerReason}`);
+      const node = document.getElementById(`business-basis-${terminalBlockerType}`);
+      node?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      node?.focus?.({ preventScroll: true });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [portfolio.confirmationEvents?.terminal, portfolio.selection.status,
+    terminalBlockerType, terminalBlockerReason]);
   const readyForReport = portfolio.selection.status === 'READY_FOR_LEGAL_REPORT' && !portfolio.report;
-  return <section className="business-basis" data-review-mode={reviewMode}><header><div><p>{reviewMode ? '분석 기준 확인' : '분석 기준 확정'}</p><h2>시장 분석에 사용할 기준값</h2><span>{reviewMode ? '확정한 분석 기준을 확인하고 법률·규제 결과로 돌아갈 수 있습니다.' : '시장 규모와 경쟁 환경을 같은 기준으로 분석하기 위해 지역·가격·수익 방식·시장 목표를 먼저 확인합니다.'}</span></div><strong>{portfolio.selection.activeTaskRunId ? '처리 중' : `${inputCount}/7 입력 완료`}</strong></header>{!reviewMode && missing.length > 0 && <p className="business-basis__pending" role="status"><b>값이 필요한 항목</b>{missing.map((type) => HYPOTHESIS_LABELS[type]).join(' · ')}</p>}<section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{confirmationNotice && <p className="business-basis__confirmation-error" role="alert">{confirmationNotice}</p>}{!reviewMode && portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p className="business-basis__status" role="status"><AppIcon name="check" size={15} />기준값은 확정되었습니다. 변경한 기준이 법률·규제에 미치는 영향을 확인하고 있습니다.</p>}{!reviewMode && readyForReport && <p className="business-basis__status">확정한 기준을 바탕으로 최종 법률·규제 검토 결과를 준비합니다.</p>}<div className="business-basis__actions">{!reviewMode && portfolio.selection.status === 'PENDING_HYPOTHESIS_CONFIRMATION' && <button type="button" className="bp-button bp-button--primary" disabled={disabled || confirming} onClick={confirm}>{confirming ? '기준값을 확인하고 있습니다...' : '기준값 확정'}</button>}{!reviewMode && readyForReport && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>현재 값으로 진행<AppIcon name="arrowRight" size={16} /></button>}{!reviewMode && portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}{reviewMode && onForward && <button type="button" className="bp-button bp-button--primary" onClick={onForward}>법률·규제 결과로 돌아가기<AppIcon name="arrowRight" size={16} /></button>}</div></section>;
+  const confirmableCount = presentations.filter((item) => item.confirmable).length;
+  const processing = portfolio.selection.status === 'PENDING_HYPOTHESIS_CONFIRMATION'
+    && (confirming || Boolean((portfolio.confirmationTaskRunId || portfolio.selection.activeTaskRunId)
+      && !portfolio.confirmationEvents?.terminal));
+  return <section className="business-basis" data-review-mode={reviewMode}><header><div><p>{reviewMode ? '분석 기준 확인' : '분석 기준 확정'}</p><h2>시장 분석에 사용할 기준값</h2><span>{reviewMode ? '확정한 분석 기준을 확인하고 법률·규제 결과로 돌아갈 수 있습니다.' : '시장 규모와 경쟁 환경을 같은 기준으로 분석하기 위해 지역·가격·수익 방식·시장 목표를 먼저 확인합니다.'}</span></div><strong>{processing ? '처리 중' : `${inputCount}/7 입력 완료`}</strong></header>{!reviewMode && missing.length > 0 && <p className="business-basis__pending" role="status"><b>값이 필요한 항목</b>{missing.map((type) => HYPOTHESIS_LABELS[type]).join(' · ')}</p>}{!reviewMode && inputCount === 7 && confirmableCount < 7 && <p className="business-basis__pending" role="status"><b>확정할 수 없는 항목</b>{presentations.filter((item) => !item.confirmable).map((item) => HYPOTHESIS_LABELS[item.type]).join(' · ')}</p>}<section className="business-basis__core"><h3>사업 기본 조건</h3>{BUSINESS_BASIS_TYPES.map(field)}</section><section className="business-basis__targets"><h3>시장 목표</h3>{MARKET_TARGET_TYPES.map(field)}</section>{confirmationNotice && <p className="business-basis__confirmation-error" role="alert">{confirmationNotice}</p>}{processing && <p className="business-basis__status" role="status" aria-live="polite">기준값을 확인하고 있습니다.</p>}{!reviewMode && portfolio.selection.status === 'DELTA_LEGAL_PENDING' && <p className="business-basis__status" role="status"><AppIcon name="check" size={15} />기준값은 확정되었습니다. 변경한 기준이 법률·규제에 미치는 영향을 확인하고 있습니다.</p>}{!reviewMode && readyForReport && <p className="business-basis__status">확정한 기준을 바탕으로 최종 법률·규제 검토 결과를 준비합니다.</p>}<div className="business-basis__actions">{!reviewMode && portfolio.selection.status === 'PENDING_HYPOTHESIS_CONFIRMATION' && <button type="button" className="bp-button bp-button--primary" disabled={disabled || processing} onClick={confirm}>{processing ? '기준값을 확인하고 있습니다...' : '기준값 확정'}</button>}{!reviewMode && readyForReport && <button type="button" className="bp-button bp-button--primary" disabled={portfolio.busy} onClick={portfolio.finalizeReport}>현재 값으로 진행<AppIcon name="arrowRight" size={16} /></button>}{!reviewMode && portfolio.selection.nextAction === 'REVISE_OR_RETRY' && <button type="button" className="bp-button bp-button--secondary" disabled={portfolio.busy} onClick={portfolio.retryDelta}>법률·규제 재검토 다시 시도</button>}{reviewMode && onForward && <button type="button" className="bp-button bp-button--primary" onClick={onForward}>법률·규제 결과로 돌아가기<AppIcon name="arrowRight" size={16} /></button>}</div></section>;
 }
 
 export function HypothesisField({ type, value, edit, resetKey, onEdit, onAlternative, disabled, readOnly = false }) {
@@ -301,8 +328,9 @@ export function HypothesisField({ type, value, edit, resetKey, onEdit, onAlterna
   if (type === 'PRE_MARKET_SOM_SHARE') editor = <div className="hypothesis-structured hypothesis-structured--share"><label><span>목표 점유율</span><span className="input-with-suffix"><input aria-label="목표 점유율" type="number" min="0.01" step="0.01" disabled={locked || disabled} value={current?.targetSharePercent ?? ''} onChange={(event) => updateObject('targetSharePercent', Number(event.target.value))} /><i>%</i></span></label><label><span>목표 기간</span><span className="input-with-suffix"><input aria-label="목표 기간" type="number" min="1" step="1" disabled={locked || disabled} value={current?.horizonYears ?? ''} onChange={(event) => updateObject('horizonYears', Number(event.target.value))} /><i>년</i></span></label><label className="is-wide"><span>가정 근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
   else if (type === 'PRE_MARKET_SOM') editor = <div className="hypothesis-structured hypothesis-structured--som"><label><span>목표 규모</span><input aria-label="초기 목표 시장 규모" type="number" min="0" disabled={locked || disabled} value={current?.amount ?? ''} onChange={(event) => updateObject('amount', Number(event.target.value))} /></label><label><span>통화</span><select aria-label="통화" disabled={locked || disabled} value={current?.currency ?? 'KRW'} onChange={(event) => updateObject('currency', event.target.value)}>{!["KRW", "USD", "EUR", "JPY"].includes(current?.currency) && current?.currency && <option value={current.currency}>{current.currency}</option>}<option value="KRW">KRW</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="JPY">JPY</option></select></label><label><span>기준 기간</span><input aria-label="시장 규모 기간" disabled={locked || disabled} value={current?.period ?? ''} onChange={(event) => updateObject('period', event.target.value)} /></label><label className="is-wide"><span>계산 기준</span><textarea disabled={locked || disabled} value={current?.calculationBasis ?? ''} onChange={(event) => updateObject('calculationBasis', event.target.value)} /></label><label className="is-wide"><span>근거</span><textarea disabled={locked || disabled} value={(current?.assumptions ?? []).join('\n')} onChange={(event) => updateObject('assumptions', event.target.value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean))} /></label></div>;
   else editor = <textarea aria-label={HYPOTHESIS_LABELS[type]} disabled={locked || disabled} value={edit ?? hypothesisValueText(source)} onChange={(event) => onEdit(event.target.value)} />;
-  const needsInput = !hypothesisHasValue(current);
-  return <article id={`business-basis-${type}`} tabIndex={needsInput ? -1 : undefined} className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`} data-editing={editing} data-needs-input={needsInput}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{editing ? '수정 중' : hypothesisDecisionLabel(value)}</span></header><HypothesisReadValue type={type} value={current} />{!readOnly && !locked && !editing && <button type="button" className="bp-button bp-button--tertiary" disabled={disabled || !value} onClick={() => setEditSession({ open: true, resetKey })}>수정<AppIcon name="chevronRight" size={15} /></button>}{editing && <div className="hypothesis-field__editor">{editor}<div><button type="button" className="bp-button bp-button--tertiary" onClick={() => setEditSession({ open: false, resetKey })}>편집 닫기</button>{!locked && <button type="button" className="bp-button bp-button--secondary" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</div></div>}</article>;
+  const presentation = hypothesisPresentation(value, edit);
+  const needsInput = !presentation.hasCurrentValue;
+  return <article id={`business-basis-${type}`} tabIndex={needsInput || !presentation.confirmable ? -1 : undefined} className={`hypothesis-field hypothesis-field--${type.toLowerCase()}`} data-editing={editing} data-needs-input={needsInput} data-blocked={!presentation.confirmable || undefined}><header><strong>{HYPOTHESIS_LABELS[type]}</strong><span>{editing ? '수정 중' : !presentation.confirmable ? '확정할 수 없음' : hypothesisDecisionLabel(value)}</span></header><HypothesisReadValue type={type} value={current} />{!presentation.confirmable && presentation.blockingReason && <p className="hypothesis-field__blocking" role="status">{presentation.blockingReason}</p>}{!readOnly && !locked && !editing && <button type="button" className="bp-button bp-button--tertiary" disabled={disabled || !value} onClick={() => setEditSession({ open: true, resetKey })}>수정<AppIcon name="chevronRight" size={15} /></button>}{editing && <div className="hypothesis-field__editor">{editor}<div><button type="button" className="bp-button bp-button--tertiary" onClick={() => setEditSession({ open: false, resetKey })}>편집 닫기</button>{!locked && <button type="button" className="bp-button bp-button--secondary" disabled={disabled} onClick={onAlternative}>다른 값 추천받기</button>}</div></div>}</article>;
 }
 
 function HypothesisReadValue({ type, value }) {

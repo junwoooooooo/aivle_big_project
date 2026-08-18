@@ -61,6 +61,17 @@ class RefinementBaselineBinding(StrictModel):
     overlayHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
+class RefinementApplication(StrictModel):
+    """Backend materialization binding attached only to refinement confirmation actions."""
+
+    roundId: int = Field(gt=0)
+    decisionHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    applicationHash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    expectedSelectionRevision: int = Field(ge=0)
+    expectedBmPlanRevision: int = Field(ge=0)
+    sourceMarketSeedSnapshotId: str = Field(min_length=1, max_length=64)
+
+
 class RefinementMaterial(StrictModel):
     round: int = Field(ge=1, le=3)
     attempt: int = Field(ge=1, le=3)
@@ -111,6 +122,7 @@ class ConceptPortfolioSelectionActionInput(StrictModel):
     approvedDeltaLegalResults: list[DeltaLegalResult] = Field(default_factory=list, max_length=5)
     productionBinding: ProductionBinding | None = None
     refinementMaterial: RefinementMaterial | None = None
+    refinementApplication: RefinementApplication | None = None
 
     @model_validator(mode="after")
     def action_payload(self):

@@ -23,7 +23,8 @@ public final class ConceptPortfolioSelectionApiModels {
     public record HypothesisView(String id, String hypothesisType, JsonNode proposedValue,
         JsonNode finalValue, String source, String decisionStatus, int proposalVersion,
         boolean locked, String semanticStatus, String semanticReason, String legalImpact,
-        String legalReviewStatus, boolean deltaLegalRequired, Instant decidedAt) { }
+        String legalReviewStatus, boolean deltaLegalRequired, Instant decidedAt,
+        boolean hasCurrentValue, boolean confirmable, String blockingReason) { }
     public record ActionAccepted(Long selectionId, String action, String taskRunId, String status) { }
     public record LegalReportView(String reportId, Long selectionId, String conceptId, String status,
         String schemaVersion, String reportHash, java.time.LocalDate basisDate, java.time.LocalDateTime generatedAt,

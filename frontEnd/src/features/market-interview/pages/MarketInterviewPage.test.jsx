@@ -7,6 +7,7 @@ import MarketInterviewPage from './MarketInterviewPage.jsx';
 
 const result = {
   contract: 'market-interview-result-v2', schemaVersion: '2.0', synthetic: true,
+  usableInterviewCount: 19, codedInterviewCount: 19, codingFailureCount: 0,
   targeting: { criteriaText: '서울 조건 교집합 80명', requestedSampleSize: 20, drawnSampleSize: 20,
     attemptedCount: 20, usableCount: 19, failedCount: 1, targetCount: 15, nonTargetCount: 4 },
   participants: [{ participantId: 'R001', label: '가상 참여자 A', profile: '소규모 매장 운영자', context: '도입 전 비교', needs: ['간단한 설정'], group: 'TARGET' }],
@@ -65,7 +66,7 @@ describe('MarketInterviewPage', () => {
   it('renders structured participants, themes and follow-up questions', async () => {
     renderPage({ get: vi.fn().mockResolvedValue({ data: current('SUCCEEDED', { result }) }), post: vi.fn() });
     expect(await screen.findByRole('heading', { name: 'Respondent Explorer' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '인사이트에서 응답 원문까지 한 화면에서 탐색하세요' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '이번 탐색에서 먼저 볼 인사이트' })).toBeInTheDocument();
     expect(screen.getAllByText('가상 참여자 A')).toHaveLength(2);
     expect(screen.getAllByText('도입 부담')).toHaveLength(2);
     expect(screen.getByText(/응답 생성 실패 1명은 모든 코딩과 집계에서 제외/)).toBeInTheDocument();

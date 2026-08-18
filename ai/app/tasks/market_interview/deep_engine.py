@@ -124,8 +124,12 @@ def _saturation(themes: list[dict], assignments, answered: int) -> dict:
         rows = [row for row in themes if row["axis"] == axis]
         if len(rows) == 1 and f"{axis}: {rows[0]['title']}" not in flagged:
             flagged.append(f"{axis}: {rows[0]['title']}")
+    coded = sum(1 for row in assignments if row.classificationStatus == "CODED")
     return {"participantCount": answered,
-            "codedParticipantCount": sum(1 for row in assignments if row.themeTitles),
+            "codedParticipantCount": coded,
+            "usableInterviewCount": answered,
+            "codedInterviewCount": coded,
+            "codingFailureCount": answered - coded,
             "themeCount": len(themes), "axisLabelCounts": counts, "maxMentionByAxis": peaks,
             "saturatedThemes": flagged,
             "alternativeSum": sum(1 for row in assignments if row.alternativeLabel.strip()),
@@ -295,6 +299,16 @@ def _build_coding_assignment(draft: CodingDraftAssignment, *, known: dict,
         alternativeLabel=alternative if alternative in alternatives else "",
         comprehension=draft.comprehension,
         differentiation=draft.differentiation,
+        classificationStatus="CODED",
+    )
+
+
+def _unclassified_assignment(participant_id: str) -> CodingAssignment:
+    """Keep a valid transcript when classification cannot be recovered without inventing facts."""
+    return CodingAssignment(
+        participantId=participant_id, themeTitles=[], themeEvidence=[], alternativeLabel="",
+        comprehension="unclassified", differentiation="unclassified",
+        classificationStatus="UNCLASSIFIED",
     )
 
 
@@ -469,9 +483,9 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                     break
 
             # The batch is only a transport optimization. Recover unresolved rows one by one.
+            unclassified: set[str] = set()
             for participant_id in unresolved:
                 transcript_row = next(row for row in batch if row["participantId"] == participant_id)
-                single_failure = None
                 try:
                     raw = await _call(call, CODING_SINGLE_PROMPT, {
                         "codebook": codebook.model_dump(mode="json"),
@@ -481,23 +495,19 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                     if not still_unresolved:
                         recovered.update(valid)
                         continue
-                    single_failure = "SINGLE_ASSIGNMENT_INVALID"
-                except ValidationError:
-                    single_failure = "SINGLE_ASSIGNMENT_SCHEMA_INVALID"
-                raise _coding_failure(CodingValidationFailure(
-                    single_failure or "SINGLE_ASSIGNMENT_INVALID",
-                    f"codingBatches[{batch_index}].participant[{participant_id}]",
-                    batch_index=batch_index, participant_id=participant_id,
-                    repair_attempts=1, invalid_participant_count=1,
-                    recovery_applied="VALID_ROWS_PRESERVED_SINGLE_FALLBACK",
-                ))
+                except (ValidationError, ProviderFailure):
+                    pass
+                # A respondent-level coding failure is a degradation, not a sample failure.
+                # The transcript stays traceable and no classification value is fabricated.
+                unclassified.add(participant_id)
 
             # Reorder by the expected transport ids; provider order is not a product contract.
             for participant_id in expected_ids:
-                assignments.append(_build_coding_assignment(
-                    recovered[participant_id], known=known, alternatives=alternatives,
-                    answer_by_id=answer_by_id,
-                ))
+                assignments.append(_unclassified_assignment(participant_id)
+                    if participant_id in unclassified else _build_coding_assignment(
+                        recovered[participant_id], known=known, alternatives=alternatives,
+                        answer_by_id=answer_by_id,
+                    ))
             progress("MI_CODING", "응답별 원문 근거를 확인하며 코딩하고 있습니다.",
                      completedCount=len(assignments),
                      totalCount=len(transcript_rows))
@@ -562,6 +572,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
 
         comprehension = Counter(row.comprehension for row in assignments)
         differentiation = Counter(row.differentiation for row in assignments)
+        coded_count = sum(row.classificationStatus == "CODED" for row in assignments)
         limitations = list(LIMITATIONS)
         if failures:
             limitations.append(
@@ -571,6 +582,8 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         result = {
             "contract": "market-interview-result-v2", "schemaVersion": "2.0", "synthetic": True,
             "source": value.source.model_dump(mode="json"),
+            "usableInterviewCount": len(usable), "codedInterviewCount": coded_count,
+            "codingFailureCount": len(usable) - coded_count,
             "targeting": {"criteria": sampling["criteria"].model_dump(mode="json"),
                           "criteriaText": sampling["criteriaText"],
                           "requestedSampleSize": value.sampleSize, "drawnSampleSize": len(panel),
@@ -585,8 +598,8 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                           "targetCoverageWarning": sampling["warning"]},
             "participants": participants, "interviews": interviews, "themes": themes,
             "crossRelationships": cross_relationships[:24],
-            "comprehension": {name: comprehension[name] for name in ("accurate", "partial", "misunderstood")},
-            "differentiation": {name: differentiation[name] for name in ("different", "similar", "unclear")},
+            "comprehension": {name: comprehension[name] for name in ("accurate", "partial", "misunderstood", "unclassified")},
+            "differentiation": {name: differentiation[name] for name in ("different", "similar", "unclear", "unclassified")},
             "objections": _unique((row.answers.concern for row in answers), 12),
             "unmetNeeds": _unique((row.answers.suggestion for row in answers), 12),
             "purchaseTriggers": _unique((row.answers.barrier for row in answers), 12),
@@ -598,7 +611,8 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                              "themeEvidence": [item.model_dump(mode="json") for item in row.themeEvidence],
                              "comprehension": row.comprehension, "differentiation": row.differentiation,
                              "alternativeLabel": row.alternativeLabel,
-                             "group": group_by_id[row.participantId]} for row in assignments],
+                             "group": group_by_id[row.participantId],
+                             "classificationStatus": row.classificationStatus} for row in assignments],
             "respondentFailures": failures,
             "saturation": _saturation(themes, assignments, len(usable)),
         }

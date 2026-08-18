@@ -89,6 +89,7 @@ describe('BusinessValidationContent', () => {
   it('완료되면 시장과 BM 결과를 한 화면에 표시한다', () => {
     render(<BusinessValidationContent current={view('COMPLETED',
       stage('SUCCEEDED', { market: {} }), stage('SUCCEEDED', { bm: {} }))} api={api} />);
+    fireEvent.click(screen.getByRole('button', { name: /1 사업 검증/ }));
     expect(screen.getByText('시장 결과 본문')).toBeInTheDocument();
     expect(screen.getByText('비즈니스 모델 결과 본문')).toBeInTheDocument();
   });

@@ -28,20 +28,25 @@ def _safe_validation_fields(failure: ValidationError) -> list[dict[str, str]]:
     return fields
 
 
-def _close_evidence_vocabulary(node, allowed_types: list[str]) -> None:
+def _close_evidence_vocabulary(node, allowed_types: list[str],
+                               allowed_keys: list[str] | None = None) -> None:
     if isinstance(node, dict):
         properties = node.get("properties", {})
         evidence = properties.get("evidenceSourceTypes")
         if isinstance(evidence, dict):
             evidence["items"] = {"type": "string", "enum": allowed_types}
+        evidence_keys = properties.get("evidenceKeys")
+        if isinstance(evidence_keys, dict) and allowed_keys is not None:
+            evidence_keys["items"] = {"type": "string", "enum": allowed_keys}
         for value in node.values():
-            _close_evidence_vocabulary(value, allowed_types)
+            _close_evidence_vocabulary(value, allowed_types, allowed_keys)
     elif isinstance(node, list):
         for value in node:
-            _close_evidence_vocabulary(value, allowed_types)
+            _close_evidence_vocabulary(value, allowed_types, allowed_keys)
 
 
-def _validate_evidence_types(result: FinalBusinessProposalResult, allowed: set[str]) -> None:
+def _validate_evidence_types(result: FinalBusinessProposalResult, allowed: set[str],
+                             allowed_keys: set[str]) -> None:
     groups = [result.executiveDecisionSummary.evidenceSourceTypes,
               result.decisionRequest.evidenceSourceTypes, result.appendix.evidenceSourceTypes]
     groups.extend(section.evidenceSourceTypes for section in result.sections)
@@ -53,6 +58,16 @@ def _validate_evidence_types(result: FinalBusinessProposalResult, allowed: set[s
             safe_diagnostics={"allowedTypes": sorted(allowed), "invalidTypes": invalid,
                               "invalidRefCount": sum(source_type not in allowed
                                                      for group in groups for source_type in group)},
+        )
+    key_groups = [result.executiveDecisionSummary.evidenceKeys,
+                  result.decisionRequest.evidenceKeys, result.appendix.evidenceKeys]
+    key_groups.extend(section.evidenceKeys for section in result.sections)
+    invalid_keys = sorted({key for group in key_groups for key in group if key not in allowed_keys})
+    if invalid_keys:
+        raise ProviderFailure(
+            "RESULT_SCHEMA_INVALID", "AI_EVIDENCE_REFERENCE_INVALID", 502, False,
+            safe_diagnostics={"invalidEvidenceKeyCount": len(invalid_keys),
+                              "allowedEvidenceKeyCount": len(allowed_keys)},
         )
 
 
@@ -67,8 +82,17 @@ async def execute_final_business_proposal(task_input: dict) -> dict:
             safe_diagnostics={"stage": "INPUT_CONTRACT_VALIDATION"},
         ) from failure
     allowed_types = sorted({item.type for item in value.sourceManifest})
+    allowed_keys = list(dict.fromkeys(value.allowedEvidenceKeys))
+    catalog_keys = {item.evidenceKey for item in value.evidenceCatalog}
+    if set(allowed_keys) != catalog_keys:
+        raise ProviderFailure(
+            "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
+            validation_fields=[{"path": "allowedEvidenceKeys", "category": "catalog_mismatch",
+                                "expectedType": "exact evidence catalog keys"}],
+            safe_diagnostics={"stage": "INPUT_CONTRACT_VALIDATION"},
+        )
     schema = FinalBusinessProposalResult.model_json_schema()
-    _close_evidence_vocabulary(schema, allowed_types)
+    _close_evidence_vocabulary(schema, allowed_types, allowed_keys)
     if lint_provider_schema(schema):
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED", 502, False)
     payload = {**value.model_dump(mode="json"), "allowedEvidenceSourceTypes": allowed_types}
@@ -82,5 +106,5 @@ async def execute_final_business_proposal(task_input: dict) -> dict:
         result = FinalBusinessProposalResult.model_validate(raw)
     except ValidationError as failure:
         raise ProviderFailure("RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", 502, False) from failure
-    _validate_evidence_types(result, set(allowed_types))
+    _validate_evidence_types(result, set(allowed_types), set(allowed_keys))
     return result.model_dump(mode="json")

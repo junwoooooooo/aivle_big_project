@@ -179,3 +179,31 @@ Docker image는 이번 작업에서 rebuild하지 않았다. PDF 검증 전 Back
 3. `/app/projects/7/final-report`: Marketing Strategy가 현재 hash와 같으면 `현재 결과 사용 가능`, 다르면 `업데이트 필요`로 표시돼야 한다. 새 버전 생성 후 Proposal을 즉시 볼 수 있고 AI 검토는 자동 시작되어 완료 후 기본 포함 부록으로 나타나야 한다.
 4. Final Report 문서에서 작성자, 문서번호, 결재란, 내부 목차를 확인한다. 좌우 sidebar는 없어야 한다. `PDF 저장`과 `DOCX 다운로드`는 로그인 JSON 화면으로 이동하지 않고 현재 화면에서 authenticated blob으로 다운로드돼야 한다.
 5. project 7 최신 Final Proposal failure reason은 이번 로컬 환경에서 DB가 꺼져 확인하지 못했다. 새 버전이 다시 실패하면 status의 `lastErrorCode / lastErrorReason`을 기록해 정확한 후속 수정 입력으로 사용한다.
+
+---
+
+## 2026-08-18 Stability & Main IA Restoration V6 사용자 검증
+
+### 1. 사업 기준값
+
+1. `/app/projects/8/concepts`에서 7개 AI 제안값이 모두 보이면 `7/7 입력 완료`인지 확인한다.
+2. 값은 있지만 semantic/legal gate를 통과하지 못한 행은 `확정할 수 없음`과 실제 사유가 표시되는지 확인한다.
+3. `기준값 확정`을 누른 뒤 처리 중 표시가 유지되고 SSE terminal 뒤 canonical 상태로 갱신되는지 확인한다.
+4. terminal 뒤에도 차단이면 해당 행으로 scroll/focus되고 silent no-op이 아닌 명시적 사유가 보이는지 확인한다.
+
+### 2. 사업 검증과 시장 인터뷰 IA
+
+1. `/app/projects/8/business-validation`에서 `사업 검증 / 다듬어진 사업안`이 별도 내부 화면인지 확인한다. 시장·BM 긴 결과와 refinement가 한 문서로 연속 노출되면 안 된다.
+2. `/app/projects/8/market-interview`에서 `보여줄 것 확인 / 인터뷰 실행` 두 단계와 headline-first 결과를 확인한다.
+3. 한 respondent coding 복구가 실패해도 전체 TaskRun이 실패하지 않고 `유효 인터뷰 / 테마 코딩 완료 / 코딩 제외`가 서로 다른 실제 수로 표시되는지 확인한다.
+4. UNCLASSIFIED respondent가 Respondent Explorer의 원문에는 남고 theme mentionCount에는 포함되지 않는지 확인한다.
+
+### 3. Final Business Proposal
+
+1. `/app/projects/8/final-report`에서 새 버전을 생성한다.
+2. 각 section의 `근거 상세 보기`에서 사용자용 label, 확인 내용, source 위치, 기준 시점, 실제 quote/응답자, 한계가 존재하는 범위에서 표시되는지 확인한다.
+3. 존재하지 않는 evidence key나 source 밖 수치가 문서에 새로 생기지 않는지 확인한다.
+4. PDF 저장에서 `·`가 XML entity 오류 없이 출력되고 `&`, `<`, `>`, 따옴표가 깨지지 않는지 확인한다.
+5. DOCX도 별도로 열어 한글, `·`, 표와 근거 상세가 정상인지 확인한다.
+
+이번 로컬 환경에서는 Backend/DB가 꺼져 project 8의 최신 TaskRun 원문을 조회하지 못했다. 실패가 재현되면 `lastTaskRunId / lastErrorCode / lastErrorReason`을 다음 정확한 continuation 입력으로 기록한다.

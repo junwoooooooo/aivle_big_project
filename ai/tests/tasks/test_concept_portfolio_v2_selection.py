@@ -89,6 +89,26 @@ def test_invalid_edit_remains_unconfirmed(selected_bundle):
     assert price.semanticStatus in {"INVALID", "UNRESOLVED"}
 
 
+def test_refinement_confirmation_accepts_exact_backend_application_binding(selected_bundle):
+    prepared = asyncio.run(ConceptPortfolioSelectionActionFacade().run(prepare_input(selected_bundle)))
+    value = ConceptPortfolioSelectionActionInput.model_validate({
+        "action": "CONFIRM_HYPOTHESES",
+        "expectedHypothesisRevision": 4,
+        "hypotheses": [item.model_dump(mode="json") for item in prepared.hypotheses],
+        "edits": {"PRICE": "12,500원"},
+        "confirmAll": True,
+        "refinementApplication": {
+            "roundId": 91,
+            "decisionHash": "sha256:" + "a" * 64,
+            "applicationHash": "sha256:" + "b" * 64,
+            "expectedSelectionRevision": 4,
+            "expectedBmPlanRevision": 3,
+            "sourceMarketSeedSnapshotId": "seed-1",
+        },
+    })
+    assert value.refinementApplication.expectedBmPlanRevision == 3
+
+
 def test_alternative_increments_version_without_auto_confirmation(selected_bundle, monkeypatch):
     candidate, _ = selected_bundle
     async def fake_alternative(value):

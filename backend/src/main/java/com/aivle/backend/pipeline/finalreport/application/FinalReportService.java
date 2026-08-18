@@ -93,6 +93,7 @@ public class FinalReportService {
     private final ProjectModuleStatusService moduleStatuses;
     private final FinalReportSnapshotRepository snapshots;
     private final FinalReportComposer composer;
+    private final BusinessProposalEvidenceCatalog evidenceCatalog;
     private final ObjectMapper mapper;
 
     public FinalReportView current(Long ownerId, Long projectId) {
@@ -175,6 +176,10 @@ public class FinalReportService {
         ArrayNode omitted = input.putArray("omittedSourceTypes"); current.omitted().forEach(omitted::add);
         ObjectNode sourceData = input.putObject("sources");
         current.sources().forEach(source -> sourceData.set(source.type(), source.data().deepCopy()));
+        ArrayNode catalog = evidenceCatalog.build(current.sources());
+        input.set("evidenceCatalog", catalog);
+        ArrayNode allowedEvidenceKeys = input.putArray("allowedEvidenceKeys");
+        catalog.forEach(item -> allowedEvidenceKeys.add(item.path("evidenceKey").asText()));
         String inputJson = write(input);
         String inputHash = inputHasher.hash(TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION,
             "1.0", "ko-KR", inputJson);
@@ -194,7 +199,7 @@ public class FinalReportService {
         JsonNode taskInput = json(context.inputSnapshot());
         JsonNode result = response.result().deepCopy();
         validateProposal(result);
-        canonicalizeEvidence(result, taskInput.path("sourceManifest"));
+        canonicalizeEvidence(result, taskInput.path("sourceManifest"), taskInput.path("evidenceCatalog"));
         Project project = owned(context.ownerId(), context.projectId());
         List<String> selected = new ArrayList<>();
         taskInput.path("includedSourceTypes").forEach(item -> selected.add(item.asText()));
@@ -643,6 +648,10 @@ public class FinalReportService {
     }
 
     private void canonicalizeEvidence(JsonNode result, JsonNode manifest) {
+        canonicalizeEvidence(result, manifest, mapper.createArrayNode());
+    }
+
+    private void canonicalizeEvidence(JsonNode result, JsonNode manifest, JsonNode catalog) {
         java.util.Map<String, String> byType = new java.util.HashMap<>();
         java.util.Set<String> duplicateTypes = new java.util.HashSet<>();
         manifest.forEach(item -> {
@@ -651,15 +660,39 @@ public class FinalReportService {
             if (byType.putIfAbsent(type, reference) != null) duplicateTypes.add(type);
         });
         duplicateTypes.forEach(byType::remove);
-        canonicalizeEvidenceNode(result, byType);
+        java.util.Map<String, JsonNode> byKey = new java.util.LinkedHashMap<>();
+        if (catalog != null && catalog.isArray()) catalog.forEach(item -> {
+            String key = item.path("evidenceKey").asText();
+            if (!key.isBlank()) byKey.put(key, item);
+        });
+        canonicalizeEvidenceNode(result, byType, byKey);
     }
 
-    private void canonicalizeEvidenceNode(JsonNode node, java.util.Map<String, String> byType) {
+    private void canonicalizeEvidenceNode(JsonNode node, java.util.Map<String, String> byType,
+            java.util.Map<String, JsonNode> byKey) {
         if (node.isObject()) {
             ObjectNode object = (ObjectNode) node;
-            if (object.path("evidenceSourceTypes").isArray()) {
+            if (object.path("evidenceKeys").isArray()) {
                 ArrayNode refs = mapper.createArrayNode();
+                ArrayNode details = mapper.createArrayNode();
+                java.util.Set<String> seenKeys = new java.util.LinkedHashSet<>();
+                java.util.Set<String> seenRefs = new java.util.LinkedHashSet<>();
+                object.path("evidenceKeys").forEach(keyNode -> {
+                    String key = keyNode.asText();
+                    JsonNode evidence = byKey.get(key);
+                    if (evidence == null) throw new IllegalArgumentException("FINAL_REPORT_EVIDENCE_KEY_INVALID");
+                    if (seenKeys.add(key)) details.add(evidence.deepCopy());
+                    String reference = evidence.path("sourceType").asText() + ":" + evidence.path("sourceId").asText();
+                    if (seenRefs.add(reference)) refs.add(reference);
+                });
+                object.set("evidenceRefs", refs);
+                object.set("evidenceDetails", details);
+            }
+            if (object.path("evidenceSourceTypes").isArray()) {
+                ArrayNode refs = object.path("evidenceRefs").isArray()
+                    ? (ArrayNode) object.path("evidenceRefs") : mapper.createArrayNode();
                 java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+                refs.forEach(item -> seen.add(item.asText()));
                 object.path("evidenceSourceTypes").forEach(typeNode -> {
                     String reference = byType.get(typeNode.asText());
                     if (reference == null) throw new IllegalArgumentException("FINAL_REPORT_EVIDENCE_INVALID");
@@ -669,9 +702,9 @@ public class FinalReportService {
             }
             java.util.List<JsonNode> children = new ArrayList<>();
             object.forEach(children::add);
-            children.forEach(child -> canonicalizeEvidenceNode(child, byType));
+            children.forEach(child -> canonicalizeEvidenceNode(child, byType, byKey));
         } else if (node.isArray()) {
-            node.forEach(child -> canonicalizeEvidenceNode(child, byType));
+            node.forEach(child -> canonicalizeEvidenceNode(child, byType, byKey));
         }
     }
 

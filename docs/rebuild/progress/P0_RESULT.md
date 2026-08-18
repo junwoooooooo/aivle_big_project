@@ -257,3 +257,38 @@
 ### 생략과 continuation point
 
 전체 suite, Docker rebuild, provider smoke, 새 프로젝트, browser E2E, commit/push를 생략했다. 사용자 runtime에서 final batch single recovery, Strategy source state, auto review 및 인증 download를 확인한다.
+
+---
+
+## 2026-08-18 FAST STABILITY & MAIN IA RESTORATION V6
+
+### 기준과 구현 계약
+
+- START SHA와 `origin/full`: `5988e4f14e6a887bda4f00e125c00e7b894f9850`. `main`은 IA 참고로만 조회했고 현재 `full`의 component/token/visual system을 유지했다. 현재 `main`에는 신규 Business Validation/Market Interview feature path가 존재하지 않아 파일 이식은 하지 않았다.
+- 사업 기준값은 `hasCurrentValue`와 `confirmable/blockingReason`을 분리했다. AI 제안도 값이 있으면 `7/7 입력 완료`에 포함하며, semantic/legal 차단은 별도 행 강조·사유·focus로 표시한다. confirm ActionAccepted의 `taskRunId`를 보존하고 SSE terminal 뒤 canonical selection/hypotheses를 재조회한다.
+- Concept Portfolio selection input은 Backend가 보내는 `refinementApplication` strict schema를 수용하도록 round/hash/revision/snapshot 필드를 명시했다.
+- Market Interview는 유효 transcript의 respondent-level coding 복구가 끝내 실패해도 해당 respondent를 `UNCLASSIFIED`로 보존한다. 다른 coded respondent와 theme evidence는 유지하며 `usableInterviewCount / codedInterviewCount / codingFailureCount`를 canonical result로 분리했다.
+- Business Validation은 `사업 검증`과 `다듬어진 사업안` 두 내부 화면으로 분리했다. Market Interview는 `보여줄 것 확인 / 인터뷰 실행` 두 단계와 headline-first result, 세부 disclosure를 사용한다.
+- Final Business Proposal input에 source-owned evidence catalog와 closed `allowedEvidenceKeys`를 추가했다. AI는 존재하는 key만 선택하고 Backend가 source id, 기준 시점, 원문/응답자, 출처 위치, 한계를 canonical detail로 결합한다. raw JSON fallback은 만들지 않는다.
+- PDF XHTML escaping은 XML predefined entity만 사용하도록 변경해 `·`를 그대로 보존하고 `&middot;` undeclared entity를 제거했다. 동일 structured evidence detail을 Web/PDF/DOCX에 표시한다.
+
+### 변경 파일
+
+- AI: Concept Portfolio selection model, Market Interview model/engine, Final Business Proposal model/prompt/service와 focused tests.
+- Backend: selection view/service, Final Report evidence catalog/service/document renderer와 focused tests.
+- Frontend: criteria model/hook/workspace, Business Validation, Market Interview, Final Report UI/CSS/tests.
+- 정확한 목록은 `git status --short`를 기준으로 한다.
+
+### 실제로 실행한 확인
+
+- AI Market Interview focused: `6 passed, 40 deselected`.
+- AI Final Business Proposal focused: `4 passed`.
+- AI refinement confirmation focused: `1 passed, 11 deselected`; 변경 AI 파일 `py_compile` PASS.
+- Frontend focused 7 files: `109 tests PASS`.
+- 변경 Frontend ESLint: PASS(최종 재실행 기준).
+- Backend focused test는 Gradle 9.5.1 distribution이 로컬 cache에 없고 network가 제한되어 실행하지 못했다. 전체 suite나 network 설치는 시도하지 않았다.
+- project 8 runtime 확인: localhost Backend 8080과 PostgreSQL 5432가 실행 중이지 않아 최신 hypotheses/Final Proposal TaskRun을 조회할 수 없었다. 원인을 추측해 runtime-specific patch를 추가하지 않았다.
+
+### 의도적으로 생략과 continuation point
+
+전체 suite/baseline, Docker rebuild, provider 호출, 새 프로젝트, browser E2E, commit/push를 실행하지 않았다. project 8에서 7/7 confirm terminal refresh, respondent coding degradation, Final Proposal evidence detail 및 PDF/DOCX 렌더를 사용자가 확인한다.

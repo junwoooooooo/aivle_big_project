@@ -6,6 +6,15 @@
 .business-validation li,
 .business-validation dd,
 .business-validation td { overflow-wrap: anywhere; }
+.business-validation__workspace-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-top: 1.25rem; padding: .45rem; border: 1px solid var(--color-border-default); border-radius: 14px; background: var(--color-bg-subtle); }
+.business-validation__workspace-tabs button { display: grid; grid-template-columns: auto 1fr; gap: .1rem .7rem; align-items: center; min-width: 0; padding: .8rem 1rem; text-align: left; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--color-text-secondary); }
+.business-validation__workspace-tabs button > span { grid-row: 1 / 3; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border: 1px solid var(--color-border-default); border-radius: 50%; font-weight: 800; }
+.business-validation__workspace-tabs button strong,
+.business-validation__workspace-tabs button small { overflow-wrap: anywhere; }
+.business-validation__workspace-tabs button small { color: var(--color-text-muted); }
+.business-validation__workspace-tabs button[aria-current='step'] { border-color: var(--color-border-default); background: var(--color-surface); color: var(--color-text-default); }
+.business-validation__workspace-tabs button[aria-current='step'] > span { border-color: var(--color-action-primary); color: var(--color-action-primary); }
+.business-validation__workspace-tabs button:disabled { cursor: not-allowed; opacity: .62; }
 .business-validation__preparation,
 .business-validation__progress,
 .business-validation__failure,
@@ -55,6 +64,12 @@
 .business-validation__local-nav a:hover,
 .business-validation__local-nav a:focus-visible { color: var(--color-action-primary); background: var(--color-bg-subtle); }
 .business-validation__anchor { display: block; position: relative; top: -5.5rem; }
+.business-validation__refinement-cta { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; margin-top: 2rem; padding: 1.35rem; border: 1px solid var(--color-border-default); border-radius: 16px; background: var(--color-surface); }
+.business-validation__refinement-cta span { color: var(--color-text-muted); font-size: .78rem; font-weight: 700; }
+.business-validation__refinement-cta h2 { margin: .25rem 0; }
+.business-validation__refinement-cta p { margin: 0; color: var(--color-text-muted); }
+.business-validation__refinement-screen { margin-top: 1.5rem; }
+.business-validation__back { padding: .55rem .7rem; border: 0; background: transparent; color: var(--color-action-primary); font-weight: 700; }
 .business-validation__failure { border-color: color-mix(in srgb, var(--color-status-danger) 30%, transparent); }
 .concept-refinement,
 .refined-concept { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--color-border-default); }
@@ -114,6 +129,7 @@
   .business-validation__input-cards,
   .business-validation__summary > div { grid-template-columns: 1fr; }
   .business-validation__primary-action { align-items: stretch; flex-direction: column; }
+  .business-validation__workspace-tabs { grid-template-columns: 1fr; }
   .business-validation__primary-action .ui-button { width: 100%; }
   .refinement-proposal__comparison,
   .refined-concept__values,
@@ -122,6 +138,7 @@
   .concept-refinement__actions,
   .concept-refinement__round,
   .business-validation__secondary-rerun { align-items: stretch; flex-direction: column; }
+  .business-validation__refinement-cta { align-items: stretch; flex-direction: column; }
   .concept-refinement__next-help { text-align: left; }
   .concept-refinement__actions .ui-button,
   .business-validation__secondary-rerun .ui-button { width: 100%; }

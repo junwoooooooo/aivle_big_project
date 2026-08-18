@@ -271,7 +271,35 @@ def test_unknown_themes_become_zero_theme_without_dropping_respondent(monkeypatc
     trace = next(row for row in result["codingTrace"] if row["participantId"] == "R001")
     assert trace["themeTitles"] == [] and trace["themeEvidence"] == []
     assert "R001" in {row["participantId"] for row in result["interviews"]}
-    assert result["saturation"]["codedParticipantCount"] == 19
+    assert result["saturation"]["codedParticipantCount"] == 20
+
+
+def test_single_coding_failure_degrades_to_unclassified_and_keeps_40_transcripts(monkeypatch):
+    base = provider()
+
+    async def broken_last_respondent(*args, **kwargs):
+        value = await base(*args, **kwargs)
+        payload = json.loads(args[1])
+        if kwargs["schema_name"] == "market_interview_assignment_v3":
+            value["assignments"] = [row for row in value["assignments"]
+                                    if row["participantId"] != "R035"]
+        elif kwargs["schema_name"] == "market_interview_assignment_single_v1" \
+                and payload["transcripts"][0]["participantId"] == "R035":
+            value["assignments"][0]["comprehension"] = "unsupported"
+        return value
+
+    result = execute_with_provider(monkeypatch, broken_last_respondent, sample_size=40)
+    trace = next(row for row in result["codingTrace"] if row["participantId"] == "R035")
+    assert result["usableInterviewCount"] == 40
+    assert result["codedInterviewCount"] == 39
+    assert result["codingFailureCount"] == 1
+    assert trace == {
+        "participantId": "R035", "themeTitles": [], "themeEvidence": [],
+        "comprehension": "unclassified", "differentiation": "unclassified",
+        "alternativeLabel": "", "group": trace["group"], "classificationStatus": "UNCLASSIFIED",
+    }
+    assert "R035" in {row["participantId"] for row in result["interviews"]}
+    assert all("R035" not in theme["participantIds"] for theme in result["themes"])
 
 
 def test_deterministic_excerpt_is_bounded_sentence_span_from_original_answer():
@@ -382,12 +410,18 @@ def _with_usable_count(result, usable):
     comprehension = Counter(row["comprehension"] for row in result["codingTrace"])
     differentiation = Counter(row["differentiation"] for row in result["codingTrace"])
     result["comprehension"] = {name: comprehension[name]
-                               for name in ("accurate", "partial", "misunderstood")}
+                               for name in ("accurate", "partial", "misunderstood", "unclassified")}
     result["differentiation"] = {name: differentiation[name]
-                                 for name in ("different", "similar", "unclear")}
+                                 for name in ("different", "similar", "unclear", "unclassified")}
+    coded = sum(row["classificationStatus"] == "CODED" for row in result["codingTrace"])
+    result.update({"usableInterviewCount": usable, "codedInterviewCount": coded,
+                   "codingFailureCount": usable - coded})
     result["saturation"].update({
         "participantCount": usable,
-        "codedParticipantCount": usable,
+        "codedParticipantCount": coded,
+        "usableInterviewCount": usable,
+        "codedInterviewCount": coded,
+        "codingFailureCount": usable - coded,
         "alternativeSum": usable,
         "maxMentionByAxis": {axis: max(
             (theme["mentionCount"] for theme in result["themes"] if theme["axis"] == axis),

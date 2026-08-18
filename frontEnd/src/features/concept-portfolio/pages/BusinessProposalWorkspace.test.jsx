@@ -340,6 +340,26 @@ describe('BusinessProposalWorkspace', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('가격·과금 방식 값이 비어 있습니다');
     await waitFor(() => expect(document.activeElement).toHaveAttribute('id', 'business-basis-PRICE'));
   });
+  it('값 존재 7/7과 확정 가능 상태를 분리하고 차단 사유로 이동한다', async () => {
+    const confirm = vi.fn();
+    const hypotheses = [
+      ['TARGET_REGION', '대한민국'], ['REVENUE_MODEL', 'B2B 구독'], ['PRICE', '협의'],
+      ['CHANNELS', ['직접 영업']], ['DIFFERENTIATORS', ['자동화']],
+      ['PRE_MARKET_SOM_SHARE', { targetSharePercent: 2, horizonYears: 3 }],
+      ['PRE_MARKET_SOM', { amount: 500000, currency: 'KRW', period: '연간' }],
+    ].map(([hypothesisType, proposedValue]) => ({ hypothesisType, proposedValue,
+      decisionStatus: 'PROPOSED', semanticStatus: hypothesisType === 'PRICE' ? 'INVALID' : 'VALID',
+      semanticReason: hypothesisType === 'PRICE' ? '가격 산정 기준을 입력해 주세요.' : null }));
+    useConceptPortfolio.mockReturnValue(base({ confirm,
+      selection: { selectionId: 17, conceptId: 'c1', status: 'PENDING_HYPOTHESIS_CONFIRMATION' }, hypotheses }));
+    renderWorkspace();
+    expect(screen.getByText('7/7 입력 완료')).toBeInTheDocument();
+    expect(screen.getByText(/확정할 수 없는 항목/).parentElement).toHaveTextContent('가격·과금 방식');
+    fireEvent.click(screen.getByRole('button', { name: '기준값 확정' }));
+    expect(confirm).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('가격·과금 방식: 가격 산정 기준을 입력해 주세요.');
+    await waitFor(() => expect(document.activeElement).toHaveAttribute('id', 'business-basis-PRICE'));
+  });
   it('시장 준비 상태에서는 저장 정보를 조회하고 실제 시장 분석 CTA를 표시한다', async () => {
     useConceptPortfolio.mockReturnValue(base({ selection: { selectionId: 17, conceptId: 'c1', status: 'READY_FOR_MARKET', hypothesisConfirmedCount: 7 } }));
     renderWorkspace();

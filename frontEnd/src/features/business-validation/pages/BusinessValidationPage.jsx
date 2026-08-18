@@ -160,10 +160,17 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
   const showRefinement = (state === 'COMPLETED' && !current?.stale) || refinementStarted || finalStarted;
   const deferValidationRerun = state === 'STALE' && healthyRefinement && !actualRefinementStale;
   const hasResults = Boolean(marketResult || bmResult);
+  const [workspaceView, setWorkspaceView] = useState(() => showRefinement ? 'REFINEMENT' : 'VALIDATION');
 
   return <ProjectWorkspace as="section" mode="analyze" className="business-validation">
     <ProjectStageHeader step={2} eyebrow="사업 검증" title="시장성과 사업 모델을 함께 검증하세요"
       description="한 번 시작하면 시장 분석을 완료한 뒤 같은 결과를 근거로 비즈니스 모델 분석을 이어갑니다." />
+    <nav className="business-validation__workspace-tabs" aria-label="사업 검증 내부 화면">
+      <button type="button" aria-current={workspaceView === 'VALIDATION' ? 'step' : undefined}
+        onClick={() => setWorkspaceView('VALIDATION')}><span>1</span><strong>사업 검증</strong><small>시장·사업 모델 결과</small></button>
+      <button type="button" aria-current={workspaceView === 'REFINEMENT' ? 'step' : undefined}
+        disabled={!showRefinement} onClick={() => setWorkspaceView('REFINEMENT')}><span>2</span><strong>다듬어진 사업안</strong><small>{showRefinement ? '변경 제안 검토' : '검증 완료 후 확인'}</small></button>
+    </nav>
 
     {error ? <Alert tone="danger">{error}</Alert> : null}
     {state === 'STALE' && actualRefinementStale
@@ -172,6 +179,7 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
         ? <Alert tone="info">다듬기에서 사업안이 변경되어 이전 검증 결과는 기준 결과로 보존되고 있습니다.</Alert>
         : state === 'STALE' ? <Alert tone="warning">사업안이 변경되어 다시 검증이 필요합니다. 기존 결과는 보존되어 있습니다.</Alert> : null}
 
+    {workspaceView === 'VALIDATION' ? <>
     {!started && !deferValidationRerun ? <BusinessValidationPreparation api={api} plan={plan} disabled={busy}
       actionLabel={state === 'STALE' ? '사업 검증 다시 실행' : '사업 검증 시작'} onStart={onStart} /> : null}
 
@@ -183,8 +191,6 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
         <a href="#validation-summary">요약</a>
         {marketResult ? <a href="#validation-market">시장 분석</a> : null}
         {bmResult ? <a href="#validation-bm">사업 모델</a> : null}
-        {showRefinement ? <a href="#validation-refinement">사업안 다듬기</a> : null}
-        {finalStarted ? <a href="#validation-final">최종 결과</a> : null}
       </nav>
     </> : null}
 
@@ -206,18 +212,20 @@ export function BusinessValidationContent({ current, plan, refinement, refinemen
       <BusinessModelResultBody result={bmResult} />
     </section> : null}
 
+    {showRefinement ? <section className="business-validation__refinement-cta"><div><span>다음 화면</span><h2>검증 결과를 사업안에 반영하세요</h2><p>변경 제안과 법률 검토, 최종 확정은 별도 화면에서 이어집니다.</p></div><Button onClick={() => setWorkspaceView('REFINEMENT')}>다듬어진 사업안 보기</Button></section> : null}
+
+    {deferValidationRerun ? <div className="business-validation__secondary-rerun">
+      <p>새 기준으로 전체 시장·사업 모델 검증이 필요한 경우 다시 실행할 수 있습니다.</p>
+      <Button variant="ghost" onClick={onStart} disabled={busy}>사업 검증 다시 실행</Button>
+    </div> : null}
+    </> : <section className="business-validation__refinement-screen"><button type="button" className="business-validation__back" onClick={() => setWorkspaceView('VALIDATION')}>← 사업 검증 결과로 돌아가기</button>
     {showRefinement ? <div id="validation-refinement">{finalStarted ? <span id="validation-final" className="business-validation__anchor" /> : null}<ConceptRefinementPanel refinement={effectiveRefinement} finalView={effectiveFinal}
       busy={refinementBusy} error={refinementError} onStart={onStartRefinement}
       onRetry={onRetryRefinement} onDecideAndApply={onDecideAndApply}
       onNext={onNextRefinement}
       onKeepCurrent={onKeepCurrent} onApply={onApplyRefinement}
       onRetryLegal={onRetryLegal} onRecoverLegalBlocked={onRecoverLegalBlocked}
-      onFinalize={onFinalizeRefinement} /></div> : null}
-
-    {deferValidationRerun ? <div className="business-validation__secondary-rerun">
-      <p>새 기준으로 전체 시장·사업 모델 검증이 필요한 경우 다시 실행할 수 있습니다.</p>
-      <Button variant="ghost" onClick={onStart} disabled={busy}>사업 검증 다시 실행</Button>
-    </div> : null}
+      onFinalize={onFinalizeRefinement} /></div> : null}</section>}
   </ProjectWorkspace>;
 }
 

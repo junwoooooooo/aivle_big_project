@@ -109,8 +109,9 @@ class CodingAssignment(StrictModel):
     themeTitles: list[str] = Field(max_length=18)
     themeEvidence: list[ThemeEvidence] = Field(max_length=18)
     alternativeLabel: str = Field(max_length=120)
-    comprehension: Literal["accurate", "partial", "misunderstood"]
-    differentiation: Literal["different", "similar", "unclear"]
+    comprehension: Literal["accurate", "partial", "misunderstood", "unclassified"]
+    differentiation: Literal["different", "similar", "unclear", "unclassified"]
+    classificationStatus: Literal["CODED", "UNCLASSIFIED"]
 
 
 class CodingDraftAssignment(StrictModel):
@@ -197,10 +198,11 @@ class CodingTrace(StrictModel):
     participantId: str = Field(pattern=r"^R\d{3}$")
     themeTitles: list[str] = Field(max_length=18)
     themeEvidence: list[ThemeEvidence] = Field(max_length=18)
-    comprehension: Literal["accurate", "partial", "misunderstood"]
-    differentiation: Literal["different", "similar", "unclear"]
+    comprehension: Literal["accurate", "partial", "misunderstood", "unclassified"]
+    differentiation: Literal["different", "similar", "unclear", "unclassified"]
     alternativeLabel: str = Field(max_length=120)
     group: Group
+    classificationStatus: Literal["CODED", "UNCLASSIFIED"]
 
 
 class RespondentFailure(StrictModel):
@@ -232,17 +234,22 @@ class ClassificationSummary(StrictModel):
     accurate: int = Field(strict=True, ge=0, le=80)
     partial: int = Field(strict=True, ge=0, le=80)
     misunderstood: int = Field(strict=True, ge=0, le=80)
+    unclassified: int = Field(strict=True, ge=0, le=80)
 
 
 class DifferentiationSummary(StrictModel):
     different: int = Field(strict=True, ge=0, le=80)
     similar: int = Field(strict=True, ge=0, le=80)
     unclear: int = Field(strict=True, ge=0, le=80)
+    unclassified: int = Field(strict=True, ge=0, le=80)
 
 
 class SaturationSummary(StrictModel):
     participantCount: int = Field(strict=True, ge=8, le=80)
     codedParticipantCount: int = Field(strict=True, ge=0, le=80)
+    usableInterviewCount: int = Field(strict=True, ge=8, le=80)
+    codedInterviewCount: int = Field(strict=True, ge=0, le=80)
+    codingFailureCount: int = Field(strict=True, ge=0, le=80)
     themeCount: int = Field(strict=True, ge=1, le=36)
     axisLabelCounts: dict[str, int]
     maxMentionByAxis: dict[str, int]
@@ -258,6 +265,9 @@ class MarketInterviewResult(StrictModel):
     synthetic: Literal[True]
     source: SourceBinding
     targeting: TargetingSummary
+    usableInterviewCount: int = Field(strict=True, ge=8, le=80)
+    codedInterviewCount: int = Field(strict=True, ge=0, le=80)
+    codingFailureCount: int = Field(strict=True, ge=0, le=80)
     participants: list[Participant] = Field(min_length=8, max_length=80)
     interviews: list[Interview] = Field(min_length=8, max_length=80)
     themes: list[Theme] = Field(min_length=1, max_length=36)
@@ -335,4 +345,13 @@ class MarketInterviewResult(StrictModel):
             raise ValueError("target/non-target counts must be derived from transcript provenance")
         if self.saturation.participantCount != len(sampled):
             raise ValueError("saturation participant count must equal drawn sample")
+        coded = sum(item.classificationStatus == "CODED" for item in self.codingTrace)
+        if (self.usableInterviewCount != len(sampled)
+                or self.codedInterviewCount != coded
+                or self.codingFailureCount != len(sampled) - coded
+                or self.saturation.usableInterviewCount != len(sampled)
+                or self.saturation.codedInterviewCount != coded
+                or self.saturation.codedParticipantCount != coded
+                or self.saturation.codingFailureCount != len(sampled) - coded):
+            raise ValueError("usable and coded interview counts must be derived from coding trace")
         return self

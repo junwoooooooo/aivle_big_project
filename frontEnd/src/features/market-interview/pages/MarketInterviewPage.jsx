@@ -109,15 +109,20 @@ export default function MarketInterviewPage() {
   }, [api]);
 
   if (loading) return <LoadingState label="시장 인터뷰 상태를 불러오는 중" />;
+  const preparing = view.state === 'NOT_STARTED' || view.state === 'STALE';
   return <ProjectWorkspace as="section" mode="analyze" className="market-interview">
     <ProjectStageHeader step={4} eyebrow="정성적 고객 탐색" title="시장 인터뷰" description="현재 사업안을 실측 profile bank 기반 가상 관점으로 탐색하고, 원문 근거와 실제 고객 확인 질문까지 이어서 살펴봅니다." />
+    <nav className="market-interview__steps" aria-label="시장 인터뷰 내부 단계">
+      <div aria-current={preparing ? 'step' : undefined}><span>1</span><strong>보여줄 것 확인</strong><small>사업안·표본 기준</small></div>
+      <div aria-current={!preparing ? 'step' : undefined}><span>2</span><strong>인터뷰 실행</strong><small>진행·인사이트·원문</small></div>
+    </nav>
     {error ? <Alert tone="danger">{error}</Alert> : null}
     {view.stale || view.state === 'STALE' ? <Alert tone="warning" title="이전 사업안 기준 결과입니다">사업안이 변경되어 이전 결과를 current로 표시하지 않습니다. 현재 사업안으로 다시 인터뷰해 주세요.</Alert> : null}
     {view.state === 'FAILED' ? <Alert tone="danger" title="시장 인터뷰를 완료하지 못했습니다">{view.failureCode === 'RESULT_SCHEMA_INVALID'
       ? '응답 코딩 근거를 확인하는 단계에서 실패한 코딩 묶음을 자동으로 다시 생성했지만 계약을 충족하지 못했습니다. 새 실행으로 다시 시도해 주세요.'
       : view.failure ?? '실패한 단계를 확인한 뒤 다시 시도해 주세요.'}</Alert> : null}
 
-    {(view.state === 'NOT_STARTED' || view.state === 'STALE') ? <div className="market-interview__before">
+    {preparing ? <div className="market-interview__before">
       <Alert tone="info" title="AI 가상 고객 인터뷰">실측 profile bank에서 파생한 가상 관점을 탐색합니다. 실제 고객에게 조사한 결과는 아닙니다.</Alert>
       <ConceptCard concept={view.concept} representation={REPRESENTATION[view.targetingPreview?.customerUnit] ?? '시작 전에 고객 단위를 확인합니다.'} />
       <section className="market-interview__purpose"><span>이번 인터뷰에서 확인할 것</span><ul>{PURPOSES.map((item) => <li key={item}>{item}</li>)}</ul></section>
