@@ -33,23 +33,11 @@ const API_MODULE_IDS = Object.freeze({
   IDEA: 'idea', CONCEPT_PORTFOLIO: 'concepts', CONCEPT_FACTORY: 'concepts',
   CONCEPT_SELECTION: 'concepts', MARKET_ANALYSIS: 'market', BUSINESS_MODEL: 'businessModel',
   CONCEPT_REFINEMENT: 'conceptRefinement',
-  MARKET_INTERVIEW: 'marketInterview', TWIN_SURVEY: 'marketInterview',
+  MARKET_INTERVIEW: 'marketInterview',
   TECH_OPS: 'techOps', FINANCE: 'finance', LAUNCH_READINESS: 'launchReadiness', MARKETING: 'marketing',
 });
 
 export function getModuleStatusView(status) { return MODULE_STATUS_VIEW[status] ?? MODULE_STATUS_VIEW.NOT_READY; }
-
-function hasInterviewExecution(item) {
-  return Boolean(item?.activeRunId || item?.activeTaskRunId || item?.activeJobId || item?.updatedAt);
-}
-
-function canonicalInterviewStatus(items) {
-  const marketInterview = items.find((item) => item?.module === 'MARKET_INTERVIEW');
-  const legacyTwinSurvey = items.find((item) => item?.module === 'TWIN_SURVEY');
-  if (hasInterviewExecution(marketInterview)) return marketInterview;
-  if (hasInterviewExecution(legacyTwinSurvey)) return legacyTwinSurvey;
-  return marketInterview ?? legacyTwinSurvey;
-}
 
 export function normalizeProjectModuleStatuses(items) {
   if (!Array.isArray(items)) return {};
@@ -57,20 +45,13 @@ export function normalizeProjectModuleStatuses(items) {
   const priority = [MODULE_STATUS.FAILED, MODULE_STATUS.NEEDS_INPUT, MODULE_STATUS.STALE,
     MODULE_STATUS.RUNNING, MODULE_STATUS.QUEUED, MODULE_STATUS.READY, MODULE_STATUS.COMPLETED,
     MODULE_STATUS.NOT_READY, MODULE_STATUS.NOT_CONNECTED];
-  const canonicalInterview = canonicalInterviewStatus(items);
-  items.filter((item) => !['MARKET_INTERVIEW', 'TWIN_SURVEY'].includes(item?.module)).forEach((item) => {
+  items.filter((item) => item?.module !== 'TWIN_SURVEY').forEach((item) => {
     const id = API_MODULE_IDS[item?.module];
     if (!id || !MODULE_STATUS[item?.status]) return;
     const candidate = { ...item, requiredInputs: Array.isArray(item.requiredInputs) ? item.requiredInputs : [] };
     const current = normalized[id];
     if (!current || priority.indexOf(candidate.status) < priority.indexOf(current.status)) normalized[id] = candidate;
   });
-  if (canonicalInterview && MODULE_STATUS[canonicalInterview.status]) {
-    normalized.marketInterview = {
-      ...canonicalInterview,
-      requiredInputs: Array.isArray(canonicalInterview.requiredInputs) ? canonicalInterview.requiredInputs : [],
-    };
-  }
   return normalized;
 }
 export function getProjectModules(projectId, statuses = {}) {

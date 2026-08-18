@@ -3,6 +3,7 @@ import { PROJECT_JOURNEYS } from '../../../app/module-status/projectJourneyModel
 import { getProjectPresentationView, projectNextAction } from './projectPresentation.js';
 
 export function toProjectViewModel(project) {
+  const requiredJourneyCount = PROJECT_JOURNEYS.filter((journey) => !journey.optional).length;
   const viewModel = {
     projectId: String(project.id),
     name: project.title,
@@ -23,8 +24,8 @@ export function toProjectViewModel(project) {
     statusLabel: statusView.label,
     statusTone: statusView.tone,
     stageLabel: project.currentJourneyLabel ?? (project.status === 'COMPLETED' ? '최종 보고서' : '사업 기획'),
-    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? PROJECT_JOURNEYS.length : 0),
-    journeyTotal: PROJECT_JOURNEYS.length,
+    journeyCompleted: project.completedJourneyCount ?? (project.status === 'COMPLETED' ? requiredJourneyCount : 0),
+    journeyTotal: requiredJourneyCount,
     area: 'PIPELINE',
     nextAction: null,
     nextRoute: 'overview',

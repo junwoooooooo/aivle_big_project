@@ -9,12 +9,17 @@ import './final-report.css';
 
 const SOURCE_LABELS = {
   CURRENT_CONCEPT: '현재 확정 사업안', BUSINESS_VALIDATION_SESSION: '사업성 검증', MARKET: '시장 분석',
-  BUSINESS_MODEL: '비즈니스 모델', MARKET_INTERVIEW: '시장 인터뷰', TWIN_SURVEY: '트윈 패널 조사',
+  BUSINESS_MODEL: '비즈니스 모델', MARKET_INTERVIEW: '시장 인터뷰',
   MARKETING_STRATEGY: '마케팅 전략', MARKETING: '마케팅 콘텐츠', LAUNCH_TECHNOLOGY: '기술 분석',
   LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 분석', FINANCE_REPORT: '재무 보고서',
 };
 const OPTIONAL = ['MARKET_INTERVIEW', 'MARKETING_STRATEGY', 'MARKETING', 'LAUNCH_TECHNOLOGY',
-  'LAUNCH_OPERATIONS', 'FINANCE', 'TWIN_SURVEY'];
+  'LAUNCH_OPERATIONS', 'FINANCE'];
+const SOURCE_STATE_LABELS = {
+  AVAILABLE: '현재 결과 사용 가능', AVAILABLE_FINAL: '최종 저장본 사용 가능', AVAILABLE_DRAFT: '초안 있음 · 검토 전',
+  FAILED: '최근 실행 실패 · 포함할 결과 없음', IN_PROGRESS: '현재 실행 중',
+  CURRENT_RESULT_UNAVAILABLE: '현재 결과 없음', NOT_RUN: '실행 안 함',
+};
 const STATE_VIEW = {
   CURRENT: ['최신 사업기획서', 'success'], STALE: ['업데이트 필요', 'warning'], READY: ['생성 가능', 'success'],
   NOT_READY: ['필수 자료 준비 중', 'neutral'], GENERATING: ['사업기획서 작성 중', 'neutral'],
@@ -113,7 +118,7 @@ export default function FinalReportPage() {
   return <ProjectWorkspace mode="document" className="final-report-page">
     <ProjectStageHeader step={6} eyebrow="최종 사업기획서" title="결재·공유 가능한 사업기획서를 만드세요" description="사용자가 선택한 현재 분석 snapshot만 고정해 회사용 사업기획서로 구성합니다." status={<span className="pipeline-status" data-tone={statusView[1]}>{statusView[0]}</span>} actions={<Button type="button" variant="outline" onClick={() => void load()}>새로고침</Button>} />
     {state.error && <p className="final-report-error" role="alert">{getUserErrorMessage(state.error)}</p>}
-    {!report && <section className="proposal-ready"><header><p>BUSINESS PROPOSAL</p><h2>사업기획서 작성</h2><span>현재 프로젝트의 분석 결과를 조합해 결재·공유 가능한 사업기획서를 만듭니다.</span></header><div className="proposal-source-grid"><section><h3>필수 기반</h3><SourceOption label="현재 확정 사업안" ready={status?.availableSources?.includes('CURRENT_CONCEPT')} required /><SourceOption label="사업성 검증" ready={status?.availableSources?.includes('MARKET') && status?.availableSources?.includes('BUSINESS_MODEL')} required /></section><section><h3>선택 포함</h3>{OPTIONAL.map((type) => <SourceOption key={type} label={SOURCE_LABELS[type]} ready={status?.availableSources?.includes(type)} checked={selected.includes(type)} onChange={(checked) => setSelected((items) => checked ? [...new Set([...items, type])] : items.filter((item) => item !== type))} />)}</section></div>{status?.blockingSources?.length > 0 && <p className="proposal-blocking">필수 기반 자료를 먼저 준비해 주세요.</p>}<Button type="button" loading={status?.state === 'GENERATING'} disabled={status?.state === 'NOT_READY' || status?.state === 'GENERATING'} onClick={() => void generate()}>사업기획서 만들기</Button></section>}
+    {!report && <section className="proposal-ready"><header><p>BUSINESS PROPOSAL</p><h2>사업기획서 작성</h2><span>현재 프로젝트의 분석 결과를 조합해 결재·공유 가능한 사업기획서를 만듭니다.</span></header><div className="proposal-source-grid"><section><h3>필수 기반</h3><SourceOption label="현재 확정 사업안" ready={status?.availableSources?.includes('CURRENT_CONCEPT')} required /><SourceOption label="사업성 검증" ready={status?.availableSources?.includes('MARKET') && status?.availableSources?.includes('BUSINESS_MODEL')} required /></section><section><h3>선택 포함</h3>{OPTIONAL.map((type) => { const sourceState = status?.sourceStates?.[type] ?? (status?.availableSources?.includes(type) ? 'AVAILABLE' : 'NOT_RUN'); return <SourceOption key={type} label={SOURCE_LABELS[type]} sourceState={sourceState} ready={sourceState.startsWith('AVAILABLE')} checked={selected.includes(type)} onChange={(checked) => setSelected((items) => checked ? [...new Set([...items, type])] : items.filter((item) => item !== type))} />; })}</section></div>{status?.blockingSources?.length > 0 && <p className="proposal-blocking">필수 기반 자료를 먼저 준비해 주세요.</p>}<Button type="button" loading={status?.state === 'GENERATING'} disabled={status?.state === 'NOT_READY' || status?.state === 'GENERATING'} onClick={() => void generate()}>사업기획서 만들기</Button></section>}
     {report && <div className="proposal-workspace">
       <nav className="proposal-toc" aria-label="사업기획서 목차"><strong>문서 목차</strong><a href="#proposal-summary">의사결정 요약</a>{report.sections?.map((section) => <a key={section.number} href={`#proposal-section-${section.number}`}>{section.number}. {section.title}</a>)}<a href="#proposal-appendix">부록</a></nav>
       <main><ProposalDocument view={state.view} review={state.review} includeReview={includeReview} /></main>
@@ -127,6 +132,6 @@ export default function FinalReportPage() {
   </ProjectWorkspace>;
 }
 
-function SourceOption({ label, ready, required = false, checked = false, onChange }) {
-  return <label className="proposal-source" data-ready={ready}><input type="checkbox" checked={required ? ready : checked} disabled={required || !ready} onChange={(event) => onChange?.(event.target.checked)} /><span><strong>{label}</strong><small>{ready ? (required ? '필수 포함' : '현재 결과 사용 가능') : '미실행'}</small></span></label>;
+function SourceOption({ label, ready, sourceState, required = false, checked = false, onChange }) {
+  return <label className="proposal-source" data-ready={ready}><input type="checkbox" checked={required ? ready : checked} disabled={required || !ready} onChange={(event) => onChange?.(event.target.checked)} /><span><strong>{label}</strong><small>{required ? (ready ? '필수 포함' : '준비 필요') : SOURCE_STATE_LABELS[sourceState] ?? '현재 결과 없음'}</small></span></label>;
 }

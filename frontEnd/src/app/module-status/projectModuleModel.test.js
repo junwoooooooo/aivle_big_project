@@ -36,15 +36,15 @@ describe('project module model', () => {
     expect(statuses.conceptRefinement).toMatchObject({ status: 'NEEDS_INPUT', activeRunId: 'round-1' });
   });
 
-  it('legacy TWIN_SURVEY 완료를 canonical marketInterview 슬롯으로 projection한다', () => {
+  it('legacy TWIN_SURVEY 상태를 사용자 module projection에서 제외한다', () => {
     const statuses = normalizeProjectModuleStatuses([
       { module: 'CONCEPT_PORTFOLIO', status: 'RUNNING', activeTaskRunId: 'task' },
       { module: 'MARKET_INTERVIEW', status: 'READY' },
       { module: 'TWIN_SURVEY', status: 'COMPLETED', activeRunId: 'legacy-twin' },
     ]);
     expect(statuses.concepts.activeTaskRunId).toBe('task');
-    expect(statuses.marketInterview.status).toBe('COMPLETED');
-    expect(statuses.marketInterview.module).toBe('TWIN_SURVEY');
+    expect(statuses.marketInterview.status).toBe('READY');
+    expect(statuses.marketInterview.module).toBe('MARKET_INTERVIEW');
     expect(statuses.twinSurvey).toBeUndefined();
   });
 

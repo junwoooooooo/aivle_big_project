@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import JobCenter from '../../features/job-center/JobCenter.jsx';
 import { AppIcon, useBodyScrollLock } from '../../shared/ui/index.js';
-import { getJourneyStatusView } from '../module-status/projectJourneyModel.js';
+import { getJourneyStatusView, JOURNEY_STATUS } from '../module-status/projectJourneyModel.js';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import { useProjectChrome } from './ProjectChromeContext.jsx';
 
@@ -25,7 +25,7 @@ function JourneyPopover({ model, expanded, onExpandedChange }) {
   return <section id={TOOL_IDS.navigator} className="project-tool-popover project-journey-popover" aria-label="프로젝트 단계 탐색">
     <div className="project-journey-remote"><strong>{model.currentJourney.shortLabel}<small>{currentIndex + 1} / {sequence.length}</small></strong><div className="project-journey-remote__directions"><span>{previous ? <Link to={previous.href} aria-label={`이전 단계: ${previous.shortLabel}`}><AppIcon name="chevronLeft" size={24} /><small>{previous.shortLabel}</small></Link> : <button type="button" disabled aria-label="이전 단계 없음"><AppIcon name="chevronLeft" size={24} /></button>}</span><span>{next ? <Link to={next.href} aria-label={`다음 단계: ${next.shortLabel}`}><AppIcon name="chevronRight" size={24} /><small>{next.shortLabel}</small></Link> : <button type="button" disabled aria-label="다음 단계 없음"><AppIcon name="chevronRight" size={24} /></button>}</span></div></div>
     <button type="button" className="project-journey-expand" aria-expanded={expanded} onClick={() => onExpandedChange(!expanded)}>{expanded ? '간단히 보기' : '전체 단계 보기'} <AppIcon name={expanded ? 'chevronUp' : 'chevronDown'} size={15} /></button>
-    {expanded && <nav aria-label="프로젝트 전체 단계"><Link className={model.currentJourney.id === 'overview' ? 'is-current' : ''} to={projectRoutes.overview(model.projectId)}><span>프로젝트 개요</span><small>열기</small></Link>{model.journeys.map((journey) => { const view = getJourneyStatusView(journey.status); return <Link key={journey.id} className={model.currentJourney.id === journey.id ? 'is-current' : ''} to={journey.href}><span>{journey.label}</span><small data-tone={view.tone}>{view.label}</small></Link>; })}</nav>}
+    {expanded && <nav aria-label="프로젝트 전체 단계"><Link className={model.currentJourney.id === 'overview' ? 'is-current' : ''} to={projectRoutes.overview(model.projectId)}><span>프로젝트 개요</span><small>열기</small></Link>{model.journeys.map((journey) => { const view = getJourneyStatusView(journey.status); return <Link key={journey.id} className={model.currentJourney.id === journey.id ? 'is-current' : ''} to={journey.href}><span>{journey.label}</span>{journey.status === JOURNEY_STATUS.OPTIONAL ? null : <small data-tone={view.tone}>{view.label}</small>}</Link>; })}</nav>}
   </section>;
 }
 

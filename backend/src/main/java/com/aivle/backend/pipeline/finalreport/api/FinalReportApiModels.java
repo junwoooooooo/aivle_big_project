@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.finalreport.api;
 import tools.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public final class FinalReportApiModels {
     private FinalReportApiModels() {}
@@ -19,7 +20,8 @@ public final class FinalReportApiModels {
         String taskRunId,
         List<String> blockingSources,
         List<String> availableSources,
-        List<String> omittedSources
+        List<String> omittedSources,
+        Map<String, String> sourceStates
     ) {}
 
     public record GenerateRequest(List<String> includedOptionalSources) {}

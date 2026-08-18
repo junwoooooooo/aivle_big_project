@@ -15,7 +15,7 @@ export const JOB_TASK_LABELS = Object.freeze({
   TECH_OPS_ADVISORY: '기술·운영 자문',
   MARKET_INTERVIEW: '시장 인터뷰',
   TWIN_STIMULUS_DRAFT: '트윈 비교안 준비',
-  TWIN_SURVEY: '트윈 패널 조사',
+  TWIN_SURVEY: '시장 인터뷰 · 이전 실행',
   FINANCE_ESTIMATE: '재무 입력값 준비',
   FINANCE_ANALYSIS_REPORT: '재무 분석 보고서',
   LAUNCH_TECHNOLOGY_READINESS: '기술 출시 준비 분석',

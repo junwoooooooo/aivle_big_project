@@ -159,3 +159,43 @@
 1. 실제 project 7에서 실패한 Market Interview를 재시도해 respondent repair 또는 안전 제외 후 terminal 상태를 확인한다.
 2. 실제 Marketing Strategy provider 실행으로 enum evidence ref와 canonicalization 이후 완료되는지 확인한다.
 3. Final Proposal의 실제 대용량 source 문서에서 한글 font, 긴 표, page break를 사용자 다운로드 파일로 확인한다.
+
+---
+
+## 2026-08-18 FAST 런타임 계약 교정 — Interview Retry / Final Report / Optional Status
+
+### 기준과 구현 계약
+
+- start SHA와 `origin/full`: `6b78b9fa3d50f916e55c1e17e16aec1626c0d1d5`.
+- Market Interview CurrentView에 Backend 정본 `retryAllowed`와 `restartAllowed`를 추가했다. retry 한도 소진 시 이전 run을 변경하지 않고 기존 sample size로 attempt 1 새 실행을 시작한다. `/retry` 409 race는 current를 재조회해 restart 안내로 전환한다.
+- FinalReport event publish는 writable `REQUIRES_NEW` transaction으로 분리했다. Proposal/Review worker의 event 전송은 `safePublish`로 격리해 본체 실행·저장을 실패시키지 않는다. schema 위반만 `AI_RESULT_INVALID`, 기타 runtime/persistence 실패는 `EXECUTION_FAILED / TRANSIENT_EXECUTION_FAILURE`로 분류한다.
+- Launch Technology/Operations는 concept binding과 무관하게 프로젝트의 최신 current/non-stale DOCX report를 사용한다. Finance는 최신 `USER_DOCUMENT_INPUT`과 adopted report를 concept-bound 결과보다 우선한다.
+- Marketing Content는 FINALIZED를 우선하고, 없으면 current source의 latest COMPLETED revision을 `draft=true / status=COMPLETED`로 포함한다. status 응답은 AVAILABLE, AVAILABLE_FINAL, AVAILABLE_DRAFT, IN_PROGRESS, FAILED, CURRENT_RESULT_UNAVAILABLE, NOT_RUN을 구분한다.
+- Twin Survey는 Final Report, Marketing Strategy context, ProjectModuleStatus 응답, Frontend selector/label/navigation에서 제거했다. `/twin-survey`만 `/market-interview` redirect로 보존한다.
+- 출시 준비와 최종 보고서는 상위 Journey에서 `OPTIONAL`이며 badge와 프로젝트 진행률에서 제외한다. Project shell은 Final Report status를 조회하지 않고 Final Report 페이지 내부에서만 상태를 조회한다.
+- Final Report page-level 회색 배경/margin/padding을 제거하고 A4 preview의 흰 배경과 shadow만 유지한다.
+
+### 변경 파일
+
+- AI: Final Proposal draft labeling prompt.
+- Backend: Market Interview view, Final Report source/status/transaction/workers/composer, Marketing repository/strategy source, module/project presentation과 focused tests.
+- Frontend: Market Interview retry UX, Final Report source state/UI/CSS, route/module/journey/project status와 focused tests.
+- 정확한 목록은 `git status --short`를 기준으로 한다.
+
+### 실제로 실행한 확인
+
+- Backend focused 6개 class: XML 기준 `41 tests, 0 failures, 0 errors`.
+- Frontend focused: `10 files, 78 tests PASS`.
+- 변경 Frontend ESLint: PASS.
+- Final Proposal prompt `py_compile`: PASS.
+- `git diff --check`: 최종 handoff 직전 실행.
+
+### 의도적으로 생략
+
+전체 suite/baseline, Docker rebuild, 외부 provider 호출, 실제 runtime/browser E2E, commit/push.
+
+### 남은 위험과 continuation point
+
+1. project 7에서 retry 소진 run의 새 실행 CTA와 attempt 1 생성을 확인한다.
+2. 실제 Final Proposal 생성으로 read-only transaction 오류가 재발하지 않는지 확인한다.
+3. 실제 Technology/Operations/Finance/Marketing 데이터의 sourceStates와 생성 문서 포함 여부를 확인한다.

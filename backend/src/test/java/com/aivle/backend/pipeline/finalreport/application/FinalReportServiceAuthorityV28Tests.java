@@ -36,6 +36,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 
 class FinalReportServiceAuthorityV28Tests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
@@ -43,8 +44,6 @@ class FinalReportServiceAuthorityV28Tests {
     private final BusinessValidationSessionRepository sessions = mock(BusinessValidationSessionRepository.class);
     private final MarketResearchVersionRepository marketVersions = mock(MarketResearchVersionRepository.class);
     private final MarketInterviewRunRepository marketInterviews = mock(MarketInterviewRunRepository.class);
-    private final TwinSurveyVersionRepository twinVersions = mock(TwinSurveyVersionRepository.class);
-    private final TwinSurveyRunRepository twinRuns = mock(TwinSurveyRunRepository.class);
     private final MarketingSourceSnapshotRepository marketingSources = mock(MarketingSourceSnapshotRepository.class);
     private final MarketingContentRepository marketingContents = mock(MarketingContentRepository.class);
     private final MarketingContentRevisionRepository marketingRevisions = mock(MarketingContentRevisionRepository.class);
@@ -66,7 +65,7 @@ class FinalReportServiceAuthorityV28Tests {
     @BeforeEach
     void setUp() {
         service = new FinalReportService(projects, currentConcepts, sessions, marketVersions, marketInterviews,
-            twinVersions, twinRuns, marketingSources, marketingContents, marketingRevisions, marketingAssets,
+            marketingSources, marketingContents, marketingRevisions, marketingAssets,
             marketingStrategies, launchInputs, launchReports, financeSnapshots, taskRuns, taskResults,
             taskRunService, inputHasher, events, moduleStatuses,
             snapshots, new FinalReportComposer(mapper), mapper);
@@ -87,7 +86,8 @@ class FinalReportServiceAuthorityV28Tests {
 
         assertThat(view.state().name()).isEqualTo("CURRENT");
         assertThat(view.blockingSources()).isEmpty();
-        assertThat(view.omittedSources()).contains("MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING");
+        assertThat(view.omittedSources()).contains("MARKET_INTERVIEW", "MARKETING");
+        assertThat(view.omittedSources()).doesNotContain("TWIN_SURVEY");
         verify(marketVersions, times(2)).findByIdAndProjectIdAndKindAndDeletedAtIsNull(101L, 41L, MarketResearchRun.Kind.FULL);
         verify(marketVersions, times(2)).findByIdAndProjectIdAndKindAndDeletedAtIsNull(202L, 41L, MarketResearchRun.Kind.BM);
         verify(marketVersions, never()).findTopByProjectIdAndKindAndDeletedAtIsNullOrderByVersionNumberDesc(anyLong(), any());
@@ -146,10 +146,100 @@ class FinalReportServiceAuthorityV28Tests {
 
     @Test
     void lightweightStatusExposesAvailabilityWithoutReportPayload() {
+        var failedInterview = mock(com.aivle.backend.pipeline.marketinterview.MarketInterviewRun.class);
+        when(failedInterview.getState()).thenReturn(com.aivle.backend.pipeline.marketinterview.MarketInterviewRun.State.FAILED);
+        when(marketInterviews.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(failedInterview));
         var status = service.status(7L, 41L);
         assertThat(status.state()).isEqualTo(com.aivle.backend.pipeline.finalreport.api.FinalReportApiModels.State.READY);
         assertThat(status.availableSources()).contains("CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL");
+        assertThat(status.sourceStates()).doesNotContainKey("TWIN_SURVEY");
+        assertThat(status.sourceStates().get("MARKET_INTERVIEW")).isEqualTo("FAILED");
         assertThat(status.currentVersion()).isNull();
+    }
+
+    @Test
+    void launchSourceUsesLatestIndependentCurrentDocumentInsteadOfConceptBinding() {
+        var input = mock(com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.class);
+        var report = mock(com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessReport.class);
+        when(input.getId()).thenReturn("tech-input"); when(input.isStale()).thenReturn(false);
+        when(input.getAttempt()).thenReturn(1);
+        when(launchInputs.findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            41L, com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType.TECHNOLOGY))
+            .thenReturn(Optional.of(input));
+        when(launchReports.findFirstByProjectIdAndModuleTypeAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(
+            41L, com.aivle.backend.pipeline.launchreadiness.domain.LaunchReadinessInputSnapshot.ModuleType.TECHNOLOGY,
+            "tech-input")).thenReturn(Optional.of(report));
+        when(report.isCurrent()).thenReturn(true); when(report.isStale()).thenReturn(false);
+        when(report.getId()).thenReturn("tech-report"); when(report.getAnalysisJson()).thenReturn("{}");
+        when(report.getQualityJson()).thenReturn("{}"); when(report.getExternalEvidenceJson()).thenReturn("{}");
+        when(report.getResultHash()).thenReturn("sha256:" + "7".repeat(64));
+        when(report.getCompletedAt()).thenReturn(Instant.parse("2026-08-17T02:00:00Z"));
+
+        var view = service.generate(7L, 41L, "launch-independent", List.of("LAUNCH_TECHNOLOGY"));
+        assertThat(types(view)).contains("LAUNCH_TECHNOLOGY");
+    }
+
+    @Test
+    void latestUserDocumentFinanceWithAdoptedReportIsAvailableWithoutConceptBinding() {
+        var snapshot = mock(com.aivle.backend.pipeline.finance.domain.FinancialInputSnapshot.class);
+        var run = mock(com.aivle.backend.taskrun.domain.TaskRun.class);
+        var result = mock(com.aivle.backend.taskrun.domain.TaskResult.class);
+        when(financeSnapshots.findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            41L, "USER_DOCUMENT_INPUT")).thenReturn(Optional.of(snapshot));
+        when(snapshot.getId()).thenReturn("finance-user-doc");
+        when(snapshot.getSnapshotHash()).thenReturn("sha256:" + "8".repeat(64));
+        when(snapshot.getSnapshotJson()).thenReturn("{}");
+        when(snapshot.getFinalizedAt()).thenReturn(Instant.parse("2026-08-17T03:00:00Z"));
+        when(run.getId()).thenReturn("finance-report-run");
+        when(taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            41L, "FINANCIAL_ANALYSIS_REPORT", "finance-user-doc")).thenReturn(Optional.of(run));
+        when(result.getValidationState()).thenReturn(com.aivle.backend.taskrun.domain.TaskResultValidationState.ADOPTED);
+        when(result.getId()).thenReturn("finance-result"); when(result.getResultHash()).thenReturn("sha256:" + "9".repeat(64));
+        when(result.getResultJson()).thenReturn("{}"); when(taskResults.findByTaskRunId("finance-report-run")).thenReturn(List.of(result));
+
+        var view = service.generate(7L, 41L, "finance-independent", List.of("FINANCE"));
+        assertThat(types(view)).contains("FINANCE", "FINANCE_REPORT");
+    }
+
+    @Test
+    void completedMarketingContentIsAvailableAsExplicitDraft() {
+        var source = mock(com.aivle.backend.pipeline.marketing.domain.MarketingSourceSnapshot.class);
+        var content = mock(com.aivle.backend.pipeline.marketing.domain.MarketingContent.class);
+        var revision = mock(com.aivle.backend.pipeline.marketing.domain.MarketingContentRevision.class);
+        when(source.getId()).thenReturn("marketing-source"); when(source.getPortfolioSelectionId()).thenReturn(11L);
+        when(marketingSources.findBySourceMarketSeedSnapshotIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndProjectIdAndDeletedAtIsNull(
+            "seed-1", 4, 3, 41L)).thenReturn(Optional.of(source));
+        when(marketingContents.findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByFinalizedAtDesc(
+            41L, "marketing-source", com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus.FINALIZED))
+            .thenReturn(Optional.empty());
+        when(marketingContents.findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByCreatedAtDesc(
+            41L, "marketing-source", com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus.COMPLETED))
+            .thenReturn(Optional.of(content));
+        when(content.getId()).thenReturn("content-1"); when(content.getStatus())
+            .thenReturn(com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus.COMPLETED);
+        when(content.getCurrentRevisionNumber()).thenReturn(2); when(content.getUpdatedAt())
+            .thenReturn(LocalDateTime.of(2026, 8, 17, 4, 0));
+        when(marketingRevisions.findByContentIdAndRevisionNumberAndDeletedAtIsNull("content-1", 2))
+            .thenReturn(Optional.of(revision));
+        when(revision.getId()).thenReturn("revision-2"); when(revision.getRevisionNumber()).thenReturn(2);
+        when(revision.getResultJson()).thenReturn("{\"title\":\"초안\"}");
+
+        var view = service.generate(7L, 41L, "marketing-draft", List.of("MARKETING"));
+        JsonNode item = find(view.sourceManifest().path("sources"), "MARKETING");
+        assertThat(item.path("metadata").path("draft").asBoolean()).isTrue();
+        assertThat(service.status(7L, 41L).sourceStates().get("MARKETING")).isEqualTo("AVAILABLE_DRAFT");
+    }
+
+    private List<String> types(com.aivle.backend.pipeline.finalreport.api.FinalReportApiModels.FinalReportView view) {
+        List<String> result = new java.util.ArrayList<>();
+        view.sourceManifest().path("sources").forEach(item -> result.add(item.path("type").asText()));
+        return result;
+    }
+
+    private tools.jackson.databind.JsonNode find(tools.jackson.databind.JsonNode values, String type) {
+        for (var item : values) if (type.equals(item.path("type").asText())) return item;
+        return mapper.missingNode();
     }
 
     private void exactCore() {

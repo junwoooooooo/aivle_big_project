@@ -94,6 +94,20 @@ export default function MarketInterviewPage() {
     finally { setBusy(false); }
   }, [api]);
 
+  const retry = useCallback(async () => {
+    setBusy(true); setError(null);
+    try { setCurrent(marketInterviewView(await api.retry())); }
+    catch (failure) {
+      try {
+        const refreshed = marketInterviewView(await api.current());
+        setCurrent(refreshed);
+        setError(failure?.code === 'JOB_RETRY_NOT_ALLOWED' && refreshed.canRestart
+          ? '이 실행은 재시도 횟수를 모두 사용했습니다. 현재 사업안으로 새 인터뷰를 시작할 수 있습니다.'
+          : getUserErrorMessage(failure));
+      } catch { setError(getUserErrorMessage(failure)); }
+    } finally { setBusy(false); }
+  }, [api]);
+
   if (loading) return <LoadingState label="시장 인터뷰 상태를 불러오는 중" />;
   return <ProjectWorkspace as="section" mode="analyze" className="market-interview">
     <ProjectStageHeader step={4} eyebrow="정성적 고객 탐색" title="시장 인터뷰" description="현재 사업안을 실측 profile bank 기반 가상 관점으로 탐색하고, 원문 근거와 실제 고객 확인 질문까지 이어서 살펴봅니다." />
@@ -113,7 +127,8 @@ export default function MarketInterviewPage() {
         <Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(sampleSize))}>{view.state === 'STALE' ? '현재 사업안으로 다시 인터뷰' : '가상 고객 인터뷰 시작'}</Button></section>
     </div> : null}
     {view.active ? <InterviewProgress events={job} concept={view.concept} /> : null}
-    {view.canRetry ? <div className="market-interview__actions"><Button disabled={busy} loading={busy} onClick={() => void command(api.retry)}>실패한 실행 다시 시도</Button></div> : null}
+    {view.canRetry ? <div className="market-interview__actions"><Button disabled={busy} loading={busy} onClick={() => void retry()}>실패한 실행 다시 시도</Button></div> : null}
+    {!view.canRetry && view.canRestart ? <div className="market-interview__actions"><Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(view.requestedSampleSize ?? sampleSize))}>현재 사업안으로 새 인터뷰 시작</Button></div> : null}
     {view.result && !view.stale ? <><Alert tone="warning">아래 내용은 가상 정성 탐색이며 시장 근거나 통계로 인용하지 말고 실제 고객 확인에 사용하세요. 모든 theme은 연결된 응답 원문으로 확인해야 합니다.</Alert><MarketInterviewResult result={view.result} /></> : null}
   </ProjectWorkspace>;
 }

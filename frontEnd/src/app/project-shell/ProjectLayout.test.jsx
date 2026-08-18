@@ -22,6 +22,12 @@ describe('V9 project layout', () => {
     expect(source).not.toContain('pipeline-shell__help');
   });
 
+  it('상위 Journey는 on-demand 최종 보고서 status를 조회하지 않는다', () => {
+    const source = readFileSync('src/app/project-shell/ProjectLayout.jsx', 'utf8');
+    expect(source).not.toContain('createFinalReportApi');
+    expect(source).not.toContain('finalReportApi.status');
+  });
+
   it('프로젝트 개요에서는 self-return을 숨기고 breadcrumb를 유지한다', () => {
     render(<MemoryRouter><ProjectLocationRow projectId="41"
       currentJourney={{ id: 'overview', shortLabel: '프로젝트 개요' }} /></MemoryRouter>);

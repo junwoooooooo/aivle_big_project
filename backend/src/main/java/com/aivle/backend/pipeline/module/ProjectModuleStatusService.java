@@ -111,12 +111,8 @@ public class ProjectModuleStatusService {
         MarketResearchVersion currentBusinessVersion = businessRun == null || currentMarketVersion == null
             || !currentMarketVersion.getId().equals(businessRun.getSourceMarketVersionId()) ? null
             : marketResearchVersionRepository.findBySourceRunIdAndDeletedAtIsNull(businessRun.getId()).orElse(null);
-        TwinSurveyRun twinRun = twinSurveyRunRepository
-            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
         MarketInterviewRun interviewRun = marketInterviewRunRepository
             .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId).orElse(null);
-        TaskRun twinDraftTask = latestTask(projectId, "TWIN_STIMULUS_DRAFT",
-            String.valueOf(projectId), TaskType.TWIN_STIMULUS_DRAFT);
         ModuleRun techOpsRun = latestRun(projectId, ModuleType.TECH_OPS);
         MarketingContent marketing = marketingRepository.findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId).orElse(null);
         TaskRun marketingStrategyTask = taskRunRepository
@@ -188,13 +184,6 @@ public class ProjectModuleStatusService {
                 ? PipelineModuleStatus.READY : PipelineModuleStatus.NOT_READY;
         TaskRun activeRefinementTask = currentRefinementCycle
             ? activeRefinementTask(refinementRound) : null;
-        PipelineModuleStatus twinBaseStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
-            : twinRun == null ? PipelineModuleStatus.READY
-            : twinStatus(twinRun, !selectedSnapshot.getId().equals(twinRun.getSourceMarketSeedSnapshotId()));
-        TaskRun activeTwinSurveyTask = twinRun == null ? null : activeTask(twinRun.getTaskRun());
-        TaskRun activeTwinTask = activeTwinSurveyTask != null ? activeTwinSurveyTask : activeTask(twinDraftTask);
-        PipelineModuleStatus twinStatus = activeTwinSurveyTask != null ? twinBaseStatus
-            : activeOverlay(twinBaseStatus, twinDraftTask);
         boolean interviewStale = interviewRun != null && (selectedSnapshot == null || portfolioSelection == null
             || !selectedSnapshot.getId().equals(interviewRun.getSourceMarketSeedSnapshotId())
             || !portfolioSelection.getId().equals(interviewRun.getSourceSelectionId())
@@ -281,8 +270,8 @@ public class ProjectModuleStatusService {
                 activeFinancialTask == null ? null : activeFinancialTask.getId(),
                 financialSnapshot == null ? null : financialSnapshot.getId(), null, null,
                 financialTask == null ? financialPreparation == null ? null : financialPreparation.getUpdatedAt() : financialTask.getUpdatedAt()),
-            response(projectId, PipelineModuleType.LAUNCH_READINESS, launchStatus,
-                List.of("professionalDocument"), new NextAction("출시 준비 분석", "/launch-readiness"),
+            response(projectId, PipelineModuleType.LAUNCH_READINESS, PipelineModuleStatus.READY,
+                List.of(), new NextAction("선택 분석", "/launch-readiness"),
                 latestId(launchTechnologyTask, launchOperationsTask),
                 latestActiveId(launchTechnologyTask, launchOperationsTask), null, null, null,
                 latestUpdatedAt(launchTechnologyTask, launchOperationsTask)),
@@ -293,13 +282,6 @@ public class ProjectModuleStatusService {
                 activeInterviewTask == null ? null : activeInterviewTask.getId(),
                 selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
                 interviewRun == null ? null : interviewRun.getUpdatedAt()),
-            response(projectId, PipelineModuleType.TWIN_SURVEY, twinStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
-                new NextAction("트윈 패널 조사", "/twin-survey"),
-                twinRun == null ? null : String.valueOf(twinRun.getId()),
-                activeTwinTask == null ? null : activeTwinTask.getId(),
-                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
-                twinRun == null ? null : twinRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
                 new NextAction("마케팅 전략·콘텐츠", "/marketing"),

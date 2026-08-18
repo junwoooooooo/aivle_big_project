@@ -10,11 +10,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class FinalBusinessProposalReviewWorker {
     private final TaskRunService taskRuns;
     private final InternalAiExecutionClient ai;
@@ -31,21 +33,44 @@ public class FinalBusinessProposalReviewWorker {
         var context = taskRuns.workerContext(claim.taskRunId());
         try {
             taskRuns.startExecution(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken());
-            reports.publish(context.projectId(), context.taskRunId(), "REVIEWING",
+            safePublish(context.projectId(), context.taskRunId(), "REVIEWING",
                 "job.final-report.review.running", JobEvent.Status.RUNNING, null);
             var response = ai.executeWorker(context, claim.taskAttemptId(), LocalDateTime.now().plusMinutes(5));
             reports.completeReview(claim, context, response);
-            reports.publish(context.projectId(), context.taskRunId(), "COMPLETED",
+            safePublish(context.projectId(), context.taskRunId(), "COMPLETED",
                 "job.final-report.review.completed", JobEvent.Status.COMPLETED, null);
         } catch (ExecutionFailure failure) {
-            reports.failProposal(claim, failure.code(), failure.reason(), failure.retryable());
-            reports.publish(context.projectId(), context.taskRunId(), "FAILED",
+            safeFail(claim, failure.code(), failure.reason(), failure.retryable());
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
                 "job.final-report.review.failed", JobEvent.Status.FAILED, failure.code());
-        } catch (RuntimeException failure) {
-            reports.failProposal(claim, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
-            reports.publish(context.projectId(), context.taskRunId(), "FAILED",
+        } catch (IllegalArgumentException failure) {
+            safeFail(claim, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
                 "job.final-report.review.failed", JobEvent.Status.FAILED, "AI_RESULT_INVALID");
+        } catch (RuntimeException failure) {
+            log.warn("Final proposal review infrastructure failed taskRunId={} type={}",
+                claim.taskRunId(), failure.getClass().getSimpleName());
+            safeFail(claim, "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", true);
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
+                "job.final-report.review.failed", JobEvent.Status.FAILED, "EXECUTION_FAILED");
         }
         return true;
+    }
+
+    void safePublish(Long projectId, String taskRunId, String stage, String key,
+            JobEvent.Status status, String code) {
+        try { reports.publish(projectId, taskRunId, stage, key, status, code); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal review event publish skipped taskRunId={} stage={} type={}",
+                taskRunId, stage, failure.getClass().getSimpleName());
+        }
+    }
+
+    private void safeFail(TaskRunService.Claim claim, String code, String reason, boolean retryable) {
+        try { reports.failProposal(claim, code, reason, retryable); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal review failure persistence failed taskRunId={} type={}",
+                claim.taskRunId(), failure.getClass().getSimpleName());
+        }
     }
 }

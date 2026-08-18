@@ -7,8 +7,6 @@ import static org.mockito.Mockito.when;
 import com.aivle.backend.admin.ServicePolicyService;
 import com.aivle.backend.audit.DomainAuditService;
 import com.aivle.backend.common.entity.ProjectStatus;
-import com.aivle.backend.pipeline.finalreport.api.FinalReportApiModels;
-import com.aivle.backend.pipeline.finalreport.application.FinalReportService;
 import com.aivle.backend.pipeline.module.PipelineModuleStatus;
 import com.aivle.backend.pipeline.module.PipelineModuleType;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse;
@@ -26,9 +24,8 @@ import org.junit.jupiter.api.Test;
 class ProjectServicePresentationTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
     private final ProjectModuleStatusService modules = mock(ProjectModuleStatusService.class);
-    private final FinalReportService reports = mock(FinalReportService.class);
     private final ProjectService service = new ProjectService(projects, mock(UserRepository.class),
-        mock(DomainAuditService.class), mock(ServicePolicyService.class), modules, reports);
+        mock(DomainAuditService.class), mock(ServicePolicyService.class), modules);
 
     @Test
     void untouchedProjectIsNotStartedInsteadOfNeedsAttention() {
@@ -52,16 +49,14 @@ class ProjectServicePresentationTests {
     }
 
     @Test
-    void completedProjectUsesCanonicalSixStageProgress() {
+    void optionalLaunchAndFinalReportDoNotAffectProjectCompletion() {
         var allCompleted = Arrays.stream(PipelineModuleType.values())
             .map(type -> response(type, PipelineModuleStatus.COMPLETED, LocalDateTime.of(2026, 8, 17, 9, 0)))
             .toList();
         stubProject(allCompleted);
-        when(reports.state(2L, 41L)).thenReturn(FinalReportApiModels.State.CURRENT);
-
         var summary = service.findAll(2L).get(0);
 
-        assertThat(summary.completedJourneyCount()).isEqualTo(6);
+        assertThat(summary.completedJourneyCount()).isEqualTo(4);
         assertThat(summary.presentationState()).isEqualTo("COMPLETED");
         assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
     }
@@ -76,7 +71,7 @@ class ProjectServicePresentationTests {
 
         var summary = service.findAll(2L).get(0);
 
-        assertThat(summary.completedJourneyCount()).isEqualTo(5);
+        assertThat(summary.completedJourneyCount()).isEqualTo(4);
         assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
         assertThat(summary.attentionCount()).isZero();
     }
@@ -93,12 +88,12 @@ class ProjectServicePresentationTests {
 
         var summary = service.findAll(2L).get(0);
 
-        assertThat(summary.completedJourneyCount()).isEqualTo(4);
+        assertThat(summary.completedJourneyCount()).isEqualTo(3);
         assertThat(summary.currentJourneyLabel()).isEqualTo("사업 검증");
     }
 
     @Test
-    void legacyCompletedTwinSurveyProjectsToCanonicalInterviewWhenNoInterviewRunExists() {
+    void legacyCompletedTwinSurveyDoesNotReplaceCanonicalInterview() {
         var statuses = allOtherJourneysCompleted();
         statuses.add(response(PipelineModuleType.MARKET_INTERVIEW, PipelineModuleStatus.READY, null));
         statuses.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.COMPLETED,
@@ -107,8 +102,8 @@ class ProjectServicePresentationTests {
 
         var summary = service.findAll(2L).get(0);
 
-        assertThat(summary.completedJourneyCount()).isEqualTo(5);
-        assertThat(summary.currentJourneyLabel()).isEqualTo("최종 보고서");
+        assertThat(summary.completedJourneyCount()).isEqualTo(3);
+        assertThat(summary.currentJourneyLabel()).isEqualTo("가상 인터뷰");
     }
 
     @Test
@@ -127,7 +122,7 @@ class ProjectServicePresentationTests {
         completedInterview.add(response(PipelineModuleType.TWIN_SURVEY, PipelineModuleStatus.FAILED,
             LocalDateTime.of(2026, 8, 16, 10, 0)));
         stubProject(completedInterview);
-        assertThat(service.findAll(2L).get(0).completedJourneyCount()).isEqualTo(5);
+        assertThat(service.findAll(2L).get(0).completedJourneyCount()).isEqualTo(4);
         assertThat(service.findAll(2L).get(0).attentionCount()).isZero();
     }
 
@@ -150,7 +145,6 @@ class ProjectServicePresentationTests {
         when(project.getStatus()).thenReturn(ProjectStatus.DRAFT);
         when(projects.findAllByOwnerIdAndDeletedAtIsNullOrderByUpdatedAtDesc(2L)).thenReturn(List.of(project));
         when(modules.findAll(2L, 41L)).thenReturn(statuses);
-        when(reports.state(2L, 41L)).thenReturn(FinalReportApiModels.State.NOT_READY);
     }
 
     private List<ProjectModuleStatusResponse> statuses(PipelineModuleStatus ideaStatus, LocalDateTime ideaUpdatedAt) {

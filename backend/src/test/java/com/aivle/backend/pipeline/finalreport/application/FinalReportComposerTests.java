@@ -44,13 +44,13 @@ class FinalReportComposerTests {
     }
 
     @Test
-    void marketInterviewAndTwinPanelRemainSeparateAndTruthfullyQualified() {
+    void canonicalMarketInterviewRemainsTruthfullyQualifiedWithoutTwinSurface() {
         Project project = mock(Project.class);
         when(project.getTitle()).thenReturn("프로젝트");
         var report = composer.compose(project, 1, Instant.parse("2026-08-17T00:00:00Z"), List.of());
 
         assertThat(report.path("sections").get(3).path("title").asText()).isEqualTo("시장 인터뷰");
-        assertThat(report.path("sections").get(4).path("title").asText()).isEqualTo("트윈 패널 조사");
+        assertThat(report.path("sections").toString()).doesNotContain("TWIN_SURVEY").doesNotContain("트윈 패널");
         assertThat(report.path("sections").get(3).path("sources").get(0).path("label").asText())
             .contains("아직 시장 인터뷰");
         assertThat(report.path("caveat").asText()).contains("AI 가상 참여자").contains("실제 소비자 조사 결과를 의미하지 않습니다");

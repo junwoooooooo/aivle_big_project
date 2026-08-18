@@ -18,13 +18,14 @@ const JOURNEY_POSITIONS = Object.freeze([
 ]);
 
 function JourneyStatusBadge({ status }) {
+  if (status === JOURNEY_STATUS.OPTIONAL) return null;
   const view = getJourneyStatusView(status);
   return <span className="pipeline-status" data-tone={view.tone}>{view.label}</span>;
 }
 
 export function ProjectOverviewPage() {
   const { journeys } = useOutletContext();
-  const currentIndex = journeys.findIndex(({ status }) => status !== JOURNEY_STATUS.COMPLETED);
+  const currentIndex = journeys.findIndex(({ status }) => ![JOURNEY_STATUS.COMPLETED, JOURNEY_STATUS.OPTIONAL].includes(status));
   return <section className="pipeline-overview" aria-labelledby="project-overview-title">
     <div className="pipeline-page-heading"><p>6단계 사업 여정</p><h2 id="project-overview-title">프로젝트 개요</h2><span>현재 위치와 다음 할 일을 하나의 흐름에서 확인하세요.</span></div>
     <div className="journey-map"><svg className="journey-map__path" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true"><path d="M80 180 C140 180 190 100 250 100 S360 187 420 187 S520 94 580 94 S690 180 750 180 S860 115 920 115" /></svg><ol>{journeys.map((journey, index) => {

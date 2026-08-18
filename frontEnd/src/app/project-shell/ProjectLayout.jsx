@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Link, Outlet, useLocation, useParams } from 'react-router-dom';
 
 import { AppIcon, ErrorState, LoadingState, ScrollToTopButton } from '../../shared/ui/index.js';
@@ -11,7 +11,6 @@ import { getJourneyByPath, getJourneyStatusView, getProjectJourneys, JOURNEY_STA
 import { useProjectModuleStatuses } from '../module-status/useProjectModuleStatuses.js';
 import { createConceptPortfolioApi } from '../../features/concept-portfolio/api/conceptPortfolioApi.js';
 import { startNewConceptPortfolioRun } from '../../features/concept-portfolio/hooks/useConceptPortfolio.js';
-import { createFinalReportApi } from '../../features/final-report/finalReportApi.js';
 import { projectRoutes } from '../routing/projectRoutes.js';
 import { useProjectChrome } from './ProjectChromeContext.jsx';
 import { deriveProjectPresentationState, getProjectPresentationView } from '../../features/projects/model/projectPresentation.js';
@@ -47,27 +46,13 @@ function ProjectLayoutContent() {
   const location = useLocation();
   const apiClient = useApiClient();
   const portfolioApi = useMemo(() => createConceptPortfolioApi(apiClient), [apiClient]);
-  const finalReportApi = useMemo(() => createFinalReportApi(apiClient), [apiClient]);
   const { register, toolActions } = useProjectChrome();
   const { status, project, retry } = useProjectContext();
   const live = useProjectEvents(projectId);
   const moduleState = useProjectModuleStatuses(projectId, live.revision);
-  const [finalReportState, setFinalReportState] = useState({ projectId, status: 'loading', view: null });
   const retryModuleStatus = moduleState.retry;
-  useEffect(() => {
-    const controller = new AbortController();
-    finalReportApi.status(projectId, { signal: controller.signal })
-      .then((view) => { if (!controller.signal.aborted) setFinalReportState({ projectId, status: 'success', view }); })
-      .catch(() => { if (!controller.signal.aborted) setFinalReportState({ projectId, status: 'error', view: null }); });
-    return () => controller.abort();
-  }, [finalReportApi, live.revision, projectId]);
-  const finalReportJourneyStatus = finalReportState.projectId !== projectId || finalReportState.status !== 'success'
-    ? JOURNEY_STATUS.NOT_STARTED : finalReportState.view?.state === 'CURRENT' ? JOURNEY_STATUS.COMPLETED
-      : finalReportState.view?.state === 'STALE' ? JOURNEY_STATUS.STALE
-        : (finalReportState.view?.availableSources?.length ?? 0) > 1
-          ? JOURNEY_STATUS.IN_PROGRESS : JOURNEY_STATUS.NOT_STARTED;
   const modules = useMemo(() => getProjectModules(projectId, moduleState.modules), [moduleState.modules, projectId]);
-  const journeys = useMemo(() => getProjectJourneys(projectId, modules, finalReportJourneyStatus), [finalReportJourneyStatus, modules, projectId]);
+  const journeys = useMemo(() => getProjectJourneys(projectId, modules), [modules, projectId]);
   const routeJourney = useMemo(() => getJourneyByPath(location.pathname), [location.pathname]);
   const currentJourney = useMemo(() => routeJourney.id === 'overview' ? routeJourney
     : journeys.find(({ id }) => id === routeJourney.id) ?? routeJourney, [journeys, routeJourney]);
@@ -112,7 +97,7 @@ function ProjectLayoutContent() {
     <main className="pipeline-shell__main">
       <JourneySubsteps journey={currentJourney} currentModule={currentModule} />
       {moduleState.status === 'error' && <section className="pipeline-module-status-error" role="alert"><div><strong>업무 상태를 불러오지 못했습니다.</strong><span>{getUserErrorMessage(moduleState.error)} 작업 화면은 계속 사용할 수 있습니다.</span></div><button type="button" onClick={moduleState.retry}>다시 시도</button></section>}
-      <Outlet context={{ modules, journeys, moduleState, finalReportState, liveRevision: live.revision, projectEventTransport: live.transport, openWorkCenterJob: toolActions.openWorkCenterJob }} />
+      <Outlet context={{ modules, journeys, moduleState, liveRevision: live.revision, projectEventTransport: live.transport, openWorkCenterJob: toolActions.openWorkCenterJob }} />
       <ScrollToTopButton />
     </main>
   </div>;

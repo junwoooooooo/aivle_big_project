@@ -2,14 +2,14 @@ const SOURCE_LABELS = Object.freeze({
   PROJECT: '프로젝트', CURRENT_CONCEPT: '사업안·법률', MARKET: '시장 분석',
   BUSINESS_MODEL: 'BM 분석', LAUNCH_TECHNOLOGY: '기술 분석',
   LAUNCH_OPERATIONS: '운영 분석', FINANCE: '재무 입력', FINANCE_REPORT: '재무 보고서',
-  MARKET_INTERVIEW: '시장 인터뷰', TWIN_SURVEY: '구형 패널 조사',
+  MARKET_INTERVIEW: '시장 인터뷰',
 });
 const SOURCE_ORDER = Object.keys(SOURCE_LABELS);
 const EVIDENCE_GROUP = {
   MARKET: '시장 분석 근거', BUSINESS_MODEL: 'BM 분석 근거', FINANCE: '재무 분석 근거',
   FINANCE_REPORT: '재무 분석 근거', MARKET_INTERVIEW: '인터뷰 근거',
   CURRENT_CONCEPT: '사업안·법률 근거', LAUNCH_TECHNOLOGY: '기술 분석 근거',
-  LAUNCH_OPERATIONS: '운영 분석 근거', TWIN_SURVEY: '패널 조사 근거', PROJECT: '프로젝트 근거',
+  LAUNCH_OPERATIONS: '운영 분석 근거', PROJECT: '프로젝트 근거',
 };
 const NAV = [['strategy-summary', '전략 요약'], ['strategy-target', '타깃·포지셔닝'],
   ['strategy-channel', '채널'], ['strategy-campaign', '캠페인'],

@@ -122,3 +122,39 @@ npx vitest run src/features/business-validation/pages/BusinessValidationPage.tes
 진행 중 새로고침/route 이동 후에도 TaskRun은 계속 실행되어야 한다. Backend 로그에 `No converter for ApiResponse with preset Content-Type 'text/event-stream'`가 없어야 하며 nested broken pipe는 debug disconnect로 끝나야 한다.
 
 다음 continuation point: project 7의 Market Interview/Marketing Strategy terminal state와 생성된 PDF/DOCX 파일을 확인한다.
+
+---
+
+## 2026-08-18 Retry / Optional Status 사용자 검증
+
+### 1. Market Interview retry 소진
+
+1. `/app/projects/7/market-interview`를 연다.
+2. FAILED이며 attempt가 남은 실행에는 `실패한 실행 다시 시도`만 표시되는지 확인한다.
+3. attempt 3 소진 실행에는 `현재 사업안으로 새 인터뷰 시작`이 표시되는지 확인한다.
+4. 새 실행 요청 body가 이전 `requestedSampleSize`를 사용하고 생성된 run의 attempt가 1인지 확인한다.
+5. stale UI에서 `/retry`가 `JOB_RETRY_NOT_ALLOWED`를 반환하면 current를 한 번 재조회하고 재시도 소진 안내와 새 실행 CTA로 전환되는지 확인한다.
+
+### 2. Final Report source와 transaction
+
+1. `/app/projects/7/final-report`를 연다.
+2. 선택 자료에 시장 인터뷰, 마케팅 전략, 마케팅 콘텐츠, 기술, 운영, 재무만 표시되고 Twin Survey가 없는지 확인한다.
+3. 마케팅 콘텐츠가 COMPLETED이면 `초안 있음 · 검토 전`, 실패한 시장 인터뷰는 `최근 실행 실패 · 포함할 결과 없음`으로 표시되는지 확인한다.
+4. concept/BM revision과 무관하게 최신 Technology/Operations DOCX 결과가 `현재 결과 사용 가능`인지 확인한다.
+5. 최신 USER_DOCUMENT_INPUT 재무 snapshot과 adopted report가 있으면 재무 분석이 사용 가능한지 확인한다.
+6. `사업기획서 만들기`를 누르고 `SELECT FOR NO KEY UPDATE in a read-only transaction` 없이 AI execution으로 진행되는지 확인한다.
+7. event 저장에 문제가 생겨도 Proposal/Review 본체 TaskRun이 event 실패만으로 `AI_RESULT_INVALID`가 되지 않는지 확인한다.
+
+### 3. Optional Journey
+
+1. Project Overview와 전체 단계 탐색을 연다.
+2. 출시 준비와 최종 보고서에 진행 중/완료/입력 필요 badge가 없는지 확인한다.
+3. Technology/Operations/Finance 미실행 또는 실패가 프로젝트 진행률과 전체 상태를 바꾸지 않는지 확인한다.
+4. Final Report 생성 중에도 프로젝트 전체 상태가 진행 중으로 바뀌지 않는지 확인한다.
+5. Project list 진행률 denominator가 선택 기능을 제외한 `4`인지 확인한다.
+
+### 4. UI
+
+Final Report 페이지에 일부 영역만 덮는 회색 직사각형이 없어야 한다. 앱 기본 surface 위에서 A4 preview만 흰 배경과 shadow를 유지해야 한다.
+
+다음 continuation point: project 7의 새 Interview run ID/attempt와 Final Proposal TaskRun terminal state를 기록한다.

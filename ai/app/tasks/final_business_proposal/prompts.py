@@ -13,4 +13,6 @@ SYSTEM_PROMPT = """
    source ID나 새로운 evidence 문자열을 생성하지 않는다.
 7. 영문 JSON field 이름은 데이터 계약에만 사용하고 사용자 문구는 자연스러운 한국어로 쓴다.
 8. 마크다운이 아닌 지정 JSON schema만 반환한다.
+9. MARKETING source의 _sourceMetadata.draft가 true이면 최종 성과물로 표현하지 말고
+   반드시 '마케팅 콘텐츠 초안' 또는 '검토 전 초안'으로 명시한다.
 """

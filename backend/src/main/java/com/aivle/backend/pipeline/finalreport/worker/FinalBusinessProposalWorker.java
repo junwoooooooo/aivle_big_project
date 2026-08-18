@@ -32,7 +32,7 @@ public class FinalBusinessProposalWorker {
     public void recover() {
         for (String id : taskRuns.recoverExpiredTaskIds(Duration.ZERO, List.of(TYPE))) {
             var context = taskRuns.workerContext(id);
-            reports.publish(context.projectId(), id, "QUEUED", "job.final-report.queued",
+            safePublish(context.projectId(), id, "QUEUED", "job.final-report.queued",
                 JobEvent.Status.QUEUED, null);
         }
     }
@@ -43,23 +43,45 @@ public class FinalBusinessProposalWorker {
         var context = taskRuns.workerContext(claim.taskRunId());
         try {
             taskRuns.startExecution(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken());
-            reports.publish(context.projectId(), context.taskRunId(), "COMPOSING",
+            safePublish(context.projectId(), context.taskRunId(), "COMPOSING",
                 "job.final-report.composing", JobEvent.Status.RUNNING, null);
             var response = ai.executeWorker(context, claim.taskAttemptId(), LocalDateTime.now().plusMinutes(6));
             reports.completeProposal(claim, context, response);
-            reports.publish(context.projectId(), context.taskRunId(), "COMPLETED",
+            safePublish(context.projectId(), context.taskRunId(), "COMPLETED",
                 "job.final-report.completed", JobEvent.Status.COMPLETED, null);
         } catch (ExecutionFailure failure) {
-            reports.failProposal(claim, failure.code(), failure.reason(), failure.retryable());
-            reports.publish(context.projectId(), context.taskRunId(), "FAILED",
+            safeFail(claim, failure.code(), failure.reason(), failure.retryable());
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
                 "job.final-report.failed", JobEvent.Status.FAILED, failure.code());
-        } catch (RuntimeException failure) {
-            log.warn("Final proposal worker failed taskRunId={} type={}", claim.taskRunId(),
-                failure.getClass().getSimpleName());
-            reports.failProposal(claim, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
-            reports.publish(context.projectId(), context.taskRunId(), "FAILED",
+        } catch (IllegalArgumentException failure) {
+            log.warn("Final proposal result invalid taskRunId={}", claim.taskRunId());
+            safeFail(claim, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
                 "job.final-report.failed", JobEvent.Status.FAILED, "AI_RESULT_INVALID");
+        } catch (RuntimeException failure) {
+            log.warn("Final proposal infrastructure failed taskRunId={} type={}", claim.taskRunId(),
+                failure.getClass().getSimpleName());
+            safeFail(claim, "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", true);
+            safePublish(context.projectId(), context.taskRunId(), "FAILED",
+                "job.final-report.failed", JobEvent.Status.FAILED, "EXECUTION_FAILED");
         }
         return true;
+    }
+
+    void safePublish(Long projectId, String taskRunId, String stage, String key,
+            JobEvent.Status status, String code) {
+        try { reports.publish(projectId, taskRunId, stage, key, status, code); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal event publish skipped taskRunId={} stage={} type={}",
+                taskRunId, stage, failure.getClass().getSimpleName());
+        }
+    }
+
+    private void safeFail(TaskRunService.Claim claim, String code, String reason, boolean retryable) {
+        try { reports.failProposal(claim, code, reason, retryable); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal failure persistence failed taskRunId={} type={}",
+                claim.taskRunId(), failure.getClass().getSimpleName());
+        }
     }
 }

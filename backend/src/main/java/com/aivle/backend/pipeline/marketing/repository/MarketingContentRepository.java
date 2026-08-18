@@ -12,6 +12,9 @@ public interface MarketingContentRepository extends JpaRepository<MarketingConte
     Optional<MarketingContent> findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByFinalizedAtDesc(
         Long projectId, String marketingSourceSnapshotId,
         com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus status);
+    Optional<MarketingContent> findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByCreatedAtDesc(
+        Long projectId, String marketingSourceSnapshotId,
+        com.aivle.backend.pipeline.marketing.domain.MarketingContentStatus status);
     Optional<MarketingContent> findByIdAndProjectIdAndDeletedAtIsNull(String id, Long projectId);
     Optional<MarketingContent> findByTaskRunIdAndDeletedAtIsNull(String taskRunId);
     @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -32,7 +32,7 @@ describe('project journey model', () => {
     const launch = getProjectJourneys('41', modules).find(({ id }) => id === 'launch');
     expect(launch.href).toBe('/app/projects/41/launch-readiness');
     expect(launch.children).toEqual([]);
-    expect(launch.status).toBe(JOURNEY_STATUS.ATTENTION);
+    expect(launch.status).toBe(JOURNEY_STATUS.OPTIONAL);
   });
 
   it('하위 모듈 상태를 결정적으로 집계한다', () => {
@@ -83,5 +83,13 @@ describe('project journey model', () => {
     expect(journeys.map(({ id }) => id)).toEqual([
       'planning', 'validation', 'launch', 'interview', 'marketingStrategy', 'finalReport',
     ]);
+  });
+
+  it('출시 준비와 최종 보고서는 프로젝트 진행률에 포함하지 않는다', () => {
+    const journeys = getProjectJourneys('41', getProjectModules('41', {
+      techOps: { status: MODULE_STATUS.FAILED }, finance: { status: MODULE_STATUS.NEEDS_INPUT },
+    }));
+    expect(journeys.find(({ id }) => id === 'launch').status).toBe(JOURNEY_STATUS.OPTIONAL);
+    expect(journeys.find(({ id }) => id === 'finalReport').status).toBe(JOURNEY_STATUS.OPTIONAL);
   });
 });

@@ -143,6 +143,21 @@ class MarketInterviewServiceTests {
         assertThat(service.retry(7L, 41L, "retry-key", "request-2").attempt()).isEqualTo(2);
     }
 
+    @Test void currentFailedRunPublishesCanonicalRetryAndRestartPolicy() {
+        when(inputs.preview(any(), any(), any())).thenReturn(mapper.createObjectNode());
+        when(runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
+            .thenReturn(Optional.of(run(MarketInterviewRun.State.FAILED, 1)))
+            .thenReturn(Optional.of(run(MarketInterviewRun.State.FAILED, MarketInterviewService.MAX_ATTEMPTS)));
+
+        var retryable = service.current(7L, 41L);
+        assertThat(retryable.retryAllowed()).isTrue();
+        assertThat(retryable.restartAllowed()).isTrue();
+
+        var exhausted = service.current(7L, 41L);
+        assertThat(exhausted.retryAllowed()).isFalse();
+        assertThat(exhausted.restartAllowed()).isTrue();
+    }
+
     @Test void retryAfterSourceChangeIsRejectedAndOldRunBecomesStale() {
         MarketInterviewRun failed = run(MarketInterviewRun.State.FAILED, 1);
         when(runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L)).thenReturn(Optional.of(failed));

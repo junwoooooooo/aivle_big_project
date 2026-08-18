@@ -26,8 +26,7 @@ public class MarketingStrategySourceService {
         "LAUNCH_OPERATIONS",
         "FINANCE",
         "FINANCE_REPORT",
-        "MARKET_INTERVIEW",
-        "TWIN_SURVEY"
+        "MARKET_INTERVIEW"
     );
 
     private static final List<String> REQUIRED = List.of(
@@ -36,7 +35,7 @@ public class MarketingStrategySourceService {
 
     private static final List<String> OPTIONAL = List.of(
         "MARKET", "BUSINESS_MODEL", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS",
-        "FINANCE", "FINANCE_REPORT", "MARKET_INTERVIEW", "TWIN_SURVEY"
+        "FINANCE", "FINANCE_REPORT", "MARKET_INTERVIEW"
     );
 
     private final FinalReportService finalReports;

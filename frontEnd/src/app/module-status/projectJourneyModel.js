@@ -9,6 +9,7 @@ export const JOURNEY_STATUS = Object.freeze({
   ATTENTION: 'ATTENTION',
   STALE: 'STALE',
   COMPLETED: 'COMPLETED',
+  OPTIONAL: 'OPTIONAL',
 });
 
 export const JOURNEY_STATUS_VIEW = Object.freeze({
@@ -19,15 +20,16 @@ export const JOURNEY_STATUS_VIEW = Object.freeze({
   ATTENTION: { label: '확인 필요', tone: 'danger' },
   STALE: { label: '업데이트 필요', tone: 'warning' },
   COMPLETED: { label: '완료', tone: 'success' },
+  OPTIONAL: { label: '선택 기능', tone: 'neutral' },
 });
 
 export const PROJECT_JOURNEYS = Object.freeze([
   { id: 'planning', label: '1. 사업 기획', shortLabel: '사업 기획', moduleIds: ['idea', 'concepts'] },
   { id: 'validation', label: '2. 사업 검증', shortLabel: '사업 검증', moduleIds: ['market', 'businessModel', 'conceptRefinement'] },
-  { id: 'launch', label: '3. 출시 준비', shortLabel: '출시 준비', moduleIds: [], statusModuleIds: ['techOps', 'finance'] },
+  { id: 'launch', label: '3. 출시 준비', shortLabel: '출시 준비', moduleIds: [], optional: true },
   { id: 'interview', label: '4. 가상 인터뷰', shortLabel: '가상 인터뷰', moduleIds: ['marketInterview'] },
   { id: 'marketingStrategy', label: '5. 마케팅 전략', shortLabel: '마케팅 전략', moduleIds: ['marketing'] },
-  { id: 'finalReport', label: '6. 최종 보고서', shortLabel: '최종 보고서', moduleIds: [] },
+  { id: 'finalReport', label: '6. 최종 보고서', shortLabel: '최종 보고서', moduleIds: [], optional: true },
 ]);
 
 const PATH_TO_JOURNEY = Object.freeze({
@@ -49,6 +51,7 @@ export function getJourneyActionView(status) {
     [JOURNEY_STATUS.ATTENTION]: '확인하기',
     [JOURNEY_STATUS.STALE]: '업데이트하기',
     [JOURNEY_STATUS.COMPLETED]: '결과 보기',
+    [JOURNEY_STATUS.OPTIONAL]: '열기',
   })[status] ?? '확인하기';
 }
 
@@ -75,11 +78,11 @@ export function getJourneyByPath(pathname) {
     : PROJECT_JOURNEYS.find((journey) => journey.id === id);
 }
 
-export function getProjectJourneys(projectId, modules = [], finalReportStatus = JOURNEY_STATUS.NOT_STARTED) {
+export function getProjectJourneys(projectId, modules = []) {
   return PROJECT_JOURNEYS.map((journey) => {
     const sourceChildren = (journey.statusModuleIds ?? journey.moduleIds)
       .map((id) => modules.find((module) => module.id === id)).filter(Boolean);
-    const status = journey.id === 'finalReport' ? finalReportStatus : aggregateJourneyStatus(sourceChildren);
+    const status = journey.optional ? JOURNEY_STATUS.OPTIONAL : aggregateJourneyStatus(sourceChildren);
     const children = journey.id === 'validation' ? [{
       id: 'businessValidation', label: '사업성 검증', shortLabel: '사업성 검증',
       href: projectRoutes.businessValidation(projectId), status,
@@ -102,5 +105,6 @@ export function getJourneyEntryRoute(projectId, journey, children = []) {
 }
 
 export function getJourneyProgress(journeys = []) {
-  return { completed: journeys.filter((journey) => journey.status === JOURNEY_STATUS.COMPLETED).length, total: PROJECT_JOURNEYS.length };
+  const required = journeys.filter((journey) => journey.status !== JOURNEY_STATUS.OPTIONAL);
+  return { completed: required.filter((journey) => journey.status === JOURNEY_STATUS.COMPLETED).length, total: required.length };
 }

@@ -81,12 +81,38 @@ describe('MarketInterviewPage', () => {
     expect(client.post).not.toHaveBeenCalled();
   });
 
-  it('offers retry only for a current FAILED run', async () => {
-    const client = { get: vi.fn().mockResolvedValue({ data: current('FAILED', { failure: '잠시 후 다시 시도해 주세요.' }) }),
+  it('offers retry only when the backend allows it', async () => {
+    const client = { get: vi.fn().mockResolvedValue({ data: current('FAILED', { retryAllowed: true, restartAllowed: true, failure: '잠시 후 다시 시도해 주세요.' }) }),
       post: vi.fn().mockResolvedValue({ data: current('RUNNING', { attempt: 2 }) }) };
     renderPage(client);
     fireEvent.click(await screen.findByRole('button', { name: '실패한 실행 다시 시도' }));
     await waitFor(() => expect(client.post.mock.calls[0][0]).toMatch(/\/market-interview\/retry$/));
+  });
+
+  it('starts a new attempt-one run when retry is exhausted', async () => {
+    const exhausted = current('FAILED', { attempt: 3, requestedSampleSize: 40,
+      retryAllowed: false, restartAllowed: true });
+    const client = { get: vi.fn().mockResolvedValue({ data: exhausted }),
+      post: vi.fn().mockResolvedValue({ data: current('RUNNING', { attempt: 1, requestedSampleSize: 40 }) }) };
+    renderPage(client);
+    fireEvent.click(await screen.findByRole('button', { name: '현재 사업안으로 새 인터뷰 시작' }));
+    await waitFor(() => expect(client.post).toHaveBeenCalled());
+    expect(client.post.mock.calls[0][0]).toMatch(/\/market-interview$/);
+    expect(client.post.mock.calls[0][1]).toEqual({ sampleSize: 40 });
+  });
+
+  it('refreshes a raced 409 and explains the restart path', async () => {
+    const conflict = Object.assign(new Error('conflict'), { status: 409, code: 'JOB_RETRY_NOT_ALLOWED' });
+    const client = { get: vi.fn()
+      .mockResolvedValueOnce({ data: current('FAILED', { retryAllowed: true, restartAllowed: true }) })
+      .mockResolvedValueOnce({ data: current('FAILED', { attempt: 3, requestedSampleSize: 20,
+        retryAllowed: false, restartAllowed: true }) }),
+    post: vi.fn().mockRejectedValue(conflict) };
+    renderPage(client);
+    fireEvent.click(await screen.findByRole('button', { name: '실패한 실행 다시 시도' }));
+    expect(await screen.findByText(/재시도 횟수를 모두 사용했습니다/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '현재 사업안으로 새 인터뷰 시작' })).toBeInTheDocument();
+    expect(client.get).toHaveBeenCalledTimes(2);
   });
 
   it('recovers ambiguous POST with exactly one current GET and never resends the mutation', async () => {

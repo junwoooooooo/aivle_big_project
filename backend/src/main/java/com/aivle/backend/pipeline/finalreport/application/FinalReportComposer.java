@@ -35,6 +35,8 @@ public class FinalReportComposer {
             if (source.revision() != null) item.put("revision", source.revision());
             if (source.hash() != null) item.put("resultHash", source.hash());
             if (source.generatedAt() != null) item.put("generatedAt", source.generatedAt().toString());
+            JsonNode sourceMetadata = source.data().path("_sourceMetadata");
+            if (sourceMetadata.isObject()) item.set("metadata", sourceMetadata.deepCopy());
         });
         return manifest;
     }
@@ -59,14 +61,13 @@ public class FinalReportComposer {
         section(sections, "2", "현재 확정 사업안", sources, "CURRENT_CONCEPT");
         section(sections, "3", "사업성 검증", sources, "MARKET", "BUSINESS_MODEL");
         section(sections, "4", "시장 인터뷰", sources, "MARKET_INTERVIEW");
-        section(sections, "5", "트윈 패널 조사", sources, "TWIN_SURVEY");
-        section(sections, "6", "마케팅 실행", sources, "MARKETING", "MARKETING_ASSETS");
-        section(sections, "7", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
-        section(sections, "8", "주요 위험·근거·주의사항", sources, "MARKET", "MARKET_INTERVIEW",
-            "TWIN_SURVEY", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
-        section(sections, "9", "종합 판단 및 다음 행동", sources, "CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL",
-            "MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
-        report.put("caveat", "이 보고서는 현재 확정된 사업안과 각 단계의 현재 유효 결과를 종합한 의사결정 지원 자료입니다. 시장 인터뷰와 트윈 패널 조사는 AI 가상 참여자를 활용한 탐색·시뮬레이션이며 실제 소비자 조사 결과를 의미하지 않습니다. 실행하지 않은 단계의 내용은 추정하여 채우지 않습니다.");
+        section(sections, "5", "마케팅 실행", sources, "MARKETING", "MARKETING_ASSETS");
+        section(sections, "6", "출시 준비", sources, "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
+        section(sections, "7", "주요 위험·근거·주의사항", sources, "MARKET", "MARKET_INTERVIEW",
+            "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
+        section(sections, "8", "종합 판단 및 다음 행동", sources, "CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL",
+            "MARKET_INTERVIEW", "MARKETING", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE");
+        report.put("caveat", "이 보고서는 현재 확정된 사업안과 각 단계의 현재 유효 결과를 종합한 의사결정 지원 자료입니다. 시장 인터뷰는 AI 가상 참여자를 활용한 탐색이며 실제 소비자 조사 결과를 의미하지 않습니다. 실행하지 않은 단계의 내용은 추정하여 채우지 않습니다.");
         return report;
     }
 
@@ -92,7 +93,6 @@ public class FinalReportComposer {
     private String missingLabel(String type) {
         return switch (type) {
             case "MARKET_INTERVIEW" -> "아직 시장 인터뷰를 진행하지 않았습니다.";
-            case "TWIN_SURVEY" -> "트윈 패널 조사를 진행하지 않았습니다.";
             case "MARKETING", "MARKETING_ASSETS" -> "마케팅 콘텐츠가 아직 확정되지 않았습니다.";
             case "LAUNCH_TECHNOLOGY" -> "기술 준비 분석이 아직 없습니다.";
             case "LAUNCH_OPERATIONS" -> "운영 준비 분석이 아직 없습니다.";

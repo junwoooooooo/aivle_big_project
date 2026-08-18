@@ -25,8 +25,6 @@ import com.aivle.backend.pipeline.marketing.repository.MarketingSourceSnapshotRe
 import com.aivle.backend.pipeline.marketing.strategy.repository.MarketingStrategyReportRepository;
 import com.aivle.backend.pipeline.market.MarketResearchRun;
 import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
-import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
-import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRun;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
 import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse;
@@ -53,6 +51,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -63,10 +62,10 @@ import tools.jackson.databind.node.ObjectNode;
 @Transactional(readOnly = true)
 public class FinalReportService {
     private static final int MANIFEST_SCHEMA_VERSION = 2;
-    private static final List<String> OPTIONAL = List.of("MARKET_INTERVIEW", "TWIN_SURVEY", "MARKETING_STRATEGY",
+    private static final List<String> OPTIONAL = List.of("MARKET_INTERVIEW", "MARKETING_STRATEGY",
         "MARKETING", "MARKETING_ASSETS", "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
     private static final java.util.Set<String> STRATEGY_CONTEXT_TYPES = java.util.Set.of(
-        "CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL", "MARKET_INTERVIEW", "TWIN_SURVEY",
+        "CURRENT_CONCEPT", "MARKET", "BUSINESS_MODEL", "MARKET_INTERVIEW",
         "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE", "FINANCE_REPORT");
 
     private final ProjectRepository projects;
@@ -74,8 +73,6 @@ public class FinalReportService {
     private final BusinessValidationSessionRepository validationSessions;
     private final MarketResearchVersionRepository marketVersions;
     private final MarketInterviewRunRepository marketInterviews;
-    private final TwinSurveyVersionRepository twinVersions;
-    private final TwinSurveyRunRepository twinRuns;
     private final MarketingSourceSnapshotRepository marketingSources;
     private final MarketingContentRepository marketingContents;
     private final MarketingContentRevisionRepository marketingRevisions;
@@ -132,7 +129,7 @@ public class FinalReportService {
         return new FinalReportStatusView(state, snapshot == null ? null : snapshot.getReportVersion(),
             snapshot == null ? null : snapshot.getGeneratedAt(), state == State.STALE,
             active == null ? null : active.getId(),
-            current.blocking(), available, current.omitted());
+            current.blocking(), available, current.omitted(), sourceStates(current, projectId));
     }
 
     @Transactional
@@ -255,6 +252,7 @@ public class FinalReportService {
             response.canonicalInputHash(), "1.0");
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void publish(Long projectId, String taskRunId, String stage, String key,
             JobEvent.Status status, String code) {
         events.publish(new JobEventPublisher.Command(projectId, taskRunId, taskRunId, stage, key,
@@ -389,10 +387,10 @@ public class FinalReportService {
             if (!has(values, "BUSINESS_MODEL")) blocking.add("BUSINESS_MODEL");
         }
 
-        addMarketInterview(values, projectId, binding); addTwin(values, projectId, binding);
+        addMarketInterview(values, projectId, binding);
         addMarketing(values, projectId, binding);
-        addLaunch(values, projectId, binding, ModuleType.TECHNOLOGY, "LAUNCH_TECHNOLOGY");
-        addLaunch(values, projectId, binding, ModuleType.OPERATIONS, "LAUNCH_OPERATIONS");
+        addLaunch(values, projectId, ModuleType.TECHNOLOGY, "LAUNCH_TECHNOLOGY");
+        addLaunch(values, projectId, ModuleType.OPERATIONS, "LAUNCH_OPERATIONS");
         addFinance(values, projectId, binding);
         addMarketingStrategy(values, projectId);
         List<String> omitted = OPTIONAL.stream().filter(type -> !has(values, type)).toList();
@@ -410,37 +408,35 @@ public class FinalReportService {
                 run.getAttempt(), run.getInputHash(), instant(run.getCompletedAt()), json(run.getResultJson()))));
     }
 
-    private void addTwin(List<ReportSource> values, Long projectId, Binding binding) {
-        twinRuns.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
-            .filter(run -> run.getState() == com.aivle.backend.pipeline.market.TwinSurveyRun.State.SUCCEEDED
-                && run.getSourceMarketSeedSnapshotId().equals(binding.marketSeedSnapshotId())
-                && run.getSourcePortfolioSelectionId().equals(binding.selectionId())
-                && run.getSourceSelectionRevision() == binding.selectionRevision()
-                && run.getSourceBmPlanRevision() == binding.bmPlanRevision())
-            .flatMap(run -> twinVersions.findBySourceRunIdAndDeletedAtIsNull(run.getId()))
-            .ifPresent(version -> values.add(source("TWIN_SURVEY", String.valueOf(version.getId()), version.getVersionNumber(),
-                null, null, instant(version.getUpdatedAt()), json(version.getResultJson()))));
-    }
-
     private void addMarketing(List<ReportSource> values, Long projectId, Binding binding) {
         marketingSources
             .findBySourceMarketSeedSnapshotIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndProjectIdAndDeletedAtIsNull(
                 binding.marketSeedSnapshotId(), binding.selectionRevision(), binding.bmPlanRevision(), projectId)
             .filter(source -> Objects.equals(source.getPortfolioSelectionId(), binding.selectionId()))
-            .flatMap(source -> marketingContents
+            .map(source -> marketingContents
                 .findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByFinalizedAtDesc(
-                    projectId, source.getId(), MarketingContentStatus.FINALIZED))
-            .ifPresent(content -> marketingRevisions
-                .findByContentIdAndRevisionNumberAndDeletedAtIsNull(content.getId(), content.getFinalizedRevisionNumber())
+                    projectId, source.getId(), MarketingContentStatus.FINALIZED)
+                .orElseGet(() -> marketingContents
+                    .findFirstByProjectIdAndMarketingSourceSnapshotIdAndStatusAndDeletedAtIsNullOrderByCreatedAtDesc(
+                        projectId, source.getId(), MarketingContentStatus.COMPLETED).orElse(null)))
+            .filter(Objects::nonNull)
+            .ifPresent(content -> {
+                boolean draft = content.getStatus() == MarketingContentStatus.COMPLETED;
+                int revisionNumber = draft ? content.getCurrentRevisionNumber() : content.getFinalizedRevisionNumber();
+                marketingRevisions.findByContentIdAndRevisionNumberAndDeletedAtIsNull(content.getId(), revisionNumber)
                 .ifPresent(revision -> {
+                    JsonNode raw = json(revision.getResultJson());
+                    ObjectNode data = raw.isObject() ? (ObjectNode) raw.deepCopy() : mapper.createObjectNode().set("result", raw);
+                    data.putObject("_sourceMetadata").put("draft", draft).put("status", content.getStatus().name());
                     values.add(source("MARKETING", revision.getId(), null, revision.getRevisionNumber(), null,
-                        content.getFinalizedAt(), json(revision.getResultJson())));
+                        draft ? instant(content.getUpdatedAt()) : content.getFinalizedAt(), data));
                     ArrayNode assets = mapper.createArrayNode();
                     marketingAssets.findAllByContentIdAndDeletedAtIsNullOrderByCreatedAtAsc(content.getId())
                         .forEach(asset -> assets.addObject().put("artifactRef", asset.getArtifactRef()));
                     if (!assets.isEmpty()) values.add(source("MARKETING_ASSETS", content.getId(), null,
                         revision.getRevisionNumber(), null, content.getFinalizedAt(), assets));
-                }));
+                });
+            });
     }
 
     private void addMarketingStrategy(List<ReportSource> values, Long projectId) {
@@ -465,11 +461,10 @@ public class FinalReportService {
         return !expected.isEmpty() && expected.equals(actual);
     }
 
-    private void addLaunch(List<ReportSource> values, Long projectId, Binding binding,
-            ModuleType type, String sourceType) {
+    private void addLaunch(List<ReportSource> values, Long projectId, ModuleType type, String sourceType) {
         LaunchReadinessInputSnapshot input = launchInputs
             .findFirstByProjectIdAndModuleTypeAndCurrentTrueAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId, type)
-            .filter(value -> !value.isStale() && bound(value, binding)).orElse(null);
+            .filter(value -> !value.isStale()).orElse(null);
         if (input == null) return;
         launchReports.findFirstByProjectIdAndModuleTypeAndInputSnapshotIdAndDeletedAtIsNullOrderByCompletedAtDesc(
                 projectId, type, input.getId()).filter(report -> report.isCurrent() && !report.isStale())
@@ -483,19 +478,50 @@ public class FinalReportService {
     }
 
     private void addFinance(List<ReportSource> values, Long projectId, Binding binding) {
-        financeSnapshots
-            .findFirstByProjectIdAndSourceCurrentMarketSeedSnapshotIdAndSourceSelectionIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndDeletedAtIsNullOrderByFinalizedAtDesc(
-                projectId, binding.marketSeedSnapshotId(), binding.selectionId(), binding.selectionRevision(), binding.bmPlanRevision())
-            .ifPresent(snapshot -> {
+        var snapshot = financeSnapshots
+            .findFirstByProjectIdAndSourceModeAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId, "USER_DOCUMENT_INPUT")
+            .orElseGet(() -> financeSnapshots
+                .findFirstByProjectIdAndSourceCurrentMarketSeedSnapshotIdAndSourceSelectionIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndDeletedAtIsNullOrderByFinalizedAtDesc(
+                    projectId, binding.marketSeedSnapshotId(), binding.selectionId(), binding.selectionRevision(), binding.bmPlanRevision())
+                .orElse(null));
+        if (snapshot == null) return;
+        taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+            projectId, "FINANCIAL_ANALYSIS_REPORT", snapshot.getId()).flatMap(run -> taskResults.findByTaskRunId(run.getId()).stream()
+                .filter(result -> result.getValidationState() == TaskResultValidationState.ADOPTED).findFirst())
+            .ifPresent(result -> {
                 values.add(source("FINANCE", snapshot.getId(), null, null, snapshot.getSnapshotHash(),
                     snapshot.getFinalizedAt(), json(snapshot.getSnapshotJson())));
-                taskRuns.findFirstByProjectIdAndSubjectTypeAndSubjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
-                    projectId, "FINANCIAL_ANALYSIS_REPORT", snapshot.getId()).ifPresent(run ->
-                        taskResults.findByTaskRunId(run.getId()).stream()
-                            .filter(result -> result.getValidationState() == TaskResultValidationState.ADOPTED)
-                            .findFirst().ifPresent(result -> values.add(source("FINANCE_REPORT", result.getId(), null,
-                                null, result.getResultHash(), instant(result.getAdoptedAt()), json(result.getResultJson())))));
+                values.add(source("FINANCE_REPORT", result.getId(), null, null, result.getResultHash(),
+                    instant(result.getAdoptedAt()), json(result.getResultJson())));
             });
+    }
+
+    private java.util.Map<String, String> sourceStates(SourceSet current, Long projectId) {
+        java.util.Map<String, String> states = new java.util.LinkedHashMap<>();
+        for (String type : List.of("MARKET_INTERVIEW", "MARKETING_STRATEGY", "MARKETING",
+                "LAUNCH_TECHNOLOGY", "LAUNCH_OPERATIONS", "FINANCE")) states.put(type, "NOT_RUN");
+        current.sources().forEach(source -> {
+            if (!states.containsKey(source.type())) return;
+            if ("MARKETING".equals(source.type()) && source.data().path("_sourceMetadata").path("draft").asBoolean())
+                states.put(source.type(), "AVAILABLE_DRAFT");
+            else if ("MARKETING".equals(source.type())) states.put(source.type(), "AVAILABLE_FINAL");
+            else states.put(source.type(), "AVAILABLE");
+        });
+        if (!has(current.sources(), "MARKET_INTERVIEW")) marketInterviews
+            .findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
+            .ifPresent(run -> states.put("MARKET_INTERVIEW", switch (run.getState()) {
+                case FAILED -> "FAILED"; case RUNNING -> "IN_PROGRESS"; default -> "CURRENT_RESULT_UNAVAILABLE";
+            }));
+        if (!has(current.sources(), "MARKETING")) marketingContents
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByCreatedAtDesc(projectId)
+            .ifPresent(content -> states.put("MARKETING", switch (content.getStatus()) {
+                case FAILED -> "FAILED"; case QUEUED, RUNNING -> "IN_PROGRESS";
+                case COMPLETED -> "CURRENT_RESULT_UNAVAILABLE"; default -> "CURRENT_RESULT_UNAVAILABLE";
+            }));
+        if (!has(current.sources(), "FINANCE") && financeSnapshots
+            .findFirstByProjectIdAndDeletedAtIsNullOrderByFinalizedAtDesc(projectId).isPresent())
+            states.put("FINANCE", "CURRENT_RESULT_UNAVAILABLE");
+        return java.util.Map.copyOf(states);
     }
 
     private SourceSet sourceSet(List<ReportSource> sources, JsonNode bindingJson, List<String> blocking,

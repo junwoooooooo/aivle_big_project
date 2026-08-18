@@ -33,14 +33,15 @@ export function getProjectPresentationView(state) {
 }
 
 export function deriveProjectPresentationState(journeys = []) {
-  if (journeys.length > 0 && journeys.every(({ status }) => status === JOURNEY_STATUS.COMPLETED)) {
+  const required = journeys.filter(({ status }) => status !== JOURNEY_STATUS.OPTIONAL);
+  if (required.length > 0 && required.every(({ status }) => status === JOURNEY_STATUS.COMPLETED)) {
     return PROJECT_PRESENTATION_STATE.COMPLETED;
   }
-  if (journeys.some((journey) => ATTENTION_STATES.has(journey.status)
+  if (required.some((journey) => ATTENTION_STATES.has(journey.status)
     && (journey.status !== JOURNEY_STATUS.NEEDS_INPUT || hasJourneyStarted(journey)))) {
     return PROJECT_PRESENTATION_STATE.NEEDS_ATTENTION;
   }
-  if (journeys.some(({ status }) => [JOURNEY_STATUS.IN_PROGRESS, JOURNEY_STATUS.COMPLETED].includes(status))) {
+  if (required.some(({ status }) => [JOURNEY_STATUS.IN_PROGRESS, JOURNEY_STATUS.COMPLETED].includes(status))) {
     return PROJECT_PRESENTATION_STATE.IN_PROGRESS;
   }
   return PROJECT_PRESENTATION_STATE.NOT_STARTED;

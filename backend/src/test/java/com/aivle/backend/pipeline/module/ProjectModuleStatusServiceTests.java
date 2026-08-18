@@ -111,7 +111,7 @@ class ProjectModuleStatusServiceTests {
             PipelineModuleType.MARKET_ANALYSIS, PipelineModuleType.BUSINESS_MODEL,
             PipelineModuleType.CONCEPT_REFINEMENT, PipelineModuleType.TECH_OPS,
             PipelineModuleType.FINANCE, PipelineModuleType.LAUNCH_READINESS, PipelineModuleType.MARKET_INTERVIEW,
-            PipelineModuleType.TWIN_SURVEY, PipelineModuleType.MARKETING);
+            PipelineModuleType.MARKETING);
         assertThat(modules.get(0).status()).isEqualTo(PipelineModuleStatus.COMPLETED);
         assertThat(modules.get(0).confirmedSnapshotId()).isEqualTo("brief-snapshot");
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.RUNNING);
@@ -271,7 +271,7 @@ class ProjectModuleStatusServiceTests {
     }
 
     @Test
-    void overlaysTwinDraftOnlyWhileActiveAndKeepsUnderlyingReadyOnFailure() {
+    void omitsLegacyTwinSurveyFromUserModuleStatus() {
         when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L))
             .thenReturn(Optional.of(mock(Project.class)));
         ConceptSelection selection = mock(ConceptSelection.class);
@@ -282,39 +282,9 @@ class ProjectModuleStatusServiceTests {
             .thenReturn(Optional.of(selection));
         when(snapshots.findBySelectionIdAndProjectIdAndDeletedAtIsNull(13L, 41L))
             .thenReturn(Optional.of(seed));
-        TaskRun draft = mock(TaskRun.class);
-        when(draft.getId()).thenReturn("twin-draft-task");
-        when(draft.getSubjectType()).thenReturn("TWIN_STIMULUS_DRAFT");
-        when(draft.getSubjectId()).thenReturn("41");
-        when(draft.getState()).thenReturn(TaskRunState.RUNNING);
-        when(taskRuns.findFirstByProjectIdAndTaskTypeInAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
-            41L, List.of(TaskType.TWIN_STIMULUS_DRAFT))).thenReturn(Optional.of(draft));
-
-        var twin = service.findAll(7L, 41L).stream()
-            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
-        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.RUNNING);
-        assertThat(twin.activeTaskRunId()).isEqualTo("twin-draft-task");
-
-        var surveyRun = mock(com.aivle.backend.pipeline.market.TwinSurveyRun.class);
-        TaskRun surveyTask = mock(TaskRun.class);
-        when(surveyRun.getTaskRun()).thenReturn(surveyTask);
-        when(surveyRun.getSourceMarketSeedSnapshotId()).thenReturn("market-seed-1");
-        when(surveyTask.getId()).thenReturn("twin-survey-task");
-        when(surveyTask.getState()).thenReturn(TaskRunState.RUNNING);
-        when(twinRuns.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
-            .thenReturn(Optional.of(surveyRun));
-        twin = service.findAll(7L, 41L).stream()
-            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
-        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.RUNNING);
-        assertThat(twin.activeTaskRunId()).isEqualTo("twin-survey-task");
-
-        when(twinRuns.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
-            .thenReturn(Optional.empty());
-        when(draft.getState()).thenReturn(TaskRunState.FAILED);
-        twin = service.findAll(7L, 41L).stream()
-            .filter(item -> item.module() == PipelineModuleType.TWIN_SURVEY).findFirst().orElseThrow();
-        assertThat(twin.status()).isEqualTo(PipelineModuleStatus.READY);
-        assertThat(twin.activeTaskRunId()).isNull();
+        assertThat(service.findAll(7L, 41L)).extracting(ProjectModuleStatusResponse::module)
+            .doesNotContain(PipelineModuleType.TWIN_SURVEY);
+        verify(twinRuns, never()).findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L);
     }
 
     @Test
@@ -349,7 +319,7 @@ class ProjectModuleStatusServiceTests {
         when(visualTask.getState()).thenReturn(TaskRunState.FAILED);
 
         PipelineModuleStatus status = ReflectionTestUtils.invokeMethod(
-            service, "marketingStatus", content, "source-1", visualTask);
+            service, "marketingStatus", true, content, "source-1", visualTask, null);
 
         assertThat(status).isEqualTo(PipelineModuleStatus.COMPLETED);
     }

@@ -1,12 +1,16 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { ApiClientProvider } from '../../shared/api/ApiClientProvider.jsx';
 import FinalReportPage from './FinalReportPage.jsx';
 
 const status = { state: 'READY', currentVersion: null, generatedAt: null, stale: false,
   taskRunId: null, blockingSources: [], availableSources: ['PROJECT', 'CURRENT_CONCEPT',
-    'BUSINESS_VALIDATION_SESSION', 'MARKET', 'BUSINESS_MODEL', 'MARKETING_STRATEGY'], omittedSources: [] };
+    'BUSINESS_VALIDATION_SESSION', 'MARKET', 'BUSINESS_MODEL', 'MARKETING_STRATEGY', 'MARKETING',
+    'LAUNCH_TECHNOLOGY'], omittedSources: [], sourceStates: { MARKET_INTERVIEW: 'FAILED',
+      MARKETING_STRATEGY: 'AVAILABLE', MARKETING: 'AVAILABLE_DRAFT', LAUNCH_TECHNOLOGY: 'AVAILABLE',
+      LAUNCH_OPERATIONS: 'NOT_RUN', FINANCE: 'CURRENT_RESULT_UNAVAILABLE' } };
 const proposal = { contract: 'final-business-proposal-result-v1', cover: { documentName: '사업기획서',
   businessName: '자전거 운영 분석', createdOn: '2026-08-18', version: 'v1', documentStatus: '검토용', approvalPlaceholder: '결재 / 검토' },
 executiveDecisionSummary: { businessDefinition: '자전거 운영 데이터를 분석합니다.', purpose: '운영 효율 개선',
@@ -33,8 +37,19 @@ describe('Final business proposal workspace', () => {
     expect(await screen.findByRole('heading', { name: '사업기획서 작성' })).toBeInTheDocument();
     expect(screen.getByText('현재 확정 사업안')).toBeInTheDocument();
     expect(screen.getByText('마케팅 전략')).toBeInTheDocument();
+    expect(screen.getByText('초안 있음 · 검토 전')).toBeInTheDocument();
+    expect(screen.getByText('최근 실행 실패 · 포함할 결과 없음')).toBeInTheDocument();
+    expect(screen.getByText('실행 안 함')).toBeInTheDocument();
+    expect(screen.queryByText(/트윈 패널/)).not.toBeInTheDocument();
     expect(client.get).toHaveBeenCalledTimes(1);
     expect(client.get.mock.calls[0][0]).toMatch(/\/status$/);
+  });
+
+  it('page-level 회색 직사각형 배경을 만들지 않는다', () => {
+    const css = readFileSync('src/features/final-report/final-report.css', 'utf8');
+    const pageRule = css.match(/\.final-report-page\{[^}]+\}/)?.[0] ?? '';
+    expect(pageRule).not.toContain('background:#edf1f0');
+    expect(pageRule).not.toContain('margin:-.5rem');
   });
 
   it('선택 source를 generation request에 전달한다', async () => {

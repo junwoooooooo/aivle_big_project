@@ -166,18 +166,21 @@ public class MarketInterviewService {
             result, failure, run.getFailureCode(), run.getTaskRun().getId(),
             preview == null ? null : preview.path("concept"),
             preview == null ? null : preview.path("targeting"),
-            run.getStartedAt(), run.getCompletedAt());
+            run.getStartedAt(), run.getCompletedAt(),
+            run.getState() == MarketInterviewRun.State.FAILED && !stale && run.getAttempt() < MAX_ATTEMPTS,
+            run.getState() == MarketInterviewRun.State.FAILED && preview != null);
     }
 
     public record CurrentView(String state, boolean stale, String sourceMarketSeedSnapshotId,
             Integer sourceSelectionRevision, Integer attempt, Integer requestedSampleSize,
             JsonNode result, String failure, String failureCode, String taskRunId,
             JsonNode concept, JsonNode targetingPreview,
-            LocalDateTime startedAt, LocalDateTime completedAt) {
+            LocalDateTime startedAt, LocalDateTime completedAt,
+            boolean retryAllowed, boolean restartAllowed) {
         static CurrentView notStarted(JsonNode preview) {
             return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null,
                 preview == null ? null : preview.path("concept"),
-                preview == null ? null : preview.path("targeting"), null, null);
+                preview == null ? null : preview.path("targeting"), null, null, false, false);
         }
     }
 }

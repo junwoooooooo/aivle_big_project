@@ -26,4 +26,12 @@ describe('project presentation', () => {
     expect(deriveProjectPresentationState(Array.from({ length: 6 }, () => ({ status: JOURNEY_STATUS.COMPLETED }))))
       .toBe('COMPLETED');
   });
+
+  it('출시 준비와 최종 보고서 선택 기능은 프로젝트 완료 판정에 영향을 주지 않는다', () => {
+    expect(deriveProjectPresentationState([
+      { status: JOURNEY_STATUS.COMPLETED },
+      { status: JOURNEY_STATUS.OPTIONAL },
+      { status: JOURNEY_STATUS.OPTIONAL },
+    ])).toBe('COMPLETED');
+  });
 });
