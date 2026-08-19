@@ -12,7 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-@Component
+@Component("fullMarketInterviewInputFactory")
 public class MarketInterviewInputFactory {
     private static final Set<String> BOARD_FIELDS = Set.of(
         "conceptName", "targetUsers", "problemScenario", "featureSet", "differentiators", "priceKrw");
