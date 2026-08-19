@@ -69,11 +69,30 @@ class MarketInterviewContractTests {
         ((ObjectNode) value.path("comprehension")).put("accurate", 19);
         ((ObjectNode) value.path("differentiation")).put("different", 19);
         ObjectNode saturation = (ObjectNode) value.path("saturation");
-        saturation.put("participantCount", 19).put("codedParticipantCount", 19).put("alternativeSum", 19);
+        value.put("usableInterviewCount",19).put("codedInterviewCount",19).put("codingFailureCount",0);
+        saturation.put("participantCount", 19).put("codedParticipantCount", 19)
+            .put("usableInterviewCount",19).put("codedInterviewCount",19).put("codingFailureCount",0)
+            .put("alternativeSum", 19);
         ((ObjectNode) saturation.path("maxMentionByAxis")).put("CONCERN", 19);
         ((ArrayNode) value.path("respondentFailures")).addObject().put("participantId", "R020")
             .put("group", "COMPARISON").put("attempts", 1).put("code", "PERMANENT_PROVIDER_FAILURE");
         assertThatCode(() -> MarketInterviewContract.validate(value)).doesNotThrowAnyException();
+    }
+
+    @Test void twentyUsableWithNineteenCodedStillSucceeds() {
+        ObjectNode value=valid(); ObjectNode last=(ObjectNode)value.path("codingTrace").path(19);
+        ((ArrayNode)last.path("themeTitles")).removeAll(); ((ArrayNode)last.path("themeEvidence")).removeAll();
+        last.put("classificationStatus","UNCLASSIFIED").put("comprehension","unclassified")
+            .put("differentiation","unclassified").put("alternativeLabel","");
+        ObjectNode theme=(ObjectNode)value.path("themes").path(0);((ArrayNode)theme.path("participantIds")).remove(19);
+        theme.put("mentionCount",19).put("targetCount",16).put("nonTargetCount",3);
+        ((ObjectNode)value.path("comprehension")).put("accurate",19).put("unclassified",1);
+        ((ObjectNode)value.path("differentiation")).put("different",19).put("unclassified",1);
+        value.put("codedInterviewCount",19).put("codingFailureCount",1);
+        ObjectNode saturation=(ObjectNode)value.path("saturation");
+        saturation.put("codedParticipantCount",19).put("codedInterviewCount",19).put("codingFailureCount",1);
+        ((ObjectNode)saturation.path("maxMentionByAxis")).put("CONCERN",19);
+        assertThatCode(()->MarketInterviewContract.validate(value)).doesNotThrowAnyException();
     }
 
     @Test void usableSampleMustMeetRequestedSampleMinimum() {
@@ -120,9 +139,13 @@ class MarketInterviewContractTests {
         int nonTargetCount = usable - targetCount;
         ObjectNode root = mapper.createObjectNode();
         root.put("contract", "market-interview-result-v2").put("schemaVersion", "2.0").put("synthetic", true);
-        root.putObject("source").put("marketSeedSnapshotId", "seed-1").put("selectionId", 31)
+        root.putObject("source").put("conceptRefinementFinalId",17).put("marketSeedSnapshotId", "seed-1").put("selectionId", 31)
             .put("selectionRevision", 4).put("marketSeedSnapshotHash", "sha256:" + "a".repeat(64))
             .put("bmPlanRevision", 3);
+        root.putObject("conceptBoard").put("conceptName","예약 도우미").put("targetUsers","서울 매장")
+            .put("problemScenario","예약 누락").putArray("featureSet").add("예약 확인");
+        ((ObjectNode)root.path("conceptBoard")).put("differentiators","누락 방지").put("priceKrw",9900);
+        root.put("usableInterviewCount",usable).put("codedInterviewCount",usable).put("codingFailureCount",0);
         ObjectNode targeting = root.putObject("targeting");
         ObjectNode criteria = targeting.putObject("criteria");
         criteria.put("ageMin", 0).put("ageMax", 0); criteria.putArray("genders");
@@ -131,7 +154,8 @@ class MarketInterviewContractTests {
         criteria.putArray("jobKeywords"); criteria.put("hasChildren", 0); criteria.putArray("householdRoles");
         targeting.put("criteriaText", "서울 조건 교집합 80명").put("requestedSampleSize", requested)
             .put("drawnSampleSize", requested).put("attemptedCount", requested).put("usableCount", usable)
-            .put("failedCount", requested - usable).put("targetCount", targetCount)
+            .put("failedCount", requested - usable).put("targetRequested", (requested * 4 + 4) / 5)
+            .put("targetCount", targetCount)
             .put("nonTargetCount", nonTargetCount)
             .put("proxyCount", 0).put("exploratoryCount", 0)
             .put("representationStatus", "REPRESENTABLE_TARGET")
@@ -177,7 +201,8 @@ class MarketInterviewContractTests {
             coded.putArray("themeEvidence").addObject().put("themeTitle", "가격 조건")
                 .put("answerField", "concern").put("quote", "개별 응답입니다.");
             coded.put("comprehension", "accurate")
-                .put("differentiation", "unclear").put("alternativeLabel", "수기").put("group", group);
+                .put("differentiation", "unclear").put("alternativeLabel", "수기").put("group", group)
+                .put("classificationStatus","CODED");
         }
         ArrayNode failures = root.putArray("respondentFailures");
         for (int i = usable + 1; i <= requested; i++) {
@@ -185,7 +210,9 @@ class MarketInterviewContractTests {
                 .put("attempts", 1).put("code", "PERMANENT_PROVIDER_FAILURE");
         }
         ObjectNode saturation = root.putObject("saturation");
-        saturation.put("participantCount", usable).put("codedParticipantCount", usable).put("themeCount", 1);
+        saturation.put("participantCount", usable).put("codedParticipantCount", usable)
+            .put("usableInterviewCount",usable).put("codedInterviewCount",usable).put("codingFailureCount",0)
+            .put("themeCount", 1);
         axisMap(saturation.putObject("axisLabelCounts"), 0); axisMap(saturation.putObject("maxMentionByAxis"), 0);
         ((ObjectNode) saturation.path("axisLabelCounts")).put("CONCERN", 1);
         ((ObjectNode) saturation.path("maxMentionByAxis")).put("CONCERN", usable);
@@ -196,7 +223,7 @@ class MarketInterviewContractTests {
     }
 
     private void summary(ObjectNode node, String first, String second, String third, int total) {
-        node.put(first, total).put(second, 0).put(third, 0);
+        node.put(first, total).put(second, 0).put(third, 0).put("unclassified",0);
     }
     private void axisMap(ObjectNode node, int value) {
         for (String axis : List.of("LIKE", "CONCERN", "DIFFERENTIATION", "USAGE_SCENE", "BARRIER", "SUGGESTION"))

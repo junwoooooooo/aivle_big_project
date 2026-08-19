@@ -17,8 +17,11 @@ def request_payload(sample_size=20):
     return {
         "contract": "market-interview-input-v2", "schemaVersion": "2.0", "synthetic": True,
         "sampleSize": sample_size,
-        "source": {"marketSeedSnapshotId": "seed-1", "selectionId": 31, "selectionRevision": 4,
+        "source": {"conceptRefinementFinalId": 17, "marketSeedSnapshotId": "seed-1", "selectionId": 31, "selectionRevision": 4,
                    "marketSeedSnapshotHash": "sha256:" + "a" * 64, "bmPlanRevision": 3},
+        "conceptBoard": {"conceptName": "예약 도우미", "targetUsers": "서울 소규모 매장",
+                         "problemScenario": "예약 누락으로 반복 업무가 생긴다",
+                         "featureSet": ["예약 확인"], "differentiators": "예약 누락 방지", "priceKrw": 9900},
         "selectedConcept": {"identity": {"name": "예약 도우미", "targetUsers": "서울 소규모 매장"},
                             "solution": {"featureSet": ["예약 확인"]}},
         "validatedHypotheses": {}, "businessModel": {"plan": {}, "constraints": {}},
@@ -143,6 +146,7 @@ def test_targeting_uses_problem_context_and_actual_bank_taxonomy(monkeypatch):
 
     payload = request_payload()
     payload["selectedConcept"]["solution"]["problemScenario"] = "예약 누락으로 반복 업무가 생긴다"
+    payload["conceptBoard"]["problemScenario"] = "예약 누락으로 반복 업무가 생긴다"
     monkeypatch.setattr(deep_engine, "load_bank", lambda: bank())
     monkeypatch.setattr(service, "execute_market_interview_prompt", tracked)
 
@@ -569,9 +573,17 @@ def test_current_bicycle_concept_board_preserves_semantic_nouns():
                      "solutionMechanism": "AI 카메라로 자전거 주차 상태를 분석한다",
                      "featureSet": ["자전거 상태 모니터링"]},
     }
+    payload["conceptBoard"] = {
+        "conceptName": "스마트 킥포인트 - 데이터 분석 서비스",
+        "targetUsers": "자전거 대여 운영 조직 · 지자체",
+        "problemScenario": "방치된 공유 자전거의 회수와 재배치가 늦다",
+        "featureSet": ["자전거 상태 모니터링"],
+        "differentiators": "AI 카메라 데이터 분석", "priceKrw": 9900,
+    }
     board = concept_board(MarketInterviewInput.model_validate(payload))
     assert "스마트 킥포인트" in board
-    assert "자전거 관리" in board and "AI 카메라" in board
+    assert payload["conceptBoard"]["problemScenario"] in board
+    assert payload["conceptBoard"]["differentiators"] in board
     assert "이름 미정" not in board
 
 

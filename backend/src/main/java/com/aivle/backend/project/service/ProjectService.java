@@ -95,7 +95,7 @@ public class ProjectService {
             journey("사업 검증", presentationStatuses, PipelineModuleType.MARKET_ANALYSIS,
                 PipelineModuleType.BUSINESS_MODEL, PipelineModuleType.CONCEPT_REFINEMENT),
             journey("출시 준비", presentationStatuses),
-            journey("가상 인터뷰", presentationStatuses, PipelineModuleType.MARKET_INTERVIEW),
+            journey("시장 인터뷰", presentationStatuses, PipelineModuleType.MARKET_INTERVIEW),
             journey("마케팅 전략", presentationStatuses, PipelineModuleType.MARKETING));
         List<JourneySummary> progressJourneys = journeys.stream()
             .filter(value -> !"출시 준비".equals(value.label())).toList();

@@ -2,8 +2,7 @@ package com.aivle.backend.pipeline.marketinterview;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver.Source;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewSourceResolver.Source;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskType;
@@ -22,7 +21,7 @@ public class MarketInterviewService {
     static final int MAX_ATTEMPTS = 3;
 
     private final ProjectRepository projects;
-    private final CurrentConceptSourceResolver sources;
+    private final MarketInterviewSourceResolver sources;
     private final MarketInterviewInputFactory inputs;
     private final MarketInterviewRunRepository runs;
     private final TaskRunService taskRuns;
@@ -30,7 +29,7 @@ public class MarketInterviewService {
     private final ObjectMapper mapper;
 
     public MarketInterviewService(ProjectRepository projects,
-            CurrentConceptSourceResolver sources,
+            MarketInterviewSourceResolver sources,
             MarketInterviewInputFactory inputs, MarketInterviewRunRepository runs,
             TaskRunService taskRuns, CanonicalInputHasher hasher, ObjectMapper mapper) {
         this.projects = projects; this.sources = sources;
@@ -39,15 +38,29 @@ public class MarketInterviewService {
 
     @Transactional
     public CurrentView start(Long ownerId, Long projectId, String idempotencyKey, String correlationId) {
-        return start(ownerId, projectId, idempotencyKey, correlationId, 20);
+        Source source = currentSource(projectId);
+        return start(ownerId, projectId, idempotencyKey, correlationId, inputs.board(source), 20);
     }
 
     @Transactional
     public CurrentView start(Long ownerId, Long projectId, String idempotencyKey, String correlationId,
             int sampleSize) {
+        Source source = currentSource(projectId);
+        return start(ownerId, projectId, idempotencyKey, correlationId, inputs.board(source), sampleSize);
+    }
+
+    @Transactional
+    public CurrentView start(Long ownerId, Long projectId, String idempotencyKey, String correlationId,
+            JsonNode conceptBoard, int sampleSize) {
         Project project = owned(ownerId, projectId);
         Source source = currentSource(projectId);
-        return create(ownerId, project, source, sampleSize, 1, idempotencyKey, correlationId);
+        return create(ownerId, project, source, conceptBoard, sampleSize, 1, idempotencyKey, correlationId);
+    }
+
+    @Transactional(readOnly = true)
+    public JsonNode board(Long ownerId, Long projectId) {
+        owned(ownerId, projectId);
+        return inputs.board(currentSource(projectId));
     }
 
     @Transactional(noRollbackFor = BusinessException.class)
@@ -69,14 +82,16 @@ public class MarketInterviewService {
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
                 "이전 형식의 시장 인터뷰입니다. 현재 사업안으로 새 인터뷰를 시작해 주세요.");
         }
-        String rebuilt = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
+        JsonNode previousInput = mapper.readTree(previous.getTaskRun().getInputSnapshot());
+        JsonNode conceptBoard = previousInput.path("conceptBoard");
+        String rebuilt = inputs.build(source, conceptBoard, sampleSize);
         String rebuiltHash = hasher.hash(TaskType.MARKET_INTERVIEW, TASK_SCHEMA_VERSION, "ko-KR", rebuilt);
         if (!previous.getInputHash().equals(rebuiltHash)) {
             previous.markStale(previous.getResultJson(), LocalDateTime.now());
             throw new BusinessException(ErrorCode.MODULE_INPUT_STALE,
                 "시장 인터뷰 입력 기준이 변경되었습니다.");
         }
-        return create(ownerId, project, source, sampleSize, previous.getAttempt() + 1,
+        return create(ownerId, project, source, conceptBoard, sampleSize, previous.getAttempt() + 1,
             idempotencyKey, correlationId);
     }
 
@@ -86,7 +101,7 @@ public class MarketInterviewService {
         MarketInterviewRun run = runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(projectId)
             .orElse(null);
         Source source = currentSourceOrNull(projectId);
-        JsonNode preview = source == null ? null : inputs.preview(source.seed(), source.selection(), source.bm());
+        JsonNode preview = source == null ? null : inputs.preview(source);
         if (run == null) return CurrentView.notStarted(preview);
         boolean stale = source == null || !bound(run, source);
         if (stale && run.getState() != MarketInterviewRun.State.STALE) {
@@ -114,24 +129,25 @@ public class MarketInterviewService {
         });
     }
 
-    private CurrentView create(Long ownerId, Project project, Source source, int sampleSize, int attempt,
+    private CurrentView create(Long ownerId, Project project, Source source, JsonNode conceptBoard,
+            int sampleSize, int attempt,
             String idempotencyKey, String correlationId) {
-        String input = inputs.build(source.seed(), source.selection(), source.bm(), sampleSize);
+        String input = inputs.build(source, conceptBoard, sampleSize);
         String inputHash = hasher.hash(TaskType.MARKET_INTERVIEW, TASK_SCHEMA_VERSION, "ko-KR", input);
         var created = taskRuns.createWithDisposition(ownerId, project.getId(), TaskType.MARKET_INTERVIEW,
             "MARKET_INTERVIEW", String.valueOf(project.getId()), input, inputHash,
             idempotencyKey, correlationId, 1);
         MarketInterviewRun domain = created.createdNew()
-            ? runs.save(MarketInterviewRun.create(project, created.taskRun(), source.seed().getId(),
+            ? runs.save(MarketInterviewRun.create(project, created.taskRun(), source.refinementFinal().getId(), source.seed().getId(),
                 source.selection().getId(), source.selection().getHypothesisRevision(), source.bm().revision(),
                 sampleSize, attempt, idempotencyKey, inputHash, LocalDateTime.now()))
             : runs.findByTaskRunIdAndDeletedAtIsNull(created.taskRun().getId())
                 .orElseThrow(() -> new IllegalStateException("Market interview TaskRun replay lineage missing"));
-        return view(domain, false, inputs.preview(source.seed(), source.selection(), source.bm()));
+        return view(domain, false, inputs.preview(source));
     }
 
     private Source currentSource(Long projectId) {
-        return sources.require(projectId, "현재 확정된 사업안으로 시장 인터뷰를 시작할 수 없습니다.");
+        return sources.require(projectId);
     }
 
     private Source currentSourceOrNull(Long projectId) {
@@ -139,7 +155,8 @@ public class MarketInterviewService {
     }
 
     private boolean bound(MarketInterviewRun run, Source source) {
-        return run.getSourceMarketSeedSnapshotId().equals(source.seed().getId())
+        return java.util.Objects.equals(run.getSourceConceptRefinementFinalId(), source.refinementFinal().getId())
+            && run.getSourceMarketSeedSnapshotId().equals(source.seed().getId())
             && run.getSourceSelectionId().equals(source.selection().getId())
             && run.getSourceSelectionRevision() == source.selection().getHypothesisRevision()
             && run.getSourceBmPlanRevision() == source.bm().revision();
@@ -161,26 +178,26 @@ public class MarketInterviewService {
             ? "응답 코딩 근거를 확인하는 단계에서 자동 재시도 후에도 결과 형식이 맞지 않았습니다. 새 실행으로 다시 시도해 주세요."
             : "시장 인터뷰를 완료하지 못했습니다. 실패한 단계를 확인한 뒤 다시 시도해 주세요.";
         return new CurrentView(run.getState().name(), stale,
-            run.getSourceMarketSeedSnapshotId(), run.getSourceSelectionRevision(), run.getAttempt(),
+            run.getSourceConceptRefinementFinalId(), run.getSourceMarketSeedSnapshotId(),
+            run.getSourceSelectionRevision(), run.getAttempt(),
             run.getRequestedSampleSize(),
             result, failure, run.getFailureCode(), run.getTaskRun().getId(),
-            preview == null ? null : preview.path("concept"),
-            preview == null ? null : preview.path("targeting"),
+            preview == null ? null : preview.path("conceptBoard"),
             run.getStartedAt(), run.getCompletedAt(),
             run.getState() == MarketInterviewRun.State.FAILED && !stale && run.getAttempt() < MAX_ATTEMPTS,
             run.getState() == MarketInterviewRun.State.FAILED && preview != null);
     }
 
-    public record CurrentView(String state, boolean stale, String sourceMarketSeedSnapshotId,
+    public record CurrentView(String state, boolean stale, Long sourceConceptRefinementFinalId,
+            String sourceMarketSeedSnapshotId,
             Integer sourceSelectionRevision, Integer attempt, Integer requestedSampleSize,
             JsonNode result, String failure, String failureCode, String taskRunId,
-            JsonNode concept, JsonNode targetingPreview,
+            JsonNode conceptBoard,
             LocalDateTime startedAt, LocalDateTime completedAt,
             boolean retryAllowed, boolean restartAllowed) {
         static CurrentView notStarted(JsonNode preview) {
-            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null,
-                preview == null ? null : preview.path("concept"),
-                preview == null ? null : preview.path("targeting"), null, null, false, false);
+            return new CurrentView("NOT_STARTED", false, null, null, null, null, null, null, null, null, null,
+                preview == null ? null : preview.path("conceptBoard"), null, null, false, false);
         }
     }
 }

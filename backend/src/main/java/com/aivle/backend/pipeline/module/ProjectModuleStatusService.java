@@ -32,6 +32,7 @@ import com.aivle.backend.pipeline.module.ProjectModuleStatusResponse.NextAction;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementRound;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementRoundRepository;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewSourceResolver;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementService;
 import com.aivle.backend.pipeline.selection.repository.ConceptSelectionRepository;
 import com.aivle.backend.pipeline.techops.repository.TechOpsInputPreparationRepository;
@@ -75,6 +76,7 @@ public class ProjectModuleStatusService {
     private final BusinessValidationCoordinator businessValidations;
     private final ConceptRefinementService conceptRefinements;
     private final ConceptRefinementRoundRepository conceptRefinementRounds;
+    private final MarketInterviewSourceResolver marketInterviewSources;
 
     public List<ProjectModuleStatusResponse> findAll(Long userId, Long projectId) {
         projectRepository.findByIdAndOwnerIdAndDeletedAtIsNull(projectId, userId)
@@ -184,11 +186,14 @@ public class ProjectModuleStatusService {
                 ? PipelineModuleStatus.READY : PipelineModuleStatus.NOT_READY;
         TaskRun activeRefinementTask = currentRefinementCycle
             ? activeRefinementTask(refinementRound) : null;
-        boolean interviewStale = interviewRun != null && (selectedSnapshot == null || portfolioSelection == null
-            || !selectedSnapshot.getId().equals(interviewRun.getSourceMarketSeedSnapshotId())
-            || !portfolioSelection.getId().equals(interviewRun.getSourceSelectionId())
-            || portfolioSelection.getHypothesisRevision() != interviewRun.getSourceSelectionRevision());
-        PipelineModuleStatus interviewStatus = selectedSnapshot == null ? PipelineModuleStatus.NOT_READY
+        var interviewSource = marketInterviewSources.currentOrNull(projectId);
+        boolean interviewStale = interviewRun != null && (interviewSource == null
+            || !java.util.Objects.equals(interviewSource.refinementFinal().getId(), interviewRun.getSourceConceptRefinementFinalId())
+            || !interviewSource.seed().getId().equals(interviewRun.getSourceMarketSeedSnapshotId())
+            || !interviewSource.selection().getId().equals(interviewRun.getSourceSelectionId())
+            || interviewSource.selection().getHypothesisRevision() != interviewRun.getSourceSelectionRevision()
+            || interviewSource.bm().revision() != interviewRun.getSourceBmPlanRevision());
+        PipelineModuleStatus interviewStatus = interviewSource == null ? PipelineModuleStatus.NOT_READY
             : interviewRun == null ? PipelineModuleStatus.READY
             : interviewStale || interviewRun.getState() == MarketInterviewRun.State.STALE
                 ? PipelineModuleStatus.STALE : taskStatus(interviewRun.getTaskRun().getState());
@@ -247,7 +252,7 @@ public class ProjectModuleStatusService {
             response(projectId, PipelineModuleType.CONCEPT_REFINEMENT, refinementStatus,
                 refinementStatus == PipelineModuleStatus.NOT_READY
                     ? List.of("businessValidationSessionId") : List.of(),
-                new NextAction("컨셉 다듬기", "/business-validation"),
+                new NextAction("컨셉 다듬기", "/concept-refinement"),
                 currentRefinementCycle && refinementRound != null
                     ? String.valueOf(refinementRound.getId()) : null,
                 activeRefinementTask == null ? null : activeRefinementTask.getId(),
@@ -276,11 +281,11 @@ public class ProjectModuleStatusService {
                 latestActiveId(launchTechnologyTask, launchOperationsTask), null, null, null,
                 latestUpdatedAt(launchTechnologyTask, launchOperationsTask)),
             response(projectId, PipelineModuleType.MARKET_INTERVIEW, interviewStatus,
-                selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),
+                interviewSource == null ? List.of("conceptRefinementFinal") : List.of(),
                 new NextAction("시장 인터뷰", "/market-interview"),
                 interviewRun == null ? null : String.valueOf(interviewRun.getId()),
                 activeInterviewTask == null ? null : activeInterviewTask.getId(),
-                selectedSnapshot == null ? null : selectedSnapshot.getId(), null, null,
+                interviewSource == null ? null : String.valueOf(interviewSource.refinementFinal().getId()), null, null,
                 interviewRun == null ? null : interviewRun.getUpdatedAt()),
             response(projectId, PipelineModuleType.MARKETING, marketingStatus,
                 selectedSnapshot == null ? List.of("marketAnalysisSeedSnapshotId") : List.of(),

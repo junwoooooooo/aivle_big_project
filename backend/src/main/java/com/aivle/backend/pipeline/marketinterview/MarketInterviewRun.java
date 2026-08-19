@@ -21,6 +21,9 @@ public class MarketInterviewRun extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY) @JoinColumn(name = "task_run_id", nullable = false) private TaskRun taskRun;
     @Column(name = "source_market_seed_snapshot_id", nullable = false, length = 64)
     private String sourceMarketSeedSnapshotId;
+    // V44 keeps unmatched pre-gate rows readable as stale history, so legacy rows may be null.
+    @Column(name = "source_concept_refinement_final_id")
+    private Long sourceConceptRefinementFinalId;
     @Column(name = "source_selection_id", nullable = false) private Long sourceSelectionId;
     @Column(name = "source_selection_revision", nullable = false) private int sourceSelectionRevision;
     @Column(name = "source_bm_plan_revision", nullable = false) private int sourceBmPlanRevision;
@@ -34,16 +37,17 @@ public class MarketInterviewRun extends BaseEntity {
     @Column(nullable = false) private LocalDateTime startedAt;
     private LocalDateTime completedAt;
 
-    public static MarketInterviewRun create(Project project, TaskRun taskRun, String seedId,
+    public static MarketInterviewRun create(Project project, TaskRun taskRun, Long refinementFinalId, String seedId,
             Long selectionId, int selectionRevision, int bmPlanRevision, int requestedSampleSize,
             int attempt, String idempotencyKey,
             String inputHash, LocalDateTime now) {
-        if (project == null || taskRun == null || blank(seedId) || selectionId == null
+        if (project == null || taskRun == null || refinementFinalId == null || blank(seedId) || selectionId == null
                 || selectionRevision < 0 || bmPlanRevision < 0 || !sampleSize(requestedSampleSize)
                 || attempt < 1 || attempt > 3 || blank(idempotencyKey)
                 || !hash(inputHash) || now == null) throw new IllegalArgumentException("Market interview run is invalid");
         MarketInterviewRun value = new MarketInterviewRun();
-        value.project = project; value.taskRun = taskRun; value.sourceMarketSeedSnapshotId = seedId;
+        value.project = project; value.taskRun = taskRun; value.sourceConceptRefinementFinalId = refinementFinalId;
+        value.sourceMarketSeedSnapshotId = seedId;
         value.sourceSelectionId = selectionId; value.sourceSelectionRevision = selectionRevision;
         value.sourceBmPlanRevision = bmPlanRevision;
         value.requestedSampleSize = requestedSampleSize;

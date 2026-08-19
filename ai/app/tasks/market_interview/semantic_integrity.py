@@ -17,11 +17,12 @@ def _text(value: Any) -> str:
     return re.sub(r"\s+", " ", json.dumps(value, ensure_ascii=False)).lower()
 
 
-def assert_semantic_integrity(selected_concept: dict[str, Any], result: dict[str, Any]) -> None:
+def assert_semantic_integrity(selected_concept: dict[str, Any], result: dict[str, Any],
+                              concept_board: dict[str, Any] | None = None) -> None:
     """Reject a strong cross-domain substitution while allowing adjacent vocabulary."""
     identity = selected_concept.get("identity") or {}
     solution = selected_concept.get("solution") or {}
-    source_sections = [identity, solution, selected_concept.get("operation") or {}]
+    source_sections = [identity, solution, selected_concept.get("operation") or {}, concept_board or {}]
     source_strength = sum(any(anchor in _text(section) for anchor in _BICYCLE)
                           for section in source_sections)
     if source_strength < 2:

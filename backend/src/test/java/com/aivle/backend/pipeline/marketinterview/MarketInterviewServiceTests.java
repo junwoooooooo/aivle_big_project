@@ -6,9 +6,10 @@ import static org.mockito.Mockito.*;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementFinal;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRound;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -31,7 +32,7 @@ import tools.jackson.databind.ObjectMapper;
 class MarketInterviewServiceTests {
     private static final String HASH = "sha256:" + "a".repeat(64);
     @Mock ProjectRepository projects;
-    @Mock CurrentConceptSourceResolver sources;
+    @Mock MarketInterviewSourceResolver sources;
     @Mock MarketInterviewInputFactory inputs;
     @Mock MarketInterviewRunRepository runs;
     @Mock TaskRunService taskRuns;
@@ -40,6 +41,8 @@ class MarketInterviewServiceTests {
     @Mock ConceptPortfolioSelection selection;
     @Mock MarketAnalysisSeedSnapshot seed;
     @Mock TaskRun task;
+    @Mock ConceptRefinementFinal refinementFinal;
+    @Mock ConceptRefinementRound refinementRound;
     private final ObjectMapper mapper = new ObjectMapper();
     private MarketInterviewService service;
 
@@ -54,14 +57,21 @@ class MarketInterviewServiceTests {
         lenient().when(seed.getId()).thenReturn("seed-1");
         lenient().when(seed.getProjectId()).thenReturn(41L);
         lenient().when(seed.getSourceType()).thenReturn("CONCEPT_PORTFOLIO_V2");
-        var source = new CurrentConceptSourceResolver.Source(selection, seed,
-            new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 3));
-        lenient().when(sources.require(eq(41L), anyString())).thenReturn(source);
+        lenient().when(refinementFinal.getId()).thenReturn(17L);
+        var document = mapper.readTree("""
+            {"selectedConcept":{"identity":{"conceptName":"예약 도우미"}},"finalHypotheses":{}}
+            """);
+        var source = new MarketInterviewSourceResolver.Source(refinementFinal, refinementRound, selection == null ? null : seed,
+            selection, new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 3), document);
+        lenient().when(sources.require(41L)).thenReturn(source);
         lenient().when(sources.currentOrNull(41L)).thenReturn(source);
-        lenient().when(inputs.build(any(), any(), any(), anyInt())).thenReturn("{\"contract\":\"market-interview-input-v2\"}");
+        lenient().when(inputs.board(any())).thenReturn(mapper.createObjectNode().put("conceptName", "예약 도우미"));
+        lenient().when(inputs.build(any(), any(), anyInt())).thenReturn("{\"contract\":\"market-interview-input-v2\"}");
+        lenient().when(inputs.preview(any())).thenReturn(mapper.createObjectNode());
         lenient().when(hasher.hash(TaskType.MARKET_INTERVIEW, "1.0", "ko-KR", "{\"contract\":\"market-interview-input-v2\"}"))
             .thenReturn(HASH);
         lenient().when(task.getId()).thenReturn("task-1");
+        lenient().when(task.getInputSnapshot()).thenReturn("{\"conceptBoard\":{\"conceptName\":\"예약 도우미\"}}");
         lenient().when(runs.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(taskRuns.createWithDisposition(anyLong(), anyLong(), eq(TaskType.MARKET_INTERVIEW),
             anyString(), anyString(), anyString(), anyString(), anyString(), any(), eq(1)))
@@ -75,6 +85,7 @@ class MarketInterviewServiceTests {
             anyString(), anyString(), anyString(), any(), anyInt());
         var started = service.start(7L, 41L, "start-key", "request-1");
         assertThat(started.sourceMarketSeedSnapshotId()).isEqualTo("seed-1");
+        assertThat(started.sourceConceptRefinementFinalId()).isEqualTo(17L);
         assertThat(started.sourceSelectionRevision()).isEqualTo(4);
         assertThat(started.requestedSampleSize()).isEqualTo(20);
     }
@@ -82,7 +93,7 @@ class MarketInterviewServiceTests {
     @Test void sampleSizeIsPartOfCanonicalInputAndDurableRun() {
         var started = service.start(7L, 41L, "size-key", "request-1", 80);
         assertThat(started.requestedSampleSize()).isEqualTo(80);
-        verify(inputs).build(eq(seed), eq(selection), any(), eq(80));
+        verify(inputs).build(any(), any(), eq(80));
     }
 
     @Test void sameKeyAndInputReplaysSameRun() {
@@ -144,7 +155,7 @@ class MarketInterviewServiceTests {
     }
 
     @Test void currentFailedRunPublishesCanonicalRetryAndRestartPolicy() {
-        when(inputs.preview(any(), any(), any())).thenReturn(mapper.createObjectNode());
+        when(inputs.preview(any())).thenReturn(mapper.createObjectNode());
         when(runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L))
             .thenReturn(Optional.of(run(MarketInterviewRun.State.FAILED, 1)))
             .thenReturn(Optional.of(run(MarketInterviewRun.State.FAILED, MarketInterviewService.MAX_ATTEMPTS)));
@@ -172,8 +183,10 @@ class MarketInterviewServiceTests {
     @Test void bmRevisionChangeAlsoInvalidatesCurrentRun() {
         MarketInterviewRun run = run(MarketInterviewRun.State.SUCCEEDED, 1);
         when(runs.findTopByProjectIdAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(41L)).thenReturn(Optional.of(run));
-        when(sources.currentOrNull(41L)).thenReturn(new CurrentConceptSourceResolver.Source(selection, seed,
-            new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4)));
+        when(sources.currentOrNull(41L)).thenReturn(new MarketInterviewSourceResolver.Source(
+            refinementFinal, refinementRound, seed, selection,
+            new BmPlanPreparationService.PlanView(mapper.createObjectNode(), mapper.createObjectNode(), 4),
+            mapper.createObjectNode()));
         assertThat(service.current(7L, 41L).stale()).isTrue();
     }
 
@@ -186,7 +199,7 @@ class MarketInterviewServiceTests {
     }
 
     private MarketInterviewRun run(MarketInterviewRun.State state, int attempt) {
-        MarketInterviewRun value = MarketInterviewRun.create(project, task, "seed-1", 31L, 4, 3, 20,
+        MarketInterviewRun value = MarketInterviewRun.create(project, task, 17L, "seed-1", 31L, 4, 3, 20,
             attempt, "key-" + attempt, HASH, LocalDateTime.now());
         if (state == MarketInterviewRun.State.SUCCEEDED) value.succeed("{\"synthetic\":true}", LocalDateTime.now());
         if (state == MarketInterviewRun.State.FAILED) value.fail("EXECUTION_FAILED", LocalDateTime.now());

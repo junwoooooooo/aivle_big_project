@@ -90,9 +90,13 @@ def test_full_v2_input_reaches_respondent_provider_boundary_with_shipped_bank(sh
     value = MarketInterviewInput.model_validate({
         "contract": "market-interview-input-v2", "schemaVersion": "2.0", "synthetic": True,
         "sampleSize": 20,
-        "source": {"marketSeedSnapshotId": "seed-offline", "selectionId": 31,
+        "source": {"conceptRefinementFinalId": 17, "marketSeedSnapshotId": "seed-offline", "selectionId": 31,
                    "selectionRevision": 4, "marketSeedSnapshotHash": "sha256:" + "a" * 64,
                    "bmPlanRevision": 3},
+        "conceptBoard": {"conceptName": "동네 운동 파트너 매칭", "targetUsers": TARGET_TEXT,
+                         "problemScenario": "혼자서는 운동을 지속하기 어렵다",
+                         "featureSet": ["동네 운동 파트너 매칭"],
+                         "differentiators": "동네 단위 매칭", "priceKrw": None},
         "selectedConcept": {
             "identity": {"conceptName": "동네 운동 파트너 매칭", "targetUsers": TARGET_TEXT},
             "solution": {"problemScenario": "혼자서는 운동을 지속하기 어렵다",

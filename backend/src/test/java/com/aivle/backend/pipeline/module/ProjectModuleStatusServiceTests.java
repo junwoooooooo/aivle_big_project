@@ -32,6 +32,10 @@ import com.aivle.backend.pipeline.market.MarketResearchVersionRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyRunRepository;
 import com.aivle.backend.pipeline.market.TwinSurveyVersionRepository;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewRunRepository;
+import com.aivle.backend.pipeline.marketinterview.MarketInterviewSourceResolver;
+import com.aivle.backend.pipeline.market.BmPlanPreparationService;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementFinal;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRound;
 import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementRoundRepository;
 import com.aivle.backend.pipeline.refinement.ConceptRefinementService;
@@ -54,6 +58,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import tools.jackson.databind.ObjectMapper;
 
 class ProjectModuleStatusServiceTests {
     private final ProjectRepository projects = mock(ProjectRepository.class);
@@ -79,11 +84,12 @@ class ProjectModuleStatusServiceTests {
     private final BusinessValidationCoordinator businessValidations = mock(BusinessValidationCoordinator.class);
     private final ConceptRefinementService conceptRefinements = mock(ConceptRefinementService.class);
     private final ConceptRefinementRoundRepository conceptRefinementRounds = mock(ConceptRefinementRoundRepository.class);
+    private final MarketInterviewSourceResolver marketInterviewSources = mock(MarketInterviewSourceResolver.class);
     private final ProjectModuleStatusService service = new ProjectModuleStatusService(
         projects, briefs, conceptRuns, portfolioSelections, selections, snapshots, runs,
         marketRuns, marketVersions, twinRuns, twinVersions, interviewRuns, marketing, marketingSources,
         techOpsPreparations, techOpsSnapshots, techOpsAdvisories, financialPreparations, financialSnapshots, taskRuns,
-        businessValidations, conceptRefinements, conceptRefinementRounds);
+        businessValidations, conceptRefinements, conceptRefinementRounds, marketInterviewSources);
 
     @Test
     void derivesIdeaAndConceptFromCanonicalDomainsWithoutProjectDescription() {
@@ -129,12 +135,40 @@ class ProjectModuleStatusServiceTests {
         assertThat(modules.get(1).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(3).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
         assertThat(modules.get(4).status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(modules.get(4).nextAction().route()).isEqualTo("/concept-refinement");
+        var interview = modules.stream().filter(item -> item.module() == PipelineModuleType.MARKET_INTERVIEW)
+            .findFirst().orElseThrow();
+        assertThat(interview.status()).isEqualTo(PipelineModuleStatus.NOT_READY);
+        assertThat(interview.requiredInputs()).containsExactly("conceptRefinementFinal");
+        assertThat(interview.nextAction().route()).isEqualTo("/market-interview");
         assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.TECH_OPS).findFirst().orElseThrow().status())
             .isEqualTo(PipelineModuleStatus.READY);
         assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.FINANCE).findFirst().orElseThrow().status())
             .isEqualTo(PipelineModuleStatus.READY);
         assertThat(modules.stream().filter(item -> item.module() == PipelineModuleType.LAUNCH_READINESS).findFirst().orElseThrow().status())
             .isEqualTo(PipelineModuleStatus.READY);
+    }
+
+    @Test
+    void marketInterviewIsReadyOnlyFromCurrentFinalizedRefinementSource() {
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L))
+            .thenReturn(Optional.of(mock(Project.class)));
+        ConceptRefinementFinal refinementFinal = mock(ConceptRefinementFinal.class);
+        ConceptRefinementRound refinementRound = mock(ConceptRefinementRound.class);
+        MarketAnalysisSeedSnapshot seed = mock(MarketAnalysisSeedSnapshot.class);
+        ConceptPortfolioSelection selection = mock(ConceptPortfolioSelection.class);
+        when(refinementFinal.getId()).thenReturn(91L);
+        var json = new ObjectMapper().createObjectNode();
+        var source = new MarketInterviewSourceResolver.Source(refinementFinal, refinementRound, seed, selection,
+            new BmPlanPreparationService.PlanView(json, json, 3), json);
+        when(marketInterviewSources.currentOrNull(41L)).thenReturn(source);
+
+        var interview = service.findAll(7L, 41L).stream()
+            .filter(item -> item.module() == PipelineModuleType.MARKET_INTERVIEW).findFirst().orElseThrow();
+
+        assertThat(interview.status()).isEqualTo(PipelineModuleStatus.READY);
+        assertThat(interview.requiredInputs()).isEmpty();
+        assertThat(interview.sourceSnapshotId()).isEqualTo("91");
     }
 
     @Test

@@ -19,6 +19,7 @@ AXIS_SOURCE = {"LIKE": "like", "CONCERN": "concern", "DIFFERENTIATION": "differe
 
 
 class SourceBinding(StrictModel):
+    conceptRefinementFinalId: int = Field(strict=True, ge=1)
     marketSeedSnapshotId: str = Field(min_length=1, max_length=64)
     selectionId: int = Field(strict=True, ge=1)
     selectionRevision: int = Field(strict=True, ge=0)
@@ -39,12 +40,22 @@ class TargetingContext(StrictModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
+class StimulusBoard(StrictModel):
+    conceptName: str = Field(min_length=1, max_length=1200)
+    targetUsers: str = Field(min_length=1, max_length=1200)
+    problemScenario: str = Field(min_length=1, max_length=1200)
+    featureSet: list[str] = Field(min_length=1, max_length=12)
+    differentiators: str = Field(min_length=1, max_length=1200)
+    priceKrw: int | None = Field(default=None, strict=True, ge=0)
+
+
 class MarketInterviewInput(StrictModel):
     contract: Literal["market-interview-input-v2"]
     schemaVersion: Literal["2.0"]
     synthetic: Literal[True]
     sampleSize: SampleSize
     source: SourceBinding
+    conceptBoard: StimulusBoard
     selectedConcept: dict[str, Any]
     validatedHypotheses: dict[str, Any]
     businessModel: BusinessModelContext
@@ -221,6 +232,7 @@ class TargetingSummary(StrictModel):
     attemptedCount: int = Field(strict=True, ge=20, le=80)
     usableCount: int = Field(strict=True, ge=8, le=80)
     failedCount: int = Field(strict=True, ge=0, le=80)
+    targetRequested: int = Field(strict=True, ge=0, le=80)
     targetCount: int = Field(strict=True, ge=0, le=80)
     nonTargetCount: int = Field(strict=True, ge=0, le=80)
     proxyCount: int = Field(strict=True, ge=0, le=80)
@@ -264,6 +276,7 @@ class MarketInterviewResult(StrictModel):
     schemaVersion: Literal["2.0"]
     synthetic: Literal[True]
     source: SourceBinding
+    conceptBoard: StimulusBoard
     targeting: TargetingSummary
     usableInterviewCount: int = Field(strict=True, ge=8, le=80)
     codedInterviewCount: int = Field(strict=True, ge=0, le=80)
@@ -302,6 +315,11 @@ class MarketInterviewResult(StrictModel):
                 or self.targeting.drawnSampleSize != self.targeting.attemptedCount
                 or self.targeting.usableCount + self.targeting.failedCount != self.targeting.attemptedCount):
             raise ValueError("requested, attempted, usable and failed sample counts are inconsistent")
+        if ((self.targeting.representationStatus == "EXPLORATORY_ONLY"
+             and self.targeting.targetRequested != 0)
+                or (self.targeting.representationStatus != "EXPLORATORY_ONLY"
+                    and self.targeting.targetRequested == 0)):
+            raise ValueError("target requested count must match the representation mode")
         if {item.participantId for item in self.codingTrace} != sampled_set or len(self.codingTrace) != len(sampled):
             raise ValueError("coding trace must include every sampled respondent exactly once")
         representative = [item.participantId for item in self.participants]

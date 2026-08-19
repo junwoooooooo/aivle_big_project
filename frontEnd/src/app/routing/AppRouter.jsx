@@ -11,10 +11,10 @@ import { ProjectCreatePage, ProjectListPage } from '../../features/projects/Proj
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { BusinessProposalWorkspace } from '../../features/concept-portfolio/index.js';
 import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
-import ConceptRefinementPage from '../../features/business-validation/pages/ConceptRefinementPage.jsx';
+import ConceptRefinementPage from '../../features/market/ConceptRefinementPage.jsx';
 import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
 import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
-import MarketInterviewPage from '../../features/market-interview/pages/MarketInterviewPage.jsx';
+import MarketInterviewPage from '../../features/market-interview/MarketInterviewPage.jsx';
 import { MarketingContentPage, MarketingStrategyReportPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
 import LaunchReadinessReportPage from '../../features/launch-readiness/pages/LaunchReadinessReportPage.jsx';

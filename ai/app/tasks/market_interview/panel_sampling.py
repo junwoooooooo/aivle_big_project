@@ -217,11 +217,13 @@ def draw_panel(cards: dict[str, str], frame: list[dict], criteria: TargetCriteri
         target_pids = set()
         representation_status = "EXPLORATORY_ONLY"
         member_group = "EXPLORATORY"
+        target_requested = 0
         warning = ("현재 개인 profile bank로 조직 구매 담당자를 직접 표현할 수 없어 일반 관점의 "
                    "탐색 표본으로 구성했습니다." if customer_unit == "ORGANIZATION" else
                    "패널에서 직접 확인 가능한 HARD 조건이 없어 일반 관점의 탐색 표본으로 구성했습니다.")
     else:
         wanted = math.ceil(size * TARGET_SHARE)
+        target_requested = wanted
         target_size = min(wanted, len(target_frame))
         comparison_size = size - target_size
         if len(comparison_frame) < comparison_size:
@@ -252,6 +254,7 @@ def draw_panel(cards: dict[str, str], frame: list[dict], criteria: TargetCriteri
                      "cardText": cards[pid], "profile": parse_profile(cards[pid])})
     return rows, {"matched": len(target_frame), "rawMatched": report.raw_matched,
                   "total": len(frame), "relaxationLevel": report.relaxation_level,
+                  "targetRequested": target_requested,
                   "criteria": normalized, "criteriaText": criteria_text(normalized, facts, report),
                   "warning": warning, "representationStatus": representation_status,
                   "customerUnit": customer_unit}

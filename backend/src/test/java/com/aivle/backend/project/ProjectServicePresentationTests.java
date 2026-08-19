@@ -103,7 +103,7 @@ class ProjectServicePresentationTests {
         var summary = service.findAll(2L).get(0);
 
         assertThat(summary.completedJourneyCount()).isEqualTo(3);
-        assertThat(summary.currentJourneyLabel()).isEqualTo("가상 인터뷰");
+        assertThat(summary.currentJourneyLabel()).isEqualTo("시장 인터뷰");
     }
 
     @Test

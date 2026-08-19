@@ -18,6 +18,7 @@ public class ConceptRefinementController {
     private final ConceptRefinementApplicationService applications;
     private final ConceptRefinementFinalizationService finalization;
     private final ConceptRefinementLegalRecoveryService legalRecovery;
+    private final ConceptRefinementPresentationService presentation;
     private final CurrentUserProvider currentUser;
 
     @PostMapping("/start")
@@ -31,6 +32,12 @@ public class ConceptRefinementController {
     public ApiResponse<ConceptRefinementService.CurrentView> current(
             @PathVariable Long projectId, HttpServletRequest request) {
         return ApiResponse.success(refinement.current(currentUser.currentUserId(), projectId), id(request));
+    }
+
+    @GetMapping("/presentation")
+    public ApiResponse<tools.jackson.databind.JsonNode> presentation(
+            @PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(presentation.current(currentUser.currentUserId(), projectId), id(request));
     }
 
     @PostMapping("/retry")

@@ -19,7 +19,7 @@ describe('project journey model', () => {
       'planning', 'validation', 'launch', 'interview', 'marketingStrategy', 'finalReport',
     ]);
     expect(PROJECT_JOURNEYS.map(({ shortLabel }) => shortLabel)).toEqual([
-      '사업 기획', '사업 검증', '출시 준비', '가상 인터뷰', '마케팅 전략', '최종 보고서',
+      '사업 기획', '사업 검증', '출시 준비', '시장 인터뷰', '마케팅 전략', '최종 보고서',
     ]);
   });
 
@@ -76,7 +76,7 @@ describe('project journey model', () => {
       .toBe(JOURNEY_STATUS.COMPLETED);
   });
 
-  it('가상 인터뷰 Journey를 canonical 시장 인터뷰 슬롯 하나로 집계한다', () => {
+  it('시장 인터뷰 Journey를 canonical 시장 인터뷰 슬롯 하나로 집계한다', () => {
     const modules = getProjectModules('41', {
       marketInterview: { status: MODULE_STATUS.COMPLETED },
     });

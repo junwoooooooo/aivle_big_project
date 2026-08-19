@@ -1,0 +1,381 @@
+/* 시장 인터뷰.
+   토큰·셸·공용 컴포넌트는 여기서 정의하지 않는다:
+     shared/styles/tokens.css             색·여백·반경
+     app/project-shell/project-shell.css  .pipeline-shell · .pipeline-page-heading
+     shared/ui/ui.css                     .ui-card · .ui-badge · .ui-alert · .ui-button
+
+   ⚠ 접두사는 `mi-` 다. `tone-*` 는 전역 클래스가 아니라서 여기서 정의하는데,
+     **반드시 mi- 요소 안에서만** 쓴다. CSS 는 전역이라 벗겨 두면 다른 화면을 덮는다. */
+
+.mi-page {
+  display: grid; align-content: start; gap: 1.5rem; min-width: 0;
+  /* 이 화면의 네 색. 전역 토큰에 accent 계열이 없어서 여기서 든다. */
+  --mi-lead: #1d9e75;      /* 끌림 · 제대로 이해 */
+  --mi-warn: #c8871b;      /* 걸림 · 반만 이해 */
+  --mi-trail: #c0524b;     /* 장벽 · 오해 */
+  --mi-neutral: #6b7684;   /* 제안 · 판정 못 함 */
+
+  /* 세 층의 테두리 색. 목업(`market_interview_result_v2_three_layers.html`)의 값이다. */
+  --mi-fact: #b4b2a9;      /* 집계 그대로 */
+  --mi-insight: #5dcaa5;   /* 결정론 교차만 */
+  --mi-sowhat: #afa9ec;    /* 응답자 발언 범위만 */
+
+  /* ⚠ 저장소에 **없는** 토큰의 지역 매핑이다. `tokens.css` 가 유일한 `:root` 이고
+     `--radius-sm`·`--radius-md`·`--color-bg-surface` 는 거기 정의가 없다. 폴백 없이
+     쓰면 선언 자체가 무효가 되어 모서리와 배경이 조용히 빠진다. */
+  --mi-radius-sm: var(--radius-control, .5rem);
+  --mi-radius-md: var(--radius-card, .75rem);
+  --mi-surface: var(--color-surface, #fff);
+}
+.mi-page__lead { margin: 0 0 1rem; font-size: .9rem; line-height: 1.7; color: var(--color-text-secondary); }
+.mi-page__actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; }
+.mi-page__elapsed { color: var(--color-text-secondary); font-size: .85rem; font-variant-numeric: tabular-nums; }
+
+/* ── 진행 2단계 ──────────────────────────────────────────────────────
+   모듈 이름은 셸이 그린다. 여기는 «그 모듈 안 어디인가»만, 한 줄로 말한다. */
+.mi-steps { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.mi-steps__step { display: inline-flex; align-items: center; gap: .4rem; color: var(--color-text-secondary); font-size: .8rem; }
+.mi-steps__step + .mi-steps__step::before {
+  content: ''; width: 1.5rem; height: 1px; margin-right: .1rem; background: var(--color-border-default);
+}
+.mi-steps__dot {
+  display: flex; align-items: center; justify-content: center;
+  width: 1.15rem; height: 1.15rem; border-radius: 50%;
+  background: var(--color-bg-subtle); color: var(--color-text-secondary);
+  font-size: .65rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.mi-steps__detail {
+  padding: .05rem .35rem; border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle); font-size: .7rem; font-variant-numeric: tabular-nums;
+}
+.mi-steps__step[data-state="current"] { color: var(--color-text-primary); font-weight: 700; }
+.mi-steps__step[data-state="current"] .mi-steps__dot { background: #1d6f9e; color: #fff; }
+.mi-steps__step[data-state="done"] .mi-steps__dot { background: var(--mi-lead); color: #fff; }
+.mi-steps__step[data-state="waiting"] { opacity: .55; }
+
+/* ── 컨셉보드 편집 ──────────────────────────────────────────────────── */
+.mi-board { display: grid; gap: .875rem; }
+.mi-board__field { display: grid; gap: .3rem; }
+.mi-board__field > span {
+  font-size: .8rem; font-weight: 600; color: var(--color-text-secondary);
+  display: flex; align-items: baseline; gap: .4rem;
+}
+.mi-board__field > span em { font-style: normal; font-weight: 400; font-size: .72rem; opacity: .75; }
+.mi-board__field input,
+.mi-board__field textarea {
+  width: 100%; padding: .5rem .625rem; border: 1px solid var(--color-border-default);
+  border-radius: var(--mi-radius-sm); background: var(--mi-surface);
+  color: var(--color-text-primary); font: inherit; font-size: .875rem; line-height: 1.6;
+  resize: vertical;
+}
+.mi-board__field input:disabled,
+.mi-board__field textarea:disabled { opacity: .6; }
+
+/* 가격은 못 고친다 — 자극의 가격을 바꿔 반응을 보는 것이 지불의사 측정이기 때문이다. */
+.mi-board__field--locked .mi-board__price {
+  display: grid; gap: .25rem; margin: 0;
+  padding: .5rem .625rem; border: 1px dashed var(--color-border-default);
+  border-radius: var(--mi-radius-sm); background: var(--color-bg-subtle);
+  font-size: .875rem; font-variant-numeric: tabular-nums;
+}
+.mi-board__field--locked em {
+  font-style: normal; font-size: .72rem; line-height: 1.6; color: var(--color-text-secondary);
+}
+
+.mi-board__preview { font-size: .8rem; color: var(--color-text-secondary); }
+.mi-board__preview summary { cursor: pointer; }
+.mi-board__preview pre {
+  margin: .5rem 0 0; padding: .75rem; overflow-x: auto;
+  border-radius: var(--mi-radius-sm); background: var(--color-bg-subtle);
+  font-family: inherit; font-size: .82rem; line-height: 1.7; white-space: pre-wrap;
+}
+
+/* ── 표본 ───────────────────────────────────────────────────────────── */
+.mi-sample { display: grid; gap: .4rem; }
+.mi-sample__label { font-size: .8rem; font-weight: 600; color: var(--color-text-secondary); }
+.mi-sample__value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mi-sample__slider { width: 100%; }
+.mi-sample__ticks {
+  display: flex; justify-content: space-between;
+  font-size: .7rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;
+}
+.mi-sample__cost { margin: .25rem 0 0; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.mi-sample__note { margin: 0; font-size: .78rem; color: var(--color-text-secondary); }
+.mi-sample__hint { margin: .25rem 0 0; font-size: .75rem; line-height: 1.7; color: var(--color-text-secondary); }
+
+/* ── 결과 ───────────────────────────────────────────────────────────── */
+.mi-result { display: grid; gap: 1.25rem; }
+.mi-panel {
+  display: grid; gap: .625rem; padding: 1.125rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--mi-radius-md);
+  background: var(--mi-surface);
+}
+.mi-panel__title { margin: 0; font-size: 1rem; }
+.mi-panel__lead { margin: 0; font-size: .82rem; line-height: 1.7; color: var(--color-text-secondary); }
+.mi-panel__empty { margin: 0; font-size: .85rem; color: var(--color-text-secondary); }
+
+/* 이해도 막대. 이 막대는 응답자 구성이지 시장 점유율이 아니다. */
+.mi-bar {
+  display: flex; overflow: hidden; height: .75rem; border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle);
+}
+.mi-bar__part { display: block; height: 100%; }
+.mi-legend {
+  display: flex; flex-wrap: wrap; gap: .25rem 1rem;
+  margin: 0; padding: 0; list-style: none; font-size: .82rem;
+}
+.mi-legend li { display: inline-flex; align-items: center; gap: .35rem; }
+.mi-legend__dot { width: .55rem; height: .55rem; border-radius: 50%; }
+.mi-legend strong { font-variant-numeric: tabular-nums; }
+
+.mi-misread {
+  padding: .625rem .75rem; border-radius: var(--mi-radius-sm);
+  background: var(--color-bg-subtle); font-size: .82rem; line-height: 1.7;
+}
+.mi-misread__title { margin: 0 0 .25rem; font-weight: 700; }
+.mi-misread ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; }
+
+/* ── 주제 목록 ──────────────────────────────────────────────────────── */
+.mi-themes { display: grid; gap: .875rem; margin: 0; padding: 0; list-style: none; }
+.mi-theme { display: grid; gap: .3rem; }
+.mi-theme__head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.mi-theme__label { font-size: .9rem; font-weight: 600; }
+.mi-theme__count {
+  flex: none; font-size: .78rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums;
+}
+.mi-theme__track { height: .4rem; border-radius: var(--radius-pill); background: var(--color-bg-subtle); }
+.mi-theme__fill { display: block; height: 100%; border-radius: var(--radius-pill); }
+.mi-theme__quote {
+  margin: .15rem 0 0; padding-left: .625rem; border-left: 2px solid var(--color-border-default);
+  font-size: .82rem; line-height: 1.7; color: var(--color-text-secondary);
+}
+
+/* ── 현재의 대안 ────────────────────────────────────────────────────── */
+.mi-alts { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.mi-alts li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: .75rem;
+  padding: .4rem .625rem; border-radius: var(--mi-radius-sm); background: var(--color-bg-subtle);
+  font-size: .85rem;
+}
+.mi-alts__count { flex: none; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+
+/* ── 대표 응답자 ────────────────────────────────────────────────────── */
+.mi-interview {
+  display: grid; gap: .625rem; padding: .875rem;
+  border: 1px solid var(--color-border-default); border-radius: var(--mi-radius-sm);
+}
+.mi-interview__head { display: flex; align-items: center; gap: .625rem; }
+.mi-interview__avatar {
+  display: flex; align-items: center; justify-content: center; flex: none;
+  width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  color: #fff; font-size: .8rem; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.mi-interview__who { flex: 1; min-width: 0; }
+.mi-interview__line { margin: 0; font-size: .875rem; font-weight: 600; }
+.mi-interview__sub { margin: 0; font-size: .78rem; color: var(--color-text-secondary); }
+.mi-interview__badge {
+  flex: none; padding: .15rem .5rem; border-radius: var(--radius-pill);
+  color: #fff; font-size: .7rem; font-weight: 700;
+}
+.mi-interview__answers { display: grid; gap: .45rem; margin: 0; }
+.mi-interview__answers > div { display: grid; grid-template-columns: 5rem 1fr; gap: .5rem; }
+.mi-interview__answers dt { font-size: .75rem; color: var(--color-text-secondary); }
+.mi-interview__answers dd { margin: 0; font-size: .85rem; line-height: 1.65; }
+
+/* ── 실행 기록 ──────────────────────────────────────────────────────── */
+.mi-figures { font-size: .8rem; color: var(--color-text-secondary); }
+.mi-figures summary { cursor: pointer; }
+.mi-figures dl {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: .4rem 1rem; margin: .625rem 0 0;
+}
+.mi-figures dl > div { display: flex; justify-content: space-between; gap: .5rem; }
+.mi-figures dd { margin: 0; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.mi-figures__short { margin: .625rem 0 0; line-height: 1.7; }
+
+/* ── 맨 아래 면책 각주 ──────────────────────────────────────────────── */
+.mi-footnote {
+  margin: .5rem 0 0; padding-top: .9rem; border-top: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary); font-size: .75rem; line-height: 1.7;
+}
+.mi-footnote p { margin: 0; }
+.mi-footnote details { margin-top: .5rem; }
+.mi-footnote summary { cursor: pointer; }
+.mi-footnote ul { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
+
+/* ── 색 ─────────────────────────────────────────────────────────────── */
+.mi-page .tone-lead { background: var(--mi-lead); }
+.mi-page .tone-warn { background: var(--mi-warn); }
+.mi-page .tone-trail { background: var(--mi-trail); }
+.mi-page .tone-neutral { background: var(--mi-neutral); }
+
+/* ── 세 층 ──────────────────────────────────────────────────────────────
+   Fact / Insight / So-What 을 **테두리 색으로만** 가른다. 어디까지가 집계 그대로이고
+   어디부터가 계산인지 화면이 스스로 밝히는 자리라, 장식이 아니라 경계 표시다. */
+.mi-layers {
+  display: flex; flex-wrap: wrap; gap: .35rem 1.25rem;
+  margin: 0; padding: 0; list-style: none;
+  font-size: .78rem; color: var(--color-text-secondary);
+}
+.mi-layers__item { display: inline-flex; align-items: center; gap: .4rem; }
+.mi-layers__dot { width: .6rem; height: .6rem; border-radius: 2px; }
+.mi-layers__item[data-layer="fact"] .mi-layers__dot { background: var(--mi-fact); }
+.mi-layers__item[data-layer="insight"] .mi-layers__dot { background: var(--mi-insight); }
+.mi-layers__item[data-layer="sowhat"] .mi-layers__dot { background: var(--mi-sowhat); }
+
+.mi-layer {
+  display: grid; gap: 1rem; padding: 1rem;
+  border: 1px solid var(--mi-fact); border-radius: var(--mi-radius-md);
+}
+.mi-layer[data-layer="insight"] { border-color: var(--mi-insight); }
+.mi-layer[data-layer="sowhat"] { border-color: var(--mi-sowhat); }
+.mi-layer__tag { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .04em; }
+.mi-layer__tag span { font-weight: 400; letter-spacing: 0; color: var(--color-text-secondary); }
+.mi-layer[data-layer="insight"] .mi-layer__tag { color: #0f6e56; }
+.mi-layer[data-layer="sowhat"] .mi-layer__tag { color: #534ab7; }
+
+/* 테두리 없는 판 — 표본 머리처럼 층 밖에 서는 자리에 쓴다. */
+.mi-panel--flat { background: var(--color-bg-subtle); }
+.mi-panel__aside { margin: 0; font-size: .78rem; line-height: 1.7; color: var(--color-text-secondary); }
+.mi-panel__aside--tight { margin: -.5rem 0 0; }
+
+/* ── 「이 조사가 센 것」 — 화면 맨 위. 스크롤 전에 읽히는 유일한 절이다.
+      이 화면에서 «가장 크게 보여야 하는» 자리라 카드보다 강한 테두리를 준다. */
+.mi-headline {
+  display: grid; gap: .5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--color-border, #d8dde5);
+  border-left: 4px solid var(--mi-lead);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+}
+.mi-headline__title {
+  margin: 0 0 .25rem; font-size: .8rem; font-weight: 700;
+  color: var(--color-text-secondary); letter-spacing: .02em;
+}
+.mi-headline__line { margin: 0; font-size: 1rem; line-height: 1.75; }
+.mi-headline__big { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+/* 타겟 분모. 본문보다 약하게 두되 «지우지는 않는다» — 이 괄호가 없으면
+   「20명 중 19명」이 타겟 수 행세를 한다. */
+.mi-headline__scope { color: var(--color-text-secondary); font-weight: 400; }
+.mi-headline__resolved {
+  margin: -.25rem 0 0; padding-left: .5rem;
+  font-size: .95rem; line-height: 1.75; color: var(--mi-lead);
+}
+.mi-headline__aside { color: var(--color-text-secondary); font-size: .8rem; }
+.mi-headline__open {
+  margin-top: .5rem; padding: .75rem 1rem;
+  background: var(--color-surface-subtle, #f6f8fa); border-radius: 6px;
+}
+.mi-headline__open-title {
+  margin: 0 0 .375rem; font-size: .8rem; font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.mi-headline__open ul { margin: 0; padding-left: 1.1rem; }
+.mi-headline__open li { font-size: .85rem; line-height: 1.7; }
+.mi-headline__foot {
+  margin: .25rem 0 0; font-size: .78rem; line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+/* ── 접는 서랍. **지우는 것이 아니라 접는 것이다** — 펴면 전부 그대로 있다.
+      머리 줄에 그 절의 결정적인 수를 남겨 「접었다는 사실」이 정보 손실이 안 되게 한다. */
+.mi-fold {
+  border: 1px solid var(--color-border, #d8dde5); border-radius: 8px;
+  background: var(--color-surface, #fff);
+}
+.mi-fold > summary {
+  cursor: pointer; padding: .875rem 1.25rem;
+  font-size: .9rem; font-weight: 600; color: var(--color-text-primary);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem;
+}
+.mi-fold__hint {
+  font-size: .78rem; font-weight: 400; color: var(--color-text-secondary);
+}
+.mi-fold__body { display: grid; gap: 1rem; padding: 0 1.25rem 1.25rem; }
+.mi-fold[open] > summary { border-bottom: 1px solid var(--color-border, #d8dde5); margin-bottom: 1rem; }
+
+/* ── 신뢰도 서랍 — 엔진이 자기 사정을 말하는 것을 **한 곳에** 모은 자리.
+      머리 줄이 「주의 N건」이 아니라 «가장 아픈 것 한 줄»인 것이 설계다. */
+.mi-trust {
+  border: 1px solid var(--mi-warn); border-radius: 8px;
+  background: var(--color-warning-surface, #fff8e6);
+}
+.mi-trust > summary {
+  cursor: pointer; padding: .75rem 1.25rem;
+  font-size: .85rem; line-height: 1.6; color: var(--color-text-primary);
+}
+.mi-trust__body {
+  display: grid; gap: .625rem; padding: 0 1.25rem 1.125rem;
+  font-size: .82rem; line-height: 1.75; color: var(--color-text-primary);
+}
+.mi-trust__body > p { margin: 0; }
+
+/* ── 층 딱지. 띠(`mi-layers`)를 대신한다 — 띠는 절을 층 순서에 묶어 순서를 못 바꾸게 했다. */
+.mi-layertag {
+  display: inline-block; vertical-align: middle; margin-left: .5rem;
+  padding: .0625rem .375rem; border-radius: 3px;
+  font-size: .625rem; font-weight: 600; letter-spacing: .02em;
+  color: var(--color-text-secondary); background: var(--color-surface-subtle, #f0f2f5);
+  border-left: 2px solid var(--mi-fact);
+}
+.mi-layertag[data-layer="insight"] { border-left-color: var(--mi-insight); }
+.mi-layertag[data-layer="sowhat"] { border-left-color: var(--mi-sowhat); }
+/* 축 커버리지 경고 — 「40명 중 2명만 분류됐다」. 절 안에 있어야 그 절의 수를 의심하게 된다. */
+.mi-panel__aside--warn {
+  color: var(--color-text-primary);
+  background: var(--color-warning-surface, #fff8e6);
+  border-left: 3px solid var(--color-warning, #d99000);
+  padding: .6rem .8rem;
+  border-radius: 4px;
+}
+.mi-panel__aside code {
+  padding: .1rem .3rem; border-radius: var(--mi-radius-sm);
+  background: var(--color-bg-subtle); font-size: .95em;
+}
+
+/* 접힌 주제. 접었다는 사실과 개수를 함께 보인다 — 숨기면 「다 보여줬다」로 읽힌다. */
+.mi-more { font-size: .8rem; color: var(--color-text-secondary); }
+.mi-more summary { cursor: pointer; }
+.mi-more .mi-themes { margin-top: .75rem; }
+
+.mi-theme__resolved { margin: .15rem 0 0; font-size: .78rem; line-height: 1.7; }
+.mi-theme__aside { color: var(--color-text-secondary); }
+
+/* ── 세그먼트 교차 (Insight) ────────────────────────────────────────────
+   각 줄의 합은 그 주제의 언급 수와 같다. 비율은 만들지 않는다. */
+.mi-segment {
+  display: grid; gap: .3rem; padding: .625rem .75rem;
+  border-radius: var(--mi-radius-sm); background: var(--color-bg-subtle);
+}
+.mi-segment__head { display: flex; justify-content: space-between; gap: .75rem; margin: 0; }
+.mi-segment__label { font-size: .875rem; font-weight: 600; }
+.mi-segment__count { flex: none; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.mi-segment__row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem;
+  margin: 0; font-size: .78rem; color: var(--color-text-secondary);
+}
+.mi-segment__dim { min-width: 4rem; font-weight: 600; color: var(--color-text-primary); }
+.mi-segment__bucket { font-variant-numeric: tabular-nums; }
+
+/* ── 타겟 대비 (Insight) ──────────────────────────────────────────────── */
+.mi-contrast { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.mi-contrast li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: .75rem;
+  padding: .4rem .625rem; border-radius: var(--mi-radius-sm); background: var(--color-bg-subtle);
+  font-size: .82rem;
+}
+.mi-contrast__label { font-weight: 600; }
+.mi-contrast__pair { flex: none; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+
+/* ── 제안 ↔ 우려 연결 (So-What) ───────────────────────────────────────── */
+.mi-links { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.mi-links__head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin: 0; }
+.mi-links__label { font-size: .9rem; font-weight: 600; }
+.mi-links__count { flex: none; font-size: .78rem; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.mi-links__inner {
+  display: grid; gap: .25rem; margin: .3rem 0 0; padding-left: .625rem;
+  border-left: 2px solid var(--color-border-default); list-style: none;
+  font-size: .82rem; line-height: 1.7; color: var(--color-text-secondary);
+}
+.mi-links__inner strong { color: var(--color-text-primary); font-variant-numeric: tabular-nums; }

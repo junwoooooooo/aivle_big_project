@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -34,7 +34,7 @@ describe('BM 캔버스 — 빈 칸', () => {
 
     // 모델이 쓴 사유 한 줄만 남는다 — 고정 문구를 덧붙이지 않는다.
     expect(detail.textContent).toContain('입력에 고객 관계 정보가 포함되지 않음');
-    expect(detail.textContent).not.toContain('컨셉 서술에 이 칸 내용이 없다');
+    expect(detail.textContent).not.toContain('컨셉 서술에 이 칸 내용이 없어요');
   });
 
   it('사유가 안 오면 그때만 고정 문구로 메운다 — 빈 자리로 두지 않는다', () => {
@@ -46,16 +46,54 @@ describe('BM 캔버스 — 빈 칸', () => {
     });
     const { container } = render(<BmCellDetails cells={cells} active={null} />);
     const detail = container.querySelector('#bm-KEY_RESOURCES');
-    expect(detail.textContent).toContain('컨셉 서술에 이 칸 내용이 없다');
+    expect(detail.textContent).toContain('컨셉 서술에 이 칸 내용이 없어요');
   });
 
-  it('요약 칸은 상태 줄 하나로 말한다 — 카드에 같은 말을 두 번 넣지 않는다', () => {
-    const { container } = render(<BmCanvas cells={withEmptyPlanCell()} onJump={() => {}} />);
+  it('⭐ 빈 요약 칸은 «왜 비었는지»를 그 자리에 세운다', () => {
+    // ⚠ 2026-08-15 정정: 이 시험은 「요약 칸은 상태 줄 하나로 말한다」로 빈 칸에
+    //   `.bm-cell__lead` 가 **없어야** 한다고 못박고 있었다. 그 결정이 다른 병을 만들었다 —
+    //   서버가 사용자가 쓴 계획 문장을 지웠을 때(실측: 성공 3회 중 2회) 화면에는
+    //   「서술 없음」만 남고 **왜 사라졌는지가 어디에도 없었다.** 사유를 쓰는 함수는
+    //   있었는데 호출부가 0곳인 `BmCellDetails` 안에만 있었다.
+    const { container } = render(<BmCanvas cells={withEmptyPlanCell()} />);
     const tile = [...container.querySelectorAll('.bm-cell')]
       .find((node) => node.textContent.includes('고객 관계'));
-    expect(tile.querySelector('.bm-cell__lead')).toBeNull();
     expect(tile.querySelector('.bm-cell__foot').textContent).toContain('서술 없음');
-    expect(tile.textContent).not.toContain('입력에 고객 관계 정보가');
+    expect(tile.querySelector('.bm-cell__why').textContent)
+      .toContain('입력에 고객 관계 정보가');
+  });
+
+  it('자리채움 사유는 사유로 안 보인다 — 서버가 넣는 「사유 미기재」까지', () => {
+    // 실측 봉투(`p43-smoke-01-validation.json`)에 `"reason": "사유 미기재"` 가 그대로 있다.
+    // 예전에는 정규화가 넣는 문구 하나만 걸러서 이것이 **사유인 척** 화면에 섰다.
+    const cells = canvas((raw) => {
+      const cell = raw.canvas.cells.find((c) => c.canvasCell === 'CUSTOMER_RELATIONSHIPS');
+      cell.content = [];
+      cell.reason = '사유 미기재';
+    });
+    const { container } = render(<BmCanvas cells={cells} />);
+    const tile = [...container.querySelectorAll('.bm-cell')]
+      .find((node) => node.textContent.includes('고객 관계'));
+    expect(tile.textContent).not.toContain('사유 미기재');
+    expect(tile.querySelector('.bm-cell__why').textContent).toContain('컨셉 서술에');
+  });
+
+  it('⭐ 칸을 누르면 그 칸의 근거표가 열린다 — 「근거 12건」을 열 길이 있어야 한다', () => {
+    const onSelect = vi.fn();
+    const { container } = render(
+      <BmCanvas cells={canvas()} active={null} onSelect={onSelect} />);
+    // ⚠ 본문에 「채널」이 들어간 다른 칸(가치 제안)이 있다 — **제목으로** 고른다.
+    const tile = [...container.querySelectorAll('.bm-cell')]
+      .find((node) => node.querySelector('h4')?.textContent === '채널');
+    expect(tile.tagName).toBe('BUTTON');
+    expect(tile.textContent).toContain('자세히');
+    tile.click();
+    expect(onSelect).toHaveBeenCalledWith('CHANNELS');
+  });
+
+  it('onSelect 가 없으면 누를 수 없다 — 착지할 자리가 없는데 누르게 두지 않는다', () => {
+    const { container } = render(<BmCanvas cells={canvas()} />);
+    expect(container.querySelector('button.bm-cell')).toBeNull();
   });
 });
 
@@ -69,13 +107,31 @@ describe('BM 캔버스 — PLAN 과 UNVERIFIED 는 다른 사건이다', () => {
 
     const { container } = render(<BmCellDetails cells={cells} active={null} />);
     const detail = container.querySelector('#bm-KEY_PARTNERS');
-    expect(detail.textContent).toContain('미확인');
+    // 「미확인」은 2026-08-13 에 「근거 필요」가 됐다(목업 어휘). 뜻은 그대로다.
+    expect(detail.textContent).toContain('근거 필요');
     expect(detail.textContent).not.toContain('서술 없음');
   });
 
   it('진짜 PLAN 칸은 여전히 «서술됨/서술 없음» 으로 읽힌다', () => {
     const { container } = render(<BmCellDetails cells={canvas()} active={null} />);
     expect(container.querySelector('#bm-KEY_ACTIVITIES').textContent).toContain('서술됨');
+  });
+});
+
+describe('BM 캔버스 — 3×3 배치', () => {
+  it('⭐ 9칸이 한 격자에 목업 순서로 선다 — 밴드 제목은 없다', () => {
+    const { container } = render(<BmCanvas cells={canvas()} onJump={() => {}} />);
+    const grid = container.querySelector('.bm-canvas');
+    const names = [...grid.querySelectorAll('.bm-cell h4')].map((node) => node.textContent);
+
+    expect(names).toEqual([
+      '핵심 파트너', '핵심 활동', '가치 제안',
+      '고객 관계', '고객 세그먼트', '채널',
+      '핵심 자원', '비용 구조', '수익원',
+    ]);
+    // 밴드 제목(「고객과 가치」 등)은 목업에 없다 — 되살아나면 여기서 잡힌다.
+    expect(container.querySelector('.bm-band')).toBeNull();
+    expect(container.textContent).not.toContain('고객과 가치');
   });
 });
 

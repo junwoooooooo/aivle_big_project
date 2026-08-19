@@ -13,10 +13,11 @@ import com.aivle.backend.common.exception.GlobalExceptionHandler;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.integration.ai.AiServerProperties;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.ConceptPortfolioSelection;
-import com.aivle.backend.pipeline.currentconcept.CurrentConceptSourceResolver;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.marketinterview.*;
 import com.aivle.backend.pipeline.marketseed.domain.MarketAnalysisSeedSnapshot;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementFinal;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementRound;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
@@ -122,7 +123,11 @@ class MarketInterviewCanonicalInputIntegrationTests {
 
         mvc.perform(post("/api/v3/projects/41/market-interview")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"sampleSize\":20}")
+                .content("""
+                    {"sampleSize":20,"conceptBoard":{"conceptName":"예약 도우미",
+                    "targetUsers":"서울 매장","problemScenario":"예약 누락","featureSet":["예약 확인"],
+                    "differentiators":"누락 방지","priceKrw":9900}}
+                    """)
                 .header("Idempotency-Key", "browser-20")
                 .requestAttr("requestId", "request-browser-20"))
             .andExpect(status().isAccepted())
@@ -184,9 +189,17 @@ class MarketInterviewCanonicalInputIntegrationTests {
                 """);
             var plan = new BmPlanPreparationService.PlanView(
                 mapper.createObjectNode(), mapper.createObjectNode(), 3);
-            CurrentConceptSourceResolver sources = mock(CurrentConceptSourceResolver.class);
-            when(sources.require(eq(41L), anyString()))
-                .thenReturn(new CurrentConceptSourceResolver.Source(selection, seed, plan));
+            ConceptRefinementFinal refinementFinal = mock(ConceptRefinementFinal.class);
+            ConceptRefinementRound refinementRound = mock(ConceptRefinementRound.class);
+            when(refinementFinal.getId()).thenReturn(17L);
+            JsonNode finalDocument = mapper.readTree("""
+                {"selectedConcept":{"identity":{"conceptName":"예약 도우미","targetUsers":"서울 매장"},
+                  "solution":{"problemScenario":"예약 누락","featureSet":["예약 확인"]}},
+                 "finalHypotheses":{"differentiators":{"value":"누락 방지"},"price":{"value":9900}}}
+                """);
+            MarketInterviewSourceResolver sources = mock(MarketInterviewSourceResolver.class);
+            when(sources.require(41L)).thenReturn(new MarketInterviewSourceResolver.Source(
+                refinementFinal, refinementRound, seed, selection, plan, finalDocument));
 
             MarketInterviewRunRepository interviewRuns = mock(MarketInterviewRunRepository.class);
             when(interviewRuns.save(any(MarketInterviewRun.class))).thenAnswer(invocation -> {

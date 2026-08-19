@@ -88,12 +88,9 @@ async def _call(call: StructuredCall, system: str, value: Any, model, name: str,
 
 
 def _target_context(value: MarketInterviewInput) -> dict[str, str]:
-    identity = value.selectedConcept.get("identity") or {}
-    solution = value.selectedConcept.get("solution") or {}
     return {
-        "targetUsers": str(identity.get("targetUsers") or value.selectedConcept.get("targetUsers") or ""),
-        "problemScenario": str(solution.get("problemScenario")
-                               or value.selectedConcept.get("problemScenario") or ""),
+        "targetUsers": value.conceptBoard.targetUsers,
+        "problemScenario": value.conceptBoard.problemScenario,
     }
 
 
@@ -582,6 +579,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
         result = {
             "contract": "market-interview-result-v2", "schemaVersion": "2.0", "synthetic": True,
             "source": value.source.model_dump(mode="json"),
+            "conceptBoard": value.conceptBoard.model_dump(mode="json"),
             "usableInterviewCount": len(usable), "codedInterviewCount": coded_count,
             "codingFailureCount": len(usable) - coded_count,
             "targeting": {"criteria": sampling["criteria"].model_dump(mode="json"),
@@ -589,6 +587,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                           "requestedSampleSize": value.sampleSize, "drawnSampleSize": len(panel),
                           "attemptedCount": len(panel), "usableCount": len(usable),
                           "failedCount": len(failures),
+                          "targetRequested": sampling["targetRequested"],
                           "targetCount": sum(row["group"] == "TARGET" for row in usable_panel),
                           "nonTargetCount": sum(row["group"] != "TARGET" for row in usable_panel),
                           "proxyCount": sum(row["group"] == "PROXY" for row in usable_panel),
@@ -631,7 +630,7 @@ async def execute_deep_interview(value: MarketInterviewInput, call: StructuredCa
                                   "rule": "FINAL_PYDANTIC_VALIDATION",
                                   "path": fields[0]["path"] if fields else "result"},
             ) from failure
-        assert_semantic_integrity(value.selectedConcept, validated)
+        assert_semantic_integrity(value.selectedConcept, validated, value.conceptBoard.model_dump(mode="json"))
         progress("MI_RESULT_READY", "현재 사업안과 일치하는 인터뷰 결과를 구성했습니다.")
         return validated
     except CodingValidationFailure as failure:

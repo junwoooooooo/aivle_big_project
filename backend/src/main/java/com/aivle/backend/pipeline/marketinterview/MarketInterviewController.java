@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tools.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("/api/v3/projects/{projectId}/market-interview")
@@ -14,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class MarketInterviewController {
     private final MarketInterviewService service;
     private final CurrentUserProvider currentUser;
+
+    @GetMapping("/board")
+    public ApiResponse<JsonNode> board(@PathVariable Long projectId, HttpServletRequest request) {
+        return ApiResponse.success(service.board(currentUser.currentUserId(), projectId), requestId(request));
+    }
 
     @GetMapping("/current")
     public ApiResponse<MarketInterviewService.CurrentView> current(@PathVariable Long projectId,
@@ -26,7 +32,8 @@ public class MarketInterviewController {
             @RequestBody(required = false) StartRequest body, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
             service.start(currentUser.currentUserId(), projectId, request.getHeader("Idempotency-Key"),
-                requestId(request), body == null || body.sampleSize() == null ? 20 : body.sampleSize()), requestId(request)));
+                requestId(request), body == null ? null : body.conceptBoard(),
+                body == null || body.sampleSize() == null ? 40 : body.sampleSize()), requestId(request)));
     }
 
     @PostMapping("/retry")
@@ -42,5 +49,5 @@ public class MarketInterviewController {
         return value == null ? null : value.toString();
     }
 
-    public record StartRequest(Integer sampleSize) { }
+    public record StartRequest(JsonNode conceptBoard, Integer sampleSize) { }
 }

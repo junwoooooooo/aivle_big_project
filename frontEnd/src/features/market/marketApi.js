@@ -27,6 +27,30 @@ export function createMarketApi(client, projectId) {
     },
     async currentBusinessModel() { return (await client.get(`${root}/business-model/current`)).data; },
 
+    async currentRefinementPresentation() {
+      return (await client.get(`${root}/business-validation/refinement/presentation`)).data;
+    },
+    async retryRefinement() {
+      return (await client.post(`${root}/business-validation/refinement/retry`, {},
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
+    async nextRefinement(body) {
+      return (await client.post(`${root}/business-validation/refinement/next`, body,
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
+    async decideRefinement(body) {
+      return (await client.post(`${root}/business-validation/refinement/decision`, body,
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
+    async applyRefinement(body) {
+      return (await client.post(`${root}/business-validation/refinement/apply`, body,
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
+    async finalizeRefinement(body) {
+      return (await client.post(`${root}/business-validation/refinement/finalize`, body,
+        { timeoutMs: 30000, headers: { 'Idempotency-Key': key() } })).data;
+    },
+
     // 실행 계획 — BM 앞 단계에서 사용자가 채우는 칸. **실행과 따로 저장한다**:
     // 요청 바디에 실어 보내면 새로고침에 사라지고 감사 기록도 안 남는다.
     async currentBmPlan() { return (await client.get(`${root}/business-model/plan`)).data; },
