@@ -1,9 +1,9 @@
 # Stage 2 / Stage 4 MAIN Frozen Core Manifest
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
+- FULL START: `ab89d3e9b8db65542de6fc0f52c7966a6dc9fb9f`
 - Generated from the fetched refs above.
-- Classification means: `BYTE_IDENTICAL` = current clean-filter blob equals MAIN; `WRAPPER_ONLY` = FULL outer integration before/after the frozen core; `NOT_ALLOWED` = may remain dormant but cannot be reached by Stage 2/4 production execution.
+- Classification means: `BYTE_IDENTICAL` = current clean-filter blob equals MAIN; `WRAPPER_OBSERVABILITY_DELTA` = the MAIN algorithm/result/failure contract is unchanged and only bounded server-side failure evidence is attached before temporary cleanup; `WRAPPER_ONLY` = FULL outer integration before/after the frozen core; `NOT_ALLOWED` = may remain dormant but cannot be reached by Stage 2/4 production execution.
 
 ## Transitive production closure
 
@@ -11,11 +11,20 @@ Stage 2 starts at `MarketResearchInputFactory -> MarketResearchWorker -> executi
 
 V9's earlier **287-file** statement was incomplete. It counted the research subtree and the previously identified cross-package dependencies, but did not follow these `app.validation` package-boundary imports. That omission left MAIN `product_pipeline` unpacking the FULL one-value `citation.enforce` result and left a divergent gate in production. V9.1 adds those five exact donor blobs; the count below is the corrected closure represented by this manifest.
 
+The `ab89d3e9` baseline was rechecked before the observability change and all 292 files matched
+MAIN. The temporary Market workspace is deleted inside `product_pipeline._product_full`, so no
+outer execution facade can read its existing Research2 diagnostics after propagation. The single
+non-zero subprocess block is therefore classified below as `WRAPPER_OBSERVABILITY_DELTA`. Replacing
+that block with the original four MAIN lines reproduces the MAIN blob hash; a focused test enforces
+this exact inverse transformation.
+
 Stage 4 starts at the FULL finalized-source facade, crosses the exact MAIN `MarketInterviewInputFactory`, then `MarketInterviewWorker -> executions.py -> app.interview.execute_market_interview`. Its import closure is `models/questions/targeting/runner/coding/analysis/saturation/caveats/ledger`, exact MAIN `app.twin.bank/profile/runner/task_type/caveats`, and the exact MAIN `app.providers` structured-output transport.
 
 ## BYTE_IDENTICAL files
 
-Count: **292** (Stage 2 research tree 262; Stage 2 validation package 5; Stage 4 interview tree 10; cross-package Java/twin/provider 15).
+Count after the observability hook: **291 BYTE_IDENTICAL + 1 WRAPPER_OBSERVABILITY_DELTA**
+(Stage 2 research tree 261+1; Stage 2 validation package 5; Stage 4 interview tree 10;
+cross-package Java/twin/provider 15).
 
 | MAIN path | FULL current path | MAIN blob SHA | FULL blob SHA | classification |
 |---|---|---|---|---|
@@ -47,7 +56,7 @@ Count: **292** (Stage 2 research tree 262; Stage 2 validation package 5; Stage 4
 | `ai/app/research/market_ledger_artifact.py` | `ai/app/research/market_ledger_artifact.py` | `c560cd052a98d5801e702f78aa813e1131a7451c` | `c560cd052a98d5801e702f78aa813e1131a7451c` | BYTE_IDENTICAL |
 | `ai/app/research/pipeline.py` | `ai/app/research/pipeline.py` | `02dbe0107687e451e6810eff1382b0738d3154a8` | `02dbe0107687e451e6810eff1382b0738d3154a8` | BYTE_IDENTICAL |
 | `ai/app/research/product_market_join.py` | `ai/app/research/product_market_join.py` | `e6c5d07d5d21f873f4a8a99ebf855aa865470972` | `e6c5d07d5d21f873f4a8a99ebf855aa865470972` | BYTE_IDENTICAL |
-| `ai/app/research/product_pipeline.py` | `ai/app/research/product_pipeline.py` | `b0bbce17726135448096487c33b846ca18236922` | `b0bbce17726135448096487c33b846ca18236922` | BYTE_IDENTICAL |
+| `ai/app/research/product_pipeline.py` | `ai/app/research/product_pipeline.py` | `b0bbce17726135448096487c33b846ca18236922` | `6ccd7c35d979f0c7882530528eb4b5ead8b245e9` | WRAPPER_OBSERVABILITY_DELTA |
 | `ai/app/research/product_runner.py` | `ai/app/research/product_runner.py` | `cb3525de7fb21920c1e7732aaee5d727c69f159a` | `cb3525de7fb21920c1e7732aaee5d727c69f159a` | BYTE_IDENTICAL |
 | `ai/app/research/progress_jsonl.py` | `ai/app/research/progress_jsonl.py` | `544e5799c03a1535b4bac232e12142bce02e4583` | `544e5799c03a1535b4bac232e12142bce02e4583` | BYTE_IDENTICAL |
 | `ai/app/research/research2/adapters/_cache_corpcode.json` | `ai/app/research/research2/adapters/_cache_corpcode.json` | `aefd84b31aaf474635ef1d1ff28cd9f90c5d16b1` | `aefd84b31aaf474635ef1d1ff28cd9f90c5d16b1` | BYTE_IDENTICAL |
@@ -316,6 +325,7 @@ Count: **292** (Stage 2 research tree 262; Stage 2 validation package 5; Stage 4
 
 | MAIN path/blob | FULL current path/blob | reason | classification |
 |---|---|---|---|
+| `ABSENT` | `ai/app/market_failure_diagnostics.py` | reads only existing bounded harness/runlog failure fields before temporary cleanup; no algorithm input/output | WRAPPER_OBSERVABILITY_DELTA |
 | `014e8f4dc00c95a267a9a6c0cbe23a1bb8c55677` | `ai/app/api/executions.py` / `053fa2b860c5203493cfc799065cedb659b764e2` | FULL task registry retained; MARKET_INTERVIEW branch delegates to MAIN | WRAPPER_ONLY |
 | `b135f1bf76351bc58d35095473ff26be24b7a8c4` | `backend/src/main/java/com/aivle/backend/pipeline/market/MarketResearchController.java` / `524bb81752788ad8cafc037ffd94620f5534b417` | FULL v3 route plus session observation | WRAPPER_ONLY |
 | `53c969a2b1c858d7a35653029d1b14cee81531d2` | `backend/src/main/java/com/aivle/backend/pipeline/market/MarketResearchService.java` / `6bda929a9914baf714aae6bd48fd069a7fb949aa` | TaskRun/lineage integration and projection read API | WRAPPER_ONLY |
@@ -342,4 +352,7 @@ Allowed differences are limited to authentication/current user, FULL v3 route pr
 
 ## Verification command
 
-`ai/tests/test_main_frozen_core_equivalence.py` canonicalizes CRLF through Git clean semantics, compares every listed donor blob to `origin/main`, asserts the exact dispatch import, rejects the two Stage 2 replacement files, and proves the FULL Stage 4 worker authority is absent.
+`ai/tests/test_main_frozen_core_equivalence.py` canonicalizes CRLF through Git clean semantics,
+compares every `BYTE_IDENTICAL` donor blob to `origin/main`, inverse-verifies the single permitted
+`product_pipeline.py` observability block, asserts the exact dispatch import, rejects the two Stage
+2 replacement files, and proves the FULL Stage 4 worker authority is absent.

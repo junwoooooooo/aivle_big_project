@@ -3,7 +3,7 @@
 ## Refs and scope
 
 - MAIN: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL start: `dc0976ca8dbe4cfa2ab16683621abfc1ca634923`
+- FULL start: `ab89d3e9b8db65542de6fc0f52c7966a6dc9fb9f`
 - No merge/cherry-pick/reset/clean/stash/commit/push.
 - No provider/paid call, Docker rebuild, browser E2E or full regression.
 
@@ -34,6 +34,22 @@ FULL additions (`schemaName`, upstream/provider fields, retry metadata, validati
 diagnostics). Raw detail is not copied into the HTTP error or JobEvent. Only contract reason plus
 allowlisted `diagnosticStage`/validation fields can cross those boundaries.
 
+## Temporary-workspace observability delta
+
+At the `ab89d3e9` baseline all 292 frozen files were rechecked against MAIN before editing. A clean
+volume Market failure still lost its inner Research2 evidence because the frozen product wrapper
+kept only the traceback's last line and then `TemporaryDirectory` deleted
+`runs-generated/harness/**/무인_기록.json` and `runs-generated/**/run.jsonl`. No execution facade
+outside `_product_full` can inspect those files after propagation.
+
+The non-zero subprocess block now invokes a separate bounded collector before cleanup. It reads
+only the latest intervention kind/detail/attempt limit or the latest `llm_error`/error event and
+emits allowlisted stage, node, exception class, HTTP status, provider code, attempt and adapter.
+Prompt, concept, response, document body, credential and raw traceback text are never returned.
+Market still fails with the exact MAIN `EXECUTION_FAILED / TRANSIENT_EXECUTION_FAILURE` contract.
+This one block is classified `WRAPPER_OBSERVABILITY_DELTA`; inverse-replacing it with MAIN's four
+lines reproduces the MAIN blob hash in a focused test.
+
 ## Stage 2 result
 
 - [x] Active Java input factory is the MAIN blob.
@@ -42,7 +58,8 @@ allowlisted `diagnosticStage`/validation fields can cross those boundaries.
 - [x] active worker is the MAIN blob.
 - [x] worker budget/lease are 60m/63m.
 - [x] market HTTP read boundary is 63m.
-- [x] the entire `ai/app/research` donor tree (262 files) matches MAIN blobs.
+- [x] 261 `ai/app/research` files match MAIN blobs; `product_pipeline.py` differs only by the
+  documented outer failure-diagnostic hook.
 - [x] the reached `ai/app/validation` donor closure (`__init__`, `citation`, `gate`, `mapping`,
   `runner`) matches MAIN blobs.
 - [x] `citation.enforce` has the MAIN tuple contract and MAIN production BM can unpack it.
@@ -128,10 +145,13 @@ those fields.
 
 ## Focused results
 
+- Temporary-workspace diagnostic extraction, redaction, failure contract and frozen-delta checks:
+  **23 passed**.
 - AI: **53 passed, 0 failed** across the V9.1 closure/BM/final-proposal focused runs.
 - Backend: **91 passed, 0 failed** across the Stage 2 and final-proposal focused runs.
 - Frontend: **27 passed, 0 failed** across the existing Stage 2/4 donor UI focused run.
-- Frozen manifest: **292 BYTE_IDENTICAL** files and **10 WRAPPER_ONLY** files.
+- Frozen manifest after the hook: **291 BYTE_IDENTICAL**, **1 WRAPPER_OBSERVABILITY_DELTA** and
+  **10 WRAPPER_ONLY** files. The pre-edit baseline check was 292/292.
 - Backend-produced final-proposal task input passed Python `model_validate` without a provider call.
 - The Stage 4 import/blob freeze remained green; no Stage 4 core file was changed.
 - V9.2 ProviderFailure logging/leak/frozen-hash focused checks: **12 passed**.

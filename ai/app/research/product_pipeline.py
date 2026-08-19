@@ -420,9 +420,22 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             if progress_task is not None:
                 await progress_task
         if process.returncode != 0:
-            detail = stderr.decode("utf-8", "replace").strip().splitlines()
-            raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
-                        detail[-1] if detail else "시장조사 엔진 실패")
+            from app.market_failure_diagnostics import (
+                collect_market_failure_diagnostics,
+                diagnostic_log_detail,
+                fallback_stderr_diagnostics,
+            )
+            stderr_text = stderr.decode("utf-8", "replace")
+            try:
+                diagnostic = (collect_market_failure_diagnostics(workspace)
+                              or fallback_stderr_diagnostics(stderr_text))
+            except Exception:
+                diagnostic = None
+            failure = _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+                            diagnostic_log_detail(diagnostic))
+            if diagnostic:
+                failure.safe_diagnostics = diagnostic
+            raise failure
         try:
             with io.open(output_path, encoding="utf-8") as handle:
                 result = json.load(handle)

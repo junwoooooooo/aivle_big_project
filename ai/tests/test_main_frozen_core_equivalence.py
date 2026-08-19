@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+OBSERVABILITY_DELTAS = {"ai/app/research/product_pipeline.py"}
 
 
 def _git(*args: str) -> str:
@@ -53,8 +54,40 @@ def test_stage2_research_tree_is_the_main_tree() -> None:
         and "runs-generated" not in path.parts
     }
     assert current == donor
-    for path in sorted(donor):
+    for path in sorted(donor - OBSERVABILITY_DELTAS):
         _assert_main_blob(path)
+
+
+def test_product_pipeline_delta_is_only_the_outer_failure_diagnostic_hook() -> None:
+    path = "ai/app/research/product_pipeline.py"
+    source = (ROOT / path).read_text(encoding="utf-8").replace("\r\n", "\n")
+    observed = '''            from app.market_failure_diagnostics import (
+                collect_market_failure_diagnostics,
+                diagnostic_log_detail,
+                fallback_stderr_diagnostics,
+            )
+            stderr_text = stderr.decode("utf-8", "replace")
+            try:
+                diagnostic = (collect_market_failure_diagnostics(workspace)
+                              or fallback_stderr_diagnostics(stderr_text))
+            except Exception:
+                diagnostic = None
+            failure = _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+                            diagnostic_log_detail(diagnostic))
+            if diagnostic:
+                failure.safe_diagnostics = diagnostic
+            raise failure
+'''
+    donor = '''            detail = stderr.decode("utf-8", "replace").strip().splitlines()
+            raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+                        detail[-1] if detail else "시장조사 엔진 실패")
+'''
+    assert source.count(observed) == 1
+    restored = source.replace(observed, donor)
+    content = restored.encode("utf-8")
+    header = f"blob {len(content)}\0".encode("ascii")
+
+    assert hashlib.sha1(header + content).hexdigest() == _main_blobs()[path]
 
 
 def test_stage2_validation_import_closure_is_the_main_tree() -> None:

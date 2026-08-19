@@ -3,7 +3,7 @@
 ## Identity and rule
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START SHA: `dc0976ca8dbe4cfa2ab16683621abfc1ca634923`
+- FULL START SHA: `ab89d3e9b8db65542de6fc0f52c7966a6dc9fb9f`
 - Frontend presentation truth: the files reached by MAIN `AppRouter.jsx`.
 - Backend/AI execution truth: **origin/main active core**.
 - FULL v3 is outer integration, finalized-source gating, TaskRun transport and lineage storage only.
@@ -30,6 +30,41 @@ pre-V9.1 evidence only: they failed after roughly 50–76 seconds with
 `TRANSIENT_EXECUTION_FAILURE` and empty safe diagnostics. They are not used to judge the current
 runtime or to change Market algorithms. The next cause decision must come from exactly one new
 user-run Market execution and its server `detail=` line.
+
+## 2026-08-19 observed Market runtime
+
+- `OPENAI_API_KEY`: set (value not recorded)
+- `OPENAI_BASE_URL`: `https://api.openai.com/v1`
+- OpenAI Python SDK: `2.38.0`
+- SDK read timeout: 600 seconds
+- SDK `max_retries`: 2
+- Harness model: `gpt-4o`
+- Generic `AI_PROVIDER_TIMEOUT_SECONDS`: 60 seconds, unchanged
+
+The generic 60-second provider setting is not the Research2 harness timeout authority and is not
+the cause assigned to this failure. No timeout, model, prompt, retry, gate, dryrun, collection or
+adapter setting was changed.
+
+## Temporary-workspace failure evidence
+
+Observed loss chain before this change:
+
+`Research2 harness/Meter writes exact failure -> product subprocess exits non-zero ->
+product_pipeline keeps only final stderr wrapper line -> TemporaryDirectory deletes workspace ->
+executions.py receives TRANSIENT failure without inner stage/class/status`.
+
+The only reachable preservation point is the existing non-zero subprocess branch inside
+`_product_full`, before the context manager exits. A separate outer collector now inspects only:
+
+- `runs-generated/harness/**/무인_기록.json`: last `개입.종류`, last `개입.상세`, `_시도`, `_상한`.
+- `runs-generated/**/run.jsonl`: the latest `.llm_error` or `status=error` event, retaining only
+  safe node and exception/status tokens.
+
+Its output is bounded to `stage`, `node`, `exceptionType`, `httpStatus`, `errorCode`, `attempt` and
+`adapter`. A sanitized detail assembled solely from those fields is server-log-only. The HTTP
+contract and Market FAILED semantics remain unchanged. `product_pipeline.py` is therefore recorded
+as one `WRAPPER_OBSERVABILITY_DELTA`; replacing that block with the MAIN failure block restores the
+MAIN blob exactly. All other Research2 files and all Stage 4 donor files remain MAIN-identical.
 
 ## Stage 2 complete production graph
 
@@ -211,11 +246,14 @@ the documents in `docs/rebuild`.
 
 ## Focused evidence
 
+- Temporary-workspace collector, safe stderr fallback, secret non-leak, unchanged failure contract
+  and frozen-delta checks: 23 passed.
 - V9.2 ProviderFailure detail logging, raw-detail non-leak and frozen-hash checks: 12 passed.
 - AI V9.1 closure/BM/final-proposal focused runs: 53 passed.
 - Backend Stage 2/final-proposal focused runs: 91 passed.
 - Frontend Stage 2/4 donor UI focused run: 27 passed.
-- Frozen manifest: 292 BYTE_IDENTICAL and 10 WRAPPER_ONLY files.
+- Frozen manifest after the hook: 291 BYTE_IDENTICAL, 1 WRAPPER_OBSERVABILITY_DELTA and 10
+  WRAPPER_ONLY files; the pre-edit baseline was 292/292.
 - Stage 4 MAIN dispatch/blob freeze: passed without Stage 4 core edits.
 - `git diff --check`: passed.
 - Browser presentation verification remains user-run; this document does not claim visual identity
