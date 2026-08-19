@@ -404,11 +404,12 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
     except ProviderFailure as failure:
         logger.warning(
             "AI execution failed taskType=%s taskRunId=%s taskAttemptId=%s correlationId=%s "
-            "code=%s reason=%s retryable=%s schemaName=%s upstreamStatus=%s "
+            "code=%s reason=%s retryable=%s detail=%s schemaName=%s upstreamStatus=%s "
             "providerErrorType=%s providerErrorParam=%s retryAfterMs=%s validationFields=%s "
             "safeDiagnostics=%s",
             body.taskType, body.taskRunId, body.taskAttemptId, correlation,
-            failure.code, failure.reason, failure.retryable, failure.schema_name,
+            failure.code, failure.reason, failure.retryable,
+            getattr(failure, "safe_provider_message", None), failure.schema_name,
             failure.upstream_status, failure.provider_error_type, failure.provider_error_param,
             failure.retry_after_ms,
             failure.validation_fields,

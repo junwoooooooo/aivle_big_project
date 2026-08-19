@@ -3,7 +3,7 @@
 ## Identity and rule
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START SHA: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
+- FULL START SHA: `dc0976ca8dbe4cfa2ab16683621abfc1ca634923`
 - Frontend presentation truth: the files reached by MAIN `AppRouter.jsx`.
 - Backend/AI execution truth: **origin/main active core**.
 - FULL v3 is outer integration, finalized-source gating, TaskRun transport and lineage storage only.
@@ -18,6 +18,18 @@ V9's 287-file closure statement was also incomplete: the audit did not cross fro
 `app.research` into the production-imported `app.validation` package. V9.1 follows that boundary
 and freezes exact MAIN `validation/{__init__,citation,gate,mapping,runner}.py`; `drift.py` is not
 reached by Stage 2.
+
+V9.1 core parity was present, but failure observability was not yet at MAIN parity:
+`executions.py` omitted `ProviderFailure.safe_provider_message` from its server warning. V9.2
+restores MAIN's `detail=` logging while retaining FULL's structured diagnostic fields. The detail
+remains server-log-only; the HTTP response exposes contract reason and allowlisted diagnostic
+stage/validation fields, and no raw provider prompt, input or response is published to JobEvent.
+
+Project 7 TaskRuns `638c5412...`, `c8b641ff...`, `869b721d...` and `6008bd42...` remain historical
+pre-V9.1 evidence only: they failed after roughly 50–76 seconds with
+`TRANSIENT_EXECUTION_FAILURE` and empty safe diagnostics. They are not used to judge the current
+runtime or to change Market algorithms. The next cause decision must come from exactly one new
+user-run Market execution and its server `detail=` line.
 
 ## Stage 2 complete production graph
 
@@ -199,6 +211,7 @@ the documents in `docs/rebuild`.
 
 ## Focused evidence
 
+- V9.2 ProviderFailure detail logging, raw-detail non-leak and frozen-hash checks: 12 passed.
 - AI V9.1 closure/BM/final-proposal focused runs: 53 passed.
 - Backend Stage 2/final-proposal focused runs: 91 passed.
 - Frontend Stage 2/4 donor UI focused run: 27 passed.

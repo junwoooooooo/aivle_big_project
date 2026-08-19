@@ -3,7 +3,7 @@
 ## Refs and scope
 
 - MAIN: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL start: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
+- FULL start: `dc0976ca8dbe4cfa2ab16683621abfc1ca634923`
 - No merge/cherry-pick/reset/clean/stash/commit/push.
 - No provider/paid call, Docker rebuild, browser E2E or full regression.
 
@@ -23,6 +23,16 @@ imports `app.validation.citation` and `app.validation.gate`, `pipeline.py` impor
 `citation.enforce` returned one value while MAIN `product_pipeline` unpacked `(analysis,
 corrections)`, and the FULL gate was a different implementation. The five reached validation files
 are now exact MAIN donor blobs; `drift.py` is not reached by Stage 2 and was not transplanted.
+
+## V9.2 observability correction
+
+V9.1 core parity was present, but `executions.py` did not log
+`ProviderFailure.safe_provider_message` as MAIN does. Consequently a Market failure could retain
+only `code`, `reason` and the FULL diagnostics envelope while dropping MAIN's server-only
+`detail=` field at the HTTP execution boundary. V9.2 restores MAIN logging semantics and keeps the
+FULL additions (`schemaName`, upstream/provider fields, retry metadata, validation fields and safe
+diagnostics). Raw detail is not copied into the HTTP error or JobEvent. Only contract reason plus
+allowlisted `diagnosticStage`/validation fields can cross those boundaries.
 
 ## Stage 2 result
 
@@ -124,6 +134,7 @@ those fields.
 - Frozen manifest: **292 BYTE_IDENTICAL** files and **10 WRAPPER_ONLY** files.
 - Backend-produced final-proposal task input passed Python `model_validate` without a provider call.
 - The Stage 4 import/blob freeze remained green; no Stage 4 core file was changed.
+- V9.2 ProviderFailure logging/leak/frozen-hash focused checks: **12 passed**.
 - `git diff --check`: passed.
 
 ## Remaining user verification

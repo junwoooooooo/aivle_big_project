@@ -75,7 +75,9 @@ def test_execution_logger_includes_only_safe_market_diagnostics(monkeypatch, cap
     async def fail_market(*_args, **_kwargs):
         raise ProviderFailure(
             "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", 502, True,
+            safe_provider_message="HARNESS_X",
             safe_diagnostics={
+                "stage": "HARNESS_GATE",
                 "component": "market-research",
                 "detail": "httpx.ReadTimeout after 60 seconds",
             },
@@ -115,8 +117,14 @@ def test_execution_logger_includes_only_safe_market_diagnostics(monkeypatch, cap
 
     assert response.status_code == 502
     assert response.json()["error"]["details"] == [
-        {"reason": "TRANSIENT_EXECUTION_FAILURE"}
+        {
+            "reason": "TRANSIENT_EXECUTION_FAILURE",
+            "diagnosticStage": "HARNESS_GATE",
+        }
     ]
-    assert "safeDiagnostics={'component': 'market-research', " in caplog.text
+    assert "detail=HARNESS_X" in caplog.text
+    assert "safeDiagnostics=" in caplog.text
+    assert "'component': 'market-research'" in caplog.text
     assert "httpx.ReadTimeout after 60 seconds" in caplog.text
-
+    assert "HARNESS_X" not in response.text
+    assert "httpx.ReadTimeout after 60 seconds" not in response.text

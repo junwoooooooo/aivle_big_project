@@ -39,3 +39,18 @@ def test_internal_error_carries_only_allowlisted_diagnostic_stage():
     assert detail["diagnosticStage"] == "INPUT_CONTRACT_VALIDATION"
     assert detail["fields"][0]["path"] == "sourceManifest.0.type"
     assert "raw" not in detail
+
+
+def test_internal_error_drops_non_allowlisted_diagnostic_stage_and_raw_detail():
+    response = internal_error(
+        "correlation", "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
+        502, True, "run", "attempt",
+        safe_diagnostics={
+            "stage": "harness gate/raw",
+            "detail": "HARNESS_X must remain server-side",
+        },
+    )
+    body = json.loads(response.body)
+
+    assert body["error"]["details"] == [{"reason": "TRANSIENT_EXECUTION_FAILURE"}]
+    assert "HARNESS_X" not in response.body.decode("utf-8")
