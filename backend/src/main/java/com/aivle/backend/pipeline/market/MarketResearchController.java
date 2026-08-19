@@ -3,6 +3,7 @@ package com.aivle.backend.pipeline.market;
 import com.aivle.backend.common.response.ApiResponse;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.common.web.RequestIds;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import tools.jackson.databind.JsonNode;
 public class MarketResearchController {
 
     private final MarketResearchService service;
+    private final BusinessValidationCoordinator validationProjection;
     private final CurrentUserProvider currentUser;
 
     /** Market 실행. current authoritative Concept 스냅샷 직렬화는 서버가 한다. */
@@ -30,10 +32,13 @@ public class MarketResearchController {
     public ResponseEntity<ApiResponse<MarketResearchService.RunView>> startFull(
             @PathVariable Long projectId, @Valid @RequestBody StartRequest body,
             HttpServletRequest request) {
+        Long ownerId = currentUser.currentUserId();
+        String commandKey = request.getHeader("Idempotency-Key");
+        MarketResearchService.RunView started = service.startFull(ownerId, projectId,
+            body == null ? null : body.asOf(), commandKey, id(request));
+        validationProjection.observeMarketStarted(ownerId, projectId, started, commandKey);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
-            service.startFull(currentUser.currentUserId(), projectId,
-                body == null ? null : body.asOf(),
-                request.getHeader("Idempotency-Key"), id(request)), id(request)));
+            started, id(request)));
     }
 
     @GetMapping("/market-research/current")
@@ -47,10 +52,14 @@ public class MarketResearchController {
     public ResponseEntity<ApiResponse<MarketResearchService.RunView>> recollect(
             @PathVariable Long projectId, @Valid @RequestBody RecollectRequest body,
             HttpServletRequest request) {
+        Long ownerId = currentUser.currentUserId();
+        String commandKey = request.getHeader("Idempotency-Key");
+        MarketResearchService.RunView started = service.startRecollect(ownerId, projectId,
+            body.sourceMarketResearchVersionId(), body.slots(), body.from(), body.slotsFrom(), body.asOf(),
+            commandKey, id(request));
+        validationProjection.observeMarketStarted(ownerId, projectId, started, commandKey);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(
-            service.startRecollect(currentUser.currentUserId(), projectId,
-                body.sourceMarketResearchVersionId(), body.slots(), body.from(), body.slotsFrom(), body.asOf(),
-                request.getHeader("Idempotency-Key"), id(request)), id(request)));
+            started, id(request)));
     }
 
     @GetMapping("/market-research/competitor-seeds")

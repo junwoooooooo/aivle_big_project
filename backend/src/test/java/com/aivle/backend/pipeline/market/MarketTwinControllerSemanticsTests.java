@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.aivle.backend.common.security.CurrentUserProvider;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -20,17 +22,21 @@ class MarketTwinControllerSemanticsTests {
     void longRunningMarketBmDraftAndSurveyStartsReturnAccepted() {
         when(currentUser.currentUserId()).thenReturn(7L);
         MarketResearchService market = mock(MarketResearchService.class);
+        MarketResearchService.RunView marketStarted = new MarketResearchService.RunView(
+            1L, "FULL", "QUEUED", "m-1", "QUEUED", null, false);
         when(market.startFull(any(), any(), any(), any(), any()))
-            .thenReturn(new MarketResearchService.RunView(1L, "FULL", "QUEUED", "m-1", "QUEUED", null, false));
+            .thenReturn(marketStarted);
         when(market.startBm(any(), any(), any(), any()))
             .thenReturn(new MarketResearchService.RunView(2L, "BM", "QUEUED", "b-1", "QUEUED", null, false));
-        MarketResearchController marketController = new MarketResearchController(market, currentUser);
+        BusinessValidationCoordinator projection = mock(BusinessValidationCoordinator.class);
+        MarketResearchController marketController = new MarketResearchController(market, projection, currentUser);
 
         assertThat(marketController.startFull(41L,
             new MarketResearchController.StartRequest("2026-08-11"), request).getStatusCode())
             .isEqualTo(HttpStatus.ACCEPTED);
         assertThat(marketController.startBm(41L, new MarketResearchController.BmRequest(), request).getStatusCode())
             .isEqualTo(HttpStatus.ACCEPTED);
+        verify(projection).observeMarketStarted(7L, 41L, marketStarted, null);
 
         TwinSurveyService twin = mock(TwinSurveyService.class);
         TwinSurveyStimulusDraftService draft = mock(TwinSurveyStimulusDraftService.class);

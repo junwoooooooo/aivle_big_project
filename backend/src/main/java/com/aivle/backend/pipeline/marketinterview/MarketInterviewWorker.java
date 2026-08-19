@@ -26,8 +26,13 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class MarketInterviewWorker {
     private static final TaskType TYPE = TaskType.MARKET_INTERVIEW;
-    private static final Duration BUDGET = Duration.ofMinutes(5);
-    private static final Duration LEASE = BUDGET.plusMinutes(2);
+    /**
+     * The deep engine is heavier than MAIN: respondent retry, codebook repair, batch repair and
+     * single-row coding fallback run at a lower default concurrency. Five minutes had no workload
+     * basis, so preserve MAIN's ten-minute execution boundary and a three-minute lease margin.
+     */
+    static final Duration BUDGET = Duration.ofMinutes(10);
+    static final Duration LEASE = BUDGET.plusMinutes(3);
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("storageUrl", "objectKey", "presignedUrl",
         "localPath", "fileBytes", "base64", "prompt", "rawProviderResponse", "credential", "evidenceId");
 

@@ -13,4 +13,8 @@ public interface MarketResearchRunRepository extends JpaRepository<MarketResearc
 
     @EntityGraph(attributePaths = {"project", "taskRun", "sourceRun"})
     Optional<MarketResearchRun> findByTaskRunIdAndDeletedAtIsNull(String taskRunId);
+
+    @EntityGraph(attributePaths = {"project", "taskRun", "sourceRun", "sourceRun.taskRun"})
+    Optional<MarketResearchRun> findTopByProjectIdAndKindAndSourceRunTaskRunIdAndSourceBmPlanRevisionAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
+        Long projectId, MarketResearchRun.Kind kind, String marketTaskRunId, Integer planRevision);
 }

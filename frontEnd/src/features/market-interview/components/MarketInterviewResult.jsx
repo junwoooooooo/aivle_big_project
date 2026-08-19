@@ -40,7 +40,14 @@ function ListSection({ title, items = [] }) {
   return <section className="market-interview__section"><h2>{title}</h2><ul>{items.map((item, index) => <li key={`${title}-${index}`}>{item}</li>)}</ul></section>;
 }
 
-export default function MarketInterviewResult({ result }) {
+function ClassificationSummary({ title, summary, labels }) {
+  if (!summary) return null;
+  return <section className="market-interview__classification"><h2>{title}</h2><dl>
+    {labels.map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{summary[key] ?? 0}명</dd></div>)}
+  </dl></section>;
+}
+
+export default function MarketInterviewResult({ result, run = {} }) {
   const dashboard = useMemo(() => marketInterviewDashboard(result), [result]);
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [group, setGroup] = useState('ALL');
@@ -67,18 +74,33 @@ export default function MarketInterviewResult({ result }) {
       <dl><div><dt>요청</dt><dd>{requested}명</dd></div><div><dt>유효 인터뷰</dt><dd>{dashboard.usableCount}명</dd></div><div><dt>테마 코딩 완료</dt><dd>{coded}명</dd></div>{codingFailures > 0 ? <div><dt>코딩 제외</dt><dd>{codingFailures}명</dd></div> : null}<div><dt>직접 타겟</dt><dd>{result.targeting?.targetCount ?? 0}명</dd></div><div><dt>대리·탐색</dt><dd>{(result.targeting?.proxyCount ?? 0) + (result.targeting?.exploratoryCount ?? 0)}명</dd></div></dl>
       <details><summary>표집 기준과 표현 한계 보기</summary><p>{result.targeting?.criteriaText}</p>{failed ? <p>응답 생성 실패 {failed}명은 모든 코딩과 집계에서 제외했습니다.</p> : null}{result.targeting?.targetCoverageWarning ? <p role="status">{result.targeting.targetCoverageWarning}</p> : null}</details></section>
 
-    <div className="market-interview__dashboard"><section className="market-interview__insights" aria-label="테마 상세">
+    <section className="market-interview__insights" aria-label="주요 테마">
       {dashboard.sections.map((section) => <section key={section.id}><h2>{section.title}</h2>{section.themes.map((theme) => <ThemeRow key={theme.key} theme={theme} total={dashboard.usableCount} selected={selectedTheme === theme.key} onSelect={setSelectedTheme} />)}</section>)}
       {dashboard.crossRelationships.length ? <section><h2>패턴 간 연결</h2><div className="market-interview__relationships">{dashboard.crossRelationships.map((item) => <article key={`${item.suggestionTitle}-${item.relatedTitle}`}><div><small>개선 요구</small><strong>{item.suggestionTitle}</strong></div><span>연결됨</span><div><small>{item.relatedAxis === 'BARRIER' ? '거부 이유' : '우려'}</small><strong>{item.relatedTitle}</strong></div><b>공통 응답자 {item.overlapCount}명</b></article>)}</div></section> : null}
     </section>
 
-      <aside className="market-interview__respondents" aria-labelledby="market-interview-participants"><header><div><span>응답자 근거</span><h2 id="market-interview-participants">Respondent Explorer</h2></div><div role="group" aria-label="응답자 그룹 필터"><button type="button" aria-pressed={group === 'ALL'} onClick={() => setGroup('ALL')}>전체</button>{groups.map((value) => <button type="button" key={value} aria-pressed={group === value} onClick={() => setGroup(value)}>{GROUP_LABEL[value]}</button>)}</div></header>
+    <details className="market-interview__secondary market-interview__classification-detail"><summary>세부 이해도와 차별점 보기</summary>
+      <div className="market-interview__classification-grid">
+        <ClassificationSummary title="세부 이해도" summary={result.comprehension} labels={[["accurate", "정확히 이해"], ["partial", "부분 이해"], ["misunderstood", "오해"], ["unclassified", "코딩 제외"]]} />
+        <ClassificationSummary title="차별점 인식" summary={result.differentiation} labels={[["different", "다르게 인식"], ["similar", "유사하게 인식"], ["unclear", "판단 불명확"], ["unclassified", "코딩 제외"]]} />
+      </div>
+    </details>
+
+    <section className="market-interview__respondents" aria-labelledby="market-interview-participants"><header><div><span>응답자 근거</span><h2 id="market-interview-participants">대표 응답자와 전체 원문</h2><p>응답자는 한 번에 한 명만 열어 40명 표본도 원문을 과도하게 펼치지 않습니다.</p></div><div role="group" aria-label="응답자 그룹 필터"><button type="button" aria-pressed={group === 'ALL'} onClick={() => setGroup('ALL')}>전체</button>{groups.map((value) => <button type="button" key={value} aria-pressed={group === value} onClick={() => setGroup(value)}>{GROUP_LABEL[value]}</button>)}</div></header>
         {selected ? <p className="market-interview__filter-note"><strong>{selected.title}</strong>의 원문 근거가 있는 응답자만 표시합니다.<button type="button" onClick={() => setSelectedTheme(null)}>필터 해제</button></p> : null}
         <div className="market-interview__respondent-workspace"><nav aria-label="응답자 목록">{respondents.map((participant) => <button type="button" key={participant.participantId} aria-current={participant.participantId === effectiveRespondent ? 'true' : undefined} onClick={() => setSelectedRespondent(participant.participantId)}><strong>{participant.label}</strong><small>{GROUP_LABEL[participant.group]}</small><span>{participant.profile}</span></button>)}</nav>
           <RespondentDetail participant={activeRespondent} previousDisabled={activeIndex <= 0} nextDisabled={activeIndex >= respondents.length - 1} onPrevious={() => setSelectedRespondent(respondents[Math.max(0, activeIndex - 1)]?.participantId)} onNext={() => setSelectedRespondent(respondents[Math.min(respondents.length - 1, activeIndex + 1)]?.participantId)} /></div>
-      </aside></div>
+    </section>
 
-    <details className="market-interview__secondary"><summary>다양성·한계와 후속 확인 보기</summary>
+    <details className="market-interview__secondary"><summary>실행 기록·다양성·한계와 후속 확인 보기</summary>
+      <section className="market-interview__section market-interview__run-record"><h2>실행 기록</h2><dl>
+        <div><dt>실행 시도</dt><dd>{run.attempt ?? 1}회</dd></div>
+        <div><dt>요청·시도</dt><dd>{requested ?? 0}명 · {result.targeting?.attemptedCount ?? requested ?? 0}명</dd></div>
+        <div><dt>유효·코딩</dt><dd>{dashboard.usableCount}명 · {coded}명</dd></div>
+        <div><dt>기준 seed</dt><dd>{result.source?.marketSeedSnapshotId ?? '확인 불가'}</dd></div>
+        <div><dt>선택 revision</dt><dd>{result.source?.selectionRevision ?? '확인 불가'}</dd></div>
+        <div><dt>BM plan revision</dt><dd>{result.source?.bmPlanRevision ?? '확인 불가'}</dd></div>
+      </dl></section>
       {result.saturation ? <section className="market-interview__section market-interview__diversity"><h2>다양성·한계</h2><dl><div><dt>유효 인터뷰</dt><dd>{dashboard.usableCount}명</dd></div><div><dt>테마 코딩 완료</dt><dd>{coded}명</dd></div>{codingFailures > 0 ? <div><dt>코딩 제외</dt><dd>{codingFailures}명</dd></div> : null}<div><dt>테마</dt><dd>{result.saturation.themeCount}개</dd></div><div><dt>표본 성격</dt><dd>{REPRESENTATION_LABEL[result.targeting?.representationStatus] ?? result.saturation.assessment}</dd></div></dl><p>{result.saturation.limitation}</p></section> : null}
       <ListSection title="실제 고객에게 확인할 질문" items={result.followUpQuestions} /><ListSection title="해석할 때의 한계" items={result.limitations} />
     </details>

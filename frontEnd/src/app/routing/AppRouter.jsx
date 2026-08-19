@@ -11,7 +11,9 @@ import { ProjectCreatePage, ProjectListPage } from '../../features/projects/Proj
 import { IdeaIntakePage } from '../../features/idea-intake/index.js';
 import { BusinessProposalWorkspace } from '../../features/concept-portfolio/index.js';
 import LegalRegulatoryReportPage from '../../features/concept-portfolio/pages/LegalRegulatoryReportPage.jsx';
-import BusinessValidationPage from '../../features/business-validation/pages/BusinessValidationPage.jsx';
+import ConceptRefinementPage from '../../features/business-validation/pages/ConceptRefinementPage.jsx';
+import MarketResearchPage from '../../features/market/MarketResearchPage.jsx';
+import BmCanvasPage from '../../features/market/BmCanvasPage.jsx';
 import MarketInterviewPage from '../../features/market-interview/pages/MarketInterviewPage.jsx';
 import { MarketingContentPage, MarketingStrategyReportPage } from '../../features/marketing-content/index.js';
 import LaunchReadinessPage from '../../features/launch-readiness/pages/LaunchReadinessPage.jsx';
@@ -78,10 +80,10 @@ export default function AppRouter() {
             <Route path="concepts" element={<BusinessProposalWorkspace />} />
             <Route path="concepts/compare" element={<BusinessProposalWorkspace initialMode="compare" />} />
             <Route path="concepts/legal-report" element={<LegalRegulatoryReportPage />} />
-            <Route path="business-validation" element={<BusinessValidationPage />} />
-            <Route path="market" element={<ProjectRedirect routeKey="businessValidation" />} />
-            <Route path="business-model" element={<ProjectRedirect routeKey="businessValidation" />} />
-            <Route path="concept-refinement" element={<ProjectRedirect routeKey="businessValidation" />} />
+            <Route path="business-validation" element={<ProjectRedirect routeKey="market" />} />
+            <Route path="market" element={<MarketResearchPage />} />
+            <Route path="business-model" element={<BmCanvasPage />} />
+            <Route path="concept-refinement" element={<ConceptRefinementPage />} />
             <Route path="market-interview" element={<MarketInterviewPage />} />
             <Route path="virtual-interview" element={<ProjectRedirect routeKey="marketInterview" />} />
             <Route path="twin-survey" element={<ProjectRedirect routeKey="marketInterview" />} />

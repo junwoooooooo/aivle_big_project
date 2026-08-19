@@ -156,6 +156,7 @@ describe('실행 계획 국면', () => {
     renderPage();
 
     const edit = await screen.findByRole('button', { name: '운영 정보 수정' });
+    expect(screen.getByRole('button', { name: '다음 - 컨셉 다듬기' })).toBeInTheDocument();
     fireEvent.click(edit);
 
     expect(await screen.findByText('운영 정보 확인')).toBeInTheDocument();

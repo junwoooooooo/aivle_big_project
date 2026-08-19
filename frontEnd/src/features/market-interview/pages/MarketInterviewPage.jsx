@@ -134,6 +134,6 @@ export default function MarketInterviewPage() {
     {view.active ? <InterviewProgress events={job} concept={view.concept} /> : null}
     {view.canRetry ? <div className="market-interview__actions"><Button disabled={busy} loading={busy} onClick={() => void retry()}>실패한 실행 다시 시도</Button></div> : null}
     {!view.canRetry && view.canRestart ? <div className="market-interview__actions"><Button disabled={busy} loading={busy} onClick={() => void command(() => api.start(view.requestedSampleSize ?? sampleSize))}>현재 사업안으로 새 인터뷰 시작</Button></div> : null}
-    {view.result && !view.stale ? <><Alert tone="warning">아래 내용은 가상 정성 탐색이며 시장 근거나 통계로 인용하지 말고 실제 고객 확인에 사용하세요. 모든 theme은 연결된 응답 원문으로 확인해야 합니다.</Alert><MarketInterviewResult result={view.result} /></> : null}
+    {view.result && !view.stale ? <><Alert tone="warning">아래 내용은 가상 정성 탐색이며 시장 근거나 통계로 인용하지 말고 실제 고객 확인에 사용하세요. 모든 theme은 연결된 응답 원문으로 확인해야 합니다.</Alert><MarketInterviewResult result={view.result} run={view} /></> : null}
   </ProjectWorkspace>;
 }

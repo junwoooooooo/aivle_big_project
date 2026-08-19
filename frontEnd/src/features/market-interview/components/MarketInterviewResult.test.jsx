@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import MarketInterviewResult from './MarketInterviewResult.jsx';
 
 const result = {
-  targeting: { criteriaText: '직장인', requestedSampleSize: 20, usableCount: 18, targetCount: 14, nonTargetCount: 4 },
+  source: { marketSeedSnapshotId: 'seed-3', selectionRevision: 4, bmPlanRevision: 2 },
+  targeting: { criteriaText: '직장인', requestedSampleSize: 20, attemptedCount: 20, usableCount: 18, targetCount: 14, nonTargetCount: 4 },
+  codedInterviewCount: 17, codingFailureCount: 1,
+  comprehension: { accurate: 10, partial: 5, misunderstood: 2, unclassified: 1 },
+  differentiation: { different: 8, similar: 4, unclear: 5, unclassified: 1 },
   themes: [{ axis: 'BARRIER', title: '시간 부담', description: '시간을 먼저 확인', participantIds: ['R1'],
     mentionCount: 9, targetCount: 7, nonTargetCount: 2, quote: '저녁 시간이 맞아야 해요.' }],
   participants: [{ participantId: 'R1', label: '응답자 1', profile: '41세 · 직장인 · 경기', context: '퇴근 후 운동', needs: ['시간 조율'], group: 'TARGET' }],
@@ -25,6 +29,18 @@ describe('MarketInterviewResult', () => {
       && element.textContent.includes('시간 부담의 원문 근거가 있는 응답자'))).toBeInTheDocument();
     fireEvent.click(screen.getByText(/나머지 답변 1개 보기/));
     expect(screen.getByText('혼자 운동합니다.')).toBeInTheDocument();
+  });
+
+  it('세부 분류와 실행 lineage를 접어서 제공하고 응답자는 한 명만 펼친다', () => {
+    render(<MarketInterviewResult result={result} run={{ attempt: 2 }} />);
+    expect(screen.getByRole('heading', { name: '대표 응답자와 전체 원문' })).toBeInTheDocument();
+    expect(screen.getAllByText('응답자 1')).toHaveLength(2);
+    fireEvent.click(screen.getByText('세부 이해도와 차별점 보기'));
+    expect(screen.getByRole('heading', { name: '세부 이해도' })).toBeInTheDocument();
+    expect(screen.getAllByText('코딩 제외').length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(screen.getByText(/실행 기록·다양성/));
+    expect(screen.getByText('seed-3')).toBeInTheDocument();
+    expect(screen.getByText('2회')).toBeInTheDocument();
   });
 
   it('명시되지 않은 구매의향을 생성하지 않는다', () => {

@@ -43,15 +43,20 @@ describe('project journey model', () => {
     expect(aggregateJourneyStatus([MODULE_STATUS.STALE])).toBe(JOURNEY_STATUS.STALE);
   });
 
-  it('사업 검증 Journey는 시장과 BM 상태를 묶어 canonical route 하나를 사용한다', () => {
+  it('사업 검증 Journey는 세 canonical 하위 화면과 다음 미완료 화면을 사용한다', () => {
     const modules = getProjectModules('41', {
       market: { status: MODULE_STATUS.COMPLETED },
       businessModel: { status: MODULE_STATUS.READY },
       conceptRefinement: { status: MODULE_STATUS.NOT_READY },
     });
     expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').href)
-      .toBe('/app/projects/41/business-validation');
-    expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').children).toHaveLength(1);
+      .toBe('/app/projects/41/business-model');
+    expect(getProjectJourneys('41', modules).find(({ id }) => id === 'validation').children
+      .map(({ label, href }) => ({ label, href }))).toEqual([
+        { label: '1. 시장 분석', href: '/app/projects/41/market' },
+        { label: '2. 사업 모델', href: '/app/projects/41/business-model' },
+        { label: '3. 컨셉 다듬기', href: '/app/projects/41/concept-refinement' },
+      ]);
   });
 
   it('사업 검증은 Market과 BM만 완료되어도 refinement 전에는 완료되지 않는다', () => {

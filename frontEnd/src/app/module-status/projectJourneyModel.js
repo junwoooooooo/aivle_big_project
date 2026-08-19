@@ -83,10 +83,7 @@ export function getProjectJourneys(projectId, modules = []) {
     const sourceChildren = (journey.statusModuleIds ?? journey.moduleIds)
       .map((id) => modules.find((module) => module.id === id)).filter(Boolean);
     const status = journey.optional ? JOURNEY_STATUS.OPTIONAL : aggregateJourneyStatus(sourceChildren);
-    const children = journey.id === 'validation' ? [{
-      id: 'businessValidation', label: '사업성 검증', shortLabel: '사업성 검증',
-      href: projectRoutes.businessValidation(projectId), status,
-    }] : journey.id === 'launch' ? [] : sourceChildren;
+    const children = journey.id === 'launch' ? [] : sourceChildren;
     return {
       ...journey,
       children,
@@ -98,7 +95,10 @@ export function getProjectJourneys(projectId, modules = []) {
 
 export function getJourneyEntryRoute(projectId, journey, children = []) {
   if (journey.id === 'finalReport') return projectRoutes.finalReport(projectId);
-  if (journey.id === 'validation') return projectRoutes.businessValidation(projectId);
+  if (journey.id === 'validation') {
+    const next = children.find((module) => module.status !== MODULE_STATUS.COMPLETED) ?? children.at(-1);
+    return next?.href ?? projectRoutes.market(projectId);
+  }
   if (journey.id === 'launch') return projectRoutes.launchReadiness(projectId);
   const next = children.find((module) => module.status !== MODULE_STATUS.COMPLETED) ?? children.at(-1);
   return next?.href ?? projectRoutes.overview(projectId);

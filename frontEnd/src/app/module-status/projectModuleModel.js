@@ -18,9 +18,9 @@ export const PROJECT_MODULES = Object.freeze([
   { id: 'overview', label: '프로젝트 개요', shortLabel: '개요', routeKey: 'overview', defaultStatus: MODULE_STATUS.READY },
   { id: 'idea', label: '아이디어', shortLabel: '아이디어', routeKey: 'idea', defaultStatus: MODULE_STATUS.NEEDS_INPUT },
   { id: 'concepts', label: '사업안', shortLabel: '사업안', routeKey: 'concepts', defaultStatus: MODULE_STATUS.NOT_READY },
-  { id: 'market', label: '시장 분석', shortLabel: '시장 분석', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
-  { id: 'businessModel', label: '사업 모델', shortLabel: '사업 모델', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
-  { id: 'conceptRefinement', label: '컨셉 다듬기', shortLabel: '컨셉 다듬기', routeKey: 'businessValidation', defaultStatus: MODULE_STATUS.NOT_READY },
+  { id: 'market', label: '1. 시장 분석', shortLabel: '시장 분석', routeKey: 'market', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
+  { id: 'businessModel', label: '2. 사업 모델', shortLabel: '사업 모델', routeKey: 'businessModel', defaultStatus: MODULE_STATUS.NOT_CONNECTED },
+  { id: 'conceptRefinement', label: '3. 컨셉 다듬기', shortLabel: '컨셉 다듬기', routeKey: 'conceptRefinement', defaultStatus: MODULE_STATUS.NOT_READY },
   { id: 'techOps', label: '기술·운영 분석', shortLabel: '기술·운영', routeKey: 'techOps', defaultStatus: MODULE_STATUS.READY },
   { id: 'finance', label: '재무 분석', shortLabel: '재무', routeKey: 'finance', defaultStatus: MODULE_STATUS.READY },
   { id: 'launchReadiness', label: '출시 준비', shortLabel: '출시 준비', routeKey: 'launchReadiness', defaultStatus: MODULE_STATUS.NOT_READY },
@@ -64,7 +64,10 @@ export function getProjectModuleByPath(projectId, pathname, statuses = {}) {
   const modules = getProjectModules(projectId, statuses);
   const normalized = pathname.replace(/\/+$/, '');
   if ([projectRoutes.conceptCompare(projectId), projectRoutes.legalReport(projectId)].includes(normalized)) return modules.find((item) => item.id === 'concepts');
-  if (/\/(business-validation|market|business-model|concept-refinement)$/.test(normalized)) return modules.find((item) => item.id === 'market');
+  if (/\/business-validation$/.test(normalized)) return modules.find((item) => item.id === 'market');
+  if (/\/market$/.test(normalized)) return modules.find((item) => item.id === 'market');
+  if (/\/business-model$/.test(normalized)) return modules.find((item) => item.id === 'businessModel');
+  if (/\/concept-refinement$/.test(normalized)) return modules.find((item) => item.id === 'conceptRefinement');
   if (/\/(launch-readiness|technology|operations)$/.test(normalized)) return modules.find((item) => item.id === 'launchReadiness');
   if (/\/tech-ops$/.test(normalized)) return modules.find((item) => item.id === 'techOps');
   if (/\/finance$/.test(normalized)) return modules.find((item) => item.id === 'finance');

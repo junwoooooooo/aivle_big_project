@@ -182,8 +182,7 @@ public class InternalAiExecutionClient {
         if (taskType == TaskType.MARKET_RESEARCH) {
             return marketResearchClient;
         }
-        if (taskType == TaskType.MARKET_INTERVIEW
-            || taskType == TaskType.MARKETING_CONTENT_GENERATION
+        if (taskType == TaskType.MARKETING_CONTENT_GENERATION
             || taskType == TaskType.MARKETING_STRATEGY_GENERATION
             || taskType == TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION
             || taskType == TaskType.FINAL_BUSINESS_PROPOSAL_REVIEW
@@ -193,7 +192,9 @@ public class InternalAiExecutionClient {
             || taskType == TaskType.LAUNCH_READINESS) {
             return longRunningClient;
         }
-        if (taskType == TaskType.TWIN_SURVEY) {
+        // Market Interview has a ten-minute worker budget plus response transport overhead.
+        // The 14-minute twin client is the existing long-running profile-bank boundary.
+        if (taskType == TaskType.TWIN_SURVEY || taskType == TaskType.MARKET_INTERVIEW) {
             return twinSurveyClient;
         }
         return taskType == TaskType.CONCEPT_PORTFOLIO_V2_RUN

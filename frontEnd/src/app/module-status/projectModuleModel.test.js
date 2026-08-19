@@ -11,6 +11,14 @@ describe('project module model', () => {
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/compare').id).toBe('concepts');
     expect(getProjectModuleByPath('41', '/app/projects/41/concepts/legal-report').id).toBe('concepts');
     expect(getProjectModuleByPath('41', '/app/projects/41/business-validation').id).toBe('market');
+    expect(getProjectModuleByPath('41', '/app/projects/41/market').id).toBe('market');
+    expect(getProjectModuleByPath('41', '/app/projects/41/business-model').id).toBe('businessModel');
+    expect(getProjectModuleByPath('41', '/app/projects/41/concept-refinement').id).toBe('conceptRefinement');
+    expect(getProjectModules('41').slice(3, 6).map(({ label, href }) => ({ label, href }))).toEqual([
+      { label: '1. 시장 분석', href: '/app/projects/41/market' },
+      { label: '2. 사업 모델', href: '/app/projects/41/business-model' },
+      { label: '3. 컨셉 다듬기', href: '/app/projects/41/concept-refinement' },
+    ]);
   });
 
   it('기술·운영·재무·출시 준비 상태를 서로 독립적으로 projection한다', () => {

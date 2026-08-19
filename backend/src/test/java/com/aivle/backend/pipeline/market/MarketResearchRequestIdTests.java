@@ -15,6 +15,7 @@ import com.aivle.backend.common.exception.GlobalExceptionHandler;
 import com.aivle.backend.common.security.CurrentUserProvider;
 import com.aivle.backend.common.web.RequestIdFilter;
 import com.aivle.backend.common.web.RequestIds;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
 import com.aivle.backend.taskrun.service.TaskRunFailure;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -97,7 +98,8 @@ class MarketResearchRequestIdTests {
     }
 
     private MockMvc mvc(MarketResearchService service, CurrentUserProvider currentUser) {
-        return MockMvcBuilders.standaloneSetup(new MarketResearchController(service, currentUser))
+        return MockMvcBuilders.standaloneSetup(new MarketResearchController(service,
+                mock(BusinessValidationCoordinator.class), currentUser))
             .setControllerAdvice(new GlobalExceptionHandler())
             .addFilters(new RequestIdFilter())
             .build();

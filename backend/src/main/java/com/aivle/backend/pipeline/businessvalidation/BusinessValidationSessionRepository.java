@@ -25,6 +25,9 @@ public interface BusinessValidationSessionRepository
     Optional<BusinessValidationSession> findByProjectIdAndCommandIdempotencyKeyAndDeletedAtIsNull(
         Long projectId, String commandIdempotencyKey);
 
+    @EntityGraph(attributePaths = {"project", "project.owner"})
+    Optional<BusinessValidationSession> findByMarketTaskRunIdAndDeletedAtIsNull(String marketTaskRunId);
+
     Optional<BusinessValidationSession> findFirstByProjectIdAndSourceMarketSeedSnapshotIdAndSourcePortfolioSelectionIdAndSourceSelectionRevisionAndSourceBmPlanRevisionAndStateAndDeletedAtIsNullOrderByCreatedAtDescIdDesc(
         Long projectId, String sourceMarketSeedSnapshotId, Long sourcePortfolioSelectionId,
         Integer sourceSelectionRevision, Integer sourceBmPlanRevision, BusinessValidationSession.State state);
@@ -37,6 +40,24 @@ public interface BusinessValidationSessionRepository
         where session.id = :id and session.deletedAt is null
         """)
     Optional<BusinessValidationSession> findByIdForUpdate(@Param("id") String id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select session from BusinessValidationSession session
+        join fetch session.project project
+        join fetch project.owner
+        where session.marketTaskRunId = :taskRunId and session.deletedAt is null
+        """)
+    Optional<BusinessValidationSession> findByMarketTaskRunIdForUpdate(@Param("taskRunId") String taskRunId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select session from BusinessValidationSession session
+        join fetch session.project project
+        join fetch project.owner
+        where session.bmTaskRunId = :taskRunId and session.deletedAt is null
+        """)
+    Optional<BusinessValidationSession> findByBmTaskRunIdForUpdate(@Param("taskRunId") String taskRunId);
 
     @Query("""
         select session.id from BusinessValidationSession session

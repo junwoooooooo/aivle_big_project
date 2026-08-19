@@ -3,6 +3,8 @@ package com.aivle.backend.pipeline.market;
 import com.aivle.backend.taskrun.contract.MarketResearchContract;
 import com.aivle.backend.jobevent.JobEvent;
 import com.aivle.backend.jobevent.JobEventPublisher;
+import com.aivle.backend.pipeline.businessvalidation.BusinessValidationCoordinator;
+import com.aivle.backend.pipeline.refinement.ConceptRefinementService;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient;
@@ -33,8 +35,8 @@ import tools.jackson.databind.ObjectMapper;
 public class MarketResearchWorker {
     /**
      * 저장 원장 재채점은 90~266초지만 새 Product concept은 harness·dryrun·fresh collection까지
-     * 수행한다. Main의 20분 실행 의도를 보존해야 이미 지불한 수집 결과가 짧은 deadline 때문에
-     * 폐기되지 않는다.
+     * 수행한다. FULL 엔진은 호출 상한을 96으로 줄였지만 fresh collection과 section repair를
+     * 포함하므로 검증된 20분 경계를 유지해야 수집 결과가 짧은 deadline 때문에 폐기되지 않는다.
      * lease 는 예산보다 넉넉해야 한다 — 같거나 짧으면 정상 실행이 만료로 회수돼
      * 260초짜리가 중복 실행된다.
      */
@@ -43,19 +45,30 @@ public class MarketResearchWorker {
 
     private static final Set<String> FORBIDDEN_FIELDS = Set.of("storageUrl", "objectKey", "presignedUrl",
         "localPath", "fileBytes", "base64", "prompt", "rawProviderResponse", "credential");
+    static final String BUSINESS_MODEL_TRIGGER_SUBJECT = "MARKET_RESEARCH_FULL";
+    static final String REFINEMENT_TRIGGER_SUBJECT = "MARKET_RESEARCH_BM";
+
+    private static final org.slf4j.Logger log =
+        org.slf4j.LoggerFactory.getLogger(MarketResearchWorker.class);
 
     private final TaskRunService service;
     private final MarketResearchService completion;
+    private final BusinessValidationCoordinator validationProjection;
+    private final ConceptRefinementService refinement;
     private final JobEventPublisher events;
     private final InternalAiExecutionClient client;
     private final ObjectMapper mapper;
 
     public MarketResearchWorker(TaskRunService service, InternalAiExecutionClient client,
-                                MarketResearchService completion, JobEventPublisher events,
-                                ObjectMapper mapper) {
+                                MarketResearchService completion,
+                                BusinessValidationCoordinator validationProjection,
+                                ConceptRefinementService refinement,
+                                JobEventPublisher events, ObjectMapper mapper) {
         this.service = service;
         this.client = client;
         this.completion = completion;
+        this.validationProjection = validationProjection;
+        this.refinement = refinement;
         this.events = events;
         this.mapper = mapper;
     }
@@ -93,6 +106,8 @@ public class MarketResearchWorker {
             }
             completion.complete(claim, response);
             publish(context, "COMPLETED", key(context, "completed"), JobEvent.Status.COMPLETED, null);
+            startBusinessModel(context);
+            startRefinement(context);
         } catch (ExecutionFailure failure) {
             if ("RESULT_SCHEMA_INVALID".equals(failure.code()))
                 service.rejectAndFail(claim.taskRunId(), claim.taskAttemptId(), claim.claimToken(), "{}", "1.0", failure.reason());
@@ -112,6 +127,49 @@ public class MarketResearchWorker {
             publish(context, "FAILED", key(context, "failed"), JobEvent.Status.FAILED, "AI_SERVICE_UNAVAILABLE");
         }
         return true;
+    }
+
+    /**
+     * The worker is the sole automatic BM authority. Projection lookup pins the exact committed
+     * Market version and BM-plan revision; a scheduling failure never changes the completed FULL.
+     */
+    private void startBusinessModel(
+            com.aivle.backend.taskrun.service.TaskRunWorkerContext context) {
+        if (!BUSINESS_MODEL_TRIGGER_SUBJECT.equals(context.subjectType())) return;
+        String key = "auto-bm-" + context.taskRunId();
+        try {
+            validationProjection.marketCompleted(context.taskRunId()).ifPresent(source ->
+                completion.startBmFromVersionAtPlanRevision(context.ownerId(), context.projectId(),
+                    source.marketVersionId(), source.bmPlanRevision(), key, key).ifPresent(queued -> {
+                        validationProjection.businessModelQueued(
+                            source.businessValidationSessionId(), queued.taskRunId(), key);
+                        log.info("Business model queued projectId={} marketTaskRunId={} bmTaskRunId={}",
+                            context.projectId(), context.taskRunId(), queued.taskRunId());
+                    }));
+        } catch (RuntimeException failure) {
+            log.warn("Business model chain failed projectId={} marketTaskRunId={}",
+                context.projectId(), context.taskRunId(), failure);
+        }
+    }
+
+    /**
+     * The worker is the sole automatic refinement authority. The exact BM version is projected
+     * first so the v3 refinement input binds to one completed validation session.
+     */
+    private void startRefinement(
+            com.aivle.backend.taskrun.service.TaskRunWorkerContext context) {
+        if (!REFINEMENT_TRIGGER_SUBJECT.equals(context.subjectType())) return;
+        String key = "auto-refinement-" + context.taskRunId();
+        try {
+            validationProjection.businessModelCompleted(context.taskRunId()).ifPresent(source -> {
+                refinement.start(context.ownerId(), context.projectId(), key, key);
+                log.info("Concept refinement queued projectId={} bmTaskRunId={} sessionId={}",
+                    context.projectId(), context.taskRunId(), source.businessValidationSessionId());
+            });
+        } catch (RuntimeException failure) {
+            log.warn("Concept refinement bootstrap failed projectId={} bmTaskRunId={}",
+                context.projectId(), context.taskRunId(), failure);
+        }
     }
 
     private String key(com.aivle.backend.taskrun.service.TaskRunWorkerContext context, String suffix) {

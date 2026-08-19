@@ -65,7 +65,7 @@ describe('MarketInterviewPage', () => {
 
   it('renders structured participants, themes and follow-up questions', async () => {
     renderPage({ get: vi.fn().mockResolvedValue({ data: current('SUCCEEDED', { result }) }), post: vi.fn() });
-    expect(await screen.findByRole('heading', { name: 'Respondent Explorer' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '대표 응답자와 전체 원문' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '이번 탐색에서 먼저 볼 인사이트' })).toBeInTheDocument();
     expect(screen.getAllByText('가상 참여자 A')).toHaveLength(2);
     expect(screen.getAllByText('도입 부담')).toHaveLength(2);

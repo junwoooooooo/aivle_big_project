@@ -27,10 +27,11 @@ describe('project route cutover', () => {
     expect(routerSource).toContain('path="launch-readiness" element={<LaunchReadinessPage />}');
   });
 
-  it('사업 검증 canonical route와 Market/BM 호환 redirect를 함께 유지한다', () => {
-    expect(routerSource).toContain('path="business-validation" element={<BusinessValidationPage />}');
-    expect(routerSource).toContain('path="market" element={<ProjectRedirect routeKey="businessValidation" />}');
-    expect(routerSource).toContain('path="business-model" element={<ProjectRedirect routeKey="businessValidation" />}');
+  it('사업 검증 세 화면을 canonical route로 연결하고 묶음 URL만 호환 redirect로 남긴다', () => {
+    expect(routerSource).toContain('path="business-validation" element={<ProjectRedirect routeKey="market" />}');
+    expect(routerSource).toContain('path="market" element={<MarketResearchPage />}');
+    expect(routerSource).toContain('path="business-model" element={<BmCanvasPage />}');
+    expect(routerSource).toContain('path="concept-refinement" element={<ConceptRefinementPage />}');
   });
 
   it('시장 인터뷰 canonical route와 이전 Virtual Interview redirect를 제공하고 Twin Survey를 분리한다', () => {
