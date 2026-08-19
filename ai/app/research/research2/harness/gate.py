@@ -120,15 +120,21 @@ def check_template_roles(formulas: list, vocab: dict, assumptions: dict | None =
 
     T2 에 `연환산` 이 없으면 월 매출을 연 매출로 읽는다(12배 축소). 1차 초안이 그랬고
     게이트는 통과했다 — 「빠진 변수」는 있는 값을 검사해서는 절대 안 보인다.
+
+    ★ 판 ㊴ — **가정값이 «있는지»까지 본다.** 예전에는 `vocab.var_role._가정_역할`
+    이라는 **이름 목록**만 봤다. 그 목록은 `rules/assumptions.v1.json` 의 사본이라
+    규칙 파일에서 값을 지워도 게이트는 그대로 통과했고, 통과한 설계는 B 블록에서
+    「가정값 없음 — 계산 불가」로 조용히 멈췄다(`blocks/b_estimate.py:127`).
+    **문턱은 규칙 파일이다**(절대규칙 7) — 이름 사본이 아니라 값을 읽는다.
     """
+    if assumptions is None:                       # 규칙 파일이 정본이다(절대 규칙 7)
+        assumptions = _load(os.path.join(ROOT, "rules", "assumptions.v1.json"))
     req = vocab["template"]["required_roles"]
     assume_ok = set(vocab["var_role"]["_가정_역할"])
-    if assumptions is None:
-        assumptions = _load(os.path.join(ROOT, "rules", "assumptions.v1.json"))
-    assumption_values = {
-        role for role, spec in (assumptions.get("by_role") or {}).items()
-        if isinstance(spec, dict) and spec.get("value") is not None
-    }
+    # 값이 실제로 **있는** 역할만 「가정으로 채울 수 있는 자리」다.
+    by_role = (assumptions.get("by_role") or {})
+    have_value = {r for r, a in by_role.items()
+                  if isinstance(a, dict) and a.get("value") is not None}
     # **초과 자리 검사** (판 ⑫ ①′). 목록이 있는 템플릿만 정확 일치를 요구한다 —
     # 모르는 템플릿(T1·T4·T5)에 걸면 멀쩡한 식을 죽인다. 값은 규칙 파일에.
     allow_cfg = vocab["template"].get("허용_자리") or {}
@@ -155,42 +161,18 @@ def check_template_roles(formulas: list, vocab: dict, assumptions: dict | None =
             if v.get("_observable") is not False:
                 continue
             role = v.get("var_role")
-            if role not in assume_ok:
-                bad.append({"formula_id": f.get("formula_id"), "var_id": v.get("var_id"),
-                            "var_role": role,
-                            "why": "관측하지 않는 역할이 허용 어휘 밖이다"})
-            elif role not in assumption_values:
-                bad.append({"formula_id": f.get("formula_id"), "var_id": v.get("var_id"),
-                            "var_role": role,
-                            "why": ("허용된 역할이지만 business-independent assumption 값이 없다 — "
-                                    "관측으로 채우거나 식에서 제거/재설계해야 한다")})
+            if role in have_value:
+                continue
+            # **두 사유를 가른다.** 이름이 어휘 밖인 것과 값이 없는 것은 고칠 자리가 다르다
+            # — 앞은 식을 고치고 뒤는 관측을 붙이거나 규칙에 근거 있는 값을 넣는 일이다.
+            why = ("관측 안 하는데 assumptions.by_role 에 없는 역할 — B 가 값을 못 채운다"
+                   if role not in assume_ok else
+                   f"관측 안 하는데 가정값이 없다 — rules/assumptions.v1.json::by_role.{role} "
+                   f"에 value 가 없다(판 ㊴ 에서 남의 사업 숫자를 지웠다). "
+                   f"이 자리는 **관측으로 채우거나 식에서 빼야** 한다 — B 가 값을 못 채운다")
+            bad.append({"formula_id": f.get("formula_id"), "var_id": v.get("var_id"),
+                        "var_role": role, "why": why})
     return {"name": "템플릿 필수 자리", "passed": not bad, "violations": bad}
-
-
-def check_direct_observed_market(formulas: list, vocab: dict) -> dict:
-    """TAM/SAM은 가정 곱셈이 아니라 직접 관측 변수 하나로만 설계한다."""
-    rule = (vocab.get("식_목록") or {}).get("직접_관측_시장") or {}
-    name = "직접 관측 시장식"
-    if not rule.get("enabled"):
-        return {"name": name, "passed": True, "violations": [], "_비활성": True}
-    ids = set(rule.get("formula_ids") or [])
-    template = rule.get("template") or "T5"
-    required_count = int(rule.get("observable_vars") or 1)
-    indexed = {formula.get("formula_id"): formula for formula in formulas}
-    bad = []
-    for formula_id in sorted(ids):
-        formula = indexed.get(formula_id)
-        if formula is None:
-            bad.append({"formula_id": formula_id, "why": "필수 시장식이 없다"})
-            continue
-        variables = formula.get("vars") or []
-        observed = [value for value in variables if value.get("_observable") is not False]
-        if formula.get("template") != template or len(variables) != required_count \
-                or len(observed) != required_count:
-            bad.append({"formula_id": formula_id, "template": formula.get("template"),
-                        "변수_수": len(variables), "관측_변수_수": len(observed),
-                        "why": rule.get("_규칙")})
-    return {"name": name, "passed": not bad, "violations": bad}
 
 
 def check_price_cell(slots: list, vocab: dict) -> dict:
@@ -973,7 +955,6 @@ def run_gate(raw: dict, slots: list, formulas: list, vocab: dict, adapters: dict
         check_stat_code(slots, adapters, kosis_key),
         check_role_kind(formulas, vocab, cat),
         check_template_roles(formulas, vocab),
-        check_direct_observed_market(formulas, vocab),
         check_price_cell(slots, vocab),
         check_period(slots, slotcheck or {}, as_of_year or 0),
         check_corp_exists(slots, corpcode or {}),

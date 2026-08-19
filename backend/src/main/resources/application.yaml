@@ -48,7 +48,7 @@ app:
     connect-timeout: ${AI_SERVER_CONNECT_TIMEOUT:3s}
     read-timeout: ${AI_SERVER_READ_TIMEOUT:30s}
     long-read-timeout: ${AI_SERVER_LONG_READ_TIMEOUT:7m}
-    market-research-read-timeout: ${AI_SERVER_MARKET_RESEARCH_READ_TIMEOUT:22m}
+    market-research-read-timeout: ${AI_SERVER_MARKET_RESEARCH_READ_TIMEOUT:63m}
     concept-portfolio-read-timeout: ${AI_SERVER_CONCEPT_PORTFOLIO_READ_TIMEOUT:15m}
     twin-survey-read-timeout: ${AI_SERVER_TWIN_SURVEY_READ_TIMEOUT:14m}
     internal-api-key: ${AI_SERVER_INTERNAL_API_KEY:}

@@ -79,6 +79,23 @@ public class ConceptRefinementService {
         return view(round, false);
     }
 
+    /**
+     * Compatibility bridge called by the frozen MAIN market worker after BM adoption.
+     * The FULL session remains lineage only: execution authority stays with that worker and this
+     * method delegates to the existing v3 command using one key per completed validation session.
+     */
+    @Transactional
+    public Optional<TaskRun> startFirstRoundAfterResearch(Long projectId) {
+        ConceptPortfolioSelection selection = selections
+            .findByProjectIdAndIsCurrentTrueAndDeletedAtIsNull(projectId).orElse(null);
+        if (selection == null) return Optional.empty();
+        CompletedSource source = validations.requireCurrentCompletedSource(
+            selection.getSelectedByUserId(), projectId);
+        String key = "auto-refinement-" + source.businessValidationSessionId();
+        start(selection.getSelectedByUserId(), projectId, key, key);
+        return Optional.empty();
+    }
+
     @Transactional
     public CurrentView retry(Long ownerId, Long projectId, String commandKey, String correlationId) {
         ownedForUpdate(ownerId, projectId);

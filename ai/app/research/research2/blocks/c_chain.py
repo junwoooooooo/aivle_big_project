@@ -434,12 +434,15 @@ def render_report(cells: dict[str, ChainCell], violations: list[Violation],
             ((rules.get("assumptions") or {}).get("자료_부재_확정") or {}).get(
                 (ledger and getattr(ledger, "run_id", "")) or "", [])
             or ((rules.get("assumptions") or {}).get("자료_부재_확정") or {}).get("_공용", [])),
+        # ⚠ **실행별로 조회한다.** 판 ㊳ 이전에는 규칙 파일의 문장을 컨셉과 무관하게
+        # 무조건 복사했다 — 냉동식품·미용실·반려동물 원장에 카페 POS 실명(코케비즈 등)이
+        # 각 9회씩 실렸다. 바로 위 `자료_부재_확정` 과 같은 run_id/_공용 조회로 맞춘다.
         "independent_topdown_blocked": list(
-            (((rules.get("consistency") or {}).get("report_notes") or {})
-             .get("independent_topdown_blocked") or {}).get(
+            ((rules.get("consistency") or {}).get("report_notes") or {})
+            .get("independent_topdown_blocked", {}).get(
                 (ledger and getattr(ledger, "run_id", "")) or "", [])
-            or (((rules.get("consistency") or {}).get("report_notes") or {})
-                .get("independent_topdown_blocked") or {}).get("_공용", [])),
+            or ((rules.get("consistency") or {}).get("report_notes") or {})
+            .get("independent_topdown_blocked", {}).get("_공용", [])),
     }
     for k in NOT_FOUND_KEYS:              # 하나라도 빠지면 침묵이 생긴다
         not_found.setdefault(k, [])

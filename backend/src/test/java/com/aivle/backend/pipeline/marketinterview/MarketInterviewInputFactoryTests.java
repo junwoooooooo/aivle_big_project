@@ -17,20 +17,17 @@ import java.util.HashSet;
 
 class MarketInterviewInputFactoryTests {
     private final ObjectMapper mapper = new ObjectMapper();
-    private final MarketInterviewInputFactory factory = new MarketInterviewInputFactory(mapper);
+    private final MarketInterviewInputFactory factory = new MarketInterviewInputFactory(
+        mapper, new com.aivle.backend.pipeline.market.MarketInterviewInputFactory(mapper));
 
     @ParameterizedTest
     @ValueSource(ints = {20, 40, 80})
-    void canonicalProfileBankSampleSizesAreWrittenIntoV2Input(int sampleSize) {
+    void mainCoreReceivesOnlyConceptBoardAndSampleSize(int sampleSize) {
         var source = source();
         var input = mapper.readTree(factory.build(source, factory.board(source), sampleSize));
-        assertThat(input.path("contract").asText()).isEqualTo("market-interview-input-v2");
-        assertThat(input.path("schemaVersion").asText()).isEqualTo("2.0");
+        var fields = new HashSet<String>(); input.propertyNames().forEach(fields::add);
+        assertThat(fields).containsExactlyInAnyOrder("conceptBoard", "sampleSize");
         assertThat(input.path("sampleSize").asInt()).isEqualTo(sampleSize);
-        assertThat(input.path("source").path("selectionRevision").asInt()).isEqualTo(4);
-        assertThat(input.path("source").path("bmPlanRevision").asInt()).isEqualTo(3);
-        assertThat(input.path("targetingContext").path("customerUnit").asText()).isEqualTo("ORGANIZATION");
-        assertThat(input.path("targetingContext").path("marketSeries").asText()).isEqualTo("A");
     }
 
     @ParameterizedTest
@@ -58,8 +55,9 @@ class MarketInterviewInputFactoryTests {
         var source = source(); var board = factory.board(source); board.put("targetUsers", "서울의 독립 매장 운영자");
         var input = mapper.readTree(factory.build(source, board, 20));
         assertThat(input.path("conceptBoard").path("targetUsers").asText()).isEqualTo("서울의 독립 매장 운영자");
-        assertThat(input.path("selectedConcept").path("identity").path("targetUsers").asText())
-            .isEqualTo("서울 매장 운영 업체");
+        assertThat(input.has("selectedConcept")).isFalse();
+        assertThat(input.has("targetingContext")).isFalse();
+        assertThat(input.has("source")).isFalse();
         assertThat(source.finalDocument().path("selectedConcept").path("identity").path("targetUsers").asText())
             .isEqualTo("서울 매장 운영 업체");
     }

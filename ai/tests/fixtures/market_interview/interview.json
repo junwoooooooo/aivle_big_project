@@ -1,0 +1,1573 @@
+{
+  "conceptBoard": {
+    "conceptName": "귀가 알림 밴드",
+    "targetUsers": "초등학생 자녀를 둔 맞벌이 부모",
+    "problemScenario": "하교 후 30분 동안 아이와 연락이 닿지 않는다",
+    "featureSet": [
+      "학교·학원 도착 알림",
+      "배터리 일주일",
+      "분실 시 마지막 위치"
+    ],
+    "differentiators": "아이에게 전화기를 쥐여 주지 않아도 된다",
+    "priceKrw": 39000,
+    "rendered": "이름: 귀가 알림 밴드\n누구를 위한 것인가: 초등학생 자녀를 둔 맞벌이 부모\n어떤 상황의 문제인가: 하교 후 30분 동안 아이와 연락이 닿지 않는다\n하는 일:\n  - 학교·학원 도착 알림\n  - 배터리 일주일\n  - 분실 시 마지막 위치\n다른 것과 다른 점: 아이에게 전화기를 쥐여 주지 않아도 된다\n가격: 39,000원"
+  },
+  "sampleSize": 20,
+  "sampling": {
+    "requested": 20,
+    "drawn": 20,
+    "strata": {
+      "남 40대": 8,
+      "남 50대": 1,
+      "남 60+": 1,
+      "여 20대": 1,
+      "여 30대": 8,
+      "여 60+": 1
+    },
+    "shortCells": {}
+  },
+  "targeting": {
+    "criteria": {
+      "ageMin": 30,
+      "ageMax": 49,
+      "genders": [],
+      "householdSizeMin": 3,
+      "householdSizeMax": 0,
+      "regions": [],
+      "incomeKeywords": [],
+      "jobKeywords": [],
+      "hasChildren": 0,
+      "householdRoles": []
+    },
+    "criteriaText": "만 30~49세(16명) / 3인 이상 가구(16명) → 전부 동시에 만족: 16명",
+    "targetRequested": 16,
+    "nonTargetRequested": 4,
+    "targetDrawn": 16,
+    "nonTargetDrawn": 4,
+    "shortfall": 0,
+    "targetShortCells": {},
+    "nonTargetShortCells": {}
+  },
+  "comprehension": {
+    "accurate": 12,
+    "partial": 5,
+    "misunderstood": 1,
+    "unclassified": 0,
+    "misreadPoints": [
+      "도착 알림을 실시간 위치 추적으로 읽은 답이 있다",
+      "건강·활동량 측정 기기로 읽은 답이 있다"
+    ]
+  },
+  "differentiation": {
+    "different": 2,
+    "similar": 12,
+    "unclear": 4,
+    "unclassified": 0
+  },
+  "themes": [
+    {
+      "axis": "LIKE",
+      "label": "아이 위치를 바로 안다",
+      "mentionCount": 8,
+      "respondentIds": [
+        "R1",
+        "R3",
+        "R5",
+        "R6",
+        "R7",
+        "R9",
+        "R12",
+        "R14"
+      ],
+      "resolvedCount": 7,
+      "quote": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요."
+    },
+    {
+      "axis": "LIKE",
+      "label": "조작이 간단하다",
+      "mentionCount": 3,
+      "respondentIds": [
+        "R4",
+        "R8",
+        "R13"
+      ],
+      "resolvedCount": 0,
+      "quote": "아이가 따로 조작할 게 없다는 점이 좋아요. 뭘 눌러야 하면 우리 애는 절대 안 해요. 그냥 차고 다니기만 하면 된다는 게 저한테는 핵심이에요."
+    },
+    {
+      "axis": "LIKE",
+      "label": "전화기가 필요 없다",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R2",
+        "R11"
+      ],
+      "resolvedCount": 0,
+      "quote": "전화기를 안 사 줘도 된다는 점이요. 아이한테 스마트폰을 일찍 쥐여 주는 게 제일 걱정이었는데 그 고민을 안 해도 되니까요."
+    },
+    {
+      "axis": "CONCERN",
+      "label": "가격이 부담된다",
+      "mentionCount": 8,
+      "respondentIds": [
+        "R1",
+        "R3",
+        "R5",
+        "R6",
+        "R7",
+        "R9",
+        "R12",
+        "R14"
+      ],
+      "resolvedCount": 7,
+      "quote": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요."
+    },
+    {
+      "axis": "CONCERN",
+      "label": "아이가 안 차고 다닐 것 같다",
+      "mentionCount": 3,
+      "respondentIds": [
+        "R4",
+        "R8",
+        "R13"
+      ],
+      "resolvedCount": 0,
+      "quote": "아이가 답답하다고 안 차고 다닐 것 같아요. 손목시계도 이틀 만에 빼놓더라고요."
+    },
+    {
+      "axis": "CONCERN",
+      "label": "배터리가 걱정된다",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R2",
+        "R11"
+      ],
+      "resolvedCount": 0,
+      "quote": "배터리가 일주일이라는데 실제로는 더 짧을 것 같아요. 아이 스마트워치도 하루 만에 꺼지더라고요. 충전을 제가 챙겨야 할 것 같아서 걸려요."
+    },
+    {
+      "axis": "DIFFERENTIATION",
+      "label": "위치 추적기와 비슷하다",
+      "mentionCount": 12,
+      "respondentIds": [
+        "R1",
+        "R3",
+        "R5",
+        "R7",
+        "R9",
+        "R10",
+        "R12",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18"
+      ],
+      "resolvedCount": 7,
+      "quote": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요."
+    },
+    {
+      "axis": "DIFFERENTIATION",
+      "label": "전화기 없이 되는 점이 다르다",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R2",
+        "R11"
+      ],
+      "resolvedCount": 0,
+      "quote": "전화기 없이 된다는 점은 확실히 다르네요."
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "하교 시간",
+      "mentionCount": 8,
+      "respondentIds": [
+        "R1",
+        "R3",
+        "R5",
+        "R6",
+        "R7",
+        "R9",
+        "R12",
+        "R14"
+      ],
+      "resolvedCount": 7,
+      "quote": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요."
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "주말 외출",
+      "mentionCount": 3,
+      "respondentIds": [
+        "R4",
+        "R8",
+        "R13"
+      ],
+      "resolvedCount": 0,
+      "quote": "주말에 놀이터나 마트 갈 때도 쓸 것 같아요."
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "학원 오갈 때",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R2",
+        "R11"
+      ],
+      "resolvedCount": 0,
+      "quote": "학원 오갈 때요. 태권도랑 피아노를 혼자 다녀서요."
+    },
+    {
+      "axis": "BARRIER",
+      "label": "가격이 가장 큰 걸림돌",
+      "mentionCount": 9,
+      "respondentIds": [
+        "R1",
+        "R2",
+        "R3",
+        "R5",
+        "R7",
+        "R9",
+        "R11",
+        "R12",
+        "R14"
+      ],
+      "resolvedCount": 7,
+      "quote": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요."
+    },
+    {
+      "axis": "BARRIER",
+      "label": "아이가 이미 휴대폰이 있다",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R6",
+        "R10"
+      ],
+      "resolvedCount": 0,
+      "quote": "굳이 안 사도 될 것 같아서요. 애가 휴대폰이 이미 있어요."
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "값을 내려 달라",
+      "mentionCount": 8,
+      "respondentIds": [
+        "R1",
+        "R3",
+        "R5",
+        "R6",
+        "R7",
+        "R9",
+        "R12",
+        "R14"
+      ],
+      "resolvedCount": 7,
+      "quote": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "통화도 되게",
+      "mentionCount": 3,
+      "respondentIds": [
+        "R4",
+        "R8",
+        "R13"
+      ],
+      "resolvedCount": 0,
+      "quote": "통화도 됐으면 좋겠어요."
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "배터리를 오래가게",
+      "mentionCount": 2,
+      "respondentIds": [
+        "R2",
+        "R11"
+      ],
+      "resolvedCount": 0,
+      "quote": "배터리가 더 오래가게 해 주세요."
+    }
+  ],
+  "alternatives": [
+    {
+      "label": "직접 전화한다",
+      "mentionCount": 8
+    },
+    {
+      "label": "그냥 참고 기다린다",
+      "mentionCount": 4
+    },
+    {
+      "label": "학원 선생님께 연락한다",
+      "mentionCount": 2
+    }
+  ],
+  "segments": [
+    {
+      "axis": "DIFFERENTIATION",
+      "label": "위치 추적기와 비슷하다",
+      "mentionCount": 12,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 5
+            },
+            {
+              "label": "40대",
+              "count": 3
+            },
+            {
+              "label": "60+",
+              "count": 2
+            },
+            {
+              "label": "20대",
+              "count": 1
+            },
+            {
+              "label": "50대",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "여성",
+              "count": 7
+            },
+            {
+              "label": "남성",
+              "count": 5
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "2인 가구",
+              "count": 3
+            },
+            {
+              "label": "4인 가구",
+              "count": 3
+            },
+            {
+              "label": "1인 가구",
+              "count": 1
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 5
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 3
+            },
+            {
+              "label": "월소득 100~200만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 100만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "BARRIER",
+      "label": "가격이 가장 큰 걸림돌",
+      "mentionCount": 9,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "40대",
+              "count": 5
+            },
+            {
+              "label": "30대",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "남성",
+              "count": 5
+            },
+            {
+              "label": "여성",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "4인 가구",
+              "count": 4
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 3
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 3
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 2
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "LIKE",
+      "label": "아이 위치를 바로 안다",
+      "mentionCount": 8,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 4
+            },
+            {
+              "label": "40대",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "남성",
+              "count": 4
+            },
+            {
+              "label": "여성",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "4인 가구",
+              "count": 3
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 4
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 2
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "CONCERN",
+      "label": "가격이 부담된다",
+      "mentionCount": 8,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 4
+            },
+            {
+              "label": "40대",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "남성",
+              "count": 4
+            },
+            {
+              "label": "여성",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "4인 가구",
+              "count": 3
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 4
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 2
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "하교 시간",
+      "mentionCount": 8,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 4
+            },
+            {
+              "label": "40대",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "남성",
+              "count": 4
+            },
+            {
+              "label": "여성",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "4인 가구",
+              "count": 3
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 4
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 2
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "값을 내려 달라",
+      "mentionCount": 8,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 4
+            },
+            {
+              "label": "40대",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "남성",
+              "count": 4
+            },
+            {
+              "label": "여성",
+              "count": 4
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 4
+            },
+            {
+              "label": "4인 가구",
+              "count": 3
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 300~400만 원",
+              "count": 4
+            },
+            {
+              "label": "월소득 200~300만 원",
+              "count": 2
+            },
+            {
+              "label": "월소득 400~500만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "LIKE",
+      "label": "조작이 간단하다",
+      "mentionCount": 3,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 2
+            },
+            {
+              "label": "40대",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "여성",
+              "count": 2
+            },
+            {
+              "label": "남성",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 2
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 200~300만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 300~400만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "axis": "CONCERN",
+      "label": "아이가 안 차고 다닐 것 같다",
+      "mentionCount": 3,
+      "breakdown": [
+        {
+          "dimension": "연령",
+          "buckets": [
+            {
+              "label": "30대",
+              "count": 2
+            },
+            {
+              "label": "40대",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "성별",
+          "buckets": [
+            {
+              "label": "여성",
+              "count": 2
+            },
+            {
+              "label": "남성",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "가구",
+          "buckets": [
+            {
+              "label": "3인 가구",
+              "count": 2
+            },
+            {
+              "label": "5인 가구",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "dimension": "개인 소득",
+          "buckets": [
+            {
+              "label": "월소득 200~300만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 300~400만 원",
+              "count": 1
+            },
+            {
+              "label": "월소득 500~600만 원",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "contrast": [
+    {
+      "axis": "LIKE",
+      "label": "아이 위치를 바로 안다",
+      "targetCount": 8,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "LIKE",
+      "label": "조작이 간단하다",
+      "targetCount": 3,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "LIKE",
+      "label": "전화기가 필요 없다",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "CONCERN",
+      "label": "가격이 부담된다",
+      "targetCount": 8,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "CONCERN",
+      "label": "아이가 안 차고 다닐 것 같다",
+      "targetCount": 3,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "CONCERN",
+      "label": "배터리가 걱정된다",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "DIFFERENTIATION",
+      "label": "위치 추적기와 비슷하다",
+      "targetCount": 8,
+      "nonTargetCount": 4
+    },
+    {
+      "axis": "DIFFERENTIATION",
+      "label": "전화기 없이 되는 점이 다르다",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "하교 시간",
+      "targetCount": 8,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "주말 외출",
+      "targetCount": 3,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "USAGE_SCENE",
+      "label": "학원 오갈 때",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "BARRIER",
+      "label": "가격이 가장 큰 걸림돌",
+      "targetCount": 9,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "BARRIER",
+      "label": "아이가 이미 휴대폰이 있다",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "값을 내려 달라",
+      "targetCount": 8,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "통화도 되게",
+      "targetCount": 3,
+      "nonTargetCount": 0
+    },
+    {
+      "axis": "SUGGESTION",
+      "label": "배터리를 오래가게",
+      "targetCount": 2,
+      "nonTargetCount": 0
+    }
+  ],
+  "suggestionLinks": [
+    {
+      "label": "값을 내려 달라",
+      "mentionCount": 8,
+      "links": [
+        {
+          "axis": "CONCERN",
+          "label": "가격이 부담된다",
+          "overlapCount": 8
+        },
+        {
+          "axis": "BARRIER",
+          "label": "가격이 가장 큰 걸림돌",
+          "overlapCount": 7
+        },
+        {
+          "axis": "BARRIER",
+          "label": "아이가 이미 휴대폰이 있다",
+          "overlapCount": 1
+        }
+      ]
+    },
+    {
+      "label": "통화도 되게",
+      "mentionCount": 3,
+      "links": [
+        {
+          "axis": "CONCERN",
+          "label": "아이가 안 차고 다닐 것 같다",
+          "overlapCount": 3
+        }
+      ]
+    },
+    {
+      "label": "배터리를 오래가게",
+      "mentionCount": 2,
+      "links": [
+        {
+          "axis": "BARRIER",
+          "label": "가격이 가장 큰 걸림돌",
+          "overlapCount": 2
+        },
+        {
+          "axis": "CONCERN",
+          "label": "배터리가 걱정된다",
+          "overlapCount": 2
+        }
+      ]
+    }
+  ],
+  "interviews": [
+    {
+      "comprehension": "misunderstood",
+      "profile": {
+        "age": 35,
+        "gender": "여성",
+        "household": "4인 가구",
+        "region": "대전",
+        "income": "월소득 300~400만 원",
+        "job": "회계 사무직"
+      },
+      "firstImpression": "아이 건강 상태를 재는 밴드인 줄 알았어요.",
+      "restatement": "아이 심박수나 걸음 수를 재서 부모한테 보내 주는 건강 밴드요.",
+      "like": "아이 건강을 매일 확인할 수 있다는 게 좋네요.",
+      "concern": "그런 건 이미 스마트워치에 다 있어서 굳이 따로 살 필요가 있나 싶어요.",
+      "differentiation": "스마트워치랑 다를 게 없어 보여요.",
+      "relevance": "저희는 아이가 건강해서 딱히 필요하진 않아요. 그냥 참고 지내요.",
+      "usageScene": "운동할 때 채워 줄 것 같아요.",
+      "barrier": "이미 비슷한 걸 갖고 있어서요.",
+      "suggestion": "수면 측정도 됐으면 좋겠어요."
+    },
+    {
+      "comprehension": "accurate",
+      "profile": {
+        "age": 41,
+        "gender": "남성",
+        "household": "4인 가구",
+        "region": "경기",
+        "income": "월소득 400~500만 원",
+        "job": "영업 관리직"
+      },
+      "firstImpression": "괜찮아 보이는데 실제로 잘 될지는 좀 봐야 알 것 같아요.",
+      "restatement": "아이가 어디 도착하면 알림이 오고, 잃어버리면 마지막 위치를 알려 준다는 거죠.",
+      "like": "전화기를 안 사 줘도 된다는 점이요. 아이한테 스마트폰을 일찍 쥐여 주는 게 제일 걱정이었는데 그 고민을 안 해도 되니까요.",
+      "concern": "배터리가 일주일이라는데 실제로는 더 짧을 것 같아요. 아이 스마트워치도 하루 만에 꺼지더라고요. 충전을 제가 챙겨야 할 것 같아서 걸려요.",
+      "differentiation": "전화기 없이 된다는 점은 확실히 다르네요.",
+      "relevance": "네 필요해요. 지금은 학원 선생님께 문자로 물어봐요.",
+      "usageScene": "학원 오갈 때요. 태권도랑 피아노를 혼자 다녀서요.",
+      "barrier": "가격도 가격인데 배터리가 진짜 일주일 가는지를 못 믿겠어요.",
+      "suggestion": "배터리가 더 오래가게 해 주세요."
+    },
+    {
+      "comprehension": "accurate",
+      "profile": {
+        "age": 34,
+        "gender": "여성",
+        "household": "4인 가구",
+        "region": "서울",
+        "income": "월소득 300~400만 원",
+        "job": "일반 지원 사무직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "comprehension": "partial",
+      "profile": {
+        "age": 26,
+        "gender": "여성",
+        "household": "1인 가구",
+        "region": "서울",
+        "income": "월소득 200~300만 원",
+        "job": "일반 지원 사무직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    },
+    {
+      "comprehension": "partial",
+      "profile": {
+        "age": 58,
+        "gender": "남성",
+        "household": "2인 가구",
+        "region": "경기",
+        "income": "월소득 300~400만 원",
+        "job": "경영 관리직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    }
+  ],
+  "transcripts": [
+    {
+      "id": "R1",
+      "target": true,
+      "profile": {
+        "age": 34,
+        "gender": "여성",
+        "household": "4인 가구",
+        "region": "서울",
+        "income": "월소득 300~400만 원",
+        "job": "일반 지원 사무직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R2",
+      "target": true,
+      "profile": {
+        "age": 41,
+        "gender": "남성",
+        "household": "4인 가구",
+        "region": "경기",
+        "income": "월소득 400~500만 원",
+        "job": "영업 관리직"
+      },
+      "firstImpression": "괜찮아 보이는데 실제로 잘 될지는 좀 봐야 알 것 같아요.",
+      "restatement": "아이가 어디 도착하면 알림이 오고, 잃어버리면 마지막 위치를 알려 준다는 거죠.",
+      "like": "전화기를 안 사 줘도 된다는 점이요. 아이한테 스마트폰을 일찍 쥐여 주는 게 제일 걱정이었는데 그 고민을 안 해도 되니까요.",
+      "concern": "배터리가 일주일이라는데 실제로는 더 짧을 것 같아요. 아이 스마트워치도 하루 만에 꺼지더라고요. 충전을 제가 챙겨야 할 것 같아서 걸려요.",
+      "differentiation": "전화기 없이 된다는 점은 확실히 다르네요.",
+      "relevance": "네 필요해요. 지금은 학원 선생님께 문자로 물어봐요.",
+      "usageScene": "학원 오갈 때요. 태권도랑 피아노를 혼자 다녀서요.",
+      "barrier": "가격도 가격인데 배터리가 진짜 일주일 가는지를 못 믿겠어요.",
+      "suggestion": "배터리가 더 오래가게 해 주세요."
+    },
+    {
+      "id": "R3",
+      "target": true,
+      "profile": {
+        "age": 37,
+        "gender": "여성",
+        "household": "3인 가구",
+        "region": "부산",
+        "income": "월소득 200~300만 원",
+        "job": "보건 의료직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R4",
+      "target": true,
+      "profile": {
+        "age": 45,
+        "gender": "남성",
+        "household": "5인 가구",
+        "region": "서울",
+        "income": "월소득 500~600만 원",
+        "job": "정보 통신 전문직"
+      },
+      "firstImpression": "생각보다 단순해서 좋네요. 복잡한 건 아이가 못 써요.",
+      "restatement": "버튼 없이 차고만 다니면 도착 알림이 가는 물건이요.",
+      "like": "아이가 따로 조작할 게 없다는 점이 좋아요. 뭘 눌러야 하면 우리 애는 절대 안 해요. 그냥 차고 다니기만 하면 된다는 게 저한테는 핵심이에요.",
+      "concern": "아이가 답답하다고 안 차고 다닐 것 같아요. 손목시계도 이틀 만에 빼놓더라고요.",
+      "differentiation": "위치 추적기랑 비슷한 것 같기도 하고 잘 모르겠어요.",
+      "relevance": "있으면 좋죠. 지금은 그냥 참고 기다려요.",
+      "usageScene": "주말에 놀이터나 마트 갈 때도 쓸 것 같아요.",
+      "barrier": "아이가 안 차면 소용이 없으니까 그게 제일 걱정이에요.",
+      "suggestion": "통화도 됐으면 좋겠어요."
+    },
+    {
+      "id": "R5",
+      "target": true,
+      "profile": {
+        "age": 33,
+        "gender": "여성",
+        "household": "3인 가구",
+        "region": "인천",
+        "income": "월소득 200~300만 원",
+        "job": "교육 전문직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R6",
+      "target": true,
+      "profile": {
+        "age": 48,
+        "gender": "남성",
+        "household": "4인 가구",
+        "region": "대구",
+        "income": "월소득 300~400만 원",
+        "job": "생산 기능직"
+      },
+      "firstImpression": "요즘 이런 게 많이 나오더라고요.",
+      "restatement": "아이 위치를 실시간으로 계속 보여 주는 물건 아닌가요?",
+      "like": "잃어버렸을 때 마지막 위치를 알 수 있다는 게 마음이 놓이네요.",
+      "concern": "값이 좀 있네요. 편의점에서 파는 미아방지 팔찌는 몇천 원이잖아요.",
+      "differentiation": "다른 것들이랑 뭐가 다른지는 잘 모르겠습니다.",
+      "relevance": "우리 애는 이제 중학생이라 크게 필요하진 않아요. 직접 전화해요.",
+      "usageScene": "쓴다면 하교 시간에 쓸 것 같긴 합니다.",
+      "barrier": "굳이 안 사도 될 것 같아서요. 애가 휴대폰이 이미 있어요.",
+      "suggestion": "값을 내려 달라는 것 말고는 딱히 없네요."
+    },
+    {
+      "id": "R7",
+      "target": true,
+      "profile": {
+        "age": 44,
+        "gender": "남성",
+        "household": "3인 가구",
+        "region": "광주",
+        "income": "월소득 400~500만 원",
+        "job": "경영 관리직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R8",
+      "target": true,
+      "profile": {
+        "age": 31,
+        "gender": "여성",
+        "household": "3인 가구",
+        "region": "서울",
+        "income": "월소득 200~300만 원",
+        "job": "디자인 전문직"
+      },
+      "firstImpression": "생각보다 단순해서 좋네요. 복잡한 건 아이가 못 써요.",
+      "restatement": "버튼 없이 차고만 다니면 도착 알림이 가는 물건이요.",
+      "like": "아이가 따로 조작할 게 없다는 점이 좋아요. 뭘 눌러야 하면 우리 애는 절대 안 해요. 그냥 차고 다니기만 하면 된다는 게 저한테는 핵심이에요.",
+      "concern": "아이가 답답하다고 안 차고 다닐 것 같아요. 손목시계도 이틀 만에 빼놓더라고요.",
+      "differentiation": "위치 추적기랑 비슷한 것 같기도 하고 잘 모르겠어요.",
+      "relevance": "있으면 좋죠. 지금은 그냥 참고 기다려요.",
+      "usageScene": "주말에 놀이터나 마트 갈 때도 쓸 것 같아요.",
+      "barrier": "아이가 안 차면 소용이 없으니까 그게 제일 걱정이에요.",
+      "suggestion": "통화도 됐으면 좋겠어요."
+    },
+    {
+      "id": "R9",
+      "target": true,
+      "profile": {
+        "age": 46,
+        "gender": "남성",
+        "household": "5인 가구",
+        "region": "충남",
+        "income": "월소득 300~400만 원",
+        "job": "운수 운전직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R10",
+      "target": true,
+      "profile": {
+        "age": 35,
+        "gender": "여성",
+        "household": "4인 가구",
+        "region": "대전",
+        "income": "월소득 300~400만 원",
+        "job": "회계 사무직"
+      },
+      "firstImpression": "아이 건강 상태를 재는 밴드인 줄 알았어요.",
+      "restatement": "아이 심박수나 걸음 수를 재서 부모한테 보내 주는 건강 밴드요.",
+      "like": "아이 건강을 매일 확인할 수 있다는 게 좋네요.",
+      "concern": "그런 건 이미 스마트워치에 다 있어서 굳이 따로 살 필요가 있나 싶어요.",
+      "differentiation": "스마트워치랑 다를 게 없어 보여요.",
+      "relevance": "저희는 아이가 건강해서 딱히 필요하진 않아요. 그냥 참고 지내요.",
+      "usageScene": "운동할 때 채워 줄 것 같아요.",
+      "barrier": "이미 비슷한 걸 갖고 있어서요.",
+      "suggestion": "수면 측정도 됐으면 좋겠어요."
+    },
+    {
+      "id": "R11",
+      "target": true,
+      "profile": {
+        "age": 42,
+        "gender": "남성",
+        "household": "4인 가구",
+        "region": "경기",
+        "income": "월소득 400~500만 원",
+        "job": "건설 기능직"
+      },
+      "firstImpression": "괜찮아 보이는데 실제로 잘 될지는 좀 봐야 알 것 같아요.",
+      "restatement": "아이가 어디 도착하면 알림이 오고, 잃어버리면 마지막 위치를 알려 준다는 거죠.",
+      "like": "전화기를 안 사 줘도 된다는 점이요. 아이한테 스마트폰을 일찍 쥐여 주는 게 제일 걱정이었는데 그 고민을 안 해도 되니까요.",
+      "concern": "배터리가 일주일이라는데 실제로는 더 짧을 것 같아요. 아이 스마트워치도 하루 만에 꺼지더라고요. 충전을 제가 챙겨야 할 것 같아서 걸려요.",
+      "differentiation": "전화기 없이 된다는 점은 확실히 다르네요.",
+      "relevance": "네 필요해요. 지금은 학원 선생님께 문자로 물어봐요.",
+      "usageScene": "학원 오갈 때요. 태권도랑 피아노를 혼자 다녀서요.",
+      "barrier": "가격도 가격인데 배터리가 진짜 일주일 가는지를 못 믿겠어요.",
+      "suggestion": "배터리가 더 오래가게 해 주세요."
+    },
+    {
+      "id": "R12",
+      "target": true,
+      "profile": {
+        "age": 38,
+        "gender": "여성",
+        "household": "3인 가구",
+        "region": "서울",
+        "income": "월소득 500~600만 원",
+        "job": "법률 전문직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R13",
+      "target": true,
+      "profile": {
+        "age": 32,
+        "gender": "여성",
+        "household": "3인 가구",
+        "region": "울산",
+        "income": "월소득 300~400만 원",
+        "job": "사회 복지직"
+      },
+      "firstImpression": "생각보다 단순해서 좋네요. 복잡한 건 아이가 못 써요.",
+      "restatement": "버튼 없이 차고만 다니면 도착 알림이 가는 물건이요.",
+      "like": "아이가 따로 조작할 게 없다는 점이 좋아요. 뭘 눌러야 하면 우리 애는 절대 안 해요. 그냥 차고 다니기만 하면 된다는 게 저한테는 핵심이에요.",
+      "concern": "아이가 답답하다고 안 차고 다닐 것 같아요. 손목시계도 이틀 만에 빼놓더라고요.",
+      "differentiation": "위치 추적기랑 비슷한 것 같기도 하고 잘 모르겠어요.",
+      "relevance": "있으면 좋죠. 지금은 그냥 참고 기다려요.",
+      "usageScene": "주말에 놀이터나 마트 갈 때도 쓸 것 같아요.",
+      "barrier": "아이가 안 차면 소용이 없으니까 그게 제일 걱정이에요.",
+      "suggestion": "통화도 됐으면 좋겠어요."
+    },
+    {
+      "id": "R14",
+      "target": true,
+      "profile": {
+        "age": 47,
+        "gender": "남성",
+        "household": "4인 가구",
+        "region": "전북",
+        "income": "월소득 300~400만 원",
+        "job": "생산 기능직"
+      },
+      "firstImpression": "아이 하교 때문에 늘 마음 졸였는데, 이런 게 있으면 좋겠다 싶었어요.",
+      "restatement": "아이가 학교나 학원에 도착하면 부모 휴대폰으로 알려 주는 밴드네요.",
+      "like": "도착했다는 알림이 자동으로 오는 게 제일 좋아요. 제가 회사에서 전화를 못 받을 때가 많은데, 그 시간에 확인이 되니까 그게 저한테는 중요해요.",
+      "concern": "3만 9천 원이면 좀 부담스러워요. 아이 학용품이랑 학원비까지 생각하면 다이소에서 파는 미아방지 호루라기랑 비교했을 때 차이가 커요.",
+      "differentiation": "솔직히 요즘 나오는 위치 추적기랑 크게 달라 보이지는 않아요.",
+      "relevance": "필요하긴 해요. 지금은 아이가 도착할 때쯤 제가 직접 전화를 걸어요.",
+      "usageScene": "평일 하교 시간이요. 2시에서 4시 사이에 제일 신경이 쓰이거든요.",
+      "barrier": "가격이 가장 큰 걸림돌이에요. 2만 원대였으면 바로 샀을 것 같아요.",
+      "suggestion": "값을 조금만 내려 주시면 좋겠어요."
+    },
+    {
+      "id": "R15",
+      "target": false,
+      "profile": {
+        "age": 26,
+        "gender": "여성",
+        "household": "1인 가구",
+        "region": "서울",
+        "income": "월소득 200~300만 원",
+        "job": "일반 지원 사무직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    },
+    {
+      "id": "R16",
+      "target": false,
+      "profile": {
+        "age": 58,
+        "gender": "남성",
+        "household": "2인 가구",
+        "region": "경기",
+        "income": "월소득 300~400만 원",
+        "job": "경영 관리직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    },
+    {
+      "id": "R17",
+      "target": false,
+      "profile": {
+        "age": 63,
+        "gender": "여성",
+        "household": "2인 가구",
+        "region": "부산",
+        "income": "월소득 100~200만 원",
+        "job": "판매 종사직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    },
+    {
+      "id": "R18",
+      "target": false,
+      "profile": {
+        "age": 69,
+        "gender": "남성",
+        "household": "2인 가구",
+        "region": "강원",
+        "income": "월소득 100만 원",
+        "job": "농림 어업직"
+      },
+      "firstImpression": "저한테는 해당이 없는 물건 같네요.",
+      "restatement": "아이 도착을 부모한테 알려 주는 기계인 것 같습니다.",
+      "like": "아이 키우는 집에는 도움이 되겠네요.",
+      "concern": "저는 쓸 일이 없어서 잘 모르겠어요.",
+      "differentiation": "비슷한 게 이미 있는 걸로 압니다.",
+      "relevance": "저는 아이가 없어서 필요 없습니다.",
+      "usageScene": "제가 쓸 일은 없을 것 같아요.",
+      "barrier": "필요가 없다는 게 이유죠.",
+      "suggestion": "딱히 없습니다."
+    }
+  ],
+  "telemetry": {
+    "cells": 20,
+    "rateLimited": 0,
+    "timeouts": 0,
+    "retries": 0,
+    "formatViolations": 2,
+    "failures": 0,
+    "truncated": 0,
+    "waitSeconds": 0.0,
+    "promptTokens": 18400,
+    "completionTokens": 7300,
+    "model": "gpt-4o-mini",
+    "concurrency": 32,
+    "seconds": 41.2,
+    "llmCalls": 23,
+    "answered": 18,
+    "homogeneity": {
+      "axisLabelCounts": {
+        "LIKE": 3,
+        "CONCERN": 3,
+        "DIFFERENTIATION": 2,
+        "USAGE_SCENE": 3,
+        "BARRIER": 2,
+        "SUGGESTION": 3
+      },
+      "maxMentionByAxis": {
+        "LIKE": 8,
+        "CONCERN": 8,
+        "DIFFERENTIATION": 12,
+        "USAGE_SCENE": 8,
+        "BARRIER": 9,
+        "SUGGESTION": 8
+      },
+      "saturatedThemes": [],
+      "alternativeSum": 14
+    }
+  },
+  "caveats": [
+    "실측 프로파일 기반 시뮬레이션 — 실존 인물 인터뷰가 아니다",
+    "출처: 한국미디어패널조사(KISDI)",
+    "합성 응답자는 실제 사람보다 답이 균질하고 바람직한 쪽으로 쏠린다 — 우려의 강도는 과소, 호감은 과대로 나올 수 있다",
+    "언급 수는 이 표본에서 몇 명이 그 말을 했는지일 뿐이다 — 시장 규모도 구매율도 점유율도 아니다. 백분율로 환산하지 마라",
+    "이 조사 형식(단일 자극·개방형)은 외적 타당성 시험을 거치지 않았다. 우열 비교(G3D)의 유형별 성적은 여기에 전이되지 않는다",
+    "가격 수용도·지불의사는 이 조사가 답하지 않는다 — 지불의사의 임계는 응답자가 아니라 실행 모델이 정하고, 모델을 바꾸면 방향까지 뒤집히는 것이 실측됐다",
+    "비언어·감정은 여기에 없다 — 표정도 망설임도 목소리도 없고, 텍스트로 쓴 표현뿐이다",
+    "사용 장면은 상상해서 답한 것이다 — 실제로 그때 그렇게 쓴다는 뜻이 아니다",
+    "행동 기준으로 응답자를 고르지 못한다 — 타겟 판정에 쓸 수 있는 것은 나이·성별·가구·지역·소득·직업뿐이고, 그 조건식은 자유 서술을 기계가 옮긴 것이라 틀릴 수 있다",
+    "3명 이하가 말한 것은 다시 돌리면 바뀔 수 있다 — 적은 언급을 결론으로 읽지 마라",
+    "검증 계기와 서비스 계기가 다르다 — 성적 미전이. 이 파이프라인이 재현 확인된 적이 없다."
+  ],
+  "notes": [
+    "이 결과는 실존 인물의 응답이 아니라 실측 프로파일 기반 시뮬레이션이다.",
+    "caveats 를 떨어뜨리지 마라 — 값과 함께 옮겨야 하는 문장이다.",
+    "언급 수는 이 표본에서 그 말을 한 사람 수다. 백분율·점유율·구매율로 환산하지 마라.",
+    "이해도는 컨셉이 좋은지 나쁜지가 아니라 컨셉보드가 읽히는지를 잰다.",
+    "세그먼트 교차와 연결표는 계산일 뿐이다 — 무슨 뜻인지는 이 결과가 말하지 않는다."
+  ]
+}

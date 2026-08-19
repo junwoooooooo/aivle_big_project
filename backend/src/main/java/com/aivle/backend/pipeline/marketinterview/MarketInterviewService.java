@@ -5,7 +5,11 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewSourceResolver.Source;
 import com.aivle.backend.project.entity.Project;
 import com.aivle.backend.project.repository.ProjectRepository;
+import com.aivle.backend.taskrun.domain.TaskResult;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
 import com.aivle.backend.taskrun.domain.TaskType;
+import com.aivle.backend.taskrun.repository.TaskResultRepository;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
@@ -24,6 +28,7 @@ public class MarketInterviewService {
     private final MarketInterviewSourceResolver sources;
     private final MarketInterviewInputFactory inputs;
     private final MarketInterviewRunRepository runs;
+    private final TaskResultRepository taskResults;
     private final TaskRunService taskRuns;
     private final CanonicalInputHasher hasher;
     private final ObjectMapper mapper;
@@ -31,9 +36,11 @@ public class MarketInterviewService {
     public MarketInterviewService(ProjectRepository projects,
             MarketInterviewSourceResolver sources,
             MarketInterviewInputFactory inputs, MarketInterviewRunRepository runs,
-            TaskRunService taskRuns, CanonicalInputHasher hasher, ObjectMapper mapper) {
+            TaskResultRepository taskResults, TaskRunService taskRuns,
+            CanonicalInputHasher hasher, ObjectMapper mapper) {
         this.projects = projects; this.sources = sources;
-        this.inputs = inputs; this.runs = runs; this.taskRuns = taskRuns; this.hasher = hasher; this.mapper = mapper;
+        this.inputs = inputs; this.runs = runs; this.taskResults = taskResults;
+        this.taskRuns = taskRuns; this.hasher = hasher; this.mapper = mapper;
     }
 
     @Transactional
@@ -103,11 +110,30 @@ public class MarketInterviewService {
         Source source = currentSourceOrNull(projectId);
         JsonNode preview = source == null ? null : inputs.preview(source);
         if (run == null) return CurrentView.notStarted(preview);
+        synchronize(run);
         boolean stale = source == null || !bound(run, source);
         if (stale && run.getState() != MarketInterviewRun.State.STALE) {
             run.markStale(run.getResultJson(), LocalDateTime.now());
         }
         return view(run, stale, preview);
+    }
+
+    /**
+     * MAIN worker owns execution and TaskResult adoption. This outer projection only mirrors that
+     * terminal state into the FULL lineage row; it never changes the MAIN result envelope.
+     */
+    private void synchronize(MarketInterviewRun run) {
+        if (run.getState() != MarketInterviewRun.State.RUNNING) return;
+        TaskRun task = run.getTaskRun();
+        TaskRunState state = task.getState();
+        if (state == TaskRunState.FAILED || state == TaskRunState.TIMED_OUT
+                || state == TaskRunState.CANCELLED) {
+            run.fail(task.getLastErrorCode(), LocalDateTime.now());
+            return;
+        }
+        if (state != TaskRunState.SUCCEEDED || task.getFinalResultId() == null) return;
+        TaskResult result = taskResults.findById(task.getFinalResultId()).orElse(null);
+        if (result != null) run.succeed(result.getResultJson(), LocalDateTime.now());
     }
 
     @Transactional

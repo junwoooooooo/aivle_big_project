@@ -377,15 +377,9 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
             from app.twin.stimulus_draft import execute_twin_stimulus_draft
             result = await execute_twin_stimulus_draft(body.input)
         elif body.taskType == "MARKET_INTERVIEW":
-            from app.tasks.market_interview import execute_market_interview
-            from app.progress.safe_task_progress import progress_sender_from_environment
-            async with progress_sender_from_environment(
-                task_run_id=body.taskRunId, task_attempt_id=body.taskAttemptId,
-                correlation_id=correlation,
-            ) as progress:
-                result = await execute_market_interview(
-                    body.input, event_sink=progress.emit if progress.enabled else None,
-                )
+            from app.interview import execute_market_interview
+            budget = (deadline - datetime.now(timezone.utc)).total_seconds()
+            result = await execute_market_interview(body.input, budget)
         elif body.taskType == "TWIN_SURVEY":
             from app.twin import execute_twin_survey
             from app.progress.safe_task_progress import progress_sender_from_environment

@@ -51,11 +51,16 @@ describe('MarketResultBody — 판 ㊺ 목차', () => {
     expect(ids).not.toContain('sec-CALCULATION');
   });
 
-  it('FULL 현재 결과에 없는 2절 판단을 화면이 지어내지 않는다', () => {
+  it('2절 판단은 **결론까지** 그린다 — 계산식만 남으면 반쪽이다', () => {
     const { container } = draw();
-    expect(screen.queryByText(/값이 아닌 이유가 서지 않으면/)).toBeNull();
+    // ⚠ **결론은 접힌 채로도 보여야 한다.** 옛 화면이 판단 카드를 목차 «위»에 세운 이유가
+    //    「표를 다 읽고 나서야 판단을 만나면 늦다」였고, 그 이유는 목차를 바꿔도 그대로다.
+    expect(screen.getByText(/값이 아닌 이유가 서지 않으면/)).toBeTruthy();
     const 절 = 편다(container, 'PRICE');
-    expect(within(절).getAllByText(/15,000/).length).toBeGreaterThan(0);
+    // 펼치면 근거와 계산식이 선다. ⚠ 제목은 **절 머리가 이미 갖고 있다** — 판단 카드가
+    //   절 안에서 제목을 또 세우면 「가격」이 두 번 찍힌다.
+    expect(within(절).getByText(/안 씁니다/)).toBeTruthy();  // 못 쓴 갈래도 말한다
+    expect(within(절).queryByText(/이 가격이 시장 어디에 서 있나/)).toBeNull();
   });
 
   // ★ 판 ㊻ — **8·9절이 «두 벌»이던 것을 한 벌로 줄였다.**
@@ -63,26 +68,30 @@ describe('MarketResultBody — 판 ㊺ 목차', () => {
   //   **같은 말을 두 번** 했다. 글이 왔으면 글만, 글이 없으면 기계 표가 그 자리를 지킨다.
   //   ⚠ 아래 두 시험이 **「글이 없을 때」를 못 박는다** — 이 폴백이 사라지면 8·9절이
   //     통째로 비고, 그것은 「조사가 못 구했다」가 아니라 「화면이 안 그렸다」다.
-  it('8절 처방이 없는 FULL 결과는 못 구한 원장을 정직하게 보여 준다', () => {
+  it('8절 처방은 **글이 안 온 실행에서** 「어디서 구하나」까지 그린다', () => {
     const { container } = draw((raw) => { raw.report = null; });
     const card = 편다(container, 'GAPS');
-    expect(within(card).getAllByText(/두발 미용업 · 종사자 1인 사업체 비율/).length).toBeGreaterThan(0);
+    expect(within(card).getByText(/공중위생관리법/)).toBeTruthy();
   });
 
-  it('8절 보고서 글이 왔으면 기계 원장을 두 번 그리지 않는다', () => {
-    const { container } = draw((raw) => {
-      raw.report = { writtenBy: 'test', sections: [{ subject: 'GAPS', markdown: '추가 확인 경로입니다.' }] };
-    });
-    const card = 편다(container, 'GAPS');
-    expect(card.querySelector('.mr-prose')).toBeTruthy();
-    expect(within(card).queryByText(/두발 미용업 · 종사자 1인 사업체 비율/)).toBeNull();
-  });
-
-  it('9절이 없는 FULL 결과는 없다는 뜻으로 바꾸지 않고 비활성 안내를 낸다', () => {
+  it('8·9절에 글이 왔으면 **기계 표를 두 번 그리지 않는다**', () => {
     const { container } = draw();
-    const card = container.querySelector('#sec-SYNTHESIS');
-    expect(within(card).getByText(/9절을 못 만들었어요/)).toBeTruthy();
-    expect(within(card).getByRole('button')).toBeDisabled();
+    const card = 편다(container, 'GAPS');
+    // 글은 있고, 같은 말을 하는 기계 처방 표는 없다.
+    expect(card.querySelector('.mr-prose')).toBeTruthy();
+    expect(within(card).queryByText(/공중위생관리법/)).toBeNull();
+  });
+
+  it('9절은 **글이 안 온 실행에서** 미는 것과 흔드는 것을 갈라 그린다', () => {
+    const { container } = draw((raw) => { raw.report = null; });
+    const card = 편다(container, 'SYNTHESIS');
+    // 픽스처의 9절은 「흔듦」 한 줄이다 — 갈래 상자가 그 이름으로 선다.
+    expect(within(card).getByRole('heading', { level: 4, name: /흔드는 것/ })).toBeTruthy();
+    expect(within(card).getByText(/값만으로는 고를 이유가 없어요|경쟁 구독료/)).toBeTruthy();
+    // ⚠ **빈 갈래를 지우지 않는다.** 픽스처의 9절은 「흔듦」뿐이라 「미는 것」이 비는데,
+    //    그 자리를 지우면 「미는 사실이 0건이었다」와 「안 쟀다」가 같아 보인다 —
+    //    성적표 수요 줄에서 고친 것과 같은 병이고, 9절은 사업가가 돈을 내는 자리다.
+    expect(within(card).getByText(/한 건도 없었어요/)).toBeTruthy();
   });
 
   it('2·8·9절이 **안 온 실행**에서는 «못 만들었다»고 말한다 — 조용히 비우지 않는다', () => {

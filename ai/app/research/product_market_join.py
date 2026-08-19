@@ -14,17 +14,6 @@ from .bm.contracts import (
 )
 
 
-CHANNEL_METRIC = "채널·유통 조건"
-CHANNEL_ID_PREFIX = "C-SEC-CH-"
-
-
-def _channel_evidence(evidence: list[dict]) -> list[dict]:
-    """FULL 생성 시 eligibility가 ID에 고정된 CHANNEL passage만 재판정 없이 쓴다."""
-    return [item for item in evidence
-            if str(item.get("id") or "").startswith(CHANNEL_ID_PREFIX)
-            and item.get("metric") == CHANNEL_METRIC]
-
-
 def _evidence(item: dict) -> dict:
     return {
         "id": item.get("id"), "kind": item.get("kind"),
@@ -51,7 +40,6 @@ def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData
     competitors = [item for item in evidence
                    if item.get("metric") in ("매출액", "가입 매장 수")]
     demand = [item for item in evidence if item.get("metric") == "문제 경험률"]
-    channels = _channel_evidence(evidence)
     price = market.get("price") or {}
     calculations = {
         "tam": tam.get("formula"), "tam_inputs": tam.get("inputs"),
@@ -74,7 +62,6 @@ def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData
             price_min=price.get("min"), price_base=price.get("base"),
             price_max=price.get("max"), currency=price.get("currency")),
         demand_evidence=demand,
-        channel_analysis=channels,
         market_size_calculation=calculations,
         missing_items=list(market.get("notFound") or []),
         evidence_list=evidence,

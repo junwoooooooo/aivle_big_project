@@ -34,7 +34,19 @@ def Fact(*a, **k):
 
 
 rules = load_rules()
-ASSUM = rules["assumptions"]["by_role"]
+ASSUM_RULES = rules["assumptions"]["by_role"]     # 규칙 파일 정본 (판 ㊴ 이후 「연환산」만)
+#: 이 파일의 **픽스처 가정.** 규칙 파일 값을 빌려 쓰지 않는다 — 여기서 재는 것은 B 블록의
+#: 기계(thin 흡수 · 민감도 · 단위 정지)이지 그 값이 아니다. 값을 빌리면 규칙이 개정될
+#: 때마다 기계 검사가 통째로 죽고, 그 죽음은 **기계가 아니라 값 이야기**라 오진을 부른다.
+#: 판 ㊴ 에서 실제로 그랬다(침투율·세그먼트비중 삭제 → KeyError).
+ASSUM = dict(ASSUM_RULES, **{
+    "침투율": {"value": 0.1, "range": [0.05, 0.15], "unit": "비율",
+             "basis": "테스트 픽스처 가정 — 이 파일 밖으로 나가지 않는다",
+             "falsified_if": "픽스처"},
+    "세그먼트비중": {"value": 0.19, "range": [0.15, 0.25], "unit": "비율",
+                "basis": "테스트 픽스처 가정 — 이 파일 밖으로 나가지 않는다",
+                "falsified_if": "픽스처"},
+})
 AS_OF = 2026
 ok, fail = 0, []
 
@@ -150,9 +162,23 @@ check("falsified_if 에 표본 부족 명시", "표본" in est_bu.falsified_if, 
 check("민감도에 침투율", any(s["var_id"] == "V2" for s in est_bu.sensitivity),
       str(est_bu.sensitivity))
 
-print("\n  가정값이 코드가 아니라 rules/assumptions.v1.json 에서 온다")
-check("assumptions 규칙 로드됨", "침투율" in ASSUM)
-check("basis 가 규칙 파일 문구", ASSUM["침투율"]["basis"] in by_var["V2"].basis)
+print("\n  가정값이 코드가 아니라 규칙 파일(또는 픽스처)의 표에서 온다")
+check("assumptions 규칙 로드됨", isinstance(ASSUM_RULES, dict) and "연환산" in ASSUM_RULES)
+check("basis 가 가정 표의 문구 그대로", ASSUM["침투율"]["basis"] in by_var["V2"].basis)
+
+print("\n[판 ㊴] 규칙 파일에서 지워진 자리는 **조용히 채워지지 않는다**")
+check("침투율은 규칙 파일에 없다 (미용실 SaaS 값이었다)", "침투율" not in ASSUM_RULES)
+check("단가도 없다", "단가" not in ASSUM_RULES)
+check("세그먼트비중도 없다", "세그먼트비중" not in ASSUM_RULES)
+_in_nv = B.substitute(F_BU, ledger, cmap, smap, ASSUM_RULES, rules)
+_v2 = {i.var_id: i for i in _in_nv}["V2"]
+check("→ 가정으로 때우지 않는다", _v2.assumption is None, str(_v2))
+check("→ 사유가 값으로 남는다 (절대규칙 5)", "가정값 없음" in _v2.basis, _v2.basis)
+check("→ 이름 문제라고 말하지 않는다 (allowed 목록에는 그대로 있다)",
+      "미등재" not in _v2.basis, _v2.basis)
+_est_nv = B.estimate(F_BU, _in_nv, ledger, cmap, smap, ASSUM_RULES, rules)
+check("→ 계산 불가로 멈춘다", _est_nv.status == "insufficient" and _est_nv.value is None,
+      f"{_est_nv.status} / {_est_nv.value}")
 
 # ══════════════════════════════════════════════════════════════
 print("\n[시끄러운 정지] 단위가 어긋나면 변환하지 않고 멈춘다")

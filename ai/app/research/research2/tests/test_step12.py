@@ -204,21 +204,26 @@ check("`방식=정확` 이면 옛 동작(판 ⑧ 그대로 탈락)", not r["pass
 
 
 # ══════════════════════════════════════════════════════════════
-print("\n[판 ⑬ ①] 판정층 T7 — **관측만 있으면 TAM 이 선다**")
+print("\n[판 ⑬ ①→㊳ 폐지] 시장 크기 — **계산하지 않는다. 관측 층위를 낸다**")
+# ⚠ **이 절은 통째로 뒤집혔다.**
+#   판 ⑬ 은 「거래액 관측이 있으면 TAM 값이 선다」를 합격으로 봤다. 그 「선다」가 곧
+#   `거래액 × 추정점유율 0.3(출처 0건)` 이었고 화면에 **11.41조원**이 값처럼 떴다 —
+#   같은 원장의 엔진은 그 칸을 「추정 불가」로 적어 두었는데도. 옛 기대값 자체가 결함이었다.
+#
+#   판 ㊳ 에서 **계열별 계산식(T2·T7)을 통째로 들어냈다.** 두 식 다 관측 하나에 가정
+#   여럿을 곱했고, 가정 곱셈을 막자 어느 식을 골라도 값이 안 나왔다 — 갈림길이 아무것도
+#   안 가르면서 계열이 틀리면 **틀린 사유**만 냈다.
+#   새 계약: 시장 크기는 **관측 층위 목록**이다. 식도 없고 값도 없다.
 # ══════════════════════════════════════════════════════════════
 import verdict as V2
 
-SPEC = {"template": "T7", "식": "TAM(연) = 시장 거래액 × 추정점유율",
-        "관측_metric": "거래액", "점유율_role": "추정점유율",
-        "경계": ["⚠ 거래액(GMV) ≠ 매출"]}
 
-
-def led_c(value=None, metric="거래액", unit="원", claim="TAM"):
-    """계열 C 원장 흉내 — 확인됨 1건(또는 0건)."""
+def led_c(value=None, metric="거래액", unit="원", claim="TAM", year="2025"):
+    """시장 크기 관측 1건(또는 0건)짜리 원장 흉내."""
     rows, facts = [], {}
-    slots = [{"slot_id": "S1", "claim_type": claim, "metric": metric, "unit": unit}]
+    slots = [{"slot_id": "S1", "claim_type": claim, "metric": metric,
+              "unit": unit, "subject": "냉동 간편식", "period": year}]
     if value is not None:
-        # 판 ㉙ — 확인됨 행은 새 축에서도 채택이다(픽스처 현실화, 기대값 무변경)
         rows.append({"fact_id": "F001", "slot_id": "S1", "label": "확인됨",
                      "kind": "gov_stat", "score": 5, "url": "https://kosis.kr/x",
                      "채택": True, "등급": "확정",
@@ -226,39 +231,70 @@ def led_c(value=None, metric="거래액", unit="원", claim="TAM"):
         facts["F001"] = {"value_num": value, "unit_norm": unit, "trace_id": "t",
                          "quote_verified": True}
     return {"slots": slots, "ledger_rows": rows, "facts": facts,
+            "reference_date": "2026-08-14",
             "report": {"headline_numbers": []}, "violations": {}}
 
 
-r = V2._judge_market_t7(led_c(2_792_575.0), {}, SPEC)
-check("거래액 관측이 있으면 **TAM 값이 선다**",
-      (r["TAM_추정"] or {}).get("값") is not None, str(r.get("TAM_추정"))[:160])
-check("식이 T7 구조로 적힌다", r["_구조"] == SPEC["식"], str(r["_구조"]))
-check("GMV≠매출 경계가 가정에 실린다",
-      any("GMV" in x for x in (r["TAM_추정"] or {}).get("가정", [])), "")
-check("대조_기반이 붙는다", "대조_기반" in (r["TAM_추정"] or {}), "")
+r = V2.judge_market(led_c(2_792_575.0), {})
+t = r["TAM_추정"] or {}
+check("관측이 있으면 **층위가 선다**", len(r.get("시장_관측") or []) == 1, str(r.get("시장_관측")))
+check("**값은 내지 않는다**", t.get("값") is None, str(t.get("값")))
+check("**식도 없다** — 계산하지 않으므로", t.get("식") is None, str(t.get("식")))
+check("**가정을 하나도 안 쓴다**", t.get("assumption_count") == 0, str(t.get("assumption_count")))
+check("요인은 전부 **관측**이다",
+      [f["판정"] for f in (t.get("요인") or [])] == ["관측"], str(t.get("요인"))[:140])
+check("**계산식의 항이 아니라 층위 목록임을 말한다**",
+      any("층위" in x for x in (t.get("해석_경계") or [])), str(t.get("해석_경계"))[:140])
+check("관측한 값이 그대로 실린다",
+      (t.get("관측된_밑동") or {}).get("값") == 2_792_575.0, str(t.get("관측된_밑동")))
 
-r = V2._judge_market_t7(led_c(None), {}, SPEC)
-check("관측 0이면 값은 없다", r["TAM_추정"] is None, str(r["TAM_추정"]))
-# ⚠ **여기가 이 배선의 핵심이다.** 옛 코드는 계열 C 에서도 「전국 사업체 수 확인됨 0건」
-#   이라 말했다 — 틀린 사유는 다음 판이 엉뚱한 데를 파게 만든다.
-check("**사유가 계열 C 구조로 적힌다**",
-      "거래액" in r["사유"] and "사업체" not in r["사유"], r["사유"])
+# ── **같은 관측이 두 슬롯에 앉아도 층은 하나다** ──────────────────────────
+#   실측: KOSIS 거래액 한 건이 TAM 슬롯과 SAM 슬롯에 함께 채택돼 TAM=SAM 이 됐다.
+#   층위로 두 번 세면 **없는 층이 생긴다.** fact_id 로는 안 접힌다(슬롯마다 새 id).
+led2 = led_c(2_792_575.0)
+led2["slots"].append({"slot_id": "S3", "claim_type": "SAM", "metric": "거래액",
+                      "unit": "원", "subject": "냉동 간편식", "period": "2025"})
+led2["ledger_rows"].append({**led2["ledger_rows"][0], "fact_id": "F002", "slot_id": "S3"})
+led2["facts"]["F002"] = dict(led2["facts"]["F001"])
+r2 = V2.judge_market(led2, {})
+check("같은 값·단위·연도는 **한 층으로 접힌다**",
+      len(r2.get("시장_관측") or []) == 1, str(r2.get("시장_관측")))
+check("**겹쳐 앉은 사실을 드러낸다**",
+      any("함께 앉아" in (f.get("설명") or "") for f in (r2["TAM_추정"] or {}).get("요인", [])),
+      str((r2["TAM_추정"] or {}).get("요인"))[:200])
 
-# metric 으로 좁히지 않으면 단가·CAC 가 시장 크기 밑동이 된다(종류 오류)
-r = V2._judge_market_t7(led_c(39000.0, metric="이용 요금"), {}, SPEC)
-check("**다른 금액 계량은 밑동이 되지 않는다**", r["TAM_추정"] is None, str(r["TAM_추정"]))
+# ── 관측 0건 ────────────────────────────────────────────────────────
+r3 = V2.judge_market(led_c(None), {})
+check("관측 0이면 층도 값도 없다", r3["TAM_추정"] is None, str(r3["TAM_추정"]))
+check("**사유가 층위 말로 적힌다** — 「사업체 수」가 아니다",
+      "층위" in r3["사유"] and "사업체" not in r3["사유"], r3["사유"])
 
+# ── SAM 은 축이 없으면 안 낸다 ──────────────────────────────────────
+check("**SAM 을 TAM 층위로 대신하지 않는다**", r["SAM_추정"] is None, str(r["SAM_추정"]))
+check("**왜 안 냈는지 말한다**",
+      "조사 범위를 좁히는 축" in (r.get("SAM_사유") or ""), str(r.get("SAM_사유"))[:140])
 
-# ⚠ **배선이 켜져 있는가.** 위 검사들은 `_judge_market_t7` 를 **직접 호출**하므로
-#   규칙 플래그가 꺼져 있어도 전부 green 이다 — 판 ⑬ 이 정확히 그렇게 마감됐고
-#   (측정 스크립트가 복원에 실패해 `enabled=false` 로 남았다) 판 ⑮ 착수 때 발견됐다.
-#   **켜짐 여부는 따로 봐야 한다.**
+# ── 낡은 관측은 낡았다고 말한다 ────────────────────────────────────
+r4 = V2.judge_market(led_c(1_166_600_000_000.0, year="2018"), {})
+check("3년 넘은 관측에 **낡음이 붙는다**",
+      (r4.get("시장_관측") or [{}])[0].get("낡음") is True, str(r4.get("시장_관측")))
+check("낡음이 사람 문장으로도 나간다",
+      any("낡음" in (f.get("설명") or "") for f in (r4["TAM_추정"] or {}).get("요인", [])),
+      str((r4["TAM_추정"] or {}).get("요인"))[:160])
+
+# ── **계열 계산 경로가 정말 없어졌는가** ─────────────────────────────
+#   판 ⑬ 은 「배선이 켜져 있는가」를 물었다. 판 ㊳ 은 반대를 묻는다 — **꺼져 있는가.**
+check("`_judge_market_t7` 이 사라졌다", not hasattr(V2, "_judge_market_t7"), "")
+check("`_pick_money` 가 사라졌다", not hasattr(V2, "_pick_money"), "")
 _su = json.load(io.open(os.path.join(ROOT, "rules", "series_unit.v1.json"), encoding="utf-8"))
 _tam = _su.get("계열_TAM_구조") or {}
-check("**계열_TAM_구조 배선이 켜져 있다**", _tam.get("enabled") is True,
-      f"enabled={_tam.get('enabled')} — 꺼져 있으면 계열 C 가 T2 로 판정된다")
-check("계열 C 가 T7 로 등재돼 있다",
-      ((_tam.get("map") or {}).get("C") or {}).get("template") == "T7", str(_tam.get("map")))
+check("**계열_TAM_구조가 은퇴했다**", _tam.get("enabled") is False,
+      f"enabled={_tam.get('enabled')}")
+check("은퇴 사유가 파일에 적혀 있다", bool(_tam.get("_은퇴")), str(_tam)[:120])
+# ★ **살아 있어야 하는 것** — 고객 단위 정합은 계산 경로가 아니다. 같이 지우면 안 된다.
+check("**고객 단위 정합은 그대로 살아 있다**",
+      isinstance(_su.get("계열_고객_단위"), dict) and len(_su["계열_고객_단위"]) >= 5,
+      str(list((_su.get("계열_고객_단위") or {}).keys())))
 
 
 print(f"\n===== {ok} 통과 / {len(fail)} 실패")

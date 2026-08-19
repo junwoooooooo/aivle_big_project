@@ -112,12 +112,34 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     def by_claim(*ct):
         return [r for r in 적 if (slots.get(r["slot_id"]) or {}).get("claim_type") in ct]
 
+    def 셈한_것(rows_: list) -> list:
+        """★ 판 ㊳ — **무엇을 세었는지 밝힌다.**
+
+        예전에는 건수만 냈다. 그래서 배달비 5건이 「가격 확인됨」이 됐고, 화면에는
+        그 5건이 **우리 사업과 무관하다는 사실이 어디에도 없었다.**
+        여기서 관련성을 판정하지는 않는다(그것은 게재 검증의 일이다) — 다만
+        **센 것을 이름으로 드러내** 사람이 즉시 알아볼 수 있게 한다.
+        """
+        seen, out_ = set(), []
+        for r in rows_:
+            s = slots.get(r["slot_id"]) or {}
+            key = f"{s.get('subject') or '?'} — {s.get('metric') or '?'}"
+            if key not in seen:
+                seen.add(key)
+                out_.append(key)
+        return out_
+
     out = {}
 
     # ① 시장 크기 — TAM 밑동 관측
     base = by_claim("TAM", "SAM")
-    out["1_시장크기"] = {"n": len(base), "상태": 상태(len(base), 항목["1_시장크기"]["채워짐"]),
+    # ★ 판 ㊳ — **행 수가 아니라 층위 수를 센다.** 같은 관측이 TAM·SAM 슬롯에 함께 앉으면
+    #   행은 2건인데 층은 1개다. 행으로 세면 없는 층이 생긴다(실측: KOSIS 한 표가 2건으로).
+    층 = m.get("시장_관측") or []
+    out["1_시장크기"] = {"n": len(base), "층위": len(층),
+                      "상태": 상태(len(층) or len(base), 항목["1_시장크기"]["채워짐"]),
                       "값": (m.get("TAM_추정") or {}).get("값"),
+                      "셈한_것": 셈한_것(base),
                       "등급": sorted({r.get("등급") for r in base}) or None}
 
     # ② 성장률 — 2년치 · 직접률 · proxy 선언 중 하나
@@ -139,7 +161,7 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
 
     # ④ 가격 — 표시가격 몇 건이면 밴드
     price = by_claim("PRICE", "ALT")
-    out["4_가격"] = {"n": len(price),
+    out["4_가격"] = {"n": len(price), "셈한_것": 셈한_것(price),
                    "상태": 상태(len(price), 항목["4_가격"]["채워짐"], 항목["4_가격"]["부분"])}
 
     # ⑤ 수요 — 정량 1건 or 정성 2건
@@ -150,6 +172,7 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     정량 = [r for r in pain if facts.get(r["fact_id"]) is not None]
     정성 = [r for r in pain if facts.get(r["fact_id"]) is None]
     out["5_수요"] = {"n": len(pain), "n_정량": len(정량), "n_정성": len(정성),
+                   "셈한_것": 셈한_것(pain),
                    "최고_등급": (sorted({r.get("등급") for r in pain},
                                     key=lambda x: ["추정", "실무 신뢰", "확정"].index(x)
                                     if x in ("추정", "실무 신뢰", "확정") else -1)[-1]
@@ -168,9 +191,20 @@ def build(run: str, concept: str, verdict: dict | None = None) -> dict:
     if 가정수 is None:
         가정수 = len(tam.get("가정") or [])
     가정_필수 = bool(항목["6_계산"].get("가정_명시_필수"))
-    out["6_계산"] = {"TAM": tam.get("값"), "가정수": 가정수,
-                   "상태": ("미확보" if tam.get("값") is None
-                          else ("채워짐" if (가정수 or not 가정_필수) else "부분"))}
+    # ★ 판 ㊳ — **범위도 성과다.** 점 추정을 못 냈어도 관측 점유율로 범위를 냈으면
+    #   그것은 「아무것도 못 함」이 아니라 **부분**이다. 이 줄이 없으면 3단계가 실제
+    #   점유율을 물어와도 성적표가 그대로 「미확보」라 개선이 측정되지 않는다.
+    rng = tam.get("범위") or None
+    # ★ 판 ㊳ — 시장 크기를 **계산하지 않으므로**, 이 과목은 「계산했나」가 아니라
+    #   「낼 층위가 있나」를 센다. 층위가 있으면 **부분**이다 — 점 추정이 아니지만 빈손도 아니다.
+    out["6_계산"] = {"TAM": tam.get("값"), "가정수": 가정수, "층위": len(층),
+                   "범위": ({"하한": rng.get("하한"), "상한": rng.get("상한"),
+                            "근거_점유율_수": len(rng.get("근거_점유율") or [])}
+                           if rng else None),
+                   "상태": ("채워짐" if (tam.get("값") is not None
+                                     and (가정수 or not 가정_필수))
+                          else ("부분" if (tam.get("값") is not None or rng or 층)
+                                else "미확보"))}
 
     # ⑦ 못 찾은 것 — **항상**
     nf = (res.get("report") or {}).get("not_found") or {}

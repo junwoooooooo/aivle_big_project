@@ -81,6 +81,15 @@ describe('FULL deep-engine → MAIN presentation adapter', () => {
     expect(renderBoard(result.board)).toContain('이름: 예약 도우미');
     expect(renderBoard(result.board)).toContain('가격: 9,900원');
   });
+
+  it('주제 0개도 원문을 보존하고 분류 없음 안내를 만든다', () => {
+    const raw = deepResult();
+    raw.themes = [];
+    const empty = normalizeMarketInterview(raw);
+    expect(empty.transcripts).toHaveLength(20);
+    expect(empty.sections.every((section) => section.themes.length === 0)).toBe(true);
+    expect(empty.sections.every((section) => section.empty.includes('분류된 답이 없어요'))).toBe(true);
+  });
 });
 
 describe('MAIN presentation helpers', () => {

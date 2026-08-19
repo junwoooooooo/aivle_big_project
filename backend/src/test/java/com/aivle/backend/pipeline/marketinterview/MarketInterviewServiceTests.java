@@ -15,6 +15,7 @@ import com.aivle.backend.project.repository.ProjectRepository;
 import com.aivle.backend.taskrun.domain.TaskRun;
 import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.taskrun.integration.InternalAiExecutionClient.ExecutionResponse;
+import com.aivle.backend.taskrun.repository.TaskResultRepository;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunFailure;
 import com.aivle.backend.taskrun.service.TaskRunService;
@@ -35,6 +36,7 @@ class MarketInterviewServiceTests {
     @Mock MarketInterviewSourceResolver sources;
     @Mock MarketInterviewInputFactory inputs;
     @Mock MarketInterviewRunRepository runs;
+    @Mock TaskResultRepository taskResults;
     @Mock TaskRunService taskRuns;
     @Mock CanonicalInputHasher hasher;
     @Mock Project project;
@@ -49,7 +51,7 @@ class MarketInterviewServiceTests {
     @BeforeEach
     void setUp() {
         service = new MarketInterviewService(projects, sources, inputs, runs,
-            taskRuns, hasher, mapper);
+            taskResults, taskRuns, hasher, mapper);
         lenient().when(project.getId()).thenReturn(41L);
         lenient().when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(41L, 7L)).thenReturn(Optional.of(project));
         lenient().when(selection.getId()).thenReturn(31L);

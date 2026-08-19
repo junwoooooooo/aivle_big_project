@@ -97,9 +97,6 @@ def build(run: str, concept: str) -> dict:
             "카드_id": f"C-{row['fact_id']}",
             "종류": "관측",
             "칸": s.get("_canvas_cell") or s.get("claim_type") or "",
-            # 캔버스 칸과 조사 claim type은 다른 축이다. 가격·경쟁·수요 정책이
-            # "수익원"을 PRICE로 다시 추측하지 않도록 원래 축을 내부에 보존한다.
-            "_claim_type": s.get("claim_type") or "",
             # **이 수가 무엇인가** — 판 ㉛ 실측으로 추가했다.
             #   처음엔 `칸`(= claim_type 폴백)만 줬더니 모델이 「GROWTH」를 읽고
             #   **거래액 2조를 「2024년 성장률」이라고 썼다.** 숫자 출처는 맞아서
@@ -162,18 +159,26 @@ def build(run: str, concept: str) -> dict:
         if 미관측_입력:
             mats.append("추정")
         등급 = weakest(mats, ladder)
-        값_죽음 = 등급 == "근거 없음"
-        표시값 = (est.get("값_퍼센트") if name == "성장률" else est.get("값"))
+        # ★ 판 ㊳ — **등급이 값을 죽일 수 있다.**
+        #   지금까지 등급은 배지만 바꿨을 뿐 값을 못 막았다 — 「추정」 딱지를 붙인 채
+        #   11.41조가 그대로 나갔다. 사다리 맨 아래(= 근거 없음)면 값을 내보내지 않는다.
+        #   ⚠ 등급을 **내리는** 방향으로만 작동한다. 값을 살리는 경로는 없다(fail-closed).
+        값_죽음 = (등급 == "근거 없음")
         cards.append({
             "카드_id": f"C-CALC-{name}",
             "종류": "계산",
             "칸": "고객 세그먼트" if name != "성장률" else "고객 세그먼트",
-            "값": None if 값_죽음 else 표시값,
+            # ★ 판 ㊳ — **한 값은 한 표기로만 존재한다.**
+            #   여기는 비율(0.1514642)을 담고 단위에 「%」를 붙였고, 봉투는 같은 것을
+            #   `15.1464 %/년` 으로 냈다 — 같은 근거를 인용한 **100배 차이 두 표기**가
+            #   한 산출물에 공존했다. 단위가 「%」면 값도 퍼센트여야 한다.
+            "값": (None if 값_죽음 else
+                  (est.get("값_퍼센트") if name == "성장률" else est.get("값"))),
             "단위": "원" if name in ("TAM", "SAM") else "%",
-            "값_퍼센트": None if 값_죽음 else est.get("값_퍼센트"),
-            "_비율_원값": est.get("값") if name == "성장률" else None,
-            "값_죽음_사유": ("계산 카드 등급이 근거 없음이라 숫자를 노출하지 않는다"
-                           if 값_죽음 else None),
+            "값_퍼센트": (None if 값_죽음 else est.get("값_퍼센트")),
+            "_비율_원값": (est.get("값") if name == "성장률" else None),
+            "값_죽음_사유": ("등급이 「근거 없음」이라 값을 내보내지 않는다"
+                         if 값_죽음 else None),
             "등급": 등급,
             "등급_근거": (f"약한 고리: {sorted(set(mats), key=ladder.index)} → {등급}"
                        + (f" · 뒷받침 없는 입력 {미관측_입력}개" if 미관측_입력 else

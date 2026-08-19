@@ -44,7 +44,7 @@ import gate as G                                                   # noqa: E402
 
 # 1차 초안에서 gpt-4o-mini 는 형식 예시를 그대로 베끼거나 통제 어휘를 어겼다(2회 폐기).
 # 이 일은 「빈칸 채우기」지만 빈칸이 서로 물려 있어서 작은 모델이 자리를 뒤섞는다.
-MODEL = (os.getenv("MARKET_DESIGN_MODEL") or "gpt-5.6-luna").strip()
+MODEL = "gpt-4o"
 
 # ══════════════════════════════════════════════════════════════
 # 무인 계측기 (판 ⑪ ①) — 엔진 `runlog.Run.decide/intervene` 와 **같은 어휘**
@@ -246,10 +246,6 @@ var_role 표 (식 안에서 그 변수가 맡은 자리. 자리와 계량 종류
     침투율·단가·연환산)를 **함께** 넣으면 탈락한다 — 계산이 그 변수들을 **전부 곱해서**
     무의미한 수가 되기 때문이다. 자리 목록은 아래 «템플릿이 요구하는 자리»가 정본이다.
     T7 이면 변수는 **정확히 둘**이다.
-14-2. **F_TAM·F_SAM 은 직접 관측식(T5)이다.** 각각 observable=true 변수 **하나만** 둔다.
-    계열 A는 사업체·조직 단위, B는 인구·개인 단위, C는 거래액 단위를 관측한다.
-    세그먼트비중·침투율·단가·점유율을 observable=false 로 넣어 시장 규모를 만들지 마라.
-    직접 관측할 수 없는 금액 TAM/SAM은 비워 두는 것이 정상이다.
 
 15. **경쟁사 이름을 지어내지 마라.** F_COMP 의 subject 는 아래 [경쟁 씨앗]에 있는 이름을
     **그대로** 쓴다. 씨앗에 없는 회사를 넣지 말고, 「A사」·「A미용 예약 SaaS」·「○○」 같은
@@ -1075,13 +1071,8 @@ def run_harness(a: HarnessOptions) -> dict:
 
     stamp = datetime.date.today().isoformat()
 
-    # Product TaskRun에서는 스냅샷을 소스 트리의 공유 ``data/``가 아니라 해당
-    # 실행의 workspace에 둔다. CLI/replay는 환경 변수가 없으므로 기존 경로를 쓴다.
-    snapshot_dir = os.environ.get("RESEARCH2_SNAPSHOT_DIR") or os.path.join(ROOT, "data")
-    os.makedirs(snapshot_dir, exist_ok=True)
-
-    def write(kind: str, payload: list) -> str:
-        path = os.path.join(snapshot_dir, f"{kind}_{a.tag}.json")
+    def write(kind: str, payload: list):
+        path = os.path.join(ROOT, "data", f"{kind}_{a.tag}.json")
         # 스냅샷을 덮어쓰는 것은 「재생성」이 아니라 **승인된 1회 수정**이다 — 앞선 판의
         # 생성 기록과 사유를 이력으로 남긴다. 남기지 않으면 어느 판으로 측정했는지가 사라진다.
         history = []
@@ -1098,18 +1089,19 @@ def run_harness(a: HarnessOptions) -> dict:
                 "concept": concept.get("name"), "as_of": stamp}
         io.open(path, "w", encoding="utf-8").write(
             json.dumps({**head, kind: payload}, ensure_ascii=False, indent=2))
-        return path
 
-    slots_path = write("slots", slots)
-    formulas_path = write("formulas", formulas)
-    _decide("게이트 통과 → 스냅샷 기록", slots_path,
+    write("slots", slots)
+    write("formulas", formulas)
+    _decide("게이트 통과 → 스냅샷 기록", f"data/slots_{a.tag}.json",
             rule="failopen:스냅샷 — 게이트 통과분만 기록", why="전 검사 통과")
     _flush_gate()              # 성공 갈래도 마지막 결정까지 담아 다시 쓴다
-    print(f"\n스냅샷: {slots_path} · {formulas_path}")
+    print(f"\n스냅샷: data/slots_{a.tag}.json · data/formulas_{a.tag}.json")
     return {"passed": True, "outdir": outdir, "slots": slots, "formulas": formulas,
             "report": report, "snapshot": {
-                "slots": slots_path,
-                "formulas": formulas_path}}
+                # `run.py --slots/--formulas` 는 ROOT 기준 상대경로를 받는다 — 절차의
+                # 정본(표준검사세트 v1.1)이 이 이름을 쓰므로 자리를 옮기지 않는다.
+                "slots": os.path.join("data", f"slots_{a.tag}.json"),
+                "formulas": os.path.join("data", f"formulas_{a.tag}.json")}}
 
 
 if __name__ == "__main__":

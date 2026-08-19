@@ -53,17 +53,37 @@ def load() -> tuple[dict[str, str], list[dict]]:
                 safe_diagnostics={"missing": os.path.basename(path)})
 
     cards: dict[str, str] = {}
+    # 잘린 줄은 **건너뛰되 센다.** 뱅크는 8,596줄짜리 로컬 자산이고 실제로 한 줄이 문장
+    # 중간에서 잘려 있었다(41행). 그 한 줄 때문에 `json.loads` 가 터져 **8,595명이 통째로**
+    # 막혔고, 화면에는 「카드 뱅크가 서버에 붙어 있지 않다」는 엉뚱한 말이 떴다 — 붙어 있었다.
+    #
+    # ⚠ 조용히 넘기지는 않는다. 몇 줄을 버렸는지 로그에 남기고, **1% 를 넘으면 실패시킨다.**
+    #   파일이 절반쯤 썩어도 도는 코드는 표본이 조용히 갈린 채 조사를 계속하게 만든다.
+    damaged = 0
     with open(cards_path, encoding="utf-8") as handle:
-        for line in handle:
+        for number, line in enumerate(handle, 1):
             if not line.strip():
                 continue
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                damaged += 1
+                logger.warning("twin bank card line %d is malformed — skipped", number)
+                continue
             text = record.get("text")
             if not isinstance(text, str) or not text.strip():
                 raise ProviderFailure(
                     "DEPENDENCY_UNAVAILABLE", "TWIN_BANK_UNAVAILABLE", 503, False,
                     safe_diagnostics={"reason": "card without text"})
             cards[record["pid_hash"]] = text
+
+    if damaged and damaged * 100 > len(cards):
+        raise ProviderFailure(
+            "DEPENDENCY_UNAVAILABLE", "TWIN_BANK_UNAVAILABLE", 503, False,
+            safe_diagnostics={"reason": "bank is damaged", "skipped": damaged,
+                              "loaded": len(cards)})
+    if damaged:
+        logger.warning("twin bank loaded with %d damaged card line(s) skipped", damaged)
 
     with open(frame_path, encoding="utf-8-sig") as handle:
         frame = [row for row in csv.DictReader(handle) if row["pid_hash"] in cards]

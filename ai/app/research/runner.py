@@ -32,30 +32,6 @@ RESEARCH_HOME = os.getenv(
 # runs/<이름> 으로 경로를 만들기 때문에 디렉터리 이름으로 쓸 수 있는 글자만 받는다.
 # 이걸 안 걸면 sourceRun="../../etc" 같은 값이 그대로 경로가 된다.
 _SAFE_RUN_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
-_SAFE_DETAIL_LIMIT = 600
-_SENSITIVE_ASSIGNMENT = re.compile(
-    r"(?i)\b([A-Z0-9_-]*(?:API[_-]?KEY|ACCESS[_-]?TOKEN|TOKEN|SECRET|PASSWORD))"
-    r"\b\s*[:=]\s*([^\s,;]+)"
-)
-_SENSITIVE_PAYLOAD = re.compile(
-    r"(?i)(\b(?:prompt|input|request|response|document|content)\b\s*[:=]\s*)"
-    r"(?:\{.*\}|\[.*\]|\"(?:\\.|[^\"])*\"|'(?:\\.|[^'])*'|[^,;|]+)"
-)
-
-
-def _safe_failure_detail(detail: str) -> str:
-    """Keep one bounded diagnostic line without credentials or request payloads."""
-    value = re.sub(r"[\x00-\x1f\x7f]+", " ", str(detail or ""))
-    value = re.sub(
-        r"(?i)\bauthorization\b\s*[:=]\s*(?:bearer\s+)?[^\s,;]+",
-        "Authorization=[REDACTED]",
-        value,
-    )
-    value = re.sub(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", value)
-    value = re.sub(r"(?i)\bsk-[A-Za-z0-9_-]{6,}\b", "[REDACTED]", value)
-    value = _SENSITIVE_ASSIGNMENT.sub(lambda match: f"{match.group(1)}=[REDACTED]", value)
-    value = _SENSITIVE_PAYLOAD.sub(lambda match: f"{match.group(1)}[REDACTED]", value)
-    return re.sub(r"\s+", " ", value).strip()[:_SAFE_DETAIL_LIMIT]
 
 
 # ── 실패 어휘는 **백엔드 화이트리스트 안에서만** 고른다 ────────────────────────
@@ -72,9 +48,6 @@ _ALLOWED = {
     ("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED"): (504, True),
     ("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE"): (502, True),
     ("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE"): (500, False),
-    ("EXECUTION_FAILED", "HARNESS_PRECONDITION_FAILED"): (500, False),
-    ("EXECUTION_FAILED", "RESEARCH_SNAPSHOT_MISSING"): (500, False),
-    ("EXECUTION_FAILED", "MARKET_ROUTE_UNRESOLVED"): (422, False),
     ("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION"): (502, False),
 }
 
@@ -83,18 +56,20 @@ def _fail(code: str, reason: str, detail: str = "") -> ProviderFailure:
     """등록된 (코드, 사유) 조합만 낸다. 상세는 사유가 아니라 **메시지**로 간다.
 
     ⚠ 목록에 없는 조합을 부르면 여기서 터진다 — 조용히 뭉개지는 것보다 낫다.
+
+    ⚠ `detail` 은 **서버 로그용**이다. 화면까지 가지 않는다 —
+      `MarketResearchService.safeErrorReason` 이 계약 어휘만 통과시킨다
+      ("provider details and input text stay server-side").
+
+    실측(2026-08-13): 예전엔 `detail` 을 받아 놓고 **버렸다.** 그래서 유료 BM 실행이
+    15초 만에 죽었는데 남은 것이 `EXECUTION_FAILED / TRANSIENT_EXECUTION_FAILURE` 두 낱말뿐이라
+    원인을 끝내 못 밝혔다. 호출부는 전부 원인 문장을 만들어 넘기고 있었다.
     """
     if (code, reason) not in _ALLOWED:
         raise AssertionError(f"등록되지 않은 실패 어휘: {code}/{reason}")
     status_code, retryable = _ALLOWED[(code, reason)]
-    safe_detail = _safe_failure_detail(detail)
-    diagnostics = {"component": "market-research"}
-    if safe_detail:
-        diagnostics["detail"] = safe_detail
-    return ProviderFailure(
-        code, reason, status_code, retryable,
-        safe_diagnostics=diagnostics,
-    )
+    return ProviderFailure(code, reason, status_code, retryable,
+                           safe_provider_message=detail or None)
 
 
 async def execute_market_research(task_input: dict[str, Any], run_id: str,

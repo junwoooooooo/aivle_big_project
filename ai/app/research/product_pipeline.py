@@ -24,85 +24,10 @@ from datetime import datetime, timezone
 
 from pydantic import ValidationError
 
-from app.providers import ProviderFailure
-
 from . import serialize
-from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail, _safe_failure_detail
+from .runner import RESEARCH_HOME, _SAFE_RUN_ID, _fail
 
 EventSink = Callable[[dict], None]
-
-_CHILD_PROVIDER_FAILURES = {
-    ("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION"): (400, False),
-    ("DEPENDENCY_UNAVAILABLE", "MODEL_DEPENDENCY_UNAVAILABLE"): (503, True),
-    ("DEPENDENCY_UNAVAILABLE", "AI_CONFIGURATION_INVALID"): (503, False),
-    ("DEADLINE_EXCEEDED", "REQUEST_DEADLINE_EXCEEDED"): (504, True),
-    ("RATE_LIMITED", "DEPENDENCY_RATE_LIMITED"): (429, True),
-    ("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE"): (502, True),
-    ("EXECUTION_FAILED", "PERMANENT_EXECUTION_FAILURE"): (500, False),
-    ("EXECUTION_FAILED", "HARNESS_PRECONDITION_FAILED"): (500, False),
-    ("EXECUTION_FAILED", "RESEARCH_SNAPSHOT_MISSING"): (500, False),
-    ("EXECUTION_FAILED", "MARKET_ROUTE_UNRESOLVED"): (422, False),
-    ("RESULT_SCHEMA_INVALID", "RESULT_FIELD_CONSTRAINT_VIOLATION"): (502, False),
-    ("RESULT_SCHEMA_INVALID", "PROVIDER_RESPONSE_SCHEMA_REJECTED"): (502, False),
-    ("RESULT_SCHEMA_INVALID", "PROVIDER_JSON_INVALID"): (502, False),
-    ("INTERNAL_ERROR", "UNEXPECTED_INTERNAL_ERROR"): (500, True),
-}
-
-
-def _optional_child_int(value, minimum: int, maximum: int) -> int | None:
-    if isinstance(value, bool) or not isinstance(value, int):
-        return None
-    return value if minimum <= value <= maximum else None
-
-
-def _child_failure(error_path: str) -> ProviderFailure | None:
-    try:
-        if os.path.getsize(error_path) > 64 * 1024:
-            return None
-        with io.open(error_path, encoding="utf-8") as handle:
-            payload = json.load(handle)
-    except (OSError, ValueError, TypeError):
-        return None
-    if not isinstance(payload, dict):
-        return None
-    from .product_runner import _safe_error_value
-
-    if payload.get("kind") == "ProviderFailure":
-        code = payload.get("code")
-        reason = payload.get("reason")
-        expected = _CHILD_PROVIDER_FAILURES.get((code, reason))
-        if expected is None:
-            return None
-        status_code, retryable = expected
-        if payload.get("statusCode") != status_code or payload.get("retryable") is not retryable:
-            return None
-        safe_diagnostics = _safe_error_value(payload.get("safeDiagnostics"))
-        return ProviderFailure(
-            code, reason, status_code, retryable,
-            upstream_status=_optional_child_int(payload.get("upstreamStatus"), 100, 599),
-            provider_error_type=_safe_error_value(payload.get("providerErrorType")),
-            provider_error_param=_safe_error_value(payload.get("providerErrorParam")),
-            schema_name=_safe_error_value(payload.get("schemaName")),
-            retry_after_ms=_optional_child_int(payload.get("retryAfterMs"), 1, 86_400_000),
-            safe_provider_message=_safe_error_value(payload.get("safeProviderMessage")),
-            safe_diagnostics=safe_diagnostics if isinstance(safe_diagnostics, dict) else {},
-        )
-    if payload.get("kind") == "UnexpectedException":
-        exception_class = _safe_error_value(payload.get("exceptionClass"))
-        safe_message = _safe_error_value(payload.get("safeMessage"))
-        stage = _safe_error_value(payload.get("stage"))
-        diagnostics = {
-            "stage": stage if isinstance(stage, str) and stage else "market-collection",
-            "exceptionClass": exception_class if isinstance(exception_class, str) and exception_class
-            else "UnexpectedException",
-            "detail": safe_message if isinstance(safe_message, str) and safe_message
-            else "시장조사 자식 프로세스가 예기치 않게 실패했다",
-        }
-        return ProviderFailure(
-            "EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE", 502, True,
-            safe_diagnostics=diagnostics,
-        )
-    return None
 
 
 def _observe(event_sink: EventSink | None, stage: str, action: str, summary: str,
@@ -129,9 +54,8 @@ for _dir in (RESEARCH_HOME,
 # 단계 · 예산 · 실패 등급
 # ══════════════════════════════════════════════════════════════
 #: 8단계. **이름은 계약의 일부다** — 프론트가 이 이름으로 진행 상황을 그린다.
-STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary",
-               "sections")
-STAGES_BM = ("restore", "cards", "promote", "bm_adapter", "bm_model")
+STAGES_FULL = ("harness", "dryrun", "collect", "verdict", "canvas", "cards", "summary")
+STAGES_BM = ("restore", "cards", "bm_adapter", "bm_model")
 
 #: 이름표 하나로 **(컨셉 파일, 원장)** 이 정해진다.
 #:
@@ -436,7 +360,6 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
         input_path = os.path.join(workspace, "input.json")
         runtime_path = os.path.join(workspace, "runtime.json")
         output_path = os.path.join(workspace, "output.json")
-        error_path = os.path.join(workspace, "error.json")
         progress_path = os.path.join(workspace, "progress.jsonl")
         with io.open(input_path, "w", encoding="utf-8") as handle:
             json.dump(concept, handle, ensure_ascii=False, sort_keys=True)
@@ -446,16 +369,13 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
                       handle, ensure_ascii=False, sort_keys=True)
         env = dict(os.environ)
         env["RESEARCH2_RUNS_DIR"] = os.path.join(workspace, "runs")
-        env["RESEARCH2_SNAPSHOT_DIR"] = os.path.join(workspace, "snapshots")
         command = [
             sys.executable, "-u", "-m", "app.research.product_runner",
             "--input", input_path, "--output", output_path,
-            "--error-output", error_path,
             "--workspace", workspace, "--run-id", run_id,
             "--concept-id", concept_id, "--as-of", as_of,
             "--runtime-input", runtime_path,
             "--llm-budget", str(max(0, llm_budget)),
-            "--timeout-seconds", str(max(1.0, timeout_seconds)),
         ]
         if event_sink is not None:
             command.extend(["--progress-jsonl", progress_path])
@@ -500,12 +420,9 @@ async def _product_full(concept: dict, concept_id: str, run_id: str, as_of: str,
             if progress_task is not None:
                 await progress_task
         if process.returncode != 0:
-            structured_failure = _child_failure(error_path)
-            if structured_failure is not None:
-                raise structured_failure
             detail = stderr.decode("utf-8", "replace").strip().splitlines()
             raise _fail("EXECUTION_FAILED", "TRANSIENT_EXECUTION_FAILURE",
-                        _safe_failure_detail(detail[-1]) if detail else "시장조사 엔진 실패")
+                        detail[-1] if detail else "시장조사 엔진 실패")
         try:
             with io.open(output_path, encoding="utf-8") as handle:
                 result = json.load(handle)
@@ -578,22 +495,8 @@ def _full(source_run: str, concept_path: str, concept_id: str,
     _observe(event_sink, "MARKET_VERDICT", "COMPLETED", "시장 판정 계산 완료")
     cards_doc = _timed(ledger, "cards", lambda: CARDS.build(source_run, concept_path))
     _observe(event_sink, "MARKET_CARDS", "COMPLETED", "시장 결과 카드 구성 완료")
-    from .semantic_relevance import filter_market_material
-    concept_doc = json.load(io.open(os.path.join(RESEARCH_HOME, concept_path), encoding="utf-8"))
-    verdict, cards_doc, relevance = filter_market_material(concept_doc, verdict, cards_doc)
-    if relevance["rejected"]:
-        price_rejected = any(item.get("slot") == "PRICE" and
-                             item.get("reason") in {"CONTRADICTORY_BUSINESS_CATEGORY",
-                                                    "PRICE_WITHOUT_SEMANTIC_LINK"}
-                             for item in relevance["rejected"])
-        detail = f"사업안 의미와 맞지 않는 근거 {len(relevance['rejected'])}건을 대표 근거에서 제외했다."
-        if price_rejected:
-            detail += " 직접 비교 가능한 외부 가격 근거가 부족하면 가격 대표값을 만들지 않는다."
-        ledger.degrade("relevance", "EVIDENCE_RELEVANCE_REJECTED", detail)
     score = _timed(ledger, "scorecard",
                    lambda: SCORECARD.build(source_run, concept_path, verdict=verdict))
-    from .semantic_relevance import align_scorecard
-    score = align_scorecard(score, cards_doc)
     _observe(event_sink, "MARKET_SCORECARD", "COMPLETED", "시장 점수표 계산 완료")
 
     cards = cards_doc.get("카드") or []
@@ -723,6 +626,24 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
     stage.llm_calls = 1
 
     result = _read_result(source_run)
+
+    # 게이트 — `_bm_product` 와 같은 이유로 여기도 붙인다. 다만 이 갈래는 FULL 봉투가 없어
+    # 성적표를 못 넘긴다 → 사유 갈래(`cause`)가 전부 `UNMAPPED` 이 된다. 그래도 「판정이
+    # 아예 안 붙는 것」보다는 낫고, 제품 경로는 `_bm_product` 를 탄다.
+    from app.validation import gate                                   # noqa: PLC0415
+    from app.validation import citation                               # noqa: PLC0415
+
+    analysis, corrections = citation.enforce(out["bm_analysis"])
+    if corrections:
+        ledger.degrade("bm", "UNCITED_CLAIM",
+                       f"근거 없이 확인을 주장한 {len(corrections)}칸을 미확인으로 내렸다: "
+                       + ", ".join(f"{item.cell}({item.was})" for item in corrections))
+    cells = serialize.canvas_cells(
+        analysis.canvas, evidence,
+        _user_planned_cells(plan_material, plan_constraints))
+    gate_reasons = gate.evaluate(cells, None)
+    decision = gate.apply_decision(out["final_result"].decision.value, gate_reasons)
+
     return serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(result.get("reference_date") or _now()[:10]),
@@ -730,10 +651,9 @@ async def _bm(source_run: str, concept_path: str, concept_id: str,
         stages=[s.as_contract() for s in ledger.stages],
         degradations=ledger.degradations,
         scorecard=None, market=None,
-        canvas={"cells": serialize.canvas_cells(
-            out["bm_analysis"].canvas, evidence,
-            _user_planned_cells(plan_material, plan_constraints))},
-        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff")),
+        canvas={"cells": cells},
+        bm=serialize.bm(out["final_result"], analysis, decision, gate_reasons,
+                        out.get("financial_handoff")),
         evidence=evidence, summary=None,
         notes=list(serialize.NOTES_BM))
 
@@ -755,7 +675,6 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     if plan_constraints:
         concept = {**concept, "constraint": {**(concept.get("constraint") or {}),
                                              **plan_constraints}}
-    market_result = _timed(ledger, "promote", lambda: _promote_for_bm(market_result))
     market_join = _timed(
         ledger, "bm_adapter",
         lambda: build_market_join(market_result, concept, concept_id))
@@ -780,41 +699,43 @@ async def _bm_product(market_result: dict, concept: dict, concept_id: str,
     stage.seconds = int(time.monotonic() - began)
     stage.llm_calls = 1
     _observe(event_sink, "BM_MODEL", "COMPLETED", "Business Model 분석 완료")
-    canvas_cells = serialize.canvas_cells(
-        out["bm_analysis"].canvas, evidence,
+
+    # ── 검증 게이트 ──────────────────────────────────────────────────────────
+    # ⚠ 이 블록이 없으면 **캔버스는 나오는데 판정이 안 붙는다.** 제품 BM 경로는
+    #   `pipeline._bm` 를 안 타서 게이트가 자동으로 따라오지 않는다(2026-08-16 병합에서 잡음).
+    #   LLM 0회다 — 모델이 스스로 「확인됨」이라 쓴 것을 기계가 반증할 뿐이다.
+    #
+    #   `mapping.apply` 는 여기서 안 부른다. 그건 원시 카드(`cards`)를 요구하는데 제품 경로에는
+    #   직렬화된 근거만 있다. `citation.enforce` 는 분석본만 받으므로 그대로 쓴다.
+    from app.validation import gate                                   # noqa: PLC0415
+    from app.validation import citation                               # noqa: PLC0415
+
+    analysis, corrections = citation.enforce(out["bm_analysis"])
+    if corrections:
+        ledger.degrade("bm", "UNCITED_CLAIM",
+                       f"근거 없이 확인을 주장한 {len(corrections)}칸을 미확인으로 내렸다: "
+                       + ", ".join(f"{item.cell}({item.was})" for item in corrections))
+    cells = serialize.canvas_cells(
+        analysis.canvas, evidence,
         _user_planned_cells(plan_material, plan_constraints))
-    from app.validation import gate
+    # 성적표는 **FULL 봉투가 이미 갖고 있다** — 다시 세지 않는다. 이게 없으면 게이트가
+    # 「이 칸의 근거가 애초에 수집되긴 했는가」를 몰라 사유 갈래가 전부 UNMAPPED 이 된다.
     scorecard = market_result.get("scorecard")
-    gate_reasons = gate.evaluate(canvas_cells, scorecard)
+    gate_reasons = gate.evaluate(cells, scorecard)
     decision = gate.apply_decision(out["final_result"].decision.value, gate_reasons)
+
     result = serialize.envelope(
         runId=run_id, conceptId=concept_id,
         asOf=str(market_result.get("asOf") or _now()[:10]), generatedAt=_now(), mode="BM",
         stages=[s.as_contract() for s in ledger.stages],
         degradations=ledger.degradations, scorecard=scorecard, market=None,
-        canvas={"cells": canvas_cells},
-        bm=serialize.bm(out["final_result"], out["bm_analysis"], out.get("financial_handoff"),
-                        decision=decision, gate_reasons=gate_reasons),
+        canvas={"cells": cells},
+        bm=serialize.bm(out["final_result"], analysis, decision, gate_reasons,
+                        out.get("financial_handoff")),
         evidence=evidence, summary=None, notes=list(serialize.NOTES_BM))
     _observe(event_sink, "BM_SERIALIZATION", "COMPLETED", "Business Model 결과 정리 완료",
              status="COMPLETED")
     return result
-
-
-def _promote_for_bm(market_result: dict) -> dict:
-    """Consume FULL-time section promotion without re-reading or re-judging it.
-
-    ``C-SEC-*`` cards already passed exact-quote/source gates while FULL was made.
-    BM receives the immutable FULL evidence list verbatim, including the stored
-    ``C-SEC-CH-*`` channel eligibility identity.
-    """
-    evidence = market_result.get("evidence")
-    if not isinstance(evidence, list):
-        raise TypeError("Market FULL evidence must be a list")
-    for item in evidence:
-        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
-            raise TypeError("Market FULL evidence identity is invalid")
-    return market_result
 
 
 def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: str,
@@ -841,8 +762,6 @@ def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: st
     def adapt():
         concept = json.load(io.open(os.path.join(RESEARCH_HOME, concept_path),
                                     encoding="utf-8"))
-        from .semantic_relevance import filter_market_material
-        safe_verdict, safe_cards_doc, _ = filter_market_material(concept, verdict, cards_doc)
         # 사용자가 쓴 것이 **이긴다.** 견본의 `_bm_plan` 은 컨셉 계약 밖의 손으로 쓴
         # 스텁이라, 사용자가 같은 칸을 채웠는데 그것이 이기면 입력이 조용히 무시된다.
         if plan_material:
@@ -851,9 +770,8 @@ def _bm_material(ledger: Run, source_run: str, concept_path: str, concept_id: st
             concept = {**concept, "constraint": {**(concept.get("constraint") or {}),
                                                  **plan_constraints}}
         held["constraints"] = ADAPTER.execution_constraints_of(concept)
-        held["cards"] = safe_cards_doc
-        return ADAPTER.build_from(CANVAS.build(source_run, concept_path), safe_verdict,
-                                  safe_cards_doc, concept, source_run, concept_id)
+        return ADAPTER.build_from(CANVAS.build(source_run, concept_path), verdict,
+                                  cards_doc, concept, source_run, concept_id)
 
     market_join = _timed(ledger, "bm_adapter", adapt)
-    return (held.get("cards") or cards_doc).get("카드") or [], market_join, held.get("constraints") or {}
+    return cards_doc.get("카드") or [], market_join, held.get("constraints") or {}

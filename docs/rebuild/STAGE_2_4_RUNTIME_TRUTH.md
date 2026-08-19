@@ -1,228 +1,176 @@
-# V8 Stage 2 / Stage 4 Actual Runtime Truth
+# V9 Stage 2 / Stage 4 Runtime Truth
 
-## Identity and scope
+## Identity and rule
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START SHA: `a0219e0e54768003ab491a95bd892403a27da6d5`
-- Scope: Stage 2 business validation and Stage 4 market interview only.
-- Presentation truth: files imported by `origin/main` `AppRouter.jsx`, not same-named FULL files.
-- Backend truth: FULL v3 lineage, TaskRun, worker, AI and materialization chain.
-- Not run: Docker rebuild, full regression, provider call, paid call, browser E2E.
+- FULL START SHA: `8f3fc7a25e56d1b0d04e018dd89240a1f174fff5`
+- Frontend presentation truth: the files reached by MAIN `AppRouter.jsx`.
+- Backend/AI execution truth: **origin/main active core**.
+- FULL v3 is outer integration, finalized-source gating, TaskRun transport and lineage storage only.
+- No Docker rebuild, provider/paid call, browser E2E or full regression was run.
 
-## MAIN active donor import graph
+V8 Stage 4 backend/AI was **not MAIN-equivalent** because production dispatched to
+`app.tasks.market_interview.deep_engine`. V8 Stage 2 evidence recovery was **not
+MAIN-equivalent** because production used the bounded `section_recall` and
+`semantic_relevance` replacements.
 
-`main.jsx -> App.jsx -> AppRouter.jsx` reaches these donors.
-
-### Stage 2 market
-
-`/market -> features/market/MarketResearchPage.jsx`
-
-Imports used by that page: `ResearchBasisCard.jsx`, `MarketResultBody.jsx`, `marketResult.js`,
-`marketApi.js`, `useMarketPolling.js`, `market.css`, and shared `ProjectWorkspace`,
-`ProjectStageHeader`, `Button`, `Alert` and loading components.
-
-### Stage 2 business model
-
-`/business-model -> features/market/BmCanvasPage.jsx`
-
-Imports used by that page: `BmResultBody.jsx`, `BmCanvas.jsx`, `marketResult.js`,
-`marketApi.js`, `useMarketPolling.js`, `market.css`, and the same shared shell primitives.
-
-### Stage 2 refinement
-
-`/concept-refinement -> features/market/ConceptRefinementPage.jsx`
-
-Imports used by that page: `RefinementSummary.jsx`, `useConceptRevision.js`,
-`conceptRevision.js`, `marketResult.js`, `market.css`, and the shared shell primitives.
-The MAIN v2 commands are presentation evidence only and are not backend donors.
-
-### Stage 4
-
-`/market-interview -> features/market-interview/MarketInterviewPage.jsx`
-
-Imports used by that page: `ConceptBoardEditor.jsx`, `SampleSizePicker.jsx`,
-`InterviewCard.jsx`, `marketInterviewResult.js`, `useMarketInterviewPolling.js`,
-`marketInterviewApi.js`, `sampleSize.js`, `market-interview.css`, and shared UI primitives.
-
-## V7 FULL replacements that were not presentation authority
-
-- `features/market/MarketResearchPage.jsx` as it existed at FULL START: giant report-first layout,
-  local navigation and integrated FULL renderer.
-- `features/market/BmCanvasPage.jsx` as it existed at FULL START: Plan/PreparedPlan,
-  operational editing, financial handoff and duplicate verdict presentation on the normal path.
-- `features/business-validation/pages/ConceptRefinementPage.jsx`,
-  `components/ConceptRefinementPanel.jsx`, `components/RefinedConceptSummary.jsx`.
-- `features/market-interview/pages/MarketInterviewPage.jsx` and
-  `features/market-interview/components/MarketInterviewResult.jsx`.
-
-These files may remain for compatibility or history, but `AppRouter.jsx` no longer imports them for
-the four canonical routes.
-
-## Stage 2 MAIN browser -> AI -> browser
+## Stage 2 complete production graph
 
 ### Market FULL
 
 `/market -> MarketResearchPage -> POST /api/v3/projects/{id}/market-research ->
-MarketResearchController.startFull -> MarketResearchService.startFull ->
-TaskRun(MARKET_RESEARCH, subject MARKET_RESEARCH_FULL) -> MarketResearchWorker ->
+MarketResearchController -> MarketResearchService -> MAIN MarketResearchInputFactory ->
+TaskRun(MARKET_RESEARCH, MARKET_RESEARCH_FULL) -> MAIN MarketResearchWorker ->
 InternalAiExecutionClient -> POST /internal/v1/ai/executions -> executions.py MARKET_RESEARCH ->
-app.research.product_pipeline.run_market_research(mode FULL) -> MarketResearchContract ->
-MarketResearchService.complete -> MarketResearchVersion(FULL) -> GET .../market-research/current ->
-MarketResearchPage -> MarketResultBody`.
+MAIN app.research.product_pipeline -> MAIN app.research.pipeline -> MAIN research2 collection ->
+read_sections(pdf_refetch=True) -> reask_sections.build -> reask_sections.merge -> publish_gate ->
+promote_cards -> judgment -> prescriptions -> synthesis/report/summary ->
+MAIN MarketResearchContract -> TaskResult adoption -> MarketResearchVersion(FULL) ->
+GET /market-research/current -> MarketResultBody`.
 
-### Business model
+The FULL input adapter does not select a market strategy. MAIN fixes donor `_계열.계열` to C,
+uses MAIN hypothesis/BM-plan/legal mappings, and sends `llmBudget=500`.
 
-`/business-model -> BmCanvasPage -> POST /api/v3/projects/{id}/business-model ->
-MarketResearchController.startBm -> MarketResearchService.startBm -> exact FULL version binding ->
-TaskRun(MARKET_RESEARCH, subject MARKET_RESEARCH_BM) -> MarketResearchWorker -> same AI branch ->
-product_pipeline(mode BM) -> MarketResearchVersion(BM) -> GET .../business-model/current ->
-BmCanvasPage -> BmResultBody -> BmCanvas`.
+### BM
 
-### Automatic authority
+`MarketResearchWorker FULL success -> MarketResearchService.startBm(
+idempotency=auto-bm-{fullTaskRunId}) -> exact source MarketResearchVersion ->
+MAIN MarketResearchInputFactory.bm -> marketResultJson=<entire FULL result JSON> plus exact
+source run/version and pinned plan revision -> TaskRun(MARKET_RESEARCH, MARKET_RESEARCH_BM) ->
+same MAIN product pipeline BM path -> app.research.bm contracts/routing/mapping/gate ->
+MAIN MarketResearchContract -> MarketResearchVersion(BM)`.
 
-`MarketResearchWorker` remains the only automatic execution authority:
+No Stage 2 wrapper filters the FULL result or rebuilds a partial BM input.
 
-- FULL completion schedules BM once with `auto-bm-{fullTaskRunId}`.
-- BM completion schedules refinement round one once.
-- scheduling occurs after result materialization;
-- downstream scheduling exceptions are caught and logged, so completed FULL/BM results remain
-  successful;
-- `BusinessValidationSession` remains lineage/session projection, not a second execution producer.
+### Refinement bootstrap and failure propagation
 
-FULL retains its audited 96-call / 20-minute / 22-minute lease-and-transport boundary. V8 does not
-alter the V7 execution authority or workload budget decision.
+`MarketResearchWorker BM success -> ConceptRefinementService.startFirstRoundAfterResearch`.
+The method is a boundary adapter that delegates once to the existing FULL v3 command with the
+completed validation-session id in the command key. MAIN worker catches scheduling exceptions after
+result adoption. Consequently BM scheduling cannot turn an adopted FULL result into FAILED, and
+refinement scheduling cannot turn an adopted BM result into FAILED.
 
-## Stage 2 FULL browser -> v3 refinement -> browser
+`BusinessValidationSession` and its reconciler observe exact Market/BM task/version,
+selection revision and BM-plan revision. They do not claim MARKET_RESEARCH and do not create
+automatic continuation work. The only automatic chain authority is MAIN
+`MarketResearchWorker`.
 
-The restored pages use FULL current v3 Market/BM endpoints. Refinement uses:
+### Time and budget
 
-`/concept-refinement -> MAIN ConceptRefinementPage -> GET
-/api/v3/projects/{id}/business-validation/refinement/presentation ->
-ConceptRefinementPresentationService -> ConceptRefinementService.current + exact session cycle
-round history + ConceptRefinementFinal/seed projection -> MAIN RefinementSummary`.
+- FULL LLM call ceiling: **500**.
+- Market worker budget: **60 minutes**.
+- Lease: **63 minutes**.
+- Internal market HTTP read timeout/default: **63 minutes**.
 
-Commands remain FULL v3:
+The former 96 / 20m / 22m values are no longer in the production Stage 2 core.
 
-- selected proposal keys: `/decision`, then `/apply`;
-- decline and request another round: `/next`;
-- failed proposal: `/retry`;
-- accepted/keep-current completion: `/finalize`.
+## Stage 2 refinement browser graph
 
-The projection maps `proposalKey`, round, field, title, before/after, rationale, source,
-`evidenceIds`, legal reference and accepted `true/false/null`. It includes earlier rounds from the
-same `BusinessValidationSession`. It does not fabricate narrative or legal prose; MAIN's existing
-concept-document/highlight fallback is used. Evidence links remain `/market#sec-<subject>` and only
-exist for stored evidence IDs.
+`/concept-refinement -> MAIN ConceptRefinementPage/RefinementSummary ->
+GET /api/v3/.../business-validation/refinement/presentation -> FULL read-only presentation
+projection over exact session rounds/decisions/finalization -> MAIN UI`.
 
-Canonical routes are `/market`, `/business-model`, `/concept-refinement`; `/business-validation`
-is compatibility-only and redirects to `/market`. Module next action is `/concept-refinement`.
+Commands remain FULL v3 decision/apply/next/retry/finalize. This is outside the frozen Market/BM
+execution core and preserves proposal keys, round hashes, selection revision, BM-plan revision and
+finalized lineage. Module next action remains `/concept-refinement`.
 
-## Stage 4 MAIN complete graph
+## Stage 4 complete production graph
 
-`/market-interview -> origin/main MarketInterviewPage -> GET v2 board -> editable six-cell board ->
-POST v2 {conceptBoard,sampleSize} -> pipeline.market.MarketInterviewController/Service/Worker ->
-TaskRun(MARKET_INTERVIEW) -> InternalAiExecutionClient -> executions.py MARKET_INTERVIEW ->
-app.interview.execute_market_interview -> targeting/sampling/respondent/coding/analysis/saturation ->
-version/current -> MAIN result presentation`.
+### Input/gate
 
-This is the presentation donor only. Its old v2 backend authority and DB state were not restored.
+`/market-interview -> MAIN MarketInterviewPage -> GET /api/v3/.../market-interview/board ->
+FULL MarketInterviewSourceResolver -> current non-stale FINALIZED ConceptRefinementFinal ->
+exact final seed/selection revision/BM-plan revision -> deterministic six-cell board`.
 
-## Stage 4 FULL complete graph after V8
+The user may edit stimulus wording and cannot edit price. POST validates exact six fields and price,
+then the FULL outer factory delegates to the byte-identical MAIN
+`pipeline.market.MarketInterviewInputFactory`. The resulting TaskRun input is exactly:
 
-`/market-interview -> MAIN MarketInterviewPage ->
-GET /api/v3/projects/{id}/market-interview/board -> MarketInterviewController ->
-MarketInterviewService -> MarketInterviewSourceResolver -> current non-stale finalized
-ConceptRefinementFinal -> MarketInterviewInputFactory.board (LLM 0) -> editable six-cell board`.
+```json
+{"conceptBoard": {"conceptName": "...", "targetUsers": "...", "problemScenario": "...",
+"featureSet": [], "differentiators": "...", "priceKrw": 0}, "sampleSize": 20}
+```
 
-Start and return:
+Final id, seed id/hash, selection id/revision and BM-plan revision stay in
+`MarketInterviewRun`; they are not inserted into the MAIN input or result envelope.
 
-`POST /api/v3/projects/{id}/market-interview {conceptBoard,sampleSize} -> server exact-field and
-price validation -> market-interview-input-v2 with conceptRefinementFinalId/seed/selection/
-selectionRevision/BM revision/hash -> TaskRun(MARKET_INTERVIEW) -> MarketInterviewWorker
-(10m budget, 13m lease) -> InternalAiExecutionClient (14m read boundary) -> executions.py ->
-app.tasks.market_interview.deep_engine -> respondent bounded retry -> codebook/batch repair/
-single-row fallback/UNCLASSIFIED -> strict market-interview-result-v2 -> MarketInterviewRun ->
-GET .../current -> deterministic FULL-result-to-MAIN-view adapter -> MAIN result renderer`.
+### Execution
 
-### Finalized-source gate
+`TaskRun(MARKET_INTERVIEW) -> byte-identical MAIN pipeline.market.MarketInterviewWorker
+(10m budget, 13m lease) -> InternalAiExecutionClient -> executions.py MARKET_INTERVIEW ->
+from app.interview import execute_market_interview -> exact MAIN targeting -> KISDI bank load ->
+LLM TargetCriteria once -> code matching -> TARGET 8/NON-TARGET 2 stratified deterministic draw ->
+fixed six-cell stimulus and nine questions -> one-turn respondents -> MAIN coding.py ->
+analysis/saturation/caveats -> byte-identical MAIN MarketInterviewContract -> TaskResult adoption`.
 
-The Stage 4-only `MarketInterviewSourceResolver` requires:
+The actually called structured-output transport (`app.providers/**`) and the imported twin
+`bank/profile/runner/task_type/caveats` modules are also MAIN blobs; FULL transport behavior does
+not sit inside the frozen core.
 
-- latest `ConceptRefinementFinal`;
-- referenced round is `FINALIZED`, same final id, final seed and session;
-- current selection id and hypothesis revision match;
-- final seed is current, non-stale and belongs to the same project/selection;
-- current BM plan revision matches;
-- final JSON is `concept-refinement-final-v1` and its final seed/revisions match the entity.
+The FULL `pipeline.marketinterview` worker was removed. Therefore only one worker claims
+MARKET_INTERVIEW. `app.tasks.market_interview/**` remains dormant history and is not imported by
+the execution branch.
 
-No final returns `MODULE_INPUT_STALE` from board/start. Module status is `NOT_READY` with required
-input `conceptRefinementFinal`. A changed final, seed, selection revision or BM revision makes an
-existing run stale. `CurrentConceptSourceResolver` and Stage 1/3/5/6 consumers are unchanged.
+### Return/lineage
 
-### Editable stimulus contract
+`MAIN worker adoption -> FULL MarketInterviewService.current synchronization ->
+copy unchanged TaskResult JSON into the lineage run -> stale comparison against final id, seed,
+selection revision and BM-plan revision -> GET /current -> MAIN marketInterviewResult view ->
+MAIN result renderer`.
 
-The board has exactly `conceptName`, `targetUsers`, `problemScenario`, `featureSet`,
-`differentiators`, `priceKrw`. The first five are stimulus wording; price must equal the finalized
-hypothesis server-side. Editing does not mutate ConceptPortfolio, MarketSeed or RefinementFinal.
-The exact board is part of the canonical hash, TaskRun input, AI Pydantic input/result and persisted
-result, and it drives respondent prompts and targeting text.
+The copied result remains MAIN canonical:
+`conceptBoard, sampleSize, sampling, targeting, comprehension, differentiation, themes,
+alternatives, segments, contrast, suggestionLinks, interviews, transcripts, telemetry, caveats,
+notes`.
 
-### Deep engine and presentation adapter
+`themes=[]` is valid. Valid transcripts remain available. There is no production
+`NO_TRACEABLE_THEME` failure and no Java minimum-one-theme rule.
 
-Preserved: respondent bounded retry, valid-row preservation, codebook repair, batch repair,
-single-row coding fallback, honest `UNCLASSIFIED`, usable/coded/failure counts, actual-answer quotes,
-semantic integrity and full lineage.
-
-The deterministic view adapter maps `usableInterviewCount` to answered, `title` to label,
-`participantIds` to respondent IDs, alternatives from coding trace, all transcripts by participant
-join, representative cards by comprehension quota, and targeting/sampling/caveats from typed result.
-`targetRequested` is now an engine-emitted typed count, not a frontend guess. No percentage or
-missing barrier `resolvedCount` is invented.
-
-## File classification
+## Runtime classification
 
 ### RUNTIME_ACTIVE
 
-- The four donor pages and their donor renderers/styles listed above.
-- `AppRouter.jsx`, project route/journey models and shared project shell/UI.
-- FULL Market/BM controller/service/worker/product pipeline/materialization.
-- FULL v3 refinement service/commands plus V8 read-only presentation service/controller endpoint.
-- Stage4 controller/service/run/input factory/source resolver/worker/contract, AI deep engine and
-  MAIN presentation adapter.
+- MAIN donor Stage 2/4 pages and result renderers on the four canonical routes.
+- MAIN MarketResearchInputFactory, MarketResearchWorker, MarketResearchContract.
+- MAIN `ai/app/research/**` production closure.
+- MAIN MarketInterviewInputFactory, MarketInterviewWorker, MarketInterviewContract.
+- MAIN `ai/app/interview/**`, MAIN `app.twin.bank` and MAIN `app.twin.profile`.
+- FULL v3 route/source/lineage facades before and after those cores.
 
 ### RUNTIME_DEPENDENCY
 
-- shared API client, auth/current-user handling, TaskRun service/repository, canonical hasher,
-  InternalAiExecutionClient, Jackson/Pydantic contracts, selection/seed/BM repositories, and shared
-  ProjectWorkspace/ProjectStageHeader/Button/Card/Alert.
+TaskRun infrastructure, InternalAiExecutionClient, auth/current user, selection/seed/BM/final
+repositories, canonical hashing, job events, shared Project shell/tokens, and FULL refinement v3
+commands/presentation projection.
 
 ### LOADED_DORMANT
 
-- `TaskType.BUSINESS_VALIDATION`, `BusinessValidationWorker`, FastAPI registration and
-  `app.validation.execute_business_validation`: loaded/registered but no active browser controller
-  produces this TaskRun. They are not Stage 2 execution authority.
+`TaskType.BUSINESS_VALIDATION`, `BusinessValidationWorker` and
+`app.validation.execute_business_validation` remain non-browser dormant. The old
+`app.tasks.market_interview/**` files remain on disk but have no dispatch or worker reachability.
 
 ### COMPATIBILITY_ONLY
 
-- `/business-validation -> /market`.
-- source-compatible MarketInterview service overloads used by focused tests/internal callers.
-- compatibility exports retained in `marketResult.js` for other existing consumers.
+`/business-validation -> /market`, the v3 business-validation read/projection API, FULL service
+read helpers used by session reconciliation, and frontend compatibility exports.
 
-### LEGACY_ORPHAN
+### LEGACY_ORPHAN / NOT_ALLOWED
 
-- FULL replacement refinement and market-interview page/component trees that are no longer imported
-  by the canonical routes.
-- MAIN v2 refinement backend commands and entities: donor evidence only, not restored.
-- MAIN `app.interview` backend core: compared but not restored; FULL deep engine remains active.
+FULL `section_recall`, `semantic_relevance`, deep-engine worker authority and
+MarketStrategySelector-driven Stage 2/4 input decisions. The first two source files and the old
+FULL market-interview worker were removed from their former production locations.
 
 ### TEST_FIXTURE_DOC_ONLY
 
-- donor component tests, exact-copy/import golden tests, focused Java/Python tests, and this audit.
+MAIN recorded market/interview fixtures, imported donor tests, the frozen-blob equivalence test and
+the documents in `docs/rebuild`.
 
 ## Focused evidence
 
-- Frontend donor/import/copy/result tests: 148 passed, 7 skipped.
-- AI market-interview tests: 52 passed.
-- Backend Stage 2/4 focused classes: 82 passed, 0 failed.
-- `git diff --check`: no whitespace errors.
-- Browser verification remains user-run; no claim of pixel identity is made before that check.
+- Frozen blob/import authority: 6 passed.
+- AI MAIN market/interview focused suite: 148 passed, 1 skipped.
+- Backend Stage 2/4 focused suite: 155 passed.
+- Frontend Stage 2/4 focused suite: 141 passed, 7 skipped.
+- `git diff --check`: passed.
+- Browser presentation verification remains user-run; this document does not claim visual identity
+  before that verification.

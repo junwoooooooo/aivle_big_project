@@ -98,8 +98,8 @@ class MarketResearchRequestIdTests {
     }
 
     private MockMvc mvc(MarketResearchService service, CurrentUserProvider currentUser) {
-        return MockMvcBuilders.standaloneSetup(new MarketResearchController(service,
-                mock(BusinessValidationCoordinator.class), currentUser))
+        return MockMvcBuilders.standaloneSetup(new MarketResearchController(
+                service, mock(BusinessValidationCoordinator.class), currentUser))
             .setControllerAdvice(new GlobalExceptionHandler())
             .addFilters(new RequestIdFilter())
             .build();

@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CANVAS_BANDS, CANVAS_LAYOUT, CELL_KIND, CELL_STATUS_VIEW, NOT_FOUND_GROUP, NOT_FOUND_VIEW,
-  REPORT_SECTION_ORDER, REPORT_SECTION_TITLE, SCORE_STATE_VIEW,
+  CANVAS_LAYOUT, CELL_KIND, CELL_STATUS_VIEW, NOT_FOUND_GROUP, NOT_FOUND_VIEW, SCORE_STATE_VIEW,
   bucketEvidence, competitorGaps, evidenceSubjectIndex, formatValue, gradeView, hostOf,
   normalizeMarketResult, sectionEvidence,
 } from './marketResult.js';
@@ -34,23 +33,31 @@ describe('normalizeMarketResult — FULL', () => {
     expect(result.scorecard.every((item) => item.state)).toBe(true);
   });
 
-  it('FULL 현재 결과처럼 section 이 없으면 기존 분류로 안전하게 물러선다', () => {
+  it('절 배치는 **서버가 준 것**을 쓴다 — 화면이 다시 추론하지 않는다', () => {
+    // 서버가 `section` 을 주면 그것이 답이다. 화면이 다시 풀면 두 화면이 같은 근거를
+    // 다른 과목이라고 말한다 — 코드가 그 위험을 주석으로 적어 뒀던 자리다.
     const bag = sectionEvidence(result);
-    expect(bag.COMPETITOR.map((item) => item.id)).toContain('C-F010');
-    expect(evidenceSubjectIndex(result).get('C-F010')).toBe('COMPETITOR');
+    expect(bag.COMPETITOR.map((item) => item.id)).toContain('sec-0001');
+    expect(evidenceSubjectIndex(result).get('sec-0001')).toBe('COMPETITOR');
   });
 
-  it('FULL 현재 결과의 근거 원장을 MAIN view model이 보존한다', () => {
-    const evidence = result.evidenceById.get('C-F010');
-    expect(evidence).toBeTruthy();
-    expect(evidence.section).toBeNull();
-    expect(evidence.placement).toBeNull();
+  it('승격 근거는 표 묶음과 발행사와 원문 표기를 들고 온다', () => {
+    const promoted = result.evidenceById.get('sec-0001');
+    expect(promoted.section).toBe('COMPETITOR');
+    expect(promoted.placement).toBe('COMPETITOR_FIRM');
+    expect(promoted.issuer).toBe('예시프랜차이즈');
+    // 표 묶음이 없으면 「합 100.0%」도 「⚠ 100%가 아니다」도 못 만든다.
+    expect(promoted.tableKey).toBeTruthy();
+    expect(promoted.raw).toBe('1,240개');
   });
 
-  it('FULL 현재 결과에서 생성하지 않은 2·8·9절은 지어내지 않는다', () => {
-    expect(result.judgment).toBeNull();
-    expect(result.prescriptions).toBeNull();
-    expect(result.synthesis).toBeNull();
+  it('2·8·9절이 온다 — null 과 빈 배열은 다른 사건이다', () => {
+    // ⚠ 결론을 빼면 「1.37배」에서 끝나고 「그래서 어느 쪽으로 팔라」가 사라진다.
+    expect(result.judgment.conclusion).toBeTruthy();
+    // 못 쓴 갈래도 온다 — 침묵을 「해당 없음」으로 읽히게 두지 않는다.
+    expect(result.judgment.lines.some((line) => line.silentBecause)).toBe(true);
+    expect(result.prescriptions.every((row) => row.where)).toBe(true);
+    expect(result.synthesis.length).toBeGreaterThan(0);
   });
 
   it('근거마다 등급이 있고 id 로 찾을 수 있다', () => {
@@ -184,22 +191,30 @@ describe('normalizeMarketResult — BM', () => {
     fromEvidence.forEach((caveat) => expect(segments.caveats).toContain(caveat));
   });
 
-  it('FULL 현재 판정과 신뢰도가 온다', () => {
-    expect(result.bm.decision).toBe('CONDITIONAL');
+  it('판정과 신뢰도가 온다', () => {
+    // 게이트가 내린 뒤의 값이다 — 모델은 CONDITIONAL 을 냈지만 CHANNELS 자료가 0건이다.
+    expect(result.bm.decision).toBe('REVISION_REQUIRED');
     expect(result.bm.confidence).toBe('MEDIUM');
   });
 
-  it('FULL 현재 결과의 빈 게이트 사유를 그대로 보존한다', () => {
-    expect(result.bm.gateReasons).toEqual([]);
+  it('게이트 사유가 근거 id 를 달고 온다', () => {
+    expect(result.bm.gateReasons.map((reason) => reason.code)).toEqual(['G1', 'G4']);
+    const [channels] = result.bm.gateReasons;
+    expect(channels.cell).toBe('CHANNELS');
+    expect(channels.message).toContain('0건');
+  });
+
+  // 칸 하나가 아니라 캔버스 전체를 두고 걸리는 규칙(G4)은 cell 이 null 이다.
+  // 화면이 그 분기를 안 그리면 「· undefined」 가 붙는다.
+  it('캔버스 전체 규칙은 cell 이 null 이다', () => {
+    const whole = result.bm.gateReasons.find((reason) => reason.code === 'G4');
+    expect(whole.cell).toBeNull();
   });
 
   it('사유마다 갈래가 온다 — 옛 결과는 판별 불가로 읽는다', () => {
     expect(result.bm.gateReasons.every((reason) => reason.cause)).toBe(true);
     const raw = fixture('bm.json');
-    raw.bm.gateReasons = [
-      { code: 'G1', cell: 'CHANNELS', message: '근거 없음', evidenceIds: [] },
-      { code: 'G4', cell: null, message: '관측 미달', evidenceIds: [] },
-    ];
+    raw.bm.gateReasons.forEach((reason) => { delete reason.cause; });
     expect(normalizeMarketResult(raw).bm.gateReasons.map((r) => r.cause))
       .toEqual(['UNMAPPED', 'UNMAPPED']);
   });
@@ -218,11 +233,6 @@ describe('normalizeMarketResult — BM', () => {
 });
 
 describe('캔버스 배치와 칸의 성격', () => {
-  it('retained FULL consumers keep their compatibility exports', () => {
-    expect(REPORT_SECTION_ORDER).toHaveLength(9);
-    expect(REPORT_SECTION_TITLE.MARKET_SIZE).toBe('시장 크기');
-    expect(CANVAS_BANDS.flatMap(([, cells]) => cells)).toHaveLength(9);
-  });
   it('배치표가 9칸을 빠짐없이 한 번씩 덮는다 — 빠지면 칸이 조용히 사라진다', () => {
     const cells = CANVAS_LAYOUT.map((slot) => slot.cell);
     expect(cells).toHaveLength(9);

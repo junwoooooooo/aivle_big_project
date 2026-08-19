@@ -3,6 +3,18 @@
 
 ⚠ 이 문자열은 담당자의 계약이다. 우리 쪽 사정으로 고치지 않는다 —
    고쳐야 할 이유가 생기면 노트북 쪽과 합의하고 **거기서** 고친 뒤 다시 추출한다.
+
+⚠ **2026-08-15 예외 1건 — 채널.** 위 규율을 어기고 두 줄을 더했다(`channel_analysis`
+   라벨과 CHANNELS 절의 한 줄). 이유를 남긴다:
+
+   나머지 일곱 라벨은 전부 `MarketJoinData` 의 **필드 이름**인데 채널만 대응 필드가 없었다.
+   그래서 채널 칸은 파생 라벨이 구조적으로 0건이었고, `validation.mapping._labels_for` 의
+   폴백이 모델이 쓴 `concept_snapshot`(= 사용자가 쓴 컨셉 서술문)을 되살렸다. 즉 **채널
+   칸만 「자기 입력을 자기가 확인」이 통과**하고 있었다. 라벨을 안 더하면 시장조사가 절
+   조사로 찾아낸 채널 사실(실측 31건)이 캔버스에 **영영 못 닿는다.**
+
+   노트북 쪽과 합의가 되면 거기서 같은 두 줄을 넣고 다시 추출한다. 그때까지 이 예외는
+   `MarketJoinData.channel_analysis`(`bm/contracts.py`·`bm_adapter.py` 두 사본)와 한 몸이다.
 """
 from __future__ import annotations
 
@@ -37,8 +49,9 @@ BM_ANALYSIS_PROMPT = """
 
 4. CHANNELS
 - 입력에 채널 정보가 있으면 해당 내용을 Canvas에 정리한다.
-- market_join_data.channel_analysis의 관측된 채널 조건이 존재하는 경우에만 비교 재료로 사용한다.
-- channel_analysis는 사용자가 확정한 채널 가설 자체가 아니며 자동으로 검증됨으로 승격하지 않는다.
+- market_join_data.channel_analysis 가 이 칸의 시장 근거다. 비어 있지 않으면
+  그 항목의 id를 market_evidence_ids에 적고 source_labels에 channel_analysis를 기록한다.
+- 관련 시장 근거가 존재하는 경우에만 참고하여 적합성을 확인한다.
 - 입력에 채널 정보가 없으면 content=[]로 두고 UNVERIFIED로 표시할 수 있다.
 - 새로운 채널을 임의로 제안하지 않는다.
 - 채널 정보 부족만으로 market_fit_status 또는 consistency_status를 낮추지 않는다.
@@ -130,6 +143,12 @@ market_evidence_ids에는 market_join_data.evidence_list에 실제 존재하는 
 
 #: 노트북 `ALLOWED_CANVAS_SOURCE_LABELS`. **우리 등급(gov_stat 등)과 다른 축이다** —
 #: 이것은 «입력의 어느 절에서 왔나»이고 등급은 «얼마나 확실한가»다.
+#: ⚠ `channel_analysis` 는 2026-08-15 에 더한 **여덟째**다(노트북에는 없었다).
+#: 이유: 나머지 일곱은 전부 `MarketJoinData` 의 **필드 이름**인데 채널만 대응 필드가 없어,
+#: 채널 칸은 근거를 붙일 라벨이 구조적으로 0건이었다. 그러면 `validation.mapping._labels_for`
+#: 폴백이 모델이 쓴 `concept_snapshot`(= 사용자가 쓴 컨셉 서술문)을 되살려 **자기 입력을
+#: 자기가 확인**하는 상태로 돌아간다. 라벨과 함께 `MarketJoinData.channel_analysis` 필드도
+#: 같이 생겼다 — 라벨만 더하면 모델이 가리킬 자리가 없다.
 ALLOWED_CANVAS_SOURCE_LABELS = {
     "concept_snapshot",
     "market_size",

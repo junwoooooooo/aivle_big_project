@@ -2,7 +2,6 @@ package com.aivle.backend.pipeline.marketinterview;
 
 import com.aivle.backend.common.exception.BusinessException;
 import com.aivle.backend.common.exception.ErrorCode;
-import com.aivle.backend.pipeline.market.MarketStrategySelector;
 import com.aivle.backend.pipeline.marketinterview.MarketInterviewSourceResolver.Source;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,52 +14,24 @@ import tools.jackson.databind.node.ObjectNode;
 
 @Component
 public class MarketInterviewInputFactory {
-    static final String INPUT_CONTRACT = "market-interview-input-v2";
-    static final String INPUT_SCHEMA_VERSION = "2.0";
     private static final Set<String> BOARD_FIELDS = Set.of(
         "conceptName", "targetUsers", "problemScenario", "featureSet", "differentiators", "priceKrw");
     private final ObjectMapper mapper;
+    private final com.aivle.backend.pipeline.market.MarketInterviewInputFactory mainInputs;
 
-    public MarketInterviewInputFactory(ObjectMapper mapper) { this.mapper = mapper; }
+    public MarketInterviewInputFactory(
+            ObjectMapper mapper,
+            com.aivle.backend.pipeline.market.MarketInterviewInputFactory mainInputs) {
+        this.mapper = mapper;
+        this.mainInputs = mainInputs;
+    }
 
     public String build(Source source, JsonNode requestedBoard, int sampleSize) {
         if (sampleSize != 20 && sampleSize != 40 && sampleSize != 80)
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "표본 크기는 20, 40, 80 중 하나여야 합니다.");
         ObjectNode authoritative = board(source);
         ObjectNode stimulus = validateStimulus(requestedBoard, authoritative);
-        JsonNode selectedConcept = source.finalDocument().path("selectedConcept");
-        JsonNode hypotheses = source.finalDocument().path("finalHypotheses");
-        ObjectNode root = mapper.createObjectNode();
-        root.put("contract", INPUT_CONTRACT); root.put("schemaVersion", INPUT_SCHEMA_VERSION);
-        root.put("synthetic", true); root.put("sampleSize", sampleSize);
-        ObjectNode binding = root.putObject("source");
-        binding.put("conceptRefinementFinalId", source.refinementFinal().getId());
-        binding.put("marketSeedSnapshotId", source.seed().getId());
-        binding.put("selectionId", source.selection().getId());
-        binding.put("selectionRevision", source.selection().getHypothesisRevision());
-        binding.put("marketSeedSnapshotHash", source.seed().getSnapshotHash());
-        binding.put("bmPlanRevision", source.bm().revision());
-        root.set("conceptBoard", stimulus);
-        root.set("selectedConcept", selectedConcept.deepCopy());
-        root.set("validatedHypotheses", hypotheses.deepCopy());
-        ObjectNode businessModel = root.putObject("businessModel");
-        businessModel.set("plan", source.bm().plan()); businessModel.set("constraints", source.bm().constraints());
-        var marketStrategy = new MarketStrategySelector().select(selectedConcept.toString(), hypotheses.toString(),
-            source.bm().plan().toString(), source.bm().constraints().toString());
-        ObjectNode targeting = root.putObject("targetingContext");
-        targeting.put("marketSeries", marketStrategy.series());
-        targeting.put("customerUnit", switch (marketStrategy.strategy()) {
-            case "ORGANIZATION_UNIT" -> "ORGANIZATION"; case "POPULATION_UNIT" -> "PERSON";
-            case "TRANSACTION_VALUE" -> "TRANSACTION"; default -> "UNKNOWN"; });
-        targeting.put("buyerType", "ORGANIZATION_UNIT".equals(marketStrategy.strategy())
-            ? "ORGANIZATION_BUYER" : "POPULATION_UNIT".equals(marketStrategy.strategy())
-            ? "PERSON_BUYER" : "UNRESOLVED_BUYER");
-        targeting.put("denominator", marketStrategy.denominator()); targeting.put("reason", marketStrategy.reason());
-        root.putArray("boundaries")
-            .add("가상의 고객 관점 시뮬레이션이며 실제 고객 조사나 시장 근거가 아니다.")
-            .add("통계, 대표성, 구매율 또는 모집단 비율을 추론하지 않는다.")
-            .add("결과는 사업안을 자동으로 변경하지 않는다.");
-        return root.toString();
+        return mainInputs.build(stimulus, sampleSize);
     }
 
     /** LLM-free MAIN six-cell board, derived only from the finalized document. */

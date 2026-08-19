@@ -29,8 +29,11 @@ public record AiServerProperties(
         longReadTimeout = longReadTimeout == null
             ? Duration.ofMinutes(7)
             : longReadTimeout;
+        // ⚠ MarketResearchWorker.BUDGET(60분)보다 **길어야 한다**. 같거나 짧으면 전송이 먼저
+        //    끊기고 그 실패가 retryable 이라 이미 지불한 수집을 버리고 한 번 더 태운다.
+        //    22 → 63 (2026-08-16 병합): 호출 수 266→470 · 발췌가 추론 모델이 됐다.
         marketResearchReadTimeout = marketResearchReadTimeout == null
-            ? Duration.ofMinutes(22)
+            ? Duration.ofMinutes(63)
             : marketResearchReadTimeout;
         conceptPortfolioReadTimeout = conceptPortfolioReadTimeout == null
             ? Duration.ofMinutes(15)

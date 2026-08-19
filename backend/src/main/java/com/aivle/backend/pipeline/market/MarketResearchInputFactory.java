@@ -19,16 +19,37 @@ import tools.jackson.databind.node.ObjectNode;
 @Component
 public class MarketResearchInputFactory {
     private static final int CHUNK_CHARACTERS = 16_000;
-    private static final int LLM_BUDGET_FULL = 96;
+    /**
+     * 시장조사 FULL 의 모델 호출 상한.
+     *
+     * <p><b>판 ㊸ — 90 → 270.</b> 절 체인(문서를 절 단위로 다시 읽어 2·8·9절을 만드는 걸음)이
+     * 붙었다. 90 이면 수집이 83 을 써서 남는 7 이 최소 소요 30 에 못 미쳐
+     * <b>절 체인이 통째로 안 돌고</b> {@code judgment}·{@code prescriptions}·{@code synthesis}
+     * 가 셋 다 {@code null} 로 나갔다(실측).
+     *
+     * <p>★ <b>판 ㊺ — 270 → 500.</b> 270 은 재질문이 문서의 <b>절반에 못 미치는</b> 수였다.
+     * 산수는 {@code pipeline._sections} 에서 그대로 나온다(문서 94건 기준):
+     *
+     * <pre>
+     *   270 → 여유 266 → 읽기 94회        → 남은 176
+     *       → 남은 172 → 문서상한 43      → 재질문 43×4 = 172회
+     * </pre>
+     *
+     * 즉 재질문이 문서 94건 중 43건(46%)에만 닿고 나머지 51건은 경고조차 안 뜬다
+     * ({@code 문서상한 > 0} 이라 {@code REASK_SKIPPED} 가 안 걸린다). 전량을 덮으려면
+     * {@code 94 + 94×4 + 9절 1 + 요약 3 = 474} 이고, 문서가 더 많은 원장을 위해 <b>500</b>으로 둔다.
+     *
+     * <p>⚠ <b>상한이지 지출이 아니다.</b> 문서가 적은 사업안은 적게 쓴다. 모자라면
+     * {@code SECTIONS_TRUNCATED} 로 <b>덜 읽었다는 사실이 원장에 남는다</b>.
+     *
+     * <p>⚠ 실행 1회가 ≈1,200원에서 <b>≈1,600원</b>이 된다. 사람이 정했다(2026-08-15).
+     */
+    private static final int LLM_BUDGET_FULL = 500;
     private static final java.util.regex.Pattern SAFE_LABEL =
         java.util.regex.Pattern.compile("[A-Za-z0-9._-]{1,64}");
     private static final List<String> CONSTRAINT_KEYS = List.of("budget_krw", "months", "team");
     private final ObjectMapper mapper;
-    private final MarketStrategySelector strategySelector;
-    public MarketResearchInputFactory(ObjectMapper mapper, MarketStrategySelector strategySelector) {
-        this.mapper = mapper;
-        this.strategySelector = strategySelector;
-    }
+    public MarketResearchInputFactory(ObjectMapper mapper) { this.mapper = mapper; }
 
     String full(MarketAnalysisSeedSnapshot snapshot, ConceptPortfolioSelection selection, String asOf) {
         return full(snapshot, selection, asOf, null);
@@ -140,19 +161,10 @@ public class MarketResearchInputFactory {
         if (price == null) out.putNull("price_hypothesis_krw"); else out.put("price_hypothesis_krw", price);
         out.set("constraint", constraints(constraints));
 
-        MarketStrategySelector.Selection strategy = strategySelector.select(
-            name,
-            text(identity.path("targetUsers")),
-            text(identity.path("industryCategory")),
-            text(solution.path("problemScenario")),
-            text(solution.path("solutionMechanism")),
-            text(hypotheses.path("revenueModel").path("value")),
-            operation.toString());
         ObjectNode series = out.putObject("_계열");
-        series.put("계열", strategy.series());
-        series.put("전략", strategy.strategy());
-        series.put("분모", strategy.denominator());
-        series.put("왜", strategy.reason());
+        series.put("계열", "C");
+        series.put("왜", "시장 거래액 × 점유율로 TAM을 산정한다.");
+        series.put("_고정_사유", "채울 수 있는 구조를 기준으로 C를 고정한다. 개인 대상 서비스는 거래액 통계가 없어 TAM이 미확보될 수 있고, 거래액은 매출과 다르다.");
         ObjectNode refinement = out.putObject("_다듬기5");
         refinement.put("3_핵심_가치", text(identity.path("coreValue")));
         ObjectNode industry = refinement.putObject("4_업종_분류");

@@ -15,7 +15,6 @@ from __future__ import annotations
 import concurrent.futures as cf
 import dataclasses
 import json, re
-import os
 from datetime import datetime
 
 import requests
@@ -29,8 +28,11 @@ from base import AdapterResult, load_env_key, make_document
 from schema import Candidate, Document, Finding, FindingItem, Slot
 
 NAME = "web"
-SEARCH_MODEL = (os.getenv("MARKET_SEARCH_MODEL") or "gpt-5.4-nano").strip()
-EXTRACT_MODEL = (os.getenv("MARKET_EXTRACT_MODEL") or "gpt-5.6-luna").strip()
+SEARCH_MODEL = "gpt-5.4-nano"
+#: 수집 단계의 발췌. 판 ㊾ 에서 `gpt-4o-mini` → `gpt-5.6-luna` — 절 발췌
+#: (`tools/read_sections.py`)가 판 ㊺ 에 먼저 옮겨간 것과 같은 이유다.
+#: ⚠ 여기는 온도를 안 넘긴다(원래 안 넘겼다). 그래서 상수 한 줄이면 끝이다.
+EXTRACT_MODEL = "gpt-5.6-luna"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
 

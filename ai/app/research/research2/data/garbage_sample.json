@@ -1,0 +1,163 @@
+{
+ "version": "garbage.v1",
+ "_무엇": "게이트 정밀도 지표②의 **지명 표본**. 게임회사 증권신고서·자립준비청년 보고서·청년 사회통계에서 온 것으로, 우리 보고서에 실려서는 안 된다.",
+ "_규칙": "조정 중에 이 목록을 바꾸지 않는다. 이 중 게재(OFF_TOPIC 아님)된 수가 지표②이며 **오늘 1건이다. 늘리지 않는다**.",
+ "_오늘": "14건 중 1건 통과 — 게임회사 증권신고서의 「매출액 편중 비율 60%」가 COMPETITOR_FIRM 으로 경쟁 절에 실린다",
+ "items": [
+  {
+   "number_raw": "341억 4천만",
+   "unit_raw": "달러",
+   "subject": "글로벌 FPS 게임 시장 크기",
+   "url": "https://kind.krx.co.kr/external/2026/05/22/000914/20260522002083/10001.htm?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "MARKET_SIZE",
+   "quote": "2026년 약 341억 4천만 달러에 이를 것으로 추산되고 있습니다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S11-q0-u0"
+  },
+  {
+   "number_raw": "60",
+   "unit_raw": "%",
+   "subject": "매출액 편중 비율",
+   "url": "https://kind.krx.co.kr/external/2026/05/22/000914/20260522002083/10001.htm?utm_source=openai",
+   "오늘_게재": "COMPETITOR_FIRM",
+   "section": "COMPETITOR",
+   "quote": "2025년 기준 약 60% 수준의 매출액이 「복싱스타」게임에 편중된 바,",
+   "table_context": "",
+   "복원_출처": "p41-merged/S11-q0-u0"
+  },
+  {
+   "number_raw": "57.5",
+   "unit_raw": "%",
+   "subject": "부모와 동거하는 청년 비율",
+   "url": "https://www.opm.go.kr/opm/info/policies.do?articleNo=153207&attachNo=133286&mode=download&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "부모와 동거하는 청년 비율은 57.5%이며",
+   "table_context": "",
+   "복원_출처": "p41-merged/S13-q4-u1"
+  },
+  {
+   "number_raw": "20.1",
+   "unit_raw": "%",
+   "subject": "청년들의 흡연율",
+   "url": "https://www.opm.go.kr/opm/info/policies.do?articleNo=153207&attachNo=133286&mode=download&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "청년들의 흡연율은 20.1%, 남자(33.3%)가 여자(5.6%)보다 높음",
+   "table_context": "",
+   "복원_출처": "p41-merged/S13-q4-u1"
+  },
+  {
+   "number_raw": "50",
+   "unit_raw": "%",
+   "subject": "자립준비청년의 취업률",
+   "url": "https://korea.nabo.go.kr/board/file/down.do?fid=33318728&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "취업률은 50% 수준으로 저조하고, 삶의 만족도도 10점 중 5.6점으로 일반 청년에 비해 열악한 상황입니다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q3-u3"
+  },
+  {
+   "number_raw": "1만 1,210",
+   "unit_raw": "명",
+   "subject": "최근 3년간 자립준비청년 전체 수",
+   "url": "https://korea.nabo.go.kr/board/file/down.do?fid=33318728&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "CHANNEL",
+   "quote": "최근 3년간(2022~2024년) 광역자치단체별 자립준비청년 공공임대주택 지원실적을 살펴보면, 지원대상인 자립준비청년 전체 연평균(3년간) 1만 1,210명 중 1,344명(12.0%)이 공공임대주택을 지원받음",
+   "table_context": "",
+   "복원_출처": "p39-secFULL/S12-q3-u3"
+  },
+  {
+   "number_raw": "1,344",
+   "unit_raw": "명",
+   "subject": "공공임대주택 지원받은 자립준비청년 수",
+   "url": "https://korea.nabo.go.kr/board/file/down.do?fid=33318728&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "CHANNEL",
+   "quote": "최근 3년간(2022~2024년) 광역자치단체별 자립준비청년 공공임대주택 지원실적을 살펴보면, 지원대상인 자립준비청년 전체 연평균(3년간) 1만 1,210명 중 1,344명(12.0%)이 공공임대주택을 지원받음",
+   "table_context": "",
+   "복원_출처": "p39-secFULL/S12-q3-u3"
+  },
+  {
+   "number_raw": "52.4",
+   "unit_raw": "%",
+   "subject": "자립준비청년의 취업률",
+   "url": "https://korea.nabo.go.kr/board/file/down.do?fid=33318728&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "2023년도 자립준비청년의 취업률(고용률)은 52.4%, 취업자 중 임금근로자의 비율은 95.6%",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q3-u3"
+  },
+  {
+   "number_raw": "95.6",
+   "unit_raw": "%",
+   "subject": "자립준비청년의 임금근로자 비율",
+   "url": "https://korea.nabo.go.kr/board/file/down.do?fid=33318728&utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "2023년도 자립준비청년의 취업률(고용률)은 52.4%, 취업자 중 임금근로자의 비율은 95.6%",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q3-u3"
+  },
+  {
+   "number_raw": "22.0",
+   "unit_raw": "%",
+   "subject": "청년 여성 1인가구의 지속적인 결혼 강요 경험 비율",
+   "url": "https://www.newsis.com/view/NISX20190527_0000663428?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "청년 여성 1인가구의 22.0%, 청년 남성 1인가구의 16.8%가 지속적인 결혼 강요를 받은 경험이 있다고 답했다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q1-u1"
+  },
+  {
+   "number_raw": "16.8",
+   "unit_raw": "%",
+   "subject": "청년 남성 1인가구의 지속적인 결혼 강요 경험 비율",
+   "url": "https://www.newsis.com/view/NISX20190527_0000663428?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "청년 여성 1인가구의 22.0%, 청년 남성 1인가구의 16.8%가 지속적인 결혼 강요를 받은 경험이 있다고 답했다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q1-u1"
+  },
+  {
+   "number_raw": "77.0",
+   "unit_raw": "%",
+   "subject": "청년 여성의 1인가구 삶의 만족 비율",
+   "url": "https://www.newsis.com/view/NISX20190527_0000663428?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "1인가구 삶에 만족하는 비율은 청년여성 77.0%, 중·장년여성 77.1%, 고령여성 63.1%였다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q1-u1"
+  },
+  {
+   "number_raw": "77.1",
+   "unit_raw": "%",
+   "subject": "중·장년 여성의 1인가구 삶의 만족 비율",
+   "url": "https://www.newsis.com/view/NISX20190527_0000663428?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "1인가구 삶에 만족하는 비율은 청년여성 77.0%, 중·장년여성 77.1%, 고령여성 63.1%였다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q1-u1"
+  },
+  {
+   "number_raw": "63.1",
+   "unit_raw": "%",
+   "subject": "고령 여성의 1인가구 삶의 만족 비율",
+   "url": "https://www.newsis.com/view/NISX20190527_0000663428?utm_source=openai",
+   "오늘_게재": "OFF_TOPIC",
+   "section": "DEMAND",
+   "quote": "1인가구 삶에 만족하는 비율은 청년여성 77.0%, 중·장년여성 77.1%, 고령여성 63.1%였다.",
+   "table_context": "",
+   "복원_출처": "p41-merged/S12-q1-u1"
+  }
+ ],
+ "_복원": "판 ㊶ 재개 — 관측용 필드(section·quote·table_context)를 원장에서 **복원**했다. 이 표본은 `section` 이 없어 절을 보는 새 분기를 한 번도 안 태웠다(검사가 아니라 도장이었다). 동일성 키(number_raw·unit_raw·subject·url)와 기대값(오늘_게재)은 한 글자도 안 바꿨고, 낱건마다 `복원_출처` 에 어느 실행 어느 문서에서 가져왔는지 적었다."
+}

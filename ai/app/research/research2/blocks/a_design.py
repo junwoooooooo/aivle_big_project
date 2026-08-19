@@ -16,14 +16,15 @@ A1 은 채우지 않는다. 사람이 적어둔 것이 없으면 그대로 두�
 from __future__ import annotations
 
 import json
-import os
 import re
 
 import prompts
 from a_desk import normalize_unit
 from schema import FORMULA_TEMPLATES, Formula, FormulaVar, Slot, 경계_승격
 
-MODEL = (os.getenv("MARKET_DESIGN_MODEL") or "gpt-5.6-luna").strip()
+#: 산식 설계. 판 ㊾ 에서 `gpt-4o-mini` → `gpt-5.6-luna`.
+#: ⚠ 온도도 출력 상한도 안 넘긴다 — 그래서 상수 한 줄이면 끝이다.
+MODEL = "gpt-5.6-luna"
 
 # "없음을 표현한 것"과 "값"을 구분한다.
 # 목록은 rules/units.v1.json 의 nullish_tokens 한 곳에만 둔다 — 필드마다 따로 처리하면

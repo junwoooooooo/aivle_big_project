@@ -20,8 +20,7 @@
     "guards": "guards.v1.json",
     "slotcheck": "slotcheck.v1.json",
     "source_signature": "source_signature.v1.json",
-    "fill": "fill.v2.json",
-    "section_recall": "section_recall.v1.json"
+    "fill": "fill.v2.json"
   },
   "_이력": [
     {

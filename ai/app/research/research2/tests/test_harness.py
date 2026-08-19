@@ -69,7 +69,12 @@ GOOD = {"formulas": [
     {"formula_id": "F_TAM", "vars": [
         _var("사업체수", "두발 미용업", "사업체 수", "TAM", "고객 세그먼트"),
         _var("세그먼트비중", "두발 미용업", "종사자 1인 사업체 비율", "TAM", "고객 세그먼트"),
-        _assume("침투율", "도입률"),
+        # ⚠ **판 ㊴ 로 의도 갱신** (도장 조건 ①, 조용한 갱신 금지).
+        #   옛 형태는 `_assume("침투율", "도입률")` — 관측하지 않고 가정으로 채우는 자리였다.
+        #   판 ㊴ 이 `rules/assumptions.v1.json` 에서 침투율 값(0.1, 미용실 SaaS 도입률)을
+        #   지웠으므로 **가정으로 채울 수 없는 자리**가 됐고, 게이트가 그것을 위반으로 든다.
+        #   정상 초안이라면 이 자리는 **관측한다**. 「가정이 없으면 재라」가 그 규칙의 뜻이다.
+        _var("침투율", "두발 미용업", "도입률", "TAM", "고객 세그먼트"),
         _var("단가", "미용실 예약 서비스", "월 구독료", "PRICE", "수익원"),
         _assume("연환산", "연 결제 개월")]},
     # ⚠ **판 ㉖ claim_type 정합으로 의도 갱신** (도장 조건 ①, 조용한 갱신 금지).
@@ -107,7 +112,9 @@ def gate_of(raw):
 print("\n[1] 정상 초안은 통과한다")
 rep, slots, formulas = gate_of(GOOD)
 check("게이트 통과", rep["passed"], json.dumps(rep["요약"], ensure_ascii=False))
-check("슬롯 10개 (observable=false 는 슬롯 없음)", len(slots) == 10, str(len(slots)))
+# 판 ㊴ 로 10 → 11. 침투율이 가정 자리에서 **관측 자리**로 옮겨 슬롯이 하나 늘었다.
+# 남는 `observable=false` 는 연환산 하나뿐이다(가정값이 규칙에 남아 있는 유일한 역할).
+check("슬롯 11개 (observable=false 는 슬롯 없음)", len(slots) == 11, str(len(slots)))
 check("식 7개", len(formulas) == 7, str(len(formulas)))
 
 print("\n[2] 코드 칸은 코드가 잡는다 — B 조인이 성립한다")
@@ -219,6 +226,22 @@ check("가정 역할이 assumptions 밖이면 적발",
       not G.check_template_roles(
           [{"formula_id": "F", "template": "T5",
             "vars": [{"var_role": "비교축", "_observable": False}]}], VOCAB)["passed"])
+
+# ── 판 ㊴ — **이름이 아니라 값을 본다.** `vocab.var_role._가정_역할` 은 규칙 파일의
+#   사본이라, 규칙에서 값을 지워도 이름은 남는다. 이름만 보던 시절에는 게이트가 통과시키고
+#   B 블록이 「가정값 없음 — 계산 불가」로 조용히 멈췄다.
+_novalue = [{"formula_id": "F", "template": "T5",
+             "vars": [{"var_role": "침투율", "var_id": "V1", "_observable": False}]}]
+_tr_nv = G.check_template_roles(_novalue, VOCAB)
+check("이름은 어휘 안인데 가정값이 없으면 적발", not _tr_nv["passed"],
+      json.dumps(_tr_nv["violations"], ensure_ascii=False)[:160])
+check("사유가 「이름 밖」이 아니라 「값 없음」을 짚는다",
+      any("value 가 없다" in (v.get("why") or "") for v in _tr_nv["violations"]),
+      json.dumps(_tr_nv["violations"], ensure_ascii=False)[:160])
+check("가정값이 **있는** 역할은 그대로 통과 (연환산)",
+      G.check_template_roles([{"formula_id": "F", "template": "T5",
+                               "vars": [{"var_role": "연환산", "var_id": "V1",
+                                         "_observable": False}]}], VOCAB)["passed"])
 
 print("\n[13] 가격 계량은 수익원 칸 (1차 초안은 고객 세그먼트에 TAM 으로 달았다)")
 misplaced = copy.deepcopy(slots)

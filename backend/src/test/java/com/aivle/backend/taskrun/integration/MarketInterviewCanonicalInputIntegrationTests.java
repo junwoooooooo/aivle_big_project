@@ -45,7 +45,7 @@ import tools.jackson.databind.ObjectMapper;
 
 class MarketInterviewCanonicalInputIntegrationTests {
     @Test
-    void sampleSizesCreateRealTaskRunsWithV1EnvelopeAndV2BusinessInput() {
+    void sampleSizesCreateRealTaskRunsWithMainBusinessInput() {
         Harness harness = new Harness();
         Set<String> hashes = new HashSet<>();
 
@@ -58,8 +58,7 @@ class MarketInterviewCanonicalInputIntegrationTests {
             assertThat(run.getContractVersion()).isEqualTo("1.0");
             assertThat(run.getTaskSchemaVersion()).isEqualTo("1.0");
             assertThat(run.getLocale()).isEqualTo("ko-KR");
-            assertThat(input.path("contract").asText()).isEqualTo("market-interview-input-v2");
-            assertThat(input.path("schemaVersion").asText()).isEqualTo("2.0");
+            assertThat(input.propertyNames()).containsExactlyInAnyOrder("conceptBoard", "sampleSize");
             assertThat(input.path("sampleSize").asInt()).isEqualTo(sampleSize);
             assertThat(run.getInputHash()).isEqualTo(harness.hasher.hash(
                 TaskType.MARKET_INTERVIEW, "1.0", "ko-KR", run.getInputSnapshot()));
@@ -89,7 +88,8 @@ class MarketInterviewCanonicalInputIntegrationTests {
         assertThat(request.path("taskSchemaVersion").asText()).isEqualTo("1.0");
         assertThat(request.path("locale").asText()).isEqualTo("ko-KR");
         assertThat(request.path("canonicalInputHash").asText()).isEqualTo(run.getInputHash());
-        assertThat(request.path("input").path("schemaVersion").asText()).isEqualTo("2.0");
+        assertThat(request.path("input").propertyNames())
+            .containsExactlyInAnyOrder("conceptBoard", "sampleSize");
         assertThat(request.path("input").path("sampleSize").asInt()).isEqualTo(20);
     }
 
@@ -211,7 +211,9 @@ class MarketInterviewCanonicalInputIntegrationTests {
                 .thenAnswer(invocation -> Optional.ofNullable(
                     interviewRunsByTaskId.get(invocation.getArgument(0, String.class))));
             marketInterviews = new MarketInterviewService(
-                projects, sources, new MarketInterviewInputFactory(mapper), interviewRuns,
+                projects, sources, new MarketInterviewInputFactory(
+                    mapper, new com.aivle.backend.pipeline.market.MarketInterviewInputFactory(mapper)),
+                interviewRuns, mock(com.aivle.backend.taskrun.repository.TaskResultRepository.class),
                 taskRuns, hasher, mapper);
         }
 

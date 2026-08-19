@@ -32,6 +32,7 @@ for p in (ROOT, os.path.join(ROOT, "adapters")):
     sys.path.insert(0, p)
 
 import runpath                                           # noqa: E402
+import read_sections as RS                                       # noqa: E402
 from base import load_env_key                                    # noqa: E402
 
 #: 상태 어휘 — **셋을 섞지 않는다.**
@@ -68,8 +69,11 @@ def _one_openai(env_name: str, paid: bool) -> dict:
         from openai import OpenAI
         # **키를 명시해 만든다.** `OpenAI()` 로 만들면 환경변수 하나만 보게 되어
         # 진입점별 확인이 통째로 무의미해진다(그게 이 수리의 이유다).
-        r = OpenAI(api_key=key).responses.create(model="gpt-4o-mini", input="ping",
-                                                 max_output_tokens=16)
+        # ⚠ 실행이 실제로 쓰는 모델로 친다. 다른 모델로 확인하면 「키는 되는데 그 모델은
+        #   못 쓰는」 경우를 통과시킨다 — 그게 이 확인이 막으려던 바로 그 실패다.
+        #   추론 모델은 생각한 토큰도 상한에서 깎으므로 16 이면 빈 답이 온다.
+        r = OpenAI(api_key=key).responses.create(model=RS.MODEL, input="ping",
+                                                 max_output_tokens=64)
         u = getattr(r, "usage", None)
         return {"상태": "ok", "why": "최소 호출 1회 성공",
                 "tokens": ((getattr(u, "input_tokens", 0) or 0)

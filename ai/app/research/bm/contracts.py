@@ -63,10 +63,14 @@ class MarketJoinData(BaseModel):
     competitor_analysis: list[dict[str, Any]]
     price_analysis: PriceAnalysisData
     demand_evidence: list[dict[str, Any]]
-    channel_analysis: list[dict[str, Any]] = Field(default_factory=list)
     market_size_calculation: dict[str, Any]
     missing_items: list[dict[str, Any]] = Field(default_factory=list)
     evidence_list: list[dict[str, Any]] = Field(default_factory=list)
+    #: 채널 절 근거 — 2026-08-15 신설. **기본값이 있어 옛 입력이 그대로 통과한다.**
+    #: 나머지 라벨은 전부 이 모델의 필드 이름인데 채널만 자리가 없어, 채널 칸이 근거를
+    #: 붙일 라벨을 구조적으로 못 만들었다(`bm/prompt.py` 머리말의 예외 기록 참조).
+    #: ⚠ 사본이 `research2/service/bm_adapter.py` 에 있다 — `test_bm_contract_parity.py` 가 대조한다.
+    channel_analysis: list[dict[str, Any]] = Field(default_factory=list)
 
 
 # BM 분석 요청에 포함되는 선택적 법률·규제 입력 계약
