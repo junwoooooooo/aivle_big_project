@@ -53,7 +53,8 @@ public class FinalBusinessProposalWorker {
         } catch (ExecutionFailure failure) {
             safeFail(claim, failure.code(), failure.reason(), failure.retryable());
             safePublish(context.projectId(), context.taskRunId(), "FAILED",
-                "job.final-report.failed", JobEvent.Status.FAILED, failure.code());
+                "job.final-report.failed", JobEvent.Status.FAILED, failure.code(),
+                failure.validationFields(), failure.diagnosticStage());
         } catch (IllegalArgumentException failure) {
             log.warn("Final proposal result invalid taskRunId={}", claim.taskRunId());
             safeFail(claim, "RESULT_SCHEMA_INVALID", "AI_RESULT_INVALID", false);
@@ -72,6 +73,26 @@ public class FinalBusinessProposalWorker {
     void safePublish(Long projectId, String taskRunId, String stage, String key,
             JobEvent.Status status, String code) {
         try { reports.publish(projectId, taskRunId, stage, key, status, code); }
+        catch (RuntimeException failure) {
+            log.warn("Final proposal event publish skipped taskRunId={} stage={} type={}",
+                taskRunId, stage, failure.getClass().getSimpleName());
+        }
+    }
+
+    void safePublish(Long projectId, String taskRunId, String stage, String key,
+            JobEvent.Status status, String code,
+            List<InternalAiExecutionClient.ValidationIssue> validationFields,
+            String diagnosticStage) {
+        java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
+        if (validationFields != null && !validationFields.isEmpty()) {
+            params.put("validationFields", validationFields.stream().limit(12).map(field -> java.util.Map.of(
+                "path", field.path(), "expectedType", field.expectedType(), "category", field.category()
+            )).toList());
+        }
+        if (diagnosticStage != null && !diagnosticStage.isBlank()) {
+            params.put("diagnosticStage", diagnosticStage);
+        }
+        try { reports.publish(projectId, taskRunId, stage, key, status, code, params); }
         catch (RuntimeException failure) {
             log.warn("Final proposal event publish skipped taskRunId={} stage={} type={}",
                 taskRunId, stage, failure.getClass().getSimpleName());

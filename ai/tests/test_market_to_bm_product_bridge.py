@@ -200,6 +200,49 @@ def test_bm_product_emits_truthful_stage_order(monkeypatch):
     assert events[-1]["status"] == "COMPLETED"
 
 
+def test_production_bm_entrypoint_completes_restore_adapter_model_citation_gate_and_serialization(
+        monkeypatch):
+    from app.research.bm import flow
+
+    async def fake_flow(source, diagnostic_context=None):
+        resolved = resolve_bm_input(source)
+        analysis = BMAnalysisResult(
+            concept_id=resolved.concept_id,
+            concept_name=resolved.concept_name,
+            canvas=[BMCanvasItem(
+                canvas_cell=cell,
+                content=[],
+                status=CanvasStatus.UNVERIFIED,
+                reason="provider stub",
+            ) for cell in CanvasCell],
+            market_fit_status="PARTIAL",
+            consistency_status="PARTIAL",
+            market_fit_summary="provider stub",
+            consistency_summary="provider stub",
+        )
+        final = finalize_bm_analysis(
+            bm_analysis=analysis, resolved=resolved, legal_context=source.legal_context)
+        return {
+            "bm_analysis": analysis,
+            "final_result": final,
+            "financial_handoff": build_financial_handoff(
+                final_result=final, resolved=resolved),
+        }
+
+    monkeypatch.setattr(flow, "run_bm_pipeline_flow", fake_flow)
+    events = []
+
+    result = asyncio.run(pipeline.run_market_research(
+        _bm_task(), "bm-production-entry", 30.0, event_sink=events.append))
+
+    assert result["mode"] == "BM"
+    assert result["canvas"] is not None
+    assert result["bm"]["gateReasons"]
+    assert [event["stage"] for event in events] == [
+        "BM_RESTORE", "BM_ADAPTER", "BM_MODEL", "BM_SERIALIZATION",
+    ]
+
+
 def test_bm_product_maps_model_failure_as_transient(monkeypatch):
     async def fail_model(*_args, **_kwargs):
         try:

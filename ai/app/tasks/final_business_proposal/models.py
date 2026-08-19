@@ -10,6 +10,7 @@ class StrictModel(BaseModel):
 Text = Annotated[str, Field(min_length=1, max_length=4000)]
 ShortText = Annotated[str, Field(min_length=1, max_length=500)]
 TableRow = Annotated[list[ShortText], Field(min_length=2, max_length=8)]
+EvidenceKey = Annotated[str, Field(pattern=r"^EV-[0-9a-f]{24}$")]
 
 
 class SourceManifestItem(StrictModel):
@@ -46,7 +47,7 @@ class FinalBusinessProposalInput(StrictModel):
     omittedSourceTypes: list[str] = Field(max_length=30)
     sources: dict[str, JsonValue]
     evidenceCatalog: list[EvidenceCatalogItem] = Field(min_length=1, max_length=1000)
-    allowedEvidenceKeys: list[str] = Field(min_length=1, max_length=1000)
+    allowedEvidenceKeys: list[EvidenceKey] = Field(min_length=1, max_length=1000)
 
 
 class Cover(StrictModel):
@@ -68,7 +69,7 @@ class ExecutiveDecisionSummary(StrictModel):
     keyRisks: list[ShortText] = Field(max_length=10)
     approvalRequest: Text
     evidenceSourceTypes: list[str] = Field(min_length=1, max_length=20)
-    evidenceKeys: list[str] = Field(min_length=1, max_length=40)
+    evidenceKeys: list[EvidenceKey] = Field(min_length=1, max_length=40)
 
 
 class ProposalTable(StrictModel):
@@ -90,7 +91,7 @@ class ProposalSection(StrictModel):
     keyPoints: list[ShortText] = Field(max_length=20)
     tables: list[ProposalTable] = Field(max_length=8)
     evidenceSourceTypes: list[str] = Field(min_length=1, max_length=20)
-    evidenceKeys: list[str] = Field(min_length=1, max_length=60)
+    evidenceKeys: list[EvidenceKey] = Field(min_length=1, max_length=60)
 
 
 class DecisionRequest(StrictModel):
@@ -99,7 +100,7 @@ class DecisionRequest(StrictModel):
     requiredChecks: list[ShortText] = Field(max_length=15)
     nextActions: list[ShortText] = Field(min_length=1, max_length=15)
     evidenceSourceTypes: list[str] = Field(min_length=1, max_length=20)
-    evidenceKeys: list[str] = Field(min_length=1, max_length=40)
+    evidenceKeys: list[EvidenceKey] = Field(min_length=1, max_length=40)
 
 
 class ProposalAppendix(StrictModel):
@@ -107,7 +108,7 @@ class ProposalAppendix(StrictModel):
     omittedAnalyses: list[ShortText] = Field(max_length=30)
     sourceVersions: list[ShortText] = Field(min_length=1, max_length=30)
     evidenceSourceTypes: list[str] = Field(min_length=1, max_length=30)
-    evidenceKeys: list[str] = Field(min_length=1, max_length=80)
+    evidenceKeys: list[EvidenceKey] = Field(min_length=1, max_length=80)
 
 
 class FinalBusinessProposalResult(StrictModel):

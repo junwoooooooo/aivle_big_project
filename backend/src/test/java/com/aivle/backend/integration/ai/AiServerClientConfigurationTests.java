@@ -65,7 +65,7 @@ class AiServerClientConfigurationTests {
         assertTrue(!properties.connectTimeout().isZero() && !properties.connectTimeout().isNegative());
         assertTrue(!properties.readTimeout().isZero() && !properties.readTimeout().isNegative());
         assertEquals(Duration.ofMinutes(7), properties.longReadTimeout());
-        assertEquals(Duration.ofMinutes(22), properties.marketResearchReadTimeout());
+        assertEquals(Duration.ofMinutes(63), properties.marketResearchReadTimeout());
         assertTrue(!properties.conceptPortfolioReadTimeout().isZero()
             && !properties.conceptPortfolioReadTimeout().isNegative());
         assertTrue(!properties.twinSurveyReadTimeout().isZero()

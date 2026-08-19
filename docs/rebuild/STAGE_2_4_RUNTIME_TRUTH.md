@@ -3,7 +3,7 @@
 ## Identity and rule
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START SHA: `8f3fc7a25e56d1b0d04e018dd89240a1f174fff5`
+- FULL START SHA: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
 - Frontend presentation truth: the files reached by MAIN `AppRouter.jsx`.
 - Backend/AI execution truth: **origin/main active core**.
 - FULL v3 is outer integration, finalized-source gating, TaskRun transport and lineage storage only.
@@ -13,6 +13,11 @@ V8 Stage 4 backend/AI was **not MAIN-equivalent** because production dispatched 
 `app.tasks.market_interview.deep_engine`. V8 Stage 2 evidence recovery was **not
 MAIN-equivalent** because production used the bounded `section_recall` and
 `semantic_relevance` replacements.
+
+V9's 287-file closure statement was also incomplete: the audit did not cross from
+`app.research` into the production-imported `app.validation` package. V9.1 follows that boundary
+and freezes exact MAIN `validation/{__init__,citation,gate,mapping,runner}.py`; `drift.py` is not
+reached by Stage 2.
 
 ## Stage 2 complete production graph
 
@@ -25,6 +30,7 @@ InternalAiExecutionClient -> POST /internal/v1/ai/executions -> executions.py MA
 MAIN app.research.product_pipeline -> MAIN app.research.pipeline -> MAIN research2 collection ->
 read_sections(pdf_refetch=True) -> reask_sections.build -> reask_sections.merge -> publish_gate ->
 promote_cards -> judgment -> prescriptions -> synthesis/report/summary ->
+MAIN app.validation.mapping/citation/gate ->
 MAIN MarketResearchContract -> TaskResult adoption -> MarketResearchVersion(FULL) ->
 GET /market-research/current -> MarketResultBody`.
 
@@ -38,6 +44,7 @@ idempotency=auto-bm-{fullTaskRunId}) -> exact source MarketResearchVersion ->
 MAIN MarketResearchInputFactory.bm -> marketResultJson=<entire FULL result JSON> plus exact
 source run/version and pinned plan revision -> TaskRun(MARKET_RESEARCH, MARKET_RESEARCH_BM) ->
 same MAIN product pipeline BM path -> app.research.bm contracts/routing/mapping/gate ->
+MAIN app.validation.citation tuple enforcement -> MAIN app.validation.gate evaluation ->
 MAIN MarketResearchContract -> MarketResearchVersion(BM)`.
 
 No Stage 2 wrapper filters the FULL result or rebuilds a partial BM input.
@@ -126,6 +133,30 @@ notes`.
 `themes=[]` is valid. Valid transcripts remain available. There is no production
 `NO_TRACEABLE_THEME` failure and no Java minimum-one-theme rule.
 
+## V9.1 final business proposal diagnostic appendix
+
+This diagnosis is read-only with respect to the historical run and does not change Stage 4.
+
+- Project: 5
+- TaskRun: `94ab6261-35b6-4762-8454-ac4c8689b004`
+- Current attempt: `e1b81d5a-9dd0-461a-8a87-9a7b7af1b714`
+- TaskRun error: `AI_RESULT_INVALID`
+- Attempt error: `RESULT_SCHEMA_INVALID / PROVIDER_RESPONSE_SCHEMA_REJECTED`
+- Retryable: false
+- Persisted historical `validationFields` / `safeDiagnostics`: absent
+
+The exact stored input validates against `FinalBusinessProposalInput`. Its safe shape is 12
+manifest entries, 12 included source types, one omitted type, 457 catalog entries, 457 allowed
+keys, and `sha256:` plus 64 hexadecimal characters. Catalog and allowed-key sets are equal.
+
+The rejection occurred after input validation: the response schema expanded the 457 evidence keys
+into four large output enum sites, producing 1,876 enum values and 50,024 enum string characters.
+The production fix keeps only the `EV-<24 hex>` format constraint in the response schema and keeps
+exact catalog membership in the existing fail-closed result validator. Backend-generated input is
+also exercised directly through Python `FinalBusinessProposalInput.model_validate`. New worker
+failures preserve safe field paths and `diagnosticStage` in job-event technical details without
+exposing the input payload.
+
 ## Runtime classification
 
 ### RUNTIME_ACTIVE
@@ -133,6 +164,7 @@ notes`.
 - MAIN donor Stage 2/4 pages and result renderers on the four canonical routes.
 - MAIN MarketResearchInputFactory, MarketResearchWorker, MarketResearchContract.
 - MAIN `ai/app/research/**` production closure.
+- MAIN `ai/app/validation/{__init__,citation,gate,mapping,runner}.py` reached by Stage 2.
 - MAIN MarketInterviewInputFactory, MarketInterviewWorker, MarketInterviewContract.
 - MAIN `ai/app/interview/**`, MAIN `app.twin.bank` and MAIN `app.twin.profile`.
 - FULL v3 route/source/lineage facades before and after those cores.
@@ -167,10 +199,11 @@ the documents in `docs/rebuild`.
 
 ## Focused evidence
 
-- Frozen blob/import authority: 6 passed.
-- AI MAIN market/interview focused suite: 148 passed, 1 skipped.
-- Backend Stage 2/4 focused suite: 155 passed.
-- Frontend Stage 2/4 focused suite: 141 passed, 7 skipped.
+- AI V9.1 closure/BM/final-proposal focused runs: 53 passed.
+- Backend Stage 2/final-proposal focused runs: 91 passed.
+- Frontend Stage 2/4 donor UI focused run: 27 passed.
+- Frozen manifest: 292 BYTE_IDENTICAL and 10 WRAPPER_ONLY files.
+- Stage 4 MAIN dispatch/blob freeze: passed without Stage 4 core edits.
 - `git diff --check`: passed.
 - Browser presentation verification remains user-run; this document does not claim visual identity
   before that verification.

@@ -50,12 +50,16 @@ def internal_error(correlation_id: str, code: str, reason: str, status_code: int
                    retryable: bool, task_run_id: str | None = None,
                    task_attempt_id: str | None = None,
                    validation_fields: list[dict[str, str]] | None = None,
-                   retry_after_ms: int | None = None) -> JSONResponse:
+                   retry_after_ms: int | None = None,
+                   safe_diagnostics: dict[str, Any] | None = None) -> JSONResponse:
     detail: dict[str, Any] = {"reason": reason}
     if validation_fields:
         detail["fields"] = validation_fields[:12]
     if retry_after_ms is not None:
         detail["retryAfterMs"] = retry_after_ms
+    diagnostic_stage = (safe_diagnostics or {}).get("stage")
+    if isinstance(diagnostic_stage, str) and re.fullmatch(r"[A-Z0-9_]{1,80}", diagnostic_stage):
+        detail["diagnosticStage"] = diagnostic_stage
     return JSONResponse(status_code=status_code, content={"error": {
         "code": code, "message": "Internal execution request could not be processed.",
         "correlationId": correlation_id, "taskRunId": task_run_id,
@@ -412,7 +416,7 @@ async def execute(request: Request, body: InternalExecutionRequestV1):
         )
         return internal_error(correlation, failure.code, failure.reason, failure.status_code, failure.retryable,
                               body.taskRunId, body.taskAttemptId, failure.validation_fields,
-                              failure.retry_after_ms)
+                              failure.retry_after_ms, failure.safe_diagnostics)
     except Exception:
         logger.exception(
             "Unexpected internal AI execution failure taskType=%s taskRunId=%s "

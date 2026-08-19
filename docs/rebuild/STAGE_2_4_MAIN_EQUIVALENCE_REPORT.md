@@ -3,7 +3,7 @@
 ## Refs and scope
 
 - MAIN: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL start: `8f3fc7a25e56d1b0d04e018dd89240a1f174fff5`
+- FULL start: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
 - No merge/cherry-pick/reset/clean/stash/commit/push.
 - No provider/paid call, Docker rebuild, browser E2E or full regression.
 
@@ -14,6 +14,16 @@ V8 Stage 4 backend/AI was not MAIN-equivalent: it kept
 was not MAIN-equivalent: it kept bounded `section_recall` and pre-result
 `semantic_relevance`. Both production substitutions are removed in V9.
 
+## V9.1 closure correction
+
+V9's **287 BYTE_IDENTICAL** count was not the actual Stage 2 runtime dependency closure. The
+audit stopped at the `ai/app/research` directory boundary even though the production BM branch
+imports `app.validation.citation` and `app.validation.gate`, `pipeline.py` imports
+`app.validation.mapping`, and package initialization imports `runner`. In the former FULL state,
+`citation.enforce` returned one value while MAIN `product_pipeline` unpacked `(analysis,
+corrections)`, and the FULL gate was a different implementation. The five reached validation files
+are now exact MAIN donor blobs; `drift.py` is not reached by Stage 2 and was not transplanted.
+
 ## Stage 2 result
 
 - [x] Active Java input factory is the MAIN blob.
@@ -23,6 +33,10 @@ was not MAIN-equivalent: it kept bounded `section_recall` and pre-result
 - [x] worker budget/lease are 60m/63m.
 - [x] market HTTP read boundary is 63m.
 - [x] the entire `ai/app/research` donor tree (262 files) matches MAIN blobs.
+- [x] the reached `ai/app/validation` donor closure (`__init__`, `citation`, `gate`, `mapping`,
+  `runner`) matches MAIN blobs.
+- [x] `citation.enforce` has the MAIN tuple contract and MAIN production BM can unpack it.
+- [x] identical gate inputs produce identical G1/G4/G5, cause and decision-ceiling output.
 - [x] `read_sections(pdf_refetch=True)`, `REASK.build`, `REASK.merge`,
   publish/promote/judgment/prescription/synthesis/report are the MAIN implementations.
 - [x] FULL `section_recall.py`, its rule and `semantic_relevance.py` are absent.
@@ -59,8 +73,9 @@ the donor input factory or the result before donor contract validation.
 
 The production core is not a rewritten comparison implementation: FULL executes the same donor
 blobs. `test_main_frozen_core_equivalence.py` compares every synchronized Stage 2 research blob,
-all Stage 4 interview blobs and the Java/twin donor blobs to the fetched MAIN tree. It also checks
-the actual dispatch branch and rejects the replaced authorities.
+the reached Stage 2 validation blobs, all Stage 4 interview blobs and the Java/twin donor blobs to
+the fetched MAIN tree. It also checks the actual dispatch branch and rejects the replaced
+authorities.
 
 Recorded/provider-stub tests cover:
 
@@ -84,12 +99,31 @@ Recorded/provider-stub tests cover:
 Lineage metadata is intentionally excluded from result equivalence because it is stored in FULL
 entities rather than inserted into MAIN JSON.
 
+## Final business proposal diagnosis
+
+The latest persisted `FINAL_BUSINESS_PROPOSAL_GENERATION` failure was project 5, TaskRun
+`94ab6261-35b6-4762-8454-ac4c8689b004`, attempt
+`e1b81d5a-9dd0-461a-8a87-9a7b7af1b714`. The TaskRun reported `AI_RESULT_INVALID`; the attempt
+reported `RESULT_SCHEMA_INVALID / PROVIDER_RESPONSE_SCHEMA_REJECTED`, non-retryable. The exact
+stored input passes `FinalBusinessProposalInput.model_validate`: 12 manifest sources, 12 included
+source types, one omitted source type, 457 evidence catalog entries and an exactly equal 457-key
+allowlist. Therefore this was not an input-contract failure.
+
+The generated response schema repeated those 457 keys in four output enum locations (1,876 enum
+values and 50,024 enum string characters in total). The fix leaves the evidence-key format in the
+provider schema and keeps exact catalog membership as fail-closed post-generation validation. It
+does not create sources or evidence. New failures retain allowlisted `validationFields` and
+`diagnosticStage` in the job-event technical details; the historical failed row did not persist
+those fields.
+
 ## Focused results
 
-- AI: **151 passed, 1 skipped** after adding the 20/40 and zero-theme production-core regressions.
-- Backend: **155 passed, 0 failed**.
-- Frontend: **142 passed, 7 skipped** after adding the empty-theme presentation regression.
-- Frozen manifest: **287 BYTE_IDENTICAL** files and **10 WRAPPER_ONLY** files.
+- AI: **53 passed, 0 failed** across the V9.1 closure/BM/final-proposal focused runs.
+- Backend: **91 passed, 0 failed** across the Stage 2 and final-proposal focused runs.
+- Frontend: **27 passed, 0 failed** across the existing Stage 2/4 donor UI focused run.
+- Frozen manifest: **292 BYTE_IDENTICAL** files and **10 WRAPPER_ONLY** files.
+- Backend-produced final-proposal task input passed Python `model_validate` without a provider call.
+- The Stage 4 import/blob freeze remained green; no Stage 4 core file was changed.
 - `git diff --check`: passed.
 
 ## Remaining user verification

@@ -287,8 +287,19 @@ public class FinalReportService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void publish(Long projectId, String taskRunId, String stage, String key,
             JobEvent.Status status, String code) {
+        publishEvent(projectId, taskRunId, stage, key, status, code, java.util.Map.of());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publish(Long projectId, String taskRunId, String stage, String key,
+            JobEvent.Status status, String code, java.util.Map<String, ?> messageParams) {
+        publishEvent(projectId, taskRunId, stage, key, status, code, messageParams);
+    }
+
+    private void publishEvent(Long projectId, String taskRunId, String stage, String key,
+            JobEvent.Status status, String code, java.util.Map<String, ?> messageParams) {
         events.publish(new JobEventPublisher.Command(projectId, taskRunId, taskRunId, stage, key,
-            status, key, java.util.Map.of(), code));
+            status, key, messageParams, code));
     }
 
     @Transactional

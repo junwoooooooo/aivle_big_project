@@ -1,19 +1,21 @@
 # Stage 2 / Stage 4 MAIN Frozen Core Manifest
 
 - MAIN HEAD: `aab1db2d0924bddbd307893c604426a3b0f7bf44`
-- FULL START: `8f3fc7a25e56d1b0d04e018dd89240a1f174fff5`
+- FULL START: `3b60bdee05fb90e4e90bf6a7fe5e98c8d03237a3`
 - Generated from the fetched refs above.
 - Classification means: `BYTE_IDENTICAL` = current clean-filter blob equals MAIN; `WRAPPER_ONLY` = FULL outer integration before/after the frozen core; `NOT_ALLOWED` = may remain dormant but cannot be reached by Stage 2/4 production execution.
 
 ## Transitive production closure
 
-Stage 2 starts at `MarketResearchInputFactory -> MarketResearchWorker -> executions.py MARKET_RESEARCH -> app.research.product_pipeline`. The synchronized MAIN tree includes `pipeline`, `product_runner`, collection adapters/blocks/services, dynamic `read_sections`, `reask_sections`, `publish_gate`, `promote_cards`, `judge_lines`, `prescribe`, `pick_lead`, `write_report`, `synthesize`, BM flow/contracts/mapping/finalization, serialization, rules and referenced assets. The tree comparison deliberately rejects extra FULL `section_recall` and `semantic_relevance` files.
+Stage 2 starts at `MarketResearchInputFactory -> MarketResearchWorker -> executions.py MARKET_RESEARCH -> app.research.product_pipeline`. The synchronized MAIN tree includes `pipeline`, `product_runner`, collection adapters/blocks/services, dynamic `read_sections`, `reask_sections`, `publish_gate`, `promote_cards`, `judge_lines`, `prescribe`, `pick_lead`, `write_report`, `synthesize`, BM flow/contracts/mapping/finalization, serialization, rules and referenced assets. The BM branch crosses the research package boundary through `from app.validation import gate, citation`; `pipeline.py` also imports `mapping`, while `app.validation.__init__` imports `runner`. Therefore the active closure additionally includes exact MAIN `validation/{__init__,citation,gate,mapping,runner}.py`. `drift.py` is not reached by the Stage 2 import graph. The tree comparison deliberately rejects extra FULL `section_recall` and `semantic_relevance` files.
+
+V9's earlier **287-file** statement was incomplete. It counted the research subtree and the previously identified cross-package dependencies, but did not follow these `app.validation` package-boundary imports. That omission left MAIN `product_pipeline` unpacking the FULL one-value `citation.enforce` result and left a divergent gate in production. V9.1 adds those five exact donor blobs; the count below is the corrected closure represented by this manifest.
 
 Stage 4 starts at the FULL finalized-source facade, crosses the exact MAIN `MarketInterviewInputFactory`, then `MarketInterviewWorker -> executions.py -> app.interview.execute_market_interview`. Its import closure is `models/questions/targeting/runner/coding/analysis/saturation/caveats/ledger`, exact MAIN `app.twin.bank/profile/runner/task_type/caveats`, and the exact MAIN `app.providers` structured-output transport.
 
 ## BYTE_IDENTICAL files
 
-Count: **287** (Stage 2 research tree 262; Stage 4 interview tree 10; cross-package Java/twin/provider 15).
+Count: **292** (Stage 2 research tree 262; Stage 2 validation package 5; Stage 4 interview tree 10; cross-package Java/twin/provider 15).
 
 | MAIN path | FULL current path | MAIN blob SHA | FULL blob SHA | classification |
 |---|---|---|---|---|
@@ -27,6 +29,11 @@ Count: **287** (Stage 2 research tree 262; Stage 4 interview tree 10; cross-pack
 | `ai/app/interview/runner.py` | `ai/app/interview/runner.py` | `228f5e271bf4b41f15007199d9426333248ccf12` | `228f5e271bf4b41f15007199d9426333248ccf12` | BYTE_IDENTICAL |
 | `ai/app/interview/saturation.py` | `ai/app/interview/saturation.py` | `3c763bef7171ea53f855fff7d575a8aea8dbac37` | `3c763bef7171ea53f855fff7d575a8aea8dbac37` | BYTE_IDENTICAL |
 | `ai/app/interview/targeting.py` | `ai/app/interview/targeting.py` | `a67e2309c18fb006da387277bf28601e55b1fbf4` | `a67e2309c18fb006da387277bf28601e55b1fbf4` | BYTE_IDENTICAL |
+| `ai/app/validation/__init__.py` | `ai/app/validation/__init__.py` | `33689c0ff46d7760ad4e863f3233ab828f26481f` | `33689c0ff46d7760ad4e863f3233ab828f26481f` | BYTE_IDENTICAL |
+| `ai/app/validation/citation.py` | `ai/app/validation/citation.py` | `bf4d485453aa5786780990acbabad4242be44fa9` | `bf4d485453aa5786780990acbabad4242be44fa9` | BYTE_IDENTICAL |
+| `ai/app/validation/gate.py` | `ai/app/validation/gate.py` | `63ce39d514ea1640b24fabafad6882973ccfb9cd` | `63ce39d514ea1640b24fabafad6882973ccfb9cd` | BYTE_IDENTICAL |
+| `ai/app/validation/mapping.py` | `ai/app/validation/mapping.py` | `e421bdba9973e992015bc0874af0d6c7df7aa32c` | `e421bdba9973e992015bc0874af0d6c7df7aa32c` | BYTE_IDENTICAL |
+| `ai/app/validation/runner.py` | `ai/app/validation/runner.py` | `5599c8b489bea676cf937e7e919be48c90ace59c` | `5599c8b489bea676cf937e7e919be48c90ace59c` | BYTE_IDENTICAL |
 | `ai/app/research/__init__.py` | `ai/app/research/__init__.py` | `8b137891791fe96927ad78e64b0aad7bded08bdc` | `8b137891791fe96927ad78e64b0aad7bded08bdc` | BYTE_IDENTICAL |
 | `ai/app/research/bm/__init__.py` | `ai/app/research/bm/__init__.py` | `f17284667fa180deb74f3247e6e942176a5145a9` | `f17284667fa180deb74f3247e6e942176a5145a9` | BYTE_IDENTICAL |
 | `ai/app/research/bm/analyze.py` | `ai/app/research/bm/analyze.py` | `fdb447be79f99bec0a53008ec76e2914d743c0f0` | `fdb447be79f99bec0a53008ec76e2914d743c0f0` | BYTE_IDENTICAL |

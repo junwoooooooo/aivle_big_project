@@ -301,11 +301,12 @@ public class InternalAiExecutionClient {
                 return invalid("RESULT_DOMAIN_INVARIANT_VIOLATION");
             List<ValidationIssue> fields = validationIssues(details);
             Long retryAfterMs = retryAfterMillis(details);
+            String diagnosticStage = diagnosticStage(details);
             if ("INVALID_REQUEST".equals(code) && !fields.isEmpty()) {
                 log.warn("Internal AI request rejected taskType={} code=REQUEST_SCHEMA_INVALID fields={}",
                     taskType.name(), fields);
             }
-            return new ExecutionFailure(code, reason, retryable, fields, retryAfterMs);
+            return new ExecutionFailure(code, reason, retryable, fields, retryAfterMs, diagnosticStage);
         } catch (ExecutionFailure known) {
             return known;
         } catch (RuntimeException invalidError) {
@@ -338,6 +339,11 @@ public class InternalAiExecutionClient {
         return milliseconds >= 1_000 && milliseconds <= 15_000 ? milliseconds : null;
     }
 
+    private String diagnosticStage(JsonNode details) {
+        if (details == null || !details.isArray() || details.isEmpty()) return null;
+        return safeDiagnostic(details.get(0), "diagnosticStage", 80);
+    }
+
     private String safeDiagnostic(JsonNode node, String field, int maxLength) {
         JsonNode value = node.get(field);
         if (value == null || !value.isTextual()) return null;
@@ -367,24 +373,32 @@ public class InternalAiExecutionClient {
         private final boolean retryable;
         private final List<ValidationIssue> validationFields;
         private final Long retryAfterMillis;
+        private final String diagnosticStage;
 
         public ExecutionFailure(String code, String reason, boolean retryable) {
-            this(code, reason, retryable, List.of(), null);
+            this(code, reason, retryable, List.of(), null, null);
         }
 
         public ExecutionFailure(String code, String reason, boolean retryable,
                 List<ValidationIssue> validationFields) {
-            this(code, reason, retryable, validationFields, null);
+            this(code, reason, retryable, validationFields, null, null);
         }
 
         public ExecutionFailure(String code, String reason, boolean retryable,
                 List<ValidationIssue> validationFields, Long retryAfterMillis) {
+            this(code, reason, retryable, validationFields, retryAfterMillis, null);
+        }
+
+        public ExecutionFailure(String code, String reason, boolean retryable,
+                List<ValidationIssue> validationFields, Long retryAfterMillis,
+                String diagnosticStage) {
             super(code + ":" + reason);
             this.code = code;
             this.reason = reason;
             this.retryable = retryable;
             this.validationFields = List.copyOf(validationFields);
             this.retryAfterMillis = retryAfterMillis;
+            this.diagnosticStage = diagnosticStage;
         }
 
         public String code() { return code; }
@@ -392,6 +406,7 @@ public class InternalAiExecutionClient {
         public boolean retryable() { return retryable; }
         public List<ValidationIssue> validationFields() { return validationFields; }
         public Long retryAfterMillis() { return retryAfterMillis; }
+        public String diagnosticStage() { return diagnosticStage; }
     }
 
     public record ValidationIssue(String path, String expectedType, String category) { }

@@ -57,6 +57,24 @@ def test_stage2_research_tree_is_the_main_tree() -> None:
         _assert_main_blob(path)
 
 
+def test_stage2_validation_import_closure_is_the_main_tree() -> None:
+    for path in (
+        "ai/app/validation/__init__.py",
+        "ai/app/validation/citation.py",
+        "ai/app/validation/gate.py",
+        "ai/app/validation/mapping.py",
+        "ai/app/validation/runner.py",
+    ):
+        _assert_main_blob(path)
+
+    # drift is a separate refinement consumer; it is not imported by the Stage 2 BM closure.
+    product = (ROOT / "ai/app/research/product_pipeline.py").read_text(encoding="utf-8")
+    pipeline = (ROOT / "ai/app/research/pipeline.py").read_text(encoding="utf-8")
+    assert "from app.validation import gate" in product
+    assert "from app.validation import citation" in product
+    assert "from ..validation import citation, gate, mapping" in pipeline
+
+
 def test_stage2_java_execution_core_is_main() -> None:
     for path in (
         "backend/src/main/java/com/aivle/backend/pipeline/market/MarketResearchInputFactory.java",

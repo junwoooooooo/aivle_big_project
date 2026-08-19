@@ -137,7 +137,9 @@ class InternalAiExecutionClientTests {
             byte[] bytes = """
                 {"error":{"code":"RESULT_SCHEMA_INVALID","message":"safe internal failure",
                 "correlationId":"correlation-1","taskRunId":"task-run","taskAttemptId":"attempt-1",
-                "retryable":false,"details":[{"reason":"PROVIDER_RESPONSE_SCHEMA_REJECTED"}]}}
+                "retryable":false,"details":[{"reason":"PROVIDER_RESPONSE_SCHEMA_REJECTED",
+                "diagnosticStage":"OFFLINE_SCHEMA_PREFLIGHT","fields":[
+                {"path":"schema","expectedType":"valid contract value","category":"SCHEMA"}]}]}}
                 """.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(502, bytes.length);
@@ -161,6 +163,9 @@ class InternalAiExecutionClientTests {
                     assertThat(failure.code()).isEqualTo("RESULT_SCHEMA_INVALID");
                     assertThat(failure.reason()).isEqualTo("PROVIDER_RESPONSE_SCHEMA_REJECTED");
                     assertThat(failure.retryable()).isFalse();
+                    assertThat(failure.diagnosticStage()).isEqualTo("OFFLINE_SCHEMA_PREFLIGHT");
+                    assertThat(failure.validationFields()).extracting(
+                        InternalAiExecutionClient.ValidationIssue::path).containsExactly("schema");
                 });
         } finally {
             server.stop(0);

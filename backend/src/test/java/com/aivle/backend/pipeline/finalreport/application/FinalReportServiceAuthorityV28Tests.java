@@ -29,7 +29,12 @@ import com.aivle.backend.user.repository.UserRepository;
 import com.aivle.backend.taskrun.repository.*;
 import com.aivle.backend.taskrun.service.CanonicalInputHasher;
 import com.aivle.backend.taskrun.service.TaskRunService;
+import com.aivle.backend.taskrun.domain.TaskRun;
+import com.aivle.backend.taskrun.domain.TaskRunState;
+import com.aivle.backend.taskrun.domain.TaskType;
 import com.aivle.backend.jobevent.JobEventPublisher;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -239,6 +244,48 @@ class FinalReportServiceAuthorityV28Tests {
         assertThat(status.lastState()).isEqualTo("FAILED");
         assertThat(status.lastErrorCode()).isEqualTo("INVALID_REQUEST");
         assertThat(status.lastErrorReason()).isEqualTo("FIELD_CONSTRAINT_VIOLATION");
+    }
+
+    @Test
+    void startProposalBuildsTheCrossLayerPythonInputContract() throws Exception {
+        TaskRun run = mock(TaskRun.class);
+        when(run.getId()).thenReturn("proposal-task-1");
+        when(run.getState()).thenReturn(TaskRunState.QUEUED);
+        when(inputHasher.hash(eq(TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION),
+            eq("1.0"), eq("ko-KR"), anyString())).thenReturn("sha256:" + "a".repeat(64));
+        when(taskRunService.createWithDisposition(eq(7L), eq(41L),
+            eq(TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION), eq("FINAL_BUSINESS_PROPOSAL"),
+            anyString(), anyString(), anyString(), eq("proposal-contract"),
+            eq("proposal-contract"), eq(2)))
+            .thenReturn(new TaskRunService.CreateResult(run, true, false));
+
+        service.startProposal(7L, 41L, "proposal-contract", "proposal-contract", List.of());
+
+        ArgumentCaptor<String> input = ArgumentCaptor.forClass(String.class);
+        verify(taskRunService).createWithDisposition(eq(7L), eq(41L),
+            eq(TaskType.FINAL_BUSINESS_PROPOSAL_GENERATION), eq("FINAL_BUSINESS_PROPOSAL"),
+            anyString(), input.capture(), anyString(), eq("proposal-contract"),
+            eq("proposal-contract"), eq(2));
+        JsonNode value = mapper.readTree(input.getValue());
+        assertThat(value.path("contract").asText()).isEqualTo("final-business-proposal-input-v1");
+        assertThat(value.path("sourceManifest").size()).isGreaterThanOrEqualTo(3);
+        assertThat(value.path("includedSourceTypes").size()).isGreaterThanOrEqualTo(3);
+        assertThat(value.path("sourceManifestHash").asText()).matches("sha256:[0-9a-f]{64}");
+        assertThat(value.path("evidenceCatalog").size()).isGreaterThanOrEqualTo(1);
+        assertThat(value.path("allowedEvidenceKeys").size())
+            .isEqualTo(value.path("evidenceCatalog").size());
+        java.util.Set<String> catalogKeys = new java.util.TreeSet<>();
+        value.path("evidenceCatalog").forEach(item -> catalogKeys.add(item.path("evidenceKey").asText()));
+        java.util.Set<String> allowedKeys = new java.util.TreeSet<>();
+        value.path("allowedEvidenceKeys").forEach(item -> allowedKeys.add(item.asText()));
+        assertThat(allowedKeys).isEqualTo(catalogKeys);
+
+        String output = System.getenv("FINAL_PROPOSAL_FIXTURE_OUTPUT");
+        if (output != null && !output.isBlank()) {
+            Path path = Path.of(output);
+            Files.createDirectories(path.getParent());
+            Files.writeString(path, input.getValue());
+        }
     }
 
     @Test

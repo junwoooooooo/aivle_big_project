@@ -33,19 +33,37 @@ def test_every_evidence_source_field_is_closed_to_manifest_types():
     _close_evidence_vocabulary(schema, ["CURRENT_CONCEPT", "MARKET"], [allowed_key])
 
     enums = []
-    key_enums = []
+    key_patterns = []
     def visit(node):
         if isinstance(node, dict):
             if "evidenceSourceTypes" in node.get("properties", {}):
                 enums.append(node["properties"]["evidenceSourceTypes"]["items"]["enum"])
             if "evidenceKeys" in node.get("properties", {}):
-                key_enums.append(node["properties"]["evidenceKeys"]["items"]["enum"])
+                key_patterns.append(node["properties"]["evidenceKeys"]["items"]["pattern"])
             for value in node.values(): visit(value)
         elif isinstance(node, list):
             for value in node: visit(value)
     visit(schema)
     assert enums and all(value == ["CURRENT_CONCEPT", "MARKET"] for value in enums)
-    assert key_enums and all(value == [allowed_key] for value in key_enums)
+    assert key_patterns and all(value == r"^EV-[0-9a-f]{24}$" for value in key_patterns)
+
+
+def test_realistic_evidence_catalog_does_not_expand_provider_schema_past_enum_limits():
+    schema = FinalBusinessProposalResult.model_json_schema()
+    allowed_keys = [f"EV-{index:024x}" for index in range(457)]
+    _close_evidence_vocabulary(schema, ["CURRENT_CONCEPT", "MARKET"], allowed_keys)
+
+    enum_values = []
+    def visit(node):
+        if isinstance(node, dict):
+            enum_values.extend(node.get("enum", []))
+            for value in node.values(): visit(value)
+        elif isinstance(node, list):
+            for value in node: visit(value)
+    visit(schema)
+
+    assert len(enum_values) < 1000
+    assert allowed_keys[0] not in enum_values
 
 
 def test_review_contract_has_traceable_groups():

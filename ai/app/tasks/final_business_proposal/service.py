@@ -37,7 +37,11 @@ def _close_evidence_vocabulary(node, allowed_types: list[str],
             evidence["items"] = {"type": "string", "enum": allowed_types}
         evidence_keys = properties.get("evidenceKeys")
         if isinstance(evidence_keys, dict) and allowed_keys is not None:
-            evidence_keys["items"] = {"type": "string", "enum": allowed_keys}
+            # A real proposal can expose hundreds of catalog keys. Repeating that runtime
+            # vocabulary in all four evidenceKeys schema locations exceeds the provider's
+            # total enum limit. The schema keeps the canonical key shape; exact catalog
+            # membership remains fail-closed in _validate_evidence_types after generation.
+            evidence_keys["items"] = {"type": "string", "pattern": r"^EV-[0-9a-f]{24}$"}
         for value in node.values():
             _close_evidence_vocabulary(value, allowed_types, allowed_keys)
     elif isinstance(node, list):

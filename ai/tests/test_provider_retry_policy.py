@@ -22,3 +22,20 @@ def test_internal_error_carries_only_safe_retry_after_metadata():
     assert body["error"]["details"] == [{
         "reason": "DEPENDENCY_RATE_LIMITED", "retryAfterMs": 7_000,
     }]
+
+
+def test_internal_error_carries_only_allowlisted_diagnostic_stage():
+    response = internal_error(
+        "correlation", "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION",
+        400, False, "run", "attempt",
+        validation_fields=[{
+            "path": "sourceManifest.0.type", "category": "missing",
+            "expectedType": "required",
+        }],
+        safe_diagnostics={"stage": "INPUT_CONTRACT_VALIDATION", "raw": "must-not-cross"},
+    )
+    body = json.loads(response.body)
+    detail = body["error"]["details"][0]
+    assert detail["diagnosticStage"] == "INPUT_CONTRACT_VALIDATION"
+    assert detail["fields"][0]["path"] == "sourceManifest.0.type"
+    assert "raw" not in detail
