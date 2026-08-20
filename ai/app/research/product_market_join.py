@@ -15,15 +15,19 @@ from .bm.contracts import (
 
 
 def _evidence(item: dict) -> dict:
+    """Market 원장은 보존하고 BM 모델에는 판정에 필요한 compact view만 넘긴다.
+
+    source URL·원문 quote·retrieval metadata 등은 immutable Market version에 이미
+    보존되어 있다. BM은 evidence id로 원장 근거를 가리키므로 그 provenance 전문을
+    다시 프롬프트에 싣지 않는다.
+    """
     return {
         "id": item.get("id"), "kind": item.get("kind"),
         "metric": item.get("metric"), "subject": item.get("subject"),
         "period": item.get("period"), "value": item.get("value"), "unit": item.get("unit"),
-        "grade": item.get("grade"), "grade_reason": item.get("gradeReason"),
-        "source_url": item.get("sourceUrl"), "source_kind": item.get("sourceKind"),
-        "retrieved_at": item.get("retrievedAt"), "quote": item.get("quote"),
-        "caveats": list(item.get("caveats") or []), "formula": item.get("formula"),
-        "inputs": item.get("inputs"), "material_ids": list(item.get("materialIds") or []),
+        "grade": item.get("grade"),
+        "section": item.get("section"),
+        "caveats": list(item.get("caveats") or []),
         "assumptions": list(item.get("assumptions") or []),
     }
 
@@ -37,9 +41,9 @@ def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData
     market = market_result.get("market") or {}
     tam, sam, growth = market.get("tam") or {}, market.get("sam") or {}, market.get("growth") or {}
     evidence = [_evidence(item) for item in (market_result.get("evidence") or [])]
-    competitors = [item for item in evidence
-                   if item.get("metric") in ("매출액", "가입 매장 수")]
-    demand = [item for item in evidence if item.get("metric") == "문제 경험률"]
+    competitors = [item for item in evidence if item.get("section") == "COMPETITOR"]
+    demand = [item for item in evidence if item.get("section") == "DEMAND"]
+    channels = [item for item in evidence if item.get("section") == "CHANNEL"]
     price = market.get("price") or {}
     calculations = {
         "tam": tam.get("formula"), "tam_inputs": tam.get("inputs"),
@@ -62,6 +66,7 @@ def build(market_result: dict, concept: dict, concept_id: str) -> MarketJoinData
             price_min=price.get("min"), price_base=price.get("base"),
             price_max=price.get("max"), currency=price.get("currency")),
         demand_evidence=demand,
+        channel_analysis=channels,
         market_size_calculation=calculations,
         missing_items=list(market.get("notFound") or []),
         evidence_list=evidence,
