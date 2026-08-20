@@ -205,6 +205,8 @@ jobs:
               --query 'Status' \
               --output text 2>/dev/null || true)"
 
+            echo "SSM status=${STATUS:-pending} attempt=${attempt}/180"
+
             case "$STATUS" in
               Success)
                 FINAL_STATUS="Success"
