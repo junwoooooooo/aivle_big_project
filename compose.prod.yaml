@@ -5,6 +5,14 @@ services:
     image: ${AI_IMAGE:?AI_IMAGE is required}
     restart: unless-stopped
 
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /aivle-bp/prod/ai
+        awslogs-stream: ai-server
+        awslogs-create-group: "true"
+
     environment:
       AI_PROVIDER: ${AI_PROVIDER:?AI_PROVIDER is required}
       AI_API_KEY: ${AI_API_KEY:?AI_API_KEY is required}
@@ -91,6 +99,14 @@ services:
   backend:
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE is required}
     restart: unless-stopped
+
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /aivle-bp/prod/backend
+        awslogs-stream: backend
+        awslogs-create-group: "true"
 
     environment:
       SPRING_PROFILES_ACTIVE: postgres
