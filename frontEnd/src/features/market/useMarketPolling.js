@@ -43,7 +43,7 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
     } catch (failure) {
       setError(getUserErrorMessage(failure));
     }
-  }, [load, apply, refreshKey]);
+  }, [load, apply]);
 
   useEffect(() => {
     let alive = true;
