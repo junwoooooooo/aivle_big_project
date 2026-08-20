@@ -2,30 +2,5 @@
   "owner": "frontend-maintainers",
   "expiresOn": "2026-09-30",
   "policy": "New failures and stale allowlist entries fail CI. The allowlist may only shrink.",
-  "allowedFailures": [
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages submits login with accessible fields and returns to an internal route"
-    },
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages blocks an external return route"
-    },
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages keeps every password requirement neutral until password input exists"
-    },
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages validates signup password confirmation without calling the API"
-    },
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages signs up without sending password confirmation"
-    },
-    {
-      "file": "src/features/auth/AuthPages.test.jsx",
-      "name": "auth pages maps a duplicate signup username to its field"
-    }
-  ]
+  "allowedFailures": []
 }
