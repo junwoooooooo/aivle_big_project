@@ -12,7 +12,9 @@ describe('formatLocalTime', () => {
   });
 
   it('converts a UTC API timestamp to Asia/Seoul local time', () => {
-    expect(formatLocalTime('2026-08-09T06:21:00Z', { timeZone: 'Asia/Seoul' }))
-      .toMatch(/오후\s*0?3:21/);
+    expect(formatLocalTime('2026-08-09T06:21:00Z', {
+      timeZone: 'Asia/Seoul',
+      hourCycle: 'h23',
+    })).toBe('15:21');
   });
 });
