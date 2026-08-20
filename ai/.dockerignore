@@ -3,10 +3,9 @@ __pycache__
 *.pyc
 .pytest_cache
 outputs
-# ⚠ 트윈 뱅크와 research2 기준 run 은 «일부러» 제외하지 않는다.
-#   호스트 바인드 없이도 모듈 4(시장 인터뷰)와 research2 재현이 돌아야
-#   «이미지 하나로 전부 재현 가능»이 성립한다. 대신 이 이미지는 배포용이
-#   아니다 — 트윈 뱅크는 KISDI 파생 재배포 금지 자산이다.
+# KISDI 파생 Twin Bank는 재배포 금지 자산이다.
+# 이미지에는 절대 포함하지 않고 런타임 read-only bind mount로만 제공한다.
+app/twin/bank/
 app/research/research2/runs-generated
 app/research/research2/outputs
 .env
