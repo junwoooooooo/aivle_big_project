@@ -120,6 +120,16 @@ class JobEventStreamServiceTests {
         assertThat(service.activeConnections()).isZero();
     }
 
+    @Test
+    void configuredStreamTimeoutIsUsed() {
+        JobEventStreamService service = new JobEventStreamService();
+        service.setStreamTimeoutMillis(4_200_000L);
+
+        SseEmitter emitter = service.subscribe("job-long", List::of);
+
+        assertThat(emitter.getTimeout()).isEqualTo(4_200_000L);
+    }
+
     private JobEventView event(String jobId, long sequence, String status) {
         return new JobEventView(
             Long.toString(sequence), jobId, 1L, null, "IDEA_INTAKE", "STATUS_CHANGED",

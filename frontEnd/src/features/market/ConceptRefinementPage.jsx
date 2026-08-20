@@ -37,7 +37,13 @@ export default function ConceptRefinementPage() {
   const load = useCallback(() => api.currentBusinessModel(), [api]);
   const noop = useCallback(async () => undefined, []);
   const { result, loading } = useMarketLiveState(load, noop, liveRevision);
-  const revision = useConceptRevision(client, api, projectId, true);
+  const revision = useConceptRevision(
+    client,
+    api,
+    projectId,
+    true,
+    liveRevision,
+  );
   const evidenceSubjects = useMemo(
     () => (result ? evidenceSubjectIndex(result) : new Map()), [result]);
 

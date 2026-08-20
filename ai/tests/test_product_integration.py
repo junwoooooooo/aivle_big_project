@@ -89,7 +89,7 @@ def test_product_runner_invokes_exact_main_orchestrator(monkeypatch, tmp_path):
     runlog.RUNS_DIR = previous_runs_dir or os.path.join(pipeline.RESEARCH_HOME, "runs")
 
 
-def test_market_join_evidence_preserves_provenance_and_failure_semantics():
+def test_market_join_evidence_is_compact_and_keeps_decision_semantics():
     source = {
         "id": "E-17",
         "kind": "FACT",
@@ -99,6 +99,7 @@ def test_market_join_evidence_preserves_provenance_and_failure_semantics():
         "value": 123,
         "unit": "KRW",
         "grade": "B",
+        "section": "MARKET_SIZE",
         "gradeReason": "secondary source",
         "sourceUrl": "https://example.test/evidence",
         "sourceKind": "web",
@@ -113,10 +114,18 @@ def test_market_join_evidence_preserves_provenance_and_failure_semantics():
 
     joined = product_market_join._evidence(source)
 
+    assert set(joined) == {
+        "id", "kind", "metric", "subject", "period", "value", "unit",
+        "grade", "section", "caveats", "assumptions",
+    }
     assert joined["id"] == "E-17"
-    assert joined["grade_reason"] == "secondary source"
-    assert joined["source_url"] == "https://example.test/evidence"
+    assert joined["grade"] == "B"
+    assert joined["section"] == "MARKET_SIZE"
     assert joined["caveats"] == ["not directly measurable"]
-    assert joined["formula"] == "a*b"
-    assert joined["inputs"] == {"a": 3, "b": 41}
     assert joined["assumptions"] == ["constant price"]
+
+    for heavy in (
+        "grade_reason", "source_url", "source_kind", "retrieved_at",
+        "quote", "formula", "inputs", "material_ids",
+    ):
+        assert heavy not in joined

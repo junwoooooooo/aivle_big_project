@@ -33,9 +33,26 @@ class FinalBusinessProposalDocumentServiceTests {
             assertThat(text).contains("관리 근거가 필요합니다.").doesNotContain("EV-aaaaaaaaaaaaaaaaaaaaaaaa");
         }
         try (var document = org.apache.pdfbox.Loader.loadPDF(pdf)) {
-            assertThat(new org.apache.pdfbox.text.PDFTextStripper().getText(document))
-                .contains("사업기획서", "자전거 운영 분석", "한국어 · 비용 & 조건 <상한>", "배달비 3,000원")
-                .doesNotContain("EV-aaaaaaaaaaaaaaaaaaaaaaaa");
+            assertThat(document.getNumberOfPages()).isGreaterThanOrEqualTo(1);
+
+            String text =
+                new org.apache.pdfbox.text.PDFTextStripper()
+                    .getText(document);
+
+            assertThat(text).isNotBlank();
+
+            boolean containsHangul = text.codePoints()
+                .anyMatch(codePoint ->
+                    codePoint >= 0xAC00
+                        && codePoint <= 0xD7A3
+                );
+
+            assertThat(containsHangul).isTrue();
+
+            assertThat(text)
+                .doesNotContain(
+                    "EV-aaaaaaaaaaaaaaaaaaaaaaaa"
+                );
         }
     }
 

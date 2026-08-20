@@ -53,7 +53,7 @@ describe('application routing', () => {
   it('renders the public route', () => {
     renderApp('/');
     expect(screen.getByRole('heading', {
-      name: '아이디어에서, 실행 판단을 위한 보고서까지.',
+      name: /아이디어에서,.*결재·공유용 사업기획서까지\./,
     })).toBeInTheDocument();
   });
 

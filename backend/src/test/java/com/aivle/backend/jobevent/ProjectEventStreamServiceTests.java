@@ -26,6 +26,16 @@ class ProjectEventStreamServiceTests {
         verify(emitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class));
     }
 
+    @Test
+    void configuredStreamTimeoutIsUsed() {
+        ProjectEventStreamService service = new ProjectEventStreamService();
+        service.setStreamTimeoutMillis(4_200_000L);
+
+        SseEmitter emitter = service.subscribe(41L, List::of);
+
+        assertThat(emitter.getTimeout()).isEqualTo(4_200_000L);
+    }
+
     private JobEventView event(String jobId, long eventId, String status) {
         return new JobEventView(Long.toString(eventId), jobId, 41L, null, "CONCEPT_PORTFOLIO",
             "STATUS_CHANGED", status, "job.status", null, null, 1L,

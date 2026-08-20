@@ -24,7 +24,7 @@ async def execute_marketing_content(task_input: dict) -> dict:
     prompt_input = {"source": value.source.model_dump(mode="json"),
                     "request": value.request.model_dump(mode="json")}
     if value.strategy is not None:
-        prompt_input["strategy"] = value.strategy
+        prompt_input["strategy"] = value.strategy.model_dump(mode="json")
     raw = await execute_structured_prompt(
         SYSTEM_PROMPT,
         json.dumps(prompt_input, ensure_ascii=False, sort_keys=True),

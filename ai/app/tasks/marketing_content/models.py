@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StrictModel(BaseModel):
@@ -151,10 +151,44 @@ class GenerationContext(StrictModel):
     designVersion: Literal["marketing-draft-v1"]
 
 
+StrategyText = Annotated[str, Field(min_length=1, max_length=4000)]
+StrategyItem = Annotated[str, Field(min_length=1, max_length=1000)]
+
+
+class MarketingStrategyChannel(StrictModel):
+    channel: Annotated[str, Field(min_length=1, max_length=200)]
+    objective: StrategyText
+    audience: StrategyText
+    actions: list[StrategyItem] = Field(min_length=1, max_length=30)
+    kpis: list[StrategyItem] = Field(min_length=1, max_length=30)
+    rationale: StrategyText
+
+
+class MarketingStrategyPhase(StrictModel):
+    phase: Annotated[str, Field(min_length=1, max_length=200)]
+    objective: StrategyText
+    actions: list[StrategyItem] = Field(min_length=1, max_length=30)
+    kpis: list[StrategyItem] = Field(min_length=1, max_length=30)
+
+
+class MarketingStrategyContext(StrictModel):
+    contract: Literal["marketing-strategy-result-v1"]
+    executiveSummary: StrategyText
+    targetCustomers: list[StrategyItem] = Field(min_length=1, max_length=30)
+    positioning: StrategyText
+    coreMessages: list[StrategyItem] = Field(min_length=1, max_length=30)
+    channelStrategies: list[MarketingStrategyChannel] = Field(min_length=1, max_length=20)
+    contentPillars: list[StrategyItem] = Field(min_length=1, max_length=30)
+    campaignRoadmap: list[MarketingStrategyPhase] = Field(min_length=1, max_length=20)
+    budgetGuidelines: list[StrategyItem] = Field(default_factory=list, max_length=30)
+    risks: list[StrategyItem] = Field(min_length=1, max_length=30)
+    evidenceRefs: list[StrategyItem] = Field(min_length=1, max_length=200)
+
+
 class MarketingContentInput(StrictModel):
     source: MarketingSourceSnapshot
     request: MarketingContentRequest
-    strategy: dict[str, JsonValue] | None = None
+    strategy: MarketingStrategyContext | None = None
     generation: GenerationContext | None = None
 
 

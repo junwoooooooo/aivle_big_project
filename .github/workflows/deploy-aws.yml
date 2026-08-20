@@ -1,0 +1,253 @@
+name: Deploy AWS Production
+
+on:
+  push:
+    branches:
+      - deploy/aws-prod-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: aivle-bp-prod-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "663345616799"
+  ECR_REGISTRY: 663345616799.dkr.ecr.us-east-1.amazonaws.com
+  DEPLOY_ROLE_ARN: arn:aws:iam::663345616799:role/aivle-bp-prod-github-deploy-role
+  INSTANCE_ID: i-0ca6b0f6bd4d51627
+  PROD_HEALTH_URL: https://d1jtoyd1rzqcey.cloudfront.net/healthz
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.head_commit.message, 'deploy: production [deploy-prod]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout deployment commit
+        uses: actions/checkout@v6
+
+      - name: Wait for CI success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          echo "Waiting for CI on ${GITHUB_SHA}"
+
+          for attempt in $(seq 1 90); do
+            RESPONSE="$(curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${GITHUB_SHA}&event=push&per_page=10")"
+
+            STATUS="$(printf '%s' "$RESPONSE" | jq -r '.workflow_runs[0].status // "missing"')"
+            CONCLUSION="$(printf '%s' "$RESPONSE" | jq -r '.workflow_runs[0].conclusion // ""')"
+
+            echo "CI status=${STATUS} conclusion=${CONCLUSION:-pending}"
+
+            if [[ "$STATUS" == "completed" ]]; then
+              if [[ "$CONCLUSION" == "success" ]]; then
+                echo "CI is green."
+                break
+              fi
+
+              echo "CI did not succeed: ${CONCLUSION}" >&2
+              exit 1
+            fi
+
+            if [[ "$attempt" -eq 90 ]]; then
+              echo "Timed out waiting for CI." >&2
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: github-prod-${{ github.run_id }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Login to ECR
+        run: |
+          set -Eeuo pipefail
+
+          aws ecr get-login-password \
+            --region "$AWS_REGION" |
+          docker login \
+            --username AWS \
+            --password-stdin "$ECR_REGISTRY"
+
+      - name: Verify Twin Bank is not in repository image input
+        run: |
+          set -Eeuo pipefail
+
+          if [[ -e ai/app/twin/bank/twin_bank_manifest.json ]]; then
+            echo "ERROR: Twin Bank must not be committed or shipped in the AI image." >&2
+            exit 1
+          fi
+
+      - name: Build and push AI image
+        run: |
+          set -Eeuo pipefail
+
+          IMAGE="$ECR_REGISTRY/aivle-bp/ai:$GITHUB_SHA"
+
+          docker build \
+            --platform linux/amd64 \
+            --pull \
+            -t "$IMAGE" \
+            ./ai
+
+          docker push "$IMAGE"
+
+      - name: Build and push backend image
+        run: |
+          set -Eeuo pipefail
+
+          IMAGE="$ECR_REGISTRY/aivle-bp/backend:$GITHUB_SHA"
+
+          docker build \
+            --platform linux/amd64 \
+            --pull \
+            -t "$IMAGE" \
+            ./backend
+
+          docker push "$IMAGE"
+
+      - name: Build and push frontend image
+        run: |
+          set -Eeuo pipefail
+
+          IMAGE="$ECR_REGISTRY/aivle-bp/frontend:$GITHUB_SHA"
+
+          docker build \
+            --platform linux/amd64 \
+            --pull \
+            -f ./frontEnd/Dockerfile \
+            -t "$IMAGE" \
+            .
+
+          docker push "$IMAGE"
+
+      - name: Verify ECR images
+        run: |
+          set -Eeuo pipefail
+
+          for repository in \
+            aivle-bp/ai \
+            aivle-bp/backend \
+            aivle-bp/frontend
+          do
+            aws ecr describe-images \
+              --region "$AWS_REGION" \
+              --repository-name "$repository" \
+              --image-ids "imageTag=$GITHUB_SHA" \
+              >/dev/null
+          done
+
+      - name: Deploy through SSM
+        run: |
+          set -Eeuo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+
+          command = f"""set -Eeuo pipefail
+          curl -fsSL https://raw.githubusercontent.com/{repo}/{sha}/scripts/aws-prod-deploy.sh -o /tmp/aws-prod-deploy.sh
+          chmod 700 /tmp/aws-prod-deploy.sh
+          /tmp/aws-prod-deploy.sh {sha}
+          """
+
+          with open("/tmp/ssm-parameters.json", "w", encoding="utf-8") as handle:
+              json.dump({"commands": [command]}, handle)
+          PY
+
+          COMMAND_ID="$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Deploy ${GITHUB_SHA} to aivle-bp-prod" \
+            --timeout-seconds 1200 \
+            --parameters file:///tmp/ssm-parameters.json \
+            --query 'Command.CommandId' \
+            --output text)"
+
+          echo "SSM command: $COMMAND_ID"
+
+          FINAL_STATUS=""
+
+          for attempt in $(seq 1 180); do
+            STATUS="$(aws ssm get-command-invocation \
+              --region "$AWS_REGION" \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'Status' \
+              --output text 2>/dev/null || true)"
+
+            echo "SSM status=${STATUS:-pending} attempt=${attempt}/180"
+
+            case "$STATUS" in
+              Success)
+                FINAL_STATUS="Success"
+                break
+                ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                FINAL_STATUS="$STATUS"
+                break
+                ;;
+            esac
+
+            sleep 5
+          done
+
+          echo "----- SSM STDOUT -----"
+          aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query 'StandardOutputContent' \
+            --output text || true
+
+          echo "----- SSM STDERR -----"
+          aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query 'StandardErrorContent' \
+            --output text || true
+
+          if [[ "$FINAL_STATUS" != "Success" ]]; then
+            echo "Production deployment failed: ${FINAL_STATUS:-timeout}" >&2
+            exit 1
+          fi
+
+      - name: Verify public CloudFront health
+        run: |
+          set -Eeuo pipefail
+
+          curl -fsS \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            "$PROD_HEALTH_URL"

@@ -15,11 +15,20 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class JobEventStreamService {
-    static final long STREAM_TIMEOUT_MILLIS = 30 * 60 * 1_000L;
+    private static final long DEFAULT_STREAM_TIMEOUT_MILLIS = 70 * 60 * 1_000L;
+
     private final Map<String, StreamGroup> groups = new ConcurrentHashMap<>();
+    private long streamTimeoutMillis = DEFAULT_STREAM_TIMEOUT_MILLIS;
+
+    @org.springframework.beans.factory.annotation.Value(
+        "${app.job-events.stream-timeout-ms:4200000}"
+    )
+    void setStreamTimeoutMillis(long streamTimeoutMillis) {
+        this.streamTimeoutMillis = streamTimeoutMillis;
+    }
 
     public SseEmitter subscribe(String jobId, Supplier<List<JobEventView>> replaySupplier) {
-        return subscribe(jobId, replaySupplier, new SseEmitter(STREAM_TIMEOUT_MILLIS));
+        return subscribe(jobId, replaySupplier, new SseEmitter(streamTimeoutMillis));
     }
 
     SseEmitter subscribe(String jobId, Supplier<List<JobEventView>> replaySupplier,

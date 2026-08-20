@@ -104,6 +104,12 @@ app:
       quarantine-retention: ${STORAGE_RECONCILIATION_QUARANTINE_RETENTION:7d}
       batch-size: ${STORAGE_RECONCILIATION_BATCH_SIZE:100}
       schedule: ${STORAGE_RECONCILIATION_SCHEDULE:0 0 3 * * *}
+  job-events:
+    heartbeat-ms: ${JOB_EVENT_HEARTBEAT_MS:15000}
+    stream-timeout-ms: ${JOB_EVENT_STREAM_TIMEOUT_MS:4200000}
+  project-events:
+    heartbeat-ms: ${PROJECT_EVENT_HEARTBEAT_MS:15000}
+    stream-timeout-ms: ${PROJECT_EVENT_STREAM_TIMEOUT_MS:4200000}
 
 management:
   endpoints:

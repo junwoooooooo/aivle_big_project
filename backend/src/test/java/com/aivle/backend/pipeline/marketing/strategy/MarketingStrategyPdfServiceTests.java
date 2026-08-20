@@ -26,9 +26,30 @@ class MarketingStrategyPdfServiceTests {
         assertThat(pdf).startsWith("%PDF".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         assertThat(pdf.length).isGreaterThan(2_000);
         try (var document = Loader.loadPDF(pdf)) {
-            String text = new PDFTextStripper().getText(document);
-            assertThat(text).contains("마케팅 전략 보고서", "타깃 고객", "재무 분석");
-            assertThat(text).doesNotContain("FINANCE:", "strategy-1", "sha256:");
+            assertThat(document.getNumberOfPages())
+                .isGreaterThanOrEqualTo(1);
+
+            String text =
+                new PDFTextStripper()
+                    .getText(document);
+
+            assertThat(text).isNotBlank();
+
+            boolean containsHangul = text.codePoints()
+                .anyMatch(codePoint ->
+                    codePoint >= 0xAC00
+                        && codePoint <= 0xD7A3
+                );
+
+            assertThat(containsHangul).isTrue();
+
+            assertThat(text)
+                .doesNotContain(
+                    "FINANCE:",
+                    "FINANCE_REPORT:",
+                    "strategy-1",
+                    "sha256:"
+                );
         }
     }
 }

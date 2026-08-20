@@ -113,6 +113,79 @@ def test_market_join_bridges_to_canonical_snapshot_and_preserves_product_data():
         "key_activities"] == ["사용자가 확정한 활동"]
 
 
+def test_market_join_compacts_evidence_and_routes_sections():
+    market_result = _market_result()
+    heavy = "x" * 4000
+
+    def item(evidence_id: str, section: str):
+        return {
+            "id": evidence_id,
+            "kind": "관측",
+            "metric": "테스트 지표",
+            "subject": "테스트 주제",
+            "period": "2026",
+            "value": 1,
+            "unit": "건",
+            "grade": "실무 신뢰",
+            "section": section,
+            "caveats": ["테스트 경계"],
+            "assumptions": ["테스트 가정"],
+
+            # Market 원장에는 필요하지만 BM 모델 입력에는 다시 실을 필요가 없는 필드들.
+            "sourceUrl": "https://example.com/" + heavy,
+            "quote": heavy,
+            "gradeReason": heavy,
+            "tableKey": heavy,
+            "retrievedAt": heavy,
+            "placement": heavy,
+            "sourceKind": heavy,
+            "raw": heavy,
+            "formula": heavy,
+            "inputs": {"raw": heavy},
+            "issuer": heavy,
+            "materialIds": [heavy],
+        }
+
+    market_result["evidence"] = [
+        item("E-COMP", "COMPETITOR"),
+        item("E-DEMAND", "DEMAND"),
+        item("E-CHANNEL", "CHANNEL"),
+    ]
+
+    joined = product_market_join.build(
+        market_result,
+        _concept(),
+        _concept()["concept_id"],
+    )
+
+    allowed = {
+        "id",
+        "kind",
+        "metric",
+        "subject",
+        "period",
+        "value",
+        "unit",
+        "grade",
+        "section",
+        "caveats",
+        "assumptions",
+    }
+
+    assert len(joined.evidence_list) == 3
+    assert all(set(row) == allowed for row in joined.evidence_list)
+
+    assert [row["id"] for row in joined.competitor_analysis] == ["E-COMP"]
+    assert [row["id"] for row in joined.demand_evidence] == ["E-DEMAND"]
+    assert [row["id"] for row in joined.channel_analysis] == ["E-CHANNEL"]
+
+    compact_json = json.dumps(joined.evidence_list, ensure_ascii=False)
+    original_json = json.dumps(market_result["evidence"], ensure_ascii=False)
+
+    assert heavy not in compact_json
+    assert len(compact_json) < len(original_json) // 2
+
+
 def _bm_task() -> dict:
     concept = _concept()
     return {

@@ -4,9 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import useMarketLiveState, { MARKET_EXECUTION_GUIDANCE_LIMIT_MS } from './useMarketPolling.js';
 
 describe('useMarketLiveState SSE refresh seam', () => {
-  it('does not warn before the 20-minute Market worker deadline', () => {
-    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBe(22 * 60 * 1000);
-    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBeGreaterThanOrEqual(20 * 60 * 1000);
+  it('keeps long-running guidance after backend execution and before SSE expiry', () => {
+    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBe(65 * 60 * 1000);
+    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBeGreaterThan(63 * 60 * 1000);
+    expect(MARKET_EXECUTION_GUIDANCE_LIMIT_MS).toBeLessThan(70 * 60 * 1000);
   });
   it('reloads canonical current state when the project live revision changes', async () => {
     const load = vi.fn().mockResolvedValue({ run: null, version: null });

@@ -3,14 +3,18 @@ import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { normalizeMarketResult } from './marketResult.js';
 
 const ACTIVE = new Set(['QUEUED', 'READY', 'RUNNING']);
-/** fresh collection의 20분 worker deadline과 22분 lease보다 먼저 중단 경고를 내지 않는다. */
-export const MARKET_EXECUTION_GUIDANCE_LIMIT_MS = 22 * 60 * 1000;
+/**
+ * Market FULL은 최대 60분 실행을 허용하고 Backend→AI 장시간 전송도
+ * 그보다 길게 열려 있다. 정상 실행을 실패처럼 보이지 않도록 안내 상한은
+ * 그 경계보다 뒤인 65분으로 둔다.
+ */
+export const MARKET_EXECUTION_GUIDANCE_LIMIT_MS = 65 * 60 * 1000;
 
 /**
  * 「실행 → SSE revision → canonical 결과」 한 벌.
  *
  * <p>interval은 네트워크 polling이 아니라 <b>경과 시간 표시</b>와
- * <b>22분 안내 상한</b>에만 사용한다.
+ * <b>장시간 실행 안내 상한</b>에만 사용한다.
  */
 export default function useMarketLiveState(load, start, refreshKey = 0) {
   const [run, setRun] = useState(null);
@@ -39,7 +43,7 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
     } catch (failure) {
       setError(getUserErrorMessage(failure));
     }
-  }, [load, apply, refreshKey]);
+  }, [load, apply]);
 
   useEffect(() => {
     let alive = true;
@@ -68,7 +72,9 @@ export default function useMarketLiveState(load, start, refreshKey = 0) {
       setElapsed(Math.floor(spent / 1000));
       if (spent > MARKET_EXECUTION_GUIDANCE_LIMIT_MS) {
         clearInterval(timer);
-        setError('22분이 지나도 끝나지 않았다 — 실행이 멈췄을 수 있다. 새로고침하거나 다시 실행해 보라.');
+        setError(
+          '65분이 지나도 끝나지 않았습니다. 실행 상태를 확인하거나 새로고침해 주세요.',
+        );
         return;
       }
     }, 1000);
