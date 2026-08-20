@@ -28,6 +28,7 @@ export default function MarketingContentPage() {
   const [draftState, setDraftState] = useState({ key: null, value: null });
   const [revisionType, setRevisionType] = useState('USER_EDITED');
   const [notice, setNotice] = useState('');
+  const [downloading, setDownloading] = useState(false);
   const [style, setStyle] = useState({ theme: 'DARK', align: 'LEFT', accent: '#0f8878', scale: '1' });
   const effectiveSetup = { ...setup,
     marketingSourceSnapshotId: setup.marketingSourceSnapshotId || hook.source?.snapshotId || '',
@@ -121,6 +122,18 @@ export default function MarketingContentPage() {
   async function copy() {
     try { await copyMarketingContent(draft); setNotice('클립보드에 복사했습니다.'); }
     catch { setNotice('브라우저의 클립보드 권한을 확인해 주세요.'); }
+  }
+  async function download() {
+    setNotice('');
+    setDownloading(true);
+    try {
+      await downloadMarketingContent(draft, hook.imageUrl, style, hook.selected?.content.title);
+      setNotice('이미지와 문구를 한 장의 PNG로 저장했습니다.');
+    } catch (error) {
+      setNotice(error?.message || '콘텐츠 이미지 다운로드에 실패했습니다.');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const showSetupProgress =
@@ -445,14 +458,10 @@ export default function MarketingContentPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  downloadMarketingContent(
-                    draft,
-                    hook.selected?.content.title,
-                  )
-                }
+                disabled={!hook.imageUrl || downloading}
+                onClick={() => void download()}
               >
-                다운로드
+                {downloading ? 'PNG 만드는 중…' : '콘텐츠 PNG 다운로드'}
               </button>
 
               <button

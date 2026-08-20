@@ -4,9 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MarketingContentPage from './MarketingContentPage.jsx';
 import useMarketingContent from '../hooks/useMarketingContent.js';
 import useMarketingStrategy from '../hooks/useMarketingStrategy.js';
+import { downloadMarketingContent } from '../render/marketingRenderer.js';
 
 vi.mock('../hooks/useMarketingContent.js', () => ({ default: vi.fn() }));
 vi.mock('../hooks/useMarketingStrategy.js', () => ({ default: vi.fn() }));
+vi.mock('../render/marketingRenderer.js', () => ({
+  copyMarketingContent: vi.fn(),
+  downloadMarketingContent: vi.fn(),
+}));
 
 const reportId = 'a'.repeat(64);
 function contentHook(overrides = {}) { return { loading: false, list: [], source: { snapshotId: 'source-1', snapshot: {
@@ -52,5 +57,31 @@ describe('Marketing workspace', () => {
     fireEvent.click(screen.getByRole('button', { name: '마케팅 초안 만들기' }));
     await waitFor(() => expect(create).toHaveBeenCalled());
     expect(create.mock.calls[0][0].marketingStrategyReportId).toBe(reportId);
+  });
+
+  it('생성 이미지와 현재 문구를 하나의 PNG 다운로드로 전달한다', async () => {
+    const result = { contentType: 'SOCIAL_POST', title: '출시 소식', body: '새 제품을 소개합니다.',
+      callToAction: '자세히 보기', hashtags: ['신제품'], legalReview: { requiredDisclosuresApplied: [] } };
+    useMarketingContent.mockReturnValue(contentHook({
+      imageUrl: 'blob:generated-image',
+      selected: { content: { contentId: 'c1', title: '출시 소식', status: 'COMPLETED', currentRevisionNumber: 1 },
+        revisions: [{ revisionId: 'r1', revisionNumber: 1, revisionType: 'AI_GENERATED', result }] },
+    }));
+    downloadMarketingContent.mockResolvedValue();
+
+    renderPage();
+    openContentWorkspace();
+    fireEvent.click(screen.getByRole('button', { name: '콘텐츠 PNG 다운로드' }));
+
+    await waitFor(() => expect(downloadMarketingContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentType: 'SOCIAL_POST', title: '출시 소식', body: '새 제품을 소개합니다.',
+        callToAction: '자세히 보기', hashtags: ['신제품'],
+        legalReview: expect.objectContaining({ requiredDisclosuresApplied: [] }),
+      }),
+      'blob:generated-image',
+      expect.objectContaining({ accent: '#0f8878', align: 'LEFT' }),
+      '출시 소식',
+    ));
   });
 });
