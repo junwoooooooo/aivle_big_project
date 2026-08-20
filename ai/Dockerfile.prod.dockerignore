@@ -1,0 +1,16 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+outputs
+
+# Production image에는 Twin Bank를 절대로 포함하지 않는다.
+app/twin/bank
+
+app/research/research2/runs-generated
+app/research/research2/outputs
+
+.env
+.env.*
+.git
+tests
