@@ -21,7 +21,7 @@ env:
   ECR_REGISTRY: 663345616799.dkr.ecr.us-east-1.amazonaws.com
   DEPLOY_ROLE_ARN: arn:aws:iam::663345616799:role/aivle-bp-prod-github-deploy-role
   INSTANCE_ID: i-0ca6b0f6bd4d51627
-  PROD_HEALTH_URL: http://aivle-bp-prod-alb-1724069106.us-east-1.elb.amazonaws.com/healthz
+  PROD_HEALTH_URL: https://d1jtoyd1rzqcey.cloudfront.net/healthz
 
 jobs:
   deploy:
@@ -242,7 +242,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify public ALB health
+      - name: Verify public CloudFront health
         run: |
           set -Eeuo pipefail
 
