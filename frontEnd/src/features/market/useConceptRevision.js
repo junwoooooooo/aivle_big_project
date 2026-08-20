@@ -2,6 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getUserErrorMessage } from '../../shared/api/apiError.js';
 import { createConceptPortfolioApi } from '../concept-portfolio/api/conceptPortfolioApi.js';
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function waitForRefinementFinalized(
+  load,
+  {
+    attempts = 90,
+    intervalMs = 1000,
+    sleepFn = sleep,
+  } = {},
+) {
+  let next = await load();
+
+  for (
+    let attempt = 0;
+    attempt < attempts && !next?.refinement?.finalized;
+    attempt += 1
+  ) {
+    await sleepFn(intervalMs);
+    next = await load();
+  }
+
+  return next;
+}
+
 /**
  * 컨셉 다듬기가 읽고 쓰는 것 — <b>다듬기 결과 · 컨셉 원문 · 법률 델타</b>.
  *
@@ -20,7 +44,13 @@ const optional = (promise) => promise
  * <b>`selectionId` 를 먼저 알아야</b> 해서 한 번의 대기는 피할 수 없다 — 그다음 셋은
  * 한꺼번에 간다(직렬로 늘어놓으면 폭포가 된다).
  */
-export function useConceptRevision(client, marketApi, projectId, enabled) {
+export function useConceptRevision(
+  client,
+  marketApi,
+  projectId,
+  enabled,
+  liveRevision = 0,
+) {
   const portfolio = useMemo(() => createConceptPortfolioApi(client), [client]);
   const [state, setState] = useState({ loading: true, selectionId: null, refinement: null, concept: null, error: null });
   const [finalizing, setFinalizing] = useState(false);
@@ -57,7 +87,7 @@ export function useConceptRevision(client, marketApi, projectId, enabled) {
         if (alive) setState((value) => ({ ...value, loading: false, error: getUserErrorMessage(failure) }));
       });
     return () => { alive = false; };
-  }, [enabled, load]);
+  }, [enabled, load, liveRevision]);
 
   /**
    * <b>돌고 있을 때만 다시 읽는다.</b>
@@ -90,12 +120,31 @@ export function useConceptRevision(client, marketApi, projectId, enabled) {
    */
   const finalize = useCallback(async () => {
     if (!state.selectionId) return;
+
     setFinalizing(true);
+
     try {
-      await marketApi.finalizeRefinedConcept(state.selectionId, `refine-finalize-${state.selectionId}`);
-      setState(await load());
+      await marketApi.finalizeRefinedConcept(
+        state.selectionId,
+        `refine-finalize-${state.selectionId}`,
+      );
+
+      const next = await waitForRefinementFinalized(load);
+
+      setState(
+        next?.refinement?.finalized
+          ? next
+          : {
+              ...next,
+              error:
+                '컨셉 확정 작업이 아직 진행 중입니다. 완료되면 화면이 자동으로 갱신됩니다.',
+            },
+      );
     } catch (failure) {
-      setState((value) => ({ ...value, error: getUserErrorMessage(failure) }));
+      setState((value) => ({
+        ...value,
+        error: getUserErrorMessage(failure),
+      }));
     } finally {
       setFinalizing(false);
     }

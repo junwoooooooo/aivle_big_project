@@ -7,6 +7,14 @@ import com.aivle.backend.common.exception.ErrorCode;
 import com.aivle.backend.pipeline.conceptportfolio.application.*;
 import com.aivle.backend.pipeline.conceptportfolio.domain.*;
 import com.aivle.backend.pipeline.conceptportfolio.repository.*;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.ActionAccepted;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.ActionRequest;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.ConfirmHypothesesRequest;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.CreateSelectionRequest;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.HypothesisView;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.LegalReportView;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.MarketSeedView;
+import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels.SelectionView;
 import com.aivle.backend.pipeline.conceptportfolio.selection.domain.*;
 import com.aivle.backend.pipeline.conceptportfolio.selection.repository.*;
 import com.aivle.backend.pipeline.idea.repository.IdeaBriefFieldRepository;
@@ -22,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.*;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class ConceptPortfolioSelectionService {
@@ -227,6 +236,19 @@ public class ConceptPortfolioSelectionService {
     @Transactional
     public ActionAccepted finalizeMarketSeed(Long ownerId, Long projectId, Long selectionId, ActionRequest body) {
         ConceptPortfolioSelection selection = lockedCurrent(ownerId, projectId, selectionId);
+        boolean alreadyFinalized = marketSeeds
+            .findByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(selectionId)
+            .filter(MarketAnalysisSeedSnapshot::isRefinementApplied)
+            .isPresent();
+
+        if (alreadyFinalized) {
+            return new ActionAccepted(
+                selectionId,
+                "BUILD_HANDOFF",
+                null,
+                selection.getStatus().name()
+            );
+        }
         ActionAccepted replay = activeReplay(ownerId, projectId, selection, "BUILD_HANDOFF", body.idempotencyKey());
         if (replay != null) return replay;
         ConceptLegalRegulatoryReport report = reports.findBySelectionIdAndStatusAndDeletedAtIsNull(selectionId, "CURRENT")
@@ -269,7 +291,11 @@ public class ConceptPortfolioSelectionService {
             .map(com.aivle.backend.pipeline.refinement.ConceptRefinementFinal::getOverlayJson)
             .filter(json -> json != null && !json.isBlank())
             .ifPresent(json -> input.set("refinementOverlay", mapper.readTree(json)));
-        String snapshotId=UUID.randomUUID().toString(); ObjectNode binding=input.putObject("productionBinding");
+        String snapshotId = UUID.nameUUIDFromBytes(
+            ("market-seed:" + selectionId + ":" + body.idempotencyKey())
+                .getBytes(StandardCharsets.UTF_8)
+        ).toString(); 
+        ObjectNode binding=input.putObject("productionBinding");
         binding.put("projectId", projectId); binding.put("portfolioSelectionId", selectionId);
         binding.put("portfolioConceptId", concept.getId()); binding.put("marketSeedSnapshotId", snapshotId);
         TaskRun task=tasks.create(ownerId, selection, "BUILD_HANDOFF", input, body.idempotencyKey(), null);
