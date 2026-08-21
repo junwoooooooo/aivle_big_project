@@ -87,7 +87,7 @@ class MarketResearchProductInputTests {
         assertThat(input.getBytes(StandardCharsets.UTF_8).length)
             .isPositive()
             .isLessThanOrEqualTo(2 * 1024 * 1024);
-        assertThatCode(() -> new CanonicalInputHasher(mapper)
+        assertThatCode(() -> new CanonicalInputHasher()
             .hash(TaskType.MARKET_RESEARCH, "1.0", "ko-KR", input))
             .doesNotThrowAnyException();
     }

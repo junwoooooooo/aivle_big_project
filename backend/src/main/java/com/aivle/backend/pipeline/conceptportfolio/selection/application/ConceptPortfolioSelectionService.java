@@ -131,10 +131,20 @@ public class ConceptPortfolioSelectionService {
         if (replay != null) return replay;
         if (!body.changes().isObject() || body.changes().size() > 7)
             throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
+        ObjectNode canonicalEdits = mapper.createObjectNode();
+        body.changes().properties().forEach(entry -> {
+            try {
+                PortfolioHypothesisType type = PortfolioHypothesisType.valueOf(entry.getKey());
+                canonicalEdits.set(entry.getKey(), HypothesisValueContract.canonicalize(
+                    mapper, type, entry.getValue()));
+            } catch (IllegalArgumentException invalid) {
+                throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
+            }
+        });
         ObjectNode input = mapper.createObjectNode(); input.put("action", "CONFIRM_HYPOTHESES");
         input.put("expectedHypothesisRevision", selection.getHypothesisRevision());
         input.set("hypotheses", hypothesisArray(latestRequired(selectionId)));
-        input.set("edits", body.changes().deepCopy()); input.put("confirmAll", true);
+        input.set("edits", canonicalEdits); input.put("confirmAll", true);
         TaskRun task = tasks.create(ownerId, selection, "CONFIRM_HYPOTHESES", input,
             body.idempotencyKey(), null);
         staleDependents(selectionId);
@@ -327,6 +337,7 @@ public class ConceptPortfolioSelectionService {
     }
 
     TaskRun queueDelta(Long ownerId, ConceptPortfolioSelection selection, String key) {
+        repairLatestHypothesisValues(selection.getId());
         ConceptPortfolioRun run=runs.findLocked(selection.getRunId()).orElseThrow(); ConceptPortfolioConcept concept=concept(selection);
         ObjectNode input=baseInput("DELTA_LEGAL", run, concept); input.set("hypotheses", hypothesisArray(latestRequired(selection.getId())));
         return tasks.create(ownerId, selection, "DELTA_LEGAL", input, key, null);
@@ -353,12 +364,30 @@ public class ConceptPortfolioSelectionService {
     }
     ArrayNode hypothesisArray(List<ConceptPortfolioHypothesisDecision> values) {
         ArrayNode array=mapper.createArrayNode(); values.forEach(value->{ ObjectNode item=array.addObject();
-            item.put("hypothesisType",value.getHypothesisType().name()); item.set("proposedValue",mapper.readTree(value.getProposedValueJson()));
-            if(value.getFinalValueJson()==null)item.putNull("finalValue");else item.set("finalValue",mapper.readTree(value.getFinalValueJson()));
+            item.put("hypothesisType",value.getHypothesisType().name()); item.set("proposedValue",HypothesisValueContract.canonicalize(
+                mapper,value.getHypothesisType(),mapper.readTree(value.getProposedValueJson())));
+            if(value.getFinalValueJson()==null)item.putNull("finalValue");else item.set("finalValue",HypothesisValueContract.canonicalize(
+                mapper,value.getHypothesisType(),mapper.readTree(value.getFinalValueJson())));
             item.put("source",value.getSource()); item.put("decisionStatus",value.getDecisionStatus()); item.put("proposalVersion",value.getProposalVersion());
             item.put("locked",value.isLocked()); item.put("legalImpact",value.getLegalImpact()); item.put("legalReviewStatus",value.getLegalReviewStatus());
             item.put("deltaLegalRequired",value.isDeltaLegalRequired()); item.put("semanticStatus",value.getSemanticStatus());
             if(value.getSemanticReason()==null)item.putNull("semanticReason");else item.put("semanticReason",value.getSemanticReason()); }); return array;
+    }
+    private void repairLatestHypothesisValues(Long selectionId) {
+        for (ConceptPortfolioHypothesisDecision value : latestRequired(selectionId)) {
+            try {
+                JsonNode proposed = HypothesisValueContract.canonicalize(
+                    mapper, value.getHypothesisType(), mapper.readTree(value.getProposedValueJson()));
+                JsonNode finalValue = value.getFinalValueJson() == null ? null
+                    : HypothesisValueContract.canonicalize(
+                        mapper, value.getHypothesisType(), mapper.readTree(value.getFinalValueJson()));
+                value.repairCanonicalValues(mapper.writeValueAsString(proposed),
+                    finalValue == null ? null : mapper.writeValueAsString(finalValue));
+                hypotheses.save(value);
+            } catch (IllegalArgumentException invalid) {
+                throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
+            }
+        }
     }
     private void staleDependents(Long id) { reports.findAllBySelectionIdAndStatusAndDeletedAtIsNull(id,"CURRENT").forEach(ConceptLegalRegulatoryReport::markStale);
         marketSeeds.findAllByPortfolioSelectionIdAndStaleAtIsNullAndDeletedAtIsNull(id).forEach(value->value.markStale(Instant.now(clock))); }

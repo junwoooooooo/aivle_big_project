@@ -286,7 +286,10 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
     try:
         value = ConceptLegalReviewInput.model_validate(task_input)
     except ValidationError as failure:
-        raise ProviderFailure("INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False) from failure
+        raise ProviderFailure(
+            "INVALID_REQUEST", "FIELD_CONSTRAINT_VIOLATION", 400, False,
+            validation_fields=_validation_fields(failure),
+        ) from failure
 
     source = await execute_legal_source_pipeline("CONCEPT_LEGAL_VALIDATION", _source_text(value), {
         "mode": "FULL", "rerunCategories": [],
@@ -421,9 +424,15 @@ async def execute_concept_legal_review(task_input: dict) -> dict:
     ).model_dump(mode="json")
 
 
-def _validation_fields(failure: ValidationError, prefix: str) -> list[dict[str, str]]:
+def _validation_fields(failure: ValidationError, prefix: str | None = None) -> list[dict[str, str]]:
+    expected = {
+        "string_type": "string", "list_type": "array", "dict_type": "object",
+        "int_type": "integer", "float_type": "number", "bool_type": "boolean",
+        "literal_error": "allowed literal", "missing": "required field",
+    }
     return [{
-        "path": f"{prefix}." + ".".join(str(part) for part in issue.get("loc", ())),
+        "path": ((f"{prefix}." if prefix else "")
+                 + ".".join(str(part) for part in issue.get("loc", ()))),
         "category": str(issue.get("type", "invalid"))[:80],
-        "expectedType": "valid contract value",
+        "expectedType": expected.get(str(issue.get("type", "invalid")), "valid contract value"),
     } for issue in failure.errors()[:12]]

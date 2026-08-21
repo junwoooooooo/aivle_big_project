@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.tasks.concept_candidate.models import ConceptCandidateResult
+from app.concept_portfolio_v2.hypothesis_value_contract import normalize_hypothesis_value
 
 
 class StrictModel(BaseModel):
@@ -560,6 +561,13 @@ class HypothesisDecision(StrictModel):
     deltaLegalRequired: bool = False
     semanticStatus: Literal["VALID", "UNRESOLVED", "INVALID", "AMBIGUOUS", "UNASSESSED"] = "UNASSESSED"
     semanticReason: str | None = None
+
+    @model_validator(mode="after")
+    def values_match_canonical_candidate_shape(self):
+        self.proposedValue = normalize_hypothesis_value(self.hypothesisType, self.proposedValue)
+        if self.finalValue is not None:
+            self.finalValue = normalize_hypothesis_value(self.hypothesisType, self.finalValue)
+        return self
 
     @property
     def accepted(self) -> bool:

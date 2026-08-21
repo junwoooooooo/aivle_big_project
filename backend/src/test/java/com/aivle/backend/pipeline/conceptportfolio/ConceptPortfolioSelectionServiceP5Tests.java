@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 class ConceptPortfolioSelectionServiceP5Tests {
@@ -159,6 +160,47 @@ class ConceptPortfolioSelectionServiceP5Tests {
             .isInstanceOf(BusinessException.class);}
 
     @Test
+    void retryDeltaRepairsOnlyLatestLegacyChannelsAndPreservesRevisionAndHistory(){
+        Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
+        ConceptPortfolioSelection selection=portfolioSelection(f,"selection",HASH);
+        ReflectionTestUtils.setField(selection,"id",17L);
+        ReflectionTestUtils.setField(selection,"status",ConceptPortfolioSelectionStatus.DELTA_LEGAL_FAILED);
+        ReflectionTestUtils.setField(selection,"hypothesisRevision",3);
+        ConceptPortfolioHypothesisDecision historical=ConceptPortfolioHypothesisDecision.create(
+            17L,42L,f.concept.getId(),PortfolioHypothesisType.CHANNELS,"[\"과거 채널\"]",
+            "[\"과거 채널\"]","AI_HYPOTHESIS","USER_EDITED_ACCEPTED",2,true,
+            "VALID","valid","REQUIRED","PENDING",true,7L,clock.instant());
+        List<ConceptPortfolioHypothesisDecision> current=legacyChannelsHypotheses(selection);
+        List<ConceptPortfolioHypothesisDecision> repositoryRows=new ArrayList<>(current);
+        repositoryRows.add(historical);
+        when(projects.findByIdAndOwnerIdAndDeletedAtIsNull(42L,7L)).thenReturn(Optional.of(f.run.getProject()));
+        when(selections.findLocked(17L)).thenReturn(Optional.of(selection));
+        when(runs.findLocked(f.run.getId())).thenReturn(Optional.of(f.run));
+        when(hypotheses.findAllBySelectionIdAndDeletedAtIsNullOrderByHypothesisTypeAscProposalVersionDesc(17L))
+            .thenReturn(repositoryRows);
+        ArgumentCaptor<tools.jackson.databind.JsonNode> input=ArgumentCaptor.forClass(tools.jackson.databind.JsonNode.class);
+
+        ActionAccepted accepted=service.retryDelta(7L,42L,17L,new ActionRequest("retry-key"));
+
+        ConceptPortfolioHypothesisDecision channels=current.stream()
+            .filter(value->value.getHypothesisType()==PortfolioHypothesisType.CHANNELS).findFirst().orElseThrow();
+        assertThat(channels.getFinalValueJson()).isEqualTo("\"웹, 파트너 판매\"");
+        verify(hypotheses).save(channels);
+        assertThat(historical.getFinalValueJson()).isEqualTo("[\"과거 채널\"]");
+        assertThat(selection.getHypothesisRevision()).isEqualTo(3);
+        assertThat(selection.getStatus()).isEqualTo(ConceptPortfolioSelectionStatus.DELTA_LEGAL_PENDING);
+        assertThat(accepted.taskRunId()).isEqualTo("prepare-task");
+        verify(taskFactory).create(eq(7L),eq(selection),eq("DELTA_LEGAL"),input.capture(),eq("retry-key"),isNull());
+        JsonNode queuedChannels=java.util.stream.StreamSupport.stream(
+            input.getValue().path("hypotheses").spliterator(),false)
+            .filter(value->"CHANNELS".equals(value.path("hypothesisType").asText())).findFirst().orElseThrow();
+        assertThat(queuedChannels.path("finalValue").asText()).isEqualTo("웹, 파트너 판매");
+        selection.completeTask("prepare-task",ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT,false);
+        assertThat(selection.getStatus()).isEqualTo(ConceptPortfolioSelectionStatus.READY_FOR_LEGAL_REPORT);
+        assertThat(selection.getHypothesisRevision()).isEqualTo(3);
+    }
+
+    @Test
     void finalReportPreservesPhysicalActivityAndPrivacyOnlyFromTheSelectedCandidateSnapshot(){
         Fixture f=fixture(ConceptPortfolioRunStatus.RESULTS_AVAILABLE,1,true);
         String candidateJson="{\"candidateId\":\"candidate\",\"candidate\":{\"physicalActivities\":[\"방문 설치 없음\"],\"personalDataUsage\":[\"예약 연락처만 사용\"],\"transactionFlow\":[\"고객→플랫폼\"],\"paymentFlow\":[\"고객→판매자\"]}}";
@@ -194,6 +236,24 @@ class ConceptPortfolioSelectionServiceP5Tests {
         ReflectionTestUtils.setField(concept,"selectable",selectable);when(projects.findByIdForUpdate(42L)).thenReturn(Optional.of(project));when(runs.findOwned(7L,42L,run.getId())).thenReturn(Optional.of(run));when(concepts.findByIdAndProjectIdAndDeletedAtIsNull(concept.getId(),42L)).thenReturn(Optional.of(concept));
         return new Fixture(run,concept);}
     private ConceptPortfolioSelection portfolioSelection(Fixture f,String key,String requestHash){return ConceptPortfolioSelection.create(42L,f.run.getId(),f.concept.getId(),f.concept.getCandidateId(),HASH,HASH,"reason",requestHash,key,7L,Instant.now(clock));}
-    private List<ConceptPortfolioHypothesisDecision> readyHypotheses(ConceptPortfolioSelection selection){return Arrays.stream(PortfolioHypothesisType.values()).map(type->ConceptPortfolioHypothesisDecision.create(selection.getId(),42L,selection.getConceptId(),type,"\"proposed\"","\"final\"","USER_INPUT","USER_EDITED_ACCEPTED",1,false,"VALID","valid","NONE","PASSED",false,7L,Instant.now(clock))).toList();}
+    private List<ConceptPortfolioHypothesisDecision> readyHypotheses(ConceptPortfolioSelection selection){
+        return Arrays.stream(PortfolioHypothesisType.values()).map(type->{
+            String value="\"final\"";
+            if(type==PortfolioHypothesisType.PRE_MARKET_SOM_SHARE)value="{\"targetSharePercent\":1.0,\"horizonYears\":3,\"rationale\":\"근거\",\"assumptions\":[\"가정\"]}";
+            if(type==PortfolioHypothesisType.PRE_MARKET_SOM)value="{\"amount\":100000000,\"currency\":\"KRW\",\"period\":\"연간\",\"calculationBasis\":\"산식\",\"assumptions\":[\"가정\"],\"confidence\":\"MEDIUM\"}";
+            return ConceptPortfolioHypothesisDecision.create(selection.getId(),42L,selection.getConceptId(),type,
+                value,value,"USER_INPUT","USER_EDITED_ACCEPTED",1,false,"VALID","valid","NONE",
+                "PASSED",false,7L,Instant.now(clock));}).toList();}
+    private List<ConceptPortfolioHypothesisDecision> legacyChannelsHypotheses(ConceptPortfolioSelection selection){
+        return Arrays.stream(PortfolioHypothesisType.values()).map(type->{
+            String proposed="\"proposed\"";
+            String finalValue="\"final\"";
+            if(type==PortfolioHypothesisType.CHANNELS){proposed="\"웹\"";finalValue="[\"웹\",\"파트너 판매\"]";}
+            if(type==PortfolioHypothesisType.PRE_MARKET_SOM_SHARE){proposed=finalValue="{\"targetSharePercent\":1.0,\"horizonYears\":3,\"rationale\":\"근거\",\"assumptions\":[\"가정\"]}";}
+            if(type==PortfolioHypothesisType.PRE_MARKET_SOM){proposed=finalValue="{\"amount\":100000000,\"currency\":\"KRW\",\"period\":\"연간\",\"calculationBasis\":\"산식\",\"assumptions\":[\"가정\"],\"confidence\":\"MEDIUM\"}";}
+            return ConceptPortfolioHypothesisDecision.create(selection.getId(),42L,selection.getConceptId(),type,
+                proposed,finalValue,"USER_INPUT","USER_EDITED_ACCEPTED",3,true,"VALID","valid",
+                "REQUIRED","PENDING",true,7L,Instant.now(clock));}).toList();
+    }
     private record Fixture(ConceptPortfolioRun run,ConceptPortfolioConcept concept){}
 }

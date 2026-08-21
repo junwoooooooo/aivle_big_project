@@ -339,7 +339,7 @@ export function portfolioRunPresentation(run) {
   if (status === 'NEEDS_INPUT') return { title: '사업안을 완성하려면 추가 사업정보가 필요합니다.' };
   if (status === 'FAILED' && run?.failureCode === 'NO_ACCEPTED_CONCEPTS') return { title: '현재 조건에서 검토 가능한 사업안이 없습니다.', action: '다른 방향으로 다시 탐색', restart: true };
   if (status === 'FAILED') return { title: '사업안 검토를 완료하지 못했습니다.', action: '다시 시도', restart: true };
-  if (status === 'STALE') return { title: '아이디어가 변경되어 사업안을 다시 검토해야 합니다.', action: '다시 검토', restart: true };
+  if (status === 'STALE') return { title: '아이디어가 변경되어 사업안을 다시 생성해야 합니다.', action: '최신 아이디어로 사업안 다시 생성', restart: true };
   return { title: '사업안의 상태를 확인하고 있습니다.' };
 }
 

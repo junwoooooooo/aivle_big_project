@@ -24,6 +24,24 @@ def task_input():
     }
 
 
+def test_input_validation_failure_reports_safe_contract_path_without_value():
+    value = task_input()
+    value["legalFactPattern"]["hypotheses"]["channels"]["value"] = ["sensitive channel"]
+
+    with pytest.raises(ProviderFailure) as raised:
+        asyncio.run(service.execute_concept_legal_review(value))
+
+    failure = raised.value
+    assert failure.code == "INVALID_REQUEST"
+    assert failure.reason == "FIELD_CONSTRAINT_VIOLATION"
+    assert failure.validation_fields == [{
+        "path": "legalFactPattern.hypotheses.channels.value",
+        "category": "string_type",
+        "expectedType": "string",
+    }]
+    assert "sensitive channel" not in json.dumps(failure.validation_fields)
+
+
 def evidence(evidence_id="EVD-001"):
     return {
         "evidenceId": evidence_id, "routeId": "personal_data", "category": "PRIVACY_AND_DATA",

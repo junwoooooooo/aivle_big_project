@@ -33,6 +33,24 @@ export default function IdeaIntakePage() {
   useEffect(() => {
     if (intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING) scrollPageToTop();
   }, [intake.screenState]);
+  useEffect(() => {
+    if (!intake.dirty) return undefined;
+    const beforeUnload = (event) => { event.preventDefault(); event.returnValue = ''; };
+    const guardLink = (event) => {
+      const anchor = event.target.closest?.('a[href]');
+      if (!anchor || anchor.target === '_blank') return;
+      if (!window.confirm('수정한 아이디어가 아직 저장되지 않았습니다. 이 페이지를 나가면 변경 내용이 사라집니다.')) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    document.addEventListener('click', guardLink, true);
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload);
+      document.removeEventListener('click', guardLink, true);
+    };
+  }, [intake.dirty]);
 
   const execution = ideaExecutionPresentation(intake.jobEvents?.events ?? []);
   const conceptsStatus = outlet.modules?.find((module) => module.id === 'concepts')?.status;
@@ -44,9 +62,13 @@ export default function IdeaIntakePage() {
 
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.LOADING && <LoadingState label="아이디어 Draft를 준비하고 있습니다." />}
     {[IDEA_INTAKE_SCREEN_STATE.EMPTY, IDEA_INTAKE_SCREEN_STATE.READY].includes(intake.screenState) && (
+      <>{intake.editingConfirmed && <StatePanel tone={intake.dirty ? 'warning' : 'info'}
+        title={intake.dirty ? '수정한 내용이 아직 저장되지 않았습니다' : '확정된 아이디어의 수정본을 준비하고 있습니다'}
+        description="아래 버튼으로 다시 정리하고 검토·확정해야 새 Idea Brief snapshot이 생성됩니다." />}
       <IdeaIntakeForm draft={intake.draft} errors={intake.errors} attachmentError={intake.attachmentError}
         submissionError={intake.failureMessage} uploadingAttachments={intake.uploadingAttachments} organizing={intake.isOrganizing} onChange={intake.updateIntake}
-        onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} />
+        submitLabel={intake.editingConfirmed ? '수정 내용 반영하고 다시 정리하기' : undefined}
+        onFilesChange={intake.setFiles} onSubmit={intake.organizeIdea} /></>
     )}
     {intake.screenState === IDEA_INTAKE_SCREEN_STATE.RUNNING && <ProjectExecutionExperience
       title={intake.isReanalyzing ? '변경한 아이디어를 다시 정리하고 있습니다' : '아이디어를 정리하고 있습니다'}

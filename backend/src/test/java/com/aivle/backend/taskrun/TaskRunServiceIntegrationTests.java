@@ -11,6 +11,7 @@ import com.aivle.backend.taskrun.repository.TaskAttemptRepository;
 import com.aivle.backend.user.entity.User;
 import com.aivle.backend.user.repository.UserRepository;
 import java.time.Duration;
+import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +23,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("test") @Transactional
 class TaskRunServiceIntegrationTests {
@@ -62,6 +65,32 @@ class TaskRunServiceIntegrationTests {
         TaskRun completed = service.getOwned(owner.getId(), project.getId(), run.getId());
         assertThat(completed.getState()).isEqualTo(TaskRunState.SUCCEEDED);
         assertThat(completed.getFinalResultId()).isNotBlank();
+    }
+
+    @Test
+    void springRuntimePersistsAndRecomputesTheSharedDeltaCanonicalHashInvariant() throws Exception {
+        JsonNode fixture;
+        try (InputStream stream = getClass().getResourceAsStream(
+                "/canonical/concept-portfolio-delta-canonical-fixture-v1.json")) {
+            fixture = new ObjectMapper().readTree(stream);
+        }
+        String input = fixture.path("inputJson").asText();
+        String expected = fixture.path("expectedHash").asText();
+        assertThat(hasher.hash(TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION,
+            "1.0", "ko-KR", input)).isEqualTo(expected);
+
+        User owner = users.saveAndFlush(User.create("delta-hash-owner@example.com", "hash", "owner"));
+        Project project = projects.saveAndFlush(Project.create(owner, "delta hash project", null, null));
+        TaskRun run = service.create(owner.getId(), project.getId(),
+            TaskType.CONCEPT_PORTFOLIO_V2_SELECTION_ACTION, "CONCEPT_PORTFOLIO_SELECTION", "fixture",
+            input, expected, "delta-hash-key", "delta-hash-correlation", 2);
+        TaskRunWorkerContext context = service.workerContext(run.getId());
+
+        assertThat(run.getInputSnapshot()).isEqualTo(input);
+        assertThat(run.getInputHash()).isEqualTo(expected);
+        assertThat(context.inputHash()).isEqualTo(expected);
+        assertThat(hasher.hash(context.taskType(), context.taskSchemaVersion(), context.locale(),
+            context.inputSnapshot())).isEqualTo(expected);
     }
 
     @Test

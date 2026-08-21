@@ -18,6 +18,11 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.concept_portfolio_v2.hypothesis_value_contract import (
+    HypothesisValueContractError,
+    normalize_hypothesis_value,
+)
+
 #: 동결 — 이건 구체화가 아니라 **다른 사업**이다. 한 글자라도 바뀌면 기각.
 FROZEN_FIELDS = (
     "sellerRole",
@@ -371,8 +376,15 @@ def filter_proposals(proposals: list[dict], concept: dict) -> tuple[list[dict], 
         proposal = {**proposal, "fieldKey": field}
         try:
             check(field, concept.get(field), proposal.get("proposedValue"), concept)
-        except DriftRejection as failure:
-            rejected.append({**proposal, "rejectionReason": failure.reason})
+            hypothesis_type = {
+                "channels": "CHANNELS", "differentiators": "DIFFERENTIATORS",
+            }.get(field)
+            if hypothesis_type:
+                proposal = {**proposal, "proposedValue": normalize_hypothesis_value(
+                    hypothesis_type, proposal.get("proposedValue"))}
+        except (DriftRejection, HypothesisValueContractError) as failure:
+            reason = failure.reason if isinstance(failure, DriftRejection) else str(failure)
+            rejected.append({**proposal, "rejectionReason": reason})
         else:
             passed.append(proposal)
     return passed, rejected
