@@ -53,6 +53,15 @@ public class ConceptPortfolioHypothesisDecision extends BaseEntity {
         this.deltaLegalRequired = deltaRequired; this.decidedByUserId = userId; this.decidedAt = decidedAt;
     }
 
+    /** Repairs only the latest mutable hypothesis representation; revision and decision history stay intact. */
+    public void repairCanonicalValues(String proposedValue, String finalValue) {
+        if (proposedValue == null || proposedValue.isBlank()) {
+            throw new IllegalArgumentException("canonical proposed value is required");
+        }
+        this.proposedValueJson = proposedValue;
+        this.finalValueJson = finalValue;
+    }
+
     public boolean ready() {
         return ("ACCEPTED".equals(decisionStatus) || "USER_EDITED_ACCEPTED".equals(decisionStatus))
             && finalValueJson != null && "VALID".equals(semanticStatus)

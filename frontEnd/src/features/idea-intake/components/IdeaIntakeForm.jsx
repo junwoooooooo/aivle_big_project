@@ -24,7 +24,7 @@ const OPTIONAL_FIELDS = Object.freeze([
   ['otherConstraint', '기타 제약', '그 밖에 반드시 지켜야 할 조건'],
 ]);
 
-export default function IdeaIntakeForm({ draft, errors, attachmentError, submissionError, uploadingAttachments, organizing, onChange, onFilesChange, onSubmit }) {
+export default function IdeaIntakeForm({ draft, errors, attachmentError, submissionError, uploadingAttachments, organizing, submitLabel = '입력 내용으로 아이디어 정리하기', onChange, onFilesChange, onSubmit }) {
   const firstError = OPTIONAL_FIELDS.find(([field]) => errors[field])?.[0] ?? null;
   const [openOptional, setOpenOptional] = useState(firstError);
   const optionalCompleted = OPTIONAL_FIELDS.filter(([field]) => draft.intake[field]?.trim()).length;
@@ -52,7 +52,7 @@ export default function IdeaIntakeForm({ draft, errors, attachmentError, submiss
       <ProjectSplitWorkspace primary={primary} secondary={secondary} />
 
       <ProjectWorkspaceActions className="idea-primary-action">
-        <Button type="submit" loading={organizing} disabled={uploadingAttachments || organizing}>{organizing ? '아이디어를 정리하고 있습니다...' : '입력 내용으로 아이디어 정리하기'}</Button>
+        <Button type="submit" loading={organizing} disabled={uploadingAttachments || organizing}>{organizing ? '아이디어를 정리하고 있습니다...' : submitLabel}</Button>
       </ProjectWorkspaceActions>
     </form>
   );

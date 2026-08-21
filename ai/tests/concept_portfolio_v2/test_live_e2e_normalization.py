@@ -354,6 +354,29 @@ def test_77_edited_legal_sensitive_hypothesis_runs_delta_legal():
     assert delta.approved and price.legalReviewStatus == "IMPLEMENTABLE_WITH_CONTROLS"
 
 
+def test_77b_legacy_channels_list_reaches_delta_as_valid_canonical_candidate(monkeypatch):
+    engine, seed, _, _, validated, candidates = staged()
+    accepted, _ = run(engine.validate_candidates(seed, validated.acceptedPlans, candidates))
+    original_review = engine.gateway.review_legal
+    captured = {}
+
+    async def validating_review(candidate_id, candidate, review_seed):
+        captured["candidate"] = candidate
+        captured["input"] = CurrentLegalAdapter().task_input(candidate, review_seed)
+        return await original_review(candidate_id, candidate, review_seed)
+
+    monkeypatch.setattr(engine.gateway, "review_legal", validating_review)
+    hypotheses = engine.confirm_hypotheses(
+        engine.build_or_load_current_hypothesis_contract(accepted[0]),
+        {"CHANNELS": ["웹", "파트너 판매"]}, confirm_all_proposed=True)
+    delta = run(engine.review_delta_legal(seed, accepted[0], hypotheses))
+
+    assert delta.approved
+    assert captured["candidate"].channels == "웹, 파트너 판매"
+    assert captured["input"]["legalFactPattern"]["hypotheses"]["channels"]["value"] \
+        == "웹, 파트너 판매"
+
+
 def test_78_delta_legal_cannot_be_marked_passed_without_result_object():
     candidate = staged()[-1][0]
     engine = ConceptPortfolioEngine()

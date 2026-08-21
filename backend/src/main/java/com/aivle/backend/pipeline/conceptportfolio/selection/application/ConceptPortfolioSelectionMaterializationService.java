@@ -218,15 +218,19 @@ public class ConceptPortfolioSelectionMaterializationService {
     private void applyHypotheses(ConceptPortfolioSelection s,JsonNode array,Long user){require(array.isArray()&&array.size()==7);
         for(JsonNode item:array){PortfolioHypothesisType type=PortfolioHypothesisType.valueOf(item.path("hypothesisType").asText());
             ConceptPortfolioHypothesisDecision current=hypotheses.findFirstBySelectionIdAndHypothesisTypeAndDeletedAtIsNullOrderByProposalVersionDesc(s.getId(),type).orElseThrow(ContractViolation::new);
-            current.apply(nullableJson(item.get("finalValue")),item.path("source").asText(),item.path("decisionStatus").asText(),item.path("locked").asBoolean(),
+            JsonNode finalValue=item.get("finalValue");
+            current.apply(finalValue==null||finalValue.isNull()?null:canonicalJson(type,finalValue),item.path("source").asText(),item.path("decisionStatus").asText(),item.path("locked").asBoolean(),
                 item.path("semanticStatus").asText(),item.path("semanticReason").isNull()?null:item.path("semanticReason").asText(),item.path("legalImpact").asText(),
                 item.path("legalReviewStatus").asText(),item.path("deltaLegalRequired").asBoolean(),user,
                 item.path("finalValue").isNull()?null:Instant.now(clock));}}
     private ConceptPortfolioHypothesisDecision fromJson(ConceptPortfolioSelection s,JsonNode item,PortfolioHypothesisType type,int version,Long user){
-        return ConceptPortfolioHypothesisDecision.create(s.getId(),s.getProjectId(),s.getConceptId(),type,mapper.writeValueAsString(item.path("proposedValue")),
-            nullableJson(item.get("finalValue")),item.path("source").asText(),item.path("decisionStatus").asText(),version,item.path("locked").asBoolean(),
+        return ConceptPortfolioHypothesisDecision.create(s.getId(),s.getProjectId(),s.getConceptId(),type,canonicalJson(type,item.path("proposedValue")),
+            item.get("finalValue")==null||item.get("finalValue").isNull()?null:canonicalJson(type,item.get("finalValue")),item.path("source").asText(),item.path("decisionStatus").asText(),version,item.path("locked").asBoolean(),
             item.path("semanticStatus").asText("UNASSESSED"),item.path("semanticReason").isMissingNode()||item.path("semanticReason").isNull()?null:item.path("semanticReason").asText(),
             item.path("legalImpact").asText("NONE"),item.path("legalReviewStatus").asText("NOT_REQUIRED"),item.path("deltaLegalRequired").asBoolean(false),user,null);}
+    private String canonicalJson(PortfolioHypothesisType type,JsonNode value){
+        try{return mapper.writeValueAsString(HypothesisValueContract.canonicalize(mapper,type,value));}
+        catch(IllegalArgumentException invalid){throw new ContractViolation();}}
     private String nullableJson(JsonNode value){return value==null||value.isNull()?null:mapper.writeValueAsString(value);}
     private static void requireProposals(JsonNode proposals){
         require(proposals.isArray());

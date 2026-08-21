@@ -7,6 +7,9 @@ COMPOSE_FILE="$APP_DIR/compose.prod.yaml"
 ROLLBACK_IMAGES="$APP_DIR/rollback-images.env"
 ROLLBACK_COMPOSE="$APP_DIR/rollback-compose.prod.yaml"
 
+AWS_REGION="${AWS_REGION:-us-east-1}"
+ECR_REGISTRY="${ECR_REGISTRY:-663345616799.dkr.ecr.us-east-1.amazonaws.com}"
+
 log() {
   printf '[rollback] %s\n' "$*"
 }
@@ -105,11 +108,18 @@ docker compose \
   -f "$COMPOSE_FILE" \
   config --quiet
 
-docker compose \
-  --env-file "$ENV_FILE" \
-  -f "$COMPOSE_FILE" \
-  pull ai-server backend frontend || \
-  log "image pull failed; trying locally cached images"
+log "refreshing EC2 host ECR authentication"
+
+if aws ecr get-login-password --region "$AWS_REGION" | \
+  docker login --username AWS --password-stdin "$ECR_REGISTRY"; then
+  docker compose \
+    --env-file "$ENV_FILE" \
+    -f "$COMPOSE_FILE" \
+    pull ai-server backend frontend || \
+    log "image pull failed; trying locally cached images"
+else
+  log "ECR login failed; trying locally cached images"
+fi
 
 for service in ai-server backend frontend; do
   log "restoring $service"

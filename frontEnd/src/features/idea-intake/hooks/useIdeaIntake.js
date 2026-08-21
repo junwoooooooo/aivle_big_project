@@ -25,6 +25,13 @@ function hasAnswer(question, answer) {
   return answer != null && answer !== '';
 }
 
+function confirmedEditFingerprint(intake, files) {
+  return JSON.stringify({
+    intake,
+    files: Array.from(files ?? []).map((file) => [file.name, file.size, file.lastModified ?? null, file.type]),
+  });
+}
+
 function screenStateFor(response) {
   if (response?.recoveryRequired) return IDEA_INTAKE_SCREEN_STATE.RECOVERY;
   if (response?.status === 'NEEDS_INPUT') {
@@ -64,6 +71,10 @@ export default function useIdeaIntake(projectId) {
   const [isConfirming, setIsConfirming] = useState(false);
   const uploadedAttachmentIds = useRef(new Map());
   const terminalJobId = useRef(null);
+  const confirmedEditBaseline = useRef(null);
+  const editingConfirmedRef = useRef(false);
+  const [editingConfirmed, setEditingConfirmed] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const jobEvents = useJobEvents(activeJobId);
 
   const applyResponse = useCallback((response) => {
@@ -73,6 +84,12 @@ export default function useIdeaIntake(projectId) {
       .filter((question) => !question.answered).map((question) => question.questionId));
     setQuestions(questionsFromIdeaBrief(response).filter((question) => unansweredIds.has(question.id)));
     setActiveJobId(response.activeJobId ?? null);
+    if (response.status !== 'CONFIRMED' || editingConfirmedRef.current) {
+      confirmedEditBaseline.current = null;
+      editingConfirmedRef.current = false;
+      setEditingConfirmed(false);
+      setDirty(false);
+    }
     const terminalJobStillAttached = response.status === 'DERIVING'
       && response.activeJobId != null && response.activeJobId === terminalJobId.current;
     if (response.recoveryRequired || terminalJobStillAttached) {
@@ -119,6 +136,10 @@ export default function useIdeaIntake(projectId) {
 
   const updateIntake = (field, value) => {
     dispatch({ type: 'UPDATE_INTAKE', field, value });
+    if (editingConfirmedRef.current && confirmedEditBaseline.current) {
+      const next = { ...draft.intake, [field]: value };
+      setDirty(confirmedEditFingerprint(next, draft.referenceFiles) !== confirmedEditBaseline.current);
+    }
     setErrors((current) => ({ ...current, [field]: undefined }));
     setScreenState(value.trim() || field !== 'ideaOverview' || draft.intake.ideaOverview.trim()
       ? IDEA_INTAKE_SCREEN_STATE.READY : IDEA_INTAKE_SCREEN_STATE.EMPTY);
@@ -268,11 +289,16 @@ export default function useIdeaIntake(projectId) {
 
   return {
     draft, errors, failureMessage, failureKind, questions, screenState, activeJobId, jobEvents, isReanalyzing,
-    attachmentError, uploadingAttachments, isOrganizing, isConfirming,
+    attachmentError, uploadingAttachments, isOrganizing, isConfirming, editingConfirmed, dirty,
     setFiles: (files) => {
       const error = validateIdeaReferenceFiles(files);
       setAttachmentError(error);
-      if (!error) dispatch({ type: 'SET_FILES', files });
+      if (!error) {
+        dispatch({ type: 'SET_FILES', files });
+        if (editingConfirmedRef.current && confirmedEditBaseline.current) {
+          setDirty(confirmedEditFingerprint(draft.intake, files) !== confirmedEditBaseline.current);
+        }
+      }
     },
     updateIntake,
     answerQuestion: (questionId, value) => {
@@ -288,6 +314,10 @@ export default function useIdeaIntake(projectId) {
     restart: () => setScreenState(IDEA_INTAKE_SCREEN_STATE.READY),
     editConfirmed: () => {
       setFailureMessage('');
+      confirmedEditBaseline.current = confirmedEditFingerprint(draft.intake, draft.referenceFiles);
+      editingConfirmedRef.current = true;
+      setEditingConfirmed(true);
+      setDirty(false);
       setScreenState(IDEA_INTAKE_SCREEN_STATE.READY);
     },
   };

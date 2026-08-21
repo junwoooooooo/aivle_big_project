@@ -57,4 +57,25 @@ describe('Idea confirmation journey', () => {
     expect(screen.getByText('아이디어를 정리하고 있습니다')).toBeInTheDocument();
     scrollTo.mockRestore();
   });
+
+  it('저장되지 않은 confirmed 수정본에서 다른 단계로 나가려 하면 명시적으로 보호한다', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    useIdeaIntake.mockReturnValue({
+      screenState: IDEA_INTAKE_SCREEN_STATE.READY, editingConfirmed: true, dirty: true,
+      draft: { intake: { ideaOverview: '수정본', problem: '문제', targetUsers: '사용자' }, referenceFiles: [] },
+      errors: {}, updateIntake: vi.fn(), setFiles: vi.fn(), organizeIdea: vi.fn(),
+    });
+    render(<MemoryRouter initialEntries={['/app/projects/41/idea']}><Routes>
+      <Route element={<><a href="/app/projects/41/concepts">사업안으로 이동</a><Outlet context={{ modules: [] }} /></>}>
+        <Route path="/app/projects/:projectId/idea" element={<IdeaIntakePage />} />
+      </Route>
+    </Routes></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('link', { name: '사업안으로 이동' }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('아직 저장되지 않았습니다'));
+    expect(window.location.pathname).not.toBe('/app/projects/41/concepts');
+    expect(screen.getByText('수정한 내용이 아직 저장되지 않았습니다')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '수정 내용 반영하고 다시 정리하기' })).toBeInTheDocument();
+    confirm.mockRestore();
+  });
 });

@@ -1,0 +1,7 @@
+{
+  "taskType": "CONCEPT_PORTFOLIO_V2_SELECTION_ACTION",
+  "taskSchemaVersion": "1.0",
+  "locale": "ko-KR",
+  "inputJson": "{\"action\":\"DELTA_LEGAL\",\"expectedHypothesisRevision\":3,\"hypotheses\":[{\"hypothesisType\":\"PRICE\",\"finalValue\":\"월 9900원\",\"deltaLegalRequired\":true},{\"hypothesisType\":\"CHANNELS\",\"finalValue\":[\"웹\",\"파트너 판매\"],\"deltaLegalRequired\":true},{\"hypothesisType\":\"PRE_MARKET_SOM_SHARE\",\"finalValue\":{\"targetSharePercent\":1.00,\"horizonYears\":3,\"rationale\":\"축약 fixture\",\"assumptions\":[\"가정 A\"]}}],\"selectedCandidate\":{\"candidateId\":\"candidate-fixture\",\"candidate\":{\"targetRegion\":\"대한민국\",\"revenueModel\":\"월 구독\",\"price\":\"월 8900원\",\"channels\":\"웹\",\"differentiators\":\"간단한 운영\",\"preMarketSomShareHypothesis\":{\"targetSharePercent\":1e0,\"horizonYears\":3,\"rationale\":\"축약 fixture\",\"assumptions\":[\"가정 A\"]},\"preMarketSomHypothesis\":{\"amount\":1.0e8,\"currency\":\"KRW\",\"period\":\"연간\",\"calculationBasis\":\"축약 산식\",\"assumptions\":[\"가정 B\"],\"confidence\":\"MEDIUM\"}}}}",
+  "expectedHash": "sha256:ed11cbe4aa78409c736efd57bdbd36af5621541f6e97eed9b6dbe6d3e6212108"
+}

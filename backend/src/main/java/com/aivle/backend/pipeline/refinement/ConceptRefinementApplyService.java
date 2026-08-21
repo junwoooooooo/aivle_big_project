@@ -3,6 +3,10 @@ package com.aivle.backend.pipeline.refinement;
 import com.aivle.backend.pipeline.market.BmPlanPreparationService;
 import com.aivle.backend.pipeline.conceptportfolio.selection.api.ConceptPortfolioSelectionApiModels;
 import com.aivle.backend.pipeline.conceptportfolio.selection.application.ConceptPortfolioSelectionService;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.HypothesisValueContract;
+import com.aivle.backend.pipeline.conceptportfolio.selection.domain.PortfolioHypothesisType;
+import com.aivle.backend.common.exception.BusinessException;
+import com.aivle.backend.common.exception.ErrorCode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +115,12 @@ public class ConceptRefinementApplyService {
             JsonNode value = proposal.path("proposedValue");
             String hypothesis = HYPOTHESIS_OF_FIELD.get(field);
             if (hypothesis != null) {
-                hypothesisEdits.set(hypothesis, value);
+                try {
+                    hypothesisEdits.set(hypothesis, HypothesisValueContract.canonicalize(
+                        mapper, PortfolioHypothesisType.valueOf(hypothesis), value));
+                } catch (IllegalArgumentException invalid) {
+                    throw new BusinessException(ErrorCode.HYPOTHESIS_VALUE_INVALID);
+                }
             } else if (BM_PLAN_FIELDS.contains(field)) {
                 planEdits.put(field, value);
             } else if (OVERLAY_FIELDS.contains(field)) {

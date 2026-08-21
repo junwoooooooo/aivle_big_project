@@ -64,6 +64,8 @@ describe('useIdeaIntake async recovery', () => {
       result.current.updateIntake('problem', '수정한 문제');
       result.current.updateIntake('targetUsers', '수정한 사용자');
     });
+    expect(result.current.editingConfirmed).toBe(true);
+    expect(result.current.dirty).toBe(true);
     await act(async () => result.current.organizeIdea({ preventDefault: vi.fn() }));
 
     expect(client.post).toHaveBeenCalledTimes(1);
@@ -72,6 +74,8 @@ describe('useIdeaIntake async recovery', () => {
     }), expect.any(Object));
     expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.RUNNING);
     expect(result.current.activeJobId).toBe('job-resubmit');
+    expect(result.current.editingConfirmed).toBe(false);
+    expect(result.current.dirty).toBe(false);
 
     terminal = true;
     rerender();
@@ -101,6 +105,28 @@ describe('useIdeaIntake async recovery', () => {
     expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.READY);
     expect(result.current.draft.intake.ideaOverview).toBe('보존할 수정값');
     expect(result.current.failureMessage).toBe('network');
+    expect(result.current.dirty).toBe(true);
+  });
+
+  it('confirmed 수정 baseline은 첨부 선택과 해제를 dirty 상태에 정확히 반영한다', async () => {
+    useJobEvents.mockReturnValue({ terminal: false, events: [] });
+    const confirmed = {
+      ...response('CONFIRMED', null, []),
+      fields: [
+        { fieldKey: 'ideaOverview', value: '기존 아이디어', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'problem', value: '기존 문제', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+        { fieldKey: 'targetUsers', value: '기존 사용자', provenance: 'USER_CONFIRMED', decisionState: 'LOCKED' },
+      ],
+    };
+    useApiClient.mockReturnValue({ get: vi.fn().mockResolvedValue({ data: confirmed }), post: vi.fn(), patch: vi.fn() });
+    const { result } = renderHook(() => useIdeaIntake('42'));
+    await waitFor(() => expect(result.current.screenState).toBe(IDEA_INTAKE_SCREEN_STATE.CONFIRMED));
+    act(() => result.current.editConfirmed());
+
+    act(() => result.current.setFiles([new File(['memo'], 'memo.txt', { type: 'text/plain' })]));
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.setFiles([]));
+    expect(result.current.dirty).toBe(false);
   });
 
   it('restores an active job and re-queries the brief after a terminal replay event', async () => {

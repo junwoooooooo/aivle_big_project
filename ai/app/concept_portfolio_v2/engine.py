@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from app.legal.registry import RegistryError
 from app.providers import ProviderFailure
+from app.tasks.concept_candidate.models import ConceptCandidateResult
 from app.tasks.idea_brief.service import execute_idea_brief_derivation
 
 from .adapters import (
@@ -27,6 +28,7 @@ from .fact_consistency import assess_concept_fact_consistency
 from .language_policy import candidate_language_failures, plan_language_failures
 from .legal_requirement_nature import normalize_legal_requirement_route
 from .hypothesis_validation import assess_hypotheses, assess_hypothesis_value
+from .hypothesis_value_contract import HypothesisValueContractError, normalize_hypothesis_value
 from .legal_fact_completeness import (
     assess_legal_fact_completeness, assess_legal_fact_dependencies, assess_role_semantics,
     classify_fact_presence, normalized_requirements, validate_legal_fact_completion,
@@ -1631,7 +1633,19 @@ class ConceptPortfolioEngine:
             if not edited and not confirm_all_proposed:
                 result.append(item)
                 continue
-            value = edits.get(item.hypothesisType, item.proposedValue)
+            raw_value = edits.get(item.hypothesisType, item.proposedValue)
+            try:
+                value = normalize_hypothesis_value(item.hypothesisType, raw_value)
+            except HypothesisValueContractError:
+                result.append(item.model_copy(update={
+                    "finalValue": None, "decisionStatus": "PROPOSED",
+                    "source": "USER_INPUT" if edited else item.source,
+                    "semanticStatus": "INVALID",
+                    "semanticReason": "Canonical hypothesis value contract와 맞지 않습니다.",
+                    "legalImpact": "NONE", "legalReviewStatus": "NOT_REQUIRED",
+                    "deltaLegalRequired": False,
+                }))
+                continue
             assessment = assess_hypothesis_value(item.hypothesisType, value)
             semantic_validated = not edited and item.semanticStatus == "VALID" and assessment.status == "AMBIGUOUS"
             if assessment.status != "VALID" and not semantic_validated:
@@ -1669,7 +1683,8 @@ class ConceptPortfolioEngine:
         pending = [item for item in hypotheses if item.deltaLegalRequired and item.legalReviewStatus == "PENDING"]
         if not pending:
             raise ValueError("Delta Legal이 필요한 hypothesis가 없습니다")
-        updates = {HYPOTHESIS_FIELDS[item.hypothesisType]: item.finalValue for item in pending}
+        updates = {HYPOTHESIS_FIELDS[item.hypothesisType]: normalize_hypothesis_value(
+            item.hypothesisType, item.finalValue) for item in pending}
         semantics = []
         pending_fields = set(updates)
         for semantic in selected.candidate.valueSemantics:
@@ -1678,7 +1693,10 @@ class ConceptPortfolioEngine:
                     "decision": "USER_EDITED_ACCEPTED"}))
             else:
                 semantics.append(semantic)
-        changed_candidate = selected.candidate.model_copy(update={**updates, "valueSemantics": semantics})
+        candidate_payload = selected.candidate.model_dump(mode="json")
+        candidate_payload.update(updates)
+        candidate_payload["valueSemantics"] = [item.model_dump(mode="json") for item in semantics]
+        changed_candidate = ConceptCandidateResult.model_validate(candidate_payload)
         review = await self.gateway.review_legal(
             f"{selected.candidateId}-DELTA", changed_candidate, seed)
         hypothesis_types = [item.hypothesisType for item in pending]

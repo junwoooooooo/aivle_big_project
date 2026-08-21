@@ -12,7 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 class CanonicalInputHasherTests {
     @Test
     void hashesEquivalentNewPipelineInputDeterministically() {
-        CanonicalInputHasher hasher = new CanonicalInputHasher(new ObjectMapper());
+        CanonicalInputHasher hasher = new CanonicalInputHasher();
 
         String first = hasher.hash(TaskType.IDEA_BRIEF_DERIVATION, "1.0", "ko-KR",
             "{\"projectId\":1,\"sourceText\":\"idea\"}");
@@ -25,7 +25,7 @@ class CanonicalInputHasherTests {
     @Test
     void canonicalizesAllFiniteDecimalFormsUsingTheSharedFixture() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        CanonicalInputHasher hasher = new CanonicalInputHasher(mapper);
+        CanonicalInputHasher hasher = new CanonicalInputHasher();
         try (InputStream stream = getClass().getResourceAsStream(
                 "/canonical/numeric-canonical-fixture-v1.json")) {
             JsonNode fixture = mapper.readTree(stream);
@@ -38,11 +38,25 @@ class CanonicalInputHasherTests {
 
     @Test
     void equivalentDecimalSpellingsHaveTheSameHash() {
-        CanonicalInputHasher hasher = new CanonicalInputHasher(new ObjectMapper());
+        CanonicalInputHasher hasher = new CanonicalInputHasher();
         String canonical = hasher.hash(TaskType.CONCEPT_REDESIGN, "1.0", "ko-KR",
             "{\"value\":1,\"zero\":0,\"som\":100000000}");
         String alternate = hasher.hash(TaskType.CONCEPT_REDESIGN, "1.0", "ko-KR",
             "{\"som\":1e8,\"zero\":-0.0,\"value\":1.00}");
         assertThat(alternate).isEqualTo(canonical);
+    }
+
+    @Test
+    void hashesTheSanitizedProductionDeltaSharedVector() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        try (InputStream stream = getClass().getResourceAsStream(
+                "/canonical/concept-portfolio-delta-canonical-fixture-v1.json")) {
+            JsonNode fixture = mapper.readTree(stream);
+            String hash = new CanonicalInputHasher().hash(
+                TaskType.valueOf(fixture.path("taskType").asText()),
+                fixture.path("taskSchemaVersion").asText(), fixture.path("locale").asText(),
+                fixture.path("inputJson").asText());
+            assertThat(hash).isEqualTo(fixture.path("expectedHash").asText());
+        }
     }
 }

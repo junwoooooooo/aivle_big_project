@@ -11,6 +11,7 @@ ROLLBACK_SCRIPT="$APP_DIR/rollback-last-deploy.sh"
 
 TWIN_MANIFEST="${TWIN_MANIFEST:-/opt/aivle/private/twin-bank/twin_bank_manifest.json}"
 
+AWS_REGION="${AWS_REGION:-us-east-1}"
 ECR_REGISTRY="${ECR_REGISTRY:-663345616799.dkr.ecr.us-east-1.amazonaws.com}"
 REPOSITORY="${GITHUB_REPOSITORY:-junwoooooooo/aivle_big_project}"
 
@@ -177,6 +178,11 @@ docker compose \
   --env-file "$ENV_FILE" \
   -f "$TMP_COMPOSE" \
   config --quiet
+
+log "refreshing EC2 host ECR authentication"
+
+aws ecr get-login-password --region "$AWS_REGION" | \
+  docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
 trap rollback_on_error ERR
 

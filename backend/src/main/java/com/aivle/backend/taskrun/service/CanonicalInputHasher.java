@@ -15,11 +15,12 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class CanonicalInputHasher {
+    /** Dedicated parser/serializer: application-wide Jackson customization must not change hashes. */
     private final ObjectMapper mapper;
 
-    public CanonicalInputHasher(ObjectMapper mapper) {
-        this.mapper = mapper;
-    }
+    public CanonicalInputHasher() { this(new ObjectMapper()); }
+
+    CanonicalInputHasher(ObjectMapper mapper) { this.mapper = mapper; }
 
     public String hash(TaskType taskType, String taskSchemaVersion, String locale, String inputJson) {
         JsonNode input = mapper.readTree(inputJson);

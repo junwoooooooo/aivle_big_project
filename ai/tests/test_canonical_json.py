@@ -6,6 +6,8 @@ from app.canonical_json import canonical_input_hash, canonical_json
 
 FIXTURE = (Path(__file__).resolve().parents[2]
            / "backend/src/test/resources/canonical/numeric-canonical-fixture-v1.json")
+DELTA_FIXTURE = (Path(__file__).resolve().parents[2]
+                 / "backend/src/test/resources/canonical/concept-portfolio-delta-canonical-fixture-v1.json")
 
 
 def test_numeric_canonical_fixture_matches_java_expected_hash():
@@ -31,3 +33,14 @@ def test_nested_redesign_candidate_numbers_are_canonical():
     encoded = canonical_json(candidate)
     assert '"targetSharePercent":3.5' in encoded
     assert '"amount":100000000' in encoded
+
+
+def test_production_delta_shape_matches_java_shared_vector():
+    fixture = json.loads(DELTA_FIXTURE.read_text(encoding="utf-8"))
+    assert canonical_input_hash(
+        contract_version="1.0",
+        task_type=fixture["taskType"],
+        task_schema_version=fixture["taskSchemaVersion"],
+        locale=fixture["locale"],
+        input_value=json.loads(fixture["inputJson"]),
+    ) == fixture["expectedHash"]

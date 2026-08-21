@@ -25,7 +25,9 @@ export default function BusinessProposalWorkspace() {
   const { projectId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const outlet = useOutletContext() ?? {};
-  const portfolio = useConceptPortfolio(projectId, outlet.liveRevision);
+  const conceptModuleStatus = outlet.moduleState?.status === 'loading' ? null
+    : outlet.modules?.find((module) => module.id === 'concepts')?.status;
+  const portfolio = useConceptPortfolio(projectId, outlet.liveRevision, conceptModuleStatus);
   const progressJobId = portfolio.run?.activeTaskRunId ?? portfolio.run?.initialTaskRunId ?? null;
   const progressEvents = useJobEvents(progressJobId);
   const [clock, setClock] = useState(0);
